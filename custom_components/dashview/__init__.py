@@ -4,7 +4,7 @@ import os
 from aiohttp.web import Response
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.frontend import add_extra_js_url, async_register_built_in_panel
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.helpers.typing import ConfigType
 
@@ -276,7 +276,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(DashViewPanel())
     
     # Register the custom panel in the frontend
-    hass.components.frontend.async_register_built_in_panel(
+    async_register_built_in_panel(
+        hass,
         "iframe",
         "DashView",
         "mdi:view-dashboard",
