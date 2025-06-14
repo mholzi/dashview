@@ -47,7 +47,6 @@ class DashViewPanel(HomeAssistantView):
     <title>DashView Dashboard v2.0</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="referrer" content="same-origin">
     <style>
         :root {{
             --primary-color: {css_config.get('primary_color', '#667eea')};
@@ -64,8 +63,6 @@ class DashViewPanel(HomeAssistantView):
             padding: 20px;
             background-color: var(--background-color);
             color: var(--text-color);
-            min-height: calc(100vh - 40px);
-            box-sizing: border-box;
         }}
 
         .dashboard-container {{
@@ -166,25 +163,6 @@ class DashViewPanel(HomeAssistantView):
             border-bottom: 1px solid #eee;
         }}
 
-        .room-placeholder, .media-placeholder {{
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            color: #666;
-        }}
-
-        .security-item {{
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }}
-
-        .security-item:last-child {{
-            border-bottom: none;
-        }}
-
         .form-group {{
             margin-bottom: 15px;
         }}
@@ -259,8 +237,7 @@ class DashViewPanel(HomeAssistantView):
             {'<button class="nav-tab" data-view="admin"><span>🔧</span><span>Admin</span></button>' if is_admin else ''}
         </div>
 
-        <!-- Main View Content -->
-        <div class="dashboard-content" id="main-view">
+        <div class="dashboard-content">
             <div class="widget">
                 <h3>🏠 Welcome to DashView v2.0</h3>
                 <p>Your fully configurable Home Assistant dashboard with:</p>
@@ -289,57 +266,9 @@ class DashViewPanel(HomeAssistantView):
                 <div>Last Updated: <span id="last-updated">--:--</span></div>
                 <div>Current Time: <span id="time-display">--:--</span></div>
             </div>
-        </div>
 
-        <!-- Rooms View Content -->
-        <div class="dashboard-content" id="rooms-view" style="display: none;">
-            <div class="widget">
-                <h3>🏠 Rooms Overview</h3>
-                <p>Manage and monitor your Home Assistant rooms and their assigned entities.</p>
-                <div id="rooms-grid">
-                    <div class="room-placeholder">
-                        <h4>📋 Room configuration in progress...</h4>
-                        <p>Visit the Admin panel to configure your rooms and assign entities.</p>
-                    </div>
-                </div>
-            </div>
+            {'<div class="admin-panel" id="admin-panel" style="display: none;"><h2>🔧 Dashboard Administration</h2><div class="admin-section"><h3>🏠 Room Management</h3><p>Room management interface coming soon...</p></div><div class="admin-section"><h3>🔧 Entity Configuration</h3><p>Entity configuration interface coming soon...</p></div><div class="admin-section"><h3>🎨 CSS & Styling</h3><p>CSS customization interface coming soon...</p></div></div>' if is_admin else ''}
         </div>
-
-        <!-- Security View Content -->
-        <div class="dashboard-content" id="security-view" style="display: none;">
-            <div class="widget">
-                <h3>🔒 Security Overview</h3>
-                <p>Monitor your home security systems and devices.</p>
-                <div id="security-status">
-                    <div class="security-item">
-                        <strong>🚪 Door Locks:</strong> <span>Checking...</span>
-                    </div>
-                    <div class="security-item">
-                        <strong>📹 Cameras:</strong> <span>Checking...</span>
-                    </div>
-                    <div class="security-item">
-                        <strong>🚨 Alarms:</strong> <span>Checking...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Media View Content -->
-        <div class="dashboard-content" id="media-view" style="display: none;">
-            <div class="widget">
-                <h3>🎵 Media Overview</h3>
-                <p>Control your media players and entertainment systems.</p>
-                <div id="media-players">
-                    <div class="media-placeholder">
-                        <h4>🎵 No media players found</h4>
-                        <p>Media player controls will appear here when devices are available.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Admin Panel (only for admins) -->
-        {'<div class="admin-panel" id="admin-view" style="display: none;"><h2>🔧 Dashboard Administration</h2><div class="admin-section"><h3>🏠 Room Management</h3><p>Room management interface coming soon...</p></div><div class="admin-section"><h3>🔧 Entity Configuration</h3><p>Entity configuration interface coming soon...</p></div><div class="admin-section"><h3>🎨 CSS & Styling</h3><p>CSS customization interface coming soon...</p></div></div>' if is_admin else ''}
 
         <div class="footer">
             <p>DashView v2.0.0 - Fully Configurable Home Assistant Dashboard</p>
@@ -356,9 +285,6 @@ class DashViewPanel(HomeAssistantView):
             loadDashboardData();
             setupEventListeners();
             startPeriodicUpdates();
-            
-            // Initialize with main view
-            showView('main');
         }});
 
         // Load dashboard data
@@ -390,19 +316,9 @@ class DashViewPanel(HomeAssistantView):
                 tab.classList.toggle('active', tab.dataset.view === viewId);
             }});
 
-            // Hide all view content
-            const views = ['main-view', 'rooms-view', 'security-view', 'media-view', 'admin-view'];
-            views.forEach(view => {{
-                const element = document.getElementById(view);
-                if (element) {{
-                    element.style.display = 'none';
-                }}
-            }});
-
-            // Show the selected view
-            const activeView = document.getElementById(viewId + '-view');
-            if (activeView) {{
-                activeView.style.display = 'grid';
+            const adminPanel = document.getElementById('admin-panel');
+            if (adminPanel) {{
+                adminPanel.style.display = viewId === 'admin' ? 'block' : 'none';
             }}
         }}
 
@@ -465,7 +381,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(DashViewDataAPIView(data_store))
 
     # Register the custom panel in the frontend
-    # Use iframe with proper configuration to maintain HA sidebar compatibility
     async_register_built_in_panel(
         hass,
         "iframe",
