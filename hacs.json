@@ -1,0 +1,6 @@
+{
+  "name": "DashView",
+  "render_readme": true,
+  "domain": "dashview",
+  "iot_class": "Local Polling"
+}
