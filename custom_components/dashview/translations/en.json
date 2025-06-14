@@ -3,13 +3,30 @@
     "title": "DashView",
     "step": {
       "user": {
-        "title": "Set up DashView",
-        "description": "DashView provides a custom dashboard for Home Assistant.",
-        "data": {}
+        "title": "Set up DashView Dashboard",
+        "description": "Configure your comprehensive Home Assistant dashboard with room-based organization and custom widgets.",
+        "data": {
+          "dashboard_title": "Dashboard Title",
+          "enable_admin_panel": "Enable Admin Panel",
+          "theme_color": "Theme Color"
+        }
       }
     },
     "abort": {
       "single_instance_allowed": "Only a single instance of DashView is allowed."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "DashView Options",
+        "description": "Configure dashboard options",
+        "data": {
+          "dashboard_title": "Dashboard Title",
+          "enable_admin_panel": "Enable Admin Panel",
+          "theme_color": "Theme Color"
+        }
+      }
     }
   }
 }
