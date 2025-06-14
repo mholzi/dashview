@@ -1,0 +1,4 @@
+refresh_dashboard:
+  name: Refresh Dashboard
+  description: Refresh the DashView dashboard content
+  fields: {}

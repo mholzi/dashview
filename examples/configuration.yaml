@@ -1,0 +1,35 @@
+# Example Home Assistant configuration for DashView
+
+# No configuration needed in configuration.yaml!
+# DashView automatically sets itself up when installed via HACS.
+
+# However, if you want to use DashView services in your automations,
+# here are some examples:
+
+# Example automation that refreshes the dashboard every hour
+automation:
+  - alias: "Refresh DashView Dashboard Hourly"
+    trigger:
+      - platform: time_pattern
+        minutes: 0  # Every hour at minute 0
+    action:
+      - service: dashview.refresh_dashboard
+
+# Example script to refresh dashboard manually
+script:
+  refresh_dashview:
+    alias: "Refresh DashView"
+    sequence:
+      - service: dashview.refresh_dashboard
+
+# Example sensor template that uses DashView data
+template:
+  - sensor:
+      - name: "DashView Active"
+        state: >
+          {% if states('sensor.dashview_status') == 'active' %}
+            on
+          {% else %}
+            off
+          {% endif %}
+        icon: mdi:view-dashboard

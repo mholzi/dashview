@@ -1,0 +1,15 @@
+{
+  "config": {
+    "title": "DashView",
+    "step": {
+      "user": {
+        "title": "Set up DashView",
+        "description": "DashView provides a custom dashboard for Home Assistant.",
+        "data": {}
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only a single instance of DashView is allowed."
+    }
+  }
+}
