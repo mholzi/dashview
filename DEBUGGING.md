@@ -110,6 +110,27 @@ DashView expects these entities (customize as needed):
 - `person.markus` - Person entity (hardcoded, update in code)
 - Various sensor entities for info cards (check code for specifics)
 
+### Window Weather Notifications
+
+For window weather notifications to work, ensure these entities exist:
+- `binary_sensor.fenster_buero_contact` - Office window contact sensor
+- `binary_sensor.fenster_schlafzimmer_contact` - Bedroom window contact sensor  
+- `weather.dreieich` - Weather entity (or update entity name in config)
+- `sensor.room_temperature` - Temperature sensor (configured in global_settings)
+- `sensor.room_humidity` - Humidity sensor (configured in global_settings)
+
+**Troubleshooting Window Weather Notifications:**
+```javascript
+// Enable debug mode and reload page
+DashViewDebug.enableDebug()
+
+// Check notification configuration and entity states
+DashViewDebug.debugWindowWeatherNotifications()
+
+// Test notification display functionality
+DashViewDebug.testWindowWeatherNotifications()
+```
+
 ## Getting Help
 
 1. Enable debug mode: `DashViewDebug.enableDebug()`
