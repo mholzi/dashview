@@ -33,16 +33,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # FIX #1: This logic now only runs once within async_setup_entry,
         # preventing the "Overwriting panel" error.
-        await panel_custom.async_register_panel(
-            hass,
-            webcomponent_name="dashview-panel",
-            frontend_url_path=panel_name,
-            sidebar_title="DashView",
-            sidebar_icon="mdi:view-dashboard",
-            module_url=f"/local/{panel_name}/dashview-panel.js",
-            require_admin=False,
-        )
-        _LOGGER.info("DashView panel successfully registered.")
+        try:
+            await panel_custom.async_register_panel(
+                hass,
+                webcomponent_name="dashview-panel",
+                frontend_url_path=panel_name,
+                sidebar_title="DashView",
+                sidebar_icon="mdi:view-dashboard",
+                module_url=f"/local/{panel_name}/dashview-panel.js",
+                require_admin=False,
+            )
+            _LOGGER.info("DashView panel successfully registered.")
+        except ValueError as ve:
+            if "Overwriting panel" in str(ve):
+                _LOGGER.info("DashView panel already exists, skipping registration.")
+            else:
+                raise
 
     except Exception as e:
         _LOGGER.error("Failed to register DashView panel: %s", e, exc_info=True)
@@ -56,6 +62,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.info("Unloading DashView panel.")
     # Clean up the panel when the integration is unloaded or reloaded.
-    panel_custom.async_remove_panel(hass, "dashview")
+    try:
+        # Use frontend module to remove the panel
+        from homeassistant.components import frontend
+        frontend.async_remove_panel(hass, "dashview")
+    except (AttributeError, ImportError) as e:
+        # If removal method doesn't exist or fails, log but don't fail unload
+        _LOGGER.warning("Could not remove panel during unload: %s", e)
+    
     hass.data[DOMAIN].pop(entry.entry_id, None)
     return True
