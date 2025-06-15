@@ -583,6 +583,10 @@ h3 {
     color: var(--gray800);
 }
 
+.info-badge.green.motion-detected {
+    color: var(--gray000);
+}
+
 .info-badge.red {
     background-color: var(--red);
     color: var(--gray100);
