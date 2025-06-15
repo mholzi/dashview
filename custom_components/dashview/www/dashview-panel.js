@@ -6,6 +6,7 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
+    this._scenesConfig = {};
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -115,6 +116,9 @@ class DashviewPanel extends HTMLElement {
 
     // Update Header Buttons
     this.updateHeaderButtons(shadow);
+
+    // Update Scene Buttons
+    this.updateSceneButtons(shadow);
 
   }
 
@@ -640,6 +644,11 @@ class DashviewPanel extends HTMLElement {
             this.saveMusicConfiguration();
         }
 
+        const saveScenesBtn = e.target.closest('#save-scenes-config');
+        if (saveScenesBtn) {
+            this.saveScenesConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -948,10 +957,11 @@ class DashviewPanel extends HTMLElement {
   // Load configuration from JSON files
   async loadConfiguration() {
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, scenesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -970,11 +980,20 @@ class DashviewPanel extends HTMLElement {
         console.warn('Could not load music configuration file');
         this._musicConfig = {};
       }
+
+      // Load scenes configuration separately as it's optional
+      if (scenesResponse.ok) {
+        this._scenesConfig = await scenesResponse.json();
+      } else {
+        console.warn('Could not load scenes configuration file');
+        this._scenesConfig = {};
+      }
     } catch (error) {
       console.error('Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
       this._musicConfig = {};
+      this._scenesConfig = {};
     }
   }
 
@@ -1052,16 +1071,18 @@ class DashviewPanel extends HTMLElement {
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
     const musicTextarea = shadow.getElementById('music-config');
+    const scenesTextarea = shadow.getElementById('scenes-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, scenesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1075,9 +1096,15 @@ class DashviewPanel extends HTMLElement {
         if (musicResponse.ok && musicTextarea) {
           const musicConfig = await musicResponse.json();
           musicTextarea.value = JSON.stringify(musicConfig, null, 2);
+        }
+
+        // Load scenes configuration if available
+        if (scenesResponse.ok && scenesTextarea) {
+          const scenesConfig = await scenesResponse.json();
+          scenesTextarea.value = JSON.stringify(scenesConfig, null, 2);
           statusElement.textContent = '✓ All configurations loaded successfully';
         } else {
-          statusElement.textContent = '✓ Floor and room configurations loaded successfully (music config optional)';
+          statusElement.textContent = '✓ Main configurations loaded successfully (optional configs may be missing)';
         }
         statusElement.style.background = 'var(--green)';
       } else {
@@ -1182,6 +1209,167 @@ class DashviewPanel extends HTMLElement {
       statusElement.textContent = '✗ Error saving music config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
+  }
+
+  // Save scenes configuration
+  async saveScenesConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const scenesTextarea = shadow.getElementById('scenes-config');
+
+    if (!statusElement || !scenesTextarea) return;
+
+    try {
+      const configData = JSON.parse(scenesTextarea.value);
+      
+      // Validate structure
+      if (!configData.scene_entities_by_room || !configData.scene_button_config) {
+        throw new Error('Invalid scenes configuration structure. Must include scene_entities_by_room and scene_button_config.');
+      }
+
+      statusElement.textContent = '✓ Scenes configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for use in scene buttons
+      this._scenesConfig = configData;
+      
+      // Update scene buttons with the new configuration
+      this.updateSceneButtons(shadow);
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving scenes config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Update scene buttons based on configuration
+  updateSceneButtons(shadow) {
+    if (!this._scenesConfig || !this._scenesConfig.scene_entities_by_room) return;
+
+    // Update main header scene buttons
+    const headerScenePlaceholders = shadow.querySelectorAll('.placeholder');
+    headerScenePlaceholders.forEach(placeholder => {
+      if (placeholder.textContent.includes('Scene Buttons')) {
+        placeholder.innerHTML = this.generateSceneButtonsHTML('Header');
+        placeholder.classList.remove('placeholder');
+        placeholder.classList.add('scene-buttons-section');
+      }
+    });
+
+    // Update room-specific scene buttons
+    const roomPopups = shadow.querySelectorAll('.popup');
+    roomPopups.forEach(popup => {
+      const roomId = popup.id.replace('-popup', '');
+      const roomName = this.getRoomNameFromId(roomId);
+      const scenePlaceholders = popup.querySelectorAll('.placeholder');
+      scenePlaceholders.forEach(placeholder => {
+        if (placeholder.textContent.includes('Scene Button') && roomName) {
+          placeholder.innerHTML = this.generateSceneButtonsHTML(roomName);
+          placeholder.classList.remove('placeholder');
+          placeholder.classList.add('scene-buttons-section');
+        }
+      });
+    });
+
+    // Add event listeners for scene buttons
+    this.addSceneButtonListeners(shadow);
+  }
+
+  // Generate HTML for scene buttons based on room
+  generateSceneButtonsHTML(roomName) {
+    if (!this._scenesConfig || !this._scenesConfig.scene_entities_by_room[roomName]) {
+      return '<div class="no-scenes">No scenes configured for this room</div>';
+    }
+
+    const roomScenes = this._scenesConfig.scene_entities_by_room[roomName];
+    const sceneButtonConfig = this._scenesConfig.scene_button_config;
+    
+    let buttonsHTML = '<div class="scene-buttons-container">';
+    
+    for (const [sceneType, entities] of Object.entries(roomScenes)) {
+      if (entities && entities.length > 0) {
+        const config = sceneButtonConfig[sceneType] || {
+          label: sceneType,
+          icon: 'mdi:home',
+          action: 'toggle'
+        };
+        
+        buttonsHTML += `
+          <button class="scene-button" 
+                  data-scene-type="${sceneType}" 
+                  data-room="${roomName}"
+                  data-action="${config.action}">
+            <i class="mdi ${config.icon}"></i>
+            <span>${config.label}</span>
+          </button>
+        `;
+      }
+    }
+    
+    buttonsHTML += '</div>';
+    return buttonsHTML;
+  }
+
+  // Get room name from popup ID
+  getRoomNameFromId(roomId) {
+    const roomMap = {
+      'wohnzimmer': 'Wohnzimmer',
+      'buero': 'Büro', 
+      'kinderzimmer': 'Kinderzimmer',
+      'elternbereich': 'Eltern',
+      'eingang': 'Eingang',
+      'aupair': 'Aupair',
+      'kinderbad': 'Kinderbad',
+      'kueche': 'Küche',
+      'waeschekeller': 'Wäschekeller',
+      'kellerraum': 'Kellerraum',
+      'serverraum': 'Serverraum',
+      'kinderflur': 'Kinderflur',
+      'kellerflur': 'Kellerflur',
+      'heizungskeller': 'Heizungskeller',
+      'partykeller': 'Partykeller',
+      'gaesteklo': 'Gästeklo',
+      'aussen': 'Aussen'
+    };
+    return roomMap[roomId] || roomId;
+  }
+
+  // Add event listeners for scene buttons
+  addSceneButtonListeners(shadow) {
+    const sceneButtons = shadow.querySelectorAll('.scene-button');
+    sceneButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleSceneButtonClick(button);
+      });
+    });
+  }
+
+  // Handle scene button click
+  handleSceneButtonClick(button) {
+    const sceneType = button.dataset.sceneType;
+    const roomName = button.dataset.room;
+    const action = button.dataset.action;
+
+    if (!this._scenesConfig || !this._scenesConfig.scene_entities_by_room[roomName]) return;
+
+    const entities = this._scenesConfig.scene_entities_by_room[roomName][sceneType];
+    if (!entities || entities.length === 0) return;
+
+    // Execute action on all entities
+    entities.forEach(entityId => {
+      if (entityId && this._hass) {
+        const domain = entityId.split('.')[0];
+        this._hass.callService(domain, action, { entity_id: entityId });
+      }
+    });
+
+    // Visual feedback
+    button.style.opacity = '0.6';
+    setTimeout(() => {
+      button.style.opacity = '1';
+    }, 200);
   }
 
   // Generate music popup content based on configuration
@@ -1466,10 +1654,6 @@ class DashviewPanel extends HTMLElement {
         }
       }
     });
-  }
-
-    // Also update room-specific media players
-    this.updateRoomMediaPlayerStates(shadow);
   }
 
   // Update room media players in individual room popups

@@ -1053,3 +1053,64 @@ h3 {
     font-size: 0.9em;
     color: var(--secondary-text-color);
 }
+
+/* Scene Buttons */
+.scene-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.scene-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background: var(--card-background-color);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    font-family: var(--primary-font-family);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.scene-button:hover {
+    background: var(--highlight);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.scene-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.scene-button i {
+    font-size: 18px;
+    margin-bottom: 4px;
+    color: var(--accent-color);
+}
+
+.scene-button span {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.scene-buttons-section {
+    padding: 8px 0;
+}
+
+.no-scenes {
+    padding: 12px;
+    text-align: center;
+    color: var(--secondary-text-color);
+    font-style: italic;
+    font-size: 0.9em;
+}

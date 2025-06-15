@@ -1,0 +1,105 @@
+{
+  "scene_entities_by_room": {
+    "Header": {
+      "wohnzimmer_ambiente": ["light.esszimmer_ambiente", "light.kucheninsel_l2"],
+      "all_covers": ["cover.rollo_treppenaufgang", "cover.rollo_aupair", "cover.rollo_aupairbad_3", "cover.rollo_kinderbad_2", "cover.rollo_jan_philipp_3", "cover.fenster_felicia_links", "cover.fenster_felicia_rechts", "cover.rollo_frederik_seite_3", "cover.rollo_frederik_balkon_3"],
+      "roof_window": ["cover.velux_window_roof_window_2"]
+    },
+    "Wohnzimmer": {
+      "wohnzimmer_ambiente": ["light.esszimmer_ambiente", "light.kucheninsel_l2"],
+      "all_lights_out": ["light.esszimmer_ambiente", "light.esszimmer_tisch", "light.schalter_wohnzimmer_l1", "light.schalter_wohnzimmer_l2", "light.licht_wohnzimmer_ambiente_switch"]
+    },
+    "Büro": {
+      "all_lights_out": ["light.buro_schreibtisch1", "light.schalter_buro_l1", "switch.buro_computer_licht_switch", "light.licht_buero"],
+      "computer": ["light.buro_computer_licht"],
+      "dimm_desk": ["light.buro_schreibtisch1"]
+    },
+    "Kinderzimmer": {
+      "all_lights_out": ["light.schalter_jp_l1", "light.schalter_jp_l2", "light.schalter_felicia_l1", "light.schalter_felicia_l2", "light.schalter_frederik_l1", "light.schalter_frederik_l2"],
+      "cover": ["cover.rollo_jan_philipp_3", "cover.fenster_felicia_links", "cover.fenster_felicia_rechts", "cover.rollo_frederik_seite_3", "cover.rollo_frederik_balkon_3"]
+    },
+    "Aupair": {
+      "all_lights_out": ["light.licht_aupair", "light.decke_aupairflur", "light.decke_aupairbad"],
+      "cover": ["cover.rollo_aupair", "cover.rollo_aupairbad_3"]
+    },
+    "Eltern": {
+      "all_lights_out": ["light.licht_schlafzimmer", "light.licht_ankleide", "light.licht_flur_dach", "light.licht_badezimmer", "light.licht_klo_dach"],
+      "roof_window": ["cover.velux_window_roof_window_2"]
+    },
+    "Kinderbad": {
+      "all_lights_out": ["light.licht_kinderbad"],
+      "cover": []
+    },
+    "Küche": {
+      "all_lights_out": ["light.licht_kuchenzeile_brett", "light.kucheninsel_l2", "light.kucheninsel_l1", "light.kuche_flur"]
+    },
+    "Wäschekeller": {
+      "all_lights_out": ["light.licht_waschkeller"]
+    },
+    "Kellerraum": {
+      "all_lights_out": ["light.keller_buro_licht"]
+    },
+    "Serverraum": {
+      "all_lights_out": ["light.licht_serverraum1"]
+    },
+    "Kinderflur": {
+      "all_lights_out": ["light.licht_kinderflur", "light.licht_treppe_dach"],
+      "cover": ["cover.rollo_treppenaufgang"]
+    },
+    "Kellerflur": {
+      "all_lights_out": ["light.licht_kellerflur_buro", "light.keller_eingang_links", "light.licht_kellerflur_rechts", "light.kellertreppe_switch"]
+    },
+    "Heizungskeller": {
+      "all_lights_out": ["light.licht_heizungskeller_light"]
+    },
+    "Partykeller": {
+      "all_lights_out": ["light.licht_partykeller1", "light.licht_partykeller_wand1", "light.licht_partykeller_stehlampe", "light.licht_partykeller_tisch1", "light.licht_partykeller_hund"]
+    },
+    "Eingang": {
+      "all_lights_out": ["light.flur_eingang", "light.garderobe", "light.flur_pendelleuchte", "light.led_eingangsflur_light", "light.kellertreppe_switch"]
+    },
+    "Aussen": {
+      "all_lights_out": ["light.garage_switch", "light.licht_hauswand_vorne_switch", "switch.licht_terrasse_switch"]
+    },
+    "Gästeklo": {
+      "all_lights_out": ["light.licht_gasteklo"]
+    }
+  },
+  "scene_button_config": {
+    "wohnzimmer_ambiente": {
+      "label": "Ambiente",
+      "icon": "mdi:lightbulb-on",
+      "action": "turn_on"
+    },
+    "all_lights_out": {
+      "label": "Alle Aus",
+      "icon": "mdi:lightbulb-off",
+      "action": "turn_off"
+    },
+    "all_covers": {
+      "label": "Alle Rollos",
+      "icon": "mdi:window-shutter",
+      "action": "toggle"
+    },
+    "roof_window": {
+      "label": "Dachfenster",
+      "icon": "mdi:window-open",
+      "action": "toggle"
+    },
+    "computer": {
+      "label": "Computer",
+      "icon": "mdi:monitor",
+      "action": "turn_on"
+    },
+    "dimm_desk": {
+      "label": "Schreibtisch",
+      "icon": "mdi:desk-lamp",
+      "action": "turn_on"
+    },
+    "cover": {
+      "label": "Rollos",
+      "icon": "mdi:window-shutter",
+      "action": "toggle"
+    }
+  }
+}
