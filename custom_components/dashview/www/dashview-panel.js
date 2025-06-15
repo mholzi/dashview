@@ -7,7 +7,9 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
+    this._weatherEntity = null; // Will be loaded from persistent config
     this._coversConfig = {};
+    this._scenesConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._activeMusicTab = null; // Track the currently active music tab
     this._volumeSliderInteraction = new Set(); // Track which volume sliders are being interacted with
@@ -25,11 +27,52 @@ class DashviewPanel extends HTMLElement {
     if (this._debugMode) {
       console.log('[DashView] HASS object received:', !!hass);
     }
+    
+    const isFirstTime = !this._hass;
     this._hass = hass;
+    
+    // Initialize weather entity on first hass connection
+    if (isFirstTime && hass) {
+      this.initializeWeatherEntity();
+    }
+    
     if (this._contentReady) {
       this.updateElements();
     } else if (this._debugMode) {
       console.log('[DashView] Content not ready yet, deferring update');
+    }
+  }
+
+  // Initialize weather entity from persistent storage
+  async initializeWeatherEntity() {
+    try {
+      // Try to load the weather entity from the backend API
+      const response = await fetch('/api/dashview/weather_config');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.weather_entity && this._hass && this._hass.states[data.weather_entity]) {
+          this._weatherEntity = data.weather_entity;
+          // Also cache in localStorage for faster subsequent loads
+          localStorage.setItem('dashview_weather_entity', data.weather_entity);
+          if (this._debugMode) {
+            console.log('[DashView] Loaded weather entity from backend:', data.weather_entity);
+          }
+          return;
+        }
+      }
+    } catch (error) {
+      console.warn('[DashView] Could not load weather entity from backend:', error);
+    }
+
+    // Fallback: try to load from localStorage cache
+    const cachedWeatherEntity = localStorage.getItem('dashview_weather_entity');
+    if (cachedWeatherEntity && this._hass && this._hass.states[cachedWeatherEntity]) {
+      this._weatherEntity = cachedWeatherEntity;
+      if (this._debugMode) {
+        console.log('[DashView] Loaded cached weather entity:', cachedWeatherEntity);
+      }
+    } else if (this._debugMode) {
+      console.log('[DashView] No valid weather entity found, will use fallback logic');
     }
   }
 
@@ -271,6 +314,9 @@ class DashviewPanel extends HTMLElement {
 
       // Update Cover Sections
       this._safeUpdate('cover-sections', () => this.updateCoverSections());
+
+      // Update Scene Buttons
+      this._safeUpdate('scene-buttons', () => this.updateSceneButtons(shadow));
 
       if (this._debugMode) {
         console.log('[DashView] Elements update completed successfully');
@@ -866,9 +912,20 @@ class DashviewPanel extends HTMLElement {
             this.saveCoversConfiguration();
         }
 
+        const saveScenesBtn = e.target.closest('#save-scenes-config');
+        if (saveScenesBtn) {
+            this.saveScenesConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
+        }
+
+        // Handle scene button clicks
+        const sceneButton = e.target.closest('.scene-button');
+        if (sceneButton) {
+            this.handleSceneButtonClick(sceneButton);
         }
     });
   }
@@ -1139,6 +1196,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'covers-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
                 }
+                // Load admin configuration when scenes tab is activated
+                if (targetId === 'scenes-tab') {
+                    setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
                 // Load music configuration when music tab is activated
                 if (targetId === 'music-tab') {
                     setTimeout(() => this.loadMusicAdminConfiguration(), 100);
@@ -1183,12 +1244,13 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
-        fetch('/local/dashview/config/covers.json')
+        fetch('/local/dashview/config/covers.json'),
+        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1240,6 +1302,18 @@ class DashviewPanel extends HTMLElement {
         console.warn(`[DashView] Could not load covers configuration file - status: ${coversResponse.status}`);
         this._coversConfig = {};
       }
+
+      // Load scenes configuration separately as it's optional
+      if (scenesResponse.ok) {
+        this._scenesConfig = await scenesResponse.json();
+        console.log('[DashView] Scenes configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Scenes config:', this._scenesConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load scenes configuration file - status: ${scenesResponse.status}`);
+        this._scenesConfig = {};
+      }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
@@ -1247,6 +1321,7 @@ class DashviewPanel extends HTMLElement {
       this._musicConfig = {};
       this._temperatureConfig = {};
       this._coversConfig = {};
+      this._scenesConfig = {};
     }
   }
 
@@ -1350,18 +1425,20 @@ class DashviewPanel extends HTMLElement {
     const musicTextarea = shadow.getElementById('music-config');
     const temperatureTextarea = shadow.getElementById('temperature-config');
     const coversTextarea = shadow.getElementById('covers-config');
+    const scenesTextarea = shadow.getElementById('scenes-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
-        fetch('/local/dashview/config/covers.json')
+        fetch('/local/dashview/config/covers.json'),
+        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1395,12 +1472,19 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
-        if (configsLoaded === 5) {
+        // Load scenes configuration if available
+        if (scenesResponse.ok && scenesTextarea) {
+          const scenesConfig = await scenesResponse.json();
+          scenesTextarea.value = JSON.stringify(scenesConfig, null, 2);
+          configsLoaded++;
+        }
+
+        if (configsLoaded === 6) {
           statusMessage = '✓ All configurations loaded successfully';
         } else if (configsLoaded >= 3) {
           statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-          statusMessage += ' (music, temperature, and covers configs optional)';
+          statusMessage += ' (music, temperature, covers, and scenes configs optional)';
         }
 
         statusElement.textContent = statusMessage;
@@ -1594,6 +1678,159 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
+  // Save scenes configuration
+  async saveScenesConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const scenesTextarea = shadow.getElementById('scenes-config');
+
+    if (!statusElement || !scenesTextarea) return;
+
+    try {
+      const configData = JSON.parse(scenesTextarea.value);
+      
+      // Validate structure
+      if (!configData.scene_entities_by_room) {
+        throw new Error('Invalid scenes configuration structure. Must include scene_entities_by_room.');
+      }
+
+      // Validate that scene_entities_by_room is an object
+      if (typeof configData.scene_entities_by_room !== 'object' || Array.isArray(configData.scene_entities_by_room)) {
+        throw new Error('scene_entities_by_room must be an object mapping room names to scene configurations.');
+      }
+
+      // Validate that each room has valid scene configurations
+      for (const [room, scenes] of Object.entries(configData.scene_entities_by_room)) {
+        if (!scenes || typeof scenes !== 'object' || Array.isArray(scenes)) {
+          throw new Error(`Invalid structure for room "${room}": must be an object with scene types as keys.`);
+        }
+        for (const [sceneType, entities] of Object.entries(scenes)) {
+          if (!Array.isArray(entities)) {
+            throw new Error(`Invalid structure for scene "${sceneType}" in room "${room}": must be an array of entity IDs.`);
+          }
+          for (const entity of entities) {
+            if (typeof entity !== 'string') {
+              throw new Error(`Invalid entity ID "${entity}" in scene "${sceneType}" for room "${room}": must be a string.`);
+            }
+          }
+        }
+      }
+
+      statusElement.textContent = '✓ Scenes configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._scenesConfig = configData;
+      
+      // Update scene buttons
+      if (this._hass) {
+        this.updateSceneButtons(shadow);
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving scenes config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Handle scene button clicks
+  async handleSceneButtonClick(button) {
+    if (!this._hass) return;
+
+    const sceneType = button.getAttribute('data-scene-type');
+    const room = button.getAttribute('data-room');
+    const entitiesJson = button.getAttribute('data-entities');
+    
+    try {
+      const entities = JSON.parse(entitiesJson);
+      
+      // Add visual feedback
+      button.classList.add('scene-button-active');
+      setTimeout(() => button.classList.remove('scene-button-active'), 200);
+      
+      console.log(`[DashView] Executing scene "${sceneType}" for room "${room}" with entities:`, entities);
+      
+      // Execute the scene action based on type
+      if (sceneType === 'all_lights_out') {
+        await this.turnOffLights(entities);
+      } else if (sceneType.includes('cover') || sceneType === 'roof_window') {
+        await this.toggleCovers(entities);
+      } else if (sceneType === 'wohnzimmer_ambiente') {
+        await this.setAmbientLights(entities);
+      } else if (sceneType === 'dimm_desk') {
+        await this.dimLights(entities);
+      } else {
+        // Default action: toggle entities
+        await this.toggleEntities(entities);
+      }
+      
+    } catch (error) {
+      console.error('[DashView] Error executing scene:', error);
+    }
+  }
+
+  // Turn off lights
+  async turnOffLights(entities) {
+    for (const entityId of entities) {
+      if (entityId.startsWith('light.')) {
+        this._hass.callService('light', 'turn_off', { entity_id: entityId });
+      } else if (entityId.startsWith('switch.')) {
+        this._hass.callService('switch', 'turn_off', { entity_id: entityId });
+      }
+    }
+  }
+
+  // Toggle covers (open/close)
+  async toggleCovers(entities) {
+    for (const entityId of entities) {
+      if (entityId.startsWith('cover.')) {
+        const state = this._hass.states[entityId];
+        if (state) {
+          const action = state.state === 'open' ? 'close_cover' : 'open_cover';
+          this._hass.callService('cover', action, { entity_id: entityId });
+        }
+      }
+    }
+  }
+
+  // Set ambient lighting
+  async setAmbientLights(entities) {
+    for (const entityId of entities) {
+      if (entityId.startsWith('light.')) {
+        this._hass.callService('light', 'turn_on', { 
+          entity_id: entityId,
+          brightness_pct: 30,
+          color_temp: 400
+        });
+      }
+    }
+  }
+
+  // Dim lights to low level
+  async dimLights(entities) {
+    for (const entityId of entities) {
+      if (entityId.startsWith('light.')) {
+        this._hass.callService('light', 'turn_on', { 
+          entity_id: entityId,
+          brightness_pct: 20
+        });
+      }
+    }
+  }
+
+  // Toggle entities (generic)
+  async toggleEntities(entities) {
+    for (const entityId of entities) {
+      if (entityId.startsWith('light.')) {
+        this._hass.callService('light', 'toggle', { entity_id: entityId });
+      } else if (entityId.startsWith('switch.')) {
+        this._hass.callService('switch', 'toggle', { entity_id: entityId });
+      } else if (entityId.startsWith('cover.')) {
+        this._hass.callService('cover', 'toggle', { entity_id: entityId });
+      }
+    }
+  }
+
   // Update cover sections for all rooms  
   async updateCoverSections() {
     if (!this._coversConfig || Object.keys(this._coversConfig).length === 0) {
@@ -1689,6 +1926,89 @@ class DashviewPanel extends HTMLElement {
       </div>`;
 
     return html;
+  }
+
+  // Update scene buttons for all rooms and header
+  async updateSceneButtons(shadow) {
+    if (!this._scenesConfig || Object.keys(this._scenesConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    if (!this._scenesConfig) return;
+
+    // Update header scene buttons
+    const headerContainer = shadow.querySelector('[data-template="scene-buttons"]:not([data-room])');
+    if (headerContainer) {
+      const headerHTML = this.generateSceneButtonsHTML('Header');
+      headerContainer.innerHTML = headerHTML;
+    }
+
+    // Update room-specific scene buttons
+    const roomContainers = shadow.querySelectorAll('[data-template="scene-buttons"][data-room]');
+    roomContainers.forEach(container => {
+      const room = container.getAttribute('data-room');
+      const roomHTML = this.generateSceneButtonsHTML(room);
+      container.innerHTML = roomHTML;
+    });
+  }
+
+  // Generate scene buttons HTML for a specific room
+  generateSceneButtonsHTML(room) {
+    if (!this._scenesConfig || !this._scenesConfig.scene_entities_by_room) {
+      return '<div class="loading-message">Scene configuration not loaded</div>';
+    }
+
+    const roomScenes = this._scenesConfig.scene_entities_by_room[room];
+    if (!roomScenes || Object.keys(roomScenes).length === 0) {
+      return '<div class="scene-buttons-empty">No scenes configured for this room</div>';
+    }
+
+    let html = '<div class="scene-buttons-container">';
+    
+    Object.entries(roomScenes).forEach(([sceneType, entities]) => {
+      if (entities && entities.length > 0) {
+        const buttonText = this.getSceneButtonText(sceneType);
+        const buttonIcon = this.getSceneButtonIcon(sceneType);
+        
+        html += `
+          <button class="scene-button" data-scene-type="${sceneType}" data-room="${room}" data-entities='${JSON.stringify(entities)}'>
+            <div class="scene-button-icon">${buttonIcon}</div>
+            <div class="scene-button-text">${buttonText}</div>
+          </button>
+        `;
+      }
+    });
+    
+    html += '</div>';
+    return html;
+  }
+
+  // Get human-readable text for scene button
+  getSceneButtonText(sceneType) {
+    const textMap = {
+      'all_lights_out': 'Alle Lichter aus',
+      'wohnzimmer_ambiente': 'Ambiente',
+      'all_covers': 'Alle Rollos',
+      'roof_window': 'Dachfenster',
+      'computer': 'Computer',
+      'dimm_desk': 'Schreibtisch dimmen',
+      'cover': 'Rollos'
+    };
+    return textMap[sceneType] || sceneType;
+  }
+
+  // Get icon for scene button
+  getSceneButtonIcon(sceneType) {
+    const iconMap = {
+      'all_lights_out': '💡',
+      'wohnzimmer_ambiente': '🕯️', 
+      'all_covers': '🪟',
+      'roof_window': '🏠',
+      'computer': '💻',
+      'dimm_desk': '🔅',
+      'cover': '🪟'
+    };
+    return iconMap[sceneType] || '⚙️';
   }
 
   // Update cover controls with current state
@@ -2422,14 +2742,32 @@ class DashviewPanel extends HTMLElement {
         weatherSelector.appendChild(option);
       });
 
-      // Get current configured weather entity
-      const configuredSensor = this._hass.states[`sensor.dashview_configured_weather_entity`] || 
-                              this._hass.states[`sensor.dashview_configured_weather`];
-      if (configuredSensor && configuredSensor.state) {
-        weatherSelector.value = configuredSensor.state;
+      // Get the configured weather entity from backend
+      let configuredEntity = null;
+      try {
+        const response = await fetch('/api/dashview/weather_config');
+        if (response.ok) {
+          const data = await response.json();
+          configuredEntity = data.weather_entity;
+          // Update our cache
+          if (configuredEntity && this._hass.states[configuredEntity]) {
+            this._weatherEntity = configuredEntity;
+            localStorage.setItem('dashview_weather_entity', configuredEntity);
+          }
+        }
+      } catch (error) {
+        console.warn('[DashView] Could not load weather entity config from backend:', error);
+      }
+
+      // Set the dropdown value
+      if (configuredEntity && weatherEntities.includes(configuredEntity)) {
+        weatherSelector.value = configuredEntity;
       } else {
-        // Default to first weather entity if none configured
+        // Default to first weather entity if none configured or config not available
         weatherSelector.value = weatherEntities[0];
+        if (!this._weatherEntity) {
+          this._weatherEntity = weatherEntities[0];
+        }
       }
 
     } catch (error) {
@@ -2468,6 +2806,12 @@ class DashviewPanel extends HTMLElement {
         entity_id: selectedEntity
       });
       
+      // Update our cache with the new weather entity
+      this._weatherEntity = selectedEntity;
+      
+      // Cache in localStorage for persistence across page reloads
+      localStorage.setItem('dashview_weather_entity', selectedEntity);
+      
       // Show success feedback
       saveButton.textContent = 'Saved!';
       saveButton.style.background = 'var(--green)';
@@ -2504,18 +2848,21 @@ class DashviewPanel extends HTMLElement {
   getCurrentWeatherEntity() {
     if (!this._hass) return 'weather.forecast_home'; // fallback
 
-    const configuredSensor = this._hass.states[`sensor.dashview_configured_weather_entity`] || 
-                            this._hass.states[`sensor.dashview_configured_weather`];
-    if (configuredSensor && configuredSensor.state) {
-      return configuredSensor.state;
+    // If we have a cached weather entity from our configuration, use it
+    if (this._weatherEntity && this._hass.states[this._weatherEntity]) {
+      return this._weatherEntity;
     }
     
     // Fallback to first available weather entity or default
     const weatherEntities = Object.keys(this._hass.states)
       .filter(entityId => entityId.startsWith('weather.'));
     
-    return weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
-
+    const defaultEntity = weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
+    
+    // Store the default for future use (but don't save to localStorage as this is just a fallback)
+    this._weatherEntity = defaultEntity;
+    
+    return defaultEntity;
   }
 
   // Debug method to get component status - can be called from browser console
@@ -2530,6 +2877,7 @@ class DashviewPanel extends HTMLElement {
       musicConfigLoaded: Object.keys(this._musicConfig).length > 0,
       temperatureConfigLoaded: Object.keys(this._temperatureConfig || {}).length > 0,
       coversConfigLoaded: Object.keys(this._coversConfig || {}).length > 0,
+      scenesConfigLoaded: Object.keys(this._scenesConfig || {}).length > 0,
       debugMode: this._debugMode,
       loadingErrors: this._loadingErrors,
       shadowRoot: !!this.shadowRoot,
