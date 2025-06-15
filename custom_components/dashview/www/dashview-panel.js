@@ -640,6 +640,11 @@ class DashviewPanel extends HTMLElement {
             this.saveMusicConfiguration();
         }
 
+        const saveCoversBtn = e.target.closest('#save-covers-config');
+        if (saveCoversBtn) {
+            this.saveCoversConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -948,10 +953,11 @@ class DashviewPanel extends HTMLElement {
   // Load configuration from JSON files
   async loadConfiguration() {
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, coversResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/covers.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -970,11 +976,20 @@ class DashviewPanel extends HTMLElement {
         console.warn('Could not load music configuration file');
         this._musicConfig = {};
       }
+
+      // Load covers configuration separately as it's optional
+      if (coversResponse.ok) {
+        this._coversConfig = await coversResponse.json();
+      } else {
+        console.warn('Could not load covers configuration file');
+        this._coversConfig = {};
+      }
     } catch (error) {
       console.error('Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
       this._musicConfig = {};
+      this._coversConfig = {};
     }
   }
 
@@ -1052,16 +1067,18 @@ class DashviewPanel extends HTMLElement {
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
     const musicTextarea = shadow.getElementById('music-config');
+    const coversTextarea = shadow.getElementById('covers-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, coversResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/covers.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1075,9 +1092,24 @@ class DashviewPanel extends HTMLElement {
         if (musicResponse.ok && musicTextarea) {
           const musicConfig = await musicResponse.json();
           musicTextarea.value = JSON.stringify(musicConfig, null, 2);
+        }
+
+        // Load covers configuration if available
+        if (coversResponse.ok && coversTextarea) {
+          const coversConfig = await coversResponse.json();
+          coversTextarea.value = JSON.stringify(coversConfig, null, 2);
+        }
+
+        // Update status based on what was loaded
+        const musicLoaded = musicResponse.ok && musicTextarea;
+        const coversLoaded = coversResponse.ok && coversTextarea;
+        
+        if (musicLoaded && coversLoaded) {
           statusElement.textContent = '✓ All configurations loaded successfully';
+        } else if (musicLoaded || coversLoaded) {
+          statusElement.textContent = '✓ Core configurations loaded successfully (optional configs as available)';
         } else {
-          statusElement.textContent = '✓ Floor and room configurations loaded successfully (music config optional)';
+          statusElement.textContent = '✓ Floor and room configurations loaded successfully (optional configs not available)';
         }
         statusElement.style.background = 'var(--green)';
       } else {
@@ -1180,6 +1212,34 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving music config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save covers configuration
+  async saveCoversConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const coversTextarea = shadow.getElementById('covers-config');
+
+    if (!statusElement || !coversTextarea) return;
+
+    try {
+      const configData = JSON.parse(coversTextarea.value);
+      
+      // Validate structure
+      if (!configData.room_covers) {
+        throw new Error('Invalid covers configuration structure. Must include room_covers.');
+      }
+
+      statusElement.textContent = '✓ Covers configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for use in the cover interface
+      this._coversConfig = configData;
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving covers config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
   }
@@ -1466,10 +1526,6 @@ class DashviewPanel extends HTMLElement {
         }
       }
     });
-  }
-
-    // Also update room-specific media players
-    this.updateRoomMediaPlayerStates(shadow);
   }
 
   // Update room media players in individual room popups

@@ -1,0 +1,58 @@
+{
+  "room_covers": {
+    "Wohnzimmer": [],
+    "Büro": [],
+    "Küche": [],
+    "Eingang": [],
+    "Gästeklo": [],
+    "Flur": [],
+    "Kinderzimmer": [
+      "cover.rollo_jan_philipp_3",
+      "cover.fenster_felicia_links",
+      "cover.fenster_felicia_rechts",
+      "cover.rollo_frederik_seite_3",
+      "cover.rollo_frederik_balkon_3"
+    ],
+    "Kinderbad": [
+      "cover.rollo_kinderbad_2"
+    ],
+    "Aupair": [
+      "cover.rollo_aupair",
+      "cover.rollo_aupairbad_3"
+    ],
+    "Eltern": [
+      "cover.velux_external_cover_awning_blinds_3",
+      "cover.velux_external_cover_awning_blinds_2",
+      "cover.velux_external_cover_awning_blinds"
+    ],
+    "Partykeller": [],
+    "Heizungskeller": [],
+    "Kellerflur": [],
+    "Wäschekeller": [],
+    "Serverraum": [],
+    "Kellerraum": [],
+    "Aussen": [],
+    "Kinderflur": [
+      "cover.rollo_treppenaufgang"
+    ],
+    "Sauna": []
+  },
+  "special_mappings": {
+    "Aupair": "cover.rollo_aupair_2"
+  },
+  "excluded_rooms": [
+    "Eingang",
+    "Wohnzimmer", 
+    "Küche",
+    "Gästeklo",
+    "Büro",
+    "Flur",
+    "Partykeller",
+    "Heizungskeller",
+    "Kellerflur",
+    "Wäschekeller",
+    "Serverraum",
+    "Kellerraum",
+    "Aussen"
+  ]
+}
