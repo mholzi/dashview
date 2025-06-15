@@ -8,6 +8,8 @@ class DashviewPanel extends HTMLElement {
     this._roomsConfig = {};
     this._musicConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
+    this._activeMusicTab = null; // Track the currently active music tab
+    this._volumeSliderInteraction = new Set(); // Track which volume sliders are being interacted with
     this._loadingErrors = [];
     this._version = '1.0.0-debug'; // Updated with debugging enhancements
     
@@ -1491,6 +1493,11 @@ class DashviewPanel extends HTMLElement {
 
     const { music_rooms, media_players, media_presets } = this._musicConfig;
     
+    // If no active tab is set, default to the first one
+    if (!this._activeMusicTab && music_rooms.length > 0) {
+      this._activeMusicTab = music_rooms[0].id;
+    }
+    
     let html = `
       <div class="music-tabs-container">
         <div class="music-tab-header">
@@ -1500,8 +1507,9 @@ class DashviewPanel extends HTMLElement {
 
     // Generate tab buttons
     music_rooms.forEach((room, index) => {
+      const isActive = room.id === this._activeMusicTab;
       html += `
-        <button class="music-tab-button ${index === 0 ? 'active' : ''}" 
+        <button class="music-tab-button ${isActive ? 'active' : ''}" 
                 data-room-id="${room.id}" 
                 data-room="${room.room}">
           <i class="${room.icon}"></i>
@@ -1519,9 +1527,10 @@ class DashviewPanel extends HTMLElement {
     // Generate tab content for each room
     music_rooms.forEach((room, index) => {
       const mediaPlayer = media_players[room.room];
+      const isActive = room.id === this._activeMusicTab;
       if (mediaPlayer) {
         html += `
-          <div class="music-room-content ${index === 0 ? 'active' : ''}" 
+          <div class="music-room-content ${isActive ? 'active' : ''}" 
                data-room-id="${room.id}">
             <div class="music-presets">
         `;
@@ -1622,6 +1631,9 @@ class DashviewPanel extends HTMLElement {
       button.addEventListener('click', () => {
         const roomId = button.dataset.roomId;
         
+        // Store the active tab state
+        this._activeMusicTab = roomId;
+        
         // Update active tab button
         tabButtons.forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
@@ -1696,6 +1708,26 @@ class DashviewPanel extends HTMLElement {
           });
         }
       });
+      
+      // Track when user starts interacting with volume slider
+      slider.addEventListener('mousedown', () => {
+        this._volumeSliderInteraction.add(slider.dataset.entity);
+      });
+      
+      slider.addEventListener('touchstart', () => {
+        this._volumeSliderInteraction.add(slider.dataset.entity);
+      });
+      
+      // Stop tracking interaction after a delay to allow state to update
+      const stopInteractionTracking = () => {
+        setTimeout(() => {
+          this._volumeSliderInteraction.delete(slider.dataset.entity);
+        }, 1000); // 1 second delay to allow Home Assistant state to update
+      };
+      
+      slider.addEventListener('mouseup', stopInteractionTracking);
+      slider.addEventListener('touchend', stopInteractionTracking);
+      slider.addEventListener('change', stopInteractionTracking);
     });
   }
 
@@ -1736,9 +1768,10 @@ class DashviewPanel extends HTMLElement {
           }
         }
 
-        // Update volume slider
+        // Update volume slider (only if not being interacted with)
         const volumeSlider = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity}"].volume-slider`);
-        if (volumeSlider && this._hass.states[mediaPlayer.entity]) {
+        if (volumeSlider && this._hass.states[mediaPlayer.entity] && 
+            !this._volumeSliderInteraction.has(mediaPlayer.entity)) {
           const state = this._hass.states[mediaPlayer.entity];
           const volumeLevel = state.attributes.volume_level || 0;
           volumeSlider.value = Math.round(volumeLevel * 100);
@@ -1752,7 +1785,8 @@ class DashviewPanel extends HTMLElement {
         // Update second media player if exists
         if (mediaPlayer.entity2) {
           const volumeSlider2 = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity2}"].volume-slider`);
-          if (volumeSlider2 && this._hass.states[mediaPlayer.entity2]) {
+          if (volumeSlider2 && this._hass.states[mediaPlayer.entity2] && 
+              !this._volumeSliderInteraction.has(mediaPlayer.entity2)) {
             const state = this._hass.states[mediaPlayer.entity2];
             const volumeLevel = state.attributes.volume_level || 0;
             volumeSlider2.value = Math.round(volumeLevel * 100);
@@ -1936,6 +1970,26 @@ class DashviewPanel extends HTMLElement {
           valueSpan.textContent = slider.value + '%';
         }
       });
+      
+      // Track when user starts interacting with volume slider
+      slider.addEventListener('mousedown', () => {
+        this._volumeSliderInteraction.add(slider.dataset.entity);
+      });
+      
+      slider.addEventListener('touchstart', () => {
+        this._volumeSliderInteraction.add(slider.dataset.entity);
+      });
+      
+      // Stop tracking interaction after a delay to allow state to update
+      const stopInteractionTracking = () => {
+        setTimeout(() => {
+          this._volumeSliderInteraction.delete(slider.dataset.entity);
+        }, 1000); // 1 second delay to allow Home Assistant state to update
+      };
+      
+      slider.addEventListener('mouseup', stopInteractionTracking);
+      slider.addEventListener('touchend', stopInteractionTracking);
+      slider.addEventListener('change', stopInteractionTracking);
     });
   }
 
@@ -1983,9 +2037,10 @@ class DashviewPanel extends HTMLElement {
           }
         }
 
-        // Update volume slider
+        // Update volume slider (only if not being interacted with)
         const volumeSlider = popup.querySelector(`[data-entity="${mediaPlayer.entity}"].volume-slider`);
-        if (volumeSlider && this._hass.states[mediaPlayer.entity]) {
+        if (volumeSlider && this._hass.states[mediaPlayer.entity] && 
+            !this._volumeSliderInteraction.has(mediaPlayer.entity)) {
           const state = this._hass.states[mediaPlayer.entity];
           const volumeLevel = state.attributes.volume_level || 0;
           volumeSlider.value = Math.round(volumeLevel * 100);
@@ -1999,7 +2054,8 @@ class DashviewPanel extends HTMLElement {
         // Update second media player if exists
         if (mediaPlayer.entity2) {
           const volumeSlider2 = popup.querySelector(`[data-entity="${mediaPlayer.entity2}"].volume-slider`);
-          if (volumeSlider2 && this._hass.states[mediaPlayer.entity2]) {
+          if (volumeSlider2 && this._hass.states[mediaPlayer.entity2] && 
+              !this._volumeSliderInteraction.has(mediaPlayer.entity2)) {
             const state = this._hass.states[mediaPlayer.entity2];
             const volumeLevel = state.attributes.volume_level || 0;
             volumeSlider2.value = Math.round(volumeLevel * 100);
