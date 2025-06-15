@@ -83,7 +83,7 @@ body {
     background-color: var(--background);
     color: var(--primary-text-color);
     margin: 0;
-    padding: 12px;
+    padding: 12px 0;
     padding-bottom: 90px; /* Space for fixed nav bar */
 }
 
@@ -93,6 +93,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    background-color: var(--background);
+    padding: 0 12px;
 }
 
 .placeholder {
@@ -189,14 +191,15 @@ h3 {
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - 20px);
-    max-width: 500px;
+    width: calc(100% - 40px);
+    max-width: 460px;
     background-color: var(--gray100);
     border-radius: 100px;
     padding: 10px;
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
+    gap: 40px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     z-index: 5;
 }
@@ -206,9 +209,16 @@ h3 {
     color: var(--gray400);
     cursor: pointer;
     font-size: 24px; /* MDI icons are font-based */
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+.nav-button:hover {
+    background-color: var(--highlight);
 }
 .nav-button.active {
     color: var(--blue-dark);
+    background-color: var(--highlight);
 }
 
 /* --- Header Grid --- */
