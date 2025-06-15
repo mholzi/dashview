@@ -1,0 +1,28 @@
+{
+  "temperature_entities": {
+    "Wäschekeller": [
+      {
+        "temperature_sensor": "sensor.humidity_waschkeller_temperature",
+        "humidity_sensor": "sensor.humidity_waschkeller_humidity"
+      }
+    ],
+    "Sauna": [
+      {
+        "temperature_sensor": "sensor.humidity_sauna_temperature",
+        "humidity_sensor": "sensor.humidity_sauna_humidity"
+      }
+    ],
+    "Serverraum": [
+      {
+        "temperature_sensor": "sensor.humidity_serverraum_temperature",
+        "humidity_sensor": "sensor.humidity_serverraum_humidity"
+      }
+    ],
+    "Partykeller": [
+      {
+        "temperature_sensor": "sensor.partykeller_humidity_detector_temperature",
+        "humidity_sensor": "sensor.partykeller_humidity_detector_humidity"
+      }
+    ]
+  }
+}
