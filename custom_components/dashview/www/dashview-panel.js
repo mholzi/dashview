@@ -104,7 +104,9 @@ class DashviewPanel extends HTMLElement {
 
   // Method to evaluate conditions for a train card
   evaluateConditions(conditions) {
-    if (!conditions || !this._hass) return false;
+    if (!conditions || !this._hass) {
+      return false;
+    }
 
     const conditionList = conditions.split(',');
     
@@ -176,6 +178,16 @@ class DashviewPanel extends HTMLElement {
       const departureSensor = card.dataset.departureSensor;
       const delayMin = parseInt(card.dataset.delayMin) || 0;
 
+      // If HASS is not available yet, keep cards visible with placeholder
+      if (!this._hass) {
+        card.classList.remove('hidden');
+        const timeElement = card.querySelector('.train-time');
+        if (timeElement) {
+          timeElement.textContent = '--:--';
+        }
+        return;
+      }
+
       // Check if conditions are met
       const shouldShow = this.evaluateConditions(conditions);
       
@@ -187,12 +199,14 @@ class DashviewPanel extends HTMLElement {
         const departure = this.getNextTrainDeparture(departureEntity, delayMin);
         
         const timeElement = card.querySelector('.train-time');
-        timeElement.textContent = departure.time;
-        
-        if (departure.isDelayed) {
-          timeElement.classList.add('delayed');
-        } else {
-          timeElement.classList.remove('delayed');
+        if (timeElement) {
+          timeElement.textContent = departure.time;
+          
+          if (departure.isDelayed) {
+            timeElement.classList.add('delayed');
+          } else {
+            timeElement.classList.remove('delayed');
+          }
         }
       } else {
         card.classList.add('hidden');
