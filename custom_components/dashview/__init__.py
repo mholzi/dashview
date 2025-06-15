@@ -4,11 +4,29 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import panel_custom
-from homeassistant.components.http import StaticPathConfig
+from homeassistant.components.http import StaticPathConfig, HomeAssistantView
 from .services import async_setup_services, async_unload_services
+from .store import DashViewStore
 
 DOMAIN = "dashview"
 _LOGGER = logging.getLogger(__name__)
+
+
+class DashViewWeatherConfigView(HomeAssistantView):
+    """View for getting weather entity configuration."""
+
+    url = "/api/dashview/weather_config"
+    name = "api:dashview:weather_config"
+    requires_auth = True
+
+    async def get(self, request):
+        """Get the current weather entity configuration."""
+        hass = request.app["hass"]
+        store = DashViewStore(hass)
+        await store.async_load()
+        weather_entity = store.get_weather_entity()
+        
+        return self.json({"weather_entity": weather_entity})
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -53,6 +71,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # Set up DashView services
         await async_setup_services(hass)
+
+        # Register the weather config API endpoint
+        hass.http.register_view(DashViewWeatherConfigView())
 
     except Exception as e:
         _LOGGER.error("Failed to register DashView panel: %s", e, exc_info=True)
