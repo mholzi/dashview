@@ -99,8 +99,13 @@ class DashviewPanel extends HTMLElement {
     // Update Weather Components
     this.updateWeatherComponents(shadow);
     
+
+    // Update Pollen Card
+    this.updatePollenCard(shadow);
+
     // Update Header Buttons
     this.updateHeaderButtons(shadow);
+
   }
 
   // Method to check if it's a weekday
@@ -795,6 +800,63 @@ class DashviewPanel extends HTMLElement {
     };
     
     return translations[condition] || condition;
+  }
+  
+  // Update Pollen Card with sensor data
+  updatePollenCard(shadow) {
+    const pollenButtons = shadow.querySelectorAll('.pollen-button');
+    if (!pollenButtons || pollenButtons.length === 0) return;
+    
+    pollenButtons.forEach(button => {
+      const sensorId = button.getAttribute('data-sensor');
+      const sensorEntity = this._hass.states[sensorId];
+      
+      if (sensorEntity) {
+        const sensorValue = parseFloat(sensorEntity.state) || 0;
+        const nameElement = button.querySelector('.pollen-name');
+        const stateElement = button.querySelector('.pollen-state');
+        
+        // Determine state text based on sensor value
+        let stateText = 'n/a';
+        if (sensorValue === 0) {
+          stateText = 'n/a';
+        } else if (sensorValue < 2) {
+          stateText = 'Niedrig';
+        } else if (sensorValue < 3) {
+          stateText = 'Moderat';
+        } else {
+          stateText = 'Hoch';
+        }
+        
+        // Update state text
+        stateElement.textContent = stateText;
+        
+        // Determine background color based on sensor value
+        let backgroundColor = '#dddddd'; // Default gray
+        if (sensorValue === 0) {
+          backgroundColor = '#dddddd';
+        } else if (sensorValue < 2) {
+          backgroundColor = '#d6f5d6'; // Light green
+        } else if (sensorValue < 3) {
+          backgroundColor = '#fff4cc'; // Light yellow
+        } else {
+          backgroundColor = '#f8d0d0'; // Light red
+        }
+        
+        // Update button styling
+        button.style.backgroundColor = backgroundColor;
+        
+        // Show/hide button based on sensor value
+        if (sensorValue > 0) {
+          button.style.display = 'flex';
+        } else {
+          button.style.display = 'none';
+        }
+      } else {
+        // If sensor doesn't exist, hide the button
+        button.style.display = 'none';
+      }
+    });
   }
   
   reinitializePopupContent(popup) {
