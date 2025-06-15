@@ -930,7 +930,13 @@ class DashviewPanel extends HTMLElement {
     // --- This section is the same as before ---
     const handleHashChange = async () => {
       const hash = window.location.hash || '#home';
-      context.querySelectorAll('.popup').forEach(popup => popup.classList.remove('active'));
+      
+      // Handle closing popups with animation
+      const currentActivePopups = context.querySelectorAll('.popup.active');
+      currentActivePopups.forEach(popup => {
+        popup.classList.remove('active');
+      });
+      
       context.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
 
       if (hash && hash !== '#home') {
@@ -957,7 +963,11 @@ class DashviewPanel extends HTMLElement {
             // For static popups like weather, also reinitialize content
             this.reinitializePopupContent(targetPopup);
         }
-        targetPopup.classList.add('active');
+        
+        // Add small delay to ensure previous popup animation completes, then show new popup
+        setTimeout(() => {
+          targetPopup.classList.add('active');
+        }, currentActivePopups.length > 0 ? 50 : 0);
       }
 
       const activeButton = context.querySelector(`.nav-button[data-hash="${hash}"]`);
@@ -1312,7 +1322,14 @@ class DashviewPanel extends HTMLElement {
   reinitializePopupContent(popup) {
     const closeBtn = popup.querySelector('.popup-close');
     if (closeBtn) {
-        closeBtn.onclick = () => window.history.back();
+        closeBtn.onclick = () => {
+          // Remove active class to trigger slide-down animation
+          popup.classList.remove('active');
+          // Navigate back after animation completes
+          setTimeout(() => {
+            window.history.back();
+          }, 300); // Match the CSS transition duration
+        };
     }
     
     // Handle generic tabs
