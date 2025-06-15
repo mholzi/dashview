@@ -1345,6 +1345,8 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load lights configuration file - status: ${lightsResponse.status}`);
         this._lightsConfig = {};
+      }
+
       // Load scenes configuration separately as it's optional
       if (scenesResponse.ok) {
         this._scenesConfig = await scenesResponse.json();
