@@ -1206,6 +1206,21 @@ class DashviewPanel extends HTMLElement {
             this.saveWindowWeatherConfiguration();
         }
 
+        const debugWindowWeatherBtn = e.target.closest('#debug-window-weather');
+        if (debugWindowWeatherBtn) {
+            this.debugWindowWeatherNotifications();
+        }
+
+        const refreshWindowWeatherBtn = e.target.closest('#refresh-window-weather');
+        if (refreshWindowWeatherBtn) {
+            this.updateWindowWeatherNotifications(this.shadowRoot);
+        }
+
+        const toggleDebugBtn = e.target.closest('#toggle-debug-mode');
+        if (toggleDebugBtn) {
+            this.toggleDebugMode();
+        }
+
         const saveOtherDevicesBtn = e.target.closest('#save-other-devices-config');
         if (saveOtherDevicesBtn) {
             this.saveOtherDevicesConfiguration();
@@ -3742,57 +3757,209 @@ class DashviewPanel extends HTMLElement {
 
   // Update window/weather notifications
   async updateWindowWeatherNotifications(shadow) {
-    if (!this._windowWeatherConfig || !this._windowWeatherConfig.notifications) return;
+    if (this._debugMode) {
+      console.log('[DashView] Starting updateWindowWeatherNotifications');
+      console.log('[DashView] _windowWeatherConfig:', this._windowWeatherConfig);
+    }
+    
+    if (!this._windowWeatherConfig || !this._windowWeatherConfig.notifications) {
+      if (this._debugMode) {
+        console.log('[DashView] No window weather config or notifications found');
+      }
+      return;
+    }
 
     // Find the window/weather notifications container
     const container = shadow.querySelector('.window-weather-notifications-container');
-    if (!container) return;
+    if (!container) {
+      if (this._debugMode) {
+        console.log('[DashView] Window weather notifications container not found');
+      }
+      return;
+    }
 
     let hasActiveNotifications = false;
     let notificationsHTML = '';
 
     // Evaluate each notification
     for (const notification of this._windowWeatherConfig.notifications) {
-      if (this.evaluateNotificationConditions(notification.conditions)) {
+      if (this._debugMode) {
+        console.log('[DashView] Evaluating notification:', notification.id, notification.message);
+      }
+      
+      const conditionResult = this.evaluateNotificationConditions(notification.conditions);
+      if (this._debugMode) {
+        console.log('[DashView] Condition result for', notification.id, ':', conditionResult);
+      }
+      
+      if (conditionResult) {
         hasActiveNotifications = true;
         notificationsHTML += this.generateWindowWeatherNotificationHTML(notification);
       }
     }
 
+    if (this._debugMode) {
+      console.log('[DashView] hasActiveNotifications:', hasActiveNotifications);
+    }
+
     if (hasActiveNotifications) {
       container.innerHTML = notificationsHTML;
       container.style.display = 'block';
+      if (this._debugMode) {
+        console.log('[DashView] Window weather notifications displayed');
+      }
     } else {
       container.style.display = 'none';
+      if (this._debugMode) {
+        console.log('[DashView] Window weather notifications hidden');
+      }
     }
   }
 
   // Evaluate notification conditions recursively
   evaluateNotificationConditions(conditions) {
-    if (!conditions || !this._hass) return false;
+    if (!conditions || !this._hass) {
+      if (this._debugMode) {
+        console.log('[DashView] No conditions or no hass object');
+      }
+      return false;
+    }
+
+    if (this._debugMode) {
+      console.log('[DashView] Evaluating conditions:', conditions);
+    }
 
     switch (conditions.type) {
       case 'and':
-        return conditions.conditions && conditions.conditions.every(condition => 
-          this.evaluateNotificationConditions(condition)
-        );
+        const andResult = conditions.conditions && conditions.conditions.every(condition => {
+          const result = this.evaluateNotificationConditions(condition);
+          if (this._debugMode) {
+            console.log('[DashView] AND condition result:', result, condition);
+          }
+          return result;
+        });
+        if (this._debugMode) {
+          console.log('[DashView] Final AND result:', andResult);
+        }
+        return andResult;
       
       case 'or':
-        return conditions.conditions && conditions.conditions.some(condition => 
-          this.evaluateNotificationConditions(condition)
-        );
+        const orResult = conditions.conditions && conditions.conditions.some(condition => {
+          const result = this.evaluateNotificationConditions(condition);
+          if (this._debugMode) {
+            console.log('[DashView] OR condition result:', result, condition);
+          }
+          return result;
+        });
+        if (this._debugMode) {
+          console.log('[DashView] Final OR result:', orResult);
+        }
+        return orResult;
       
       case 'state':
         const entity = this._hass.states[conditions.entity];
-        return entity && entity.state === conditions.state;
+        const stateMatch = entity && entity.state === conditions.state;
+        if (this._debugMode) {
+          console.log('[DashView] State condition for', conditions.entity, ':', {
+            entityExists: !!entity,
+            actualState: entity ? entity.state : 'N/A',
+            expectedState: conditions.state,
+            result: stateMatch
+          });
+        }
+        return stateMatch;
       
       default:
+        if (this._debugMode) {
+          console.warn('[DashView] Unknown condition type:', conditions.type);
+        }
         return false;
     }
   }
 
-  // Generate HTML for window/weather notification
-  generateWindowWeatherNotificationHTML(notification) {
+  // Debug window/weather notifications
+  debugWindowWeatherNotifications() {
+    const shadow = this.shadowRoot;
+    const debugOutput = shadow.getElementById('window-weather-debug-output');
+    
+    if (!debugOutput) {
+      console.error('[DashView] Debug output element not found');
+      return;
+    }
+
+    let debugText = '=== Window/Weather Notifications Debug ===\n\n';
+    
+    // Check if config is loaded
+    debugText += `Configuration loaded: ${!!this._windowWeatherConfig}\n`;
+    debugText += `Notifications count: ${this._windowWeatherConfig?.notifications?.length || 0}\n\n`;
+    
+    if (!this._windowWeatherConfig || !this._windowWeatherConfig.notifications) {
+      debugText += 'ERROR: No window/weather configuration loaded!\n';
+      debugOutput.textContent = debugText;
+      debugOutput.style.display = 'block';
+      return;
+    }
+
+    // Check entities mentioned in config
+    debugText += '=== Entity States ===\n';
+    const entitiesChecked = new Set();
+    
+    for (const notification of this._windowWeatherConfig.notifications) {
+      this.collectEntitiesFromConditions(notification.conditions, entitiesChecked);
+    }
+    
+    // Add temperature and humidity sensors
+    if (this._windowWeatherConfig.global_settings?.temp_sensor) {
+      entitiesChecked.add(this._windowWeatherConfig.global_settings.temp_sensor);
+    }
+    if (this._windowWeatherConfig.global_settings?.hum_sensor) {
+      entitiesChecked.add(this._windowWeatherConfig.global_settings.hum_sensor);
+    }
+    
+    for (const entityId of entitiesChecked) {
+      const entity = this._hass?.states?.[entityId];
+      debugText += `${entityId}: ${entity ? entity.state : 'NOT FOUND'}\n`;
+    }
+    
+    debugText += '\n=== Notification Evaluations ===\n';
+    
+    // Test each notification
+    for (const notification of this._windowWeatherConfig.notifications) {
+      debugText += `\nNotification: ${notification.id} - "${notification.message}"\n`;
+      const result = this.evaluateNotificationConditions(notification.conditions);
+      debugText += `Result: ${result ? 'SHOW' : 'HIDE'}\n`;
+      
+      if (result) {
+        debugText += `This notification should be visible!\n`;
+      }
+    }
+    
+    // Check if container exists and is being updated
+    debugText += '\n=== Container Status ===\n';
+    const container = shadow.querySelector('.window-weather-notifications-container');
+    debugText += `Container found: ${!!container}\n`;
+    if (container) {
+      debugText += `Container display: ${container.style.display}\n`;
+      debugText += `Container innerHTML length: ${container.innerHTML.length}\n`;
+      debugText += `Container content: ${container.innerHTML || '(empty)'}\n`;
+    }
+    
+    debugOutput.textContent = debugText;
+    debugOutput.style.display = 'block';
+  }
+
+  // Helper to collect all entity IDs from conditions recursively
+  collectEntitiesFromConditions(conditions, entitiesSet) {
+    if (!conditions) return;
+    
+    if (conditions.type === 'state' && conditions.entity) {
+      entitiesSet.add(conditions.entity);
+    } else if (conditions.conditions && Array.isArray(conditions.conditions)) {
+      for (const subCondition of conditions.conditions) {
+        this.collectEntitiesFromConditions(subCondition, entitiesSet);
+      }
+    }
+  }
     const tempSensor = this._hass.states[this._windowWeatherConfig.global_settings.temp_sensor];
     const humSensor = this._hass.states[this._windowWeatherConfig.global_settings.hum_sensor];
     

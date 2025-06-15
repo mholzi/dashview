@@ -160,6 +160,13 @@
                 <textarea id="window-weather-config" class="config-textarea" placeholder="Window/Weather notifications configuration will be loaded here..."></textarea>
                 <button id="save-window-weather-config" class="save-button">Save Window/Weather Config</button>
             </div>
+            
+            <div class="config-section">
+                <h5>Debug Window/Weather Notifications</h5>
+                <button id="debug-window-weather" class="action-button">Check Current States & Test Conditions</button>
+                <button id="refresh-window-weather" class="action-button">Force Refresh Notifications</button>
+                <div id="window-weather-debug-output" class="debug-output" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-family: monospace; white-space: pre-wrap; display: none;"></div>
+            </div>
         </div>
 
         <div id="other-devices-tab" class="tab-content">
@@ -175,6 +182,11 @@
 
         <div id="actions-tab" class="tab-content">
             <h4>Actions</h4>
+            <div class="config-section">
+                <h5>Debug Mode</h5>
+                <button id="toggle-debug-mode" class="action-button">Toggle Debug Mode</button>
+                <div id="debug-mode-status" style="margin-top: 10px; font-weight: bold;"></div>
+            </div>
             <div class="placeholder">Action buttons will be displayed here</div>
         </div>
     </div>

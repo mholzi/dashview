@@ -1866,6 +1866,14 @@ h3 {
     margin-top: -20px;
 }
 
+/* Debug output styles */
+.debug-output {
+    max-height: 400px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 /* Alarm Card Styles */
 .alarm-card-container {
     margin: 8px 0;
