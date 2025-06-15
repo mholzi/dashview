@@ -39,7 +39,7 @@ class DashViewStatusSensor(SensorEntity):
         self._attr_unique_id = f"{DOMAIN}_{name.lower().replace(' ', '_')}"
 
     @property
-def name(self) -> str:
+    def name(self) -> str:
         """Return the name of the sensor."""
         return self._name
 

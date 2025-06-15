@@ -9,9 +9,9 @@ set_weather_entity:
   fields:
     entity_id:
       name: Entity ID
-      description: The entity_id of the weather provider (e.g., weather.home).
+      description: The entity_id of the weather provider (e.g., weather.forecast_home).
       required: true
-      example: "weather.home"
+      example: "weather.forecast_home"
       selector:
         entity:
           domain: weather
