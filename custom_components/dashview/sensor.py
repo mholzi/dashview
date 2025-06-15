@@ -1,14 +1,12 @@
 """DashView sensor platform."""
 import logging
-from datetime import datetime, timedelta
-
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
+from .store import DashViewStore
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,24 +17,29 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up DashView sensor."""
+    
+    store = DashViewStore(hass)
+    await store.async_load()
+    
     sensors = [
-        DashViewSensor("DashView Status", "active"),
-        DashViewSensor("DashView Version", "1.0.0"),
+        DashViewStatusSensor("DashView Status", "active"),
+        ConfiguredWeatherSensor(store),
     ]
     async_add_entities(sensors, True)
 
 
-class DashViewSensor(SensorEntity):
-    """Representation of a DashView sensor."""
+class DashViewStatusSensor(SensorEntity):
+    """Representation of a DashView status sensor."""
+    _attr_icon = "mdi:view-dashboard"
 
     def __init__(self, name: str, state: str) -> None:
-        """Initialize the DashView sensor."""
+        """Initialize the sensor."""
         self._name = name
         self._state = state
         self._attr_unique_id = f"{DOMAIN}_{name.lower().replace(' ', '_')}"
 
     @property
-    def name(self) -> str:
+def name(self) -> str:
         """Return the name of the sensor."""
         return self._name
 
@@ -45,13 +48,19 @@ class DashViewSensor(SensorEntity):
         """Return the state of the sensor."""
         return self._state
 
-    @property
-    def icon(self) -> str:
-        """Return the icon for the sensor."""
-        return "mdi:view-dashboard"
 
-    async def async_update(self) -> None:
-        """Update the sensor."""
-        # For demo purposes, keep state as is
-        # In a real implementation, you might fetch data here
-        pass
+class ConfiguredWeatherSensor(SensorEntity):
+    """A sensor to expose the configured weather entity to the frontend."""
+    _attr_icon = "mdi:weather-partly-cloudy"
+    _attr_name = "DashView Configured Weather"
+    _attr_unique_id = f"{DOMAIN}_configured_weather_entity"
+
+    def __init__(self, store: DashViewStore):
+        """Initialize the sensor."""
+        self._store = store
+        self._attr_state = self._store.get_weather_entity()
+
+    async def async_update_from_service(self, new_state: str):
+        """Update the sensor's state from the service call."""
+        self._attr_state = new_state
+        self.async_write_ha_state()
