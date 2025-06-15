@@ -85,6 +85,8 @@ body {
     margin: 0;
     padding: 12px 0;
     padding-bottom: 90px; /* Space for fixed nav bar */
+    position: relative;
+    min-height: 100vh;
 }
 
 .dashboard-container {
@@ -187,12 +189,13 @@ h3 {
 
 /* --- Fixed Navigation Bar --- */
 .bottom-nav {
-    position: fixed;
+    position: absolute;
     bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     width: calc(100% - 40px);
     max-width: 460px;
+    margin: 0 auto;
     background-color: var(--gray100);
     border-radius: 100px;
     padding: 10px;
