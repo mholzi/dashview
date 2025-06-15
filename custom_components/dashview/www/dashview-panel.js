@@ -7,6 +7,7 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
+    this._coversConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._loadingErrors = [];
     this._version = '1.0.0-debug'; // Updated with debugging enhancements
@@ -265,6 +266,12 @@ class DashviewPanel extends HTMLElement {
 
       // Update Header Buttons
       this._safeUpdate('header-buttons', () => this.updateHeaderButtons(shadow));
+
+      // Update Cover Controls
+      this._safeUpdate('cover-controls', () => this.updateCoverControls());
+
+      // Update Cover Sections
+      this._safeUpdate('cover-sections', () => this.updateCoverSections());
 
       if (this._debugMode) {
         console.log('[DashView] Elements update completed successfully');
@@ -855,6 +862,11 @@ class DashviewPanel extends HTMLElement {
             this.saveTemperatureConfiguration();
         }
 
+        const saveCoversBtn = e.target.closest('#save-covers-config');
+        if (saveCoversBtn) {
+            this.saveCoversConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -1124,6 +1136,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'weather-tab') {
                     setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
                 }
+                // Load admin configuration when covers tab is activated
+                if (targetId === 'covers-tab') {
+                    setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
@@ -1164,11 +1180,12 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
-        fetch('/local/dashview/config/temperature.json')
+        fetch('/local/dashview/config/temperature.json'),
+        fetch('/local/dashview/config/covers.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1208,12 +1225,25 @@ class DashviewPanel extends HTMLElement {
         console.warn(`[DashView] Could not load temperature configuration file - status: ${temperatureResponse.status}`);
         this._temperatureConfig = {};
       }
+
+      // Load covers configuration separately as it's optional
+      if (coversResponse.ok) {
+        this._coversConfig = await coversResponse.json();
+        console.log('[DashView] Covers configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Covers config:', this._coversConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load covers configuration file - status: ${coversResponse.status}`);
+        this._coversConfig = {};
+      }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
       this._musicConfig = {};
       this._temperatureConfig = {};
+      this._coversConfig = {};
     }
   }
 
@@ -1292,17 +1322,19 @@ class DashviewPanel extends HTMLElement {
     const roomsTextarea = shadow.getElementById('rooms-config');
     const musicTextarea = shadow.getElementById('music-config');
     const temperatureTextarea = shadow.getElementById('temperature-config');
+    const coversTextarea = shadow.getElementById('covers-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
-        fetch('/local/dashview/config/temperature.json')
+        fetch('/local/dashview/config/temperature.json'),
+        fetch('/local/dashview/config/covers.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1329,12 +1361,19 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
-        if (configsLoaded === 4) {
+        // Load covers configuration if available
+        if (coversResponse.ok && coversTextarea) {
+          const coversConfig = await coversResponse.json();
+          coversTextarea.value = JSON.stringify(coversConfig, null, 2);
+          configsLoaded++;
+        }
+
+        if (configsLoaded === 5) {
           statusMessage = '✓ All configurations loaded successfully';
-        } else if (configsLoaded === 3) {
-          statusMessage = '✓ Floor, room, and one optional configuration loaded successfully';
+        } else if (configsLoaded >= 3) {
+          statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-          statusMessage += ' (music and temperature configs optional)';
+          statusMessage += ' (music, temperature, and covers configs optional)';
         }
 
         statusElement.textContent = statusMessage;
@@ -1481,6 +1520,258 @@ class DashviewPanel extends HTMLElement {
       statusElement.textContent = '✗ Error saving temperature config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
+  }
+
+  // Save covers configuration
+  async saveCoversConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const coversTextarea = shadow.getElementById('covers-config');
+
+    if (!statusElement || !coversTextarea) return;
+
+    try {
+      const configData = JSON.parse(coversTextarea.value);
+      
+      // Validate structure
+      if (!configData.room_covers) {
+        throw new Error('Invalid covers configuration structure. Must include room_covers.');
+      }
+
+      // Validate that room_covers is an object
+      if (typeof configData.room_covers !== 'object' || Array.isArray(configData.room_covers)) {
+        throw new Error('room_covers must be an object mapping room names to arrays of cover entity IDs.');
+      }
+
+      // Validate that each room has an array of strings
+      for (const [room, covers] of Object.entries(configData.room_covers)) {
+        if (!Array.isArray(covers)) {
+          throw new Error(`Invalid structure for room "${room}": must be an array of cover entity IDs.`);
+        }
+        for (const cover of covers) {
+          if (typeof cover !== 'string' || !cover.startsWith('cover.')) {
+            throw new Error(`Invalid cover entity ID "${cover}" in room "${room}": must be a string starting with "cover.".`);
+          }
+        }
+      }
+
+      statusElement.textContent = '✓ Covers configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._coversConfig = configData;
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving covers config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Update cover sections for all rooms  
+  updateCoverSections() {
+    if (!this._coversConfig) return;
+
+    const shadow = this.shadowRoot;
+    
+    // Map popup IDs to room names
+    const roomMappings = {
+      'kinderzimmer-cover-section': 'Kinderzimmer',
+      'aupair-cover-section': 'Aupair', 
+      'elternbereich-cover-section': 'Eltern'
+    };
+
+    // Update each cover section
+    Object.entries(roomMappings).forEach(([sectionId, roomName]) => {
+      const section = shadow.getElementById(sectionId);
+      if (section) {
+        const coverHTML = this.generateCoverSectionContent(roomName);
+        section.innerHTML = coverHTML;
+      }
+    });
+
+    // Set up cover interactions after sections are populated
+    this.handleCoverInteractions();
+  }
+
+  // Generate cover section content based on configuration and current room
+  generateCoverSectionContent(room) {
+    if (!this._coversConfig || !this._coversConfig.room_covers) {
+      return '<div class="placeholder">Cover configuration not loaded</div>';
+    }
+
+    const roomCovers = this._coversConfig.room_covers[room] || [];
+    const excludedRooms = this._coversConfig.excluded_rooms || [];
+    
+    // Check if room is in exclusion list or has no covers
+    if (excludedRooms.includes(room) || roomCovers.length === 0) {
+      return '';
+    }
+
+    // Get the primary cover entity (first in the list, or special handling for Aupair)
+    const primaryCover = room === 'Aupair' ? 'cover.rollo_aupair_2' : roomCovers[0];
+
+    let html = `
+      <div class="cover-section" data-room="${room}">
+        <div class="cover-expander-card">
+          <div class="cover-header">
+            <div class="cover-header-grid">
+              <div class="cover-title">Rollos</div>
+              <div class="cover-main-slider">
+                <div class="cover-slider-container" data-entity="${primaryCover}">
+                  <div class="cover-slider-track">
+                    <div class="cover-slider-progress"></div>
+                    <div class="cover-slider-thumb"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="cover-position-display" data-entity="${primaryCover}">0%</div>
+            </div>
+          </div>
+          <div class="cover-content" style="display: none;">
+            <div class="cover-position-buttons">
+              <button class="cover-position-btn" data-entity="${primaryCover}" data-position="0">0%</button>
+              <button class="cover-position-btn" data-entity="${primaryCover}" data-position="25">25%</button>
+              <button class="cover-position-btn" data-entity="${primaryCover}" data-position="50">50%</button>
+              <button class="cover-position-btn" data-entity="${primaryCover}" data-position="75">75%</button>
+              <button class="cover-position-btn" data-entity="${primaryCover}" data-position="100">100%</button>
+            </div>`;
+
+    // Add individual cover controls for each cover entity
+    roomCovers.forEach(coverEntity => {
+      html += `
+            <div class="cover-item" data-entity="${coverEntity}">
+              <div class="cover-item-grid">
+                <div class="cover-item-name" data-entity="${coverEntity}">Loading...</div>
+                <div class="cover-item-slider">
+                  <div class="cover-slider-container" data-entity="${coverEntity}">
+                    <div class="cover-slider-track">
+                      <div class="cover-slider-progress"></div>
+                      <div class="cover-slider-thumb"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="cover-item-position" data-entity="${coverEntity}">0%</div>
+              </div>
+            </div>`;
+    });
+
+    html += `
+          </div>
+        </div>
+      </div>`;
+
+    return html;
+  }
+
+  // Update cover controls with current state
+  updateCoverControls() {
+    if (!this._hass || !this._coversConfig) return;
+
+    const shadow = this.shadowRoot;
+    
+    // Update all cover position displays
+    shadow.querySelectorAll('[data-entity^="cover."]').forEach(element => {
+      const entityId = element.getAttribute('data-entity');
+      const entity = this._hass.states[entityId];
+      
+      if (entity) {
+        const position = entity.attributes.current_position || 0;
+        
+        // Update position displays
+        if (element.classList.contains('cover-position-display') || element.classList.contains('cover-item-position')) {
+          element.textContent = Math.floor(position) + '%';
+        }
+        
+        // Update friendly names
+        if (element.classList.contains('cover-item-name')) {
+          element.textContent = entity.attributes.friendly_name || entityId;
+        }
+        
+        // Update slider positions
+        if (element.classList.contains('cover-slider-container')) {
+          const progress = element.querySelector('.cover-slider-progress');
+          const thumb = element.querySelector('.cover-slider-thumb');
+          if (progress && thumb) {
+            const percentage = Math.max(0, Math.min(100, position));
+            progress.style.width = `${100 - percentage}%`; // Inverted for covers
+            thumb.style.left = `${100 - percentage}%`;
+          }
+        }
+      }
+    });
+  }
+
+  // Handle cover control interactions
+  handleCoverInteractions() {
+    const shadow = this.shadowRoot;
+    
+    // Handle cover header clicks (expand/collapse)
+    shadow.addEventListener('click', (e) => {
+      const coverHeader = e.target.closest('.cover-header');
+      if (coverHeader) {
+        const coverSection = coverHeader.closest('.cover-section');
+        const content = coverSection.querySelector('.cover-content');
+        if (content) {
+          const isExpanded = content.style.display !== 'none';
+          content.style.display = isExpanded ? 'none' : 'block';
+          coverSection.classList.toggle('expanded', !isExpanded);
+        }
+      }
+      
+      // Handle position button clicks
+      const positionBtn = e.target.closest('.cover-position-btn');
+      if (positionBtn) {
+        const entityId = positionBtn.getAttribute('data-entity');
+        const position = parseInt(positionBtn.getAttribute('data-position'));
+        
+        this._hass.callService('cover', 'set_cover_position', {
+          entity_id: entityId,
+          position: position
+        });
+      }
+    });
+    
+    // Handle slider interactions
+    shadow.addEventListener('pointerdown', (e) => {
+      const sliderContainer = e.target.closest('.cover-slider-container');
+      if (sliderContainer) {
+        e.preventDefault();
+        const entityId = sliderContainer.getAttribute('data-entity');
+        
+        const handleSliderMove = (moveEvent) => {
+          const rect = sliderContainer.getBoundingClientRect();
+          const percentage = Math.max(0, Math.min(100, 
+            100 - ((moveEvent.clientX - rect.left) / rect.width * 100) // Inverted for covers
+          ));
+          
+          // Update visual feedback immediately
+          const progress = sliderContainer.querySelector('.cover-slider-progress');
+          const thumb = sliderContainer.querySelector('.cover-slider-thumb');
+          if (progress && thumb) {
+            progress.style.width = `${100 - percentage}%`;
+            thumb.style.left = `${100 - percentage}%`;
+          }
+        };
+        
+        const handleSliderEnd = (endEvent) => {
+          const rect = sliderContainer.getBoundingClientRect();
+          const percentage = Math.max(0, Math.min(100, 
+            100 - ((endEvent.clientX - rect.left) / rect.width * 100) // Inverted for covers
+          ));
+          
+          this._hass.callService('cover', 'set_cover_position', {
+            entity_id: entityId,
+            position: Math.round(percentage)
+          });
+          
+          document.removeEventListener('pointermove', handleSliderMove);
+          document.removeEventListener('pointerup', handleSliderEnd);
+        };
+        
+        document.addEventListener('pointermove', handleSliderMove);
+        document.addEventListener('pointerup', handleSliderEnd);
+      }
+    });
   }
 
   // Generate music popup content based on configuration
@@ -2156,6 +2447,7 @@ class DashviewPanel extends HTMLElement {
       roomsConfigLoaded: Object.keys(this._roomsConfig).length > 0,
       musicConfigLoaded: Object.keys(this._musicConfig).length > 0,
       temperatureConfigLoaded: Object.keys(this._temperatureConfig || {}).length > 0,
+      coversConfigLoaded: Object.keys(this._coversConfig || {}).length > 0,
       debugMode: this._debugMode,
       loadingErrors: this._loadingErrors,
       shadowRoot: !!this.shadowRoot,
@@ -2227,7 +2519,8 @@ window.DashViewDebug = {
       '/local/dashview/config/floors.json',
       '/local/dashview/config/rooms.json',
       '/local/dashview/config/music.json',
-      '/local/dashview/config/temperature.json'
+      '/local/dashview/config/temperature.json',
+      '/local/dashview/config/covers.json'
     ];
     
     Promise.all(filesToCheck.map(async (file) => {
