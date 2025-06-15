@@ -4,6 +4,7 @@ class DashviewPanel extends HTMLElement {
     console.log('[DashView] Initializing DashView panel...');
     this.attachShadow({ mode: 'open' });
     this._contentReady = false;
+    this._consolidatedConfig = {};
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
@@ -1659,29 +1660,82 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
-
-
-
-        fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json'),
-        fetch('/local/dashview/config/temperature.json'),
-        fetch('/local/dashview/config/covers.json'),
-        fetch('/local/dashview/config/scenes.json'),
-        fetch('/local/dashview/config/lights.json'),
-        fetch('/local/dashview/config/room_notifications.json'),
-        fetch('/local/dashview/config/other_devices.json'),
-        fetch('/local/dashview/config/floor_tabs.json'),
-        fetch('/local/dashview/config/window_weather_notifications.json'),
-
-        fetch('/local/dashview/config/alarm.json'),
-
-        fetch('/local/dashview/config/header_updates.json'),
-
-
-      ]);
+      // Try to load consolidated config first
+      const consolidatedResponse = await fetch('/local/dashview/config/consolidated_config.json');
+      let useConsolidatedConfig = false;
+      
+      if (consolidatedResponse.ok) {
+        this._consolidatedConfig = await consolidatedResponse.json();
+        useConsolidatedConfig = true;
+        console.log('[DashView] Consolidated configuration loaded successfully');
+        
+        // Extract individual configs from consolidated config for compatibility
+        this._floorsConfig = {
+          floor_icons: {},
+          floor_sensors: {}
+        };
+        this._roomsConfig = { floors: {} };
+        this._musicConfig = {
+          music_rooms: this._consolidatedConfig.music_rooms || [],
+          media_players: {},
+          media_presets: this._consolidatedConfig.media_presets || []
+        };
+        this._floorTabsConfig = this._consolidatedConfig.floor_tabs || {};
+        this._lightsConfig = { room_lights: {}, excluded_rooms: [] };
+        this._coversConfig = { room_covers: {}, excluded_rooms: [] };
+        this._otherDevicesConfig = { room_devices: {}, excluded_rooms: [] };
+        this._temperatureConfig = { temperature_entities: {} };
+        
+        // Populate floor configs
+        Object.keys(this._consolidatedConfig.floors).forEach(floorKey => {
+          const floor = this._consolidatedConfig.floors[floorKey];
+          this._floorsConfig.floor_icons[floorKey] = floor.icon;
+          this._floorsConfig.floor_sensors[floorKey] = floor.sensor;
+          
+          // Populate room configs
+          const roomSensors = [];
+          Object.keys(floor.rooms).forEach(roomKey => {
+            const room = floor.rooms[roomKey];
+            roomSensors.push(room.combined_sensor);
+            
+            // Extract entities by type
+            this._lightsConfig.room_lights[room.friendly_name] = room.entities.lights || [];
+            this._coversConfig.room_covers[room.friendly_name] = room.entities.covers || [];
+            this._otherDevicesConfig.room_devices[room.friendly_name] = room.entities.other_devices || [];
+            if (room.entities.temperature && room.entities.temperature.length > 0) {
+              this._temperatureConfig.temperature_entities[room.friendly_name] = room.entities.temperature;
+            }
+            
+            // Extract music config
+            if (room.entities.music && room.entities.music.media_player) {
+              this._musicConfig.media_players[room.friendly_name] = room.entities.music.media_player;
+            }
+          });
+          this._roomsConfig.floors[floorKey] = roomSensors;
+        });
+        
+        if (this._debugMode) {
+          console.log('[DashView] Consolidated config:', this._consolidatedConfig);
+        }
+      }
+      
+      if (!useConsolidatedConfig) {
+        // Fallback to loading individual config files
+        const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
+          fetch('/local/dashview/config/floors.json'),
+          fetch('/local/dashview/config/rooms.json'),
+          fetch('/local/dashview/config/music.json'),
+          fetch('/local/dashview/config/temperature.json'),
+          fetch('/local/dashview/config/covers.json'),
+          fetch('/local/dashview/config/scenes.json'),
+          fetch('/local/dashview/config/lights.json'),
+          fetch('/local/dashview/config/room_notifications.json'),
+          fetch('/local/dashview/config/other_devices.json'),
+          fetch('/local/dashview/config/floor_tabs.json'),
+          fetch('/local/dashview/config/window_weather_notifications.json'),
+          fetch('/local/dashview/config/alarm.json'),
+          fetch('/local/dashview/config/header_updates.json'),
+        ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
         this._floorsConfig = await floorsResponse.json();
@@ -1880,6 +1934,27 @@ class DashviewPanel extends HTMLElement {
     return processedIcon;
   }
 
+  // Helper method to get room data from consolidated config
+  getRoomDataFromConfig(combinedSensor) {
+    if (!this._consolidatedConfig || !this._consolidatedConfig.floors) {
+      return null;
+    }
+    
+    // Search for room with matching combined sensor
+    for (const floorKey of Object.keys(this._consolidatedConfig.floors)) {
+      const floor = this._consolidatedConfig.floors[floorKey];
+      if (floor.rooms) {
+        for (const roomKey of Object.keys(floor.rooms)) {
+          const room = floor.rooms[roomKey];
+          if (room.combined_sensor === combinedSensor) {
+            return room;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   // Generate HTML for header buttons
   generateHeaderButtonsHTML() {
     if (!this._hass || !this._floorsConfig || !this._roomsConfig) {
@@ -1914,8 +1989,19 @@ class DashviewPanel extends HTMLElement {
           const isRoomActive = sensorEntity && sensorEntity.state === 'on';
 
           if (isRoomActive) {
-            const roomIcon = sensorEntity.attributes?.icon || 'mdi:help-circle-outline';
-            const roomType = sensorEntity.attributes?.room_type || '#unknown';
+            // Get room attributes from consolidated config if available
+            let roomIcon = 'mdi:help-circle-outline';
+            let roomType = '#unknown';
+            
+            const roomData = this.getRoomDataFromConfig(sensor);
+            if (roomData) {
+              roomIcon = roomData.icon_template || roomIcon;
+              roomType = roomData.room_type || roomType;
+            } else {
+              // Fallback to sensor attributes for backward compatibility
+              roomIcon = sensorEntity.attributes?.icon || roomIcon;
+              roomType = sensorEntity.attributes?.room_type || roomType;
+            }
             
             buttonsHTML += `
               <button class="header-room-button" data-sensor="${sensor}" data-navigation="${roomType}">

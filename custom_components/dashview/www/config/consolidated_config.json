@@ -1,0 +1,686 @@
+{
+  "floors": {
+    "EG": {
+      "name": "Erdgeschoss",
+      "icon": "mdi:home",
+      "sensor": "binary_sensor.floor_eg_active",
+      "rooms": {
+        "wohnzimmer": {
+          "friendly_name": "Wohnbereich",
+          "icon_template": "mdi:sofa",
+          "room_type": "#wohnzimmer",
+          "combined_sensor": "binary_sensor.combined_sensor_wohnzimmer",
+          "entities": {
+            "lights": [
+              "light.schalter_wohnzimmer_l1",
+              "light.schalter_wohnzimmer_l2",
+              "light.esszimmer_tisch",
+              "light.esszimmer_ambiente"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        },
+        "buero": {
+          "friendly_name": "Büro",
+          "icon_template": "mdi:desk",
+          "room_type": "#buero",
+          "combined_sensor": "binary_sensor.combined_sensor_buero",
+          "entities": {
+            "lights": [
+              "light.schalter_buro_l1",
+              "light.buro_stehlampe",
+              "light.buro_schreibtisch1",
+              "light.buro_computer_licht"
+            ],
+            "covers": [],
+            "music": {
+              "media_player": {
+                "entity": "media_player.echo_buero",
+                "room_name": "Büro"
+              }
+            },
+            "temperature": [],
+            "other_devices": [
+              {
+                "entity": "sensor.hp_laserjet_m110w_192_168_0_96_status",
+                "type": "printer"
+              },
+              {
+                "entity": "sensor.hp_laserjet_m109_m112_black_cartridge_hp_w1420a",
+                "type": "cartridge"
+              }
+            ]
+          }
+        },
+        "kueche": {
+          "friendly_name": "Küche",
+          "icon_template": "mdi:stove",
+          "room_type": "#kueche",
+          "combined_sensor": "binary_sensor.combined_sensor_kueche",
+          "entities": {
+            "lights": [
+              "light.licht_kuchenzeile_brett",
+              "light.kucheninsel_l1",
+              "light.kuche_flur",
+              "light.kucheninsel_l2"
+            ],
+            "covers": [],
+            "music": {
+              "media_player": {
+                "entity2": "media_player.kuche",
+                "room_name2": "Küche"
+              }
+            },
+            "temperature": [],
+            "other_devices": [
+              {
+                "entity": "switch.gefrierschrank_power",
+                "type": "freezer"
+              },
+              {
+                "entity": "sensor.geschirrspuler_operation_state",
+                "type": "dishwasher"
+              },
+              {
+                "entity": "vacuum.mova_e30_ultra",
+                "type": "hoover"
+              }
+            ]
+          }
+        },
+        "eingangsflur": {
+          "friendly_name": "Eingangsflur",
+          "icon_template": "mdi:coat-rack",
+          "room_type": "#eingang",
+          "combined_sensor": "binary_sensor.combined_sensor_eingangsflur",
+          "entities": {
+            "lights": [
+              "light.garderobe",
+              "light.flur_pendelleuchte",
+              "light.led_eingangsflur_light",
+              "light.flur_eingang"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": [
+              {
+                "entity": "lock.door_aqara_smart_lock_u200_lock",
+                "type": "door"
+              }
+            ]
+          }
+        },
+        "gaesteklo": {
+          "friendly_name": "Gästeklo",
+          "icon_template": "mdi:toilet",
+          "room_type": "#gaesteklo",
+          "combined_sensor": "binary_sensor.combined_sensor_gaesteklo",
+          "entities": {
+            "lights": [
+              "light.licht_gasteklo"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": [
+              {
+                "entity": "sensor.gasteklo_temperature",
+                "type": "temp"
+              }
+            ]
+          }
+        },
+        "treppe_erdgeschoss": {
+          "friendly_name": "Treppe Erdgeschoss",
+          "icon_template": "mdi:stairs",
+          "room_type": "#treppe_erdgeschoss",
+          "combined_sensor": "binary_sensor.combined_sensor_treppe_erdgeschoss",
+          "entities": {
+            "lights": [],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        }
+      }
+    },
+    "OG": {
+      "name": "Obergeschoss", 
+      "icon": "mdi:home-floor-1",
+      "sensor": "binary_sensor.floor_og_active",
+      "rooms": {
+        "kids": {
+          "friendly_name": "Kinderzimmer",
+          "icon_template": "mdi:human-child",
+          "room_type": "#kinderzimmer",
+          "combined_sensor": "binary_sensor.combined_sensor_kids",
+          "entities": {
+            "lights": [
+              "light.licht_ambiente_jp",
+              "light.schalter_jp_l1",
+              "light.schalter_frederik_l1",
+              "light.schalter_frederik_l2",
+              "light.schalter_felicia_l1",
+              "light.schalter_felicia_l2"
+            ],
+            "covers": [
+              "cover.rollo_jan_philipp_3",
+              "cover.fenster_felicia_links",
+              "cover.fenster_felicia_rechts",
+              "cover.rollo_frederik_seite_3",
+              "cover.rollo_frederik_balkon_3"
+            ],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        },
+        "kinderbad": {
+          "friendly_name": "Kinderbad",
+          "icon_template": "mdi:shower",
+          "room_type": "#kinderbad",
+          "combined_sensor": "binary_sensor.combined_sensor_kinderbad",
+          "entities": {
+            "lights": [
+              "light.licht_kinderbad",
+              "light.spiegel_kinderbad"
+            ],
+            "covers": [
+              "cover.rollo_kinderbad_2"
+            ],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        },
+        "flur": {
+          "friendly_name": "Kinderflur",
+          "icon_template": "mdi:coat-rack",
+          "room_type": "#kinderflur",
+          "combined_sensor": "binary_sensor.combined_sensor_flur",
+          "entities": {
+            "lights": [
+              "light.licht_kinderflur",
+              "light.licht_treppe_dach"
+            ],
+            "covers": [
+              "cover.rollo_treppenaufgang"
+            ],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        },
+        "aupair": {
+          "friendly_name": "Aupair",
+          "icon_template": "mdi:bed",
+          "room_type": "#aupair",
+          "combined_sensor": "binary_sensor.combined_sensor_aupair",
+          "entities": {
+            "lights": [
+              "light.licht_aupair",
+              "light.licht_aupair_ambiente",
+              "light.decke_aupairflur",
+              "light.decke_aupairbad",
+              "light.spiegel_aupairbad"
+            ],
+            "covers": [
+              "cover.rollo_aupair",
+              "cover.rollo_aupairbad_3"
+            ],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        }
+      }
+    },
+    "Eltern": {
+      "name": "Elternbereich",
+      "icon": "mdi:home-roof",
+      "sensor": "binary_sensor.floor_eltern_active",
+      "rooms": {
+        "schlafzimmer": {
+          "friendly_name": "Schlafzimmer",
+          "icon_template": "mdi:bed-double",
+          "room_type": "#elternbereich",
+          "combined_sensor": "binary_sensor.combined_sensor_schlafzimmer",
+          "entities": {
+            "lights": [
+              "light.licht_schlafzimmer",
+              "light.licht_ankleide",
+              "light.licht_flur_dach",
+              "light.licht_badezimmer",
+              "light.spiegel_badezimmer",
+              "light.licht_klo_dach"
+            ],
+            "covers": [
+              "cover.velux_external_cover_awning_blinds_3",
+              "cover.velux_external_cover_awning_blinds_2",
+              "cover.velux_external_cover_awning_blinds"
+            ],
+            "music": {
+              "media_player": {
+                "entity": "media_player.echo_bad",
+                "room_name": "Bad"
+              }
+            },
+            "temperature": [],
+            "other_devices": []
+          }
+        }
+      }
+    },
+    "Keller": {
+      "name": "Keller",
+      "icon": "mdi:stairs-down",
+      "sensor": "binary_sensor.floor_keller_active",
+      "rooms": {
+        "partykeller": {
+          "friendly_name": "Partykeller",
+          "icon_template": "mdi:party-popper",
+          "room_type": "#partykeller",
+          "combined_sensor": "binary_sensor.combined_sensor_partykeller",
+          "entities": {
+            "lights": [
+              "light.licht_partykeller_hund",
+              "light.licht_partykeller1",
+              "light.licht_partykeller_wand1",
+              "light.licht_partykeller_stehlampe",
+              "light.licht_partykeller_tisch1"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [
+              {
+                "temperature_sensor": "sensor.partykeller_humidity_detector_temperature",
+                "humidity_sensor": "sensor.partykeller_humidity_detector_humidity"
+              }
+            ],
+            "other_devices": []
+          }
+        },
+        "heizungskeller": {
+          "friendly_name": "Heizungskeller",
+          "icon_template": "mdi:gas-burner",
+          "room_type": "#heizungskeller",
+          "combined_sensor": "binary_sensor.combined_sensor_heizungskeller",
+          "entities": {
+            "lights": [
+              "light.licht_heizungskeller"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        },
+        "kellerflur": {
+          "friendly_name": "Kellerflur",
+          "icon_template": "mdi:floor-plan",
+          "room_type": "#kellerflur",
+          "combined_sensor": "binary_sensor.combined_sensor_kellerflur",
+          "entities": {
+            "lights": [
+              "light.licht_kellerflur_buro",
+              "light.licht_kellerflur_rechts"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        },
+        "waschkeller": {
+          "friendly_name": "Waschkeller",
+          "icon_template": "mdi:washing-machine",
+          "room_type": "#waschkeller",
+          "combined_sensor": "binary_sensor.combined_sensor_waschkeller",
+          "entities": {
+            "lights": [
+              "light.licht_waschkeller"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [
+              {
+                "temperature_sensor": "sensor.humidity_waschkeller_temperature",
+                "humidity_sensor": "sensor.humidity_waschkeller_humidity"
+              }
+            ],
+            "other_devices": [
+              {
+                "entity": "sensor.waschmaschine_operation_state",
+                "type": "washing"
+              },
+              {
+                "entity": "input_boolean.trockner_an",
+                "type": "dryer"
+              }
+            ]
+          }
+        },
+        "serverraum": {
+          "friendly_name": "Serverraum",
+          "icon_template": "mdi:server",
+          "room_type": "#serverraum",
+          "combined_sensor": "binary_sensor.combined_sensor_serverraum",
+          "entities": {
+            "lights": [
+              "light.licht_serverraum1"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [
+              {
+                "temperature_sensor": "sensor.humidity_serverraum_temperature",
+                "humidity_sensor": "sensor.humidity_serverraum_humidity"
+              }
+            ],
+            "other_devices": []
+          }
+        },
+        "sauna": {
+          "friendly_name": "Sauna",
+          "icon_template": "mdi:sauna",
+          "room_type": "#sauna",
+          "combined_sensor": "binary_sensor.combined_sensor_sauna",
+          "entities": {
+            "lights": [],
+            "covers": [],
+            "music": {},
+            "temperature": [
+              {
+                "temperature_sensor": "sensor.humidity_sauna_temperature",
+                "humidity_sensor": "sensor.humidity_sauna_humidity"
+              }
+            ],
+            "other_devices": []
+          }
+        },
+        "buero_keller": {
+          "friendly_name": "Kellerraum",
+          "icon_template": "mdi:wardrobe",
+          "room_type": "#kellerraum",
+          "combined_sensor": "binary_sensor.combined_sensor_buero_keller",
+          "entities": {
+            "lights": [
+              "light.keller_buro_licht"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        }
+      }
+    },
+    "Außen": {
+      "name": "Außenbereich",
+      "icon": "mdi:tree",
+      "sensor": "binary_sensor.floor_aussen_active",
+      "rooms": {
+        "aussen": {
+          "friendly_name": "Aussen",
+          "icon_template": "mdi:tree",
+          "room_type": "#aussen",
+          "combined_sensor": "binary_sensor.combined_sensor_aussen",
+          "entities": {
+            "lights": [
+              "light.garage_switch",
+              "light.licht_hauswand_vorne_switch",
+              "switch.licht_terrasse_switch"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": [
+              {
+                "entity": "vacuum.sileno",
+                "type": "mower"
+              }
+            ]
+          }
+        },
+        "garten": {
+          "friendly_name": "Garten",
+          "icon_template": "mdi:balcony",
+          "room_type": "#garten",
+          "combined_sensor": "binary_sensor.combined_sensor_garten",
+          "entities": {
+            "lights": [
+              "light.balkon_aussen"
+            ],
+            "covers": [],
+            "music": {},
+            "temperature": [],
+            "other_devices": []
+          }
+        }
+      }
+    }
+  },
+  "music_rooms": [
+    {
+      "id": "musik_buero",
+      "label": "Büro",
+      "icon": "mdi:desk",
+      "room": "Büro"
+    },
+    {
+      "id": "musik_eltern",
+      "label": "Bad",
+      "icon": "mdi:shower",
+      "room": "Eltern"
+    },
+    {
+      "id": "musik_wohnzimmer",
+      "label": "Wohnzimmer",
+      "icon": "mdi:sofa",
+      "room": "Wohnzimmer"
+    }
+  ],
+  "media_presets": [
+    {
+      "name": "Dinner Jazz",
+      "media_content_id": "spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+    },
+    {
+      "name": "Happy Hits",
+      "media_content_id": "spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
+    },
+    {
+      "name": "Karneval",
+      "media_content_id": "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
+    }
+  ],
+  "floor_tabs": {
+    "floors": [
+      {
+        "id": "erdgeschoss",
+        "room": "EG",
+        "default": "show",
+        "active_tab": 1
+      },
+      {
+        "id": "obergeschoss", 
+        "room": "OG",
+        "default": "hide",
+        "active_tab": 2
+      },
+      {
+        "id": "elternbereich",
+        "room": "Eltern", 
+        "default": "hide",
+        "active_tab": 3
+      },
+      {
+        "id": "keller",
+        "room": "Keller",
+        "default": "hide", 
+        "active_tab": 4
+      }
+    ],
+    "tabs": [
+      {
+        "icon": "mdi:home",
+        "label": "EG", 
+        "target": "erdgeschoss"
+      },
+      {
+        "icon": "mdi:home-floor-1",
+        "label": "OG",
+        "target": "obergeschoss"
+      },
+      {
+        "icon": "mdi:home-roof",
+        "label": "Eltern",
+        "target": "elternbereich"
+      },
+      {
+        "icon": "mdi:stairs-down",
+        "label": "Keller", 
+        "target": "keller"
+      }
+    ],
+    "room_cards": {
+      "Gästeklo": {
+        "grid_template_areas": "'licht1 motion'\n'licht1 temp'\n'gap gap'",
+        "cards": [
+          {
+            "template": "sensor_big_swipe",
+            "grid": "licht1",
+            "entity": "light.licht_gasteklo",
+            "type": "light"
+          },
+          {
+            "template": "sensor_small_swipe", 
+            "grid": "motion",
+            "entity": "binary_sensor.motion_gasteklo_occupancy",
+            "type": "motion"
+          },
+          {
+            "template": "sensor_small_swipe",
+            "grid": "temp", 
+            "entity": "sensor.gasteklo_temperature",
+            "type": "temp"
+          }
+        ]
+      },
+      "Keller": {
+        "grid_template_areas": "'washing licht1'\n'washing dryer'\n'kellerraum raeume'\n'kellerraum raeume'",
+        "cards": [
+          {
+            "template": "sensor_small_swipe",
+            "grid": "licht1",
+            "entity": "light.licht_waschkeller", 
+            "type": "light"
+          },
+          {
+            "template": "sensor_big_swipe",
+            "grid": "washing",
+            "entity": "sensor.waschmaschine_operation_state",
+            "type": "washing"
+          },
+          {
+            "template": "sensor_small_swipe",
+            "grid": "dryer",
+            "entity": "input_boolean.trockner_an",
+            "type": "dryer"
+          },
+          {
+            "template": "floor_swipe",
+            "grid": "raeume", 
+            "entity": "Keller"
+          },
+          {
+            "template": "sensor_small_swipe",
+            "grid": "kellerraum",
+            "entity": "light.keller_buro_licht",
+            "type": "light"
+          }
+        ]
+      },
+      "EG": {
+        "grid_template_areas": "'eingang raeume'\n'garbage raeume'\n'garbage esszimmertuer'\n'sauger dishwasher'",
+        "cards": [
+          {
+            "template": "sensor_small_swipe",
+            "grid": "eingang",
+            "entity": "lock.door_aqara_smart_lock_u200_lock",
+            "type": "door",
+            "closed_entity": "binary_sensor.tuer_eingang"
+          },
+          {
+            "template": "floor_swipe",
+            "grid": "raeume",
+            "entity": "EG"
+          },
+          {
+            "template": "floor_swipe", 
+            "grid": "garbage",
+            "entity": "Muell"
+          },
+          {
+            "template": "sensor_small_swipe",
+            "grid": "esszimmertuer",
+            "entity": "binary_sensor.fenster_terrasse",
+            "type": "window"
+          },
+          {
+            "template": "sensor_small_swipe",
+            "grid": "sauger",
+            "entity": "vacuum.mova_e30_ultra",
+            "type": "hoover"
+          },
+          {
+            "template": "sensor_small_swipe",
+            "grid": "dishwasher",
+            "entity": "sensor.geschirrspuler_operation_state",
+            "type": "dishwasher"
+          }
+        ]
+      },
+      "Eltern": {
+        "grid_template_areas": "'eltern .'\n'eltern .'",
+        "cards": [
+          {
+            "template": "room_card",
+            "grid": "eltern",
+            "entity": "binary_sensor.combined_sensor_schlafzimmer"
+          }
+        ]
+      },
+      "OG": {
+        "grid_template_areas": "'kinder kinderbad'\n'kinder kinderbad'\n'kinderflur aupair'\n'kinderflur aupair'",
+        "cards": [
+          {
+            "template": "room_card",
+            "grid": "kinder", 
+            "entity": "binary_sensor.combined_sensor_kids"
+          },
+          {
+            "template": "room_card",
+            "grid": "kinderbad",
+            "entity": "binary_sensor.combined_sensor_kinderbad"
+          },
+          {
+            "template": "room_card",
+            "grid": "aupair",
+            "entity": "binary_sensor.combined_sensor_aupair"
+          },
+          {
+            "template": "room_card",
+            "grid": "kinderflur",
+            "entity": "binary_sensor.combined_sensor_flur"
+          }
+        ]
+      }
+    }
+  }
+}
