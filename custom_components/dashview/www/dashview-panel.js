@@ -1224,6 +1224,16 @@ class DashviewPanel extends HTMLElement {
         this.updateWeatherComponents(this.shadowRoot);
     }
     
+    // Handle admin popup specific initialization
+    if (popup.id === 'admin-popup') {
+        // Check if this admin popup has a weather tab and pre-load the configuration
+        const weatherTab = popup.querySelector('#weather-tab');
+        if (weatherTab) {
+            // Load weather entity configuration immediately so it's ready when user clicks the tab
+            setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
+        }
+    }
+    
     // Handle weather popup specific tabs
     const forecastTabs = popup.querySelectorAll('.forecast-tab');
     const forecastContent = popup.querySelector('#daily-forecast-content');
@@ -1253,15 +1263,14 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, lightsResponse] = await Promise.all([
       const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
         fetch('/local/dashview/config/covers.json'),
+        fetch('/local/dashview/config/scenes.json'),
         fetch('/local/dashview/config/lights.json')
-        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1325,6 +1334,8 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load lights configuration file - status: ${lightsResponse.status}`);
         this._lightsConfig = {};
+      }
+
       // Load scenes configuration separately as it's optional
       if (scenesResponse.ok) {
         this._scenesConfig = await scenesResponse.json();
@@ -1335,7 +1346,6 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load scenes configuration file - status: ${scenesResponse.status}`);
         this._scenesConfig = {};
-
       }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
