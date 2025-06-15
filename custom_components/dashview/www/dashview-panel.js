@@ -367,10 +367,26 @@ class DashviewPanel extends HTMLElement {
               
               /* Navigation Icons */
               .mdi-home::before { content: "🏠"; }
+              .mdi-home-floor-1::before { content: "🏠¹"; }
+              .mdi-home-roof::before { content: "🏠↗"; }
+              .mdi-stairs-down::before { content: "⬇️"; }
+              .mdi-tree::before { content: "🌳"; }
               .mdi-security::before { content: "🔒"; }
               .mdi-calendar::before { content: "📅"; }
               .mdi-music::before { content: "🎵"; }
               .mdi-cog::before { content: "⚙️"; }
+              
+              /* Room Icons */
+              .mdi-sofa::before { content: "🛋️"; }
+              .mdi-bed::before { content: "🛏️"; }
+              .mdi-silverware-fork-knife::before { content: "🍴"; }
+              .mdi-bathtub::before { content: "🛁"; }
+              .mdi-desk::before { content: "🗃️"; }
+              .mdi-baby::before { content: "👶"; }
+              .mdi-account::before { content: "👤"; }
+              .mdi-toilet::before { content: "🚽"; }
+              .mdi-stairs::before { content: "📐"; }
+              .mdi-garage::before { content: "🏠"; }
               
               /* Common UI Icons */
               .mdi-menu::before { content: "☰"; }
@@ -414,11 +430,30 @@ class DashviewPanel extends HTMLElement {
               .mdi-motion-sensor-off::before { content: "👁️"; }
               .mdi-alert-circle::before { content: "⚠️"; }
               
-              /* Ensure icons are properly sized */
+              /* Ensure icons are properly sized and colored */
               .nav-button .mdi::before,
-              .header-button .mdi::before {
+              .header-button .mdi::before,
+              .header-floor-button .mdi::before,
+              .header-room-button .mdi::before {
                 font-size: 1.2em;
                 vertical-align: middle;
+              }
+              
+              /* Ensure header icon colors are visible */
+              .header-floor-button .mdi::before {
+                color: var(--gray000);
+              }
+              
+              .header-room-button .mdi::before {
+                color: var(--black);
+              }
+              
+              /* Generic fallback for any mdi icon without specific definition */
+              .mdi:not([class*="::before"])::before,
+              .mdi-undefined::before,
+              .mdi-unknown::before {
+                content: "⚪";
+                color: inherit;
               }
             `;
           }
@@ -1830,6 +1865,19 @@ class DashviewPanel extends HTMLElement {
     `;
   }
 
+  // Helper method to process icon names consistently
+  processIconName(iconName) {
+    if (!iconName) return 'mdi-help-circle-outline';
+    
+    // Remove 'mdi:' prefix if present and ensure it starts with 'mdi-'
+    let processedIcon = iconName.replace('mdi:', '');
+    if (!processedIcon.startsWith('mdi-')) {
+      processedIcon = 'mdi-' + processedIcon;
+    }
+    
+    return processedIcon;
+  }
+
   // Generate HTML for header buttons
   generateHeaderButtonsHTML() {
     if (!this._hass || !this._floorsConfig || !this._roomsConfig) {
@@ -1854,7 +1902,7 @@ class DashviewPanel extends HTMLElement {
         // Add floor button
         buttonsHTML += `
           <button class="header-floor-button" data-floor="${floorName}">
-            <i class="mdi ${floorIcon.replace('mdi:', '')}"></i>
+            <i class="mdi ${this.processIconName(floorIcon)}"></i>
           </button>
         `;
 
@@ -1869,7 +1917,7 @@ class DashviewPanel extends HTMLElement {
             
             buttonsHTML += `
               <button class="header-room-button" data-sensor="${sensor}" data-navigation="${roomType}">
-                <i class="mdi ${roomIcon.replace('mdi:', '')}"></i>
+                <i class="mdi ${this.processIconName(roomIcon)}"></i>
               </button>
             `;
           }
