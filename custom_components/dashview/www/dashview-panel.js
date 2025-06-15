@@ -339,6 +339,75 @@ class DashviewPanel extends HTMLElement {
               .popup { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
               .popup-content { background: white; margin: 20px; padding: 20px; border-radius: 8px; }
             `;
+          } else if (stylesheet.name === 'Material Design Icons') {
+            // Provide fallback icons using Unicode symbols and CSS pseudo-elements
+            fallbackStyle.textContent = `
+              /* Material Design Icons Fallback - Using Unicode symbols */
+              .mdi::before {
+                display: inline-block;
+                font-style: normal;
+                font-variant: normal;
+                text-rendering: auto;
+                line-height: 1;
+                font-family: system-ui, -apple-system, sans-serif;
+              }
+              
+              /* Navigation Icons */
+              .mdi-home::before { content: "🏠"; }
+              .mdi-security::before { content: "🔒"; }
+              .mdi-calendar::before { content: "📅"; }
+              .mdi-music::before { content: "🎵"; }
+              .mdi-cog::before { content: "⚙️"; }
+              
+              /* Common UI Icons */
+              .mdi-menu::before { content: "☰"; }
+              .mdi-close::before { content: "✕"; }
+              .mdi-lightbulb::before { content: "💡"; }
+              .mdi-help-circle-outline::before { content: "❓"; }
+              .mdi-help-circle::before { content: "❓"; }
+              
+              /* Media Control Icons */
+              .mdi-play::before { content: "▶️"; }
+              .mdi-pause::before { content: "⏸️"; }
+              .mdi-skip-backward::before { content: "⏮️"; }
+              .mdi-skip-forward::before { content: "⏭️"; }
+              
+              /* Device Icons */  
+              .mdi-devices::before { content: "📱"; }
+              .mdi-robot-mower::before { content: "🤖"; }
+              .mdi-robot-vacuum::before { content: "🤖"; }
+              .mdi-dishwasher::before { content: "🍽️"; }
+              .mdi-washing-machine::before { content: "👕"; }
+              .mdi-tumble-dryer::before { content: "🌀"; }
+              .mdi-tumble-dryer-off::before { content: "⭕"; }
+              .mdi-printer::before { content: "🖨️"; }
+              .mdi-printer-alert::before { content: "🖨️⚠️"; }
+              .mdi-printer-pos::before { content: "🖨️"; }
+              .mdi-fridge::before { content: "❄️"; }
+              .mdi-thermometer::before { content: "🌡️"; }
+              
+              /* Door and Window Icons */
+              .mdi-door::before { content: "🚪"; }
+              .mdi-door-open::before { content: "🚪"; }
+              .mdi-door-closed::before { content: "🚪"; }
+              .mdi-door-closed-lock::before { content: "🔒"; }
+              .mdi-door-sliding::before { content: "🚪"; }
+              .mdi-door-sliding-open::before { content: "🚪"; }
+              .mdi-window-open::before { content: "🪟"; }
+              .mdi-window-closed::before { content: "🪟"; }
+              
+              /* Sensor Icons */
+              .mdi-motion-sensor::before { content: "👁️"; }
+              .mdi-motion-sensor-off::before { content: "👁️"; }
+              .mdi-alert-circle::before { content: "⚠️"; }
+              
+              /* Ensure icons are properly sized */
+              .nav-button .mdi::before,
+              .header-button .mdi::before {
+                font-size: 1.2em;
+                vertical-align: middle;
+              }
+            `;
           }
           
           shadow.insertBefore(fallbackStyle, shadow.firstChild);
