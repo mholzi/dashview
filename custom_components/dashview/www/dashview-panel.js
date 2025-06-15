@@ -1153,7 +1153,8 @@ class DashviewPanel extends HTMLElement {
       });
 
       // Get current configured weather entity
-      const configuredSensor = this._hass.states[`sensor.dashview_configured_weather`];
+      const configuredSensor = this._hass.states[`sensor.dashview_configured_weather_entity`] || 
+                              this._hass.states[`sensor.dashview_configured_weather`];
       if (configuredSensor && configuredSensor.state) {
         weatherSelector.value = configuredSensor.state;
       } else {
@@ -1171,6 +1172,7 @@ class DashviewPanel extends HTMLElement {
   async saveWeatherEntity() {
     const shadow = this.shadowRoot;
     const weatherSelector = shadow.getElementById('weather-entity-selector');
+    const saveButton = shadow.getElementById('save-weather-entity');
     
     if (!weatherSelector || !this._hass) return;
 
@@ -1180,20 +1182,50 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
+    // Validate the selected entity exists
+    if (!this._hass.states[selectedEntity]) {
+      alert(`Weather entity "${selectedEntity}" not found in Home Assistant`);
+      return;
+    }
+
+    const originalButtonText = saveButton.textContent;
+    saveButton.textContent = 'Saving...';
+    saveButton.disabled = true;
+
     try {
       // Call the service to set the weather entity
       await this._hass.callService('dashview', 'set_weather_entity', {
         entity_id: selectedEntity
       });
       
-      // Show success message (could be improved with a proper status display)
-      alert(`Weather entity saved: ${selectedEntity}`);
+      // Show success feedback
+      saveButton.textContent = 'Saved!';
+      saveButton.style.background = 'var(--green)';
+      
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        saveButton.textContent = originalButtonText;
+        saveButton.disabled = false;
+        saveButton.style.background = '';
+      }, 2000);
       
       // Update the weather components with the new entity
-      this.updateWeatherComponents(shadow);
+      setTimeout(() => {
+        this.updateWeatherComponents(shadow);
+      }, 500);
       
     } catch (error) {
       console.error('Error saving weather entity:', error);
+      saveButton.textContent = 'Error!';
+      saveButton.style.background = 'var(--red)';
+      
+      // Reset button after 3 seconds
+      setTimeout(() => {
+        saveButton.textContent = originalButtonText;
+        saveButton.disabled = false;
+        saveButton.style.background = '';
+      }, 3000);
+      
       alert(`Error saving weather entity: ${error.message}`);
     }
   }
@@ -1202,7 +1234,8 @@ class DashviewPanel extends HTMLElement {
   getCurrentWeatherEntity() {
     if (!this._hass) return 'weather.forecast_home'; // fallback
 
-    const configuredSensor = this._hass.states[`sensor.dashview_configured_weather`];
+    const configuredSensor = this._hass.states[`sensor.dashview_configured_weather_entity`] || 
+                            this._hass.states[`sensor.dashview_configured_weather`];
     if (configuredSensor && configuredSensor.state) {
       return configuredSensor.state;
     }
