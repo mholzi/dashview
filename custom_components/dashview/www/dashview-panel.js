@@ -1,34 +1,98 @@
 class DashviewPanel extends HTMLElement {
   constructor() {
     super();
+    console.log('[DashView] Initializing DashView panel...');
     this.attachShadow({ mode: 'open' });
     this._contentReady = false;
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
+    this._debugMode = localStorage.getItem('dashview_debug') === 'true';
+    this._loadingErrors = [];
+    this._version = '1.0.0-debug'; // Updated with debugging enhancements
+    
+    if (this._debugMode) {
+      console.log('[DashView] Debug mode enabled');
+    }
+    console.log(`[DashView] Version: ${this._version}`);
   }
 
   // When the HASS object is passed to the panel, store it and update content
   set hass(hass) {
+    if (this._debugMode) {
+      console.log('[DashView] HASS object received:', !!hass);
+    }
     this._hass = hass;
     if (this._contentReady) {
       this.updateElements();
+    } else if (this._debugMode) {
+      console.log('[DashView] Content not ready yet, deferring update');
     }
   }
 
   connectedCallback() {
+    console.log('[DashView] Component connected to DOM');
+    this._performStartupCheck();
     this.loadContent();
   }
 
+  // Perform basic startup integrity checks
+  _performStartupCheck() {
+    if (this._debugMode) {
+      console.log('[DashView] Performing startup checks...');
+    }
+    
+    // Check if shadow DOM is available
+    if (!this.shadowRoot) {
+      console.error('[DashView] Shadow DOM not available');
+      return false;
+    }
+    
+    // Check if we're in a proper browser environment
+    if (typeof fetch === 'undefined') {
+      console.error('[DashView] Fetch API not available');
+      return false;
+    }
+    
+    // Check if localStorage is available for debug settings
+    try {
+      localStorage.getItem('test');
+    } catch (e) {
+      console.warn('[DashView] localStorage not available, debug settings won\'t persist');
+    }
+    
+    if (this._debugMode) {
+      console.log('[DashView] Startup checks passed');
+    }
+    
+    return true;
+  }
+
   async loadContent() {
+    console.log('[DashView] Starting content load...');
     const shadow = this.shadowRoot;
-    if (!shadow) return;
+    if (!shadow) {
+      console.error('[DashView] No shadow root available');
+      return;
+    }
+
+    // Show loading indicator
+    shadow.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Loading DashView...</div>';
 
     try {
+      console.log('[DashView] Fetching CSS and HTML resources...');
       const [styleText, htmlText] = await Promise.all([
-        fetch('/local/dashview/style.css').then(res => res.ok ? res.text() : Promise.reject('Failed to load stylesheet')),
-        fetch('/local/dashview/index.html').then(res => res.ok ? res.text() : Promise.reject('Failed to load HTML content'))
+        fetch('/local/dashview/style.css').then(res => {
+          if (!res.ok) throw new Error(`Failed to load stylesheet: ${res.status} ${res.statusText}`);
+          return res.text();
+        }),
+        fetch('/local/dashview/index.html').then(res => {
+          if (!res.ok) throw new Error(`Failed to load HTML content: ${res.status} ${res.statusText}`);
+          return res.text();
+        })
       ]);
+
+      console.log('[DashView] Resources loaded successfully, building DOM...');
 
       const style = document.createElement('style');
       style.textContent = styleText;
@@ -38,84 +102,213 @@ class DashviewPanel extends HTMLElement {
       content.innerHTML = htmlText;
       shadow.appendChild(content);
       
+      console.log('[DashView] Loading templates...');
       await this.loadTemplates(shadow);
+      
+      console.log('[DashView] Initializing card...');
       this.initializeCard(shadow);
 
       this._contentReady = true;
+      console.log('[DashView] Content ready, updating elements...');
+      
       if (this._hass) {
         this.updateElements();
+      } else {
+        console.log('[DashView] HASS not available yet, waiting...');
       }
 
     } catch (error) {
-      shadow.innerHTML = `<div style="color: red; padding: 16px;">Error loading DashView panel: ${error.message}</div>`;
-      console.error('Error loading DashView panel:', error);
+      console.error('[DashView] Critical error loading panel:', error);
+      this._loadingErrors.push({
+        timestamp: new Date().toISOString(),
+        error: error.message,
+        stack: error.stack
+      });
+      
+      shadow.innerHTML = `
+        <div style="color: red; padding: 16px; font-family: monospace; border: 1px solid #ff0000; background: #fff5f5;">
+          <h3>🚫 DashView Loading Error</h3>
+          <p><strong>Error:</strong> ${error.message}</p>
+          <details style="margin-top: 10px;">
+            <summary>Debug Information</summary>
+            <pre style="margin-top: 10px; padding: 10px; background: #f5f5f5; overflow: auto;">${error.stack}</pre>
+            <p><strong>Troubleshooting:</strong></p>
+            <ul>
+              <li>Check browser console for additional errors</li>
+              <li>Verify files exist at /local/dashview/</li>
+              <li>Check Home Assistant logs</li>
+              <li>Enable debug mode: localStorage.setItem('dashview_debug', 'true')</li>
+            </ul>
+          </details>
+        </div>
+      `;
     }
   }
 
   // New method to find all data-template placeholders and load their HTML
   async loadTemplates(container) {
     const placeholders = container.querySelectorAll('[data-template]');
+    console.log(`[DashView] Loading ${placeholders.length} templates...`);
+    
+    if (placeholders.length === 0) {
+      console.warn('[DashView] No templates found to load');
+    }
+    
     for (const el of placeholders) {
       const templateName = el.dataset.template;
       try {
+        if (this._debugMode) {
+          console.log(`[DashView] Loading template: ${templateName}`);
+        }
         const response = await fetch(`/local/dashview/templates/${templateName}.html`);
         if (response.ok) {
           el.innerHTML = await response.text();
+          if (this._debugMode) {
+            console.log(`[DashView] Template ${templateName} loaded successfully`);
+          }
         } else {
-          el.innerHTML = `Failed to load template: ${templateName}`;
+          const errorMsg = `Failed to load template: ${templateName} (${response.status})`;
+          console.error(`[DashView] ${errorMsg}`);
+          el.innerHTML = `<div style="color: orange; padding: 8px; border: 1px dashed orange; background: #fff8e1;">${errorMsg}</div>`;
         }
       } catch (err) {
-        el.innerHTML = `Error loading template: ${templateName}`;
+        const errorMsg = `Error loading template: ${templateName} - ${err.message}`;
+        console.error(`[DashView] ${errorMsg}`, err);
+        el.innerHTML = `<div style="color: red; padding: 8px; border: 1px solid red; background: #ffebee;">${errorMsg}</div>`;
       }
     }
+    console.log('[DashView] All templates processed');
   }
 
   // New method to update elements based on hass state
   updateElements() {
-    if (!this._hass) return;
+    if (!this._hass) {
+      console.log('[DashView] No HASS object available for updateElements');
+      return;
+    }
+    
+    if (this._debugMode) {
+      console.log('[DashView] Updating elements with HASS state...');
+    }
+    
     const shadow = this.shadowRoot;
-
-    // Update Weather Button
-    const weatherEntityId = this.getCurrentWeatherEntity();
-    const weatherState = this._hass.states[weatherEntityId];
-    if (weatherState) {
-        const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
-        shadow.querySelector('.weather-button .name').textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C';
-        shadow.querySelector('.weather-button .label').innerHTML = weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C';
-        shadow.querySelector('.weather-button .icon-container').innerHTML = `<img src="/local/weather_icons/${weatherState.state}.svg" width="40" height="40" alt="${weatherState.state}">`;
+    if (!shadow) {
+      console.error('[DashView] No shadow root available for updateElements');
+      return;
     }
 
-    // Update Person Button
-    const personState = this._hass.states['person.markus'];
-    if (personState) {
-        const img_src = personState.attributes.entity_picture || (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
-        shadow.querySelector('.person-button .image-container').innerHTML = `<img src="${img_src}" width="45" height="45">`;
+    try {
+      // Update Weather Button
+      this._safeUpdate('weather-button', () => {
+        const weatherEntityId = this.getCurrentWeatherEntity();
+        const weatherState = this._hass.states[weatherEntityId];
+        if (weatherState) {
+            const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
+            this._safeQueryUpdate(shadow, '.weather-button .name', el => el.textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C');
+            this._safeQueryUpdate(shadow, '.weather-button .label', el => el.innerHTML = weatherState.attributes && weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C');
+            this._safeQueryUpdate(shadow, '.weather-button .icon-container', el => el.innerHTML = `<img src="/local/weather_icons/${weatherState.state}.svg" width="40" height="40" alt="${weatherState.state}">`);
+        } else if (this._debugMode) {
+          console.warn(`[DashView] Weather entity not found: ${weatherEntityId}`);
+        }
+      });
+
+      // Update Person Button
+      this._safeUpdate('person-button', () => {
+        const personState = this._hass.states['person.markus'];
+        if (personState) {
+            const img_src = personState.attributes && personState.attributes.entity_picture ? 
+              personState.attributes.entity_picture : 
+              (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
+            this._safeQueryUpdate(shadow, '.person-button .image-container', el => el.innerHTML = `<img src="${img_src}" width="45" height="45">`);
+        } else if (this._debugMode) {
+          console.warn('[DashView] Person entity not found: person.markus');
+        }
+      });
+
+      // Update Train Departure Cards
+      this._safeUpdate('train-departure-cards', () => this.updateTrainDepartureCards(shadow));
+      
+      // Update Info Card
+      this._safeUpdate('info-card', () => this.updateInfoCard(shadow));
+      
+      // Update Weather Components
+      this._safeUpdate('weather-components', () => this.updateWeatherComponents(shadow));
+      
+      // Update Music Popup
+      this._safeUpdate('music-popup', () => this.updateMusicPopup(shadow));
+      
+      // Update Music Player States
+      this._safeUpdate('music-player-states', () => this.updateMusicPlayerStates(shadow));
+
+      // Update Room Media Players
+      this._safeUpdate('room-media-players', () => this.updateRoomMediaPlayers(shadow));
+
+      // Update Pollen Card
+      this._safeUpdate('pollen-card', () => this.updatePollenCard(shadow));
+
+      // Update Header Buttons
+      this._safeUpdate('header-buttons', () => this.updateHeaderButtons(shadow));
+
+      if (this._debugMode) {
+        console.log('[DashView] Elements update completed successfully');
+      }
+
+    } catch (error) {
+      console.error('[DashView] Critical error in updateElements:', error);
+      this._showErrorOverlay(shadow, 'Update Error', error.message);
     }
+  }
 
-    // Update Train Departure Cards
-    this.updateTrainDepartureCards(shadow);
+  // Helper method to safely execute update functions with error handling
+  _safeUpdate(componentName, updateFn) {
+    try {
+      updateFn();
+    } catch (error) {
+      console.error(`[DashView] Error updating ${componentName}:`, error);
+      if (this._debugMode) {
+        console.error(`[DashView] Stack trace for ${componentName}:`, error.stack);
+      }
+    }
+  }
+
+  // Helper method to safely query and update DOM elements
+  _safeQueryUpdate(container, selector, updateFn) {
+    try {
+      const element = container.querySelector(selector);
+      if (element) {
+        updateFn(element);
+      } else if (this._debugMode) {
+        console.warn(`[DashView] Element not found: ${selector}`);
+      }
+    } catch (error) {
+      console.error(`[DashView] Error updating element ${selector}:`, error);
+    }
+  }
+
+  // Helper method to show error overlay
+  _showErrorOverlay(shadow, title, message) {
+    const existingOverlay = shadow.querySelector('.dashview-error-overlay');
+    if (existingOverlay) {
+      existingOverlay.remove();
+    }
     
-    // Update Info Card
-    this.updateInfoCard(shadow);
+    const overlay = document.createElement('div');
+    overlay.className = 'dashview-error-overlay';
+    overlay.innerHTML = `
+      <div style="position: fixed; top: 10px; right: 10px; background: #ff5722; color: white; padding: 12px; border-radius: 4px; z-index: 10000; max-width: 300px; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+        <strong>${title}</strong>
+        <p style="margin: 8px 0 0 0; font-size: 12px;">${message}</p>
+        <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: 1px solid white; color: white; padding: 4px 8px; margin-top: 8px; cursor: pointer; border-radius: 2px;">Close</button>
+      </div>
+    `;
+    shadow.appendChild(overlay);
     
-    // Update Weather Components
-    this.updateWeatherComponents(shadow);
-    
-    // Update Music Popup
-    this.updateMusicPopup(shadow);
-    
-    // Update Music Player States
-    this.updateMusicPlayerStates(shadow);
-
-    // Update Room Media Players
-    this.updateRoomMediaPlayers(shadow);
-
-    // Update Pollen Card
-    this.updatePollenCard(shadow);
-
-    // Update Header Buttons
-    this.updateHeaderButtons(shadow);
-
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      if (overlay.parentElement) {
+        overlay.remove();
+      }
+    }, 10000);
   }
 
   // Method to check if it's a weekday
@@ -947,6 +1140,7 @@ class DashviewPanel extends HTMLElement {
 
   // Load configuration from JSON files
   async loadConfiguration() {
+    console.log('[DashView] Loading configuration files...');
     try {
       const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
@@ -957,8 +1151,13 @@ class DashviewPanel extends HTMLElement {
       if (floorsResponse.ok && roomsResponse.ok) {
         this._floorsConfig = await floorsResponse.json();
         this._roomsConfig = await roomsResponse.json();
+        console.log('[DashView] Floor and room configurations loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Floors config:', this._floorsConfig);
+          console.log('[DashView] Rooms config:', this._roomsConfig);
+        }
       } else {
-        console.warn('Could not load floor/room configuration files');
+        console.warn(`[DashView] Could not load floor/room configuration files - floors: ${floorsResponse.status}, rooms: ${roomsResponse.status}`);
         this._floorsConfig = {};
         this._roomsConfig = {};
       }
@@ -966,12 +1165,16 @@ class DashviewPanel extends HTMLElement {
       // Load music configuration separately as it's optional
       if (musicResponse.ok) {
         this._musicConfig = await musicResponse.json();
+        console.log('[DashView] Music configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Music config:', this._musicConfig);
+        }
       } else {
-        console.warn('Could not load music configuration file');
+        console.warn(`[DashView] Could not load music configuration file - status: ${musicResponse.status}`);
         this._musicConfig = {};
       }
     } catch (error) {
-      console.error('Error loading configuration:', error);
+      console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
       this._musicConfig = {};
@@ -1468,10 +1671,6 @@ class DashviewPanel extends HTMLElement {
     });
   }
 
-    // Also update room-specific media players
-    this.updateRoomMediaPlayerStates(shadow);
-  }
-
   // Update room media players in individual room popups
   updateRoomMediaPlayers(shadow) {
     if (!this._musicConfig || !this._musicConfig.media_players) {
@@ -1849,6 +2048,119 @@ class DashviewPanel extends HTMLElement {
     return weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
 
   }
+
+  // Debug method to get component status - can be called from browser console
+  getDebugStatus() {
+    return {
+      version: this._version,
+      contentReady: this._contentReady,
+      hasHass: !!this._hass,
+      hassEntitiesCount: this._hass ? Object.keys(this._hass.states).length : 0,
+      floorsConfigLoaded: Object.keys(this._floorsConfig).length > 0,
+      roomsConfigLoaded: Object.keys(this._roomsConfig).length > 0,
+      musicConfigLoaded: Object.keys(this._musicConfig).length > 0,
+      debugMode: this._debugMode,
+      loadingErrors: this._loadingErrors,
+      shadowRoot: !!this.shadowRoot,
+      connected: this.isConnected,
+      weatherEntity: this.getCurrentWeatherEntity(),
+      availableWeatherEntities: this._hass ? Object.keys(this._hass.states).filter(id => id.startsWith('weather.')) : []
+    };
+  }
+
+  // Debug method to enable/disable debug mode
+  setDebugMode(enabled) {
+    this._debugMode = enabled;
+    localStorage.setItem('dashview_debug', enabled.toString());
+    console.log(`[DashView] Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
 }
 
 customElements.define('dashview-panel', DashviewPanel);
+
+// Global helper functions for debugging DashView
+window.DashViewDebug = {
+  // Enable debug mode
+  enableDebug() {
+    localStorage.setItem('dashview_debug', 'true');
+    console.log('[DashView] Debug mode enabled. Reload the page to see debug logs.');
+  },
+  
+  // Disable debug mode
+  disableDebug() {
+    localStorage.setItem('dashview_debug', 'false');
+    console.log('[DashView] Debug mode disabled.');
+  },
+  
+  // Get status of all DashView panels on the page
+  getStatus() {
+    const panels = document.querySelectorAll('dashview-panel');
+    return Array.from(panels).map((panel, index) => ({
+      panelIndex: index,
+      status: panel.getDebugStatus ? panel.getDebugStatus() : 'Debug methods not available'
+    }));
+  },
+  
+  // Force reload all DashView panels
+  reload() {
+    const panels = document.querySelectorAll('dashview-panel');
+    panels.forEach(panel => {
+      if (panel.loadContent) {
+        console.log('[DashView] Reloading panel...');
+        panel.loadContent();
+      }
+    });
+  },
+  
+  // Check for common issues
+  diagnose() {
+    console.log('[DashView] Running diagnostics...');
+    const issues = [];
+    
+    // Check if panels exist
+    const panels = document.querySelectorAll('dashview-panel');
+    if (panels.length === 0) {
+      issues.push('No DashView panels found on page');
+    }
+    
+    // Check if files are accessible
+    const filesToCheck = [
+      '/local/dashview/style.css',
+      '/local/dashview/index.html',
+      '/local/dashview/config/floors.json',
+      '/local/dashview/config/rooms.json',
+      '/local/dashview/config/music.json'
+    ];
+    
+    Promise.all(filesToCheck.map(async (file) => {
+      try {
+        const response = await fetch(file);
+        console.log(`[DashView] ${file}: ${response.ok ? 'OK' : 'FAILED'} (${response.status})`);
+        return { file, ok: response.ok, status: response.status };
+      } catch (error) {
+        console.error(`[DashView] ${file}: ERROR`, error);
+        return { file, ok: false, error: error.message };
+      }
+    })).then(results => {
+      const failed = results.filter(r => !r.ok);
+      if (failed.length > 0) {
+        console.warn('[DashView] File access issues found:', failed);
+      } else {
+        console.log('[DashView] All files accessible');
+      }
+    });
+    
+    if (issues.length > 0) {
+      console.warn('[DashView] Issues found:', issues);
+    } else {
+      console.log('[DashView] No obvious issues detected');
+    }
+    
+    return { issues, panelCount: panels.length };
+  }
+};
+
+console.log('[DashView] Debug helpers available at window.DashViewDebug');
+console.log('[DashView] Use DashViewDebug.enableDebug() to enable debug logging');
+console.log('[DashView] Use DashViewDebug.diagnose() to check for common issues');
+console.log('[DashView] Use DashViewDebug.getStatus() to see component status');

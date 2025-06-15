@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DashView Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .debug-panel h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        
+        .status {
+            margin: 10px 0;
+        }
+        
+        .status.error {
+            color: #dc3545;
+        }
+        
+        .status.success {
+            color: #28a745;
+        }
+        
+        .status.warning {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 DashView Test Page</h1>
+        <p>This page helps test and debug the DashView panel component.</p>
+        
+        <div class="debug-panel">
+            <h3>🔧 Debug Controls</h3>
+            <button onclick="enableDebug()">Enable Debug Mode</button>
+            <button onclick="disableDebug()">Disable Debug Mode</button>
+            <button onclick="getStatus()">Get Status</button>
+            <button onclick="diagnose()">Run Diagnostics</button>
+            <button onclick="reloadPanel()">Reload Panel</button>
+            <button onclick="clearConsole()">Clear Console</button>
+        </div>
+        
+        <div class="debug-panel">
+            <h3>📊 Component Status</h3>
+            <div id="status-output">Click "Get Status" to see component information</div>
+        </div>
+        
+        <div class="debug-panel">
+            <h3>🎛️ DashView Panel</h3>
+            <div id="panel-container">
+                <dashview-panel id="test-panel"></dashview-panel>
+            </div>
+        </div>
+        
+        <div class="debug-panel">
+            <h3>📝 Console Output</h3>
+            <pre id="console-output">Console messages will appear here...</pre>
+        </div>
+        
+        <div class="debug-panel">
+            <h3>ℹ️ Instructions</h3>
+            <ul>
+                <li><strong>Enable Debug Mode:</strong> Shows detailed logging in browser console</li>
+                <li><strong>Get Status:</strong> Displays current component state and configuration</li>
+                <li><strong>Run Diagnostics:</strong> Checks for common issues and file accessibility</li>
+                <li><strong>Reload Panel:</strong> Forces the panel to reload its content</li>
+                <li>Open browser developer tools (F12) to see detailed console logs</li>
+                <li>Check Network tab for failed resource requests</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="dashview-panel.js"></script>
+    <script>
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        const consoleOutput = document.getElementById('console-output');
+        let consoleMessages = [];
+
+        function logToOutput(level, args) {
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleMessages.push(`[${timestamp}] ${level.toUpperCase()}: ${message}`);
+            if (consoleMessages.length > 50) {
+                consoleMessages = consoleMessages.slice(-50);
+            }
+            consoleOutput.textContent = consoleMessages.join('\n');
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logToOutput('log', args);
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logToOutput('error', args);
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            logToOutput('warn', args);
+        };
+
+        // Debug functions
+        function enableDebug() {
+            if (window.DashViewDebug) {
+                window.DashViewDebug.enableDebug();
+                showStatus('Debug mode enabled', 'success');
+            } else {
+                showStatus('DashViewDebug not available', 'error');
+            }
+        }
+
+        function disableDebug() {
+            if (window.DashViewDebug) {
+                window.DashViewDebug.disableDebug();
+                showStatus('Debug mode disabled', 'success');
+            } else {
+                showStatus('DashViewDebug not available', 'error');
+            }
+        }
+
+        function getStatus() {
+            if (window.DashViewDebug) {
+                const status = window.DashViewDebug.getStatus();
+                document.getElementById('status-output').innerHTML = 
+                    '<pre>' + JSON.stringify(status, null, 2) + '</pre>';
+                showStatus('Status retrieved', 'success');
+            } else {
+                showStatus('DashViewDebug not available', 'error');
+            }
+        }
+
+        function diagnose() {
+            if (window.DashViewDebug) {
+                const result = window.DashViewDebug.diagnose();
+                showStatus(`Diagnostics completed. Found ${result.issues.length} issues.`, 
+                          result.issues.length > 0 ? 'warning' : 'success');
+            } else {
+                showStatus('DashViewDebug not available', 'error');
+            }
+        }
+
+        function reloadPanel() {
+            if (window.DashViewDebug) {
+                window.DashViewDebug.reload();
+                showStatus('Panel reload initiated', 'success');
+            } else {
+                showStatus('DashViewDebug not available', 'error');
+            }
+        }
+
+        function clearConsole() {
+            consoleMessages = [];
+            consoleOutput.textContent = 'Console cleared...';
+            showStatus('Console cleared', 'success');
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.createElement('div');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+            document.body.appendChild(statusEl);
+            
+            setTimeout(() => {
+                statusEl.remove();
+            }, 3000);
+        }
+
+        // Initialize
+        console.log('DashView test page loaded');
+        
+        // Create a mock HASS object for testing
+        window.mockHass = {
+            states: {
+                'weather.forecast_home': {
+                    state: 'sunny',
+                    attributes: {
+                        temperature: 22.5,
+                        forecast: [{ temperature: 23 }]
+                    }
+                },
+                'person.markus': {
+                    state: 'home',
+                    attributes: {
+                        entity_picture: null
+                    }
+                }
+            }
+        };
+
+        // Set mock HASS object to panel after a delay
+        setTimeout(() => {
+            const panel = document.getElementById('test-panel');
+            if (panel) {
+                panel.hass = window.mockHass;
+                console.log('Mock HASS object set to panel');
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
