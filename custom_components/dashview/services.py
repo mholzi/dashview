@@ -45,11 +45,21 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         else:
             _LOGGER.warning("Invalid config received for set_covers_config: %s", config)
 
+    async def set_scenes_config(service_call: ServiceCall) -> None:
+        """Handle the service call to set the scenes configuration."""
+        config = service_call.data.get("config")
+        _LOGGER.info("Service called to set scenes configuration")
+        if config and isinstance(config, dict):
+            await store.async_set_scenes_config(config)
+        else:
+            _LOGGER.warning("Invalid config received for set_scenes_config: %s", config)
+
     # Register services
     hass.services.async_register(DOMAIN, "refresh_dashboard", refresh_dashboard)
     hass.services.async_register(DOMAIN, "set_weather_entity", set_weather_entity)
     hass.services.async_register(DOMAIN, "set_temperature_config", set_temperature_config)
     hass.services.async_register(DOMAIN, "set_covers_config", set_covers_config)
+    hass.services.async_register(DOMAIN, "set_scenes_config", set_scenes_config)
     _LOGGER.info("DashView services registered")
 
 
@@ -59,4 +69,5 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, "set_weather_entity")
     hass.services.async_remove(DOMAIN, "set_temperature_config")
     hass.services.async_remove(DOMAIN, "set_covers_config")
+    hass.services.async_remove(DOMAIN, "set_scenes_config")
     _LOGGER.info("DashView services unloaded")
