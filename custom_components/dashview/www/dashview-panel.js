@@ -6,6 +6,7 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
+    this._roomNotificationsConfig = {};
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -115,6 +116,9 @@ class DashviewPanel extends HTMLElement {
 
     // Update Header Buttons
     this.updateHeaderButtons(shadow);
+
+    // Update Room Notifications
+    this.updateRoomNotifications(shadow);
 
   }
 
@@ -640,6 +644,11 @@ class DashviewPanel extends HTMLElement {
             this.saveMusicConfiguration();
         }
 
+        const saveRoomNotificationsBtn = e.target.closest('#save-room-notifications-config');
+        if (saveRoomNotificationsBtn) {
+            this.saveRoomNotificationsConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -948,10 +957,11 @@ class DashviewPanel extends HTMLElement {
   // Load configuration from JSON files
   async loadConfiguration() {
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, roomNotificationsResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/room_notifications.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -970,11 +980,20 @@ class DashviewPanel extends HTMLElement {
         console.warn('Could not load music configuration file');
         this._musicConfig = {};
       }
+
+      // Load room notifications configuration separately as it's optional
+      if (roomNotificationsResponse.ok) {
+        this._roomNotificationsConfig = await roomNotificationsResponse.json();
+      } else {
+        console.warn('Could not load room notifications configuration file');
+        this._roomNotificationsConfig = {};
+      }
     } catch (error) {
       console.error('Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
       this._musicConfig = {};
+      this._roomNotificationsConfig = {};
     }
   }
 
@@ -1052,16 +1071,18 @@ class DashviewPanel extends HTMLElement {
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
     const musicTextarea = shadow.getElementById('music-config');
+    const roomNotificationsTextarea = shadow.getElementById('room-notifications-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, roomNotificationsResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/room_notifications.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1075,9 +1096,15 @@ class DashviewPanel extends HTMLElement {
         if (musicResponse.ok && musicTextarea) {
           const musicConfig = await musicResponse.json();
           musicTextarea.value = JSON.stringify(musicConfig, null, 2);
+        }
+
+        // Load room notifications configuration if available
+        if (roomNotificationsResponse.ok && roomNotificationsTextarea) {
+          const roomNotificationsConfig = await roomNotificationsResponse.json();
+          roomNotificationsTextarea.value = JSON.stringify(roomNotificationsConfig, null, 2);
           statusElement.textContent = '✓ All configurations loaded successfully';
         } else {
-          statusElement.textContent = '✓ Floor and room configurations loaded successfully (music config optional)';
+          statusElement.textContent = '✓ Core configurations loaded successfully (optional configs may be missing)';
         }
         statusElement.style.background = 'var(--green)';
       } else {
@@ -1180,6 +1207,37 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving music config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save room notifications configuration
+  async saveRoomNotificationsConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const roomNotificationsTextarea = shadow.getElementById('room-notifications-config');
+
+    if (!statusElement || !roomNotificationsTextarea) return;
+
+    try {
+      const configData = JSON.parse(roomNotificationsTextarea.value);
+      
+      // Validate structure
+      if (!configData.global_thresholds || !configData.room_conditions) {
+        throw new Error('Invalid room notifications configuration structure. Must include global_thresholds and room_conditions.');
+      }
+
+      statusElement.textContent = '✓ Room notifications configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for use in room notifications
+      this._roomNotificationsConfig = configData;
+      
+      // Update all room notifications with the new configuration
+      this.updateRoomNotifications(shadow);
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving room notifications config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
   }
@@ -1466,10 +1524,6 @@ class DashviewPanel extends HTMLElement {
         }
       }
     });
-  }
-
-    // Also update room-specific media players
-    this.updateRoomMediaPlayerStates(shadow);
   }
 
   // Update room media players in individual room popups
@@ -1848,6 +1902,103 @@ class DashviewPanel extends HTMLElement {
     
     return weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
 
+  }
+
+  // Update room notifications based on sensor states and thresholds
+  updateRoomNotifications(shadow) {
+    if (!this._hass || !this._roomNotificationsConfig || 
+        !this._roomNotificationsConfig.room_conditions) {
+      // Load configuration if not already loaded
+      if (!this._roomNotificationsConfig || Object.keys(this._roomNotificationsConfig).length === 0) {
+        this.loadConfiguration().then(() => {
+          this.updateRoomNotifications(shadow);
+        });
+      }
+      return;
+    }
+
+    const { global_thresholds, room_conditions } = this._roomNotificationsConfig;
+
+    // Iterate through each room popup and update its notifications
+    Object.keys(room_conditions).forEach(roomName => {
+      const roomConfig = room_conditions[roomName];
+      const popupId = this.getRoomPopupId(roomName);
+      const roomPopup = shadow.getElementById(popupId);
+      
+      if (roomPopup) {
+        const notificationDiv = roomPopup.querySelector('.room-notification');
+        if (notificationDiv) {
+          const notificationHTML = this.generateRoomNotificationHTML(roomName, roomConfig, global_thresholds);
+          notificationDiv.innerHTML = notificationHTML;
+        }
+      }
+    });
+  }
+
+  // Map room names to popup IDs
+  getRoomPopupId(roomName) {
+    const roomMappings = {
+      'Wohnzimmer': 'wohnzimmer-popup',
+      'Büro': 'buero-popup', 
+      'Eltern': 'elternbereich-popup',
+      'Kellerraum': 'keller-popup',
+      'Sauna': 'sauna-popup',
+      'Kinderbad': 'kinderbad-popup',
+      'Partykeller': 'partykeller-popup'
+    };
+    return roomMappings[roomName] || `${roomName.toLowerCase()}-popup`;
+  }
+
+  // Generate HTML for room notification based on sensor states
+  generateRoomNotificationHTML(roomName, roomConfig, globalThresholds) {
+    if (!this._hass) return '';
+
+    const tempSensor = this._hass.states[roomConfig.temp_sensor];
+    const humSensor = this._hass.states[roomConfig.hum_sensor];
+    
+    if (!tempSensor && !humSensor) {
+      return '<div style="display: none;"></div>';
+    }
+
+    const temperature = tempSensor ? parseFloat(tempSensor.state) : null;
+    const humidity = humSensor ? parseFloat(humSensor.state) : null;
+    const tempThreshold = roomConfig.temp_above || globalThresholds.temp_above_default;
+    const humThreshold = roomConfig.hum_above || globalThresholds.hum_above_default;
+
+    const tempExceeded = temperature !== null && temperature > tempThreshold;
+    const humExceeded = humidity !== null && humidity > humThreshold;
+    
+    if (!tempExceeded && !humExceeded) {
+      return '<div style="display: none;"></div>';
+    }
+
+    let displayText = '';
+    if (tempExceeded) {
+      displayText += `Temperatur: ${temperature}°C`;
+    }
+    if (humExceeded) {
+      if (displayText) displayText += ' - ';
+      displayText += `Luftfeuchtigkeit: ${humidity}%`;
+    }
+
+    return `
+      <div class="notification-card" style="
+        display: flex;
+        align-items: center;
+        background: var(--warning-color, #ff9800);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 8px 0;
+        color: white;
+        font-weight: 500;
+      ">
+        <div style="font-size: 24px; margin-right: 12px;">⚠️</div>
+        <div>
+          <div style="font-size: 16px; margin-bottom: 4px;">Bitte Raum lüften</div>
+          <div style="font-size: 12px; opacity: 0.9;">${displayText}</div>
+        </div>
+      </div>
+    `;
   }
 }
 

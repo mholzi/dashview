@@ -1,0 +1,36 @@
+{
+  "global_thresholds": {
+    "temp_above_default": 23,
+    "hum_above_default": 60
+  },
+  "room_conditions": {
+    "Wohnzimmer": {
+      "temp_sensor": "sensor.humidity_wohnzimmer_temperature",
+      "hum_sensor": "sensor.humidity_wohnzimmer_humidity"
+    },
+    "Büro": {
+      "temp_sensor": "sensor.humidity_buro_temperature",
+      "hum_sensor": "sensor.humidity_buro_humidity"
+    },
+    "Eltern": {
+      "temp_sensor": "sensor.humidity_elternbad_temperature",
+      "hum_sensor": "sensor.humidity_elternbad_humidity"
+    },
+    "Kellerraum": {
+      "temp_sensor": "sensor.humidity_keller_buro_temperature",
+      "hum_sensor": "sensor.humidity_keller_buro_humidity"
+    },
+    "Sauna": {
+      "temp_sensor": "sensor.humidity_sauna_temperature",
+      "hum_sensor": "sensor.humidity_sauna_humidity"
+    },
+    "Kinderbad": {
+      "temp_sensor": "sensor.humidity_kinderbad_temperature",
+      "hum_sensor": "sensor.humidity_kinderbad_humidity"
+    },
+    "Partykeller": {
+      "temp_sensor": "sensor.partykeller_humidity_detector_temperature",
+      "hum_sensor": "sensor.partykeller_humidity_detector_humidity"
+    }
+  }
+}
