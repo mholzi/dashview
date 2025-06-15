@@ -94,8 +94,25 @@ class DashviewPanel extends HTMLElement {
 
       console.log('[DashView] Resources loaded successfully, building DOM...');
 
+      // Handle @import statements separately for Shadow DOM compatibility
+      const importRegex = /@import\s+url\(['"]?(.*?)['"]?\)\s*;?/g;
+      let processedCSS = styleText;
+      let match;
+      
+      // Extract and create link elements for @import statements
+      while ((match = importRegex.exec(styleText)) !== null) {
+        const importUrl = match[1];
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = importUrl;
+        shadow.appendChild(link);
+        
+        // Remove the @import statement from the CSS
+        processedCSS = processedCSS.replace(match[0], '');
+      }
+
       const style = document.createElement('style');
-      style.textContent = styleText;
+      style.textContent = processedCSS;
       shadow.appendChild(style);
 
       const content = document.createElement('div');
