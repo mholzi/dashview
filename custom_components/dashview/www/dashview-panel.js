@@ -102,6 +102,9 @@ class DashviewPanel extends HTMLElement {
     
     // Update Music Popup
     this.updateMusicPopup(shadow);
+    
+    // Update Music Player States
+    this.updateMusicPlayerStates(shadow);
 
     // Update Pollen Card
     this.updatePollenCard(shadow);
@@ -1056,9 +1059,10 @@ class DashviewPanel extends HTMLElement {
         if (musicResponse.ok && musicTextarea) {
           const musicConfig = await musicResponse.json();
           musicTextarea.value = JSON.stringify(musicConfig, null, 2);
+          statusElement.textContent = '✓ All configurations loaded successfully';
+        } else {
+          statusElement.textContent = '✓ Floor and room configurations loaded successfully (music config optional)';
         }
-
-        statusElement.textContent = '✓ Configuration loaded successfully';
         statusElement.style.background = 'var(--green)';
       } else {
         throw new Error('Could not load configuration files');
@@ -1152,6 +1156,10 @@ class DashviewPanel extends HTMLElement {
 
       // Store the configuration for use in the music popup
       this._musicConfig = configData;
+      
+      // Update the music popup with the new configuration
+      const shadow = this.shadowRoot;
+      this.updateMusicPopup(shadow);
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving music config: ' + error.message;
@@ -1272,12 +1280,18 @@ class DashviewPanel extends HTMLElement {
   updateMusicPopup(shadow) {
     const musicPopup = shadow.getElementById('music-popup');
     if (musicPopup) {
-      const contentDiv = musicPopup.querySelector('.popup-content div:last-child');
-      if (contentDiv) {
-        contentDiv.innerHTML = this.generateMusicPopupContent();
-        
-        // Add event listeners for music controls
-        this.setupMusicControls(musicPopup);
+      const placeholderDiv = musicPopup.querySelector('.placeholder');
+      if (placeholderDiv) {
+        // Load configuration if not already loaded
+        if (!this._musicConfig || Object.keys(this._musicConfig).length === 0) {
+          this.loadConfiguration().then(() => {
+            placeholderDiv.innerHTML = this.generateMusicPopupContent();
+            this.setupMusicControls(musicPopup);
+          });
+        } else {
+          placeholderDiv.innerHTML = this.generateMusicPopupContent();
+          this.setupMusicControls(musicPopup);
+        }
       }
     }
   }
@@ -1366,6 +1380,74 @@ class DashviewPanel extends HTMLElement {
           });
         }
       });
+    });
+  }
+
+  // Update music player states in the popup
+  updateMusicPlayerStates(shadow) {
+    if (!this._hass || !this._musicConfig) return;
+    
+    const musicPopup = shadow.getElementById('music-popup');
+    if (!musicPopup) return;
+
+    const { music_rooms, media_players } = this._musicConfig;
+    
+    music_rooms.forEach(room => {
+      const mediaPlayer = media_players[room.room];
+      if (mediaPlayer) {
+        // Update media info
+        const playerInfo = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity}"]`);
+        if (playerInfo && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const titleElement = playerInfo.querySelector('.music-title');
+          const artistElement = playerInfo.querySelector('.music-artist');
+          
+          if (titleElement) {
+            titleElement.textContent = state.attributes.media_title || 'No media playing';
+          }
+          if (artistElement) {
+            artistElement.textContent = state.attributes.media_artist || '';
+          }
+        }
+
+        // Update play/pause button
+        const playPauseBtn = musicPopup.querySelector(`[data-action="play_pause"][data-entity="${mediaPlayer.entity}"]`);
+        if (playPauseBtn && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const icon = playPauseBtn.querySelector('i');
+          if (icon) {
+            icon.className = state.state === 'playing' ? 'mdi mdi-pause' : 'mdi mdi-play';
+          }
+        }
+
+        // Update volume slider
+        const volumeSlider = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity}"].volume-slider`);
+        if (volumeSlider && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const volumeLevel = state.attributes.volume_level || 0;
+          volumeSlider.value = Math.round(volumeLevel * 100);
+          
+          const valueSpan = volumeSlider.parentElement.querySelector('.volume-value');
+          if (valueSpan) {
+            valueSpan.textContent = Math.round(volumeLevel * 100) + '%';
+          }
+        }
+
+        // Update second media player if exists
+        if (mediaPlayer.entity2) {
+          const volumeSlider2 = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity2}"].volume-slider`);
+          if (volumeSlider2 && this._hass.states[mediaPlayer.entity2]) {
+            const state = this._hass.states[mediaPlayer.entity2];
+            const volumeLevel = state.attributes.volume_level || 0;
+            volumeSlider2.value = Math.round(volumeLevel * 100);
+            
+            const valueSpan = volumeSlider2.parentElement.querySelector('.volume-value');
+            if (valueSpan) {
+              valueSpan.textContent = Math.round(volumeLevel * 100) + '%';
+            }
+          }
+        }
+      }
     });
   }
 }
