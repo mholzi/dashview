@@ -1,0 +1,94 @@
+{
+  "room_devices": {
+    "Wohnzimmer": [],
+    "Büro": [
+      {
+        "entity": "sensor.hp_laserjet_m110w_192_168_0_96_status",
+        "type": "printer"
+      },
+      {
+        "entity": "sensor.hp_laserjet_m109_m112_black_cartridge_hp_w1420a",
+        "type": "cartridge"
+      }
+    ],
+    "Küche": [
+      {
+        "entity": "switch.gefrierschrank_power",
+        "type": "freezer"
+      },
+      {
+        "entity": "sensor.geschirrspuler_operation_state",
+        "type": "dishwasher"
+      },
+      {
+        "entity": "vacuum.mova_e30_ultra",
+        "type": "hoover"
+      }
+    ],
+    "Eingang": [
+      {
+        "entity": "lock.door_aqara_smart_lock_u200_lock",
+        "type": "door"
+      }
+    ],
+    "Gästeklo": [
+      {
+        "entity": "sensor.gasteklo_temperature",
+        "type": "temp"
+      }
+    ],
+    "Flur": [],
+    "Kinderzimmer": [],
+    "Kinderbad": [],
+    "Aupair": [],
+    "Eltern": [],
+    "Partykeller": [],
+    "Heizungskeller": [],
+    "Kellerflur": [],
+    "Wäschekeller": [
+      {
+        "entity": "sensor.waschmaschine_operation_state",
+        "type": "washing"
+      },
+      {
+        "entity": "input_boolean.trockner_an",
+        "type": "dryer"
+      }
+    ],
+    "Serverraum": [],
+    "Kellerraum": [],
+    "Aussen": [
+      {
+        "entity": "vacuum.sileno",
+        "type": "mower"
+      }
+    ],
+    "Kinderflur": [],
+    "Sauna": [],
+    "Erdgeschoss": [
+      {
+        "entity": "lock.door_aqara_smart_lock_u200_lock",
+        "type": "door"
+      },
+      {
+        "entity": "vacuum.mova_e30_ultra",
+        "type": "hoover"
+      },
+      {
+        "entity": "sensor.geschirrspuler_operation_state",
+        "type": "dishwasher"
+      }
+    ],
+    "Kellergeschoss": [
+      {
+        "entity": "sensor.waschmaschine_operation_state",
+        "type": "washing"
+      },
+      {
+        "entity": "input_boolean.trockner_an",
+        "type": "dryer"
+      }
+    ]
+  },
+  "excluded_rooms": []
+}
