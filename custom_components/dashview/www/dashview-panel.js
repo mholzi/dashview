@@ -1340,9 +1340,11 @@ class DashviewPanel extends HTMLElement {
       
       // Convert room name to popup ID format
       const popupId = roomName.toLowerCase()
-        .replace('ä', 'a')
-        .replace('ö', 'o')
-        .replace('ü', 'u');
+        .replace(/ä/g, 'ae')
+        .replace(/ö/g, 'oe')
+        .replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
+        .replace(/\s+/g, '');
       
       const temperatureSection = shadow.getElementById(`${popupId}-temperature-section`);
       if (!temperatureSection) return;
