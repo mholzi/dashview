@@ -15,6 +15,7 @@ class DashviewPanel extends HTMLElement {
     this._windowWeatherConfig = {};
     this._otherDevicesConfig = {};
     this._floorTabsConfig = {};
+    this._headerUpdatesConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._activeMusicTab = null; // Track the currently active music tab
     this._volumeSliderInteraction = new Set(); // Track which volume sliders are being interacted with
@@ -487,6 +488,9 @@ class DashviewPanel extends HTMLElement {
 
       // Update Header Buttons
       this._safeUpdate('header-buttons', () => this.updateHeaderButtons(shadow));
+
+      // Update Header Updates
+      this._safeUpdate('header-updates', () => this.updateHeaderUpdates(shadow));
 
       // Update Floor Tabs
       this._safeUpdate('floor-tabs', () => this.updateFloorTabs(shadow));
@@ -1077,13 +1081,16 @@ class DashviewPanel extends HTMLElement {
             window.location.hash = '#bahn';
         }
 
-        // Handle info card section clicks
-        const infoSection = e.target.closest('.info-section');
-        if (infoSection) {
-            if (infoSection.classList.contains('motion-section') || infoSection.classList.contains('windows-section')) {
-                window.location.hash = '#security';
-            } else if (infoSection.classList.contains('dryer-section')) {
-                window.location.hash = '#waschkeller';
+        // Handle info card section clicks - only on clickable badges
+        const clickableBadge = e.target.closest('.info-badge.clickable');
+        if (clickableBadge) {
+            const infoSection = clickableBadge.closest('.info-section');
+            if (infoSection) {
+                if (infoSection.classList.contains('motion-section') || infoSection.classList.contains('windows-section')) {
+                    window.location.hash = '#security';
+                } else if (infoSection.classList.contains('dryer-section')) {
+                    window.location.hash = '#waschkeller';
+                }
             }
         }
 
@@ -1092,6 +1099,15 @@ class DashviewPanel extends HTMLElement {
         if (roomButton) {
             const navigationPath = roomButton.getAttribute('data-navigation');
             if (navigationPath && navigationPath !== '#unknown') {
+                window.location.hash = navigationPath;
+            }
+        }
+
+        // Handle header updates button clicks
+        const headerUpdateButton = e.target.closest('.header-update-button, .header-update-icon-button');
+        if (headerUpdateButton) {
+            const navigationPath = headerUpdateButton.getAttribute('data-navigation');
+            if (navigationPath) {
                 window.location.hash = navigationPath;
             }
         }
@@ -1153,9 +1169,13 @@ class DashviewPanel extends HTMLElement {
             this.saveFloorTabsConfiguration();
         }
 
+
         const saveAlarmBtn = e.target.closest('#save-alarm-config');
         if (saveAlarmBtn) {
             this.saveAlarmConfiguration();
+        const saveHeaderUpdatesBtn = e.target.closest('#save-header-updates-config');
+        if (saveHeaderUpdatesBtn) {
+            this.saveHeaderUpdatesConfiguration();
         }
 
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
@@ -1514,6 +1534,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'header-buttons-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
                 }
+                // Load admin configuration when header updates tab is activated
+                if (targetId === 'header-updates-tab') {
+                    setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
                 // Load weather entity configuration when weather tab is activated
                 if (targetId === 'weather-tab') {
                     setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
@@ -1593,8 +1617,8 @@ class DashviewPanel extends HTMLElement {
     console.log('[DashView] Loading configuration files...');
     try {
 
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
 
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse] = await Promise.all([
 
 
         fetch('/local/dashview/config/floors.json'),
@@ -1608,7 +1632,11 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/other_devices.json'),
         fetch('/local/dashview/config/floor_tabs.json'),
         fetch('/local/dashview/config/window_weather_notifications.json'),
+
         fetch('/local/dashview/config/alarm.json'),
+
+        fetch('/local/dashview/config/header_updates.json'),
+
 
       ]);
 
@@ -1737,6 +1765,7 @@ class DashviewPanel extends HTMLElement {
         this._floorTabsConfig = {};
       }
 
+
       // Load alarm configuration separately as it's optional
       if (alarmResponse.ok) {
         this._alarmConfig = await alarmResponse.json();
@@ -1747,6 +1776,17 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load alarm configuration file - status: ${alarmResponse.status}`);
         this._alarmConfig = {};
+
+      if (headerUpdatesResponse.ok) {
+        this._headerUpdatesConfig = await headerUpdatesResponse.json();
+        console.log('[DashView] Header updates configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Header updates config:', this._headerUpdatesConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load header updates configuration file - status: ${headerUpdatesResponse.status}`);
+        this._headerUpdatesConfig = {};
+
       }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
@@ -1761,6 +1801,7 @@ class DashviewPanel extends HTMLElement {
       this._windowWeatherConfig = {};
       this._otherDevicesConfig = {};
       this._floorTabsConfig = {};
+      this._headerUpdatesConfig = {};
     }
   }
 
@@ -1829,6 +1870,230 @@ class DashviewPanel extends HTMLElement {
     });
 
     return buttonsHTML || '<div class="no-activity">No active rooms</div>';
+  }
+
+  // Update header updates based on configuration
+  async updateHeaderUpdates(shadow) {
+    const container = shadow.querySelector('.placeholder');
+    
+    // Find the container with "Header Updates" text
+    const placeholders = shadow.querySelectorAll('.placeholder');
+    let headerUpdatesContainer = null;
+    
+    for (const placeholder of placeholders) {
+      if (placeholder.textContent.includes('Header Updates')) {
+        headerUpdatesContainer = placeholder;
+        break;
+      }
+    }
+    
+    if (!headerUpdatesContainer) return;
+
+    // If no configuration yet, hide the container
+    if (!this._headerUpdatesConfig || !this._headerUpdatesConfig.buttons) {
+      headerUpdatesContainer.style.display = 'none';
+      return;
+    }
+
+    // Generate header updates HTML
+    const buttonsHTML = this.generateHeaderUpdatesHTML();
+    
+    // If no buttons to show, hide the container
+    if (buttonsHTML.includes('No updates at this time')) {
+      headerUpdatesContainer.style.display = 'none';
+      return;
+    }
+    
+    // Show the container and update content
+    headerUpdatesContainer.style.display = 'block';
+    headerUpdatesContainer.innerHTML = `
+      <div class="header-updates-scroll">
+        ${buttonsHTML}
+      </div>
+    `;
+  }
+
+  // Generate HTML for header updates buttons
+  generateHeaderUpdatesHTML() {
+    if (!this._hass || !this._headerUpdatesConfig || !this._headerUpdatesConfig.buttons) {
+      return '<div class="loading-message">Loading...</div>';
+    }
+
+    let buttonsHTML = '';
+    
+    for (const button of this._headerUpdatesConfig.buttons) {
+      // Check if button should be displayed based on conditions
+      const conditionResult = this.shouldDisplayHeaderUpdateButton(button);
+      if (!conditionResult.show) {
+        continue;
+      }
+
+      const buttonClass = button.layout === 'icon' ? 'header-update-icon-button' : 'header-update-button';
+      let name = button.name || '';
+      
+      // Handle name templates
+      if (button.name_template && conditionResult.count !== undefined) {
+        name = button.name_template.replace('{{ count }}', conditionResult.count);
+      }
+      
+      const nameHtml = name ? `<span class="button-name" style="${this.getNameStyles(button)}">${name}</span>` : '';
+      const iconClass = button.icon ? button.icon.replace('mdi:', 'mdi-') : 'mdi-help-circle';
+      const navigationPath = button.tap_action?.navigation_path || '';
+      
+      buttonsHTML += `
+        <button class="${buttonClass}" 
+                data-button-id="${button.id}"
+                data-navigation="${navigationPath}"
+                style="${this.getButtonStyles(button)}">
+          <i class="mdi ${iconClass}" style="${this.getIconStyles(button)}"></i>
+          ${nameHtml}
+        </button>
+      `;
+    }
+
+    return buttonsHTML || '<div class="no-updates">No updates at this time</div>';
+  }
+
+  // Check if header update button should be displayed
+  shouldDisplayHeaderUpdateButton(button) {
+    if (!button.display_conditions || button.display_conditions.length === 0) {
+      return { show: true }; // No conditions means always show
+    }
+
+    for (const condition of button.display_conditions) {
+      const result = this.evaluateHeaderUpdateCondition(condition);
+      if (!result.show) {
+        return { show: false };
+      }
+      // If this condition provides a count, return it
+      if (result.count !== undefined) {
+        return { show: true, count: result.count };
+      }
+    }
+
+    return { show: true };
+  }
+
+  // Evaluate a single header update condition
+  evaluateHeaderUpdateCondition(condition) {
+    if (!this._hass || !condition) return { show: false };
+
+    switch (condition.type) {
+      case 'entity_state':
+        const entity = this._hass.states[condition.entity];
+        if (!entity) return { show: false };
+        
+        if (condition.state) {
+          return { show: entity.state === condition.state };
+        }
+        
+        if (condition.operator && condition.value !== undefined) {
+          const entityValue = parseFloat(entity.state);
+          const conditionValue = parseFloat(condition.value);
+          
+          switch (condition.operator) {
+            case '>': return { show: entityValue > conditionValue };
+            case '<': return { show: entityValue < conditionValue };
+            case '>=': return { show: entityValue >= conditionValue };
+            case '<=': return { show: entityValue <= conditionValue };
+            case '==': return { show: entityValue === conditionValue };
+            case '!=': return { show: entityValue !== conditionValue };
+            default: return { show: false };
+          }
+        }
+        break;
+        
+      case 'entity_count':
+        // Count entities matching a pattern
+        if (!condition.pattern || !condition.state) return { show: false };
+        
+        const matchingEntities = Object.values(this._hass.states).filter(entity => {
+          const entityId = entity.entity_id;
+          const regex = new RegExp(condition.pattern);
+          return regex.test(entityId) && entity.state === condition.state;
+        });
+        
+        const count = matchingEntities.length;
+        if (condition.operator && condition.value !== undefined) {
+          const conditionValue = parseInt(condition.value);
+          let show = false;
+          switch (condition.operator) {
+            case '>': show = count > conditionValue; break;
+            case '<': show = count < conditionValue; break;
+            case '>=': show = count >= conditionValue; break;
+            case '<=': show = count <= conditionValue; break;
+            case '==': show = count === conditionValue; break;
+            case '!=': show = count !== conditionValue; break;
+            default: show = false;
+          }
+          return { show, count };
+        }
+        break;
+        
+      case 'multiple_entity_or':
+        // Check if any of multiple entities match the condition
+        if (!condition.entities || !Array.isArray(condition.entities)) return { show: false };
+        
+        const hasMatch = condition.entities.some(entityId => {
+          const entity = this._hass.states[entityId];
+          return entity && entity.state === condition.state;
+        });
+        
+        return { show: hasMatch };
+        
+      default:
+        return { show: false };
+    }
+
+    return { show: false };
+  }
+
+  // Get button styles from configuration
+  getButtonStyles(button) {
+    if (!button.styles || !button.styles.button) return '';
+    
+    const styles = button.styles.button;
+    let styleString = '';
+    
+    // Convert CSS properties
+    Object.entries(styles).forEach(([key, value]) => {
+      const cssKey = key.replace(/_/g, '-');
+      styleString += `${cssKey}: ${value}; `;
+    });
+    
+    return styleString;
+  }
+
+  // Get icon styles from configuration
+  getIconStyles(button) {
+    if (!button.styles || !button.styles.icon) return '';
+    
+    const styles = button.styles.icon;
+    let styleString = '';
+    
+    // Convert CSS properties
+    Object.entries(styles).forEach(([key, value]) => {
+      const cssKey = key.replace(/_/g, '-');
+      styleString += `${cssKey}: ${value}; `;
+    });
+    
+    return styleString;
+  }
+
+  // Get name styles from configuration
+  getNameStyles(button) {
+    if (!button.styles || !button.styles.name) return '';
+    
+    const styles = button.styles.name;
+    let styleString = '';
+    
+    // Convert CSS properties
+    Object.entries(styles).forEach(([key, value]) => {
+      const cssKey = key.replace(/_/g, '-');
+      styleString += `${cssKey}: ${value}; `;
+    });
+    
+    return styleString;
   }
 
   // Update Floor Tabs
@@ -2043,14 +2308,18 @@ class DashviewPanel extends HTMLElement {
     const windowWeatherTextarea = shadow.getElementById('window-weather-config');
     const otherDevicesTextarea = shadow.getElementById('other-devices-config');
     const floorTabsTextarea = shadow.getElementById('floor-tabs-config');
+
     const alarmTextarea = shadow.getElementById('alarm-config');
+
+    const headerUpdatesTextarea = shadow.getElementById('header-updates-config');
+
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
 
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
@@ -2064,6 +2333,7 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/floor_tabs.json'),
         fetch('/local/dashview/config/alarm.json'),
         fetch('/local/dashview/config/window_weather_notifications.json'),
+        fetch('/local/dashview/config/header_updates.json'),
 
       ]);
 
@@ -2133,10 +2403,17 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
+
         // Load alarm configuration if available
         if (alarmResponse.ok && alarmTextarea) {
           const alarmConfig = await alarmResponse.json();
           alarmTextarea.value = JSON.stringify(alarmConfig, null, 2);
+
+        // Load header updates configuration if available
+        if (headerUpdatesResponse.ok && headerUpdatesTextarea) {
+          const headerUpdatesConfig = await headerUpdatesResponse.json();
+          headerUpdatesTextarea.value = JSON.stringify(headerUpdatesConfig, null, 2);
+
           configsLoaded++;
         }
 
@@ -2145,7 +2422,9 @@ class DashviewPanel extends HTMLElement {
         } else if (configsLoaded >= 3) {
           statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-          statusMessage += ' (music, temperature, covers, scenes, floor tabs, alarm, room notifications, window/weather notifications, and other devices configs optional)';
+
+          statusMessage += ' (music, temperature, covers, scenes, floor tabs, alarm, header updates, room notifications, window/weather notifications, and other devices configs optional)';
+
         }
 
         statusElement.textContent = statusMessage;
@@ -2622,6 +2901,7 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
+
   // Save alarm configuration
   async saveAlarmConfiguration() {
     const shadow = this.shadowRoot;
@@ -2664,6 +2944,52 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving alarm config: ' + error.message;
+
+  // Save header updates configuration
+  async saveHeaderUpdatesConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const headerUpdatesTextarea = shadow.getElementById('header-updates-config');
+
+    if (!statusElement || !headerUpdatesTextarea) return;
+
+    try {
+      const configData = JSON.parse(headerUpdatesTextarea.value);
+
+      // Validate configuration structure
+      if (!configData.buttons || !Array.isArray(configData.buttons)) {
+        throw new Error('Configuration must have a "buttons" array');
+      }
+
+      // Validate each button structure
+      for (const button of configData.buttons) {
+        if (!button.icon || !button.id) {
+          throw new Error('Each button must have icon and id properties');
+        }
+        
+        if (button.display_conditions && !Array.isArray(button.display_conditions)) {
+          throw new Error('display_conditions must be an array if specified');
+        }
+        
+        if (button.tap_action && (!button.tap_action.action || !button.tap_action.navigation_path)) {
+          throw new Error('tap_action must have action and navigation_path if specified');
+        }
+      }
+
+      statusElement.textContent = '✓ Header updates configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._headerUpdatesConfig = configData;
+      
+      // Update header updates display
+      if (this._hass) {
+        this.updateHeaderUpdates(shadow);
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving header updates config: ' + error.message;
+
       statusElement.style.background = 'var(--red)';
     }
   }

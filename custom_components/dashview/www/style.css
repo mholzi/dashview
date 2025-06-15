@@ -519,7 +519,8 @@ h3 {
     padding: 12px;
     border: 1px solid var(--gray200);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
     font-size: 1.2em;
     line-height: 1.1em;
@@ -534,18 +535,14 @@ h3 {
     justify-content: flex-start;
 }
 
-.info-section.motion-section,
-.info-section.windows-section,
-.info-section.dryer-section {
+.info-badge.clickable {
     cursor: pointer;
-    padding: 4px;
-    border-radius: 8px;
+    padding: 4px 6px;
+    border-radius: 12px;
     transition: background-color 0.2s;
 }
 
-.info-section.motion-section:hover,
-.info-section.windows-section:hover,
-.info-section.dryer-section:hover {
+.info-badge.clickable:hover {
     background-color: var(--highlight);
 }
 
@@ -590,49 +587,77 @@ h3 {
 /* --- Weather Components --- */
 .weather-forecast-card {
     background-color: var(--card-background-color);
-    border-radius: 20px;
+    border-radius: 12px;
     padding: 20px;
     margin-bottom: 12px;
 }
 
 .current-weather {
-    display: flex;
+    display: grid;
+    grid-template-areas: 
+        "temperature weather_icon"
+        "condition weather_icon" 
+        "feels_like weather_icon"
+        "details weather_icon";
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto auto;
     align-items: center;
-    gap: 20px;
+    gap: 8px;
+}
+
+.weather-icon {
+    grid-area: weather_icon;
+    justify-self: end;
+    align-self: center;
 }
 
 .weather-icon img {
     border-radius: 10px;
+    width: 120px;
+    height: 120px;
 }
 
 .weather-info {
-    flex: 1;
+    display: contents;
 }
 
 .temperature {
+    grid-area: temperature;
     font-size: 2.5em;
     font-weight: 700;
     color: var(--primary-text-color);
     line-height: 1;
+    justify-self: start;
+    margin-left: 15px;
 }
 
 .condition {
+    grid-area: condition;
     font-size: 1.1em;
     color: var(--secondary-text-color);
     margin-bottom: 8px;
     text-transform: capitalize;
+    justify-self: start;
+    margin-left: 15px;
 }
 
 .feels-like {
+    grid-area: feels_like;
     font-size: 0.9em;
     color: var(--secondary-text-color);
+    justify-self: start;
+    margin-left: 15px;
 }
 
 .weather-details {
+    grid-area: details;
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-width: 120px;
+    justify-self: start;
+    margin-left: 15px;
+    margin-top: 8px;
 }
 
 .detail-item {
@@ -654,6 +679,8 @@ h3 {
 
 .hourly-forecast-container {
     margin-bottom: 12px;
+    display: block;
+    visibility: visible;
 }
 
 .hourly-forecast-container h4 {
@@ -669,6 +696,7 @@ h3 {
     padding: 4px 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    min-height: 120px;
 }
 
 .hourly-forecast-scroll::-webkit-scrollbar {
@@ -679,7 +707,7 @@ h3 {
     min-width: 100px;
     background-color: #fff;
     border-radius: 12px;
-    padding: 12px 24px 12px 0px;
+    padding: 12px;
     text-align: center;
     white-space: nowrap;
     cursor: pointer;
@@ -760,7 +788,7 @@ h3 {
 }
 
 .forecast-tab.active {
-    background-color: var(--primary-color);
+    background: var(--active-big);
     color: var(--primary-text-color);
 }
 
@@ -976,6 +1004,77 @@ h3 {
     font-size: 0.9em;
     padding: 8px;
     text-align: center;
+}
+
+/* Header Updates Styles */
+.header-updates-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    margin: 24px 8px 0 8px;
+}
+
+.header-updates-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.header-update-button,
+.header-update-icon-button {
+    background: var(--active-big);
+    border: none;
+    border-radius: 50%;
+    height: 34px;
+    min-width: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    color: var(--black);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.header-update-button {
+    border-radius: 24px;
+    padding: 0 12px;
+    gap: 8px;
+}
+
+.header-update-button .mdi,
+.header-update-icon-button .mdi {
+    font-size: 22px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-update-button .button-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: inherit;
+}
+
+.header-update-button:hover,
+.header-update-icon-button:hover {
+    transform: scale(1.05);
+}
+
+.no-updates {
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    padding: 8px;
+    text-align: center;
+    display: none; /* Hide when no updates, let section be invisible */
 }
 
 /* Admin Configuration Styles */
