@@ -248,16 +248,19 @@ class DashviewPanel extends HTMLElement {
       {
         name: 'Google Fonts',
         url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap',
+        type: 'link',
         critical: true
       },
       {
         name: 'Material Design Icons',
         url: 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css',
+        type: 'link',
         critical: true
       },
       {
         name: 'Main Stylesheet', 
         url: '/local/dashview/style.css',
+        type: 'inline',
         critical: true
       }
     ];
@@ -265,23 +268,32 @@ class DashviewPanel extends HTMLElement {
     for (const stylesheet of stylesheets) {
       try {
         console.log(`[DashView] Loading ${stylesheet.name}...`);
-        
-        const response = await fetch(stylesheet.url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${stylesheet.name}: ${response.status} ${response.statusText}`);
+
+        if (stylesheet.type === 'link') {
+            // Correct approach: Use a <link> element for external stylesheets with relative assets
+            const linkElement = document.createElement('link');
+            linkElement.setAttribute('rel', 'stylesheet');
+            linkElement.setAttribute('href', stylesheet.url);
+            linkElement.setAttribute('data-source', stylesheet.name);
+            shadow.insertBefore(linkElement, shadow.firstChild);
+            console.log(`[DashView] ${stylesheet.name} linked successfully`);
+        } else {
+            // Inline approach for local CSS
+            const response = await fetch(stylesheet.url);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch ${stylesheet.name}: ${response.status} ${response.statusText}`);
+            }
+            
+            const cssText = await response.text();
+            
+            const styleElement = document.createElement('style');
+            styleElement.setAttribute('data-source', stylesheet.name);
+            styleElement.textContent = cssText;
+            
+            shadow.insertBefore(styleElement, shadow.firstChild);
+            
+            console.log(`[DashView] ${stylesheet.name} loaded successfully (${cssText.length} characters)`);
         }
-        
-        const cssText = await response.text();
-        
-        // Create style element and inject CSS
-        const styleElement = document.createElement('style');
-        styleElement.setAttribute('data-source', stylesheet.name);
-        styleElement.textContent = cssText;
-        
-        // Insert at the beginning of shadow root to ensure proper cascade
-        shadow.insertBefore(styleElement, shadow.firstChild);
-        
-        console.log(`[DashView] ${stylesheet.name} loaded successfully (${cssText.length} characters)`);
         
       } catch (error) {
         console.error(`[DashView] Failed to load ${stylesheet.name}:`, error);
