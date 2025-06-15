@@ -590,49 +590,77 @@ h3 {
 /* --- Weather Components --- */
 .weather-forecast-card {
     background-color: var(--card-background-color);
-    border-radius: 20px;
+    border-radius: 12px;
     padding: 20px;
     margin-bottom: 12px;
 }
 
 .current-weather {
-    display: flex;
+    display: grid;
+    grid-template-areas: 
+        "temperature weather_icon"
+        "condition weather_icon" 
+        "feels_like weather_icon"
+        "details weather_icon";
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto auto;
     align-items: center;
-    gap: 20px;
+    gap: 8px;
+}
+
+.weather-icon {
+    grid-area: weather_icon;
+    justify-self: end;
+    align-self: center;
 }
 
 .weather-icon img {
     border-radius: 10px;
+    width: 120px;
+    height: 120px;
 }
 
 .weather-info {
-    flex: 1;
+    display: contents;
 }
 
 .temperature {
+    grid-area: temperature;
     font-size: 2.5em;
     font-weight: 700;
     color: var(--primary-text-color);
     line-height: 1;
+    justify-self: start;
+    margin-left: 15px;
 }
 
 .condition {
+    grid-area: condition;
     font-size: 1.1em;
     color: var(--secondary-text-color);
     margin-bottom: 8px;
     text-transform: capitalize;
+    justify-self: start;
+    margin-left: 15px;
 }
 
 .feels-like {
+    grid-area: feels_like;
     font-size: 0.9em;
     color: var(--secondary-text-color);
+    justify-self: start;
+    margin-left: 15px;
 }
 
 .weather-details {
+    grid-area: details;
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-width: 120px;
+    justify-self: start;
+    margin-left: 15px;
+    margin-top: 8px;
 }
 
 .detail-item {
@@ -654,6 +682,8 @@ h3 {
 
 .hourly-forecast-container {
     margin-bottom: 12px;
+    display: block;
+    visibility: visible;
 }
 
 .hourly-forecast-container h4 {
@@ -669,6 +699,7 @@ h3 {
     padding: 4px 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    min-height: 120px;
 }
 
 .hourly-forecast-scroll::-webkit-scrollbar {
@@ -679,7 +710,7 @@ h3 {
     min-width: 100px;
     background-color: #fff;
     border-radius: 12px;
-    padding: 12px 24px 12px 0px;
+    padding: 12px;
     text-align: center;
     white-space: nowrap;
     cursor: pointer;
@@ -760,7 +791,7 @@ h3 {
 }
 
 .forecast-tab.active {
-    background-color: var(--primary-color);
+    background: var(--active-big);
     color: var(--primary-text-color);
 }
 
