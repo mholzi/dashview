@@ -34,6 +34,17 @@ Once installed, DashView will automatically create a new panel in your Home Assi
 
 The integration provides a foundation for creating custom dashboard widgets and functionality using HTML, CSS, and JavaScript.
 
+## Troubleshooting
+
+If you experience issues like a black screen or components not loading:
+
+1. **Black Screen Fix**: Update to the latest version - a critical syntax error has been fixed
+2. **Enable Debug Mode**: Run `localStorage.setItem('dashview_debug', 'true')` in browser console, then reload
+3. **Use Debug Tools**: Access `DashViewDebug.diagnose()` and other tools in browser console
+4. **Check Files**: Ensure all required files exist in `/local/dashview/` directory
+
+For detailed troubleshooting instructions, see [DEBUGGING.md](DEBUGGING.md).
+
 ## Development
 
 The integration is designed to be easily extensible. You can modify the dashboard content by editing the HTML template in the integration code or by creating additional custom components.
