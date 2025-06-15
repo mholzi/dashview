@@ -1982,20 +1982,11 @@ class DashviewPanel extends HTMLElement {
     }
 
     return `
-      <div class="notification-card" style="
-        display: flex;
-        align-items: center;
-        background: var(--warning-color, #ff9800);
-        border-radius: 8px;
-        padding: 12px;
-        margin: 8px 0;
-        color: white;
-        font-weight: 500;
-      ">
-        <div style="font-size: 24px; margin-right: 12px;">⚠️</div>
-        <div>
-          <div style="font-size: 16px; margin-bottom: 4px;">Bitte Raum lüften</div>
-          <div style="font-size: 12px; opacity: 0.9;">${displayText}</div>
+      <div class="notification-card">
+        <div class="icon">⚠️</div>
+        <div class="content">
+          <div class="title">Bitte Raum lüften</div>
+          <div class="details">${displayText}</div>
         </div>
       </div>
     `;
