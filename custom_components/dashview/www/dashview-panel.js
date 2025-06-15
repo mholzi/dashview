@@ -9,10 +9,12 @@ class DashviewPanel extends HTMLElement {
     this._musicConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._loadingErrors = [];
+    this._version = '1.0.0-debug'; // Updated with debugging enhancements
     
     if (this._debugMode) {
       console.log('[DashView] Debug mode enabled');
     }
+    console.log(`[DashView] Version: ${this._version}`);
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -30,7 +32,40 @@ class DashviewPanel extends HTMLElement {
 
   connectedCallback() {
     console.log('[DashView] Component connected to DOM');
+    this._performStartupCheck();
     this.loadContent();
+  }
+
+  // Perform basic startup integrity checks
+  _performStartupCheck() {
+    if (this._debugMode) {
+      console.log('[DashView] Performing startup checks...');
+    }
+    
+    // Check if shadow DOM is available
+    if (!this.shadowRoot) {
+      console.error('[DashView] Shadow DOM not available');
+      return false;
+    }
+    
+    // Check if we're in a proper browser environment
+    if (typeof fetch === 'undefined') {
+      console.error('[DashView] Fetch API not available');
+      return false;
+    }
+    
+    // Check if localStorage is available for debug settings
+    try {
+      localStorage.getItem('test');
+    } catch (e) {
+      console.warn('[DashView] localStorage not available, debug settings won\'t persist');
+    }
+    
+    if (this._debugMode) {
+      console.log('[DashView] Startup checks passed');
+    }
+    
+    return true;
   }
 
   async loadContent() {
@@ -170,8 +205,10 @@ class DashviewPanel extends HTMLElement {
         if (weatherState) {
             const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
             this._safeQueryUpdate(shadow, '.weather-button .name', el => el.textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C');
-            this._safeQueryUpdate(shadow, '.weather-button .label', el => el.innerHTML = weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C');
+            this._safeQueryUpdate(shadow, '.weather-button .label', el => el.innerHTML = weatherState.attributes && weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C');
             this._safeQueryUpdate(shadow, '.weather-button .icon-container', el => el.innerHTML = `<img src="/local/weather_icons/${weatherState.state}.svg" width="40" height="40" alt="${weatherState.state}">`);
+        } else if (this._debugMode) {
+          console.warn(`[DashView] Weather entity not found: ${weatherEntityId}`);
         }
       });
 
@@ -179,8 +216,12 @@ class DashviewPanel extends HTMLElement {
       this._safeUpdate('person-button', () => {
         const personState = this._hass.states['person.markus'];
         if (personState) {
-            const img_src = personState.attributes.entity_picture || (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
+            const img_src = personState.attributes && personState.attributes.entity_picture ? 
+              personState.attributes.entity_picture : 
+              (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
             this._safeQueryUpdate(shadow, '.person-button .image-container', el => el.innerHTML = `<img src="${img_src}" width="45" height="45">`);
+        } else if (this._debugMode) {
+          console.warn('[DashView] Person entity not found: person.markus');
         }
       });
 
@@ -2011,6 +2052,7 @@ class DashviewPanel extends HTMLElement {
   // Debug method to get component status - can be called from browser console
   getDebugStatus() {
     return {
+      version: this._version,
       contentReady: this._contentReady,
       hasHass: !!this._hass,
       hassEntitiesCount: this._hass ? Object.keys(this._hass.states).length : 0,
@@ -2020,7 +2062,9 @@ class DashviewPanel extends HTMLElement {
       debugMode: this._debugMode,
       loadingErrors: this._loadingErrors,
       shadowRoot: !!this.shadowRoot,
-      connected: this.isConnected
+      connected: this.isConnected,
+      weatherEntity: this.getCurrentWeatherEntity(),
+      availableWeatherEntities: this._hass ? Object.keys(this._hass.states).filter(id => id.startsWith('weather.')) : []
     };
   }
 
