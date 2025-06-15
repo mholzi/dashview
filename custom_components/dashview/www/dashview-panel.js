@@ -249,6 +249,9 @@ class DashviewPanel extends HTMLElement {
       // Update Header Buttons
       this._safeUpdate('header-buttons', () => this.updateHeaderButtons(shadow));
 
+      // Update Scene Buttons
+      this._safeUpdate('scene-buttons', () => this.updateSceneButtons(shadow));
+
       if (this._debugMode) {
         console.log('[DashView] Elements update completed successfully');
       }
@@ -833,9 +836,20 @@ class DashviewPanel extends HTMLElement {
             this.saveMusicConfiguration();
         }
 
+        const saveScenesBtn = e.target.closest('#save-scenes-config');
+        if (saveScenesBtn) {
+            this.saveScenesConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
+        }
+
+        // Handle scene button clicks
+        const sceneButton = e.target.closest('.scene-button');
+        if (sceneButton) {
+            this.handleSceneButtonClick(sceneButton);
         }
     });
   }
@@ -1102,6 +1116,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'weather-tab') {
                     setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
                 }
+                // Load scenes configuration when scenes tab is activated
+                if (targetId === 'scenes-tab') {
+                    setTimeout(() => this.loadScenesConfiguration(), 100);
+                }
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
@@ -1142,10 +1160,11 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, scenesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1173,11 +1192,24 @@ class DashviewPanel extends HTMLElement {
         console.warn(`[DashView] Could not load music configuration file - status: ${musicResponse.status}`);
         this._musicConfig = {};
       }
+
+      // Load scenes configuration separately as it's optional
+      if (scenesResponse.ok) {
+        this._scenesConfig = await scenesResponse.json();
+        console.log('[DashView] Scenes configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Scenes config:', this._scenesConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load scenes configuration file - status: ${scenesResponse.status}`);
+        this._scenesConfig = {};
+      }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
       this._musicConfig = {};
+      this._scenesConfig = {};
     }
   }
 
@@ -1255,16 +1287,18 @@ class DashviewPanel extends HTMLElement {
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
     const musicTextarea = shadow.getElementById('music-config');
+    const scenesTextarea = shadow.getElementById('scenes-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, scenesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1278,9 +1312,15 @@ class DashviewPanel extends HTMLElement {
         if (musicResponse.ok && musicTextarea) {
           const musicConfig = await musicResponse.json();
           musicTextarea.value = JSON.stringify(musicConfig, null, 2);
+        }
+
+        // Load scenes configuration if available
+        if (scenesResponse.ok && scenesTextarea) {
+          const scenesConfig = await scenesResponse.json();
+          scenesTextarea.value = JSON.stringify(scenesConfig, null, 2);
           statusElement.textContent = '✓ All configurations loaded successfully';
         } else {
-          statusElement.textContent = '✓ Floor and room configurations loaded successfully (music config optional)';
+          statusElement.textContent = '✓ Floor, room and music configurations loaded successfully (scenes config optional)';
         }
         statusElement.style.background = 'var(--green)';
       } else {
@@ -1385,6 +1425,207 @@ class DashviewPanel extends HTMLElement {
       statusElement.textContent = '✗ Error saving music config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
+  }
+
+  // Save scenes configuration
+  async saveScenesConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const scenesTextarea = shadow.getElementById('scenes-config');
+
+    if (!statusElement || !scenesTextarea) return;
+
+    try {
+      const configData = JSON.parse(scenesTextarea.value);
+      
+      // Basic validation - ensure it's an object with room configurations
+      if (typeof configData !== 'object' || configData === null) {
+        throw new Error('Invalid scenes configuration structure. Must be a valid JSON object.');
+      }
+
+      statusElement.textContent = '✓ Scenes configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for use in scene buttons
+      this._scenesConfig = configData;
+      
+      // Update the scene buttons with the new configuration
+      this.updateSceneButtons(shadow);
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving scenes config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Load scenes configuration for admin interface
+  async loadScenesConfiguration() {
+    const shadow = this.shadowRoot;
+    const scenesTextarea = shadow.getElementById('scenes-config');
+    
+    if (!scenesTextarea) return;
+
+    try {
+      const scenesResponse = await fetch('/local/dashview/config/scenes.json');
+      
+      if (scenesResponse.ok) {
+        const scenesConfig = await scenesResponse.json();
+        scenesTextarea.value = JSON.stringify(scenesConfig, null, 2);
+        console.log('[DashView] Scenes configuration loaded for admin interface');
+      } else {
+        scenesTextarea.value = '{\n  "Header": {},\n  "Wohnzimmer": {},\n  "Büro": {}\n}';
+        console.warn('[DashView] Could not load scenes configuration, using default structure');
+      }
+    } catch (error) {
+      console.error('[DashView] Error loading scenes configuration for admin:', error);
+      scenesTextarea.value = '{\n  "Header": {},\n  "Wohnzimmer": {},\n  "Büro": {}\n}';
+    }
+  }
+
+  // Update scene buttons throughout the interface
+  updateSceneButtons(shadow) {
+    if (!this._scenesConfig || Object.keys(this._scenesConfig).length === 0) {
+      this.loadConfiguration().then(() => {
+        this.updateSceneButtons(shadow);
+      });
+      return;
+    }
+
+    // Update all scene button containers
+    const sceneContainers = shadow.querySelectorAll('[data-template="scene-buttons"]');
+    sceneContainers.forEach(container => {
+      const roomName = container.getAttribute('data-room') || 'Header';
+      container.innerHTML = this.generateSceneButtonsHTML(roomName);
+    });
+  }
+
+  // Generate HTML for scene buttons based on room configuration
+  generateSceneButtonsHTML(roomName) {
+    if (!this._scenesConfig || !this._scenesConfig[roomName]) {
+      return '<div class="no-scenes">No scenes configured for this room</div>';
+    }
+
+    const scenes = this._scenesConfig[roomName];
+    const sceneKeys = Object.keys(scenes);
+    
+    if (sceneKeys.length === 0) {
+      return '<div class="no-scenes">No scenes configured for this room</div>';
+    }
+
+    let buttonsHTML = '<div class="scene-buttons-row">';
+    
+    sceneKeys.forEach(sceneKey => {
+      const scene = scenes[sceneKey];
+      if (scene && scene.entities && scene.entities.length > 0) {
+        const name = scene.name || sceneKey;
+        const icon = scene.icon || 'mdi:lightbulb';
+        
+        buttonsHTML += `
+          <button class="scene-button" 
+                  data-scene-key="${sceneKey}" 
+                  data-room="${roomName}"
+                  data-entities='${JSON.stringify(scene.entities)}'>
+            <i class="mdi ${icon.replace('mdi:', '')}"></i>
+            <span class="scene-label">${name}</span>
+          </button>
+        `;
+      }
+    });
+    
+    buttonsHTML += '</div>';
+    return buttonsHTML;
+  }
+
+  // Handle scene button clicks
+  handleSceneButtonClick(button) {
+    if (!this._hass) {
+      console.warn('[DashView] Cannot execute scene - Home Assistant not available');
+      return;
+    }
+
+    const sceneKey = button.getAttribute('data-scene-key');
+    const roomName = button.getAttribute('data-room');
+    const entitiesStr = button.getAttribute('data-entities');
+    
+    try {
+      const entities = JSON.parse(entitiesStr);
+      
+      if (!Array.isArray(entities) || entities.length === 0) {
+        console.warn('[DashView] No entities defined for scene:', sceneKey);
+        return;
+      }
+
+      console.log(`[DashView] Executing scene "${sceneKey}" in room "${roomName}" with entities:`, entities);
+      
+      // Add visual feedback
+      button.classList.add('scene-button-active');
+      setTimeout(() => {
+        button.classList.remove('scene-button-active');
+      }, 1000);
+
+      // Execute scene based on scene type
+      this.executeScene(sceneKey, entities);
+      
+    } catch (error) {
+      console.error('[DashView] Error parsing scene entities:', error);
+    }
+  }
+
+  // Execute scene actions based on scene type and entities
+  executeScene(sceneKey, entities) {
+    if (!this._hass || !Array.isArray(entities)) return;
+
+    entities.forEach(entityId => {
+      const state = this._hass.states[entityId];
+      if (!state) {
+        console.warn(`[DashView] Entity not found: ${entityId}`);
+        return;
+      }
+
+      const domain = entityId.split('.')[0];
+      
+      // Determine action based on scene key and entity domain
+      if (sceneKey.includes('all_lights_out') || sceneKey.includes('lights_out')) {
+        // Turn off lights and switches
+        if (domain === 'light' || domain === 'switch') {
+          this._hass.callService(domain, 'turn_off', { entity_id: entityId });
+        }
+      } else if (sceneKey.includes('cover')) {
+        // Handle covers (open/close based on current state or default action)
+        if (domain === 'cover') {
+          // For covers, we'll default to closing them, but this could be configurable
+          this._hass.callService('cover', 'close_cover', { entity_id: entityId });
+        }
+      } else if (sceneKey.includes('roof_window')) {
+        // Handle roof windows specifically
+        if (domain === 'cover') {
+          this._hass.callService('cover', 'close_cover', { entity_id: entityId });
+        }
+      } else {
+        // For other scenes (like ambiente, computer, etc.), turn on the entities
+        if (domain === 'light') {
+          // For lights, turn on with appropriate settings
+          if (sceneKey.includes('ambiente')) {
+            // Ambient lighting - turn on dimmed
+            this._hass.callService('light', 'turn_on', { 
+              entity_id: entityId,
+              brightness_pct: 60
+            });
+          } else if (sceneKey.includes('dimm')) {
+            // Dimmed lighting
+            this._hass.callService('light', 'turn_on', { 
+              entity_id: entityId,
+              brightness_pct: 30
+            });
+          } else {
+            // Regular turn on
+            this._hass.callService('light', 'turn_on', { entity_id: entityId });
+          }
+        } else if (domain === 'switch') {
+          this._hass.callService('switch', 'turn_on', { entity_id: entityId });
+        }
+      }
+    });
   }
 
   // Generate music popup content based on configuration

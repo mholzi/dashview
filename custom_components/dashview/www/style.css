@@ -873,6 +873,67 @@ h3 {
     color: var(--primary-text-color);
 }
 
+/* --- Scene Button Styles --- */
+.scene-buttons-container {
+    margin: 8px 0;
+}
+
+.scene-buttons-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+}
+
+.scene-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: var(--gray100);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--primary-font-family);
+    font-size: 0.8em;
+    color: var(--primary-text-color);
+    min-width: 60px;
+}
+
+.scene-button:hover {
+    background: var(--gray200);
+    transform: translateY(-1px);
+}
+
+.scene-button.scene-button-active {
+    background: var(--active-small);
+    color: var(--gray800);
+    transform: scale(0.95);
+}
+
+.scene-button i {
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+.scene-label {
+    font-size: 0.75em;
+    text-align: center;
+    line-height: 1.1;
+    max-width: 50px;
+    word-wrap: break-word;
+}
+
+.no-scenes {
+    color: var(--secondary-text-color);
+    font-size: 0.8em;
+    padding: 8px;
+    text-align: center;
+    font-style: italic;
+}
+
 /* --- Music Tab Styles --- */
 .music-tabs-container {
     display: flex;

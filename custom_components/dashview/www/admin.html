@@ -9,6 +9,7 @@
             <button class="tab-button" data-target="config-tab">Configuration</button>
             <button class="tab-button" data-target="weather-tab">Weather</button>
             <button class="tab-button" data-target="header-buttons-tab">Header Buttons</button>
+            <button class="tab-button" data-target="scenes-tab">Scenes</button>
             <button class="tab-button" data-target="music-tab">Music</button>
             <button class="tab-button" data-target="actions-tab">Actions</button>
         </div>
@@ -52,6 +53,17 @@
                 <h5>Room Configuration</h5>
                 <textarea id="rooms-config" class="config-textarea" placeholder="Room configuration will be loaded here..."></textarea>
                 <button id="save-rooms-config" class="save-button">Save Rooms Config</button>
+            </div>
+        </div>
+
+        <div id="scenes-tab" class="tab-content">
+            <h4>Scene Configuration</h4>
+            <p>Configure scene buttons for different rooms. Each scene can control multiple entities like lights, covers, and switches.</p>
+            
+            <div class="config-section">
+                <h5>Scene Configuration</h5>
+                <textarea id="scenes-config" class="config-textarea" placeholder="Scene configuration will be loaded here..."></textarea>
+                <button id="save-scenes-config" class="save-button">Save Scenes Config</button>
             </div>
         </div>
 

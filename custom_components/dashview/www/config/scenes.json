@@ -1,0 +1,185 @@
+{
+  "Header": {
+    "wohnzimmer_ambiente": {
+      "name": "Wohnzimmer Ambiente",
+      "icon": "mdi:lightbulb-group",
+      "entities": ["light.esszimmer_ambiente", "light.kucheninsel_l2"]
+    },
+    "all_covers": {
+      "name": "Alle Rollos",
+      "icon": "mdi:window-shutter",
+      "entities": [
+        "cover.rollo_treppenaufgang", "cover.rollo_aupair", "cover.rollo_aupairbad_3",
+        "cover.rollo_kinderbad_2", "cover.rollo_jan_philipp_3", "cover.fenster_felicia_links",
+        "cover.fenster_felicia_rechts", "cover.rollo_frederik_seite_3", "cover.rollo_frederik_balkon_3"
+      ]
+    },
+    "roof_window": {
+      "name": "Dachfenster",
+      "icon": "mdi:window-open-variant",
+      "entities": ["cover.velux_window_roof_window_2"]
+    }
+  },
+  "Wohnzimmer": {
+    "wohnzimmer_ambiente": {
+      "name": "Ambiente",
+      "icon": "mdi:lightbulb-group",
+      "entities": ["light.esszimmer_ambiente", "light.kucheninsel_l2"]
+    },
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": [
+        "light.esszimmer_ambiente", "light.esszimmer_tisch", "light.schalter_wohnzimmer_l1",
+        "light.schalter_wohnzimmer_l2", "light.licht_wohnzimmer_ambiente_switch"
+      ]
+    }
+  },
+  "Büro": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.buro_schreibtisch1", "light.schalter_buro_l1", "switch.buro_computer_licht_switch", "light.licht_buero"]
+    },
+    "computer": {
+      "name": "Computer",
+      "icon": "mdi:desktop-classic",
+      "entities": ["light.buro_computer_licht"]
+    },
+    "dimm_desk": {
+      "name": "Schreibtisch dimmen",
+      "icon": "mdi:brightness-6",
+      "entities": ["light.buro_schreibtisch1"]
+    }
+  },
+  "Kinderzimmer": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": [
+        "light.schalter_jp_l1", "light.schalter_jp_l2", "light.schalter_felicia_l1",
+        "light.schalter_felicia_l2", "light.schalter_frederik_l1", "light.schalter_frederik_l2"
+      ]
+    },
+    "cover": {
+      "name": "Rollos",
+      "icon": "mdi:window-shutter",
+      "entities": [
+        "cover.rollo_jan_philipp_3", "cover.fenster_felicia_links", "cover.fenster_felicia_rechts",
+        "cover.rollo_frederik_seite_3", "cover.rollo_frederik_balkon_3"
+      ]
+    }
+  },
+  "Aupair": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_aupair", "light.decke_aupairflur", "light.decke_aupairbad"]
+    },
+    "cover": {
+      "name": "Rollos",
+      "icon": "mdi:window-shutter",
+      "entities": ["cover.rollo_aupair", "cover.rollo_aupairbad_3"]
+    }
+  },
+  "Elternbereich": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": [
+        "light.licht_schlafzimmer", "light.licht_ankleide", "light.licht_flur_dach",
+        "light.licht_badezimmer", "light.licht_klo_dach"
+      ]
+    },
+    "roof_window": {
+      "name": "Dachfenster",
+      "icon": "mdi:window-open-variant",
+      "entities": ["cover.velux_window_roof_window_2"]
+    }
+  },
+  "Gästeklo": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_gasteklo"]
+    }
+  },
+  "Küche": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_kuchenzeile_brett", "light.kucheninsel_l2", "light.kucheninsel_l1", "light.kuche_flur"]
+    }
+  },
+  "Wäschekeller": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_waschkeller"]
+    }
+  },
+  "Kellerraum": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.keller_buro_licht"]
+    }
+  },
+  "Serverraum": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_serverraum1"]
+    }
+  },
+  "Kinderflur": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_kinderflur", "light.licht_treppe_dach"]
+    },
+    "cover": {
+      "name": "Rollos",
+      "icon": "mdi:window-shutter",
+      "entities": ["cover.rollo_treppenaufgang"]
+    }
+  },
+  "Kellerflur": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_kellerflur_buro", "light.keller_eingang_links", "light.licht_kellerflur_rechts", "light.kellertreppe_switch"]
+    }
+  },
+  "Heizungskeller": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.licht_heizungskeller_light"]
+    }
+  },
+  "Partykeller": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": [
+        "light.licht_partykeller1", "light.licht_partykeller_wand1", "light.licht_partykeller_stehlampe",
+        "light.licht_partykeller_tisch1", "light.licht_partykeller_hund"
+      ]
+    }
+  },
+  "Eingang": {
+    "all_lights_out": {
+      "name": "Licht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.flur_eingang", "light.garderobe", "light.flur_pendelleuchte", "light.led_eingangsflur_light", "light.kellertreppe_switch"]
+    }
+  },
+  "Aussen": {
+    "all_lights_out": {
+      "name": "Außenlicht aus",
+      "icon": "mdi:lightbulb-off",
+      "entities": ["light.garage_switch", "light.licht_hauswand_vorne_switch", "switch.licht_terrasse_switch"]
+    }
+  }
+}
