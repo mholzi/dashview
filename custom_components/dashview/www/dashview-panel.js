@@ -2975,7 +2975,6 @@ class DashviewPanel extends HTMLElement {
     let html = `
       <div class="music-tabs-container">
         <div class="music-tab-header">
-          <h4>Musik</h4>
           <div class="music-tab-buttons">
     `;
 
@@ -3024,6 +3023,9 @@ class DashviewPanel extends HTMLElement {
             </div>
             <div class="music-controls">
               <div class="music-player-info" data-entity="${mediaPlayer.entity}">
+                <div class="music-cover" data-entity="${mediaPlayer.entity}">
+                  <img class="music-cover-image" src="" alt="Album Cover" style="display: none;">
+                </div>
                 <div class="music-title">No media playing</div>
                 <div class="music-artist"></div>
               </div>
@@ -3042,8 +3044,8 @@ class DashviewPanel extends HTMLElement {
                 <span class="volume-label">${mediaPlayer.room_name}</span>
                 <input type="range" class="volume-slider" 
                        data-entity="${mediaPlayer.entity}" 
-                       min="0" max="100" value="50">
-                <span class="volume-value">50%</span>
+                       min="0" max="100" value="0">
+                <span class="volume-value">0%</span>
               </div>
         `;
 
@@ -3054,8 +3056,8 @@ class DashviewPanel extends HTMLElement {
                 <span class="volume-label">${mediaPlayer.room_name2}</span>
                 <input type="range" class="volume-slider" 
                        data-entity="${mediaPlayer.entity2}" 
-                       min="0" max="100" value="50">
-                <span class="volume-value">50%</span>
+                       min="0" max="100" value="0">
+                <span class="volume-value">0%</span>
               </div>
           `;
         }
@@ -3223,12 +3225,22 @@ class DashviewPanel extends HTMLElement {
           const state = this._hass.states[mediaPlayer.entity];
           const titleElement = playerInfo.querySelector('.music-title');
           const artistElement = playerInfo.querySelector('.music-artist');
+          const coverElement = playerInfo.querySelector('.music-cover-image');
           
           if (titleElement) {
             titleElement.textContent = state.attributes.media_title || 'No media playing';
           }
           if (artistElement) {
             artistElement.textContent = state.attributes.media_artist || '';
+          }
+          if (coverElement) {
+            const entityPicture = state.attributes.entity_picture;
+            if (entityPicture && state.attributes.media_title) {
+              coverElement.src = entityPicture;
+              coverElement.style.display = 'block';
+            } else {
+              coverElement.style.display = 'none';
+            }
           }
         }
 
@@ -3332,6 +3344,9 @@ class DashviewPanel extends HTMLElement {
         </div>
         <div class="music-controls">
           <div class="music-player-info" data-entity="${mediaPlayer.entity}">
+            <div class="music-cover" data-entity="${mediaPlayer.entity}">
+              <img class="music-cover-image" src="" alt="Album Cover" style="display: none;">
+            </div>
             <div class="music-title">No media playing</div>
             <div class="music-artist"></div>
           </div>
@@ -3350,8 +3365,8 @@ class DashviewPanel extends HTMLElement {
             <span class="volume-label">${mediaPlayer.room_name}</span>
             <input type="range" class="volume-slider" 
                    data-entity="${mediaPlayer.entity}" 
-                   min="0" max="100" value="50">
-            <span class="volume-value">50%</span>
+                   min="0" max="100" value="0">
+            <span class="volume-value">0%</span>
           </div>
     `;
 
@@ -3362,8 +3377,8 @@ class DashviewPanel extends HTMLElement {
             <span class="volume-label">${mediaPlayer.room_name2}</span>
             <input type="range" class="volume-slider" 
                    data-entity="${mediaPlayer.entity2}" 
-                   min="0" max="100" value="50">
-            <span class="volume-value">50%</span>
+                   min="0" max="100" value="0">
+            <span class="volume-value">0%</span>
           </div>
       `;
     }
@@ -3492,12 +3507,22 @@ class DashviewPanel extends HTMLElement {
           const state = this._hass.states[mediaPlayer.entity];
           const titleElement = playerInfo.querySelector('.music-title');
           const artistElement = playerInfo.querySelector('.music-artist');
+          const coverElement = playerInfo.querySelector('.music-cover-image');
           
           if (titleElement) {
             titleElement.textContent = state.attributes.media_title || 'No media playing';
           }
           if (artistElement) {
             artistElement.textContent = state.attributes.media_artist || '';
+          }
+          if (coverElement) {
+            const entityPicture = state.attributes.entity_picture;
+            if (entityPicture && state.attributes.media_title) {
+              coverElement.src = entityPicture;
+              coverElement.style.display = 'block';
+            } else {
+              coverElement.style.display = 'none';
+            }
           }
         }
 

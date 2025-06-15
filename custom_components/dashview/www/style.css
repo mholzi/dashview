@@ -228,6 +228,11 @@ h3 {
     line-height: 1;
 }
 
+.popup-content h3 i {
+    margin-right: 8px;
+    color: var(--accent-color);
+}
+
 /* --- Tab styles --- */
 .tab-buttons {
     display: flex;
@@ -1027,12 +1032,30 @@ h3 {
     flex-direction: column;
     gap: 16px;
     padding: 16px;
-    background: var(--gray100);
+    background: var(--popupBG);
     border-radius: 16px;
 }
 
 .music-player-info {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.music-cover {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.music-cover-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .music-title {
