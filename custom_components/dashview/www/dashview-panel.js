@@ -275,36 +275,36 @@ class DashviewPanel extends HTMLElement {
     const badgeElement = section.querySelector('[data-type="motion-time"]');
     const badge = section.querySelector('.info-badge');
     
+    // Calculate time difference since last state change
+    const lastChanged = new Date(motionEntity.last_changed);
+    const now = new Date();
+    const diffSeconds = Math.floor((now - lastChanged) / 1000);
+    
+    let timeText = 'Unbekannt';
+    if (diffSeconds < 60) {
+      timeText = 'Jetzt';
+    } else if (diffSeconds < 3600) {
+      const minutes = Math.floor(diffSeconds / 60);
+      timeText = `${minutes} Minuten`;
+    } else if (diffSeconds < 86400) {
+      const hours = Math.floor(diffSeconds / 3600);
+      timeText = `${hours} Stunden`;
+    } else {
+      const days = Math.floor(diffSeconds / 86400);
+      timeText = `${days} Tagen`;
+    }
+    
     if (motionEntity.state === 'on') {
       prefixElement.textContent = 'Im Haus ist seit';
       section.classList.remove('hidden');
       badge.classList.add('green');
       badge.classList.remove('red');
-      badgeElement.textContent = 'Jetzt🏡';
+      badgeElement.textContent = `${timeText}🏡`;
     } else {
       prefixElement.textContent = 'Die letzte Bewegung im Haus war vor';
       section.classList.remove('hidden');
       badge.classList.remove('green');
       badge.classList.add('red');
-      
-      // Calculate time difference
-      const lastChanged = new Date(motionEntity.last_changed);
-      const now = new Date();
-      const diffSeconds = Math.floor((now - lastChanged) / 1000);
-      
-      let timeText = 'Unbekannt';
-      if (diffSeconds < 60) {
-        timeText = 'Jetzt';
-      } else if (diffSeconds < 3600) {
-        const minutes = Math.floor(diffSeconds / 60);
-        timeText = `${minutes} Minuten`;
-      } else if (diffSeconds < 86400) {
-        const hours = Math.floor(diffSeconds / 3600);
-        timeText = `${hours} Stunden`;
-      } else {
-        const days = Math.floor(diffSeconds / 86400);
-        timeText = `${days} Tagen`;
-      }
       badgeElement.textContent = `${timeText}🏡`;
     }
   }
