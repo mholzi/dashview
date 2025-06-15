@@ -3,6 +3,8 @@ class DashviewPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this._contentReady = false;
+    this._floorsConfig = {};
+    this._roomsConfig = {};
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -96,6 +98,9 @@ class DashviewPanel extends HTMLElement {
     
     // Update Weather Components
     this.updateWeatherComponents(shadow);
+    
+    // Update Header Buttons
+    this.updateHeaderButtons(shadow);
   }
 
   // Method to check if it's a weekday
@@ -585,6 +590,31 @@ class DashviewPanel extends HTMLElement {
                 window.location.hash = '#waschkeller';
             }
         }
+
+        // Handle header room button clicks
+        const roomButton = e.target.closest('.header-room-button');
+        if (roomButton) {
+            const navigationPath = roomButton.getAttribute('data-navigation');
+            if (navigationPath && navigationPath !== '#unknown') {
+                window.location.hash = navigationPath;
+            }
+        }
+
+        // Handle admin config buttons
+        const reloadConfigBtn = e.target.closest('#reload-config');
+        if (reloadConfigBtn) {
+            this.loadAdminConfiguration();
+        }
+
+        const saveFloorsBtn = e.target.closest('#save-floors-config');
+        if (saveFloorsBtn) {
+            this.saveFloorsConfiguration();
+        }
+
+        const saveRoomsBtn = e.target.closest('#save-rooms-config');
+        if (saveRoomsBtn) {
+            this.saveRoomsConfiguration();
+        }
     });
   }
   
@@ -781,10 +811,202 @@ class DashviewPanel extends HTMLElement {
                 tabButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 tabContents.forEach(content => content.classList.toggle('active', content.id === targetId));
+                
+                // Load admin configuration when header buttons tab is activated
+                if (targetId === 'header-buttons-tab') {
+                    setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
     });
+  }
+
+  // Load configuration from JSON files
+  async loadConfiguration() {
+    try {
+      const [floorsResponse, roomsResponse] = await Promise.all([
+        fetch('/local/dashview/config/floors.json'),
+        fetch('/local/dashview/config/rooms.json')
+      ]);
+
+      if (floorsResponse.ok && roomsResponse.ok) {
+        this._floorsConfig = await floorsResponse.json();
+        this._roomsConfig = await roomsResponse.json();
+      } else {
+        console.warn('Could not load floor/room configuration files');
+        this._floorsConfig = {};
+        this._roomsConfig = {};
+      }
+    } catch (error) {
+      console.error('Error loading configuration:', error);
+      this._floorsConfig = {};
+      this._roomsConfig = {};
+    }
+  }
+
+  // Update header buttons based on sensor states
+  async updateHeaderButtons(shadow) {
+    if (!this._floorsConfig || Object.keys(this._floorsConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    const container = shadow.getElementById('header-buttons');
+    if (!container) return;
+
+    // Create button container with scrollable styling
+    container.innerHTML = `
+      <div class="header-buttons-scroll">
+        ${this.generateHeaderButtonsHTML()}
+      </div>
+    `;
+  }
+
+  // Generate HTML for header buttons
+  generateHeaderButtonsHTML() {
+    if (!this._hass || !this._floorsConfig || !this._roomsConfig) {
+      return '<div class="loading-message">Loading...</div>';
+    }
+
+    let buttonsHTML = '';
+    const floors = this._roomsConfig.floors || {};
+    const floorIcons = this._floorsConfig.floor_icons || {};
+    const floorSensors = this._floorsConfig.floor_sensors || {};
+
+    // Generate buttons for each floor
+    Object.entries(floors).forEach(([floorName, sensors]) => {
+      const floorSensor = floorSensors[floorName];
+      const floorIcon = floorIcons[floorName] || 'mdi:help-circle-outline';
+      
+      // Check if floor sensor is active
+      const floorEntity = this._hass.states[floorSensor];
+      const isFloorActive = floorEntity && floorEntity.state === 'on';
+
+      if (isFloorActive) {
+        // Add floor button
+        buttonsHTML += `
+          <button class="header-floor-button" data-floor="${floorName}">
+            <i class="mdi ${floorIcon.replace('mdi:', '')}"></i>
+          </button>
+        `;
+
+        // Add room buttons for this floor
+        sensors.forEach(sensor => {
+          const sensorEntity = this._hass.states[sensor];
+          const isRoomActive = sensorEntity && sensorEntity.state === 'on';
+
+          if (isRoomActive) {
+            const roomIcon = sensorEntity.attributes?.icon || 'mdi:help-circle-outline';
+            const roomType = sensorEntity.attributes?.room_type || '#unknown';
+            
+            buttonsHTML += `
+              <button class="header-room-button" data-sensor="${sensor}" data-navigation="${roomType}">
+                <i class="mdi ${roomIcon.replace('mdi:', '')}"></i>
+              </button>
+            `;
+          }
+        });
+      }
+    });
+
+    return buttonsHTML || '<div class="no-activity">No active rooms</div>';
+  }
+
+  // Load configuration for admin interface
+  async loadAdminConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const floorsTextarea = shadow.getElementById('floors-config');
+    const roomsTextarea = shadow.getElementById('rooms-config');
+
+    if (!statusElement || !floorsTextarea || !roomsTextarea) return;
+
+    statusElement.textContent = 'Loading configuration...';
+
+    try {
+      const [floorsResponse, roomsResponse] = await Promise.all([
+        fetch('/local/dashview/config/floors.json'),
+        fetch('/local/dashview/config/rooms.json')
+      ]);
+
+      if (floorsResponse.ok && roomsResponse.ok) {
+        const floorsConfig = await floorsResponse.json();
+        const roomsConfig = await roomsResponse.json();
+
+        floorsTextarea.value = JSON.stringify(floorsConfig, null, 2);
+        roomsTextarea.value = JSON.stringify(roomsConfig, null, 2);
+
+        statusElement.textContent = '✓ Configuration loaded successfully';
+        statusElement.style.background = 'var(--green)';
+      } else {
+        throw new Error('Could not load configuration files');
+      }
+    } catch (error) {
+      statusElement.textContent = '✗ Error loading configuration: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save floors configuration
+  async saveFloorsConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const floorsTextarea = shadow.getElementById('floors-config');
+
+    if (!statusElement || !floorsTextarea) return;
+
+    try {
+      const configData = JSON.parse(floorsTextarea.value);
+      
+      // Validate structure
+      if (!configData.floor_icons || !configData.floor_sensors) {
+        throw new Error('Invalid floors configuration structure');
+      }
+
+      statusElement.textContent = '✓ Floors configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Reload the configuration for the header buttons
+      this._floorsConfig = configData;
+      if (this._hass) {
+        this.updateHeaderButtons(shadow);
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving floors config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save rooms configuration
+  async saveRoomsConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const roomsTextarea = shadow.getElementById('rooms-config');
+
+    if (!statusElement || !roomsTextarea) return;
+
+    try {
+      const configData = JSON.parse(roomsTextarea.value);
+      
+      // Validate structure
+      if (!configData.floors) {
+        throw new Error('Invalid rooms configuration structure');
+      }
+
+      statusElement.textContent = '✓ Rooms configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Reload the configuration for the header buttons
+      this._roomsConfig = configData;
+      if (this._hass) {
+        this.updateHeaderButtons(shadow);
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving rooms config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
   }
 }
 
