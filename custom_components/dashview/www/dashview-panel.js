@@ -75,9 +75,9 @@ class DashviewPanel extends HTMLElement {
     // Update Weather Button
     const weatherState = this._hass.states['weather.forecast_home'];
     if (weatherState) {
-        shadow.querySelector('.weather-button .name').textContent = weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}°C` : '-- °C';
         const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
-        shadow.querySelector('.weather-button .label').innerHTML = temp ? `${temp.toFixed(1)}<sup>°C</sup>` : '-- °C';
+        shadow.querySelector('.weather-button .name').textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C';
+        shadow.querySelector('.weather-button .label').innerHTML = weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C';
         shadow.querySelector('.weather-button .icon-container').innerHTML = `<img src="/local/weather_icons/${weatherState.state}.svg" width="40" height="40" alt="${weatherState.state}">`;
     }
 
