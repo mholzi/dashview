@@ -820,12 +820,14 @@ class DashviewPanel extends HTMLElement {
       prefixElement.textContent = 'Im Haus ist seit';
       section.classList.remove('hidden');
       badge.classList.add('green');
+      badge.classList.add('motion-detected');
       badge.classList.remove('red');
       badgeElement.textContent = `${timeText}🏡`;
     } else {
       prefixElement.textContent = 'Die letzte Bewegung im Haus war vor';
       section.classList.remove('hidden');
       badge.classList.remove('green');
+      badge.classList.remove('motion-detected');
       badge.classList.add('red');
       badgeElement.textContent = `${timeText}🏡`;
     }
