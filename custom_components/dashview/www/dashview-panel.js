@@ -833,6 +833,11 @@ class DashviewPanel extends HTMLElement {
             this.saveMusicConfiguration();
         }
 
+        const saveTemperatureBtn = e.target.closest('#save-temperature-config');
+        if (saveTemperatureBtn) {
+            this.saveTemperatureConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -1142,10 +1147,11 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/temperature.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1173,11 +1179,24 @@ class DashviewPanel extends HTMLElement {
         console.warn(`[DashView] Could not load music configuration file - status: ${musicResponse.status}`);
         this._musicConfig = {};
       }
+
+      // Load temperature configuration separately as it's optional
+      if (temperatureResponse.ok) {
+        this._temperatureConfig = await temperatureResponse.json();
+        console.log('[DashView] Temperature configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Temperature config:', this._temperatureConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load temperature configuration file - status: ${temperatureResponse.status}`);
+        this._temperatureConfig = {};
+      }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
       this._musicConfig = {};
+      this._temperatureConfig = {};
     }
   }
 
@@ -1255,16 +1274,18 @@ class DashviewPanel extends HTMLElement {
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
     const musicTextarea = shadow.getElementById('music-config');
+    const temperatureTextarea = shadow.getElementById('temperature-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
-        fetch('/local/dashview/config/music.json')
+        fetch('/local/dashview/config/music.json'),
+        fetch('/local/dashview/config/temperature.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1274,14 +1295,32 @@ class DashviewPanel extends HTMLElement {
         floorsTextarea.value = JSON.stringify(floorsConfig, null, 2);
         roomsTextarea.value = JSON.stringify(roomsConfig, null, 2);
 
+        let statusMessage = '✓ Floor and room configurations loaded successfully';
+        let configsLoaded = 2;
+
         // Load music configuration if available
         if (musicResponse.ok && musicTextarea) {
           const musicConfig = await musicResponse.json();
           musicTextarea.value = JSON.stringify(musicConfig, null, 2);
-          statusElement.textContent = '✓ All configurations loaded successfully';
-        } else {
-          statusElement.textContent = '✓ Floor and room configurations loaded successfully (music config optional)';
+          configsLoaded++;
         }
+
+        // Load temperature configuration if available
+        if (temperatureResponse.ok && temperatureTextarea) {
+          const temperatureConfig = await temperatureResponse.json();
+          temperatureTextarea.value = JSON.stringify(temperatureConfig, null, 2);
+          configsLoaded++;
+        }
+
+        if (configsLoaded === 4) {
+          statusMessage = '✓ All configurations loaded successfully';
+        } else if (configsLoaded === 3) {
+          statusMessage = '✓ Floor, room, and one optional configuration loaded successfully';
+        } else {
+          statusMessage += ' (music and temperature configs optional)';
+        }
+
+        statusElement.textContent = statusMessage;
         statusElement.style.background = 'var(--green)';
       } else {
         throw new Error('Could not load configuration files');
@@ -1383,6 +1422,46 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving music config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save temperature configuration
+  async saveTemperatureConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const temperatureTextarea = shadow.getElementById('temperature-config');
+
+    if (!statusElement || !temperatureTextarea) return;
+
+    try {
+      const configData = JSON.parse(temperatureTextarea.value);
+      
+      // Validate structure
+      if (!configData.temperature_entities) {
+        throw new Error('Invalid temperature configuration structure. Must include temperature_entities.');
+      }
+
+      // Validate that each room has proper sensor structure
+      for (const [room, sensors] of Object.entries(configData.temperature_entities)) {
+        if (!Array.isArray(sensors)) {
+          throw new Error(`Invalid structure for room "${room}": must be an array of sensor objects.`);
+        }
+        for (const sensor of sensors) {
+          if (!sensor.temperature_sensor || !sensor.humidity_sensor) {
+            throw new Error(`Invalid sensor configuration for room "${room}": must include temperature_sensor and humidity_sensor.`);
+          }
+        }
+      }
+
+      statusElement.textContent = '✓ Temperature configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._temperatureConfig = configData;
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving temperature config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
   }
@@ -2059,6 +2138,7 @@ class DashviewPanel extends HTMLElement {
       floorsConfigLoaded: Object.keys(this._floorsConfig).length > 0,
       roomsConfigLoaded: Object.keys(this._roomsConfig).length > 0,
       musicConfigLoaded: Object.keys(this._musicConfig).length > 0,
+      temperatureConfigLoaded: Object.keys(this._temperatureConfig || {}).length > 0,
       debugMode: this._debugMode,
       loadingErrors: this._loadingErrors,
       shadowRoot: !!this.shadowRoot,
@@ -2129,7 +2209,8 @@ window.DashViewDebug = {
       '/local/dashview/index.html',
       '/local/dashview/config/floors.json',
       '/local/dashview/config/rooms.json',
-      '/local/dashview/config/music.json'
+      '/local/dashview/config/music.json',
+      '/local/dashview/config/temperature.json'
     ];
     
     Promise.all(filesToCheck.map(async (file) => {
