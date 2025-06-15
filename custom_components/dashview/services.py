@@ -1,7 +1,6 @@
 """Services for DashView integration."""
 import logging
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers.entity_component import EntityComponent
 from .const import DOMAIN
 from .store import DashViewStore
 
@@ -25,12 +24,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         _LOGGER.info("Service called to set weather entity to: %s", entity_id)
         if entity_id and entity_id.startswith("weather."):
             await store.async_set_weather_entity(entity_id)
-            # Find our sensor and tell it to update its state
-            component: EntityComponent = hass.data.get("sensor")
-            for entity in component.entities:
-                if entity.unique_id == f"{DOMAIN}_configured_weather_entity":
-                    await entity.async_update_from_service(entity_id)
-                    break
         else:
             _LOGGER.warning("Invalid entity_id received for set_weather_entity: %s", entity_id)
 
