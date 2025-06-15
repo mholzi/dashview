@@ -118,7 +118,7 @@ class DashviewPanel extends HTMLElement {
         continue;
       }
 
-      if (trimmedCondition.includes('=')) {
+      if (trimmedCondition.includes('=') && !trimmedCondition.includes('!=')) {
         const [entityId, expectedValue] = trimmedCondition.split('=');
         const entity = this._hass.states[entityId.trim()];
         if (!entity || entity.state !== expectedValue.trim()) return false;
