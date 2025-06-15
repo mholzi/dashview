@@ -1585,7 +1585,7 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/lights.json'),
         fetch('/local/dashview/config/room_notifications.json'),
         fetch('/local/dashview/config/other_devices.json'),
-        fetch('/local/dashview/config/floor_tabs.json')
+        fetch('/local/dashview/config/floor_tabs.json'),
         fetch('/local/dashview/config/window_weather_notifications.json'),
 
       ]);
@@ -2025,7 +2025,7 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/scenes.json'),
         fetch('/local/dashview/config/room_notifications.json'),
         fetch('/local/dashview/config/other_devices.json'),
-        fetch('/local/dashview/config/floor_tabs.json')
+        fetch('/local/dashview/config/floor_tabs.json'),
         fetch('/local/dashview/config/window_weather_notifications.json'),
 
       ]);
