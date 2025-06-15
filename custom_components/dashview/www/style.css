@@ -561,7 +561,7 @@ h3 {
 .info-badge {
     background-color: var(--gray800);
     color: var(--gray100);
-    padding: 1px 6px;
+    padding: 4px 6px;
     border-radius: 12px;
     display: inline-flex;
     align-items: center;
