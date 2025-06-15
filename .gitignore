@@ -113,3 +113,7 @@ dmypy.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Test files
+custom_components/dashview/www/test_mdi_*.html
+custom_components/dashview/www/test_mdi_*.js

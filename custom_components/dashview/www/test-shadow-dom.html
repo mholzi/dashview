@@ -55,16 +55,19 @@
                 {
                     name: 'Google Fonts',
                     url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap',
+                    type: 'link',
                     critical: true
                 },
                 {
                     name: 'Material Design Icons',
                     url: 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css',
+                    type: 'link',
                     critical: true
                 },
                 {
                     name: 'Main Stylesheet', 
                     url: 'http://localhost:8000/style.css',
+                    type: 'inline',
                     critical: true
                 }
             ];
@@ -72,23 +75,32 @@
             for (const stylesheet of stylesheets) {
                 try {
                     addStatus(`Loading ${stylesheet.name}...`);
-                    
-                    const response = await fetch(stylesheet.url);
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch ${stylesheet.name}: ${response.status} ${response.statusText}`);
+
+                    if (stylesheet.type === 'link') {
+                        // Fixed approach: Use a <link> element for external stylesheets with relative assets
+                        const linkElement = document.createElement('link');
+                        linkElement.setAttribute('rel', 'stylesheet');
+                        linkElement.setAttribute('href', stylesheet.url);
+                        linkElement.setAttribute('data-source', stylesheet.name);
+                        shadow.insertBefore(linkElement, shadow.firstChild);
+                        addStatus(`${stylesheet.name} linked successfully`, 'success');
+                    } else {
+                        // Inline approach for local CSS
+                        const response = await fetch(stylesheet.url);
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch ${stylesheet.name}: ${response.status} ${response.statusText}`);
+                        }
+                        
+                        const cssText = await response.text();
+                        
+                        const styleElement = document.createElement('style');
+                        styleElement.setAttribute('data-source', stylesheet.name);
+                        styleElement.textContent = cssText;
+                        
+                        shadow.insertBefore(styleElement, shadow.firstChild);
+                        
+                        addStatus(`${stylesheet.name} loaded successfully (${cssText.length} characters)`, 'success');
                     }
-                    
-                    const cssText = await response.text();
-                    
-                    // Create style element and inject CSS
-                    const styleElement = document.createElement('style');
-                    styleElement.setAttribute('data-source', stylesheet.name);
-                    styleElement.textContent = cssText;
-                    
-                    // Insert at the beginning of shadow root to ensure proper cascade
-                    shadow.insertBefore(styleElement, shadow.firstChild);
-                    
-                    addStatus(`${stylesheet.name} loaded successfully (${cssText.length} characters)`, 'success');
                     
                 } catch (error) {
                     addStatus(`Failed to load ${stylesheet.name}: ${error.message}`, 'error');
@@ -105,6 +117,24 @@
                                 .dashboard-container { max-width: 500px; margin: 0 auto; padding: 12px; }
                                 .placeholder { background: #f0f0f0; padding: 16px; margin: 8px 0; border-radius: 8px; }
                                 .info-card { background: #fff; padding: 16px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; }
+                            `;
+                        } else if (stylesheet.name === 'Material Design Icons') {
+                            // Provide fallback icons using Unicode symbols
+                            fallbackStyle.textContent = `
+                                .mdi::before {
+                                    display: inline-block;
+                                    font-style: normal;
+                                    font-variant: normal;
+                                    text-rendering: auto;
+                                    line-height: 1;
+                                    font-family: system-ui, -apple-system, sans-serif;
+                                }
+                                .mdi-home::before { content: "🏠"; }
+                                .mdi-security::before { content: "🔒"; }
+                                .mdi-lightbulb::before { content: "💡"; }
+                                .mdi-music::before { content: "🎵"; }
+                                .mdi-cog::before { content: "⚙️"; }
+                                .mdi-devices::before { content: "📱"; }
                             `;
                         }
                         
