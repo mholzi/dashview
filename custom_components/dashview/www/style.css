@@ -315,11 +315,22 @@ h3 {
 }
 
 /* --- Train Departure Cards --- */
+.train-departures-section {
+    margin: 16px 0;
+}
+
+.train-departures-section h4 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin: 0 0 12px 0;
+    padding: 0 4px;
+}
+
 .train-departures-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin: 16px 0;
 }
 
 .train-departure-card {
