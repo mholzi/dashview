@@ -687,11 +687,11 @@ h3 {
     display: flex;
     width: 85px;
     min-width: 85px;
-    background: var(--gray800);
+    background: #dddddd;
     border-radius: 10px;
     padding: 8px;
     flex-direction: column;
-    color: var(--gray000);
+    color: var(--gray800);
     text-align: center;
     cursor: pointer;
     transition: opacity 0.2s ease;
@@ -704,14 +704,14 @@ h3 {
 .pollen-name {
     font-size: 12px;
     font-weight: bold;
-    color: var(--gray000);
+    color: var(--gray800);
     text-align: center;
     margin-bottom: 4px;
 }
 
 .pollen-state {
     font-size: 10px;
-    color: var(--gray000);
+    color: var(--gray800);
     text-align: center;
 }
 
