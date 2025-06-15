@@ -93,6 +93,9 @@ class DashviewPanel extends HTMLElement {
     
     // Update Info Card
     this.updateInfoCard(shadow);
+    
+    // Update Weather Components
+    this.updateWeatherComponents(shadow);
   }
 
   // Method to check if it's a weekday
@@ -569,6 +572,185 @@ class DashviewPanel extends HTMLElement {
             }
         }
     });
+  }
+  
+  // Method to update weather components
+  updateWeatherComponents(shadow) {
+    if (!this._hass) return;
+    
+    const weatherState = this._hass.states['weather.forecast_home'];
+    if (!weatherState) return;
+
+    // Update current weather card
+    this.updateCurrentWeather(shadow, weatherState);
+    
+    // Update hourly forecast
+    this.updateHourlyForecast(shadow, weatherState);
+    
+    // Initialize daily forecast tabs
+    this.initializeDailyForecast(shadow, weatherState);
+  }
+
+  // Method to update current weather display
+  updateCurrentWeather(shadow, weatherState) {
+    const iconElement = shadow.getElementById('current-weather-icon');
+    const tempElement = shadow.getElementById('current-temperature');
+    const conditionElement = shadow.getElementById('current-condition');
+    const feelsLikeElement = shadow.getElementById('feels-like-temp');
+    const humidityElement = shadow.getElementById('humidity');
+    const windElement = shadow.getElementById('wind-speed');
+
+    if (iconElement && weatherState.state) {
+      iconElement.src = `/local/weather_icons/${weatherState.state}.svg`;
+      iconElement.alt = weatherState.state;
+    }
+
+    if (tempElement && weatherState.attributes.temperature) {
+      tempElement.textContent = `${Math.round(weatherState.attributes.temperature)}°C`;
+    }
+
+    if (conditionElement) {
+      conditionElement.textContent = this.translateWeatherCondition(weatherState.state);
+    }
+
+    if (feelsLikeElement && weatherState.attributes.apparent_temperature) {
+      feelsLikeElement.textContent = `${Math.round(weatherState.attributes.apparent_temperature)}°C`;
+    }
+
+    if (humidityElement && weatherState.attributes.humidity) {
+      humidityElement.textContent = `${weatherState.attributes.humidity}%`;
+    }
+
+    if (windElement && weatherState.attributes.wind_speed) {
+      windElement.textContent = `${Math.round(weatherState.attributes.wind_speed)} km/h`;
+    }
+  }
+
+  // Method to update hourly forecast
+  updateHourlyForecast(shadow, weatherState) {
+    const container = shadow.getElementById('hourly-forecast');
+    if (!container || !weatherState.attributes.forecast) return;
+
+    container.innerHTML = '';
+    
+    // Show next 8 hours of forecast
+    const hourlyData = weatherState.attributes.forecast.slice(0, 8);
+    
+    hourlyData.forEach(forecast => {
+      const hourlyItem = document.createElement('div');
+      hourlyItem.className = 'hourly-item';
+      
+      const date = new Date(forecast.datetime);
+      const timeString = date.getHours().toString().padStart(2, '0') + ':00';
+      
+      hourlyItem.innerHTML = `
+        <div class="hourly-time">${timeString}</div>
+        <div class="hourly-icon">
+          <img src="/local/weather_icons/${forecast.condition}.svg" alt="${forecast.condition}" width="32" height="32">
+        </div>
+        <div class="hourly-temp">${Math.round(forecast.temperature)}°</div>
+      `;
+      
+      container.appendChild(hourlyItem);
+    });
+  }
+
+  // Method to initialize daily forecast tabs
+  initializeDailyForecast(shadow, weatherState) {
+    const tabs = shadow.querySelectorAll('.forecast-tab');
+    const content = shadow.getElementById('daily-forecast-content');
+    
+    if (!tabs.length || !content || !weatherState.attributes.forecast) return;
+
+    // Add click handlers to tabs
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        const dayIndex = parseInt(tab.dataset.day);
+        this.showDailyForecast(content, weatherState, dayIndex);
+      });
+    });
+
+    // Show today's forecast by default
+    this.showDailyForecast(content, weatherState, 0);
+  }
+
+  // Method to show daily forecast for a specific day
+  showDailyForecast(container, weatherState, dayIndex) {
+    if (!weatherState.attributes.forecast) return;
+
+    // Get forecast for the specified day
+    const dailyForecast = this.getDailyForecast(weatherState.attributes.forecast, dayIndex);
+    
+    if (!dailyForecast) {
+      container.innerHTML = '<div>Keine Daten verfügbar</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="daily-forecast">
+        <div class="daily-icon">
+          <img src="/local/weather_icons/${dailyForecast.condition}.svg" alt="${dailyForecast.condition}">
+        </div>
+        <div class="daily-info">
+          <div class="daily-condition">${this.translateWeatherCondition(dailyForecast.condition)}</div>
+          <div class="daily-temps">
+            <span class="daily-high">${Math.round(dailyForecast.temperature)}°C</span>
+            <span class="daily-low">${dailyForecast.templow ? Math.round(dailyForecast.templow) + '°C' : ''}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Helper method to get daily forecast data
+  getDailyForecast(forecastData, dayIndex) {
+    if (!forecastData || dayIndex < 0) return null;
+
+    const now = new Date();
+    const targetDate = new Date(now);
+    targetDate.setDate(now.getDate() + dayIndex);
+    targetDate.setHours(12, 0, 0, 0); // Use noon time for daily forecast
+
+    // Find the forecast closest to noon of the target day
+    let closestForecast = null;
+    let minTimeDiff = Infinity;
+
+    forecastData.forEach(forecast => {
+      const forecastDate = new Date(forecast.datetime);
+      const timeDiff = Math.abs(forecastDate.getTime() - targetDate.getTime());
+      
+      if (timeDiff < minTimeDiff) {
+        minTimeDiff = timeDiff;
+        closestForecast = forecast;
+      }
+    });
+
+    return closestForecast;
+  }
+
+  // Helper method to translate weather conditions to German
+  translateWeatherCondition(condition) {
+    const translations = {
+      'clear-night': 'Klare Nacht',
+      'cloudy': 'Bewölkt',
+      'fog': 'Nebel',
+      'hail': 'Hagel',
+      'lightning': 'Gewitter',
+      'lightning-rainy': 'Gewitter mit Regen',
+      'partlycloudy': 'Teilweise bewölkt',
+      'pouring': 'Stark regnerisch',
+      'rainy': 'Regnerisch',
+      'snowy': 'Schnee',
+      'snowy-rainy': 'Schneeregen',
+      'sunny': 'Sonnig',
+      'windy': 'Windig',
+      'windy-variant': 'Windig'
+    };
+    
+    return translations[condition] || condition;
   }
   
   reinitializePopupContent(popup) {
