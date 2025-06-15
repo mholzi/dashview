@@ -1885,8 +1885,8 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load header updates configuration file - status: ${headerUpdatesResponse.status}`);
         this._headerUpdatesConfig = {};
-
       }
+      } // Close the !useConsolidatedConfig block
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
