@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DashView</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/local/dashview/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <h3>Home</h3>
+        
+        <div class="header-grid">
+            <div data-template="kiosk-button"></div>
+            <div class="weather-person-stack" data-template="weather-button"></div>
+            <div data-template="person-button"></div>
+        </div>
+        <div class="placeholder">Room Icons (Header)</div>
+        <div class="placeholder">Alarm</div>
+        <div class="placeholder">Scene Buttons</div>
+        <div class="placeholder">Header Updates</div>
+        <div class="placeholder">Info/Conditional Text</div>
+        <div class="placeholder">Train Departures</div>
+        <div class="placeholder">Window/Weather Notifications</div>
+        <div class="placeholder">DWD Warning</div>
+        <div class="placeholder">Erdgeschoss Floor Tab</div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-button mdi mdi-home" data-hash="#home"></button> <!-- Added home button -->
+        <button class="nav-button mdi mdi-security" data-hash="#security"></button>
+        <button class="nav-button mdi mdi-calendar" data-hash="#calendar"></button>
+        <button class="nav-button mdi mdi-music" data-hash="#music"></button>
+        <button class="nav-button mdi mdi-cog" data-hash="#admin"></button> <!-- Changed icon and hash -->
+    </nav>
+
+    <div id="weather-popup" class="popup">
+        <div class="popup-content">
+            <span class="popup-close">&times;</span>
+            <h3>Wetter</h3>
+            <div class="placeholder">DWD Warning</div>
+            <div class="placeholder">Weather Forecast Card</div>
+            <div class="placeholder">Hourly Forecast Horizontal Scroll</div>
+            <div class="placeholder">Today/Tomorrow Swipe Card</div>
+            <div class="placeholder">Pollen Card</div>
+        </div>
+    </div>
+    
+    <div id="security-popup" class="popup">
+        <div class="popup-content">
+            <span class="popup-close">&times;</span>
+            <h3>Sicherheit</h3>
+            <div class="placeholder">Motion / Windows / Smoke Detectors</div>
+            <div class="placeholder">Alarm Panel Card</div>
+            
+            <div class="tabs-container" style="margin-top: 20px;">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-target="fenster-tab">Fenster</button>
+                    <button class="tab-button" data-target="bewegung-tab">Bewegung</button>
+                    <button class="tab-button" data-target="temperatur-tab">Temperatur</button>
+                </div>
+                <div id="fenster-tab" class="tab-content active">
+                    <h4>Offene Fenster</h4>
+                    <div class="placeholder">List of open windows...</div>
+                    <h4>Geschlossene Fenster</h4>
+                    <div class="placeholder">List of closed windows...</div>
+                </div>
+                <div id="bewegung-tab" class="tab-content">
+                    <h4>Räume mit Bewegung</h4>
+                    <div class="placeholder">List of rooms with motion...</div>
+                    <h4>Räume ohne Bewegung</h4>
+                    <div class="placeholder">List of rooms without motion...</div>
+                </div>
+                 <div id="temperatur-tab" class="tab-content">
+                    <h4>Temperaturen</h4>
+                    <div class="placeholder">List of temperatures...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="settings-popup" class="popup">
+        <div class="popup-content">
+            <span class="popup-close">&times;</span>
+            <h3>Einstellungen</h3>
+            <div class="placeholder">Guest Mode Toggle</div>
+
+            <div class="tabs-container" style="margin-top: 20px;">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-target="auto-tab">Automationen</button>
+                    <button class="tab-button" data-target="wifi-tab">Wifi</button>
+                </div>
+                <div id="auto-tab" class="tab-content active">
+                    <div class="placeholder">Kiosk Mode</div>
+                    <div class="placeholder">Rollo abends</div>
+                    <div class="placeholder">Rollo morgens</div>
+                    <div class="placeholder">Licht-Effekt</div>
+                </div>
+                <div id="wifi-tab" class="tab-content">
+                    <div class="placeholder-grid">
+                        <div class="placeholder">Wifi Connected Status</div>
+                        <div class="placeholder">Connected Devices</div>
+                        <div class="placeholder">Last Update</div>
+                    </div>
+                    <div class="placeholder" style="margin-top: 12px;">Speedtest Chart</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="calendar-popup" class="popup">
+        <div class="popup-content">
+            <span class="popup-close">&times;</span>
+            <h3>Kalender</h3>
+            <div class="placeholder">Week Planner Card</div>
+        </div>
+    </div>
+
+    <div id="music-popup" class="popup">
+        <div class="popup-content">
+            <span class="popup-close">&times;</span>
+            <h3>Medien</h3>
+            <div class="placeholder">Music Tabs</div>
+        </div>
+    </div>
+    
+    <div id="buero-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Büro</h3><div class="placeholder">Room Content for Büro</div></div></div>
+    <div id="wohnzimmer-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Wohnzimmer</h3><div class="placeholder">Room Content for Wohnzimmer</div></div></div>
+    <div id="kueche-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Küche</h3><div class="placeholder">Room Content for Küche</div></div></div>
+    <div id="kinderzimmer-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Kinderzimmer</h3><div class="placeholder">Room Content for Kinderzimmer</div></div></div>
+    <div id="gaesteklo-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Gästeklo</h3><div class="placeholder">Room Content for Gästeklo</div></div></div>
+    <div id="eingang-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Eingang</h3><div class="placeholder">Room Content for Eingang</div></div></div>
+    <div id="aupair-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Aupair</h3><div class="placeholder">Room Content for Aupair</div></div></div>
+    <div id="elternbereich-popup" class="popup"><div class="popup-content"><span class="popup-close">&times;</span><h3>Elternbereich</h3><div class="placeholder">Room Content for Elternbereich</div></div></div>
+    <script src="/local/dashview/script.js"></script>
+</body>
+</html>
