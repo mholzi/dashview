@@ -71,27 +71,17 @@
         <div class="popup-content">
             <span class="popup-close">&times;</span>
             <h3><img src="/local/weather_icons/sunny.svg" alt="Weather" width="24" height="24" style="vertical-align: middle; margin-right: 8px;">Wetter</h3>
-            <div class="placeholder">DWD Warning</div>
+            <div class="placeholder" style="margin-bottom: 12px;">DWD Warning</div>
             <!-- Weather Forecast Card -->
             <div class="weather-forecast-card">
-                <div class="current-weather">
-                    <div class="weather-icon">
-                        <img id="current-weather-icon" src="" alt="Weather" width="60" height="60">
+                <div class="daily-forecast">
+                    <div class="daily-icon">
+                        <img id="current-weather-icon" src="" alt="Weather" width="120" height="120">
                     </div>
-                    <div class="weather-info">
-                        <div class="temperature" id="current-temperature">--°C</div>
-                        <div class="condition" id="current-condition">--</div>
-                        <div class="feels-like">Gefühlt <span id="feels-like-temp">--°C</span></div>
-                    </div>
-                    <div class="weather-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Luftfeuchtigkeit</span>
-                            <span class="detail-value" id="humidity">--%</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Wind</span>
-                            <span class="detail-value" id="wind-speed">-- km/h</span>
-                        </div>
+                    <div class="daily-info">
+                        <div class="daily-title">Aktuell</div>
+                        <div class="daily-temp" id="current-temperature">--°C</div>
+                        <div class="daily-condition" id="current-condition">--</div>
                     </div>
                 </div>
             </div>
