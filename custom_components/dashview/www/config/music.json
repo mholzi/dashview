@@ -1,0 +1,52 @@
+{
+  "music_rooms": [
+    {
+      "id": "musik_buero",
+      "label": "Büro",
+      "icon": "mdi:desk",
+      "room": "Büro"
+    },
+    {
+      "id": "musik_eltern",
+      "label": "Bad",
+      "icon": "mdi:shower",
+      "room": "Eltern"
+    },
+    {
+      "id": "musik_wohnzimmer",
+      "label": "Wohnzimmer",
+      "icon": "mdi:sofa",
+      "room": "Wohnzimmer"
+    }
+  ],
+  "media_players": {
+    "Büro": {
+      "entity": "media_player.echo_buero",
+      "room_name": "Büro"
+    },
+    "Eltern": {
+      "entity": "media_player.echo_bad",
+      "room_name": "Bad"
+    },
+    "Wohnzimmer": {
+      "entity": "media_player.unnamed_room",
+      "room_name": "Esszimmer",
+      "entity2": "media_player.kuche",
+      "room_name2": "Küche"
+    }
+  },
+  "media_presets": [
+    {
+      "name": "Dinner Jazz",
+      "media_content_id": "spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+    },
+    {
+      "name": "Happy Hits",
+      "media_content_id": "spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
+    },
+    {
+      "name": "Karneval",
+      "media_content_id": "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
+    }
+  ]
+}

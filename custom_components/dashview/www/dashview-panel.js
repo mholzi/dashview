@@ -5,6 +5,7 @@ class DashviewPanel extends HTMLElement {
     this._contentReady = false;
     this._floorsConfig = {};
     this._roomsConfig = {};
+    this._musicConfig = {};
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -100,6 +101,11 @@ class DashviewPanel extends HTMLElement {
     // Update Weather Components
     this.updateWeatherComponents(shadow);
     
+    // Update Music Popup
+    this.updateMusicPopup(shadow);
+    
+    // Update Music Player States
+    this.updateMusicPlayerStates(shadow);
 
     // Update Pollen Card
     this.updatePollenCard(shadow);
@@ -625,9 +631,15 @@ class DashviewPanel extends HTMLElement {
             this.saveRoomsConfiguration();
         }
 
+
+        const saveMusicBtn = e.target.closest('#save-music-config');
+        if (saveMusicBtn) {
+            this.saveMusicConfiguration();
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
+
         }
     });
   }
@@ -933,9 +945,10 @@ class DashviewPanel extends HTMLElement {
   // Load configuration from JSON files
   async loadConfiguration() {
     try {
-      const [floorsResponse, roomsResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json')
+        fetch('/local/dashview/config/rooms.json'),
+        fetch('/local/dashview/config/music.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -946,10 +959,19 @@ class DashviewPanel extends HTMLElement {
         this._floorsConfig = {};
         this._roomsConfig = {};
       }
+
+      // Load music configuration separately as it's optional
+      if (musicResponse.ok) {
+        this._musicConfig = await musicResponse.json();
+      } else {
+        console.warn('Could not load music configuration file');
+        this._musicConfig = {};
+      }
     } catch (error) {
       console.error('Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
+      this._musicConfig = {};
     }
   }
 
@@ -1026,15 +1048,17 @@ class DashviewPanel extends HTMLElement {
     const statusElement = shadow.getElementById('config-status');
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
+    const musicTextarea = shadow.getElementById('music-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json')
+        fetch('/local/dashview/config/rooms.json'),
+        fetch('/local/dashview/config/music.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1044,7 +1068,14 @@ class DashviewPanel extends HTMLElement {
         floorsTextarea.value = JSON.stringify(floorsConfig, null, 2);
         roomsTextarea.value = JSON.stringify(roomsConfig, null, 2);
 
-        statusElement.textContent = '✓ Configuration loaded successfully';
+        // Load music configuration if available
+        if (musicResponse.ok && musicTextarea) {
+          const musicConfig = await musicResponse.json();
+          musicTextarea.value = JSON.stringify(musicConfig, null, 2);
+          statusElement.textContent = '✓ All configurations loaded successfully';
+        } else {
+          statusElement.textContent = '✓ Floor and room configurations loaded successfully (music config optional)';
+        }
         statusElement.style.background = 'var(--green)';
       } else {
         throw new Error('Could not load configuration files');
@@ -1116,6 +1147,322 @@ class DashviewPanel extends HTMLElement {
       statusElement.style.background = 'var(--red)';
     }
   }
+
+
+  // Save music configuration
+  async saveMusicConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const musicTextarea = shadow.getElementById('music-config');
+
+    if (!statusElement || !musicTextarea) return;
+
+    try {
+      const configData = JSON.parse(musicTextarea.value);
+      
+      // Validate structure
+      if (!configData.music_rooms || !configData.media_players || !configData.media_presets) {
+        throw new Error('Invalid music configuration structure. Must include music_rooms, media_players, and media_presets.');
+      }
+
+      statusElement.textContent = '✓ Music configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for use in the music popup
+      this._musicConfig = configData;
+      
+      // Update the music popup with the new configuration
+      const shadow = this.shadowRoot;
+      this.updateMusicPopup(shadow);
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving music config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Generate music popup content based on configuration
+  generateMusicPopupContent() {
+    if (!this._musicConfig || !this._musicConfig.music_rooms) {
+      return '<div class="placeholder">Music configuration not loaded</div>';
+    }
+
+    const { music_rooms, media_players, media_presets } = this._musicConfig;
+    
+    let html = `
+      <div class="music-tabs-container">
+        <div class="music-tab-header">
+          <h4>Musik</h4>
+          <div class="music-tab-buttons">
+    `;
+
+    // Generate tab buttons
+    music_rooms.forEach((room, index) => {
+      html += `
+        <button class="music-tab-button ${index === 0 ? 'active' : ''}" 
+                data-room-id="${room.id}" 
+                data-room="${room.room}">
+          <i class="${room.icon}"></i>
+          <span>${room.label}</span>
+        </button>
+      `;
+    });
+
+    html += `
+          </div>
+        </div>
+        <div class="music-tab-content">
+    `;
+
+    // Generate tab content for each room
+    music_rooms.forEach((room, index) => {
+      const mediaPlayer = media_players[room.room];
+      if (mediaPlayer) {
+        html += `
+          <div class="music-room-content ${index === 0 ? 'active' : ''}" 
+               data-room-id="${room.id}">
+            <div class="music-presets">
+        `;
+
+        // Add preset buttons
+        media_presets.forEach(preset => {
+          html += `
+            <button class="music-preset-button" 
+                    data-media-player="${mediaPlayer.entity}"
+                    data-content-id="${preset.media_content_id}">
+              ${preset.name}
+            </button>
+          `;
+        });
+
+        html += `
+            </div>
+            <div class="music-controls">
+              <div class="music-player-info" data-entity="${mediaPlayer.entity}">
+                <div class="music-title">No media playing</div>
+                <div class="music-artist"></div>
+              </div>
+              <div class="music-control-buttons">
+                <button class="music-control-btn" data-action="previous" data-entity="${mediaPlayer.entity}">
+                  <i class="mdi mdi-skip-backward"></i>
+                </button>
+                <button class="music-control-btn play-pause" data-action="play_pause" data-entity="${mediaPlayer.entity}">
+                  <i class="mdi mdi-play"></i>
+                </button>
+                <button class="music-control-btn" data-action="next" data-entity="${mediaPlayer.entity}">
+                  <i class="mdi mdi-skip-forward"></i>
+                </button>
+              </div>
+              <div class="music-volume-control">
+                <span class="volume-label">${mediaPlayer.room_name}</span>
+                <input type="range" class="volume-slider" 
+                       data-entity="${mediaPlayer.entity}" 
+                       min="0" max="100" value="50">
+                <span class="volume-value">50%</span>
+              </div>
+        `;
+
+        // Add second media player if exists
+        if (mediaPlayer.entity2) {
+          html += `
+              <div class="music-volume-control">
+                <span class="volume-label">${mediaPlayer.room_name2}</span>
+                <input type="range" class="volume-slider" 
+                       data-entity="${mediaPlayer.entity2}" 
+                       min="0" max="100" value="50">
+                <span class="volume-value">50%</span>
+              </div>
+          `;
+        }
+
+        html += `
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    return html;
+  }
+
+  // Update music popup with configuration
+  updateMusicPopup(shadow) {
+    const musicPopup = shadow.getElementById('music-popup');
+    if (musicPopup) {
+      const placeholderDiv = musicPopup.querySelector('.placeholder');
+      if (placeholderDiv) {
+        // Load configuration if not already loaded
+        if (!this._musicConfig || Object.keys(this._musicConfig).length === 0) {
+          this.loadConfiguration().then(() => {
+            placeholderDiv.innerHTML = this.generateMusicPopupContent();
+            this.setupMusicControls(musicPopup);
+          });
+        } else {
+          placeholderDiv.innerHTML = this.generateMusicPopupContent();
+          this.setupMusicControls(musicPopup);
+        }
+      }
+    }
+  }
+
+  // Setup event listeners for music controls
+  setupMusicControls(musicPopup) {
+    // Tab switching
+    const tabButtons = musicPopup.querySelectorAll('.music-tab-button');
+    const tabContents = musicPopup.querySelectorAll('.music-room-content');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const roomId = button.dataset.roomId;
+        
+        // Update active tab button
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Update active tab content
+        tabContents.forEach(content => {
+          content.classList.toggle('active', content.dataset.roomId === roomId);
+        });
+      });
+    });
+
+    // Preset buttons
+    const presetButtons = musicPopup.querySelectorAll('.music-preset-button');
+    presetButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const mediaPlayer = button.dataset.mediaPlayer;
+        const contentId = button.dataset.contentId;
+        
+        if (this._hass) {
+          this._hass.callService('media_player', 'play_media', {
+            entity_id: mediaPlayer,
+            media_content_id: contentId,
+            media_content_type: 'music'
+          });
+        }
+      });
+    });
+
+    // Control buttons
+    const controlButtons = musicPopup.querySelectorAll('.music-control-btn');
+    controlButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.action;
+        const entity = button.dataset.entity;
+        
+        if (this._hass) {
+          switch(action) {
+            case 'play_pause':
+              this._hass.callService('media_player', 'media_play_pause', {
+                entity_id: entity
+              });
+              break;
+            case 'previous':
+              this._hass.callService('media_player', 'media_previous_track', {
+                entity_id: entity
+              });
+              break;
+            case 'next':
+              this._hass.callService('media_player', 'media_next_track', {
+                entity_id: entity
+              });
+              break;
+          }
+        }
+      });
+    });
+
+    // Volume sliders
+    const volumeSliders = musicPopup.querySelectorAll('.volume-slider');
+    volumeSliders.forEach(slider => {
+      slider.addEventListener('input', () => {
+        const entity = slider.dataset.entity;
+        const volume = slider.value / 100;
+        const valueSpan = slider.parentElement.querySelector('.volume-value');
+        
+        valueSpan.textContent = slider.value + '%';
+        
+        if (this._hass) {
+          this._hass.callService('media_player', 'volume_set', {
+            entity_id: entity,
+            volume_level: volume
+          });
+        }
+      });
+    });
+  }
+
+  // Update music player states in the popup
+  updateMusicPlayerStates(shadow) {
+    if (!this._hass || !this._musicConfig) return;
+    
+    const musicPopup = shadow.getElementById('music-popup');
+    if (!musicPopup) return;
+
+    const { music_rooms, media_players } = this._musicConfig;
+    
+    music_rooms.forEach(room => {
+      const mediaPlayer = media_players[room.room];
+      if (mediaPlayer) {
+        // Update media info
+        const playerInfo = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity}"]`);
+        if (playerInfo && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const titleElement = playerInfo.querySelector('.music-title');
+          const artistElement = playerInfo.querySelector('.music-artist');
+          
+          if (titleElement) {
+            titleElement.textContent = state.attributes.media_title || 'No media playing';
+          }
+          if (artistElement) {
+            artistElement.textContent = state.attributes.media_artist || '';
+          }
+        }
+
+        // Update play/pause button
+        const playPauseBtn = musicPopup.querySelector(`[data-action="play_pause"][data-entity="${mediaPlayer.entity}"]`);
+        if (playPauseBtn && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const icon = playPauseBtn.querySelector('i');
+          if (icon) {
+            icon.className = state.state === 'playing' ? 'mdi mdi-pause' : 'mdi mdi-play';
+          }
+        }
+
+        // Update volume slider
+        const volumeSlider = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity}"].volume-slider`);
+        if (volumeSlider && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const volumeLevel = state.attributes.volume_level || 0;
+          volumeSlider.value = Math.round(volumeLevel * 100);
+          
+          const valueSpan = volumeSlider.parentElement.querySelector('.volume-value');
+          if (valueSpan) {
+            valueSpan.textContent = Math.round(volumeLevel * 100) + '%';
+          }
+        }
+
+        // Update second media player if exists
+        if (mediaPlayer.entity2) {
+          const volumeSlider2 = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity2}"].volume-slider`);
+          if (volumeSlider2 && this._hass.states[mediaPlayer.entity2]) {
+            const state = this._hass.states[mediaPlayer.entity2];
+            const volumeLevel = state.attributes.volume_level || 0;
+            volumeSlider2.value = Math.round(volumeLevel * 100);
+            
+            const valueSpan = volumeSlider2.parentElement.querySelector('.volume-value');
+            if (valueSpan) {
+              valueSpan.textContent = Math.round(volumeLevel * 100) + '%';
+            }
+          }
+        }
+      }
+    });
 
   // Load weather entity configuration for admin interface
   async loadWeatherEntityConfiguration() {
@@ -1245,6 +1592,7 @@ class DashviewPanel extends HTMLElement {
       .filter(entityId => entityId.startsWith('weather.'));
     
     return weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
+
   }
 }
 
