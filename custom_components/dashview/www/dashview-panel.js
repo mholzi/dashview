@@ -4114,7 +4114,10 @@ class DashviewPanel extends HTMLElement {
           if (coverElement) {
             const entityPicture = state.attributes.entity_picture;
             if (entityPicture && state.attributes.media_title) {
-              coverElement.src = entityPicture;
+              // Only update src if it has changed to prevent flickering
+              if (coverElement.src !== entityPicture) {
+                coverElement.src = entityPicture;
+              }
               coverElement.style.display = 'block';
             } else {
               coverElement.style.display = 'none';
@@ -4396,7 +4399,10 @@ class DashviewPanel extends HTMLElement {
           if (coverElement) {
             const entityPicture = state.attributes.entity_picture;
             if (entityPicture && state.attributes.media_title) {
-              coverElement.src = entityPicture;
+              // Only update src if it has changed to prevent flickering
+              if (coverElement.src !== entityPicture) {
+                coverElement.src = entityPicture;
+              }
               coverElement.style.display = 'block';
             } else {
               coverElement.style.display = 'none';
