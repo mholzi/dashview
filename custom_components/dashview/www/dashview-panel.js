@@ -1102,6 +1102,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'weather-tab') {
                     setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
                 }
+                // Load music configuration when music tab is activated
+                if (targetId === 'music-tab') {
+                    setTimeout(() => this.loadMusicAdminConfiguration(), 100);
+                }
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
@@ -1246,6 +1250,30 @@ class DashviewPanel extends HTMLElement {
     });
 
     return buttonsHTML || '<div class="no-activity">No active rooms</div>';
+  }
+
+  // Load music configuration for admin interface
+  async loadMusicAdminConfiguration() {
+    const shadow = this.shadowRoot;
+    const musicTextarea = shadow.getElementById('music-config');
+
+    if (!musicTextarea) return;
+
+    try {
+      const musicResponse = await fetch('/local/dashview/config/music.json');
+
+      if (musicResponse.ok) {
+        const musicConfig = await musicResponse.json();
+        musicTextarea.value = JSON.stringify(musicConfig, null, 2);
+        musicTextarea.placeholder = 'Music configuration loaded successfully';
+      } else {
+        throw new Error(`Failed to load music.json: ${musicResponse.status} ${musicResponse.statusText}`);
+      }
+    } catch (error) {
+      console.error('[DashView] Error loading music configuration for admin:', error);
+      musicTextarea.placeholder = 'Error loading music configuration: ' + error.message;
+      musicTextarea.value = '';
+    }
   }
 
   // Load configuration for admin interface
