@@ -981,7 +981,7 @@ class DashviewPanel extends HTMLElement {
       await this.loadConfiguration();
     }
 
-    const container = shadow.getElementById('header-buttons');
+    const container = shadow.querySelector('[data-template="header-buttons"]');
     if (!container) return;
 
     // Create button container with scrollable styling
