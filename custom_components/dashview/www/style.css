@@ -414,7 +414,7 @@ h3 {
 
 .info-section {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 6px;
     flex-wrap: wrap;
     justify-content: flex-start;
@@ -443,6 +443,7 @@ h3 {
     color: var(--gray800);
     white-space: normal;
     word-break: break-word;
+    flex: 0 1 auto;
 }
 
 .info-badge {
@@ -454,6 +455,7 @@ h3 {
     align-items: center;
     gap: 4px;
     font-size: 0.9em;
+    flex-shrink: 0;
 }
 
 .info-badge.green {
