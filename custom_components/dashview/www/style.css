@@ -522,7 +522,7 @@ h3 {
 
 /* --- Info Card --- */
 .info-card {
-    background-color: var(--card-background-color);
+    background-color: var(--background);
     border-radius: 20px;
     padding: 8px;
     border: 1px solid var(--gray200);
