@@ -1708,3 +1708,125 @@ h3 {
     opacity: 0.7;
     margin-top: -20px;
 }
+
+/* Alarm Card Styles */
+.alarm-card-container {
+    margin: 8px 0;
+}
+
+.alarm-card-mod {
+    border-radius: 15px;
+    padding: 3px;
+    margin: 35px 8px;
+}
+
+.alarm-button-card {
+    padding: 15px;
+    border-radius: 15px;
+}
+
+.alarm-grid {
+    display: grid;
+    grid-template-areas: 
+        "icon icon"
+        "name controls"
+        "state controls";
+    grid-template-columns: 1fr min-content;
+    grid-template-rows: 1fr min-content min-content;
+    gap: 8px;
+    align-items: center;
+}
+
+.alarm-icon {
+    grid-area: icon;
+    height: 30px;
+    justify-self: start;
+    padding-bottom: 5px;
+    margin-left: -52px;
+}
+
+.alarm-name {
+    grid-area: name;
+    justify-self: start;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.alarm-state {
+    grid-area: state;
+    justify-self: start;
+    text-align: left;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.alarm-controls {
+    grid-area: controls;
+    justify-self: start;
+    justify-content: center;
+}
+
+/* Alarm Panel Styles */
+.alarm-panel-container {
+    margin: 15px 0;
+}
+
+.alarm-panel {
+    background: var(--card-background);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px 0;
+}
+
+.alarm-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.alarm-status-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+}
+
+.alarm-status-text {
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.alarm-controls-panel {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.alarm-mode-button {
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-background);
+    color: var(--primary-text-color);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: capitalize;
+}
+
+.alarm-mode-button:hover {
+    background: var(--hover-background);
+    border-color: var(--accent-color);
+}
+
+.alarm-mode-button.active {
+    background: var(--accent-color);
+    color: var(--accent-text-color);
+    border-color: var(--accent-color);
+}
+
+.alarm-mode-button:active {
+    transform: scale(0.98);
+}

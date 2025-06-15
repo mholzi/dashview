@@ -518,6 +518,12 @@ class DashviewPanel extends HTMLElement {
       // Update Window/Weather Notifications
       this._safeUpdate('window-weather-notifications', () => this.updateWindowWeatherNotifications(shadow));
 
+      // Update Alarm Card
+      this._safeUpdate('alarm-card', () => this.updateAlarmCard(shadow));
+
+      // Update Alarm Panel
+      this._safeUpdate('alarm-panel', () => this.updateAlarmPanel(shadow));
+
       if (this._debugMode) {
         console.log('[DashView] Elements update completed successfully');
       }
@@ -1147,6 +1153,11 @@ class DashviewPanel extends HTMLElement {
             this.saveFloorTabsConfiguration();
         }
 
+        const saveAlarmBtn = e.target.closest('#save-alarm-config');
+        if (saveAlarmBtn) {
+            this.saveAlarmConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -1156,6 +1167,12 @@ class DashviewPanel extends HTMLElement {
         const sceneButton = e.target.closest('.scene-button');
         if (sceneButton) {
             this.handleSceneButtonClick(sceneButton);
+        }
+
+        // Handle alarm mode button clicks
+        const alarmButton = e.target.closest('.alarm-mode-button');
+        if (alarmButton) {
+            this.handleAlarmButtonClick(alarmButton);
         }
     });
   }
@@ -1509,6 +1526,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'scenes-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
                 }
+                // Load admin configuration when alarm tab is activated
+                if (targetId === 'alarm-tab') {
+                    setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
                 // Load admin configuration when room notifications tab is activated
                 if (targetId === 'room-notifications-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
@@ -1573,7 +1594,7 @@ class DashviewPanel extends HTMLElement {
     try {
 
 
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse] = await Promise.all([
 
 
         fetch('/local/dashview/config/floors.json'),
@@ -1587,6 +1608,7 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/other_devices.json'),
         fetch('/local/dashview/config/floor_tabs.json'),
         fetch('/local/dashview/config/window_weather_notifications.json'),
+        fetch('/local/dashview/config/alarm.json'),
 
       ]);
 
@@ -1713,6 +1735,18 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load floor tabs configuration file - status: ${floorTabsResponse.status}`);
         this._floorTabsConfig = {};
+      }
+
+      // Load alarm configuration separately as it's optional
+      if (alarmResponse.ok) {
+        this._alarmConfig = await alarmResponse.json();
+        console.log('[DashView] Alarm configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Alarm config:', this._alarmConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load alarm configuration file - status: ${alarmResponse.status}`);
+        this._alarmConfig = {};
       }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
@@ -2009,13 +2043,14 @@ class DashviewPanel extends HTMLElement {
     const windowWeatherTextarea = shadow.getElementById('window-weather-config');
     const otherDevicesTextarea = shadow.getElementById('other-devices-config');
     const floorTabsTextarea = shadow.getElementById('floor-tabs-config');
+    const alarmTextarea = shadow.getElementById('alarm-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse] = await Promise.all([
 
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
@@ -2024,8 +2059,10 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/covers.json'),
         fetch('/local/dashview/config/scenes.json'),
         fetch('/local/dashview/config/room_notifications.json'),
+        fetch('/local/dashview/config/window_weather_notifications.json'),
         fetch('/local/dashview/config/other_devices.json'),
         fetch('/local/dashview/config/floor_tabs.json'),
+        fetch('/local/dashview/config/alarm.json'),
         fetch('/local/dashview/config/window_weather_notifications.json'),
 
       ]);
@@ -2096,12 +2133,19 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
-        if (configsLoaded === 9) {
+        // Load alarm configuration if available
+        if (alarmResponse.ok && alarmTextarea) {
+          const alarmConfig = await alarmResponse.json();
+          alarmTextarea.value = JSON.stringify(alarmConfig, null, 2);
+          configsLoaded++;
+        }
+
+        if (configsLoaded === 10) {
           statusMessage = '✓ All configurations loaded successfully';
         } else if (configsLoaded >= 3) {
           statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-          statusMessage += ' (music, temperature, covers, scenes, floor tabs, room notifications, window/weather notifications, and other devices configs optional)';
+          statusMessage += ' (music, temperature, covers, scenes, floor tabs, alarm, room notifications, window/weather notifications, and other devices configs optional)';
         }
 
         statusElement.textContent = statusMessage;
@@ -2578,6 +2622,52 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
+  // Save alarm configuration
+  async saveAlarmConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const alarmTextarea = shadow.getElementById('alarm-config');
+
+    if (!statusElement || !alarmTextarea) return;
+
+    try {
+      const configData = JSON.parse(alarmTextarea.value);
+
+      // Validate configuration structure
+      if (!configData.alarm_entity || typeof configData.alarm_entity !== 'string') {
+        throw new Error('Configuration must have an "alarm_entity" string');
+      }
+
+      if (!configData.alarm_name || typeof configData.alarm_name !== 'string') {
+        throw new Error('Configuration must have an "alarm_name" string');
+      }
+
+      if (!configData.conditional_states || !Array.isArray(configData.conditional_states)) {
+        throw new Error('Configuration must have a "conditional_states" array');
+      }
+
+      if (!configData.alarm_modes || !Array.isArray(configData.alarm_modes)) {
+        throw new Error('Configuration must have an "alarm_modes" array');
+      }
+
+      statusElement.textContent = '✓ Alarm configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._alarmConfig = configData;
+      
+      // Update alarm displays
+      if (this._hass) {
+        this.updateAlarmCard(shadow);
+        this.updateAlarmPanel(shadow);
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving alarm config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
   // Handle scene button clicks
   async handleSceneButtonClick(button) {
     if (!this._hass) return;
@@ -2611,6 +2701,36 @@ class DashviewPanel extends HTMLElement {
       
     } catch (error) {
       console.error('[DashView] Error executing scene:', error);
+    }
+  }
+
+  // Handle alarm mode button clicks
+  async handleAlarmButtonClick(button) {
+    if (!this._hass) return;
+
+    const entityId = button.getAttribute('data-entity');
+    const mode = button.getAttribute('data-mode');
+    
+    try {
+      // Add visual feedback
+      button.style.opacity = '0.7';
+      setTimeout(() => button.style.opacity = '1', 200);
+      
+      console.log(`[DashView] Setting alarm mode to "${mode}" for entity "${entityId}"`);
+      
+      // Call the alarm service based on the mode
+      if (mode === 'disarmed') {
+        await this._hass.callService('alarm_control_panel', 'alarm_disarm', { entity_id: entityId });
+      } else if (mode === 'armed_away') {
+        await this._hass.callService('alarm_control_panel', 'alarm_arm_away', { entity_id: entityId });
+      } else if (mode === 'armed_night') {
+        await this._hass.callService('alarm_control_panel', 'alarm_arm_night', { entity_id: entityId });
+      } else if (mode === 'armed_custom_bypass') {
+        await this._hass.callService('alarm_control_panel', 'alarm_arm_custom_bypass', { entity_id: entityId });
+      }
+      
+    } catch (error) {
+      console.error('[DashView] Error setting alarm mode:', error);
     }
   }
 
@@ -4592,6 +4712,126 @@ class DashviewPanel extends HTMLElement {
     this._debugMode = enabled;
     localStorage.setItem('dashview_debug', enabled.toString());
     console.log(`[DashView] Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  // Update alarm card (conditional display for main dashboard)
+  async updateAlarmCard(shadow) {
+    if (!this._alarmConfig || Object.keys(this._alarmConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    if (!this._alarmConfig || !this._hass) return;
+
+    const container = shadow.querySelector('[data-template="alarm-card"]');
+    if (!container) return;
+
+    const alarmEntity = this._hass.states[this._alarmConfig.alarm_entity];
+    if (!alarmEntity) {
+      container.innerHTML = '<div class="loading-message">Alarm entity not found</div>';
+      return;
+    }
+
+    // Check if alarm should be shown (conditional states)
+    const shouldShow = this._alarmConfig.conditional_states.includes(alarmEntity.state);
+    
+    if (!shouldShow) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const alarmHTML = this.generateAlarmCardHTML(alarmEntity);
+    container.innerHTML = alarmHTML;
+  }
+
+  // Update alarm panel (always visible in security popup)
+  async updateAlarmPanel(shadow) {
+    if (!this._alarmConfig || Object.keys(this._alarmConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    if (!this._alarmConfig || !this._hass) return;
+
+    const container = shadow.querySelector('[data-template="alarm-panel"]');
+    if (!container) return;
+
+    const alarmEntity = this._hass.states[this._alarmConfig.alarm_entity];
+    if (!alarmEntity) {
+      container.innerHTML = '<div class="loading-message">Alarm entity not found</div>';
+      return;
+    }
+
+    const alarmHTML = this.generateAlarmPanelHTML(alarmEntity);
+    container.innerHTML = alarmHTML;
+  }
+
+  // Generate HTML for conditional alarm card
+  generateAlarmCardHTML(alarmEntity) {
+    const config = this._alarmConfig;
+    const state = alarmEntity.state;
+    
+    let backgroundColor = config.colors.background_normal;
+    if (state === 'triggered') {
+      backgroundColor = config.colors.background_triggered;
+    } else if (state === 'pending') {
+      backgroundColor = config.colors.background_pending;
+    }
+
+    return `
+      <div class="alarm-card-mod" style="background: ${backgroundColor}; border-radius: 15px; padding: 3px; margin: 35px 8px;">
+        <div class="alarm-button-card" style="background: ${backgroundColor}; padding: 15px; border-radius: 15px;">
+          <div class="alarm-grid">
+            <div class="alarm-icon" style="color: ${config.colors.default}; font-size: 30px;">🛡️</div>
+            <div class="alarm-content">
+              <div class="alarm-name" style="color: ${config.colors.default}; font-size: 14px; font-weight: 500;">${config.alarm_name}</div>
+              <div class="alarm-state" style="color: ${config.colors.default}; font-size: 12px; opacity: 0.7;">${alarmEntity.state}</div>
+            </div>
+            <div class="alarm-controls">
+              ${this.generateAlarmControlsHTML(alarmEntity)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Generate HTML for alarm panel (always visible)
+  generateAlarmPanelHTML(alarmEntity) {
+    const config = this._alarmConfig;
+    const state = alarmEntity.state;
+    
+    return `
+      <div class="alarm-panel">
+        <h4 style="color: var(--primary-text-color); margin-bottom: 15px;">${config.alarm_name}</h4>
+        <div class="alarm-status" style="margin-bottom: 15px;">
+          <div class="alarm-status-icon" style="font-size: 24px; margin-bottom: 8px;">🛡️</div>
+          <div class="alarm-status-text" style="font-size: 16px; color: var(--primary-text-color);">Status: ${state}</div>
+        </div>
+        <div class="alarm-controls-panel">
+          ${this.generateAlarmControlsHTML(alarmEntity)}
+        </div>
+      </div>
+    `;
+  }
+
+  // Generate alarm controls HTML
+  generateAlarmControlsHTML(alarmEntity) {
+    const config = this._alarmConfig;
+    const currentState = alarmEntity.state;
+    
+    return config.alarm_modes.map(mode => {
+      const isActive = currentState === mode;
+      const activeClass = isActive ? ' active' : '';
+      const modeLabel = mode.replace('armed_', '').replace('_', ' ').toUpperCase();
+      
+      return `
+        <button class="alarm-mode-button${activeClass}" 
+                data-entity="${config.alarm_entity}" 
+                data-mode="${mode}"
+                style="margin: 2px; padding: 8px 12px; border: 1px solid #ccc; background: ${isActive ? config.colors.active : 'white'}; color: ${isActive ? 'white' : 'black'}; border-radius: 4px; cursor: pointer;">
+          ${modeLabel}
+        </button>
+      `;
+    }).join('');
   }
 }
 

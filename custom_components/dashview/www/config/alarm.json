@@ -1,0 +1,20 @@
+{
+  "alarm_entity": "alarm_control_panel.home_alarm",
+  "alarm_name": "Hausalarm",
+  "alarm_icon": "mdi:shield-lock",
+  "conditional_states": ["armed_away", "pending", "triggered"],
+  "alarm_modes": [
+    "armed_away",
+    "armed_night", 
+    "armed_custom_bypass",
+    "disarmed"
+  ],
+  "navigation_path": "#alarm",
+  "colors": {
+    "default": "black",
+    "active": "red",
+    "background_normal": "var(--white)",
+    "background_triggered": "var(--active-big)",
+    "background_pending": "rgb(239, 188, 155)"
+  }
+}
