@@ -56,7 +56,25 @@
       },
       "notification_type": "fenster_dach",
       "message": "Fenster im Dachgeschoss schliessen!",
-      "icon": "⚠️"
+      "icon": "⚠️",
+      "detail_override": "Die Aussenfeuchtigkeit ist zu hoch für offene Fenster."
+    },
+    {
+      "id": "keller_lueften",
+      "conditions": {
+        "type": "and",
+        "conditions": [
+          {
+            "type": "state",
+            "entity": "binary_sensor.humidity_keller_high",
+            "state": "on"
+          }
+        ]
+      },
+      "notification_type": "keller",
+      "message": "Keller lüften!",
+      "icon": "⚠️",
+      "detail_override": "Die Aussenfeuchtigkeit ist niedriger als die Innenfeuchtigkeit."
     }
   ]
 }

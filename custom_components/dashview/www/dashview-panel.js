@@ -2561,21 +2561,26 @@ class DashviewPanel extends HTMLElement {
       humidity = parseFloat(humSensor.state).toFixed(0);
     }
 
-    // Generate detail text similar to the original template
-    const tempAbove = this._windowWeatherConfig.global_settings.temp_above;
-    const humAbove = this._windowWeatherConfig.global_settings.hum_above;
-    
-    if (temperature !== 'N/A' && tempAbove !== undefined && parseFloat(temperature) > tempAbove) {
-      detailText += `Temperatur: ${temperature}°C`;
-    }
-    
-    if (humidity !== 'N/A' && humAbove !== undefined && parseFloat(humidity) > humAbove) {
-      if (detailText) detailText += ' - ';
-      detailText += `Luftfeuchtigkeit: ${humidity}%`;
-    }
-    
-    if (!detailText && temperature !== 'N/A' && humidity !== 'N/A') {
-      detailText = `Temperatur: ${temperature}°C, Luftfeuchtigkeit: ${humidity}%`;
+    // Use detail_override if provided, otherwise generate detail text
+    if (notification.detail_override) {
+      detailText = notification.detail_override;
+    } else {
+      // Generate detail text similar to the original template
+      const tempAbove = this._windowWeatherConfig.global_settings.temp_above;
+      const humAbove = this._windowWeatherConfig.global_settings.hum_above;
+      
+      if (temperature !== 'N/A' && tempAbove !== undefined && parseFloat(temperature) > tempAbove) {
+        detailText += `Temperatur: ${temperature}°C`;
+      }
+      
+      if (humidity !== 'N/A' && humAbove !== undefined && parseFloat(humidity) > humAbove) {
+        if (detailText) detailText += ' - ';
+        detailText += `Luftfeuchtigkeit: ${humidity}%`;
+      }
+      
+      if (!detailText && temperature !== 'N/A' && humidity !== 'N/A') {
+        detailText = `Temperatur: ${temperature}°C, Luftfeuchtigkeit: ${humidity}%`;
+      }
     }
 
     return `
