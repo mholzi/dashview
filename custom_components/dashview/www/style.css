@@ -1384,6 +1384,157 @@ h3 {
     margin: 8px 0;
 }
 
+/* Floor Tabs Styles */
+.floor-tabs-wrapper {
+    width: 100%;
+    max-width: 100%;
+}
+
+.floor-gap {
+    height: 12px;
+}
+
+.floor-gap-bottom {
+    height: 70px;
+}
+
+.floor-section {
+    width: 100%;
+}
+
+.floor-content {
+    width: 100%;
+}
+
+.floor-header-layout {
+    display: grid;
+    grid-template-columns: 1fr max-content max-content max-content max-content;
+    grid-template-rows: min-content;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 0 16px;
+}
+
+.floor-title {
+    display: flex;
+    align-items: center;
+    justify-self: start;
+}
+
+.floor-title span {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.floor-tabs-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.floor-tab-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--gray800);
+    color: var(--gray000);
+}
+
+.floor-tab-button.active {
+    background: var(--active-small);
+    color: var(--gray800);
+}
+
+.floor-tab-button:hover {
+    transform: scale(1.05);
+}
+
+.floor-tab-button i {
+    font-size: 22px;
+}
+
+.room-cards-container {
+    width: 100%;
+    padding: 0 16px;
+}
+
+.room-card-grid {
+    gap: 8px;
+}
+
+.floor-swipe-card,
+.room-card,
+.sensor-card {
+    background: var(--card-background-color);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 66px;
+    transition: all 0.2s ease;
+}
+
+.floor-swipe-card:hover,
+.room-card:hover,
+.sensor-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.sensor-card.sensor_big_swipe {
+    background: var(--active-big);
+    color: var(--gray800);
+    font-weight: 500;
+}
+
+.sensor-card.sensor_small_swipe {
+    background: var(--active-small);
+    color: var(--gray800);
+}
+
+.sensor-card-content {
+    text-align: center;
+    width: 100%;
+}
+
+.sensor-name {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.sensor-value {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.sensor-type {
+    font-size: 10px;
+    opacity: 0.5;
+}
+
+.floor-swipe-content,
+.room-card-content {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.loading-message {
+    padding: 20px;
+    text-align: center;
+    color: var(--secondary-text-color);
+    font-style: italic;
 /* Window/Weather Notifications Styles */
 .window-weather-notifications-container {
     margin: 8px 0;

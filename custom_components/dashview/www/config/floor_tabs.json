@@ -1,0 +1,184 @@
+{
+  "floors": [
+    {
+      "id": "erdgeschoss",
+      "room": "EG",
+      "default": "show",
+      "active_tab": 1
+    },
+    {
+      "id": "obergeschoss", 
+      "room": "OG",
+      "default": "hide",
+      "active_tab": 2
+    },
+    {
+      "id": "elternbereich",
+      "room": "Eltern", 
+      "default": "hide",
+      "active_tab": 3
+    },
+    {
+      "id": "keller",
+      "room": "Keller",
+      "default": "hide", 
+      "active_tab": 4
+    }
+  ],
+  "tabs": [
+    {
+      "icon": "mdi:home",
+      "label": "EG", 
+      "target": "erdgeschoss"
+    },
+    {
+      "icon": "mdi:home-floor-1",
+      "label": "OG",
+      "target": "obergeschoss"
+    },
+    {
+      "icon": "mdi:home-roof",
+      "label": "Eltern",
+      "target": "elternbereich"
+    },
+    {
+      "icon": "mdi:stairs-down",
+      "label": "Keller", 
+      "target": "keller"
+    }
+  ],
+  "room_cards": {
+    "Gästeklo": {
+      "grid_template_areas": "'licht1 motion'\n'licht1 temp'\n'gap gap'",
+      "cards": [
+        {
+          "template": "sensor_big_swipe",
+          "grid": "licht1",
+          "entity": "light.licht_gasteklo",
+          "type": "light"
+        },
+        {
+          "template": "sensor_small_swipe", 
+          "grid": "motion",
+          "entity": "binary_sensor.motion_gasteklo_occupancy",
+          "type": "motion"
+        },
+        {
+          "template": "sensor_small_swipe",
+          "grid": "temp", 
+          "entity": "sensor.gasteklo_temperature",
+          "type": "temp"
+        }
+      ]
+    },
+    "Keller": {
+      "grid_template_areas": "'washing licht1'\n'washing dryer'\n'kellerraum raeume'\n'kellerraum raeume'",
+      "cards": [
+        {
+          "template": "sensor_small_swipe",
+          "grid": "licht1",
+          "entity": "light.licht_waschkeller", 
+          "type": "light"
+        },
+        {
+          "template": "sensor_big_swipe",
+          "grid": "washing",
+          "entity": "sensor.waschmaschine_operation_state",
+          "type": "washing"
+        },
+        {
+          "template": "sensor_small_swipe",
+          "grid": "dryer",
+          "entity": "input_boolean.trockner_an",
+          "type": "dryer"
+        },
+        {
+          "template": "floor_swipe",
+          "grid": "raeume", 
+          "entity": "Keller"
+        },
+        {
+          "template": "sensor_small_swipe",
+          "grid": "kellerraum",
+          "entity": "light.keller_buro_licht",
+          "type": "light"
+        }
+      ]
+    },
+    "EG": {
+      "grid_template_areas": "'eingang raeume'\n'garbage raeume'\n'garbage esszimmertuer'\n'sauger dishwasher'",
+      "cards": [
+        {
+          "template": "sensor_small_swipe",
+          "grid": "eingang",
+          "entity": "lock.door_aqara_smart_lock_u200_lock",
+          "type": "door",
+          "closed_entity": "binary_sensor.tuer_eingang"
+        },
+        {
+          "template": "floor_swipe",
+          "grid": "raeume",
+          "entity": "EG"
+        },
+        {
+          "template": "floor_swipe", 
+          "grid": "garbage",
+          "entity": "Muell"
+        },
+        {
+          "template": "sensor_small_swipe",
+          "grid": "esszimmertuer",
+          "entity": "binary_sensor.fenster_terrasse",
+          "type": "window"
+        },
+        {
+          "template": "sensor_small_swipe",
+          "grid": "sauger",
+          "entity": "vacuum.mova_e30_ultra",
+          "type": "hoover"
+        },
+        {
+          "template": "sensor_small_swipe",
+          "grid": "dishwasher",
+          "entity": "sensor.geschirrspuler_operation_state",
+          "type": "dishwasher"
+        }
+      ]
+    },
+    "Eltern": {
+      "grid_template_areas": "'eltern .'\n'eltern .'",
+      "cards": [
+        {
+          "template": "room_card",
+          "grid": "eltern",
+          "entity": "binary_sensor.combined_sensor_schlafzimmer"
+        }
+      ]
+    },
+    "OG": {
+      "grid_template_areas": "'kinder kinderbad'\n'kinder kinderbad'\n'kinderflur aupair'\n'kinderflur aupair'",
+      "cards": [
+        {
+          "template": "room_card",
+          "grid": "kinder", 
+          "entity": "binary_sensor.combined_sensor_kids"
+        },
+        {
+          "template": "room_card",
+          "grid": "kinderbad",
+          "entity": "binary_sensor.combined_sensor_kinderbad"
+        },
+        {
+          "template": "room_card",
+          "grid": "aupair",
+          "entity": "binary_sensor.combined_sensor_aupair"
+        },
+        {
+          "template": "room_card",
+          "grid": "kinderflur",
+          "entity": "binary_sensor.combined_sensor_flur"
+        }
+      ]
+    }
+  }
+}

@@ -14,6 +14,7 @@ class DashviewPanel extends HTMLElement {
     this._roomNotificationsConfig = {};
     this._windowWeatherConfig = {};
     this._otherDevicesConfig = {};
+    this._floorTabsConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._activeMusicTab = null; // Track the currently active music tab
     this._volumeSliderInteraction = new Set(); // Track which volume sliders are being interacted with
@@ -417,6 +418,9 @@ class DashviewPanel extends HTMLElement {
 
       // Update Header Buttons
       this._safeUpdate('header-buttons', () => this.updateHeaderButtons(shadow));
+
+      // Update Floor Tabs
+      this._safeUpdate('floor-tabs', () => this.updateFloorTabs(shadow));
 
       // Update Cover Controls
       this._safeUpdate('cover-controls', () => this.updateCoverControls());
@@ -1059,6 +1063,11 @@ class DashviewPanel extends HTMLElement {
             this.saveOtherDevicesConfiguration();
         }
 
+        const saveFloorTabsBtn = e.target.closest('#save-floor-tabs-config');
+        if (saveFloorTabsBtn) {
+            this.saveFloorTabsConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -1405,7 +1414,9 @@ class DashviewPanel extends HTMLElement {
     console.log('[DashView] Loading configuration files...');
     try {
 
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse] = await Promise.all([
+
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+
 
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
@@ -1413,11 +1424,12 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/temperature.json'),
         fetch('/local/dashview/config/covers.json'),
         fetch('/local/dashview/config/scenes.json'),
-
         fetch('/local/dashview/config/lights.json'),
         fetch('/local/dashview/config/room_notifications.json'),
+        fetch('/local/dashview/config/other_devices.json'),
+        fetch('/local/dashview/config/floor_tabs.json')
         fetch('/local/dashview/config/window_weather_notifications.json'),
-        fetch('/local/dashview/config/other_devices.json')
+
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1532,6 +1544,18 @@ class DashviewPanel extends HTMLElement {
         this._otherDevicesConfig = {};
 
       }
+
+      // Load floor tabs configuration separately as it's optional
+      if (floorTabsResponse.ok) {
+        this._floorTabsConfig = await floorTabsResponse.json();
+        console.log('[DashView] Floor tabs configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Floor tabs config:', this._floorTabsConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load floor tabs configuration file - status: ${floorTabsResponse.status}`);
+        this._floorTabsConfig = {};
+      }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
@@ -1544,6 +1568,7 @@ class DashviewPanel extends HTMLElement {
       this._roomNotificationsConfig = {};
       this._windowWeatherConfig = {};
       this._otherDevicesConfig = {};
+      this._floorTabsConfig = {};
     }
   }
 
@@ -1614,6 +1639,180 @@ class DashviewPanel extends HTMLElement {
     return buttonsHTML || '<div class="no-activity">No active rooms</div>';
   }
 
+  // Update Floor Tabs
+  async updateFloorTabs(shadow) {
+    if (!this._floorTabsConfig || Object.keys(this._floorTabsConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    const container = shadow.querySelector('[data-template="floor-tabs"]');
+    if (!container || !this._floorTabsConfig.floors || !this._floorTabsConfig.tabs) {
+      if (container) {
+        container.innerHTML = '<div class="loading-message">Floor tabs configuration not available</div>';
+      }
+      return;
+    }
+
+    // Generate the floor tabs HTML
+    let floorTabsHTML = `
+      <div class="floor-tabs-wrapper">
+        <div class="floor-gap"></div>
+    `;
+
+    // Add each floor section
+    for (const floor of this._floorTabsConfig.floors) {
+      const isVisible = floor.default === 'show';
+      floorTabsHTML += `
+        <div class="floor-section" id="${floor.id}" style="display: ${isVisible ? 'block' : 'none'}">
+          <div class="floor-content">
+            <div class="floor-header-layout">
+              <div class="floor-title">
+                <span>Räume</span>
+              </div>
+              <div class="floor-tabs-buttons">
+      `;
+
+      // Add tab buttons
+      for (let i = 0; i < this._floorTabsConfig.tabs.length; i++) {
+        const tab = this._floorTabsConfig.tabs[i];
+        const isActive = floor.active_tab === (i + 1);
+        floorTabsHTML += `
+          <button class="floor-tab-button ${isActive ? 'active' : ''}" 
+                  data-target="${tab.target}" 
+                  data-icon="${tab.icon}">
+            <i class="mdi ${tab.icon}"></i>
+          </button>
+        `;
+      }
+
+      floorTabsHTML += `
+              </div>
+            </div>
+            <div class="room-cards-container" id="room-cards-${floor.id}">
+              <!-- Room cards will be populated here -->
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    floorTabsHTML += `
+        <div class="floor-gap-bottom"></div>
+      </div>
+    `;
+
+    container.innerHTML = floorTabsHTML;
+
+    // Set up tab switching functionality
+    this.setupFloorTabSwitching(shadow);
+
+    // Generate room cards for each floor
+    this.generateRoomCards(shadow);
+  }
+
+  // Set up floor tab switching functionality
+  setupFloorTabSwitching(shadow) {
+    const tabButtons = shadow.querySelectorAll('.floor-tab-button');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const target = button.getAttribute('data-target');
+        
+        // Hide all floor sections
+        const floorSections = shadow.querySelectorAll('.floor-section');
+        floorSections.forEach(section => {
+          section.style.display = 'none';
+        });
+
+        // Show target floor section
+        const targetSection = shadow.getElementById(target);
+        if (targetSection) {
+          targetSection.style.display = 'block';
+        }
+
+        // Update active tab states for all floors
+        const allTabButtons = shadow.querySelectorAll('.floor-tab-button');
+        allTabButtons.forEach(btn => {
+          btn.classList.remove('active');
+        });
+
+        // Set active tab in the visible floor
+        const visibleFloor = shadow.querySelector('.floor-section[style*="block"]');
+        if (visibleFloor) {
+          const matchingButton = visibleFloor.querySelector(`[data-target="${target}"]`);
+          if (matchingButton) {
+            matchingButton.classList.add('active');
+          }
+        }
+      });
+    });
+  }
+
+  // Generate room cards based on configuration
+  generateRoomCards(shadow) {
+    if (!this._floorTabsConfig.room_cards) return;
+
+    for (const [roomName, roomConfig] of Object.entries(this._floorTabsConfig.room_cards)) {
+      // Find which floor this room belongs to
+      const floor = this._floorTabsConfig.floors.find(f => f.room === roomName);
+      if (!floor) continue;
+
+      const container = shadow.getElementById(`room-cards-${floor.id}`);
+      if (!container) continue;
+
+      // Generate CSS grid areas from the grid template
+      const gridAreas = roomConfig.grid_template_areas.split('\n').map(line => line.trim().replace(/'/g, '"'));
+      const numRows = gridAreas.length;
+      const rowHeights = gridAreas.map(row => row.includes('gap') ? '10px' : '76px');
+
+      let roomCardHTML = `
+        <div class="room-card-grid" style="
+          width: 100%;
+          grid-template-columns: 50% 50%;
+          grid-template-rows: ${rowHeights.join(' ')};
+          grid-template-areas: ${gridAreas.join(' ')};
+          display: grid;
+          place-items: stretch;
+        ">
+      `;
+
+      // Add cards
+      for (const card of roomConfig.cards) {
+        if (card.template === 'floor_swipe') {
+          roomCardHTML += `
+            <div style="grid-area: ${card.grid};" class="floor-swipe-card">
+              <div class="floor-swipe-content">Floor: ${card.entity}</div>
+            </div>
+          `;
+        } else if (card.template === 'room_card') {
+          roomCardHTML += `
+            <div style="grid-area: ${card.grid};" class="room-card">
+              <div class="room-card-content">Room: ${card.entity}</div>
+            </div>
+          `;
+        } else {
+          // Sensor cards
+          const entityState = this._hass && this._hass.states ? this._hass.states[card.entity] : null;
+          const entityName = entityState ? (entityState.attributes.friendly_name || card.entity) : card.entity;
+          const entityValue = entityState ? entityState.state : 'unavailable';
+          
+          roomCardHTML += `
+            <div style="grid-area: ${card.grid};" class="sensor-card ${card.template}">
+              <div class="sensor-card-content">
+                <div class="sensor-name">${entityName}</div>
+                <div class="sensor-value">${entityValue}</div>
+                <div class="sensor-type">${card.type}</div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      roomCardHTML += '</div>';
+      container.innerHTML = roomCardHTML;
+    }
+  }
+
   // Load music configuration for admin interface
   async loadMusicAdminConfiguration() {
     const shadow = this.shadowRoot;
@@ -1651,13 +1850,15 @@ class DashviewPanel extends HTMLElement {
     const roomNotificationsTextarea = shadow.getElementById('room-notifications-config');
     const windowWeatherTextarea = shadow.getElementById('window-weather-config');
     const otherDevicesTextarea = shadow.getElementById('other-devices-config');
+    const floorTabsTextarea = shadow.getElementById('floor-tabs-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
@@ -1665,8 +1866,10 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/covers.json'),
         fetch('/local/dashview/config/scenes.json'),
         fetch('/local/dashview/config/room_notifications.json'),
+        fetch('/local/dashview/config/other_devices.json'),
+        fetch('/local/dashview/config/floor_tabs.json')
         fetch('/local/dashview/config/window_weather_notifications.json'),
-        fetch('/local/dashview/config/other_devices.json')
+
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1728,12 +1931,19 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
+        // Load floor tabs configuration if available
+        if (floorTabsResponse.ok && floorTabsTextarea) {
+          const floorTabsConfig = await floorTabsResponse.json();
+          floorTabsTextarea.value = JSON.stringify(floorTabsConfig, null, 2);
+          configsLoaded++;
+        }
+
         if (configsLoaded === 9) {
           statusMessage = '✓ All configurations loaded successfully';
         } else if (configsLoaded >= 3) {
           statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-          statusMessage += ' (music, temperature, covers, scenes, room notifications, window/weather notifications, and other devices configs optional)';
+          statusMessage += ' (music, temperature, covers, scenes, floor tabs, room notifications, window/weather notifications, and other devices configs optional)';
         }
 
         statusElement.textContent = statusMessage;
@@ -2151,6 +2361,61 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving other devices config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save floor tabs configuration
+  async saveFloorTabsConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const floorTabsTextarea = shadow.getElementById('floor-tabs-config');
+
+    if (!statusElement || !floorTabsTextarea) return;
+
+    try {
+      const configData = JSON.parse(floorTabsTextarea.value);
+
+      // Validate configuration structure
+      if (!configData.floors || !Array.isArray(configData.floors)) {
+        throw new Error('Configuration must have a "floors" array');
+      }
+
+      if (!configData.tabs || !Array.isArray(configData.tabs)) {
+        throw new Error('Configuration must have a "tabs" array');
+      }
+
+      if (!configData.room_cards || typeof configData.room_cards !== 'object') {
+        throw new Error('Configuration must have a "room_cards" object');
+      }
+
+      // Validate floors structure
+      for (const floor of configData.floors) {
+        if (!floor.id || !floor.room || !floor.default || typeof floor.active_tab !== 'number') {
+          throw new Error('Each floor must have id, room, default, and active_tab properties');
+        }
+      }
+
+      // Validate tabs structure
+      for (const tab of configData.tabs) {
+        if (!tab.icon || !tab.label || !tab.target) {
+          throw new Error('Each tab must have icon, label, and target properties');
+        }
+      }
+
+      statusElement.textContent = '✓ Floor tabs configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._floorTabsConfig = configData;
+      
+      // Update floor tabs display
+      if (this._hass) {
+        this.updateFloorTabs();
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving floor tabs config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
   }
