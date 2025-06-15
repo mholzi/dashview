@@ -15,3 +15,13 @@ set_weather_entity:
       selector:
         entity:
           domain: weather
+
+set_temperature_config:
+  name: Set Temperature Configuration
+  description: Sets the temperature sensor configuration for rooms.
+  fields:
+    config:
+      name: Configuration
+      description: JSON configuration for temperature sensors by room.
+      required: true
+      example: '{"Sauna": [{"temperature_sensor": "sensor.humidity_sauna_temperature", "humidity_sensor": "sensor.humidity_sauna_humidity"}]}'

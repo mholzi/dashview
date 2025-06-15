@@ -1053,3 +1053,75 @@ h3 {
     font-size: 0.9em;
     color: var(--secondary-text-color);
 }
+
+/* --- Temperature Card Styles --- */
+.temperature-section {
+    margin: 16px 0;
+}
+
+.temperature-card {
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--gray200);
+    transition: all 0.2s ease;
+}
+
+.temperature-card:hover {
+    background-color: var(--highlight);
+    transform: scale(1.02);
+}
+
+.temperature-header {
+    margin-bottom: 12px;
+}
+
+.temperature-header h4 {
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--primary-text-color);
+}
+
+.temperature-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.temperature-info {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.temperature-value, .humidity-value {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.temperature-number, .humidity-number {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: var(--primary-text-color);
+    line-height: 1;
+}
+
+.temperature-unit, .humidity-unit {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+    font-weight: 500;
+}
+
+.temperature-icon {
+    color: var(--primary-text-color);
+    opacity: 0.7;
+}
+
+.temperature-icon svg {
+    width: 24px;
+    height: 24px;
+}

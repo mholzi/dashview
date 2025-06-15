@@ -6,6 +6,40 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
+    this._temperatureConfig = {};
+    
+    // Initialize temperature configuration with defaults
+    this.initializeTemperatureConfig();
+  }
+
+  // Initialize temperature configuration with default values
+  initializeTemperatureConfig() {
+    this._temperatureConfig = {
+      "Wäschekeller": [
+        {
+          "temperature_sensor": "sensor.humidity_waschkeller_temperature",
+          "humidity_sensor": "sensor.humidity_waschkeller_humidity"
+        }
+      ],
+      "Sauna": [
+        {
+          "temperature_sensor": "sensor.humidity_sauna_temperature",
+          "humidity_sensor": "sensor.humidity_sauna_humidity"
+        }
+      ],
+      "Serverraum": [
+        {
+          "temperature_sensor": "sensor.humidity_serverraum_temperature",
+          "humidity_sensor": "sensor.humidity_serverraum_humidity"
+        }
+      ],
+      "Partykeller": [
+        {
+          "temperature_sensor": "sensor.partykeller_humidity_detector_temperature",
+          "humidity_sensor": "sensor.partykeller_humidity_detector_humidity"
+        }
+      ]
+    };
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -115,6 +149,9 @@ class DashviewPanel extends HTMLElement {
 
     // Update Header Buttons
     this.updateHeaderButtons(shadow);
+
+    // Update Temperature Sections
+    this.updateTemperatureSections();
 
   }
 
@@ -640,6 +677,11 @@ class DashviewPanel extends HTMLElement {
             this.saveMusicConfiguration();
         }
 
+        const saveTemperatureBtn = e.target.closest('#save-temperature-config');
+        if (saveTemperatureBtn) {
+            this.saveTemperatureConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -908,6 +950,10 @@ class DashviewPanel extends HTMLElement {
                 // Load weather entity configuration when weather tab is activated
                 if (targetId === 'weather-tab') {
                     setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
+                }
+                // Load temperature configuration when temperature tab is activated
+                if (targetId === 'temperature-tab') {
+                    setTimeout(() => this.loadTemperatureConfiguration(), 100);
                 }
             });
         });
@@ -1182,6 +1228,161 @@ class DashviewPanel extends HTMLElement {
       statusElement.textContent = '✗ Error saving music config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
+  }
+
+  // Load temperature configuration for admin interface
+  async loadTemperatureConfiguration() {
+    const shadow = this.shadowRoot;
+    const temperatureTextarea = shadow.getElementById('temperature-config');
+
+    if (!temperatureTextarea) return;
+
+    try {
+      // Load existing temperature configuration or provide default
+      const defaultConfig = {
+        "Wäschekeller": [
+          {
+            "temperature_sensor": "sensor.humidity_waschkeller_temperature",
+            "humidity_sensor": "sensor.humidity_waschkeller_humidity"
+          }
+        ],
+        "Sauna": [
+          {
+            "temperature_sensor": "sensor.humidity_sauna_temperature",
+            "humidity_sensor": "sensor.humidity_sauna_humidity"
+          }
+        ],
+        "Serverraum": [
+          {
+            "temperature_sensor": "sensor.humidity_serverraum_temperature",
+            "humidity_sensor": "sensor.humidity_serverraum_humidity"
+          }
+        ],
+        "Partykeller": [
+          {
+            "temperature_sensor": "sensor.partykeller_humidity_detector_temperature",
+            "humidity_sensor": "sensor.partykeller_humidity_detector_humidity"
+          }
+        ]
+      };
+
+      // Use stored configuration if available, otherwise use default
+      const temperatureConfig = this._temperatureConfig || defaultConfig;
+      temperatureTextarea.value = JSON.stringify(temperatureConfig, null, 2);
+
+    } catch (error) {
+      console.error('Error loading temperature configuration:', error);
+      temperatureTextarea.value = '{}';
+    }
+  }
+
+  // Save temperature configuration
+  async saveTemperatureConfiguration() {
+    const shadow = this.shadowRoot;
+    const temperatureTextarea = shadow.getElementById('temperature-config');
+
+    if (!temperatureTextarea || !this._hass) return;
+
+    try {
+      const configData = JSON.parse(temperatureTextarea.value);
+      
+      // Call the service to save the temperature configuration
+      await this._hass.callService('dashview', 'set_temperature_config', {
+        config: configData
+      });
+
+      // Store the configuration locally
+      this._temperatureConfig = configData;
+      
+      // Show success feedback (using a temporary approach since no status element in temperature tab)
+      const button = shadow.getElementById('save-temperature-config');
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = 'Saved!';
+        button.style.background = 'var(--green)';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = '';
+        }, 2000);
+      }
+
+      console.log('Temperature configuration saved successfully');
+
+    } catch (error) {
+      console.error('Error saving temperature configuration:', error);
+      
+      // Show error feedback
+      const button = shadow.getElementById('save-temperature-config');
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = 'Error!';
+        button.style.background = 'var(--red)';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = '';
+        }, 3000);
+      }
+    }
+  }
+
+  // Update temperature sections in room popups
+  updateTemperatureSections() {
+    if (!this._hass || !this._temperatureConfig) return;
+    
+    const shadow = this.shadowRoot;
+    
+    // Iterate through temperature configuration
+    Object.keys(this._temperatureConfig).forEach(roomName => {
+      const roomConfig = this._temperatureConfig[roomName];
+      if (!roomConfig || !roomConfig.length) return;
+      
+      // Convert room name to popup ID format
+      const popupId = roomName.toLowerCase()
+        .replace('ä', 'a')
+        .replace('ö', 'o')
+        .replace('ü', 'u');
+      
+      const temperatureSection = shadow.getElementById(`${popupId}-temperature-section`);
+      if (!temperatureSection) return;
+      
+      // Clear existing content
+      temperatureSection.innerHTML = '';
+      
+      // Create temperature cards for each sensor set
+      roomConfig.forEach((sensorConfig, index) => {
+        const tempSensor = this._hass.states[sensorConfig.temperature_sensor];
+        const humiditySensor = this._hass.states[sensorConfig.humidity_sensor];
+        
+        const temperatureCard = document.createElement('div');
+        temperatureCard.className = 'temperature-card';
+        temperatureCard.innerHTML = `
+          <div class="temperature-header">
+            <h4>${roomName}</h4>
+          </div>
+          <div class="temperature-content">
+            <div class="temperature-info">
+              <div class="temperature-value">
+                <span class="temperature-number">${tempSensor ? Math.round(tempSensor.state) : '--'}</span>
+                <span class="temperature-unit">°C</span>
+              </div>
+              <div class="humidity-value">
+                <span class="humidity-number">${humiditySensor ? Math.round(humiditySensor.state) : '--'}</span>
+                <span class="humidity-unit">%</span>
+              </div>
+            </div>
+            <div class="temperature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15 13V5a3 3 0 0 0-6 0v8a5 5 0 1 0 6 0zM12 4a1 1 0 0 1 1 1v8.26a3 3 0 1 1-2 0V5a1 1 0 0 1 1-1z"/>
+              </svg>
+            </div>
+          </div>
+        `;
+        
+        temperatureSection.appendChild(temperatureCard);
+      });
+    });
   }
 
   // Generate music popup content based on configuration
@@ -1466,10 +1667,6 @@ class DashviewPanel extends HTMLElement {
         }
       }
     });
-  }
-
-    // Also update room-specific media players
-    this.updateRoomMediaPlayerStates(shadow);
   }
 
   // Update room media players in individual room popups
