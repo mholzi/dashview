@@ -313,3 +313,66 @@ h3 {
 .save-button:hover {
     opacity: 0.8;
 }
+
+/* --- Train Departure Cards --- */
+.train-departures-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.train-departure-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 16px;
+    gap: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: 1px solid var(--gray200);
+}
+
+.train-departure-card:hover {
+    background-color: var(--highlight);
+}
+
+.train-departure-card.hidden {
+    display: none;
+}
+
+.train-departure-card .train-icon {
+    font-size: 60px;
+    font-weight: 800;
+    line-height: 1;
+    padding-left: 80px;
+    padding-right: 8px;
+    text-align: right;
+    min-width: 80px;
+}
+
+.train-departure-card .train-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.train-departure-card .train-time {
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    line-height: 1.1;
+}
+
+.train-departure-card .train-time.delayed {
+    color: red;
+}
+
+.train-departure-card .train-destination {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    opacity: 0.7;
+}

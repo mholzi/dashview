@@ -87,6 +87,114 @@ class DashviewPanel extends HTMLElement {
         const img_src = personState.attributes.entity_picture || (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
         shadow.querySelector('.person-button .image-container').innerHTML = `<img src="${img_src}" width="45" height="45">`;
     }
+
+    // Update Train Departure Cards
+    this.updateTrainDepartureCards(shadow);
+  }
+
+  // Method to check if it's a weekday
+  isWeekday() {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    return dayOfWeek >= 1 && dayOfWeek <= 5; // Monday = 1, Sunday = 0
+  }
+
+  // Method to evaluate conditions for a train card
+  evaluateConditions(conditions) {
+    if (!conditions || !this._hass) return false;
+
+    const conditionList = conditions.split(',');
+    
+    for (const condition of conditionList) {
+      const trimmedCondition = condition.trim();
+      
+      if (trimmedCondition === 'weekday') {
+        if (!this.isWeekday()) return false;
+        continue;
+      }
+
+      if (trimmedCondition.includes('=')) {
+        const [entityId, expectedValue] = trimmedCondition.split('=');
+        const entity = this._hass.states[entityId.trim()];
+        if (!entity || entity.state !== expectedValue.trim()) return false;
+      } else if (trimmedCondition.includes('>')) {
+        const [entityId, minValue] = trimmedCondition.split('>');
+        const entity = this._hass.states[entityId.trim()];
+        if (!entity || parseFloat(entity.state) <= parseFloat(minValue.trim())) return false;
+      } else if (trimmedCondition.includes('!=')) {
+        const [entityId, excludedValue] = trimmedCondition.split('!=');
+        const entity = this._hass.states[entityId.trim()];
+        if (!entity || entity.state === excludedValue.trim()) return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Method to get next train departure
+  getNextTrainDeparture(departureEntity, delayMin = 0) {
+    if (!departureEntity || !departureEntity.attributes.next_departures) {
+      return { time: '--:--', isDelayed: false };
+    }
+
+    const departures = departureEntity.attributes.next_departures;
+    const now = new Date();
+
+    for (const train of departures) {
+      if (train.isCancelled) continue;
+
+      const [hours, minutes] = train.scheduledDeparture.split(':').map(Number);
+      const departureTime = new Date();
+      departureTime.setHours(hours, minutes + (train.delayDeparture || 0), 0, 0);
+
+      // Check if departure is far enough in the future
+      const timeDiff = (departureTime - now) / (1000 * 60); // difference in minutes
+      if (timeDiff >= delayMin) {
+        const totalMinutes = hours * 60 + minutes + (train.delayDeparture || 0);
+        const displayHours = Math.floor(totalMinutes / 60) % 24;
+        const displayMinutes = totalMinutes % 60;
+        
+        return {
+          time: `${String(displayHours).padStart(2, '0')}:${String(displayMinutes).padStart(2, '0')}`,
+          isDelayed: (train.delayDeparture || 0) > 0
+        };
+      }
+    }
+
+    return { time: '--:--', isDelayed: false };
+  }
+
+  // Method to update train departure cards
+  updateTrainDepartureCards(shadow) {
+    const trainCards = shadow.querySelectorAll('.train-departure-card');
+    
+    trainCards.forEach(card => {
+      const conditions = card.dataset.conditions;
+      const departureSensor = card.dataset.departureSensor;
+      const delayMin = parseInt(card.dataset.delayMin) || 0;
+
+      // Check if conditions are met
+      const shouldShow = this.evaluateConditions(conditions);
+      
+      if (shouldShow) {
+        card.classList.remove('hidden');
+        
+        // Update departure time
+        const departureEntity = this._hass.states[departureSensor];
+        const departure = this.getNextTrainDeparture(departureEntity, delayMin);
+        
+        const timeElement = card.querySelector('.train-time');
+        timeElement.textContent = departure.time;
+        
+        if (departure.isDelayed) {
+          timeElement.classList.add('delayed');
+        } else {
+          timeElement.classList.remove('delayed');
+        }
+      } else {
+        card.classList.add('hidden');
+      }
+    });
   }
 
   initializeCard(context) {
@@ -141,6 +249,11 @@ class DashviewPanel extends HTMLElement {
         const kioskButton = e.target.closest('.kiosk-button');
         if (kioskButton) {
             this.dispatchEvent(new Event('hass-toggle-menu', { bubbles: true, composed: true }));
+        }
+
+        const trainCard = e.target.closest('.train-departure-card');
+        if (trainCard) {
+            window.location.hash = '#bahn';
         }
     });
   }

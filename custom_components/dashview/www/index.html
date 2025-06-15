@@ -21,7 +21,41 @@
         <div class="placeholder">Scene Buttons</div>
         <div class="placeholder">Header Updates</div>
         <div class="placeholder">Info/Conditional Text</div>
-        <div class="placeholder">Train Departures</div>
+        <div class="train-departures-container">
+            <div class="train-departure-card" 
+                 data-conditions="zone.deutsche_bank>0,weekday"
+                 data-departure-sensor="sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag"
+                 data-destination="Nach Buchschlag"
+                 data-delay-min="0">
+                <div class="train-icon">🚆</div>
+                <div class="train-info">
+                    <div class="train-time">--:--</div>
+                    <div class="train-destination">Nach Buchschlag</div>
+                </div>
+            </div>
+            <div class="train-departure-card" 
+                 data-conditions="zone.buchschlag_bahnhof!=0,binary_sensor.before_9am=on,weekday"
+                 data-departure-sensor="sensor.dreieich_buchschlag_departures_via_frankfurt_hbf"
+                 data-destination="Nach Frankfurt"
+                 data-delay-min="0">
+                <div class="train-icon">🚆</div>
+                <div class="train-info">
+                    <div class="train-time">--:--</div>
+                    <div class="train-destination">Nach Frankfurt</div>
+                </div>
+            </div>
+            <div class="train-departure-card" 
+                 data-conditions="person.markus=home,binary_sensor.before_9am=on,weekday"
+                 data-departure-sensor="sensor.dreieich_buchschlag_departures_via_frankfurt_hbf"
+                 data-destination="Nach Frankfurt"
+                 data-delay-min="10">
+                <div class="train-icon">🚆</div>
+                <div class="train-info">
+                    <div class="train-time">--:--</div>
+                    <div class="train-destination">Nach Frankfurt</div>
+                </div>
+            </div>
+        </div>
         <div class="placeholder">Window/Weather Notifications</div>
         <div class="placeholder">DWD Warning</div>
         <div class="placeholder">Erdgeschoss Floor Tab</div>
