@@ -75,7 +75,8 @@ class DashviewPanel extends HTMLElement {
     const shadow = this.shadowRoot;
 
     // Update Weather Button
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const weatherEntityId = this.getCurrentWeatherEntity();
+    const weatherState = this._hass.states[weatherEntityId];
     if (weatherState) {
         const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
         shadow.querySelector('.weather-button .name').textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C';
@@ -623,6 +624,11 @@ class DashviewPanel extends HTMLElement {
         if (saveRoomsBtn) {
             this.saveRoomsConfiguration();
         }
+
+        const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
+        if (saveWeatherEntityBtn) {
+            this.saveWeatherEntity();
+        }
     });
   }
   
@@ -630,7 +636,8 @@ class DashviewPanel extends HTMLElement {
   updateWeatherComponents(shadow) {
     if (!this._hass) return;
     
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const weatherEntityId = this.getCurrentWeatherEntity();
+    const weatherState = this._hass.states[weatherEntityId];
     if (!weatherState) return;
 
     // Update current weather card
@@ -883,6 +890,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'header-buttons-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
                 }
+                // Load weather entity configuration when weather tab is activated
+                if (targetId === 'weather-tab') {
+                    setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
+                }
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
@@ -904,7 +915,8 @@ class DashviewPanel extends HTMLElement {
                 tab.classList.add('active');
                 
                 const dayIndex = parseInt(tab.dataset.day);
-                const weatherState = this._hass ? this._hass.states['weather.forecast_home'] : null;
+                const weatherEntityId = this.getCurrentWeatherEntity();
+                const weatherState = this._hass ? this._hass.states[weatherEntityId] : null;
                 if (weatherState) {
                     this.showDailyForecast(forecastContent, weatherState, dayIndex);
                 }
@@ -1103,6 +1115,103 @@ class DashviewPanel extends HTMLElement {
       statusElement.textContent = '✗ Error saving rooms config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
+  }
+
+  // Load weather entity configuration for admin interface
+  async loadWeatherEntityConfiguration() {
+    const shadow = this.shadowRoot;
+    const weatherSelector = shadow.getElementById('weather-entity-selector');
+    
+    if (!weatherSelector || !this._hass) return;
+
+    try {
+      // Clear existing options
+      weatherSelector.innerHTML = '';
+      
+      // Get all weather entities from Home Assistant
+      const weatherEntities = Object.keys(this._hass.states)
+        .filter(entityId => entityId.startsWith('weather.'))
+        .sort();
+
+      if (weatherEntities.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No weather entities found';
+        option.disabled = true;
+        weatherSelector.appendChild(option);
+        return;
+      }
+
+      // Add weather entities to dropdown
+      weatherEntities.forEach(entityId => {
+        const option = document.createElement('option');
+        option.value = entityId;
+        const state = this._hass.states[entityId];
+        const friendlyName = state.attributes.friendly_name || entityId;
+        option.textContent = `${friendlyName} (${entityId})`;
+        weatherSelector.appendChild(option);
+      });
+
+      // Get current configured weather entity
+      const configuredSensor = this._hass.states[`sensor.dashview_configured_weather`];
+      if (configuredSensor && configuredSensor.state) {
+        weatherSelector.value = configuredSensor.state;
+      } else {
+        // Default to first weather entity if none configured
+        weatherSelector.value = weatherEntities[0];
+      }
+
+    } catch (error) {
+      console.error('Error loading weather entity configuration:', error);
+      weatherSelector.innerHTML = '<option disabled>Error loading weather entities</option>';
+    }
+  }
+
+  // Save weather entity configuration
+  async saveWeatherEntity() {
+    const shadow = this.shadowRoot;
+    const weatherSelector = shadow.getElementById('weather-entity-selector');
+    
+    if (!weatherSelector || !this._hass) return;
+
+    const selectedEntity = weatherSelector.value;
+    if (!selectedEntity) {
+      alert('Please select a weather entity');
+      return;
+    }
+
+    try {
+      // Call the service to set the weather entity
+      await this._hass.callService('dashview', 'set_weather_entity', {
+        entity_id: selectedEntity
+      });
+      
+      // Show success message (could be improved with a proper status display)
+      alert(`Weather entity saved: ${selectedEntity}`);
+      
+      // Update the weather components with the new entity
+      this.updateWeatherComponents(shadow);
+      
+    } catch (error) {
+      console.error('Error saving weather entity:', error);
+      alert(`Error saving weather entity: ${error.message}`);
+    }
+  }
+
+  // Get the currently configured weather entity
+  getCurrentWeatherEntity() {
+    if (!this._hass) return 'weather.forecast_home'; // fallback
+
+    const configuredSensor = this._hass.states[`sensor.dashview_configured_weather`];
+    if (configuredSensor && configuredSensor.state) {
+      return configuredSensor.state;
+    }
+    
+    // Fallback to first available weather entity or default
+    const weatherEntities = Object.keys(this._hass.states)
+      .filter(entityId => entityId.startsWith('weather.'));
+    
+    return weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
   }
 }
 
