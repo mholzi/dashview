@@ -26,7 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         # FIX #2: Use the new, non-blocking method for registering static paths.
         www_path = os.path.join(os.path.dirname(__file__), "www")
-        hass.http.async_register_static_paths([
+        await hass.http.async_register_static_paths([
             {"url_path": f"/local/{panel_name}", "path": www_path, "cache_headers": False}
         ])
 
