@@ -90,6 +90,9 @@ class DashviewPanel extends HTMLElement {
 
     // Update Train Departure Cards
     this.updateTrainDepartureCards(shadow);
+    
+    // Update Info Card
+    this.updateInfoCard(shadow);
   }
 
   // Method to check if it's a weekday
@@ -197,6 +200,306 @@ class DashviewPanel extends HTMLElement {
     });
   }
 
+  // Method to update info card sections
+  updateInfoCard(shadow) {
+    const infoCard = shadow.querySelector('.info-card');
+    if (!infoCard || !this._hass) return;
+
+    // Update Motion Section
+    this.updateMotionSection(shadow);
+    
+    // Update Windows Section
+    this.updateWindowsSection(shadow);
+    
+    // Update Dishwasher Section
+    this.updateDishwasherSection(shadow);
+    
+    // Update Washing Machine Section
+    this.updateWashingSection(shadow);
+    
+    // Update Vacuum Section
+    this.updateVacuumSection(shadow);
+    
+    // Update Dryer Section
+    this.updateDryerSection(shadow);
+    
+    // Update Solar Section
+    this.updateSolarSection(shadow);
+  }
+
+  updateMotionSection(shadow) {
+    const section = shadow.querySelector('.motion-section');
+    if (!section) return;
+    
+    const motionEntity = this._hass.states['binary_sensor.motion_presence_home'];
+    if (!motionEntity) {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    const prefixElement = section.querySelector('[data-type="motion-prefix"]');
+    const badgeElement = section.querySelector('[data-type="motion-time"]');
+    const badge = section.querySelector('.info-badge');
+    
+    if (motionEntity.state === 'on') {
+      prefixElement.textContent = 'Im Haus ist seit';
+      section.classList.remove('hidden');
+      badge.classList.add('green');
+      badge.classList.remove('red');
+      badgeElement.textContent = 'Jetzt🏡';
+    } else {
+      prefixElement.textContent = 'Die letzte Bewegung im Haus war vor';
+      section.classList.remove('hidden');
+      badge.classList.remove('green');
+      badge.classList.add('red');
+      
+      // Calculate time difference
+      const lastChanged = new Date(motionEntity.last_changed);
+      const now = new Date();
+      const diffSeconds = Math.floor((now - lastChanged) / 1000);
+      
+      let timeText = 'Unbekannt';
+      if (diffSeconds < 60) {
+        timeText = 'Jetzt';
+      } else if (diffSeconds < 3600) {
+        const minutes = Math.floor(diffSeconds / 60);
+        timeText = `${minutes} Minuten`;
+      } else if (diffSeconds < 86400) {
+        const hours = Math.floor(diffSeconds / 3600);
+        timeText = `${hours} Stunden`;
+      } else {
+        const days = Math.floor(diffSeconds / 86400);
+        timeText = `${days} Tagen`;
+      }
+      badgeElement.textContent = `${timeText}🏡`;
+    }
+  }
+
+  updateWindowsSection(shadow) {
+    const section = shadow.querySelector('.windows-section');
+    if (!section) return;
+    
+    // Count open windows
+    let openWindows = 0;
+    Object.values(this._hass.states).forEach(entity => {
+      if (entity.entity_id.includes('binary_sensor.fenster') && entity.state === 'on') {
+        openWindows++;
+      }
+    });
+    
+    if (openWindows > 0) {
+      section.classList.remove('hidden');
+      const countElement = section.querySelector('[data-type="window-count"]');
+      countElement.textContent = `${openWindows} 🪟`;
+    } else {
+      section.classList.add('hidden');
+    }
+  }
+
+  updateDishwasherSection(shadow) {
+    const section = shadow.querySelector('.dishwasher-section');
+    if (!section) return;
+    
+    const dishwasherEntity = this._hass.states['sensor.geschirrspuler_operation_state'];
+    if (!dishwasherEntity || dishwasherEntity.state !== 'run') {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    section.classList.remove('hidden');
+    const timeElement = section.querySelector('[data-type="time-remaining"]');
+    
+    // Calculate remaining time
+    const endTimeEntity = this._hass.states['sensor.geschirrspuler_remaining_program_time'];
+    if (endTimeEntity && endTimeEntity.state) {
+      const endTime = new Date(endTimeEntity.state);
+      const now = new Date();
+      if (endTime > now) {
+        const diffMinutes = Math.floor((endTime - now) / (1000 * 60));
+        const hours = Math.floor(diffMinutes / 60);
+        const remainingMinutes = diffMinutes % 60;
+        
+        let timeText = '';
+        if (hours > 0) timeText += `${hours}h`;
+        if (remainingMinutes > 0 || hours === 0) timeText += `${remainingMinutes}min`;
+        
+        timeElement.textContent = timeText || 'Ready';
+      } else {
+        timeElement.textContent = 'Ready';
+      }
+    } else {
+      timeElement.textContent = 'Unknown';
+    }
+  }
+
+  updateWashingSection(shadow) {
+    const section = shadow.querySelector('.washing-section');
+    if (!section) return;
+    
+    const washingEntity = this._hass.states['sensor.waschmaschine_operation_state'];
+    if (!washingEntity) {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    const prefixElement = section.querySelector('[data-type="washing-prefix"]');
+    const timeElement = section.querySelector('[data-type="washing-time"]');
+    
+    if (washingEntity.state === 'run') {
+      prefixElement.textContent = 'Die Waschmaschine läuft noch';
+      section.classList.remove('hidden');
+      
+      // Calculate remaining time
+      const endTimeEntity = this._hass.states['sensor.waschmaschine_remaining_program_time'];
+      if (endTimeEntity && endTimeEntity.state) {
+        const endTime = new Date(endTimeEntity.state);
+        const now = new Date();
+        if (endTime > now) {
+          const diffMinutes = Math.floor((endTime - now) / (1000 * 60));
+          const hours = Math.floor(diffMinutes / 60);
+          const remainingMinutes = diffMinutes % 60;
+          
+          let timeText = '';
+          if (hours > 0) timeText += `${hours}h`;
+          if (remainingMinutes > 0 || hours === 0) timeText += `${remainingMinutes}min`;
+          
+          timeElement.textContent = `${timeText}👕` || 'Ready👕';
+        } else {
+          timeElement.textContent = 'Ready👕';
+        }
+      } else {
+        timeElement.textContent = 'Unknown👕';
+      }
+    } else if (washingEntity.state === 'finished') {
+      prefixElement.textContent = 'Die Waschmaschine ist fertig';
+      timeElement.textContent = '👕';
+      section.classList.remove('hidden');
+    } else {
+      section.classList.add('hidden');
+    }
+  }
+
+  updateVacuumSection(shadow) {
+    const section = shadow.querySelector('.vacuum-section');
+    if (!section) return;
+    
+    const vacuumEntity = this._hass.states['vacuum.mova_e30_ultra'];
+    if (!vacuumEntity || vacuumEntity.state !== 'cleaning') {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    section.classList.remove('hidden');
+    const roomElement = section.querySelector('[data-type="room-name"]');
+    
+    // Room mapping
+    const roomDict = {
+      'Erdgeschoss': {
+        1: 'Arbeitszimmer',
+        2: 'Gästeklo',
+        3: 'Küche',
+        4: 'Wohnzimmer',
+        5: 'Esszimmer',
+        6: 'Flur'
+      },
+      'Keller': {
+        1: 'Partykeller',
+        2: 'Kellerflur',
+        3: 'Raum 3',
+        5: 'Waschkeller'
+      },
+      'Dachgeschoss': {
+        1: 'Elternschlafzimmer',
+        2: 'Klo',
+        3: 'Ankleide',
+        4: 'Badezimmer'
+      },
+      'Map 4': {
+        1: 'Raum 1',
+        2: 'Raum 2',
+        3: 'Raum 3',
+        4: 'Raum 4',
+        5: 'Raum 5'
+      }
+    };
+    
+    const currentSegment = vacuumEntity.attributes.current_segment;
+    const selectedMap = vacuumEntity.attributes.selected_map;
+    
+    let roomName = 'Reinigung läuft';
+    if (selectedMap && roomDict[selectedMap] && currentSegment && roomDict[selectedMap][currentSegment]) {
+      roomName = roomDict[selectedMap][currentSegment];
+    }
+    
+    roomElement.textContent = roomName;
+  }
+
+  updateDryerSection(shadow) {
+    const section = shadow.querySelector('.dryer-section');
+    if (!section) return;
+    
+    const dryerEntity = this._hass.states['input_boolean.trockner_an'];
+    if (!dryerEntity || dryerEntity.state !== 'on') {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    section.classList.remove('hidden');
+  }
+
+  updateSolarSection(shadow) {
+    const section = shadow.querySelector('.solar-section');
+    if (!section) return;
+    
+    const solarEntity = this._hass.states['sensor.foxess_solar'];
+    const batteryEntity = this._hass.states['sensor.foxess_bat_soc'];
+    
+    if (!solarEntity || !this.isNumber(solarEntity.state)) {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    section.classList.remove('hidden');
+    
+    const productionElement = section.querySelector('[data-type="solar-production"]');
+    const batteryPrefixElement = section.querySelector('[data-type="battery-prefix"]');
+    const batteryLevelElement = section.querySelector('[data-type="battery-level"]');
+    const batterySuffixElement = section.querySelector('[data-type="battery-suffix"]');
+    
+    // Update solar production
+    const solarValue = parseFloat(solarEntity.state);
+    productionElement.textContent = `${solarValue.toFixed(1)} kWh ☀️`;
+    
+    // Update battery info
+    if (batteryEntity && this.isNumber(batteryEntity.state)) {
+      const batteryLevel = parseFloat(batteryEntity.state);
+      
+      if (batteryLevel < 50) {
+        batteryPrefixElement.textContent = 'und die Batterie ist zu';
+        batteryPrefixElement.style.marginLeft = '0px';
+        batteryLevelElement.textContent = `${Math.round(batteryLevel)}% 🔋`;
+        batteryLevelElement.style.display = 'inline';
+        batterySuffixElement.textContent = 'geladen.';
+        batterySuffixElement.style.display = 'inline';
+      } else {
+        batteryPrefixElement.textContent = '.';
+        batteryPrefixElement.style.marginLeft = '-5px';
+        batteryLevelElement.style.display = 'none';
+        batterySuffixElement.style.display = 'none';
+      }
+    } else {
+      batteryPrefixElement.textContent = '.';
+      batteryPrefixElement.style.marginLeft = '-5px';
+      batteryLevelElement.style.display = 'none';
+      batterySuffixElement.style.display = 'none';
+    }
+  }
+
+  // Helper method to check if a value is a number
+  isNumber(value) {
+    return !isNaN(parseFloat(value)) && isFinite(value);
+  }
+
   initializeCard(context) {
     // --- This section is the same as before ---
     const handleHashChange = async () => {
@@ -254,6 +557,16 @@ class DashviewPanel extends HTMLElement {
         const trainCard = e.target.closest('.train-departure-card');
         if (trainCard) {
             window.location.hash = '#bahn';
+        }
+
+        // Handle info card section clicks
+        const infoSection = e.target.closest('.info-section');
+        if (infoSection) {
+            if (infoSection.classList.contains('motion-section') || infoSection.classList.contains('windows-section')) {
+                window.location.hash = '#security';
+            } else if (infoSection.classList.contains('dryer-section')) {
+                window.location.hash = '#waschkeller';
+            }
         }
     });
   }
