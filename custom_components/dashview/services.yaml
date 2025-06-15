@@ -15,3 +15,8 @@ set_weather_entity:
       selector:
         entity:
           domain: weather
+
+get_weather_entity:
+  name: Get Weather Entity
+  description: Gets the currently configured weather entity for the DashView panel.
+  fields: {}

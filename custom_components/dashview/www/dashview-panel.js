@@ -7,6 +7,7 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._musicConfig = {};
+    this._weatherEntity = null; // Will be loaded from persistent config
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._activeMusicTab = null; // Track the currently active music tab
     this._volumeSliderInteraction = new Set(); // Track which volume sliders are being interacted with
@@ -24,11 +25,33 @@ class DashviewPanel extends HTMLElement {
     if (this._debugMode) {
       console.log('[DashView] HASS object received:', !!hass);
     }
+    
+    const isFirstTime = !this._hass;
     this._hass = hass;
+    
+    // Initialize weather entity on first hass connection
+    if (isFirstTime && hass) {
+      this.initializeWeatherEntity();
+    }
+    
     if (this._contentReady) {
       this.updateElements();
     } else if (this._debugMode) {
       console.log('[DashView] Content not ready yet, deferring update');
+    }
+  }
+
+  // Initialize weather entity from persistent storage
+  async initializeWeatherEntity() {
+    // Try to load the weather entity from localStorage as a cache
+    const cachedWeatherEntity = localStorage.getItem('dashview_weather_entity');
+    if (cachedWeatherEntity && this._hass && this._hass.states[cachedWeatherEntity]) {
+      this._weatherEntity = cachedWeatherEntity;
+      if (this._debugMode) {
+        console.log('[DashView] Loaded cached weather entity:', cachedWeatherEntity);
+      }
+    } else if (this._debugMode) {
+      console.log('[DashView] No valid cached weather entity found, will use fallback logic');
     }
   }
 
@@ -2144,14 +2167,14 @@ class DashviewPanel extends HTMLElement {
         weatherSelector.appendChild(option);
       });
 
-      // Get current configured weather entity
-      const configuredSensor = this._hass.states[`sensor.dashview_configured_weather_entity`] || 
-                              this._hass.states[`sensor.dashview_configured_weather`];
-      if (configuredSensor && configuredSensor.state) {
-        weatherSelector.value = configuredSensor.state;
+      // Set the current weather entity (either from our cache or default to first available)
+      const currentWeatherEntity = this.getCurrentWeatherEntity();
+      if (weatherEntities.includes(currentWeatherEntity)) {
+        weatherSelector.value = currentWeatherEntity;
       } else {
-        // Default to first weather entity if none configured
+        // Default to first weather entity if current one is not available
         weatherSelector.value = weatherEntities[0];
+        this._weatherEntity = weatherEntities[0]; // Update our cache
       }
 
     } catch (error) {
@@ -2190,6 +2213,12 @@ class DashviewPanel extends HTMLElement {
         entity_id: selectedEntity
       });
       
+      // Update our cache with the new weather entity
+      this._weatherEntity = selectedEntity;
+      
+      // Cache in localStorage for persistence across page reloads
+      localStorage.setItem('dashview_weather_entity', selectedEntity);
+      
       // Show success feedback
       saveButton.textContent = 'Saved!';
       saveButton.style.background = 'var(--green)';
@@ -2226,18 +2255,21 @@ class DashviewPanel extends HTMLElement {
   getCurrentWeatherEntity() {
     if (!this._hass) return 'weather.forecast_home'; // fallback
 
-    const configuredSensor = this._hass.states[`sensor.dashview_configured_weather_entity`] || 
-                            this._hass.states[`sensor.dashview_configured_weather`];
-    if (configuredSensor && configuredSensor.state) {
-      return configuredSensor.state;
+    // If we have a cached weather entity from our configuration, use it
+    if (this._weatherEntity && this._hass.states[this._weatherEntity]) {
+      return this._weatherEntity;
     }
     
     // Fallback to first available weather entity or default
     const weatherEntities = Object.keys(this._hass.states)
       .filter(entityId => entityId.startsWith('weather.'));
     
-    return weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
-
+    const defaultEntity = weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
+    
+    // Store the default for future use (but don't save to localStorage as this is just a fallback)
+    this._weatherEntity = defaultEntity;
+    
+    return defaultEntity;
   }
 
   // Debug method to get component status - can be called from browser console
