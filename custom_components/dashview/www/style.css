@@ -76,7 +76,18 @@
 
 
 /* --- Base Layout --- */
-body {
+/* Shadow DOM host styles */
+:host {
+    font-family: var(--primary-font-family);
+    background-color: var(--background);
+    color: var(--primary-text-color);
+    display: block;
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Root container in Shadow DOM - target the body element that gets loaded */
+body, :host body, :host > div, :host > div > body {
     font-family: var(--primary-font-family);
     background-color: var(--background);
     color: var(--primary-text-color);
