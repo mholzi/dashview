@@ -814,6 +814,7 @@ h3 {
     grid-template-rows: auto auto auto;
     align-items: center;
     background-color: var(--popupBG);
+    border-radius: 12px;
     padding: 12px;
     margin-top: 12px;
 }
