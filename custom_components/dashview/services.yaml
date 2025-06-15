@@ -15,3 +15,15 @@ set_weather_entity:
       selector:
         entity:
           domain: weather
+
+set_covers_config:
+  name: Set Covers Configuration
+  description: Sets the covers configuration for the DashView panel.
+  fields:
+    config:
+      name: Configuration
+      description: The covers configuration as a JSON object.
+      required: true
+      example: '{"room_covers": {"Kinderzimmer": ["cover.rollo_1"]}}'
+      selector:
+        object:
