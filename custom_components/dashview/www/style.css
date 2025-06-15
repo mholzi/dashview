@@ -1548,6 +1548,50 @@ h3 {
     margin: 8px 0;
 }
 
+/* New Scene Button Card Styles */
+.scene-button-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    overflow: hidden;
+    position: relative;
+}
+
+.scene-button-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.scene-button-card:active {
+    transform: scale(0.95);
+}
+
+.scene-button-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 4px;
+}
+
+.scene-button-card .scene-button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.scene-button-card .scene-button-icon i {
+    font-size: 22px;
+}
+
+.scene-button-card .scene-button-name {
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
 /* Room Notifications Styles */
 .room-notification-container {
     margin: 8px 0;

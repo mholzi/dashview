@@ -1198,7 +1198,7 @@ class DashviewPanel extends HTMLElement {
         }
 
         // Handle scene button clicks
-        const sceneButton = e.target.closest('.scene-button');
+        const sceneButton = e.target.closest('.scene-button-card, .scene-button');
         if (sceneButton) {
             this.handleSceneButtonClick(sceneButton);
         }
@@ -3007,36 +3007,91 @@ class DashviewPanel extends HTMLElement {
   async handleSceneButtonClick(button) {
     if (!this._hass) return;
 
-    const sceneType = button.getAttribute('data-scene-type');
-    const room = button.getAttribute('data-room');
-    const entitiesJson = button.getAttribute('data-entities');
+    const variablesJson = button.getAttribute('data-variables');
     
     try {
-      const entities = JSON.parse(entitiesJson);
+      const variables = JSON.parse(variablesJson);
       
       // Add visual feedback
       button.classList.add('scene-button-active');
       setTimeout(() => button.classList.remove('scene-button-active'), 200);
       
-      console.log(`[DashView] Executing scene "${sceneType}" for room "${room}" with entities:`, entities);
+      console.log(`[DashView] Executing scene with variables:`, variables);
       
-      // Execute the scene action based on type
-      if (sceneType === 'all_lights_out') {
-        await this.turnOffLights(entities);
-      } else if (sceneType.includes('cover') || sceneType === 'roof_window') {
-        await this.toggleCovers(entities);
-      } else if (sceneType === 'wohnzimmer_ambiente') {
-        await this.setAmbientLights(entities);
-      } else if (sceneType === 'dimm_desk') {
-        await this.dimLights(entities);
-      } else {
-        // Default action: toggle entities
-        await this.toggleEntities(entities);
+      // Get the service and service data based on the complex logic
+      const service = this.getSceneService(variables);
+      const serviceData = this.getSceneServiceData(variables);
+      
+      if (service && service !== 'script.turn_on') {
+        const [domain, serviceAction] = service.split('.');
+        await this._hass.callService(domain, serviceAction, serviceData);
+      } else if (service === 'script.turn_on' && serviceData && serviceData.entity_id) {
+        // Handle script calls
+        await this._hass.callService('script', 'turn_on', serviceData);
       }
       
     } catch (error) {
       console.error('[DashView] Error executing scene:', error);
     }
+  }
+
+  // Get the service to call based on variables (implementing the complex tap_action logic)
+  getSceneService(variables) {
+    if (!Array.isArray(variables.lights) || variables.lights.length === 0) {
+      return 'script.turn_on';
+    }
+
+    if (variables.type === 'cover') {
+      const openNeeded = variables.lights.some(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos < 90;
+      });
+      return openNeeded ? 'cover.open_cover' : 'cover.close_cover';
+    }
+
+    if (variables.type === 'all_covers') {
+      const openNeeded = variables.lights.some(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos < 90;
+      });
+      return openNeeded ? 'cover.open_cover' : 'cover.close_cover';
+    }
+
+    if (variables.type === 'roof_window') {
+      const pos = this._hass.states[variables.lights[0]]?.attributes?.current_position;
+      return (typeof pos === 'number' && pos === 0) ? 'script.dach_fenster_offnen' : 'script.dach_fenster_schliessen';
+    }
+
+    if (variables.type === 'dimm_desk') {
+      return 'light.turn_on';
+    }
+
+    if (variables.type === 'computer') return 'homeassistant.toggle';
+    if (variables.type === 'all_lights_out') return 'light.turn_off';
+    if (variables.type === 'wohnzimmer_ambiente') return 'homeassistant.toggle';
+
+    return 'script.turn_on';
+  }
+
+  // Get the service data based on variables (implementing the service_data logic)
+  getSceneServiceData(variables) {
+    if (!Array.isArray(variables.lights) || variables.lights.length === 0) {
+      return {};
+    }
+
+    if (variables.type === 'roof_window') {
+      return {};
+    }
+
+    if (variables.type === 'dimm_desk') {
+      const brightness = this._hass.states[variables.lights[0]]?.attributes?.brightness;
+      if (typeof brightness === 'number' && brightness > 76) {
+        return { entity_id: variables.lights, brightness: 76 };
+      }
+      return { entity_id: variables.lights };
+    }
+
+    return { entity_id: variables.lights };
   }
 
   // Handle alarm mode button clicks
@@ -3265,16 +3320,33 @@ class DashviewPanel extends HTMLElement {
 
     let html = '<div class="scene-buttons-container">';
     
-    Object.entries(roomScenes).forEach(([sceneType, entities]) => {
-      if (entities && entities.length > 0) {
-        const buttonText = this.getSceneButtonText(sceneType);
-        const buttonIcon = this.getSceneButtonIcon(sceneType);
+    Object.entries(roomScenes).forEach(([sceneType, sceneConfig]) => {
+      if (sceneConfig && sceneConfig.lights && sceneConfig.lights.length > 0) {
+        // Use the new variables-based approach
+        const variables = {
+          lights: sceneConfig.lights,
+          type: sceneConfig.type,
+          room: sceneConfig.room
+        };
+        
+        const buttonIcon = this.getSceneButtonIcon(variables);
+        const buttonName = this.getSceneButtonName(variables);
+        const buttonEntity = this.getSceneButtonEntity(variables);
+        const buttonStyles = this.getSceneButtonStyles(variables);
         
         html += `
-          <button class="scene-button" data-scene-type="${sceneType}" data-room="${room}" data-entities='${JSON.stringify(entities)}'>
-            <div class="scene-button-icon">${buttonIcon}</div>
-            <div class="scene-button-text">${buttonText}</div>
-          </button>
+          <div class="scene-button-card" 
+               data-scene-type="${sceneType}" 
+               data-room="${room}" 
+               data-variables='${JSON.stringify(variables)}'
+               style="${buttonStyles.card}">
+            <div class="scene-button-content">
+              <div class="scene-button-icon" style="${buttonStyles.icon}">
+                <i class="${buttonIcon}"></i>
+              </div>
+              <div class="scene-button-name" style="${buttonStyles.name}">${buttonName}</div>
+            </div>
+          </div>
         `;
       }
     });
@@ -3283,32 +3355,235 @@ class DashviewPanel extends HTMLElement {
     return html;
   }
 
-  // Get human-readable text for scene button
-  getSceneButtonText(sceneType) {
-    const textMap = {
-      'all_lights_out': 'Alle Lichter aus',
-      'wohnzimmer_ambiente': 'Ambiente',
-      'all_covers': 'Alle Rollos',
-      'roof_window': 'Dachfenster',
-      'computer': 'Computer',
-      'dimm_desk': 'Schreibtisch dimmen',
-      'cover': 'Rollos'
-    };
-    return textMap[sceneType] || sceneType;
+  // Get entity for scene button (return first entity or empty)
+  getSceneButtonEntity(variables) {
+    return (variables.lights && variables.lights.length > 0) ? variables.lights[0] : null;
   }
 
-  // Get icon for scene button
-  getSceneButtonIcon(sceneType) {
-    const iconMap = {
-      'all_lights_out': '💡',
-      'wohnzimmer_ambiente': '🕯️', 
-      'all_covers': '🪟',
-      'roof_window': '🏠',
-      'computer': '💻',
-      'dimm_desk': '🔅',
-      'cover': '🪟'
+  // Get icon for scene button based on variables.type
+  getSceneButtonIcon(variables) {
+    if (variables.type === 'cover') return 'mdi-window-shutter';
+    if (variables.type === 'all_covers') return 'mdi-window-shutter';
+    if (variables.type === 'roof_window') return 'mdi-window-open';
+    if (variables.type === 'dimm_desk') return 'mdi-desk-lamp';
+    if (variables.type === 'computer') return 'mdi-desktop-tower';
+    if (variables.type === 'all_lights_out') return 'mdi-lightbulb-off';
+    if (variables.type === 'wohnzimmer_ambiente') return 'mdi-sofa';
+    return 'mdi-flash';
+  }
+
+  // Get name for scene button based on variables and states
+  getSceneButtonName(variables) {
+    if (!this._hass) return 'Szene';
+
+    if (variables.type === 'cover') {
+      const anyOpen = (variables.lights || []).some(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos < 90;
+      });
+      return anyOpen ? 'Rollos auf' : 'Rollos schließen';
+    }
+    
+    if (variables.type === 'all_covers') {
+      const anyNeedOpening = (variables.lights || []).some(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos < 30;
+      });
+      return anyNeedOpening ? 'Rollos auf' : 'Rollos zu';
+    }
+    
+    if (variables.type === 'roof_window') {
+      const pos = this._hass.states[variables.lights[0]]?.attributes?.current_position;
+      return (typeof pos === 'number' && pos === 0) ? 'Dachfenster öffnen' : 'Dachfenster schließen';
+    }
+    
+    if (variables.type === 'dimm_desk') {
+      const brightness = this._hass.states[variables.lights[0]]?.attributes?.brightness;
+      return (typeof brightness === 'number' && brightness > 76) ? 'Schreibtisch dimmen' : 'Schreibtisch heller';
+    }
+    
+    if (variables.type === 'computer') {
+      const anyOn = (variables.lights || []).some(e => this._hass.states[e]?.state === 'on');
+      return anyOn ? 'Computer aus' : 'Computer an';
+    }
+    
+    if (variables.type === 'all_lights_out') return 'Lichter aus';
+    
+    if (variables.type === 'wohnzimmer_ambiente') {
+      const anyOn = (variables.lights || []).some(e => this._hass.states[e]?.state === 'on');
+      return anyOn ? 'Ambiente aus' : 'Ambiente';
+    }
+    
+    return 'Szene';
+  }
+
+  // Get styles for scene button based on variables and states
+  getSceneButtonStyles(variables) {
+    if (!this._hass) {
+      return {
+        card: this.getDefaultCardStyles(variables),
+        icon: 'color: var(--gray800);',
+        name: 'color: var(--gray800);'
+      };
+    }
+
+    const cardBgColor = this.getSceneButtonBackgroundColor(variables);
+    const textColor = this.getSceneButtonTextColor(variables);
+    const iconColor = this.getSceneButtonIconColor(variables);
+
+    return {
+      card: `
+        margin-right: ${variables.room === 'Header' ? '8px' : '0px'};
+        padding-bottom: 10px;
+        padding-right: 5px;
+        padding-left: 5px;
+        background-color: ${cardBgColor};
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        height: 80px;
+        width: 80px;
+        cursor: pointer;
+      `,
+      icon: `
+        color: ${iconColor};
+        width: 22px;
+        height: 22px;
+      `,
+      name: `
+        color: ${textColor};
+        font-size: 11px;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: initial;
+        text-align: center;
+        line-height: 1.2;
+      `
     };
-    return iconMap[sceneType] || '⚙️';
+  }
+
+  // Get default card styles
+  getDefaultCardStyles(variables) {
+    return `
+      margin-right: ${variables.room === 'Header' ? '8px' : '0px'};
+      padding-bottom: 10px;
+      padding-right: 5px;
+      padding-left: 5px;
+      background-color: var(--gray100);
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      height: 80px;
+      width: 80px;
+      cursor: pointer;
+    `;
+  }
+
+  // Get background color for scene button based on state
+  getSceneButtonBackgroundColor(variables) {
+    if (variables.type === 'cover') {
+      const allClosed = (variables.lights || []).every(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos >= 90;
+      });
+      return allClosed ? 'var(--gray100)' : 'var(--gray800)';
+    }
+
+    if (variables.type === 'all_covers') {
+      const allAtPosition = (variables.lights || []).every(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos > 30;
+      });
+      return allAtPosition ? 'var(--gray100)' : 'var(--gray800)';
+    }
+
+    if (variables.type === 'roof_window') {
+      const pos = this._hass.states[variables.lights[0]]?.attributes?.current_position;
+      return (typeof pos === 'number' && pos === 0) ? 'var(--gray100)' : 'var(--gray800)';
+    }
+
+    if (variables.type === 'dimm_desk') {
+      const brightness = this._hass.states[variables.lights[0]]?.attributes?.brightness;
+      return (typeof brightness === 'number' && brightness > 76) ? 'var(--gray800)' : 'var(--gray100)';
+    }
+
+    if (variables.type === 'computer') {
+      return (variables.lights || []).some(e => this._hass.states[e]?.state === 'on')
+        ? 'var(--gray800)'
+        : 'var(--gray100)';
+    }
+
+    if (variables.type === 'all_lights_out') {
+      return variables.lights.some(e => this._hass.states[e]?.state === 'on')
+        ? 'var(--gray800)'
+        : 'var(--gray100)';
+    }
+
+    if (variables.type === 'wohnzimmer_ambiente') {
+      return variables.lights.some(e => this._hass.states[e]?.state === 'on')
+        ? 'var(--gray800)'
+        : 'var(--gray100)';
+    }
+
+    return 'green';
+  }
+
+  // Get text color for scene button based on state
+  getSceneButtonTextColor(variables) {
+    if (variables.type === 'cover') {
+      const allClosed = (variables.lights || []).every(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos >= 90;
+      });
+      return allClosed ? 'var(--gray800)' : 'var(--gray100)';
+    }
+
+    if (variables.type === 'all_covers') {
+      const allAtPosition = (variables.lights || []).every(e => {
+        const pos = this._hass.states[e]?.attributes?.current_position;
+        return typeof pos === 'number' && pos > 30;
+      });
+      return allAtPosition ? 'var(--gray800)' : 'var(--gray100)';
+    }
+
+    if (variables.type === 'roof_window') {
+      const pos = this._hass.states[variables.lights[0]]?.attributes?.current_position;
+      return (typeof pos === 'number' && pos === 0) ? 'var(--gray800)' : 'var(--gray100)';
+    }
+
+    if (variables.type === 'dimm_desk') {
+      const brightness = this._hass.states[variables.lights[0]]?.attributes?.brightness;
+      return (typeof brightness === 'number' && brightness > 76) ? 'var(--gray100)' : 'var(--gray800)';
+    }
+
+    if (variables.type === 'computer') {
+      return (variables.lights || []).some(e => this._hass.states[e]?.state === 'on')
+        ? 'var(--gray100)'
+        : 'var(--gray800)';
+    }
+
+    if (variables.type === 'all_lights_out') {
+      return variables.lights.some(e => this._hass.states[e]?.state === 'on')
+        ? 'var(--gray100)'
+        : 'var(--gray800)';
+    }
+    
+    if (variables.type === 'wohnzimmer_ambiente') {
+      return variables.lights.some(e => this._hass.states[e]?.state === 'on')
+        ? 'var(--gray100)'
+        : 'var(--gray800)';
+    }
+
+    return 'green';
+  }
+
+  // Get icon color for scene button based on state
+  getSceneButtonIconColor(variables) {
+    return this.getSceneButtonTextColor(variables); // Same logic as text color
   }
 
   // Update room notifications for all rooms
