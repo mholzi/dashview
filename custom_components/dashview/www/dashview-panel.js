@@ -126,51 +126,34 @@ class DashviewPanel extends HTMLElement {
     shadow.innerHTML = '';
 
     try {
-      console.log('[DashView] Fetching CSS and HTML resources...');
-      const [styleText, htmlText] = await Promise.all([
-        fetch('/local/dashview/style.css').then(res => {
-          if (!res.ok) throw new Error(`Failed to load stylesheet: ${res.status} ${res.statusText}`);
-          return res.text();
-        }),
-        fetch('/local/dashview/index.html').then(res => {
-          if (!res.ok) throw new Error(`Failed to load HTML content: ${res.status} ${res.statusText}`);
-          return res.text();
-        })
-      ]);
+      console.log('[DashView] Fetching HTML resources...');
+      // Fetch only the HTML content
+      const htmlText = await fetch('/local/dashview/index.html').then(res => {
+        if (!res.ok) throw new Error(`Failed to load HTML content: ${res.status} ${res.statusText}`);
+        return res.text();
+      });
 
       console.log('[DashView] Resources loaded successfully, building DOM...');
 
-      // Handle @import statements separately for Shadow DOM compatibility
-      // Match @import statements at the beginning of lines, allowing for comments
-      const importRegex = /^[\s]*@import\s+url\(['"]?(.*?)['"]?\)\s*;?.*$/gm;
-      const importMatches = [];
-      let match;
+      // --- CORRECTED STYLESHEET LOADING ---
+      // 1. Create link for Google Fonts (previously from @import)
+      const fontLink = document.createElement('link');
+      fontLink.rel = 'stylesheet';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap';
+      shadow.appendChild(fontLink);
       
-      // First, collect all @import matches
-      while ((match = importRegex.exec(styleText)) !== null) {
-        importMatches.push({
-          fullMatch: match[0],
-          url: match[1]
-        });
-      }
-      
-      // Create link elements for each @import statement
-      importMatches.forEach(importMatch => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = importMatch.url;
-        shadow.appendChild(link);
-      });
-      
-      // Remove all @import statements from the CSS in one pass
-      let processedCSS = styleText;
-      importMatches.forEach(importMatch => {
-        processedCSS = processedCSS.replace(importMatch.fullMatch, '');
-      });
+      // 2. Create link for Material Design Icons (from index.html)
+      const mdiLink = document.createElement('link');
+      mdiLink.rel = 'stylesheet';
+      mdiLink.href = 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css';
+      shadow.appendChild(mdiLink);
 
-      const style = document.createElement('style');
-      style.textContent = processedCSS;
-      shadow.appendChild(style);
+      // 3. Create link for the main stylesheet
+      const styleLink = document.createElement('link');
+      styleLink.rel = 'stylesheet';
+      styleLink.href = '/local/dashview/style.css';
+      shadow.appendChild(styleLink);
+      // --- END OF CORRECTION ---
 
       const content = document.createElement('div');
       content.innerHTML = htmlText;
