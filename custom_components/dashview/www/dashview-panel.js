@@ -1185,6 +1185,8 @@ class DashviewPanel extends HTMLElement {
         const saveAlarmBtn = e.target.closest('#save-alarm-config');
         if (saveAlarmBtn) {
             this.saveAlarmConfiguration();
+        }
+
         const saveHeaderUpdatesBtn = e.target.closest('#save-header-updates-config');
         if (saveHeaderUpdatesBtn) {
             this.saveHeaderUpdatesConfiguration();
@@ -1788,7 +1790,9 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load alarm configuration file - status: ${alarmResponse.status}`);
         this._alarmConfig = {};
+      }
 
+      // Load header updates configuration separately as it's optional
       if (headerUpdatesResponse.ok) {
         this._headerUpdatesConfig = await headerUpdatesResponse.json();
         console.log('[DashView] Header updates configuration loaded successfully');
@@ -2420,12 +2424,13 @@ class DashviewPanel extends HTMLElement {
         if (alarmResponse.ok && alarmTextarea) {
           const alarmConfig = await alarmResponse.json();
           alarmTextarea.value = JSON.stringify(alarmConfig, null, 2);
+          configsLoaded++;
+        }
 
         // Load header updates configuration if available
         if (headerUpdatesResponse.ok && headerUpdatesTextarea) {
           const headerUpdatesConfig = await headerUpdatesResponse.json();
           headerUpdatesTextarea.value = JSON.stringify(headerUpdatesConfig, null, 2);
-
           configsLoaded++;
         }
 
@@ -2434,9 +2439,7 @@ class DashviewPanel extends HTMLElement {
         } else if (configsLoaded >= 3) {
           statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-
-          statusMessage += ' (music, temperature, covers, scenes, floor tabs, alarm, header updates, room notifications, window/weather notifications, and other devices configs optional)';
-
+          statusMessage = '✓ Floor and room configurations loaded successfully (music, temperature, covers, scenes, floor tabs, alarm, header updates, room notifications, window/weather notifications, and other devices configs optional)';
         }
 
         statusElement.textContent = statusMessage;
@@ -2956,6 +2959,9 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving alarm config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
 
   // Save header updates configuration
   async saveHeaderUpdatesConfiguration() {
@@ -3001,7 +3007,6 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving header updates config: ' + error.message;
-
       statusElement.style.background = 'var(--red)';
     }
   }
@@ -5263,3 +5268,5 @@ console.log('[DashView] Debug helpers available at window.DashViewDebug');
 console.log('[DashView] Use DashViewDebug.enableDebug() to enable debug logging');
 console.log('[DashView] Use DashViewDebug.diagnose() to check for common issues');
 console.log('[DashView] Use DashViewDebug.getStatus() to see component status');
+
+// End of DashView Panel component
