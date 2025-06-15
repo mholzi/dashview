@@ -2,3 +2,16 @@ refresh_dashboard:
   name: Refresh Dashboard
   description: Refresh the DashView dashboard content
   fields: {}
+
+set_weather_entity:
+  name: Set Weather Entity
+  description: Sets the primary weather entity for the DashView panel.
+  fields:
+    entity_id:
+      name: Entity ID
+      description: The entity_id of the weather provider (e.g., weather.home).
+      required: true
+      example: "weather.home"
+      selector:
+        entity:
+          domain: weather
