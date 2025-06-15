@@ -444,9 +444,8 @@ h3 {
 
 .info-text {
     color: var(--gray800);
-    white-space: normal;
-    word-break: break-word;
-    flex: 0 1 auto;
+    white-space: nowrap;
+    flex: 0 0 auto;
 }
 
 .info-badge {
