@@ -1190,7 +1190,7 @@ h3 {
 }
 
 .music-tab-button.active {
-    background: var(--accent-color);
+    background: var(--active-big);
     color: white;
 }
 
@@ -1216,6 +1216,7 @@ h3 {
 
 .music-preset-button {
     padding: 8px 16px;
+    height: 30px;
     background: var(--popupBG);
     border: 1px solid var(--gray200);
     border-radius: 12px;
