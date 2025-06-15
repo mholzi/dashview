@@ -76,7 +76,78 @@
 
 
 /* --- Base Layout --- */
-body {
+/* Shadow DOM host styles - redeclare variables for Shadow DOM */
+:host {
+    /* Redeclare all variables for Shadow DOM since :root variables don't inherit */
+    --primary-font-family: 'Space Grotesk', sans-serif;
+    --background: #f5f7fa;
+    --popupBG: #fafbfc;
+    --highlight: rgba(40, 40, 42, 0.05);
+    --highlight-active: rgba(250, 251, 252, 0.1);
+    --gray000: #edeff2;
+    --gray100: #e9eaec;
+    --gray200: #d6d7d9;
+    --gray400: #909193;
+    --gray500: #707173;
+    --gray800: #0f0f10;
+    --green: #c5e4ac;
+    --purple: #e3d4f6;
+    --yellow: #faedae;
+    --red: #f0a994;
+    --blue: #c8ddfa;
+    --blue-dark: #abcbf8;
+    --orange: #ffd1b1;
+    --active-light: linear-gradient(145deg, rgba(255,245,200,1) 0%, rgba(255,225,130,1) 60%, rgba(255,200,90,1) 150%);
+    --active-big: linear-gradient(145deg, rgba(255,220,178,1) 0%, rgba(255,176,233,1) 60%, rgba(104,156,255,1) 150%);
+    --active-small: linear-gradient(145deg, rgba(255,212,193,1) 0%, rgba(248,177,235,1) 100%);
+    --primary-color: var(--blue-dark);
+    --accent-color: var(--blue-dark);
+    --primary-background-color: var(--background);
+    --secondary-background-color: var(--background);
+    --divider-color: var(--gray100);
+    --primary-text-color: var(--gray800);
+    --secondary-text-color: var(--gray500);
+    --text-primary-color: var(--gray800);
+    --disabled-text-color: var(--gray400);
+    --card-background-color: var(--gray000);
+    --ha-card-background: var(--gray000);
+    --ha-card-border-radius: 30px;
+    --ha-card-border-width: 0px;
+    --ha-card-box-shadow: none;
+    
+    font-family: var(--primary-font-family);
+    background-color: var(--background);
+    color: var(--primary-text-color);
+    display: block;
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Shadow DOM dark mode support */
+@media (prefers-color-scheme: dark) {
+    :host {
+        --background: #28282A;
+        --popupBG: #28282A;
+        --highlight: rgba(250, 251, 252, 0.05);
+        --highlight-active: rgba(40, 40, 42, 0.1);
+        --gray000: #3a3b3d;
+        --gray100: #353637;
+        --gray200: #404142;
+        --gray400: #737476;
+        --gray500: #939496;
+        --gray800: #ffffff;
+        --green: #d2e7d6;
+        --purple: #d5c1ed;
+        --yellow: #fbf1be;
+        --red: #e7625f;
+        --blue: #abcbf8;
+        --blue-dark: #c8ddfa;
+        --orange: #ffba8a;
+    }
+}
+
+/* Root container in Shadow DOM - target the body element that gets loaded */
+body, :host body, :host > div, :host > div > body {
     font-family: var(--primary-font-family);
     background-color: var(--background);
     color: var(--primary-text-color);

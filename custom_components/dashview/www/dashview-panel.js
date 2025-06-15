@@ -143,8 +143,13 @@ class DashviewPanel extends HTMLElement {
       await this.loadStylesheetsInline(shadow);
       // --- END OF NEW APPROACH ---
 
+      // Parse the HTML and extract just the body content for Shadow DOM
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      const bodyContent = doc.body.innerHTML;
+      
       const content = document.createElement('div');
-      content.innerHTML = htmlText;
+      content.innerHTML = bodyContent;
       shadow.appendChild(content);
       
       console.log('[DashView] Loading templates...');
@@ -284,10 +289,51 @@ class DashviewPanel extends HTMLElement {
           fallbackStyle.setAttribute('data-source', `${stylesheet.name} (fallback)`);
           
           if (stylesheet.name === 'Main Stylesheet') {
-            // Provide essential fallback styles
+            // Provide essential fallback styles with CSS variables for Shadow DOM
             fallbackStyle.textContent = `
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-              .dashboard-container { max-width: 500px; margin: 0 auto; padding: 12px; }
+              :host {
+                --primary-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                --background: #f5f7fa;
+                --gray000: #edeff2;
+                --gray100: #e9eaec;
+                --gray200: #d6d7d9;
+                --gray800: #0f0f10;
+                --gray500: #707173;
+                --primary-text-color: #0f0f10;
+                --secondary-text-color: #707173;
+                font-family: var(--primary-font-family);
+                background-color: var(--background);
+                color: var(--primary-text-color);
+                display: block;
+                position: relative;
+                min-height: 100vh;
+              }
+              body { 
+                font-family: var(--primary-font-family); 
+                background-color: var(--background);
+                color: var(--primary-text-color);
+                margin: 0;
+                padding: 12px 0;
+                padding-bottom: 90px;
+              }
+              .dashboard-container { 
+                max-width: 500px; 
+                margin: 0 auto; 
+                padding: 0 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                background-color: var(--background);
+              }
+              .placeholder {
+                background-color: var(--gray000);
+                border: 2px dashed var(--gray200);
+                border-radius: 20px;
+                padding: 16px;
+                text-align: center;
+                color: var(--secondary-text-color);
+                font-size: 0.9em;
+              }
               .popup { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
               .popup-content { background: white; margin: 20px; padding: 20px; border-radius: 8px; }
             `;
