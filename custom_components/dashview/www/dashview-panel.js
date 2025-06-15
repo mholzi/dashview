@@ -43,7 +43,26 @@ class DashviewPanel extends HTMLElement {
 
   // Initialize weather entity from persistent storage
   async initializeWeatherEntity() {
-    // Try to load the weather entity from localStorage as a cache
+    try {
+      // Try to load the weather entity from the backend API
+      const response = await fetch('/api/dashview/weather_config');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.weather_entity && this._hass && this._hass.states[data.weather_entity]) {
+          this._weatherEntity = data.weather_entity;
+          // Also cache in localStorage for faster subsequent loads
+          localStorage.setItem('dashview_weather_entity', data.weather_entity);
+          if (this._debugMode) {
+            console.log('[DashView] Loaded weather entity from backend:', data.weather_entity);
+          }
+          return;
+        }
+      }
+    } catch (error) {
+      console.warn('[DashView] Could not load weather entity from backend:', error);
+    }
+
+    // Fallback: try to load from localStorage cache
     const cachedWeatherEntity = localStorage.getItem('dashview_weather_entity');
     if (cachedWeatherEntity && this._hass && this._hass.states[cachedWeatherEntity]) {
       this._weatherEntity = cachedWeatherEntity;
@@ -51,7 +70,7 @@ class DashviewPanel extends HTMLElement {
         console.log('[DashView] Loaded cached weather entity:', cachedWeatherEntity);
       }
     } else if (this._debugMode) {
-      console.log('[DashView] No valid cached weather entity found, will use fallback logic');
+      console.log('[DashView] No valid weather entity found, will use fallback logic');
     }
   }
 
@@ -2167,14 +2186,32 @@ class DashviewPanel extends HTMLElement {
         weatherSelector.appendChild(option);
       });
 
-      // Set the current weather entity (either from our cache or default to first available)
-      const currentWeatherEntity = this.getCurrentWeatherEntity();
-      if (weatherEntities.includes(currentWeatherEntity)) {
-        weatherSelector.value = currentWeatherEntity;
+      // Get the configured weather entity from backend
+      let configuredEntity = null;
+      try {
+        const response = await fetch('/api/dashview/weather_config');
+        if (response.ok) {
+          const data = await response.json();
+          configuredEntity = data.weather_entity;
+          // Update our cache
+          if (configuredEntity && this._hass.states[configuredEntity]) {
+            this._weatherEntity = configuredEntity;
+            localStorage.setItem('dashview_weather_entity', configuredEntity);
+          }
+        }
+      } catch (error) {
+        console.warn('[DashView] Could not load weather entity config from backend:', error);
+      }
+
+      // Set the dropdown value
+      if (configuredEntity && weatherEntities.includes(configuredEntity)) {
+        weatherSelector.value = configuredEntity;
       } else {
-        // Default to first weather entity if current one is not available
+        // Default to first weather entity if none configured or config not available
         weatherSelector.value = weatherEntities[0];
-        this._weatherEntity = weatherEntities[0]; // Update our cache
+        if (!this._weatherEntity) {
+          this._weatherEntity = weatherEntities[0];
+        }
       }
 
     } catch (error) {
