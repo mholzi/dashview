@@ -12,6 +12,7 @@ class DashviewPanel extends HTMLElement {
     this._lightsConfig = {};
     this._scenesConfig = {};
     this._roomNotificationsConfig = {};
+    this._windowWeatherConfig = {};
     this._otherDevicesConfig = {};
     this._floorTabsConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
@@ -444,6 +445,9 @@ class DashviewPanel extends HTMLElement {
 
       // Update Room Notifications
       this._safeUpdate('room-notifications', () => this.updateRoomNotifications(shadow));
+
+      // Update Window/Weather Notifications
+      this._safeUpdate('window-weather-notifications', () => this.updateWindowWeatherNotifications(shadow));
 
       if (this._debugMode) {
         console.log('[DashView] Elements update completed successfully');
@@ -1049,6 +1053,11 @@ class DashviewPanel extends HTMLElement {
             this.saveRoomNotificationsConfiguration();
         }
 
+        const saveWindowWeatherBtn = e.target.closest('#save-window-weather-config');
+        if (saveWindowWeatherBtn) {
+            this.saveWindowWeatherConfiguration();
+        }
+
         const saveOtherDevicesBtn = e.target.closest('#save-other-devices-config');
         if (saveOtherDevicesBtn) {
             this.saveOtherDevicesConfiguration();
@@ -1405,7 +1414,9 @@ class DashviewPanel extends HTMLElement {
     console.log('[DashView] Loading configuration files...');
     try {
 
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+
 
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
@@ -1413,11 +1424,12 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/temperature.json'),
         fetch('/local/dashview/config/covers.json'),
         fetch('/local/dashview/config/scenes.json'),
-
         fetch('/local/dashview/config/lights.json'),
         fetch('/local/dashview/config/room_notifications.json'),
         fetch('/local/dashview/config/other_devices.json'),
         fetch('/local/dashview/config/floor_tabs.json')
+        fetch('/local/dashview/config/window_weather_notifications.json'),
+
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1508,6 +1520,18 @@ class DashviewPanel extends HTMLElement {
         this._roomNotificationsConfig = {};
       }
 
+      // Load window/weather notifications configuration separately as it's optional
+      if (windowWeatherResponse.ok) {
+        this._windowWeatherConfig = await windowWeatherResponse.json();
+        console.log('[DashView] Window/Weather notifications configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Window/Weather notifications config:', this._windowWeatherConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load window/weather notifications configuration file - status: ${windowWeatherResponse.status}`);
+        this._windowWeatherConfig = {};
+      }
+
       // Load other devices configuration separately as it's optional
       if (otherDevicesResponse.ok) {
         this._otherDevicesConfig = await otherDevicesResponse.json();
@@ -1542,6 +1566,7 @@ class DashviewPanel extends HTMLElement {
       this._lightsConfig = {};
       this._scenesConfig = {};
       this._roomNotificationsConfig = {};
+      this._windowWeatherConfig = {};
       this._otherDevicesConfig = {};
       this._floorTabsConfig = {};
     }
@@ -1823,6 +1848,7 @@ class DashviewPanel extends HTMLElement {
     const coversTextarea = shadow.getElementById('covers-config');
     const scenesTextarea = shadow.getElementById('scenes-config');
     const roomNotificationsTextarea = shadow.getElementById('room-notifications-config');
+    const windowWeatherTextarea = shadow.getElementById('window-weather-config');
     const otherDevicesTextarea = shadow.getElementById('other-devices-config');
     const floorTabsTextarea = shadow.getElementById('floor-tabs-config');
 
@@ -1831,7 +1857,8 @@ class DashviewPanel extends HTMLElement {
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse] = await Promise.all([
+
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
@@ -1841,6 +1868,8 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/room_notifications.json'),
         fetch('/local/dashview/config/other_devices.json'),
         fetch('/local/dashview/config/floor_tabs.json')
+        fetch('/local/dashview/config/window_weather_notifications.json'),
+
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1888,6 +1917,13 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
+        // Load window/weather notifications configuration if available
+        if (windowWeatherResponse.ok && windowWeatherTextarea) {
+          const windowWeatherConfig = await windowWeatherResponse.json();
+          windowWeatherTextarea.value = JSON.stringify(windowWeatherConfig, null, 2);
+          configsLoaded++;
+        }
+
         // Load other devices configuration if available
         if (otherDevicesResponse.ok && otherDevicesTextarea) {
           const otherDevicesConfig = await otherDevicesResponse.json();
@@ -1907,7 +1943,7 @@ class DashviewPanel extends HTMLElement {
         } else if (configsLoaded >= 3) {
           statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-          statusMessage += ' (music, temperature, covers, scenes, floor tabs, and other devices configs optional)';
+          statusMessage += ' (music, temperature, covers, scenes, floor tabs, room notifications, window/weather notifications, and other devices configs optional)';
         }
 
         statusElement.textContent = statusMessage;
@@ -2218,6 +2254,60 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving room notifications config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save window/weather notifications configuration
+  async saveWindowWeatherConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const windowWeatherTextarea = shadow.getElementById('window-weather-config');
+
+    if (!statusElement || !windowWeatherTextarea) return;
+
+    try {
+      const configData = JSON.parse(windowWeatherTextarea.value);
+      
+      // Validate structure
+      if (!configData.global_settings || !configData.notifications) {
+        throw new Error('Invalid window/weather notifications configuration structure. Must include global_settings and notifications.');
+      }
+
+      // Validate global_settings
+      if (typeof configData.global_settings !== 'object' || Array.isArray(configData.global_settings)) {
+        throw new Error('global_settings must be an object.');
+      }
+
+      // Validate notifications array
+      if (!Array.isArray(configData.notifications)) {
+        throw new Error('notifications must be an array.');
+      }
+
+      // Validate each notification
+      for (const notification of configData.notifications) {
+        if (!notification.id || !notification.conditions || !notification.notification_type) {
+          throw new Error('Each notification must have id, conditions, and notification_type.');
+        }
+        
+        if (typeof notification.conditions !== 'object') {
+          throw new Error('Notification conditions must be an object.');
+        }
+      }
+
+      statusElement.textContent = '✓ Window/Weather notifications configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._windowWeatherConfig = configData;
+      
+      // Update window/weather notifications
+      if (this._hass) {
+        this.updateWindowWeatherNotifications(shadow);
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving window/weather notifications config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
   }
@@ -2712,6 +2802,109 @@ class DashviewPanel extends HTMLElement {
     }
     
     return details.join(' - ') || `Temperatur: ${temperature}°C, Luftfeuchtigkeit: ${humidity}%`;
+  }
+
+  // Update window/weather notifications
+  async updateWindowWeatherNotifications(shadow) {
+    if (!this._windowWeatherConfig || !this._windowWeatherConfig.notifications) return;
+
+    // Find the window/weather notifications container
+    const container = shadow.querySelector('.window-weather-notifications-container');
+    if (!container) return;
+
+    let hasActiveNotifications = false;
+    let notificationsHTML = '';
+
+    // Evaluate each notification
+    for (const notification of this._windowWeatherConfig.notifications) {
+      if (this.evaluateNotificationConditions(notification.conditions)) {
+        hasActiveNotifications = true;
+        notificationsHTML += this.generateWindowWeatherNotificationHTML(notification);
+      }
+    }
+
+    if (hasActiveNotifications) {
+      container.innerHTML = notificationsHTML;
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+    }
+  }
+
+  // Evaluate notification conditions recursively
+  evaluateNotificationConditions(conditions) {
+    if (!conditions || !this._hass) return false;
+
+    switch (conditions.type) {
+      case 'and':
+        return conditions.conditions && conditions.conditions.every(condition => 
+          this.evaluateNotificationConditions(condition)
+        );
+      
+      case 'or':
+        return conditions.conditions && conditions.conditions.some(condition => 
+          this.evaluateNotificationConditions(condition)
+        );
+      
+      case 'state':
+        const entity = this._hass.states[conditions.entity];
+        return entity && entity.state === conditions.state;
+      
+      default:
+        return false;
+    }
+  }
+
+  // Generate HTML for window/weather notification
+  generateWindowWeatherNotificationHTML(notification) {
+    const tempSensor = this._hass.states[this._windowWeatherConfig.global_settings.temp_sensor];
+    const humSensor = this._hass.states[this._windowWeatherConfig.global_settings.hum_sensor];
+    
+    let temperature = 'N/A';
+    let humidity = 'N/A';
+    let detailText = '';
+
+    if (tempSensor && !isNaN(parseFloat(tempSensor.state))) {
+      temperature = parseFloat(tempSensor.state).toFixed(1);
+    }
+    
+    if (humSensor && !isNaN(parseFloat(humSensor.state))) {
+      humidity = parseFloat(humSensor.state).toFixed(0);
+    }
+
+    // Use detail_override if provided, otherwise generate detail text
+    if (notification.detail_override) {
+      detailText = notification.detail_override;
+    } else {
+      // Generate detail text similar to the original template
+      const tempAbove = this._windowWeatherConfig.global_settings.temp_above;
+      const humAbove = this._windowWeatherConfig.global_settings.hum_above;
+      
+      if (temperature !== 'N/A' && tempAbove !== undefined && parseFloat(temperature) > tempAbove) {
+        detailText += `Temperatur: ${temperature}°C`;
+      }
+      
+      if (humidity !== 'N/A' && humAbove !== undefined && parseFloat(humidity) > humAbove) {
+        if (detailText) detailText += ' - ';
+        detailText += `Luftfeuchtigkeit: ${humidity}%`;
+      }
+      
+      if (!detailText && temperature !== 'N/A' && humidity !== 'N/A') {
+        detailText = `Temperatur: ${temperature}°C, Luftfeuchtigkeit: ${humidity}%`;
+      }
+    }
+
+    return `
+      <div class="temp-notification-container">
+        <div class="notification-grid">
+          <div class="notification-icon">${notification.icon || '⚠️'}</div>
+          <div class="notification-content">
+            <div class="notification-title">${notification.message}</div>
+            <div class="notification-details">${detailText}</div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   // Update cover controls with current state
