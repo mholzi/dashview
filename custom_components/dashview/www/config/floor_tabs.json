@@ -2,25 +2,25 @@
   "floors": [
     {
       "id": "erdgeschoss",
-      "room": "Erdgeschoss",
+      "room": "EG",
       "default": "show",
       "active_tab": 1
     },
     {
       "id": "obergeschoss", 
-      "room": "Obergeschoss",
+      "room": "OG",
       "default": "hide",
       "active_tab": 2
     },
     {
       "id": "elternbereich",
-      "room": "Elternbereich", 
+      "room": "Eltern", 
       "default": "hide",
       "active_tab": 3
     },
     {
       "id": "keller",
-      "room": "Kellergeschoss",
+      "room": "Keller",
       "default": "hide", 
       "active_tab": 4
     }
@@ -71,7 +71,7 @@
         }
       ]
     },
-    "Kellergeschoss": {
+    "Keller": {
       "grid_template_areas": "'washing licht1'\n'washing dryer'\n'kellerraum raeume'\n'kellerraum raeume'",
       "cards": [
         {
@@ -105,7 +105,7 @@
         }
       ]
     },
-    "Erdgeschoss": {
+    "EG": {
       "grid_template_areas": "'eingang raeume'\n'garbage raeume'\n'garbage esszimmertuer'\n'sauger dishwasher'",
       "cards": [
         {
@@ -118,7 +118,7 @@
         {
           "template": "floor_swipe",
           "grid": "raeume",
-          "entity": "Erdgeschoss"
+          "entity": "EG"
         },
         {
           "template": "floor_swipe", 
@@ -145,7 +145,7 @@
         }
       ]
     },
-    "Elternbereich": {
+    "Eltern": {
       "grid_template_areas": "'eltern .'\n'eltern .'",
       "cards": [
         {
@@ -155,7 +155,7 @@
         }
       ]
     },
-    "Obergeschoss": {
+    "OG": {
       "grid_template_areas": "'kinder kinderbad'\n'kinder kinderbad'\n'kinderflur aupair'\n'kinderflur aupair'",
       "cards": [
         {
