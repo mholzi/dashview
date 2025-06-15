@@ -8,6 +8,7 @@ class DashviewPanel extends HTMLElement {
     this._roomsConfig = {};
     this._musicConfig = {};
     this._coversConfig = {};
+    this._lightsConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._activeMusicTab = null; // Track the currently active music tab
     this._volumeSliderInteraction = new Set(); // Track which volume sliders are being interacted with
@@ -141,6 +142,9 @@ class DashviewPanel extends HTMLElement {
 
       // Initialize cover interactions
       this.handleCoverInteractions();
+
+      // Initialize light interactions
+      this.handleLightInteractions();
 
       this._contentReady = true;
       console.log('[DashView] Content ready, updating elements...');
@@ -288,6 +292,12 @@ class DashviewPanel extends HTMLElement {
 
       // Update Cover Sections
       this._safeUpdate('cover-sections', () => this.updateCoverSections());
+
+      // Update Light Controls
+      this._safeUpdate('light-controls', () => this.updateLightControls());
+
+      // Update Light Sections
+      this._safeUpdate('light-sections', () => this.updateLightSections());
 
       if (this._debugMode) {
         console.log('[DashView] Elements update completed successfully');
@@ -1155,6 +1165,7 @@ class DashviewPanel extends HTMLElement {
                 // Load admin configuration when covers tab is activated
                 if (targetId === 'covers-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
                 // Load music configuration when music tab is activated
                 if (targetId === 'music-tab') {
                     setTimeout(() => this.loadMusicAdminConfiguration(), 100);
@@ -1199,12 +1210,13 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, lightsResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
-        fetch('/local/dashview/config/covers.json')
+        fetch('/local/dashview/config/covers.json'),
+        fetch('/local/dashview/config/lights.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1256,6 +1268,18 @@ class DashviewPanel extends HTMLElement {
         console.warn(`[DashView] Could not load covers configuration file - status: ${coversResponse.status}`);
         this._coversConfig = {};
       }
+
+      // Load lights configuration separately as it's optional
+      if (lightsResponse.ok) {
+        this._lightsConfig = await lightsResponse.json();
+        console.log('[DashView] Lights configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Lights config:', this._lightsConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load lights configuration file - status: ${lightsResponse.status}`);
+        this._lightsConfig = {};
+      }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
@@ -1263,6 +1287,7 @@ class DashviewPanel extends HTMLElement {
       this._musicConfig = {};
       this._temperatureConfig = {};
       this._coversConfig = {};
+      this._lightsConfig = {};
     }
   }
 
@@ -1814,6 +1839,212 @@ class DashviewPanel extends HTMLElement {
         
         document.addEventListener('pointermove', handleSliderMove);
         document.addEventListener('pointerup', handleSliderEnd);
+      }
+    });
+  }
+
+  // Update light sections for all rooms  
+  async updateLightSections() {
+    if (!this._lightsConfig || Object.keys(this._lightsConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    if (!this._lightsConfig) return;
+
+    const shadow = this.shadowRoot;
+    
+    // Map popup IDs to room names
+    const roomMappings = {
+      'buro-light-section': 'Büro',
+      'wohnzimmer-light-section': 'Wohnzimmer',
+      'kueche-light-section': 'Küche',
+      'kinderzimmer-light-section': 'Kinderzimmer',
+      'gaesteklo-light-section': 'Gästeklo',
+      'eingang-light-section': 'Eingang',
+      'aupair-light-section': 'Aupair',
+      'elternbereich-light-section': 'Eltern'
+    };
+
+    // Update each light section
+    Object.entries(roomMappings).forEach(([sectionId, roomName]) => {
+      const section = shadow.getElementById(sectionId);
+      if (section) {
+        const lightHTML = this.generateLightSectionContent(roomName);
+        section.innerHTML = lightHTML;
+      }
+    });
+  }
+
+  // Generate light section content based on configuration and current room
+  generateLightSectionContent(room) {
+    if (!this._lightsConfig || !this._lightsConfig.room_lights) {
+      return '<div class="placeholder">Light configuration not loaded</div>';
+    }
+
+    const roomLights = this._lightsConfig.room_lights[room] || [];
+    const excludedRooms = this._lightsConfig.excluded_rooms || [];
+    
+    // Check if room is in exclusion list or has no lights
+    if (excludedRooms.includes(room) || roomLights.length === 0) {
+      return '';
+    }
+
+    // Get the primary light entity (first in the list)
+    const primaryLight = roomLights[0];
+
+    let html = `
+      <div class="light-section" data-room="${room}">
+        <div class="light-expander-card">
+          <div class="light-header">
+            <div class="light-header-grid">
+              <div class="light-title">Licht</div>
+              <div class="light-main-switch">
+                <button class="light-all-toggle" data-room="${room}">
+                  <i class="mdi mdi-lightbulb"></i>
+                </button>
+              </div>
+              <div class="light-count-display" data-room="${room}">0 von ${roomLights.length} Lichter an</div>
+            </div>
+          </div>
+          <div class="light-content" style="display: none;">
+            <div class="light-controls">
+    `;
+
+    // Add individual light controls for each light entity
+    roomLights.forEach(lightEntity => {
+      html += `
+            <div class="light-item" data-entity="${lightEntity}">
+              <div class="light-item-grid">
+                <div class="light-item-name" data-entity="${lightEntity}">Loading...</div>
+                <div class="light-item-controls">
+                  <button class="light-toggle-btn" data-entity="${lightEntity}">
+                    <i class="mdi mdi-lightbulb"></i>
+                  </button>
+                </div>
+                <div class="light-item-status" data-entity="${lightEntity}">--</div>
+              </div>
+            </div>`;
+    });
+
+    html += `
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    return html;
+  }
+
+  // Update light controls with current state
+  updateLightControls() {
+    if (!this._hass || !this._lightsConfig) return;
+
+    const shadow = this.shadowRoot;
+    
+    // Update all light displays
+    shadow.querySelectorAll('[data-entity^="light."], [data-entity^="switch."]').forEach(element => {
+      const entityId = element.getAttribute('data-entity');
+      const entity = this._hass.states[entityId];
+      
+      if (entity) {
+        // Update friendly names
+        if (element.classList.contains('light-item-name')) {
+          element.textContent = entity.attributes.friendly_name || entityId;
+        }
+        
+        // Update status displays
+        if (element.classList.contains('light-item-status')) {
+          const isOn = entity.state === 'on';
+          element.textContent = isOn ? 'Ein' : 'Aus';
+          element.classList.toggle('on', isOn);
+        }
+        
+        // Update toggle button states
+        if (element.classList.contains('light-toggle-btn')) {
+          const isOn = entity.state === 'on';
+          element.classList.toggle('on', isOn);
+        }
+      }
+    });
+    
+    // Update room light counts
+    if (this._lightsConfig.room_lights) {
+      Object.entries(this._lightsConfig.room_lights).forEach(([roomName, lights]) => {
+        const countDisplay = shadow.querySelector(`[data-room="${roomName}"].light-count-display`);
+        if (countDisplay && lights.length > 0) {
+          let onCount = 0;
+          lights.forEach(lightEntity => {
+            const entity = this._hass.states[lightEntity];
+            if (entity && entity.state === 'on') {
+              onCount++;
+            }
+          });
+          countDisplay.textContent = `${onCount} von ${lights.length} Lichter an`;
+        }
+      });
+    }
+  }
+
+  // Handle light control interactions
+  handleLightInteractions() {
+    const shadow = this.shadowRoot;
+    
+    // Handle light header clicks (expand/collapse)
+    shadow.addEventListener('click', (e) => {
+      const lightHeader = e.target.closest('.light-header');
+      if (lightHeader) {
+        const lightSection = lightHeader.closest('.light-section');
+        const content = lightSection.querySelector('.light-content');
+        if (content) {
+          const isExpanded = content.style.display !== 'none';
+          content.style.display = isExpanded ? 'none' : 'block';
+          lightSection.classList.toggle('expanded', !isExpanded);
+        }
+      }
+      
+      // Handle individual light toggle clicks
+      const lightToggle = e.target.closest('.light-toggle-btn');
+      if (lightToggle) {
+        const entityId = lightToggle.getAttribute('data-entity');
+        const entity = this._hass.states[entityId];
+        
+        if (entity) {
+          const isOn = entity.state === 'on';
+          const domain = entityId.startsWith('switch.') ? 'switch' : 'light';
+          const service = isOn ? 'turn_off' : 'turn_on';
+          
+          this._hass.callService(domain, service, {
+            entity_id: entityId
+          });
+        }
+      }
+      
+      // Handle all lights toggle for room
+      const allToggle = e.target.closest('.light-all-toggle');
+      if (allToggle) {
+        const roomName = allToggle.getAttribute('data-room');
+        const roomLights = this._lightsConfig.room_lights[roomName] || [];
+        
+        if (roomLights.length > 0) {
+          // Check if any lights are on
+          let anyOn = false;
+          roomLights.forEach(lightEntity => {
+            const entity = this._hass.states[lightEntity];
+            if (entity && entity.state === 'on') {
+              anyOn = true;
+            }
+          });
+          
+          // Turn all on if none are on, otherwise turn all off
+          const service = anyOn ? 'turn_off' : 'turn_on';
+          
+          roomLights.forEach(lightEntity => {
+            const domain = lightEntity.startsWith('switch.') ? 'switch' : 'light';
+            this._hass.callService(domain, service, {
+              entity_id: lightEntity
+            });
+          });
+        }
       }
     });
   }
