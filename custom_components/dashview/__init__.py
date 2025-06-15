@@ -5,6 +5,7 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig
+from .services import async_setup_services, async_unload_services
 
 DOMAIN = "dashview"
 _LOGGER = logging.getLogger(__name__)
@@ -50,6 +51,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             else:
                 raise
 
+        # Set up DashView services
+        await async_setup_services(hass)
+
     except Exception as e:
         _LOGGER.error("Failed to register DashView panel: %s", e, exc_info=True)
         return False
@@ -61,6 +65,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.info("Unloading DashView panel.")
+    
+    # Unload DashView services
+    await async_unload_services(hass)
+    
     # Clean up the panel when the integration is unloaded or reloaded.
     try:
         # Use frontend module to remove the panel
