@@ -635,11 +635,11 @@ class DashviewPanel extends HTMLElement {
         const saveMusicBtn = e.target.closest('#save-music-config');
         if (saveMusicBtn) {
             this.saveMusicConfiguration();
+        }
 
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
-
         }
     });
   }
@@ -1463,6 +1463,7 @@ class DashviewPanel extends HTMLElement {
         }
       }
     });
+  }
 
   // Load weather entity configuration for admin interface
   async loadWeatherEntityConfiguration() {
