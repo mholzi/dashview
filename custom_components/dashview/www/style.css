@@ -224,15 +224,16 @@ h3 {
     background-color: var(--popupBG);
     padding: 20px;
     border-radius: 30px 30px 0 0;
-    max-width: 600px;
+    max-width: 500px;
     width: calc(100% - 40px);
     position: relative;
     /* Start at bottom of screen */
     transform: translateY(100%);
     transition: transform 0.3s ease;
-    /* Height constraints */
-    min-height: 50vh;
-    max-height: 90vh;
+    /* Height constraints - set to 80% of screen */
+    height: 80vh;
+    max-height: 80vh;
+    min-height: 80vh;
     overflow-y: auto;
 }
 
@@ -270,7 +271,7 @@ h3 {
 }
 
 .popup-content h3 {
-    margin-bottom: 40px;
+    margin-bottom: 80px;
 }
 
 .popup-content h3 i {
@@ -1186,7 +1187,8 @@ h3 {
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: var(--primary-text-color);
+    color: var(--gray400);
+    font-size: 1.2em;
 }
 
 .music-tab-button:hover {
@@ -1195,7 +1197,8 @@ h3 {
 
 .music-tab-button.active {
     background: var(--active-big);
-    color: white;
+    color: var(--gray000);
+    font-weight: 500;
 }
 
 .music-tab-content {
@@ -1257,8 +1260,8 @@ h3 {
 }
 
 .music-cover-image {
-    width: 180px;
-    height: 120px;
+    width: 270px;
+    height: 180px;
     border-radius: 12px;
     object-fit: cover;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -1284,8 +1287,8 @@ h3 {
 }
 
 .music-control-btn {
-    width: 72px;
-    height: 72px;
+    width: 58px;
+    height: 58px;
     border: none;
     border-radius: 50%;
     background: var(--gray200);
@@ -1303,8 +1306,8 @@ h3 {
 }
 
 .music-control-btn.play-pause {
-    width: 96px;
-    height: 96px;
+    width: 77px;
+    height: 77px;
     background: var(--active-small);
     font-size: 2em;
 }
@@ -1317,7 +1320,7 @@ h3 {
 
 .volume-label {
     min-width: 80px;
-    font-size: 0.9em;
+    font-size: 1.08em;
     color: var(--primary-text-color);
 }
 
