@@ -1152,11 +1152,12 @@ class DashviewPanel extends HTMLElement {
       const temp = forecast.temperature !== undefined ? `${forecast.temperature}°C` : '— °C';
       const wind = forecast.wind_speed !== undefined ? `${forecast.wind_speed.toFixed(1)} km/h` : '';
       const rain = forecast.precipitation !== undefined ? `${forecast.precipitation.toFixed(1)} mm` : '';
+      const condition = forecast.condition || 'sunny';
       
       hourlyItem.innerHTML = `
         <div class="hourly-time">${timeString}</div>
         <div class="hourly-icon">
-          <img src="/local/weather_icons/${forecast.condition}.svg" alt="${forecast.condition}" width="50" height="50">
+          <img src="/local/weather_icons/${condition}.svg" alt="${condition}" width="50" height="50">
         </div>
         <div class="hourly-temp">${temp}</div>
         <div class="hourly-wind">${wind}</div>
@@ -1218,16 +1219,31 @@ class DashviewPanel extends HTMLElement {
       return;
     }
     
-    // Get sensor states
+    // Get sensor states with fallback to weather forecast if sensors don't exist
     const tempState = this._hass.states[mapping.temp_sensor];
     const conditionState = this._hass.states[mapping.condition_sensor];
     const precipitationState = this._hass.states['sensor.dreieich_precipitation'];
     
-    // Extract values
-    const temp = tempState?.state && tempState.state !== 'unavailable' ? 
-      parseFloat(tempState.state).toFixed(1) + '°C' : '— °C';
+    // Fallback to weather forecast if sensors are not available
+    let temp, condition;
     
-    const condition = conditionState?.state || 'sunny';
+    if (tempState?.state && tempState.state !== 'unavailable') {
+      temp = parseFloat(tempState.state).toFixed(1) + '°C';
+    } else if (weatherState?.attributes?.forecast && weatherState.attributes.forecast[dayIndex]) {
+      // Fallback to weather forecast
+      temp = Math.round(weatherState.attributes.forecast[dayIndex].temperature) + '°C';
+    } else {
+      temp = '— °C';
+    }
+    
+    if (conditionState?.state && conditionState.state !== 'unavailable') {
+      condition = conditionState.state;
+    } else if (weatherState?.attributes?.forecast && weatherState.attributes.forecast[dayIndex]) {
+      // Fallback to weather forecast
+      condition = weatherState.attributes.forecast[dayIndex].condition;
+    } else {
+      condition = 'sunny';
+    }
     
     // Condition translations
     const translations = {
