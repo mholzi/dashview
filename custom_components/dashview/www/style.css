@@ -705,7 +705,7 @@ h3 {
 
 .hourly-item {
     min-width: 100px;
-    background-color: #fff;
+    background-color: var(--card-background-color);
     border-radius: 12px;
     padding: 12px;
     text-align: center;
@@ -732,7 +732,7 @@ h3 {
 .hourly-time {
     font-size: 12px;
     font-weight: bold;
-    color: #000;
+    color: var(--primary-text-color);
     margin-bottom: 6px;
 }
 
@@ -748,19 +748,19 @@ h3 {
 .hourly-temp {
     font-size: 20px;
     font-weight: bold;
-    color: #000;
+    color: var(--primary-text-color);
     margin-bottom: 6px;
 }
 
 .hourly-wind {
     font-size: 11px;
-    color: #000;
+    color: var(--secondary-text-color);
     margin-bottom: 2px;
 }
 
 .hourly-rain {
     font-size: 11px;
-    color: #000;
+    color: var(--secondary-text-color);
 }
 
 .daily-forecast-container {

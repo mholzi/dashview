@@ -1241,9 +1241,6 @@ class DashviewPanel extends HTMLElement {
     const iconElement = shadow.getElementById('current-weather-icon');
     const tempElement = shadow.getElementById('current-temperature');
     const conditionElement = shadow.getElementById('current-condition');
-    const feelsLikeElement = shadow.getElementById('feels-like-temp');
-    const humidityElement = shadow.getElementById('humidity');
-    const windElement = shadow.getElementById('wind-speed');
 
     if (iconElement && weatherState.state) {
       iconElement.src = `/local/weather_icons/${weatherState.state}.svg`;
@@ -1255,19 +1252,14 @@ class DashviewPanel extends HTMLElement {
     }
 
     if (conditionElement) {
-      conditionElement.textContent = this.translateWeatherCondition(weatherState.state);
-    }
-
-    if (feelsLikeElement && weatherState.attributes.apparent_temperature) {
-      feelsLikeElement.textContent = `${Math.round(weatherState.attributes.apparent_temperature)}°C`;
-    }
-
-    if (humidityElement && weatherState.attributes.humidity) {
-      humidityElement.textContent = `${weatherState.attributes.humidity}%`;
-    }
-
-    if (windElement && weatherState.attributes.wind_speed) {
-      windElement.textContent = `${Math.round(weatherState.attributes.wind_speed)} km/h`;
+      let conditionText = this.translateWeatherCondition(weatherState.state);
+      
+      // Add feels like temperature if available
+      if (weatherState.attributes.apparent_temperature) {
+        conditionText += ` – Gefühlt ${Math.round(weatherState.attributes.apparent_temperature)}°C`;
+      }
+      
+      conditionElement.textContent = conditionText;
     }
   }
 
