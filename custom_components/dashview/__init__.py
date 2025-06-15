@@ -4,6 +4,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import panel_custom
+from homeassistant.components.http import StaticPathConfig
 
 DOMAIN = "dashview"
 _LOGGER = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # FIX #2: Use the new, non-blocking method for registering static paths.
         www_path = os.path.join(os.path.dirname(__file__), "www")
         await hass.http.async_register_static_paths([
-            {"url_path": f"/local/{panel_name}", "path": www_path, "cache_headers": False}
+            StaticPathConfig(f"/local/{panel_name}", www_path, False)
         ])
 
         # FIX #1: This logic now only runs once within async_setup_entry,
