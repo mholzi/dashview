@@ -239,6 +239,53 @@
                         entity_picture: null
                     }
                 },
+                // Add smoke detector entities for header updates testing
+                'binary_sensor.smoke_detector_1': {
+                    state: 'on',
+                    attributes: {
+                        friendly_name: 'Kitchen Smoke Detector'
+                    }
+                },
+                'binary_sensor.smoke_detector_2': {
+                    state: 'off',
+                    attributes: {
+                        friendly_name: 'Living Room Smoke Detector'
+                    }
+                },
+                'binary_sensor.smoke_detector_3': {
+                    state: 'on',
+                    attributes: {
+                        friendly_name: 'Bedroom Smoke Detector'
+                    }
+                },
+                // Freezer alarm entities
+                'sensor.gefrierschrank_door_alarm_freezer': {
+                    state: 'present',
+                    attributes: {
+                        friendly_name: 'Freezer Door Alarm'
+                    }
+                },
+                'sensor.gefrierschrank_temperature_alarm_freezer': {
+                    state: 'absent',
+                    attributes: {
+                        friendly_name: 'Freezer Temperature Alarm'
+                    }
+                },
+                // Media players for header updates testing
+                'media_player.wohnzimmer': {
+                    state: 'playing',
+                    attributes: {
+                        media_title: 'Netflix',
+                        friendly_name: 'Living Room TV'
+                    }
+                },
+                'media_player.tv_schlafzimmer_2': {
+                    state: 'idle',
+                    attributes: {
+                        media_title: null,
+                        friendly_name: 'Bedroom TV'
+                    }
+                },
                 // Add mock media player for testing music popup improvements
                 'media_player.echo_buero': {
                     state: 'playing',

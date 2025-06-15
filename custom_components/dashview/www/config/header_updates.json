@@ -1,0 +1,221 @@
+{
+  "buttons": [
+    {
+      "id": "smoke_detectors",
+      "icon": "mdi:smoke-detector-alert",
+      "layout": "icon|name",
+      "name_template": "{{ count }} offen",
+      "display_conditions": [
+        {
+          "type": "entity_count",
+          "pattern": "^binary_sensor\\.smoke",
+          "state": "on",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "styles": {
+        "button": {
+          "flex-basis": "1",
+          "flex-shrink": "0",
+          "background": "var(--active-big)",
+          "border-radius": "24px",
+          "color": "var(--black)",
+          "height": "34px"
+        },
+        "icon": {
+          "--mdc-icon-size": "26px",
+          "color": "var(--black)",
+          "width": "36px",
+          "height": "36px",
+          "display": "flex",
+          "margin-left": "-2px",
+          "justify-content": "center",
+          "align-items": "center",
+          "background": "var(--white)",
+          "border-radius": "50%"
+        },
+        "name": {
+          "padding": "0 10px",
+          "color": "var(--black)"
+        }
+      }
+    },
+    {
+      "id": "tv_wohnzimmer",
+      "icon": "mdi:television",
+      "layout": "icon",
+      "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#wohnzimmer"
+      },
+      "display_conditions": [
+        {
+          "type": "multiple_entity_or",
+          "entities": ["media_player.wohnzimmer", "media_player.tv_schlafzimmer_2"],
+          "state": "playing"
+        }
+      ],
+      "styles": {
+        "button": {
+          "background": "var(--active-big)",
+          "border-radius": "50%",
+          "color": "white",
+          "height": "34px"
+        },
+        "icon": {
+          "--mdc-icon-size": "22px",
+          "color": "var(--black)",
+          "width": "34px",
+          "height": "34px",
+          "display": "flex",
+          "justify-content": "center",
+          "align-items": "center"
+        }
+      }
+    },
+    {
+      "id": "music_wohnbereich",
+      "icon": "mdi:music",
+      "layout": "icon",
+      "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#wohnbereich"
+      },
+      "display_conditions": [
+        {
+          "type": "entity_state",
+          "entity": "media_player.unnamed_room",
+          "state": "playing"
+        }
+      ],
+      "styles": {
+        "button": {
+          "background": "var(--active-big)",
+          "border-radius": "50%",
+          "color": "white",
+          "height": "34px"
+        },
+        "icon": {
+          "--mdc-icon-size": "22px",
+          "color": "var(--black)",
+          "width": "34px",
+          "height": "34px",
+          "display": "flex",
+          "justify-content": "center",
+          "align-items": "center"
+        }
+      }
+    },
+    {
+      "id": "music_buero",
+      "icon": "mdi:music",
+      "layout": "icon",
+      "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#buero"
+      },
+      "display_conditions": [
+        {
+          "type": "entity_state",
+          "entity": "media_player.echo_buero",
+          "state": "playing"
+        }
+      ],
+      "styles": {
+        "button": {
+          "background": "var(--active-big)",
+          "border-radius": "50%",
+          "color": "white",
+          "height": "34px"
+        },
+        "icon": {
+          "--mdc-icon-size": "22px",
+          "color": "var(--black)",
+          "width": "34px",
+          "height": "34px",
+          "display": "flex",
+          "justify-content": "center",
+          "align-items": "center"
+        }
+      }
+    },
+    {
+      "id": "music_bad",
+      "icon": "mdi:music",
+      "layout": "icon",
+      "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#elternbereich"
+      },
+      "display_conditions": [
+        {
+          "type": "entity_state",
+          "entity": "media_player.echo_bad",
+          "state": "playing"
+        }
+      ],
+      "styles": {
+        "button": {
+          "background": "var(--active-big)",
+          "border-radius": "50%",
+          "color": "white",
+          "height": "34px"
+        },
+        "icon": {
+          "--mdc-icon-size": "22px",
+          "color": "var(--black)",
+          "width": "34px",
+          "height": "34px",
+          "display": "flex",
+          "justify-content": "center",
+          "align-items": "center"
+        }
+      }
+    },
+    {
+      "id": "freezer_alarm",
+      "icon": "mdi:fridge",
+      "layout": "icon",
+      "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#kueche"
+      },
+      "display_conditions": [
+        {
+          "type": "multiple_entity_or",
+          "entities": ["sensor.gefrierschrank_door_alarm_freezer", "sensor.gefrierschrank_temperature_alarm_freezer"],
+          "state": "present"
+        }
+      ],
+      "styles": {
+        "button": {
+          "background": "var(--active-big)",
+          "border-radius": "50%",
+          "color": "white",
+          "height": "34px",
+          "margin-right": "auto"
+        },
+        "icon": {
+          "--mdc-icon-size": "22px",
+          "color": "var(--black)",
+          "width": "34px",
+          "height": "34px",
+          "display": "flex",
+          "justify-content": "center",
+          "align-items": "center"
+        }
+      }
+    }
+  ],
+  "styles": {
+    "container": {
+      "gap": "8px",
+      "overflow-x": "scroll",
+      "margin": "24px 8px 0 8px",
+      "-ms-overflow-style": "none",
+      "scrollbar-width": "none",
+      "justify-content": "flex-start"
+    }
+  }
+}
