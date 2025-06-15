@@ -97,21 +97,32 @@ class DashviewPanel extends HTMLElement {
       console.log('[DashView] Resources loaded successfully, building DOM...');
 
       // Handle @import statements separately for Shadow DOM compatibility
-      const importRegex = /@import\s+url\(['"]?(.*?)['"]?\)\s*;?/g;
-      let processedCSS = styleText;
+      // Match @import statements at the beginning of lines, allowing for comments
+      const importRegex = /^[\s]*@import\s+url\(['"]?(.*?)['"]?\)\s*;?.*$/gm;
+      const importMatches = [];
       let match;
       
-      // Extract and create link elements for @import statements
+      // First, collect all @import matches
       while ((match = importRegex.exec(styleText)) !== null) {
-        const importUrl = match[1];
+        importMatches.push({
+          fullMatch: match[0],
+          url: match[1]
+        });
+      }
+      
+      // Create link elements for each @import statement
+      importMatches.forEach(importMatch => {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = importUrl;
+        link.href = importMatch.url;
         shadow.appendChild(link);
-        
-        // Remove the @import statement from the CSS
-        processedCSS = processedCSS.replace(match[0], '');
-      }
+      });
+      
+      // Remove all @import statements from the CSS in one pass
+      let processedCSS = styleText;
+      importMatches.forEach(importMatch => {
+        processedCSS = processedCSS.replace(importMatch.fullMatch, '');
+      });
 
       const style = document.createElement('style');
       style.textContent = processedCSS;
