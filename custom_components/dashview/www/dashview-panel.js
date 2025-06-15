@@ -24,7 +24,7 @@ class DashviewPanel extends HTMLElement {
     try {
       const [styleText, htmlText] = await Promise.all([
         fetch('/local/dashview/style.css').then(res => res.ok ? res.text() : Promise.reject('Failed to load stylesheet')),
-        fetch('/local/dashview/index.yaml').then(res => res.ok ? res.text() : Promise.reject('Failed to load HTML content'))
+        fetch('/local/dashview/index.html').then(res => res.ok ? res.text() : Promise.reject('Failed to load HTML content'))
       ]);
 
       const style = document.createElement('style');
