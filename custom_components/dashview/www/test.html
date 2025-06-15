@@ -238,6 +238,54 @@
                     attributes: {
                         entity_picture: null
                     }
+                },
+                // Add mock media player for testing music popup improvements
+                'media_player.echo_buero': {
+                    state: 'playing',
+                    attributes: {
+                        media_title: 'Test Song Title',
+                        media_artist: 'Test Artist',
+                        entity_picture: '/api/media_player_proxy/media_player.echo_buero?token=test123&cache=test456',
+                        volume_level: 0.65
+                    }
+                },
+                'media_player.echo_bad': {
+                    state: 'idle',
+                    attributes: {
+                        media_title: null,
+                        media_artist: null,
+                        entity_picture: null,
+                        volume_level: 0.3
+                    }
+                },
+                'media_player.unnamed_room': {
+                    state: 'playing',
+                    attributes: {
+                        media_title: 'Another Track',
+                        media_artist: 'Different Artist',
+                        entity_picture: '/api/media_player_proxy/media_player.unnamed_room?token=test789&cache=test012',
+                        volume_level: 0.45
+                    }
+                },
+                'media_player.kuche': {
+                    state: 'paused',
+                    attributes: {
+                        media_title: 'Kitchen Music',
+                        media_artist: 'Kitchen Artist', 
+                        entity_picture: null,
+                        volume_level: 0.2
+                    }
+                }
+            },
+            callService: function(domain, service, data) {
+                console.log(`Mock service call: ${domain}.${service}`, data);
+                // Simulate volume changes for testing
+                if (domain === 'media_player' && service === 'volume_set' && data.volume_level !== undefined) {
+                    const entity = this.states[data.entity_id];
+                    if (entity) {
+                        entity.attributes.volume_level = data.volume_level;
+                        console.log(`Volume updated for ${data.entity_id}: ${Math.round(data.volume_level * 100)}%`);
+                    }
                 }
             }
         };
