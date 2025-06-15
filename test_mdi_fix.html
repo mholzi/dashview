@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MDI Icon Loading Test - Fixed Version</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { margin: 20px; font-family: Arial, sans-serif; background: #f5f5f5; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; background: white; border-radius: 8px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .success { background: #e8f5e8; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .warning { background: #fff3e0; color: #f57c00; border: 1px solid #ffcc02; }
+        .info { background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
+        .icon-test { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+        .icon-item { padding: 8px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; text-align: center; min-width: 80px; }
+        .icon-item i { font-size: 24px; display: block; margin-bottom: 4px; }
+        .icon-item span { font-size: 12px; color: #666; }
+        #shadow-host { border: 2px solid #4CAF50; border-radius: 8px; padding: 20px; min-height: 200px; background: white; }
+    </style>
+</head>
+<body>
+    <h1>MDI Icon Loading Test - Fixed Version</h1>
+    <p>This test validates that Material Design Icons load correctly in Shadow DOM using the fixed approach.</p>
+    
+    <div class="test-section">
+        <h2>Regular DOM Test (Reference)</h2>
+        <p>These icons should work because they use the normal DOM:</p>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+        
+        <div class="icon-test">
+            <div class="icon-item"><i class="mdi mdi-home"></i><span>home</span></div>
+            <div class="icon-item"><i class="mdi mdi-security"></i><span>security</span></div>
+            <div class="icon-item"><i class="mdi mdi-lightbulb"></i><span>lightbulb</span></div>
+            <div class="icon-item"><i class="mdi mdi-music"></i><span>music</span></div>
+            <div class="icon-item"><i class="mdi mdi-cog"></i><span>cog</span></div>
+            <div class="icon-item"><i class="mdi mdi-devices"></i><span>devices</span></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Shadow DOM Test (Fixed)</h2>
+        <p>These icons should now work in Shadow DOM with the fixed approach:</p>
+        <div id="shadow-host"></div>
+        <div id="status"></div>
+    </div>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        
+        function addStatus(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            statusDiv.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // Create shadow DOM exactly like the fixed dashview-panel.js
+        const host = document.getElementById('shadow-host');
+        const shadow = host.attachShadow({ mode: 'open' });
+        
+        async function loadStylesheetsFixed(shadow) {
+            const stylesheets = [
+                {
+                    name: 'Google Fonts',
+                    url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap',
+                    type: 'link',
+                    critical: true
+                },
+                {
+                    name: 'Material Design Icons',
+                    url: 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css',
+                    type: 'link',
+                    critical: true
+                }
+            ];
+
+            for (const stylesheet of stylesheets) {
+                try {
+                    addStatus(`Loading ${stylesheet.name}...`);
+
+                    if (stylesheet.type === 'link') {
+                        // Fixed approach: Use a <link> element for external stylesheets with relative assets
+                        const linkElement = document.createElement('link');
+                        linkElement.setAttribute('rel', 'stylesheet');
+                        linkElement.setAttribute('href', stylesheet.url);
+                        linkElement.setAttribute('data-source', stylesheet.name);
+                        shadow.insertBefore(linkElement, shadow.firstChild);
+                        addStatus(`${stylesheet.name} linked successfully`, 'success');
+                    } else {
+                        // Inline approach for local CSS
+                        const response = await fetch(stylesheet.url);
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch ${stylesheet.name}: ${response.status} ${response.statusText}`);
+                        }
+                        
+                        const cssText = await response.text();
+                        
+                        const styleElement = document.createElement('style');
+                        styleElement.setAttribute('data-source', stylesheet.name);
+                        styleElement.textContent = cssText;
+                        
+                        shadow.insertBefore(styleElement, shadow.firstChild);
+                        
+                        addStatus(`${stylesheet.name} loaded successfully (${cssText.length} characters)`, 'success');
+                    }
+                    
+                } catch (error) {
+                    addStatus(`Failed to load ${stylesheet.name}: ${error.message}`, 'error');
+                    
+                    if (stylesheet.critical) {
+                        const fallbackStyle = document.createElement('style');
+                        fallbackStyle.setAttribute('data-source', `${stylesheet.name} (fallback)`);
+                        
+                        if (stylesheet.name === 'Material Design Icons') {
+                            // Provide fallback icons using Unicode symbols
+                            fallbackStyle.textContent = `
+                                .mdi::before {
+                                    display: inline-block;
+                                    font-style: normal;
+                                    font-variant: normal;
+                                    text-rendering: auto;
+                                    line-height: 1;
+                                    font-family: system-ui, -apple-system, sans-serif;
+                                }
+                                .mdi-home::before { content: "🏠"; }
+                                .mdi-security::before { content: "🔒"; }
+                                .mdi-lightbulb::before { content: "💡"; }
+                                .mdi-music::before { content: "🎵"; }
+                                .mdi-cog::before { content: "⚙️"; }
+                                .mdi-devices::before { content: "📱"; }
+                            `;
+                        }
+                        
+                        shadow.insertBefore(fallbackStyle, shadow.firstChild);
+                        addStatus(`Fallback styles applied for ${stylesheet.name}`, 'warning');
+                    }
+                }
+            }
+            
+            addStatus('All stylesheets processed', 'success');
+        }
+        
+        async function loadContent() {
+            try {
+                // Load CSS first with the fixed approach
+                addStatus('Loading stylesheets with fixed approach...');
+                await loadStylesheetsFixed(shadow);
+                
+                // Add test HTML content
+                addStatus('Adding test content...');
+                const content = document.createElement('div');
+                content.innerHTML = `
+                    <h3>Shadow DOM Icons Test</h3>
+                    <p>If the fix works, you should see proper MDI icons below:</p>
+                    <div class="icon-test">
+                        <div class="icon-item"><i class="mdi mdi-home"></i><span>home</span></div>
+                        <div class="icon-item"><i class="mdi mdi-security"></i><span>security</span></div>
+                        <div class="icon-item"><i class="mdi mdi-lightbulb"></i><span>lightbulb</span></div>
+                        <div class="icon-item"><i class="mdi mdi-music"></i><span>music</span></div>
+                        <div class="icon-item"><i class="mdi mdi-cog"></i><span>cog</span></div>
+                        <div class="icon-item"><i class="mdi mdi-devices"></i><span>devices</span></div>
+                    </div>
+                    <p><small>Icons should match the reference icons above. If you see emoji instead, the fallback is being used.</small></p>
+                `;
+                
+                // Add CSS for the icon test inside shadow DOM
+                const testStyles = document.createElement('style');
+                testStyles.textContent = `
+                    .icon-test { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+                    .icon-item { padding: 8px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; text-align: center; min-width: 80px; }
+                    .icon-item i { font-size: 24px; display: block; margin-bottom: 4px; }
+                    .icon-item span { font-size: 12px; color: #666; }
+                    h3 { color: #2e7d32; margin-top: 0; }
+                    p { margin: 10px 0; }
+                `;
+                shadow.appendChild(testStyles);
+                shadow.appendChild(content);
+                
+                addStatus('Content loading complete!', 'success');
+                
+                // Wait a bit then test if icons loaded
+                setTimeout(() => {
+                    const iconElements = shadow.querySelectorAll('.mdi');
+                    const hasRealIcons = Array.from(iconElements).some(el => {
+                        const styles = window.getComputedStyle(el, '::before');
+                        const content = styles.getPropertyValue('content');
+                        // Check if content is not an emoji (fallback) but a proper icon font character
+                        return content && content !== 'none' && !content.includes('🏠') && !content.includes('🔒');
+                    });
+                    
+                    if (hasRealIcons) {
+                        addStatus('✅ SUCCESS: Real MDI icons are loading correctly!', 'success');
+                    } else {
+                        addStatus('⚠️ WARNING: Icons may be using fallback (emoji) instead of real MDI font', 'warning');
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                addStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Start the loading process
+        addStatus('Starting MDI fix test...');
+        loadContent();
+    </script>
+</body>
+</html>
