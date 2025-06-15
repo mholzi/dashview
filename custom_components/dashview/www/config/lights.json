@@ -1,0 +1,92 @@
+{
+  "room_lights": {
+    "Wohnzimmer": [
+      "light.schalter_wohnzimmer_l1",
+      "light.schalter_wohnzimmer_l2",
+      "light.esszimmer_tisch",
+      "light.esszimmer_ambiente"
+    ],
+    "Büro": [
+      "light.schalter_buro_l1",
+      "light.buro_stehlampe",
+      "light.buro_schreibtisch1",
+      "light.buro_computer_licht"
+    ],
+    "Küche": [
+      "light.licht_kuchenzeile_brett",
+      "light.kucheninsel_l1",
+      "light.kuche_flur",
+      "light.kucheninsel_l2"
+    ],
+    "Eingang": [
+      "light.garderobe",
+      "light.flur_pendelleuchte",
+      "light.led_eingangsflur_light",
+      "light.flur_eingang"
+    ],
+    "Gästeklo": [
+      "light.licht_gasteklo"
+    ],
+    "Flur": [
+      "light.licht_kinderflur",
+      "light.licht_treppe_dach"
+    ],
+    "Kinderzimmer": [
+      "light.licht_ambiente_jp",
+      "light.schalter_jp_l1",
+      "light.schalter_frederik_l1",
+      "light.schalter_frederik_l2",
+      "light.schalter_felicia_l1",
+      "light.schalter_felicia_l2"
+    ],
+    "Kinderbad": [
+      "light.licht_kinderbad"
+    ],
+    "Aupair": [
+      "light.licht_aupair",
+      "light.decke_aupairflur",
+      "light.decke_aupairbad"
+    ],
+    "Eltern": [
+      "light.licht_schlafzimmer",
+      "light.licht_ankleide",
+      "light.licht_flur_dach",
+      "light.licht_badezimmer",
+      "light.licht_klo_dach"
+    ],
+    "Partykeller": [
+      "light.licht_partykeller_hund",
+      "light.licht_partykeller1",
+      "light.licht_partykeller_wand1",
+      "light.licht_partykeller_stehlampe",
+      "light.licht_partykeller_tisch1"
+    ],
+    "Heizungskeller": [
+      "light.licht_heizungskeller"
+    ],
+    "Kellerflur": [
+      "light.licht_kellerflur_buro",
+      "light.licht_kellerflur_rechts"
+    ],
+    "Wäschekeller": [
+      "light.licht_waschkeller"
+    ],
+    "Serverraum": [
+      "light.licht_serverraum1"
+    ],
+    "Kellerraum": [
+      "light.keller_buro_licht"
+    ],
+    "Aussen": [
+      "light.garage_switch",
+      "light.licht_hauswand_vorne_switch",
+      "switch.licht_terrasse_switch"
+    ],
+    "Kinderflur": [
+      "light.licht_kinderflur",
+      "light.licht_treppe_dach"
+    ],
+    "Sauna": []
+  },
+  "excluded_rooms": []
+}
