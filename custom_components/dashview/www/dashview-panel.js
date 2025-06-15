@@ -1479,7 +1479,7 @@ class DashviewPanel extends HTMLElement {
     const roomConfig = config.room_conditions[roomName];
     
     if (!roomConfig) {
-      container.style.display = 'none';
+      container.classList.remove('show');
       return;
     }
 
@@ -1492,7 +1492,7 @@ class DashviewPanel extends HTMLElement {
     const humState = this._hass.states[humSensor];
 
     if (!tempState || !humState) {
-      container.style.display = 'none';
+      container.classList.remove('show');
       return;
     }
 
@@ -1502,7 +1502,7 @@ class DashviewPanel extends HTMLElement {
     const showHumWarning = humValue > humThreshold;
 
     if (showTempWarning || showHumWarning) {
-      container.style.display = 'block';
+      container.classList.add('show');
       
       // Update values
       const tempValueSpan = container.querySelector('.temp-value');
@@ -1515,11 +1515,11 @@ class DashviewPanel extends HTMLElement {
       const tempInfo = container.querySelector('.temp-info');
       const humInfo = container.querySelector('.hum-info');
       
-      if (tempInfo) tempInfo.style.display = showTempWarning ? 'inline' : 'none';
-      if (humInfo) humInfo.style.display = showHumWarning ? 'inline' : 'none';
+      if (tempInfo) tempInfo.style.display = showTempWarning ? 'inline-flex' : 'none';
+      if (humInfo) humInfo.style.display = showHumWarning ? 'inline-flex' : 'none';
       
     } else {
-      container.style.display = 'none';
+      container.classList.remove('show');
     }
   }
 
@@ -1539,11 +1539,13 @@ class DashviewPanel extends HTMLElement {
       // Handle special room names
       const roomNameMap = {
         'buero': 'Büro',
+        'wohnzimmer': 'Wohnzimmer', 
         'kueche': 'Küche',
-        'gaesteklo': 'Gästeklo',
-        'elternbereich': 'Eltern',
         'kinderzimmer': 'Kinderzimmer',
-        'wohnzimmer': 'Wohnzimmer'
+        'gaesteklo': 'Gästeklo',
+        'eingang': 'Eingang',
+        'aupair': 'Aupair',
+        'elternbereich': 'Eltern'
       };
       
       if (roomNameMap[roomId]) {
@@ -1551,25 +1553,27 @@ class DashviewPanel extends HTMLElement {
       }
 
       // Find room notification placeholder in this popup
-      const placeholder = popup.querySelector('.placeholder');
-      if (placeholder && placeholder.textContent.includes('Room Notifications')) {
-        // Replace with actual notification content
-        placeholder.innerHTML = `
-          <div class="room-notification-container" data-room="${roomName}" style="display: none;">
-            <div class="notification-content" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #ffeb3b; border-radius: 5px; margin: 5px 0;">
-              <div class="notification-icon" style="font-size: 24px;">⚠️</div>
-              <div class="notification-text">
-                <div class="notification-title" style="font-weight: bold; margin-bottom: 5px;">Bitte Raum lüften</div>
-                <div class="notification-details" style="font-size: 14px;">
-                  <span class="temp-info" style="margin-right: 10px;">Temperatur: <span class="temp-value">--</span>°C</span>
-                  <span class="hum-info">Luftfeuchtigkeit: <span class="hum-value">--</span>%</span>
+      const placeholders = popup.querySelectorAll('.placeholder');
+      placeholders.forEach(placeholder => {
+        if (placeholder.textContent.includes('Room Notifications')) {
+          // Replace with actual notification content
+          placeholder.innerHTML = `
+            <div class="room-notification-container" data-room="${roomName}">
+              <div class="notification-content">
+                <div class="notification-icon">⚠️</div>
+                <div class="notification-text">
+                  <div class="notification-title">Bitte Raum lüften</div>
+                  <div class="notification-details">
+                    <span class="temp-info">Temperatur: <span class="temp-value">--</span>°C</span>
+                    <span class="hum-info">Luftfeuchtigkeit: <span class="hum-value">--</span>%</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        `;
-        placeholder.classList.remove('placeholder');
-      }
+          `;
+          placeholder.classList.remove('placeholder');
+        }
+      });
     });
 
     // Update all notifications after replacement

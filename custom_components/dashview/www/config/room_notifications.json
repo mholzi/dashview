@@ -12,6 +12,14 @@
       "temp_sensor": "sensor.humidity_buro_temperature",
       "hum_sensor": "sensor.humidity_buro_humidity"
     },
+    "Küche": {
+      "temp_sensor": "sensor.humidity_kueche_temperature",
+      "hum_sensor": "sensor.humidity_kueche_humidity"
+    },
+    "Kinderzimmer": {
+      "temp_sensor": "sensor.humidity_kinderzimmer_temperature",
+      "hum_sensor": "sensor.humidity_kinderzimmer_humidity"
+    },
     "Eltern": {
       "temp_sensor": "sensor.humidity_elternbad_temperature",
       "hum_sensor": "sensor.humidity_elternbad_humidity"
@@ -31,6 +39,18 @@
     "Partykeller": {
       "temp_sensor": "sensor.partykeller_humidity_detector_temperature",
       "hum_sensor": "sensor.partykeller_humidity_detector_humidity"
+    },
+    "Gästeklo": {
+      "temp_sensor": "sensor.humidity_gaesteklo_temperature",
+      "hum_sensor": "sensor.humidity_gaesteklo_humidity"
+    },
+    "Eingang": {
+      "temp_sensor": "sensor.humidity_eingang_temperature",
+      "hum_sensor": "sensor.humidity_eingang_humidity"
+    },
+    "Aupair": {
+      "temp_sensor": "sensor.humidity_aupair_temperature",
+      "hum_sensor": "sensor.humidity_aupair_humidity"
     }
   }
 }
