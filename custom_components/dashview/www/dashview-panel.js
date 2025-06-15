@@ -3955,59 +3955,165 @@ class DashviewPanel extends HTMLElement {
 
   // Update window/weather notifications
   async updateWindowWeatherNotifications(shadow) {
-    if (!this._windowWeatherConfig || !this._windowWeatherConfig.notifications) return;
+    if (this._debugMode) {
+      console.log('[DashView] updateWindowWeatherNotifications called');
+      console.log('[DashView] Window weather config:', this._windowWeatherConfig);
+    }
+
+    if (!this._windowWeatherConfig || !this._windowWeatherConfig.notifications) {
+      if (this._debugMode) {
+        console.log('[DashView] No window weather config or notifications');
+      }
+      return;
+    }
 
     // Find the window/weather notifications container
     const container = shadow.querySelector('.window-weather-notifications-container');
-    if (!container) return;
+    if (!container) {
+      if (this._debugMode) {
+        console.log('[DashView] Window weather notifications container not found');
+      }
+      return;
+    }
 
     let hasActiveNotifications = false;
     let notificationsHTML = '';
 
+    if (this._debugMode) {
+      console.log(`[DashView] Evaluating ${this._windowWeatherConfig.notifications.length} window weather notifications`);
+    }
+
     // Evaluate each notification
     for (const notification of this._windowWeatherConfig.notifications) {
-      if (this.evaluateNotificationConditions(notification.conditions)) {
+      if (this._debugMode) {
+        console.log(`[DashView] Evaluating notification: ${notification.id}`);
+      }
+      
+      const isActive = this.evaluateNotificationConditions(notification.conditions);
+      
+      if (this._debugMode) {
+        console.log(`[DashView] Notification ${notification.id} active: ${isActive}`);
+      }
+      
+      if (isActive) {
         hasActiveNotifications = true;
         notificationsHTML += this.generateWindowWeatherNotificationHTML(notification);
       }
     }
 
+    if (this._debugMode) {
+      console.log(`[DashView] Has active notifications: ${hasActiveNotifications}`);
+    }
+
     if (hasActiveNotifications) {
       container.innerHTML = notificationsHTML;
       container.style.display = 'block';
+      
+      if (this._debugMode) {
+        console.log('[DashView] Window weather notifications displayed');
+      }
     } else {
       container.style.display = 'none';
+      
+      if (this._debugMode) {
+        console.log('[DashView] Window weather notifications hidden');
+      }
     }
   }
 
   // Evaluate notification conditions recursively
   evaluateNotificationConditions(conditions) {
-    if (!conditions || !this._hass) return false;
+    if (!conditions || !this._hass) {
+      if (this._debugMode) {
+        console.log('[DashView] evaluateNotificationConditions: No conditions or HASS unavailable');
+      }
+      return false;
+    }
+
+    if (this._debugMode) {
+      console.log(`[DashView] Evaluating condition type: ${conditions.type}`);
+    }
 
     switch (conditions.type) {
       case 'and':
-        return conditions.conditions && conditions.conditions.every(condition => 
-          this.evaluateNotificationConditions(condition)
-        );
+        if (!conditions.conditions) {
+          if (this._debugMode) {
+            console.log('[DashView] AND condition has no subconditions');
+          }
+          return false;
+        }
+        
+        const andResult = conditions.conditions.every(condition => {
+          const result = this.evaluateNotificationConditions(condition);
+          if (this._debugMode) {
+            console.log(`[DashView] AND subcondition result: ${result}`);
+          }
+          return result;
+        });
+        
+        if (this._debugMode) {
+          console.log(`[DashView] AND condition result: ${andResult}`);
+        }
+        return andResult;
       
       case 'or':
-        return conditions.conditions && conditions.conditions.some(condition => 
-          this.evaluateNotificationConditions(condition)
-        );
+        if (!conditions.conditions) {
+          if (this._debugMode) {
+            console.log('[DashView] OR condition has no subconditions');
+          }
+          return false;
+        }
+        
+        const orResult = conditions.conditions.some(condition => {
+          const result = this.evaluateNotificationConditions(condition);
+          if (this._debugMode) {
+            console.log(`[DashView] OR subcondition result: ${result}`);
+          }
+          return result;
+        });
+        
+        if (this._debugMode) {
+          console.log(`[DashView] OR condition result: ${orResult}`);
+        }
+        return orResult;
       
       case 'state':
         const entity = this._hass.states[conditions.entity];
-        return entity && entity.state === conditions.state;
+        const hasEntity = !!entity;
+        const stateMatch = entity && entity.state === conditions.state;
+        
+        if (this._debugMode) {
+          console.log(`[DashView] State condition - Entity: ${conditions.entity}`);
+          console.log(`[DashView] State condition - Entity exists: ${hasEntity}`);
+          console.log(`[DashView] State condition - Current state: ${entity ? entity.state : 'N/A'}`);
+          console.log(`[DashView] State condition - Expected state: ${conditions.state}`);
+          console.log(`[DashView] State condition - Match: ${stateMatch}`);
+        }
+        
+        return stateMatch;
       
       default:
+        if (this._debugMode) {
+          console.log(`[DashView] Unknown condition type: ${conditions.type}`);
+        }
         return false;
     }
   }
 
   // Generate HTML for window/weather notification
   generateWindowWeatherNotificationHTML(notification) {
+    if (this._debugMode) {
+      console.log(`[DashView] Generating HTML for notification: ${notification.id}`);
+      console.log(`[DashView] Notification message: ${notification.message}`);
+    }
+
     const tempSensor = this._hass.states[this._windowWeatherConfig.global_settings.temp_sensor];
     const humSensor = this._hass.states[this._windowWeatherConfig.global_settings.hum_sensor];
+    
+    if (this._debugMode) {
+      console.log(`[DashView] Temperature sensor (${this._windowWeatherConfig.global_settings.temp_sensor}):`, tempSensor ? tempSensor.state : 'Not found');
+      console.log(`[DashView] Humidity sensor (${this._windowWeatherConfig.global_settings.hum_sensor}):`, humSensor ? humSensor.state : 'Not found');
+    }
     
     let temperature = 'N/A';
     let humidity = 'N/A';
@@ -5767,7 +5873,8 @@ window.DashViewDebug = {
       '/local/dashview/config/rooms.json',
       '/local/dashview/config/music.json',
       '/local/dashview/config/temperature.json',
-      '/local/dashview/config/covers.json'
+      '/local/dashview/config/covers.json',
+      '/local/dashview/config/window_weather_notifications.json'
     ];
     
     Promise.all(filesToCheck.map(async (file) => {
@@ -5795,6 +5902,99 @@ window.DashViewDebug = {
     }
     
     return { issues, panelCount: panels.length };
+  },
+  
+  // Debug window weather notifications specifically
+  debugWindowWeatherNotifications() {
+    console.log('[DashView] Debugging window weather notifications...');
+    const panels = document.querySelectorAll('dashview-panel');
+    
+    if (panels.length === 0) {
+      console.error('[DashView] No DashView panels found');
+      return;
+    }
+    
+    panels.forEach((panel, index) => {
+      console.log(`[DashView] Checking panel ${index}:`);
+      
+      // Check if config is loaded
+      if (panel._windowWeatherConfig) {
+        console.log(`[DashView] Panel ${index}: Window weather config loaded`);
+        console.log(`[DashView] Panel ${index}: Config:`, panel._windowWeatherConfig);
+        
+        // Check each notification
+        if (panel._windowWeatherConfig.notifications) {
+          panel._windowWeatherConfig.notifications.forEach((notification, notifIndex) => {
+            console.log(`[DashView] Panel ${index}, Notification ${notifIndex}: ${notification.id}`);
+            console.log(`[DashView] Message: ${notification.message}`);
+            
+            if (panel._hass) {
+              console.log(`[DashView] HASS available, evaluating conditions...`);
+              const result = panel.evaluateNotificationConditions(notification.conditions);
+              console.log(`[DashView] Notification ${notification.id} condition result: ${result}`);
+            } else {
+              console.log(`[DashView] HASS not available for condition evaluation`);
+            }
+          });
+        } else {
+          console.log(`[DashView] Panel ${index}: No notifications in config`);
+        }
+      } else {
+        console.log(`[DashView] Panel ${index}: Window weather config not loaded`);
+      }
+      
+      // Check if container exists
+      const container = panel.shadowRoot?.querySelector('.window-weather-notifications-container');
+      if (container) {
+        console.log(`[DashView] Panel ${index}: Container found, display: ${container.style.display}`);
+        console.log(`[DashView] Panel ${index}: Container innerHTML length: ${container.innerHTML.length}`);
+      } else {
+        console.log(`[DashView] Panel ${index}: Container not found`);
+      }
+    });
+  },
+  
+  // Force display window weather notifications for testing
+  testWindowWeatherNotifications() {
+    console.log('[DashView] Testing window weather notifications display...');
+    const panels = document.querySelectorAll('dashview-panel');
+    
+    if (panels.length === 0) {
+      console.error('[DashView] No DashView panels found');
+      return;
+    }
+    
+    panels.forEach((panel, index) => {
+      const container = panel.shadowRoot?.querySelector('.window-weather-notifications-container');
+      if (container) {
+        // Create test notification HTML
+        const testHTML = `
+          <div class="temp-notification-container">
+            <div class="notification-grid">
+              <div class="notification-icon">⚠️</div>
+              <div class="notification-content">
+                <div class="notification-title">TEST: Fenster im Dachgeschoss schliessen!</div>
+                <div class="notification-details">Dies ist ein Test der Fenster-Wetter-Benachrichtigungen.</div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        container.innerHTML = testHTML;
+        container.style.display = 'block';
+        
+        console.log(`[DashView] Panel ${index}: Test notification displayed`);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+          container.style.display = 'none';
+          container.innerHTML = '';
+          console.log(`[DashView] Panel ${index}: Test notification hidden`);
+        }, 10000);
+      } else {
+        console.log(`[DashView] Panel ${index}: Container not found`);
+      }
+    });
   }
 };
 
@@ -5802,5 +6002,7 @@ console.log('[DashView] Debug helpers available at window.DashViewDebug');
 console.log('[DashView] Use DashViewDebug.enableDebug() to enable debug logging');
 console.log('[DashView] Use DashViewDebug.diagnose() to check for common issues');
 console.log('[DashView] Use DashViewDebug.getStatus() to see component status');
+console.log('[DashView] Use DashViewDebug.debugWindowWeatherNotifications() to debug window weather notifications');
+console.log('[DashView] Use DashViewDebug.testWindowWeatherNotifications() to test notification display');
 
 // End of DashView Panel component
