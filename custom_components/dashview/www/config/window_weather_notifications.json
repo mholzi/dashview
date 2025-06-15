@@ -1,0 +1,80 @@
+{
+  "global_settings": {
+    "enabled": true,
+    "temp_sensor": "sensor.room_temperature",
+    "hum_sensor": "sensor.room_humidity",
+    "temp_above": 23,
+    "hum_above": 60
+  },
+  "notifications": [
+    {
+      "id": "fenster_dach",
+      "conditions": {
+        "type": "and",
+        "conditions": [
+          {
+            "type": "or",
+            "conditions": [
+              {
+                "type": "state",
+                "entity": "binary_sensor.fenster_buero_contact",
+                "state": "on"
+              },
+              {
+                "type": "state", 
+                "entity": "binary_sensor.fenster_schlafzimmer_contact",
+                "state": "on"
+              }
+            ]
+          },
+          {
+            "type": "or",
+            "conditions": [
+              {
+                "type": "state",
+                "entity": "weather.dreieich",
+                "state": "lightning-rainy"
+              },
+              {
+                "type": "state",
+                "entity": "weather.dreieich", 
+                "state": "windy"
+              },
+              {
+                "type": "state",
+                "entity": "weather.dreieich",
+                "state": "pouring"
+              },
+              {
+                "type": "state",
+                "entity": "weather.dreieich",
+                "state": "rainy"
+              }
+            ]
+          }
+        ]
+      },
+      "notification_type": "fenster_dach",
+      "message": "Fenster im Dachgeschoss schliessen!",
+      "icon": "⚠️",
+      "detail_override": "Die Aussenfeuchtigkeit ist zu hoch für offene Fenster."
+    },
+    {
+      "id": "keller_lueften",
+      "conditions": {
+        "type": "and",
+        "conditions": [
+          {
+            "type": "state",
+            "entity": "binary_sensor.humidity_keller_high",
+            "state": "on"
+          }
+        ]
+      },
+      "notification_type": "keller",
+      "message": "Keller lüften!",
+      "icon": "⚠️",
+      "detail_override": "Die Aussenfeuchtigkeit ist niedriger als die Innenfeuchtigkeit."
+    }
+  ]
+}
