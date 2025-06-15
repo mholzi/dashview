@@ -107,6 +107,9 @@ class DashviewPanel extends HTMLElement {
     // Update Music Player States
     this.updateMusicPlayerStates(shadow);
 
+    // Update Room Media Players
+    this.updateRoomMediaPlayers(shadow);
+
     // Update Pollen Card
     this.updatePollenCard(shadow);
 
@@ -1450,6 +1453,256 @@ class DashviewPanel extends HTMLElement {
         // Update second media player if exists
         if (mediaPlayer.entity2) {
           const volumeSlider2 = musicPopup.querySelector(`[data-entity="${mediaPlayer.entity2}"].volume-slider`);
+          if (volumeSlider2 && this._hass.states[mediaPlayer.entity2]) {
+            const state = this._hass.states[mediaPlayer.entity2];
+            const volumeLevel = state.attributes.volume_level || 0;
+            volumeSlider2.value = Math.round(volumeLevel * 100);
+            
+            const valueSpan = volumeSlider2.parentElement.querySelector('.volume-value');
+            if (valueSpan) {
+              valueSpan.textContent = Math.round(volumeLevel * 100) + '%';
+            }
+          }
+        }
+      }
+    });
+
+    // Also update room-specific media players
+    this.updateRoomMediaPlayerStates(shadow);
+  }
+
+  // Update room media players in individual room popups
+  updateRoomMediaPlayers(shadow) {
+    if (!this._musicConfig || !this._musicConfig.media_players) {
+      // Load configuration if not already loaded
+      if (!this._musicConfig || Object.keys(this._musicConfig).length === 0) {
+        this.loadConfiguration().then(() => {
+          this.updateRoomMediaPlayers(shadow);
+        });
+      }
+      return;
+    }
+
+    const { media_players, media_presets } = this._musicConfig;
+
+    // Map popup IDs to room names in music config
+    const roomMappings = {
+      'buero-popup': 'Büro',
+      'wohnzimmer-popup': 'Wohnzimmer',
+      'elternbereich-popup': 'Eltern'
+    };
+
+    // Update each room popup that has a media player
+    Object.entries(roomMappings).forEach(([popupId, roomName]) => {
+      const popup = shadow.getElementById(popupId);
+      if (popup && media_players[roomName]) {
+        const placeholder = popup.querySelector('.placeholder');
+        if (placeholder && placeholder.textContent.includes('Media Player')) {
+          placeholder.innerHTML = this.generateRoomMediaPlayerContent(roomName, media_players[roomName], media_presets);
+          this.setupRoomMediaPlayerControls(popup, media_players[roomName]);
+        }
+      }
+    });
+  }
+
+  // Generate media player content for a specific room
+  generateRoomMediaPlayerContent(roomName, mediaPlayer, mediaPresets) {
+    let html = `
+      <div class="room-media-player">
+        <h4>Media Player - ${roomName}</h4>
+        <div class="music-presets">
+    `;
+
+    // Add preset buttons
+    mediaPresets.forEach(preset => {
+      html += `
+        <button class="music-preset-button" 
+                data-media-player="${mediaPlayer.entity}"
+                data-content-id="${preset.media_content_id}">
+          ${preset.name}
+        </button>
+      `;
+    });
+
+    html += `
+        </div>
+        <div class="music-controls">
+          <div class="music-player-info" data-entity="${mediaPlayer.entity}">
+            <div class="music-title">No media playing</div>
+            <div class="music-artist"></div>
+          </div>
+          <div class="music-control-buttons">
+            <button class="music-control-btn" data-action="previous" data-entity="${mediaPlayer.entity}">
+              <i class="mdi mdi-skip-backward"></i>
+            </button>
+            <button class="music-control-btn play-pause" data-action="play_pause" data-entity="${mediaPlayer.entity}">
+              <i class="mdi mdi-play"></i>
+            </button>
+            <button class="music-control-btn" data-action="next" data-entity="${mediaPlayer.entity}">
+              <i class="mdi mdi-skip-forward"></i>
+            </button>
+          </div>
+          <div class="music-volume-control">
+            <span class="volume-label">${mediaPlayer.room_name}</span>
+            <input type="range" class="volume-slider" 
+                   data-entity="${mediaPlayer.entity}" 
+                   min="0" max="100" value="50">
+            <span class="volume-value">50%</span>
+          </div>
+    `;
+
+    // Add second media player if exists
+    if (mediaPlayer.entity2) {
+      html += `
+          <div class="music-volume-control">
+            <span class="volume-label">${mediaPlayer.room_name2}</span>
+            <input type="range" class="volume-slider" 
+                   data-entity="${mediaPlayer.entity2}" 
+                   min="0" max="100" value="50">
+            <span class="volume-value">50%</span>
+          </div>
+      `;
+    }
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    return html;
+  }
+
+  // Setup event listeners for room media player controls
+  setupRoomMediaPlayerControls(roomPopup, mediaPlayer) {
+    // Preset buttons
+    const presetButtons = roomPopup.querySelectorAll('.music-preset-button');
+    presetButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const mediaPlayerEntity = button.dataset.mediaPlayer;
+        const contentId = button.dataset.contentId;
+        
+        if (this._hass && mediaPlayerEntity && contentId) {
+          this._hass.callService('media_player', 'play_media', {
+            entity_id: mediaPlayerEntity,
+            media_content_id: contentId,
+            media_content_type: 'music'
+          });
+        }
+      });
+    });
+
+    // Control buttons
+    const controlButtons = roomPopup.querySelectorAll('.music-control-btn');
+    controlButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.action;
+        const entity = button.dataset.entity;
+        
+        if (this._hass) {
+          switch(action) {
+            case 'play_pause':
+              this._hass.callService('media_player', 'media_play_pause', {
+                entity_id: entity
+              });
+              break;
+            case 'previous':
+              this._hass.callService('media_player', 'media_previous_track', {
+                entity_id: entity
+              });
+              break;
+            case 'next':
+              this._hass.callService('media_player', 'media_next_track', {
+                entity_id: entity
+              });
+              break;
+          }
+        }
+      });
+    });
+
+    // Volume sliders
+    const volumeSliders = roomPopup.querySelectorAll('.volume-slider');
+    volumeSliders.forEach(slider => {
+      slider.addEventListener('input', () => {
+        const entity = slider.dataset.entity;
+        const volume = parseFloat(slider.value) / 100;
+        
+        if (this._hass && entity) {
+          this._hass.callService('media_player', 'volume_set', {
+            entity_id: entity,
+            volume_level: volume
+          });
+        }
+        
+        // Update volume display
+        const valueSpan = slider.parentElement.querySelector('.volume-value');
+        if (valueSpan) {
+          valueSpan.textContent = slider.value + '%';
+        }
+      });
+    });
+  }
+
+  // Update media player states in room popups
+  updateRoomMediaPlayerStates(shadow) {
+    if (!this._hass || !this._musicConfig) return;
+
+    const { media_players } = this._musicConfig;
+
+    // Map popup IDs to room names in music config
+    const roomMappings = {
+      'buero-popup': 'Büro',
+      'wohnzimmer-popup': 'Wohnzimmer',
+      'elternbereich-popup': 'Eltern'
+    };
+
+    // Update each room popup that has a media player
+    Object.entries(roomMappings).forEach(([popupId, roomName]) => {
+      const popup = shadow.getElementById(popupId);
+      const mediaPlayer = media_players[roomName];
+      
+      if (popup && mediaPlayer) {
+        // Update media info
+        const playerInfo = popup.querySelector(`[data-entity="${mediaPlayer.entity}"]`);
+        if (playerInfo && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const titleElement = playerInfo.querySelector('.music-title');
+          const artistElement = playerInfo.querySelector('.music-artist');
+          
+          if (titleElement) {
+            titleElement.textContent = state.attributes.media_title || 'No media playing';
+          }
+          if (artistElement) {
+            artistElement.textContent = state.attributes.media_artist || '';
+          }
+        }
+
+        // Update play/pause button
+        const playPauseBtn = popup.querySelector(`[data-action="play_pause"][data-entity="${mediaPlayer.entity}"]`);
+        if (playPauseBtn && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const icon = playPauseBtn.querySelector('i');
+          if (icon) {
+            icon.className = state.state === 'playing' ? 'mdi mdi-pause' : 'mdi mdi-play';
+          }
+        }
+
+        // Update volume slider
+        const volumeSlider = popup.querySelector(`[data-entity="${mediaPlayer.entity}"].volume-slider`);
+        if (volumeSlider && this._hass.states[mediaPlayer.entity]) {
+          const state = this._hass.states[mediaPlayer.entity];
+          const volumeLevel = state.attributes.volume_level || 0;
+          volumeSlider.value = Math.round(volumeLevel * 100);
+          
+          const valueSpan = volumeSlider.parentElement.querySelector('.volume-value');
+          if (valueSpan) {
+            valueSpan.textContent = Math.round(volumeLevel * 100) + '%';
+          }
+        }
+
+        // Update second media player if exists
+        if (mediaPlayer.entity2) {
+          const volumeSlider2 = popup.querySelector(`[data-entity="${mediaPlayer.entity2}"].volume-slider`);
           if (volumeSlider2 && this._hass.states[mediaPlayer.entity2]) {
             const state = this._hass.states[mediaPlayer.entity2];
             const volumeLevel = state.attributes.volume_level || 0;
