@@ -51,3 +51,21 @@ class DashViewStore:
         """Set the weather entity."""
         self._data["weather_entity"] = entity_id
         await self.async_save(self._data)
+
+    def get_floors_config(self):
+        """Get the floors configuration."""
+        return self._data.get("floors_config", {})
+
+    def get_rooms_config(self):
+        """Get the rooms configuration."""
+        return self._data.get("rooms_config", {})
+
+    async def async_set_floors_config(self, config: dict):
+        """Set the floors configuration."""
+        self._data["floors_config"] = config
+        await self.async_save(self._data)
+
+    async def async_set_rooms_config(self, config: dict):
+        """Set the rooms configuration."""
+        self._data["rooms_config"] = config
+        await self.async_save(self._data)

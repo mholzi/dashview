@@ -638,3 +638,78 @@ h3 {
     margin-bottom: 4px;
     text-transform: capitalize;
 }
+
+/* Header Buttons Styles */
+.header-buttons-container {
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+}
+
+.header-buttons-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 8px 12px 8px;
+    overflow-x: auto;
+    width: 100%;
+    background: none;
+    box-shadow: none;
+}
+
+.header-floor-button,
+.header-room-button {
+    background: var(--gray800);
+    border: none;
+    border-radius: 50%;
+    height: 40px;
+    width: 40px;
+    margin-left: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.header-floor-button {
+    background: var(--gray800);
+}
+
+.header-room-button {
+    background: var(--active-big);
+}
+
+.header-floor-button i,
+.header-room-button i {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-floor-button i {
+    color: var(--gray000);
+}
+
+.header-room-button i {
+    color: var(--gray800);
+}
+
+.header-floor-button:hover,
+.header-room-button:hover {
+    transform: scale(1.05);
+}
+
+.loading-message,
+.no-activity {
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    padding: 8px;
+    text-align: center;
+}

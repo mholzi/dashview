@@ -3,6 +3,8 @@ class DashviewPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this._contentReady = false;
+    this._floorsConfig = {};
+    this._roomsConfig = {};
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -96,6 +98,9 @@ class DashviewPanel extends HTMLElement {
     
     // Update Weather Components
     this.updateWeatherComponents(shadow);
+    
+    // Update Header Buttons
+    this.updateHeaderButtons(shadow);
   }
 
   // Method to check if it's a weekday
@@ -571,6 +576,15 @@ class DashviewPanel extends HTMLElement {
                 window.location.hash = '#waschkeller';
             }
         }
+
+        // Handle header room button clicks
+        const roomButton = e.target.closest('.header-room-button');
+        if (roomButton) {
+            const navigationPath = roomButton.getAttribute('data-navigation');
+            if (navigationPath && navigationPath !== '#unknown') {
+                window.location.hash = navigationPath;
+            }
+        }
     });
   }
   
@@ -771,6 +785,96 @@ class DashviewPanel extends HTMLElement {
         });
         if(tabButtons.length > 0) tabButtons[0].click();
     });
+  }
+
+  // Load configuration from JSON files
+  async loadConfiguration() {
+    try {
+      const [floorsResponse, roomsResponse] = await Promise.all([
+        fetch('/local/dashview/config/floors.json'),
+        fetch('/local/dashview/config/rooms.json')
+      ]);
+
+      if (floorsResponse.ok && roomsResponse.ok) {
+        this._floorsConfig = await floorsResponse.json();
+        this._roomsConfig = await roomsResponse.json();
+      } else {
+        console.warn('Could not load floor/room configuration files');
+        this._floorsConfig = {};
+        this._roomsConfig = {};
+      }
+    } catch (error) {
+      console.error('Error loading configuration:', error);
+      this._floorsConfig = {};
+      this._roomsConfig = {};
+    }
+  }
+
+  // Update header buttons based on sensor states
+  async updateHeaderButtons(shadow) {
+    if (!this._floorsConfig || Object.keys(this._floorsConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    const container = shadow.getElementById('header-buttons');
+    if (!container) return;
+
+    // Create button container with scrollable styling
+    container.innerHTML = `
+      <div class="header-buttons-scroll">
+        ${this.generateHeaderButtonsHTML()}
+      </div>
+    `;
+  }
+
+  // Generate HTML for header buttons
+  generateHeaderButtonsHTML() {
+    if (!this._hass || !this._floorsConfig || !this._roomsConfig) {
+      return '<div class="loading-message">Loading...</div>';
+    }
+
+    let buttonsHTML = '';
+    const floors = this._roomsConfig.floors || {};
+    const floorIcons = this._floorsConfig.floor_icons || {};
+    const floorSensors = this._floorsConfig.floor_sensors || {};
+
+    // Generate buttons for each floor
+    Object.entries(floors).forEach(([floorName, sensors]) => {
+      const floorSensor = floorSensors[floorName];
+      const floorIcon = floorIcons[floorName] || 'mdi:help-circle-outline';
+      
+      // Check if floor sensor is active
+      const floorEntity = this._hass.states[floorSensor];
+      const isFloorActive = floorEntity && floorEntity.state === 'on';
+
+      if (isFloorActive) {
+        // Add floor button
+        buttonsHTML += `
+          <button class="header-floor-button" data-floor="${floorName}">
+            <i class="mdi ${floorIcon.replace('mdi:', '')}"></i>
+          </button>
+        `;
+
+        // Add room buttons for this floor
+        sensors.forEach(sensor => {
+          const sensorEntity = this._hass.states[sensor];
+          const isRoomActive = sensorEntity && sensorEntity.state === 'on';
+
+          if (isRoomActive) {
+            const roomIcon = sensorEntity.attributes?.icon || 'mdi:help-circle-outline';
+            const roomType = sensorEntity.attributes?.room_type || '#unknown';
+            
+            buttonsHTML += `
+              <button class="header-room-button" data-sensor="${sensor}" data-navigation="${roomType}">
+                <i class="mdi ${roomIcon.replace('mdi:', '')}"></i>
+              </button>
+            `;
+          }
+        });
+      }
+    });
+
+    return buttonsHTML || '<div class="no-activity">No active rooms</div>';
   }
 }
 
