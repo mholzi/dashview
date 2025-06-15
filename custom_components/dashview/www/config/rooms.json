@@ -1,0 +1,31 @@
+{
+  "floors": {
+    "EG": [
+      "binary_sensor.combined_sensor_wohnzimmer",
+      "binary_sensor.combined_sensor_buero",
+      "binary_sensor.combined_sensor_kueche",
+      "binary_sensor.combined_sensor_eingangsflur",
+      "binary_sensor.combined_sensor_gaesteklo",
+      "binary_sensor.combined_sensor_treppe_erdgeschoss"
+    ],
+    "OG": [
+      "binary_sensor.combined_sensor_kids",
+      "binary_sensor.combined_sensor_kinderbad",
+      "binary_sensor.combined_sensor_flur",
+      "binary_sensor.combined_sensor_aupair",
+      "binary_sensor.combined_sensor_schlafzimmer"
+    ],
+    "Keller": [
+      "binary_sensor.combined_sensor_partykeller",
+      "binary_sensor.combined_sensor_heizungskeller",
+      "binary_sensor.combined_sensor_kellerflur",
+      "binary_sensor.combined_sensor_waschkeller",
+      "binary_sensor.combined_sensor_serverraum",
+      "binary_sensor.combined_sensor_buero_keller",
+      "binary_sensor.combined_sensor_sauna"
+    ],
+    "Außen": [
+      "binary_sensor.combined_sensor_aussen"
+    ]
+  }
+}
