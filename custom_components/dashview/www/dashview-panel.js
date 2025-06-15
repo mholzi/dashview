@@ -1080,6 +1080,13 @@ class DashviewPanel extends HTMLElement {
     const weatherState = this._hass.states[weatherEntityId];
     if (!weatherState) return;
 
+    // Update weather popup header icon
+    const weatherPopupTitle = shadow.querySelector('#weather-popup h3');
+    if (weatherPopupTitle && weatherState.state) {
+      const currentIcon = weatherState.state;
+      weatherPopupTitle.innerHTML = `<img src="/local/weather_icons/${currentIcon}.svg" alt="Weather" width="24" height="24" style="vertical-align: middle; margin-right: 8px;">Wetter`;
+    }
+
     // Update current weather card
     this.updateCurrentWeather(shadow, weatherState);
     
@@ -1132,22 +1139,28 @@ class DashviewPanel extends HTMLElement {
 
     container.innerHTML = '';
     
-    // Show next 8 hours of forecast
-    const hourlyData = weatherState.attributes.forecast.slice(0, 8);
+    // Show next 9 hours of forecast (starting from hour 2 as per the provided code)
+    const hourlyData = weatherState.attributes.forecast.slice(1, 10);
     
-    hourlyData.forEach(forecast => {
+    hourlyData.forEach((forecast, index) => {
       const hourlyItem = document.createElement('div');
       hourlyItem.className = 'hourly-item';
       
       const date = new Date(forecast.datetime);
-      const timeString = date.getHours().toString().padStart(2, '0') + ':00';
+      const timeString = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false });
+      
+      const temp = forecast.temperature !== undefined ? `${forecast.temperature}°C` : '— °C';
+      const wind = forecast.wind_speed !== undefined ? `${forecast.wind_speed.toFixed(1)} km/h` : '';
+      const rain = forecast.precipitation !== undefined ? `${forecast.precipitation.toFixed(1)} mm` : '';
       
       hourlyItem.innerHTML = `
         <div class="hourly-time">${timeString}</div>
         <div class="hourly-icon">
-          <img src="/local/weather_icons/${forecast.condition}.svg" alt="${forecast.condition}" width="32" height="32">
+          <img src="/local/weather_icons/${forecast.condition}.svg" alt="${forecast.condition}" width="50" height="50">
         </div>
-        <div class="hourly-temp">${Math.round(forecast.temperature)}°</div>
+        <div class="hourly-temp">${temp}</div>
+        <div class="hourly-wind">${wind}</div>
+        <div class="hourly-rain">${rain}</div>
       `;
       
       container.appendChild(hourlyItem);
@@ -1178,27 +1191,70 @@ class DashviewPanel extends HTMLElement {
 
   // Method to show daily forecast for a specific day
   showDailyForecast(container, weatherState, dayIndex) {
-    if (!weatherState.attributes.forecast) return;
-
-    // Get forecast for the specified day
-    const dailyForecast = this.getDailyForecast(weatherState.attributes.forecast, dayIndex);
+    if (!this._hass) return;
     
-    if (!dailyForecast) {
+    // Define sensor mappings based on the provided configuration
+    const sensorMappings = {
+      0: { // Heute
+        temp_sensor: 'sensor.temperature_forecast_today',
+        condition_sensor: 'sensor.state_forecast_today',
+        title: 'Heute'
+      },
+      1: { // Morgen
+        temp_sensor: 'sensor.temperature_forecast_tomorrow', 
+        condition_sensor: 'sensor.state_forecast_tomorrow',
+        title: 'Morgen'
+      },
+      2: { // Übermorgen
+        temp_sensor: 'sensor.temperature_forecast_day2',
+        condition_sensor: 'sensor.state_forecast_day2', 
+        title: 'Übermorgen'
+      }
+    };
+    
+    const mapping = sensorMappings[dayIndex];
+    if (!mapping) {
       container.innerHTML = '<div>Keine Daten verfügbar</div>';
       return;
+    }
+    
+    // Get sensor states
+    const tempState = this._hass.states[mapping.temp_sensor];
+    const conditionState = this._hass.states[mapping.condition_sensor];
+    const precipitationState = this._hass.states['sensor.dreieich_precipitation'];
+    
+    // Extract values
+    const temp = tempState?.state && tempState.state !== 'unavailable' ? 
+      parseFloat(tempState.state).toFixed(1) + '°C' : '— °C';
+    
+    const condition = conditionState?.state || 'sunny';
+    
+    // Condition translations
+    const translations = {
+      "sunny": "Sonnig", "clear-night": "Klar", "partlycloudy": "Teilweise bewölkt",
+      "cloudy": "Bewölkt", "rainy": "Regnerisch", "pouring": "Starkregen", 
+      "lightning": "Gewitter", "lightning-rainy": "Gewitter mit Regen",
+      "windy": "Windig", "windy-variant": "Windig", "fog": "Nebel", "hail": "Hagel",
+      "snowy": "Schnee", "snowy-rainy": "Schneeregen", "exceptional": "Außergewöhnlich"
+    };
+    
+    let conditionText = translations[condition] || condition || "—";
+    
+    // Add precipitation if available
+    const precipitation = precipitationState?.state;
+    if (precipitation && !isNaN(parseFloat(precipitation)) && parseFloat(precipitation) > 0) {
+      conditionText += ` – Niederschlag ${parseFloat(precipitation).toFixed(1)} mm`;
     }
 
     container.innerHTML = `
       <div class="daily-forecast">
         <div class="daily-icon">
-          <img src="/local/weather_icons/${dailyForecast.condition}.svg" alt="${dailyForecast.condition}">
+          <img src="/local/weather_icons/${condition}.svg" alt="${condition}" width="120" height="120">
         </div>
         <div class="daily-info">
-          <div class="daily-condition">${this.translateWeatherCondition(dailyForecast.condition)}</div>
-          <div class="daily-temps">
-            <span class="daily-high">${Math.round(dailyForecast.temperature)}°C</span>
-            <span class="daily-low">${dailyForecast.templow ? Math.round(dailyForecast.templow) + '°C' : ''}</span>
-          </div>
+          <div class="daily-title">${mapping.title}</div>
+          <div class="daily-temp">${temp}</div>
+          <div class="daily-condition">${conditionText}</div>
         </div>
       </div>
     `;
