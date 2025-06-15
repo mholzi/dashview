@@ -789,7 +789,7 @@ h3 {
 }
 
 .header-room-button i {
-    color: var(--gray800);
+    color: var(--black);
 }
 
 .header-floor-button:hover,
