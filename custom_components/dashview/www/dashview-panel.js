@@ -76,8 +76,8 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
-    // Show loading indicator
-    shadow.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Loading DashView...</div>';
+    // Clear any existing content
+    shadow.innerHTML = '';
 
     try {
       console.log('[DashView] Fetching CSS and HTML resources...');
