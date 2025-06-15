@@ -1685,6 +1685,11 @@ class DashviewPanel extends HTMLElement {
         this._coversConfig = { room_covers: {}, excluded_rooms: [] };
         this._otherDevicesConfig = { room_devices: {}, excluded_rooms: [] };
         this._temperatureConfig = { temperature_entities: {} };
+        this._scenesConfig = {};
+        this._roomNotificationsConfig = {};
+        this._windowWeatherConfig = {};
+        this._alarmConfig = {};
+        this._headerUpdatesConfig = {};
         
         // Populate floor configs
         Object.keys(this._consolidatedConfig.floors).forEach(floorKey => {
@@ -1698,17 +1703,18 @@ class DashviewPanel extends HTMLElement {
             const room = floor.rooms[roomKey];
             roomSensors.push(room.combined_sensor);
             
-            // Extract entities by type
-            this._lightsConfig.room_lights[room.friendly_name] = room.entities.lights || [];
-            this._coversConfig.room_covers[room.friendly_name] = room.entities.covers || [];
-            this._otherDevicesConfig.room_devices[room.friendly_name] = room.entities.other_devices || [];
+            // Extract entities by type using technical_name as key
+            const technicalName = room.technical_name || room.friendly_name;
+            this._lightsConfig.room_lights[technicalName] = room.entities.lights || [];
+            this._coversConfig.room_covers[technicalName] = room.entities.covers || [];
+            this._otherDevicesConfig.room_devices[technicalName] = room.entities.other_devices || [];
             if (room.entities.temperature && room.entities.temperature.length > 0) {
-              this._temperatureConfig.temperature_entities[room.friendly_name] = room.entities.temperature;
+              this._temperatureConfig.temperature_entities[technicalName] = room.entities.temperature;
             }
             
-            // Extract music config
+            // Extract music config using technical_name
             if (room.entities.music && room.entities.music.media_player) {
-              this._musicConfig.media_players[room.friendly_name] = room.entities.music.media_player;
+              this._musicConfig.media_players[technicalName] = room.entities.music.media_player;
             }
           });
           this._roomsConfig.floors[floorKey] = roomSensors;

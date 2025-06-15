@@ -7,6 +7,7 @@
       "rooms": {
         "wohnzimmer": {
           "friendly_name": "Wohnbereich",
+          "technical_name": "Wohnzimmer",
           "icon_template": "mdi:sofa",
           "room_type": "#wohnzimmer",
           "combined_sensor": "binary_sensor.combined_sensor_wohnzimmer",
@@ -25,6 +26,7 @@
         },
         "buero": {
           "friendly_name": "Büro",
+          "technical_name": "Büro",
           "icon_template": "mdi:desk",
           "room_type": "#buero",
           "combined_sensor": "binary_sensor.combined_sensor_buero",
@@ -57,6 +59,7 @@
         },
         "kueche": {
           "friendly_name": "Küche",
+          "technical_name": "Küche",
           "icon_template": "mdi:stove",
           "room_type": "#kueche",
           "combined_sensor": "binary_sensor.combined_sensor_kueche",
@@ -93,6 +96,7 @@
         },
         "eingangsflur": {
           "friendly_name": "Eingangsflur",
+          "technical_name": "Eingang",
           "icon_template": "mdi:coat-rack",
           "room_type": "#eingang",
           "combined_sensor": "binary_sensor.combined_sensor_eingangsflur",
@@ -132,7 +136,8 @@
                 "type": "temp"
               }
             ]
-          }
+          },
+          "technical_name": "Gästeklo"
         },
         "treppe_erdgeschoss": {
           "friendly_name": "Treppe Erdgeschoss",
@@ -145,12 +150,13 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Treppe"
         }
       }
     },
     "OG": {
-      "name": "Obergeschoss", 
+      "name": "Obergeschoss",
       "icon": "mdi:home-floor-1",
       "sensor": "binary_sensor.floor_og_active",
       "rooms": {
@@ -178,7 +184,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Kinderzimmer"
         },
         "kinderbad": {
           "friendly_name": "Kinderbad",
@@ -196,7 +203,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Kinderbad"
         },
         "flur": {
           "friendly_name": "Kinderflur",
@@ -214,7 +222,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Flur"
         },
         "aupair": {
           "friendly_name": "Aupair",
@@ -236,7 +245,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Aupair"
         }
       }
     },
@@ -272,7 +282,8 @@
             },
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Eltern"
         }
       }
     },
@@ -303,7 +314,8 @@
               }
             ],
             "other_devices": []
-          }
+          },
+          "technical_name": "Partykeller"
         },
         "heizungskeller": {
           "friendly_name": "Heizungskeller",
@@ -318,7 +330,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Heizungskeller"
         },
         "kellerflur": {
           "friendly_name": "Kellerflur",
@@ -334,7 +347,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Kellerflur"
         },
         "waschkeller": {
           "friendly_name": "Waschkeller",
@@ -363,7 +377,8 @@
                 "type": "dryer"
               }
             ]
-          }
+          },
+          "technical_name": "Wäschekeller"
         },
         "serverraum": {
           "friendly_name": "Serverraum",
@@ -383,7 +398,8 @@
               }
             ],
             "other_devices": []
-          }
+          },
+          "technical_name": "Serverraum"
         },
         "sauna": {
           "friendly_name": "Sauna",
@@ -401,7 +417,8 @@
               }
             ],
             "other_devices": []
-          }
+          },
+          "technical_name": "Sauna"
         },
         "buero_keller": {
           "friendly_name": "Kellerraum",
@@ -416,7 +433,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Kellerraum"
         }
       }
     },
@@ -445,7 +463,8 @@
                 "type": "mower"
               }
             ]
-          }
+          },
+          "technical_name": "Aussen"
         },
         "garten": {
           "friendly_name": "Garten",
@@ -460,7 +479,8 @@
             "music": {},
             "temperature": [],
             "other_devices": []
-          }
+          },
+          "technical_name": "Garten"
         }
       }
     }
@@ -508,28 +528,28 @@
         "active_tab": 1
       },
       {
-        "id": "obergeschoss", 
+        "id": "obergeschoss",
         "room": "OG",
         "default": "hide",
         "active_tab": 2
       },
       {
         "id": "elternbereich",
-        "room": "Eltern", 
+        "room": "Eltern",
         "default": "hide",
         "active_tab": 3
       },
       {
         "id": "keller",
         "room": "Keller",
-        "default": "hide", 
+        "default": "hide",
         "active_tab": 4
       }
     ],
     "tabs": [
       {
         "icon": "mdi:home",
-        "label": "EG", 
+        "label": "EG",
         "target": "erdgeschoss"
       },
       {
@@ -544,7 +564,7 @@
       },
       {
         "icon": "mdi:stairs-down",
-        "label": "Keller", 
+        "label": "Keller",
         "target": "keller"
       }
     ],
@@ -559,14 +579,14 @@
             "type": "light"
           },
           {
-            "template": "sensor_small_swipe", 
+            "template": "sensor_small_swipe",
             "grid": "motion",
             "entity": "binary_sensor.motion_gasteklo_occupancy",
             "type": "motion"
           },
           {
             "template": "sensor_small_swipe",
-            "grid": "temp", 
+            "grid": "temp",
             "entity": "sensor.gasteklo_temperature",
             "type": "temp"
           }
@@ -578,7 +598,7 @@
           {
             "template": "sensor_small_swipe",
             "grid": "licht1",
-            "entity": "light.licht_waschkeller", 
+            "entity": "light.licht_waschkeller",
             "type": "light"
           },
           {
@@ -595,7 +615,7 @@
           },
           {
             "template": "floor_swipe",
-            "grid": "raeume", 
+            "grid": "raeume",
             "entity": "Keller"
           },
           {
@@ -622,7 +642,7 @@
             "entity": "EG"
           },
           {
-            "template": "floor_swipe", 
+            "template": "floor_swipe",
             "grid": "garbage",
             "entity": "Muell"
           },
@@ -661,7 +681,7 @@
         "cards": [
           {
             "template": "room_card",
-            "grid": "kinder", 
+            "grid": "kinder",
             "entity": "binary_sensor.combined_sensor_kids"
           },
           {
