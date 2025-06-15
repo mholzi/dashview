@@ -126,6 +126,9 @@ class DashviewPanel extends HTMLElement {
       console.log('[DashView] Initializing card...');
       this.initializeCard(shadow);
 
+      // Initialize cover interactions
+      this.handleCoverInteractions();
+
       this._contentReady = true;
       console.log('[DashView] Content ready, updating elements...');
       
@@ -1568,7 +1571,11 @@ class DashviewPanel extends HTMLElement {
   }
 
   // Update cover sections for all rooms  
-  updateCoverSections() {
+  async updateCoverSections() {
+    if (!this._coversConfig || Object.keys(this._coversConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
     if (!this._coversConfig) return;
 
     const shadow = this.shadowRoot;
@@ -1588,9 +1595,6 @@ class DashviewPanel extends HTMLElement {
         section.innerHTML = coverHTML;
       }
     });
-
-    // Set up cover interactions after sections are populated
-    this.handleCoverInteractions();
   }
 
   // Generate cover section content based on configuration and current room
