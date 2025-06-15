@@ -1354,7 +1354,7 @@ h3 {
 .volume-value {
     min-width: 40px;
     text-align: right;
-    font-size: 0.9em;
+    font-size: 1.08em;
     color: var(--secondary-text-color);
 }
 
