@@ -11,6 +11,7 @@ class DashviewPanel extends HTMLElement {
     this._coversConfig = {};
     this._lightsConfig = {};
     this._scenesConfig = {};
+    this._otherDevicesConfig = {};
     this._debugMode = localStorage.getItem('dashview_debug') === 'true';
     this._activeMusicTab = null; // Track the currently active music tab
     this._volumeSliderInteraction = new Set(); // Track which volume sliders are being interacted with
@@ -172,6 +173,9 @@ class DashviewPanel extends HTMLElement {
       // Initialize light interactions
       this.handleLightInteractions();
 
+      // Initialize other devices interactions
+      this.handleOtherDevicesInteractions();
+
       this._contentReady = true;
       console.log('[DashView] Content ready, updating elements...');
       
@@ -324,6 +328,13 @@ class DashviewPanel extends HTMLElement {
 
       // Update Light Sections
       this._safeUpdate('light-sections', () => this.updateLightSections());
+      
+      // Update Other Devices Sections
+      this._safeUpdate('other-devices-sections', () => this.updateOtherDevicesSections());
+      
+      // Update Other Devices Controls
+      this._safeUpdate('other-devices-controls', () => this.updateOtherDevicesControls());
+      
       // Update Scene Buttons
       this._safeUpdate('scene-buttons', () => this.updateSceneButtons(shadow));
 
@@ -926,6 +937,11 @@ class DashviewPanel extends HTMLElement {
             this.saveScenesConfiguration();
         }
 
+        const saveOtherDevicesBtn = e.target.closest('#save-other-devices-config');
+        if (saveOtherDevicesBtn) {
+            this.saveOtherDevicesConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntity();
@@ -1209,6 +1225,10 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'scenes-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
                 }
+                // Load admin configuration when other devices tab is activated
+                if (targetId === 'other-devices-tab') {
+                    setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
                 // Load music configuration when music tab is activated
                 if (targetId === 'music-tab') {
                     setTimeout(() => this.loadMusicAdminConfiguration(), 100);
@@ -1253,15 +1273,15 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, lightsResponse] = await Promise.all([
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, otherDevicesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
         fetch('/local/dashview/config/covers.json'),
-        fetch('/local/dashview/config/lights.json')
-        fetch('/local/dashview/config/scenes.json')
+        fetch('/local/dashview/config/scenes.json'),
+        fetch('/local/dashview/config/lights.json'),
+        fetch('/local/dashview/config/other_devices.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1335,7 +1355,18 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load scenes configuration file - status: ${scenesResponse.status}`);
         this._scenesConfig = {};
+      }
 
+      // Load other devices configuration separately as it's optional
+      if (otherDevicesResponse.ok) {
+        this._otherDevicesConfig = await otherDevicesResponse.json();
+        console.log('[DashView] Other devices configuration loaded successfully');
+        if (this._debugMode) {
+          console.log('[DashView] Other devices config:', this._otherDevicesConfig);
+        }
+      } else {
+        console.warn(`[DashView] Could not load other devices configuration file - status: ${otherDevicesResponse.status}`);
+        this._otherDevicesConfig = {};
       }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
@@ -1346,7 +1377,7 @@ class DashviewPanel extends HTMLElement {
       this._coversConfig = {};
       this._lightsConfig = {};
       this._scenesConfig = {};
-
+      this._otherDevicesConfig = {};
     }
   }
 
@@ -1451,19 +1482,21 @@ class DashviewPanel extends HTMLElement {
     const temperatureTextarea = shadow.getElementById('temperature-config');
     const coversTextarea = shadow.getElementById('covers-config');
     const scenesTextarea = shadow.getElementById('scenes-config');
+    const otherDevicesTextarea = shadow.getElementById('other-devices-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
 
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse] = await Promise.all([
+      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, otherDevicesResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
         fetch('/local/dashview/config/covers.json'),
-        fetch('/local/dashview/config/scenes.json')
+        fetch('/local/dashview/config/scenes.json'),
+        fetch('/local/dashview/config/other_devices.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1504,12 +1537,19 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
-        if (configsLoaded === 6) {
+        // Load other devices configuration if available
+        if (otherDevicesResponse.ok && otherDevicesTextarea) {
+          const otherDevicesConfig = await otherDevicesResponse.json();
+          otherDevicesTextarea.value = JSON.stringify(otherDevicesConfig, null, 2);
+          configsLoaded++;
+        }
+
+        if (configsLoaded === 7) {
           statusMessage = '✓ All configurations loaded successfully';
         } else if (configsLoaded >= 3) {
           statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
         } else {
-          statusMessage += ' (music, temperature, covers, and scenes configs optional)';
+          statusMessage += ' (music, temperature, covers, scenes, and other devices configs optional)';
         }
 
         statusElement.textContent = statusMessage;
@@ -1754,6 +1794,59 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       statusElement.textContent = '✗ Error saving scenes config: ' + error.message;
+      statusElement.style.background = 'var(--red)';
+    }
+  }
+
+  // Save other devices configuration
+  async saveOtherDevicesConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+    const otherDevicesTextarea = shadow.getElementById('other-devices-config');
+
+    if (!statusElement || !otherDevicesTextarea) return;
+
+    try {
+      const configData = JSON.parse(otherDevicesTextarea.value);
+
+      // Validate configuration structure
+      if (!configData.room_devices || typeof configData.room_devices !== 'object') {
+        throw new Error('Configuration must have a "room_devices" object');
+      }
+
+      if (!Array.isArray(configData.excluded_rooms)) {
+        throw new Error('Configuration must have an "excluded_rooms" array');
+      }
+
+      // Validate each room's device configuration
+      for (const [room, devices] of Object.entries(configData.room_devices)) {
+        if (!Array.isArray(devices)) {
+          throw new Error(`Devices for room "${room}" must be an array`);
+        }
+        
+        for (const device of devices) {
+          if (!device.entity || typeof device.entity !== 'string') {
+            throw new Error(`Invalid entity in room "${room}": must have a string "entity" property`);
+          }
+          if (!device.type || typeof device.type !== 'string') {
+            throw new Error(`Invalid type in room "${room}": must have a string "type" property`);
+          }
+        }
+      }
+
+      statusElement.textContent = '✓ Other devices configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
+      statusElement.style.background = 'var(--yellow)';
+
+      // Store the configuration for future use
+      this._otherDevicesConfig = configData;
+      
+      // Update other devices sections
+      if (this._hass) {
+        this.updateOtherDevicesSections();
+      }
+
+    } catch (error) {
+      statusElement.textContent = '✗ Error saving other devices config: ' + error.message;
       statusElement.style.background = 'var(--red)';
     }
   }
@@ -3096,6 +3189,420 @@ class DashviewPanel extends HTMLElement {
     return defaultEntity;
   }
 
+  // Update other devices sections for all rooms  
+  async updateOtherDevicesSections() {
+    if (!this._otherDevicesConfig || Object.keys(this._otherDevicesConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
+    if (!this._otherDevicesConfig) return;
+
+    const shadow = this.shadowRoot;
+    
+    // Map popup IDs to room names
+    const roomMappings = {
+      'buero-other-section': 'Büro',
+      'wohnzimmer-other-section': 'Wohnzimmer',
+      'kueche-other-section': 'Küche',
+      'kinderzimmer-other-section': 'Kinderzimmer',
+      'gaesteklo-other-section': 'Gästeklo',
+      'eingang-other-section': 'Eingang',
+      'aupair-other-section': 'Aupair',
+      'elternbereich-other-section': 'Eltern'
+    };
+
+    // Update each other devices section
+    Object.entries(roomMappings).forEach(([sectionId, roomName]) => {
+      const section = shadow.getElementById(sectionId);
+      if (section) {
+        const otherHTML = this.generateOtherDevicesSectionContent(roomName);
+        section.innerHTML = otherHTML;
+      }
+    });
+  }
+
+  // Generate other devices section content based on configuration and current room
+  generateOtherDevicesSectionContent(room) {
+    if (!this._otherDevicesConfig || !this._otherDevicesConfig.room_devices) {
+      return '<div class="placeholder">Other devices configuration not loaded</div>';
+    }
+
+    const roomDevices = this._otherDevicesConfig.room_devices[room] || [];
+    const excludedRooms = this._otherDevicesConfig.excluded_rooms || [];
+    
+    // Check if room is in exclusion list or has no devices
+    if (excludedRooms.includes(room) || roomDevices.length === 0) {
+      return '';
+    }
+
+    let html = `
+      <div class="other-devices-section" data-room="${room}">
+        <div class="other-devices-expander-card">
+          <div class="other-devices-header">
+            <div class="other-devices-header-grid">
+              <div class="other-devices-title">Andere Geräte</div>
+              <div class="other-devices-icon">
+                <i class="mdi mdi-devices"></i>
+              </div>
+              <div class="other-devices-count-display" data-room="${room}">${roomDevices.length} Geräte</div>
+            </div>
+          </div>
+          <div class="other-devices-content" style="display: none;">
+            <div class="other-devices-grid">
+    `;
+
+    // Add individual device controls for each device entity
+    roomDevices.forEach(device => {
+      html += `
+            <div class="other-device-card" data-entity="${device.entity}" data-type="${device.type}">
+              <div class="other-device-card-content">
+                <div class="other-device-icon" data-entity="${device.entity}" data-type="${device.type}">
+                  <i class="mdi mdi-help-circle"></i>
+                </div>
+                <div class="other-device-info">
+                  <div class="other-device-name" data-entity="${device.entity}">Loading...</div>
+                  <div class="other-device-state" data-entity="${device.entity}" data-type="${device.type}">--</div>
+                </div>
+              </div>
+            </div>`;
+    });
+
+    html += `
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    return html;
+  }
+
+  // Update other devices controls with current state
+  updateOtherDevicesControls() {
+    if (!this._hass || !this._otherDevicesConfig) return;
+
+    const shadow = this.shadowRoot;
+    
+    // Update all other device displays
+    shadow.querySelectorAll('.other-device-card').forEach(element => {
+      const entityId = element.getAttribute('data-entity');
+      const deviceType = element.getAttribute('data-type');
+      const entity = this._hass.states[entityId];
+      
+      if (entity) {
+        // Update friendly names
+        const nameElement = element.querySelector('.other-device-name');
+        if (nameElement) {
+          nameElement.textContent = entity.attributes.friendly_name || entityId;
+        }
+        
+        // Update device icons
+        const iconElement = element.querySelector('.other-device-icon i');
+        if (iconElement) {
+          const icon = this.getOtherDeviceIcon(entity, deviceType);
+          iconElement.className = `mdi ${icon}`;
+        }
+        
+        // Update status displays
+        const stateElement = element.querySelector('.other-device-state');
+        if (stateElement) {
+          const stateText = this.getOtherDeviceState(entity, deviceType);
+          stateElement.textContent = stateText;
+          
+          // Add state-based styling
+          const isActive = this.isOtherDeviceActive(entity, deviceType);
+          stateElement.classList.toggle('active', isActive);
+          element.classList.toggle('active', isActive);
+        }
+      }
+    });
+  }
+
+  // Get icon for other device based on type and state
+  getOtherDeviceIcon(entity, deviceType) {
+    const state = entity.state;
+    const attributes = entity.attributes || {};
+    
+    switch (deviceType) {
+      case 'mower':
+        return 'mdi-robot-mower';
+      case 'dishwasher':
+        return 'mdi-dishwasher';
+      case 'washing':
+        return 'mdi-washing-machine';
+      case 'cartridge':
+        const cartridgeValue = parseFloat(state);
+        if (isNaN(cartridgeValue)) return 'mdi-printer';
+        if (cartridgeValue < 10) return 'mdi-printer-alert';
+        if (cartridgeValue < 30) return 'mdi-printer-pos';
+        return 'mdi-printer';
+      case 'sliding_door':
+        return state === 'on' ? 'mdi-door-sliding-open' : 'mdi-door-sliding';
+      case 'window':
+        return state === 'on' ? 'mdi-window-open' : 'mdi-window-closed';
+      case 'motion':
+        return state === 'on' ? 'mdi-motion-sensor' : 'mdi-motion-sensor-off';
+      case 'dryer':
+        return state === 'on' ? 'mdi-tumble-dryer' : 'mdi-tumble-dryer-off';
+      case 'temp':
+        return 'mdi-thermometer';
+      case 'freezer':
+        const alarmDoor = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+        const alarmTemp = this._hass.states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+        return (alarmDoor === 'present' || alarmTemp === 'present') ? 'mdi-alert-circle' : 'mdi-fridge';
+      case 'hoover':
+        return 'mdi-robot-vacuum';
+      case 'printer':
+        return 'mdi-printer';
+      case 'door':
+        const closedEntity = attributes.closed_entity || null;
+        const lockState = state;
+        
+        if (closedEntity && this._hass.states[closedEntity]?.state === 'on') {
+          return 'mdi-door-open';
+        }
+        
+        if (lockState === 'locked') {
+          return 'mdi-door-closed-lock';
+        }
+        
+        if (lockState === 'unlocked' || lockState === 'off' || lockState === 'closed') {
+          return 'mdi-door-closed';
+        }
+        
+        return 'mdi-door';
+      default:
+        return entity.attributes?.icon?.replace('mdi:', 'mdi-') || 'mdi-help-circle';
+    }
+  }
+
+  // Get state text for other device
+  getOtherDeviceState(entity, deviceType) {
+    const state = entity.state;
+    const attributes = entity.attributes || {};
+    const errorCode = attributes.error ? String(attributes.error) : '';
+
+    switch (deviceType) {
+      case 'light':
+        return state === 'on' ? 'An' : 'Aus';
+      case 'cartridge':
+        const cartValue = parseFloat(state);
+        return isNaN(cartValue) ? 'Unbekannt' : cartValue.toFixed(0) + '%';
+      case 'sliding_door':
+      case 'window':
+        return state === 'on' ? 'Auf' : 'Zu';
+      case 'motion':
+        return state === 'on' ? 'Bewegung' : 'Keine Bewegung';
+      case 'dryer':
+        return state === 'on' ? 'Läuft' : 'Aus';
+      case 'temp':
+        const temp = parseFloat(state);
+        return isNaN(temp) ? '' : temp.toFixed(1) + '°C';
+      case 'freezer':
+        const alarmDoor = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+        const alarmTemp = this._hass.states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+        return (alarmDoor === 'present' || alarmTemp === 'present') ? 'Alarm' : 'OK';
+      case 'hoover':
+        const errorMessages = {
+          'No Error': 'Kein Fehler',
+          'brush': 'Hauptbürste blockiert',
+          'side_brush': 'Seitenbürste blockiert',
+          'Cutting system blocked': 'Mähwerk blockiert',
+          'No loop signal': 'Kein Schleifensignal',
+          'Upside down': 'Mäher umgekippt',
+          'Battery problem': 'Batterieproblem',
+          'Collision sensor problem': 'Kollisionssensor defekt',
+          'Lift sensor problem': 'Anhebesensor defekt',
+          'Charging station blocked': 'Ladestation blockiert',
+          'Outside working area': 'Außerhalb des Arbeitsbereichs',
+          'Trapped': 'Mäher festgefahren',
+          'Low battery': 'Batterie fast leer',
+          'OFF_HATCH_CLOSED': 'Klappe offen'
+        };
+
+        const stateDescriptions = {
+          'cleaning': 'Reinigt',
+          'error': errorMessages[errorCode] || 'Fehler',
+          'returning': 'Fährt zur Ladestation',
+          'paused': errorMessages[errorCode] || 'Fehler',
+          'docked': 'Geparkt',
+          'idle': 'Bereit',
+          'unavailable': 'Nicht erreichbar'
+        };
+
+        const normalizedState = (state || '').toLowerCase();
+        return stateDescriptions[normalizedState] || state;
+      case 'printer':
+        switch (state) {
+          case 'processing': return 'Druckt';
+          case 'scanprocessing': return 'Scannt';
+          case 'copying': return 'Kopiert';
+          case 'canceljob': return 'Abbruch';
+          case 'ready': return 'Bereit';
+          case 'inpowersave': return 'Energiesparen';
+          case 'off': return 'Aus';
+          default: return state;
+        }
+      case 'door':
+        const isOpen = attributes.closed_entity && this._hass.states[attributes.closed_entity]?.state === 'on';
+        const lockState = state;
+
+        if (isOpen) {
+          return 'Auf';
+        } else if (lockState === 'locked') {
+          return 'Abgeschlossen';
+        } else {
+          return 'Zu';
+        }
+      case 'dishwasher':
+        if (state !== 'run') {
+          return 'Bereit';
+        } else {
+          const endTimeEntity = this._hass.states['sensor.geschirrspuler_remaining_program_time'];
+          if (!endTimeEntity || !endTimeEntity.state) {
+            return 'Unbekannt';
+          }
+          const end = new Date(endTimeEntity.state);
+          if (isNaN(end.getTime())) {
+            return 'Unbekannt';
+          }
+          const diff = Math.floor((end - new Date()) / 60000);
+          if (diff <= 0) {
+            return 'Fertig';
+          }
+          const h = Math.floor(diff / 60);
+          const m = diff % 60;
+          return (h > 0 ? h + 'h ' : '') + (m > 0 || h === 0 ? m + 'min' : '');
+        }
+      case 'washing':
+        if (state !== 'run') {
+          return 'Bereit';
+        } else {
+          const endTimeEntity = this._hass.states['sensor.waschmaschine_remaining_program_time'];
+          if (!endTimeEntity || !endTimeEntity.state) {
+            return 'Unbekannt';
+          }
+          const end = new Date(endTimeEntity.state);
+          if (isNaN(end.getTime())) {
+            return 'Unbekannt';
+          }
+          const diff = Math.floor((end - new Date()) / 60000);
+          if (diff <= 0) {
+            return 'Fertig';
+          }
+          const h = Math.floor(diff / 60);
+          const m = diff % 60;
+          return (h > 0 ? h + 'h ' : '') + (m > 0 || h === 0 ? m + 'min' : '');
+        }
+      case 'mower':
+        const mowerErrorMessages = {
+          "Wheel motor blocked": "Radmotor blockiert",
+          "Wheel motor overloaded": "Radmotor überlastet",
+          "Cutting system blocked": "Mähwerk blockiert",
+          "NO_LOOP_SIGNAL": "Kein Schleifensignal",
+          "Upside down": "Mäher umgekippt",
+          "Battery problem": "Batterieproblem",
+          "Collision sensor problem": "Kollisionssensor defekt",
+          "Lift sensor problem": "Anhebesensor defekt",
+          "Charging station blocked": "Ladestation blockiert",
+          "Outside working area": "Außerhalb des Arbeitsbereichs",
+          "Trapped": "Mäher festgefahren",
+          "Low battery": "Batterie fast leer",
+          "OFF_HATCH_CLOSED": "Klappe offen",
+          "OFF_DISABLED": "Ausgeschaltet",
+          "LIFTED": "Angehoben",
+          "NO_MESSAGE": "Kein Kontakt"
+        };
+
+        const mowerStateDescriptions = {
+          "cleaning": "Mäht",
+          "error": errorCode ? (mowerErrorMessages[errorCode] || `${errorCode}`) : "Fehler",
+          "returning": "Fährt zur Ladestation",
+          "paused": "Pause",
+          "docked": "Geparkt",
+          "idle": "Bereit"
+        };
+
+        return mowerStateDescriptions[state] || state;
+      default:
+        return state;
+    }
+  }
+
+  // Check if other device is in active state
+  isOtherDeviceActive(entity, deviceType) {
+    const state = entity.state;
+    
+    switch (deviceType) {
+      case 'light':
+        return state === 'on';
+      case 'mower':
+        return state === 'error' || state === 'cleaning';
+      case 'dishwasher':
+      case 'washing':
+        return state === 'run' || state === 'error';
+      case 'cartridge':
+        const value = parseFloat(state);
+        return !isNaN(value) && value < 20;
+      case 'sliding_door':
+      case 'window':
+      case 'motion':
+        return state === 'on';
+      case 'dryer':
+        return state === 'on';
+      case 'freezer':
+        const alarmDoor = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+        const alarmTemp = this._hass.states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+        return alarmDoor === 'present' || alarmTemp === 'present';
+      case 'hoover':
+        return state === 'error' || state === 'cleaning';
+      case 'printer':
+        const activeStates = ['processing', 'copying', 'scanprocessing', 'canceljob'];
+        return activeStates.includes(state);
+      case 'door':
+        const closedState = entity.attributes.closed_entity 
+          ? this._hass.states[entity.attributes.closed_entity]?.state
+          : null;
+        return closedState === 'on'; // Door is open
+      default:
+        return false;
+    }
+  }
+
+  // Handle other devices control interactions
+  handleOtherDevicesInteractions() {
+    const shadow = this.shadowRoot;
+    
+    // Handle other devices header clicks (expand/collapse)
+    shadow.addEventListener('click', (e) => {
+      const otherDevicesHeader = e.target.closest('.other-devices-header');
+      if (otherDevicesHeader) {
+        const otherDevicesSection = otherDevicesHeader.closest('.other-devices-section');
+        const content = otherDevicesSection.querySelector('.other-devices-content');
+        if (content) {
+          const isExpanded = content.style.display !== 'none';
+          content.style.display = isExpanded ? 'none' : 'block';
+          otherDevicesSection.classList.toggle('expanded', !isExpanded);
+        }
+      }
+      
+      // Handle individual device card clicks for more info
+      const deviceCard = e.target.closest('.other-device-card');
+      if (deviceCard) {
+        const entityId = deviceCard.getAttribute('data-entity');
+        
+        if (this._hass && entityId) {
+          // Show more info popup (Home Assistant's more-info dialog)
+          const event = new CustomEvent('hass-more-info', {
+            detail: { entityId: entityId },
+            bubbles: true,
+            composed: true
+          });
+          this.dispatchEvent(event);
+        }
+      }
+    });
+  }
+
   // Debug method to get component status - can be called from browser console
   getDebugStatus() {
     return {
@@ -3109,6 +3616,7 @@ class DashviewPanel extends HTMLElement {
       temperatureConfigLoaded: Object.keys(this._temperatureConfig || {}).length > 0,
       coversConfigLoaded: Object.keys(this._coversConfig || {}).length > 0,
       scenesConfigLoaded: Object.keys(this._scenesConfig || {}).length > 0,
+      otherDevicesConfigLoaded: Object.keys(this._otherDevicesConfig || {}).length > 0,
       debugMode: this._debugMode,
       loadingErrors: this._loadingErrors,
       shadowRoot: !!this.shadowRoot,
