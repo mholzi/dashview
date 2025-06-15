@@ -888,6 +888,12 @@ class DashviewPanel extends HTMLElement {
         if(tabButtons.length > 0) tabButtons[0].click();
     });
     
+    // Handle weather popup specific initialization
+    if (popup.id === 'weather-popup') {
+        // Update all weather components when weather popup is opened
+        this.updateWeatherComponents(this.shadowRoot);
+    }
+    
     // Handle weather popup specific tabs
     const forecastTabs = popup.querySelectorAll('.forecast-tab');
     const forecastContent = popup.querySelector('#daily-forecast-content');
