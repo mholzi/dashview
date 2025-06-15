@@ -3408,16 +3408,227 @@ class DashviewPanel extends HTMLElement {
     return (variables.lights && variables.lights.length > 0) ? variables.lights[0] : null;
   }
 
-  // Get icon for scene button based on variables.type
+  // Get icon for scene button based on variables.type and current device states
   getSceneButtonIcon(variables) {
-    if (variables.type === 'cover') return 'mdi-window-shutter';
-    if (variables.type === 'all_covers') return 'mdi-window-shutter';
-    if (variables.type === 'roof_window') return 'mdi-window-open';
-    if (variables.type === 'dimm_desk') return 'mdi-desk-lamp';
-    if (variables.type === 'computer') return 'mdi-desktop-tower';
-    if (variables.type === 'all_lights_out') return 'mdi-lightbulb-off';
-    if (variables.type === 'wohnzimmer_ambiente') return 'mdi-sofa';
-    return 'mdi-flash';
+    if (!this._hass || !variables.lights || variables.lights.length === 0) {
+      // Fallback to static icons when no HASS or entities available
+      return this.getStaticSceneIcon(variables.type);
+    }
+
+    // Dynamic icons based on scene type and current device states
+    switch (variables.type) {
+      case 'cover':
+        return this.getCoverSceneIcon(variables.lights);
+      
+      case 'all_covers':
+        return this.getAllCoversSceneIcon(variables.lights);
+      
+      case 'roof_window':
+        return this.getRoofWindowSceneIcon(variables.lights);
+      
+      case 'dimm_desk':
+        return this.getDeskSceneIcon(variables.lights);
+      
+      case 'computer':
+        return this.getComputerSceneIcon(variables.lights);
+      
+      case 'all_lights_out':
+        return this.getAllLightsOutSceneIcon(variables.lights);
+      
+      case 'wohnzimmer_ambiente':
+        return this.getAmbienceSceneIcon(variables.lights);
+      
+      default:
+        return this.getGenericSceneIcon(variables);
+    }
+  }
+
+  // Get static fallback icon for scene type
+  getStaticSceneIcon(sceneType) {
+    switch (sceneType) {
+      case 'cover':
+      case 'all_covers':
+        return 'mdi-window-shutter';
+      case 'roof_window':
+        return 'mdi-window-open';
+      case 'dimm_desk':
+        return 'mdi-desk-lamp';
+      case 'computer':
+        return 'mdi-desktop-tower';
+      case 'all_lights_out':
+        return 'mdi-lightbulb-off';
+      case 'wohnzimmer_ambiente':
+        return 'mdi-lightbulb-on';
+      default:
+        return 'mdi-home-automation';
+    }
+  }
+
+  // Get dynamic icon for cover scenes
+  getCoverSceneIcon(entities) {
+    const positions = entities.map(entityId => {
+      const entity = this._hass.states[entityId];
+      return entity?.attributes?.current_position;
+    }).filter(pos => typeof pos === 'number');
+
+    if (positions.length === 0) return 'mdi-window-shutter';
+
+    const avgPosition = positions.reduce((sum, pos) => sum + pos, 0) / positions.length;
+    
+    if (avgPosition > 80) {
+      return 'mdi-window-shutter-open'; // Mostly open
+    } else if (avgPosition > 20) {
+      return 'mdi-window-shutter'; // Partially open
+    } else {
+      return 'mdi-window-shutter-alert'; // Mostly closed
+    }
+  }
+
+  // Get dynamic icon for all covers scene
+  getAllCoversSceneIcon(entities) {
+    const coverEntities = entities.filter(entityId => entityId.startsWith('cover.'));
+    if (coverEntities.length === 0) return 'mdi-window-shutter';
+
+    const positions = coverEntities.map(entityId => {
+      const entity = this._hass.states[entityId];
+      return entity?.attributes?.current_position;
+    }).filter(pos => typeof pos === 'number');
+
+    if (positions.length === 0) return 'mdi-window-shutter';
+
+    const anyNeedOpening = positions.some(pos => pos < 30);
+    const anyOpen = positions.some(pos => pos > 70);
+    
+    if (anyNeedOpening && !anyOpen) {
+      return 'mdi-blinds-open'; // Need to open
+    } else if (anyOpen) {
+      return 'mdi-blinds'; // Some are open
+    } else {
+      return 'mdi-blinds-horizontal-closed'; // All closed
+    }
+  }
+
+  // Get dynamic icon for roof window scene
+  getRoofWindowSceneIcon(entities) {
+    if (entities.length === 0) return 'mdi-window-open';
+    
+    const entity = this._hass.states[entities[0]];
+    const position = entity?.attributes?.current_position;
+    
+    if (typeof position === 'number') {
+      if (position === 0) {
+        return 'mdi-window-closed-variant'; // Closed
+      } else if (position > 50) {
+        return 'mdi-window-open-variant'; // Open
+      } else {
+        return 'mdi-window-closed'; // Partially open
+      }
+    }
+    
+    return 'mdi-window-open';
+  }
+
+  // Get dynamic icon for desk scene
+  getDeskSceneIcon(entities) {
+    if (entities.length === 0) return 'mdi-desk-lamp';
+    
+    const entity = this._hass.states[entities[0]];
+    const isOn = entity?.state === 'on';
+    const brightness = entity?.attributes?.brightness;
+    
+    if (isOn && typeof brightness === 'number') {
+      if (brightness > 200) {
+        return 'mdi-desk-lamp-on'; // Bright
+      } else if (brightness > 76) {
+        return 'mdi-desk-lamp'; // Medium
+      } else {
+        return 'mdi-lamp'; // Dim
+      }
+    } else if (isOn) {
+      return 'mdi-desk-lamp-on';
+    }
+    
+    return 'mdi-desk-lamp-off';
+  }
+
+  // Get dynamic icon for computer scene
+  getComputerSceneIcon(entities) {
+    if (entities.length === 0) return 'mdi-desktop-tower';
+    
+    const anyOn = entities.some(entityId => {
+      const entity = this._hass.states[entityId];
+      return entity?.state === 'on';
+    });
+    
+    if (anyOn) {
+      return 'mdi-monitor'; // Computer/workspace active
+    } else {
+      return 'mdi-monitor-off'; // Computer/workspace inactive
+    }
+  }
+
+  // Get dynamic icon for all lights out scene
+  getAllLightsOutSceneIcon(entities) {
+    if (entities.length === 0) return 'mdi-lightbulb-off';
+    
+    const onCount = entities.filter(entityId => {
+      const entity = this._hass.states[entityId];
+      return entity?.state === 'on';
+    }).length;
+    
+    const totalCount = entities.length;
+    const ratio = onCount / totalCount;
+    
+    if (ratio === 0) {
+      return 'mdi-lightbulb-off-outline'; // All off
+    } else if (ratio < 0.3) {
+      return 'mdi-lightbulb-group-off'; // Mostly off
+    } else if (ratio < 0.7) {
+      return 'mdi-lightbulb-group'; // Some on
+    } else {
+      return 'mdi-lightbulb-multiple'; // Most on
+    }
+  }
+
+  // Get dynamic icon for ambience scene
+  getAmbienceSceneIcon(entities) {
+    if (entities.length === 0) return 'mdi-lightbulb-on';
+    
+    const activeEntities = entities.filter(entityId => {
+      const entity = this._hass.states[entityId];
+      return entity?.state === 'on';
+    });
+    
+    const activeRatio = activeEntities.length / entities.length;
+    
+    if (activeRatio === 0) {
+      return 'mdi-candle'; // Ambient lights off
+    } else if (activeRatio > 0.5) {
+      return 'mdi-string-lights'; // Ambient scene active
+    } else {
+      return 'mdi-lightbulb-variant'; // Partial ambient
+    }
+  }
+
+  // Get generic scene icon based on entities
+  getGenericSceneIcon(variables) {
+    if (!variables.lights || variables.lights.length === 0) {
+      return 'mdi-home-automation';
+    }
+    
+    // Determine scene type based on entity types
+    const hasCovers = variables.lights.some(id => id.startsWith('cover.'));
+    const hasLights = variables.lights.some(id => id.startsWith('light.') || id.startsWith('switch.'));
+    
+    if (hasCovers && hasLights) {
+      return 'mdi-home-assistant'; // Mixed scene
+    } else if (hasCovers) {
+      return 'mdi-window-shutter'; // Cover scene
+    } else if (hasLights) {
+      return 'mdi-lightbulb-group'; // Light scene
+    } else {
+      return 'mdi-toggle-switch'; // Generic device scene
+    }
   }
 
   // Get name for scene button based on variables and states
