@@ -1071,13 +1071,16 @@ class DashviewPanel extends HTMLElement {
             window.location.hash = '#bahn';
         }
 
-        // Handle info card section clicks
-        const infoSection = e.target.closest('.info-section');
-        if (infoSection) {
-            if (infoSection.classList.contains('motion-section') || infoSection.classList.contains('windows-section')) {
-                window.location.hash = '#security';
-            } else if (infoSection.classList.contains('dryer-section')) {
-                window.location.hash = '#waschkeller';
+        // Handle info card section clicks - only on clickable badges
+        const clickableBadge = e.target.closest('.info-badge.clickable');
+        if (clickableBadge) {
+            const infoSection = clickableBadge.closest('.info-section');
+            if (infoSection) {
+                if (infoSection.classList.contains('motion-section') || infoSection.classList.contains('windows-section')) {
+                    window.location.hash = '#security';
+                } else if (infoSection.classList.contains('dryer-section')) {
+                    window.location.hash = '#waschkeller';
+                }
             }
         }
 
