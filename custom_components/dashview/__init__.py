@@ -12,23 +12,26 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the DashView component."""
     # This function is called by Home Assistant to initialize the component.
-    # We set up a data dictionary to be used by the config entry setup.
+    # We leave it minimal to allow for UI-based setup.
     hass.data.setdefault(DOMAIN, {})
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up DashView from a config entry (UI configuration)."""
+    """Set up DashView from a config entry (the primary setup method)."""
     _LOGGER.info("Setting up DashView panel from config entry.")
     
     panel_name = "dashview"
     
     try:
-        # Register the 'www' directory to be served at /local/dashview
+        # FIX #2: Use the new, non-blocking method for registering static paths.
         www_path = os.path.join(os.path.dirname(__file__), "www")
-        hass.http.register_static_path(f"/local/{panel_name}", www_path)
+        hass.http.async_register_static_paths([
+            {"url_path": f"/local/{panel_name}", "path": www_path, "cache_headers": False}
+        ])
 
-        # Register the custom panel
+        # FIX #1: This logic now only runs once within async_setup_entry,
+        # preventing the "Overwriting panel" error.
         await panel_custom.async_register_panel(
             hass,
             webcomponent_name="dashview-panel",
@@ -41,18 +44,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.info("DashView panel successfully registered.")
 
     except Exception as e:
-        _LOGGER.error("Failed to register DashView panel during async_setup_entry: %s", e, exc_info=True)
-        return False  # Return False if setup fails
+        _LOGGER.error("Failed to register DashView panel: %s", e, exc_info=True)
+        return False
 
-    # Store the entry for proper unloading
     hass.data[DOMAIN][entry.entry_id] = True
-    
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.info("Unloading DashView panel.")
+    # Clean up the panel when the integration is unloaded or reloaded.
     panel_custom.async_remove_panel(hass, "dashview")
-    hass.data[DOMAIN].pop(entry.entry_id)
+    hass.data[DOMAIN].pop(entry.entry_id, None)
     return True
