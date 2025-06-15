@@ -555,6 +555,18 @@ h3 {
     padding: 12px 8px;
     text-align: center;
     white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hourly-item:hover {
+    background-color: var(--highlight);
+    transform: scale(1.02);
+}
+
+.hourly-item.active {
+    background-color: var(--primary-color);
+    color: var(--primary-text-color);
 }
 
 .hourly-time {
@@ -675,11 +687,11 @@ h3 {
     display: flex;
     width: 85px;
     min-width: 85px;
-    background: #dddddd;
+    background: var(--gray800);
     border-radius: 10px;
     padding: 8px;
     flex-direction: column;
-    color: var(--gray800);
+    color: var(--gray000);
     text-align: center;
     cursor: pointer;
     transition: opacity 0.2s ease;
@@ -692,15 +704,16 @@ h3 {
 .pollen-name {
     font-size: 12px;
     font-weight: bold;
-    color: var(--gray800);
+    color: var(--gray000);
     text-align: center;
     margin-bottom: 4px;
 }
 
 .pollen-state {
     font-size: 10px;
-    color: var(--gray800);
+    color: var(--gray000);
     text-align: center;
+}
 
 /* Header Buttons Styles */
 .header-buttons-container {

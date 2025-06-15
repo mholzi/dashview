@@ -554,6 +554,9 @@ class DashviewPanel extends HTMLElement {
                 targetPopup.innerHTML = `<div class="popup-content"><span class="popup-close">&times;</span>Error loading: ${err.message}</div>`;
                  this.reinitializePopupContent(targetPopup);
             }
+        } else {
+            // For static popups like weather, also reinitialize content
+            this.reinitializePopupContent(targetPopup);
         }
         targetPopup.classList.add('active');
       }
@@ -864,6 +867,8 @@ class DashviewPanel extends HTMLElement {
     if (closeBtn) {
         closeBtn.onclick = () => window.history.back();
     }
+    
+    // Handle generic tabs
     popup.querySelectorAll('.tabs-container').forEach(container => {
         const tabButtons = container.querySelectorAll('.tab-button');
         const tabContents = container.querySelectorAll('.tab-content');
@@ -882,6 +887,29 @@ class DashviewPanel extends HTMLElement {
         });
         if(tabButtons.length > 0) tabButtons[0].click();
     });
+    
+    // Handle weather popup specific tabs
+    const forecastTabs = popup.querySelectorAll('.forecast-tab');
+    const forecastContent = popup.querySelector('#daily-forecast-content');
+    if (forecastTabs.length > 0 && forecastContent) {
+        forecastTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                forecastTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const dayIndex = parseInt(tab.dataset.day);
+                const weatherState = this._hass ? this._hass.states['weather.forecast_home'] : null;
+                if (weatherState) {
+                    this.showDailyForecast(forecastContent, weatherState, dayIndex);
+                }
+            });
+        });
+        
+        // Initialize with the first tab
+        if (forecastTabs[0]) {
+            forecastTabs[0].click();
+        }
+    }
   }
 
   // Load configuration from JSON files
