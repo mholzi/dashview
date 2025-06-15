@@ -136,25 +136,10 @@ class DashviewPanel extends HTMLElement {
 
       console.log('[DashView] Resources loaded successfully, building DOM...');
 
-      // --- CORRECTED STYLESHEET LOADING ---
-      // 1. Create link for Google Fonts (previously from @import)
-      const fontLink = document.createElement('link');
-      fontLink.rel = 'stylesheet';
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap';
-      shadow.appendChild(fontLink);
-      
-      // 2. Create link for Material Design Icons (from index.html)
-      const mdiLink = document.createElement('link');
-      mdiLink.rel = 'stylesheet';
-      mdiLink.href = 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css';
-      shadow.appendChild(mdiLink);
-
-      // 3. Create link for the main stylesheet
-      const styleLink = document.createElement('link');
-      styleLink.rel = 'stylesheet';
-      styleLink.href = '/local/dashview/style.css';
-      shadow.appendChild(styleLink);
-      // --- END OF CORRECTION ---
+      // --- NEW INLINE CSS APPROACH ---
+      console.log('[DashView] Loading stylesheets inline...');
+      await this.loadStylesheetsInline(shadow);
+      // --- END OF NEW APPROACH ---
 
       const content = document.createElement('div');
       content.innerHTML = htmlText;
@@ -242,6 +227,74 @@ class DashviewPanel extends HTMLElement {
       }
     }
     console.log('[DashView] All templates processed');
+  }
+
+  // New method to load stylesheets inline as <style> tags
+  async loadStylesheetsInline(shadow) {
+    const stylesheets = [
+      {
+        name: 'Google Fonts',
+        url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap',
+        critical: true
+      },
+      {
+        name: 'Material Design Icons',
+        url: 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css',
+        critical: true
+      },
+      {
+        name: 'Main Stylesheet', 
+        url: '/local/dashview/style.css',
+        critical: true
+      }
+    ];
+
+    for (const stylesheet of stylesheets) {
+      try {
+        console.log(`[DashView] Loading ${stylesheet.name}...`);
+        
+        const response = await fetch(stylesheet.url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${stylesheet.name}: ${response.status} ${response.statusText}`);
+        }
+        
+        const cssText = await response.text();
+        
+        // Create style element and inject CSS
+        const styleElement = document.createElement('style');
+        styleElement.setAttribute('data-source', stylesheet.name);
+        styleElement.textContent = cssText;
+        
+        // Insert at the beginning of shadow root to ensure proper cascade
+        shadow.insertBefore(styleElement, shadow.firstChild);
+        
+        console.log(`[DashView] ${stylesheet.name} loaded successfully (${cssText.length} characters)`);
+        
+      } catch (error) {
+        console.error(`[DashView] Failed to load ${stylesheet.name}:`, error);
+        
+        if (stylesheet.critical) {
+          // For critical stylesheets, create a fallback style element with basic styles
+          const fallbackStyle = document.createElement('style');
+          fallbackStyle.setAttribute('data-source', `${stylesheet.name} (fallback)`);
+          
+          if (stylesheet.name === 'Main Stylesheet') {
+            // Provide essential fallback styles
+            fallbackStyle.textContent = `
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+              .dashboard-container { max-width: 500px; margin: 0 auto; padding: 12px; }
+              .popup { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+              .popup-content { background: white; margin: 20px; padding: 20px; border-radius: 8px; }
+            `;
+          }
+          
+          shadow.insertBefore(fallbackStyle, shadow.firstChild);
+          console.log(`[DashView] Fallback styles applied for ${stylesheet.name}`);
+        }
+      }
+    }
+    
+    console.log('[DashView] All stylesheets processed');
   }
 
   // New method to update elements based on hass state
@@ -1253,15 +1306,14 @@ class DashviewPanel extends HTMLElement {
   async loadConfiguration() {
     console.log('[DashView] Loading configuration files...');
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, lightsResponse] = await Promise.all([
       const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse] = await Promise.all([
         fetch('/local/dashview/config/floors.json'),
         fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
         fetch('/local/dashview/config/covers.json'),
+        fetch('/local/dashview/config/scenes.json'),
         fetch('/local/dashview/config/lights.json')
-        fetch('/local/dashview/config/scenes.json')
       ]);
 
       if (floorsResponse.ok && roomsResponse.ok) {
@@ -1325,6 +1377,8 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load lights configuration file - status: ${lightsResponse.status}`);
         this._lightsConfig = {};
+      }
+
       // Load scenes configuration separately as it's optional
       if (scenesResponse.ok) {
         this._scenesConfig = await scenesResponse.json();
@@ -1335,7 +1389,6 @@ class DashviewPanel extends HTMLElement {
       } else {
         console.warn(`[DashView] Could not load scenes configuration file - status: ${scenesResponse.status}`);
         this._scenesConfig = {};
-
       }
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
