@@ -1,0 +1,492 @@
+# Sensor Small Template  
+# Template for button-card usage with various sensor types
+sensor_small:
+  variables:
+    name: var_name
+    label: var_label
+    icon: var_icon
+    background: var(--popupBG)
+    text: var(--gray800)
+  name: |
+    [[[
+      if (variables.type === 'cartridge') {
+        return 'Druckerpatrone';
+      }
+      return entity.attributes.friendly_name;
+    ]]]
+  label: |
+    [[[ 
+      if (variables.label_last === true && entity?.last_changed) {
+        const lastChanged = new Date(entity.last_changed);
+        const now = new Date();
+        const diff = Math.floor((now - lastChanged) / 1000); // in seconds
+
+        if (diff < 60) {
+          return 'vor wenigen Sekunden';
+        } else if (diff < 3600) {
+          return 'vor ' + Math.floor(diff / 60) + 'm';
+        } else if (diff < 86400) {
+          return 'vor ' + Math.floor(diff / 3600) + 'h';
+        } else {
+          return 'vor ' + Math.floor(diff / 86400) + 'd'; 
+        }
+      }
+      if (variables.type === 'cartridge') {
+        const value = parseFloat(entity.state);
+        return isNaN(value) ? 'Unbekannt' : value.toFixed(0) + '%';
+      }
+      if (variables.type === 'sliding_door' || variables.type === 'window') {
+        return entity.state === 'on' ? 'Auf' : 'Zu';
+      }
+
+      if (variables.type === 'motion') {
+        const state = entity?.state || 'off';
+        return state === 'on' ? 'Bewegung' : 'Keine Bewegung';
+      }
+
+      if (variables.type === 'dryer') {
+        const state = entity?.state || 'off';
+        return state === 'on' ? 'Läuft' : 'Aus';
+      }
+      if (variables.type === 'light') {
+        const state = entity?.state || 'off';
+        return state === 'on' ? 'An' : 'Aus';
+      }
+
+      if (variables.type === 'temp') {
+        const temp = parseFloat(entity?.state);
+        return isNaN(temp) ? '' : temp.toFixed(1) + '°C';
+      }
+      if (variables.type === 'freezer') {
+        const alarmDoor = states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+        const alarmTemp = states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+        return (alarmDoor === 'present' || alarmTemp === 'present') ? 'Alarm' : 'OK';
+      }
+      if (variables.type === 'hoover') {
+        const state = states['vacuum.mova_e30_ultra']?.state;
+        const error_code = states['vacuum.mova_e30_ultra']?.attributes?.error;
+
+        const error_messages = {
+          'No Error': 'Kein Fehler',
+          'brush': 'Hauptbürste blockiert',
+          'side_brush': 'Seitenbürste blockiert',
+          'Cutting system blocked': 'Mähwerk blockiert',
+          'No loop signal': 'Kein Schleifensignal',
+          'Upside down': 'Mäher umgekippt',
+          'Battery problem': 'Batterieproblem',
+          'Collision sensor problem': 'Kollisionssensor defekt',
+          'Lift sensor problem': 'Anhebesensor defekt',
+          'Charging station blocked': 'Ladestation blockiert',
+          'Outside working area': 'Außerhalb des Arbeitsbereichs',
+          'Trapped': 'Mäher festgefahren',
+          'Low battery': 'Batterie fast leer',
+          'OFF_HATCH_CLOSED': 'Klappe offen'
+        }; 
+
+        const state_descriptions = {
+          'cleaning': 'Reinigt',
+          'error': error_messages?.[error_code] || 'Fehler',
+          'returning': 'Fährt zur Ladestation',
+          'paused': error_messages?.[error_code] || 'Fehler',
+          'docked': 'Geparkt',
+          'idle': 'Bereit',
+          'unavailable': 'Nicht erreichbar'
+        };
+
+        const normalized_state = (state || '').toLowerCase();
+        return state_descriptions?.[normalized_state] || state;
+      }
+      if (variables.type === 'printer') {
+        switch (entity.state) {
+          case 'processing': return 'Druckt';
+          case 'scanprocessing': return 'Scannt';
+          case 'copying': return 'Kopiert';
+          case 'canceljob': return 'Abbruch';
+          case 'ready': return 'Bereit';
+          case 'inpowersave': return 'Energiesparen';
+          case 'off': return 'Aus';
+          default: return entity.state;
+        }
+      }
+      if (variables.type === 'door') {
+        const isOpen = states[variables.closed_entity]?.state === 'on';  // door open
+        const lockState = states[entity.entity_id]?.state;
+
+        if (isOpen) {
+          return 'Auf';
+        } else if (lockState === 'locked') {
+          return 'Abgeschlossen';
+        } else {
+          return 'Zu';
+        }
+      }
+
+      if (variables.type === 'dishwasher') {
+        if (entity.state !== 'run') return 'Bereit';
+
+        const end = new Date(states['sensor.geschirrspuler_remaining_program_time']?.state);
+        const now = new Date();
+
+        if (isNaN(end.getTime())) return 'Unbekannt';
+
+        const diff = Math.floor((end - now) / 60000); // minutes
+
+        if (diff <= 0) return 'Fertig';
+
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+
+        return (h > 0 ? h + 'h ' : '') + (m > 0 || h === 0 ? m + 'min' : '');
+      }
+
+      return '';
+    ]]]
+  show_label: true
+  icon: |
+    [[[
+      const state = entity?.state;
+
+      if (variables.type === 'hoover') {
+        return 'mdi:robot-vacuum';
+      }
+      if (variables.type === 'temp') {
+        return 'mdi:thermometer';
+      }
+      if (variables.type === 'cartridge') {
+        const value = parseFloat(entity.state);
+        if (isNaN(value)) return 'mdi:printer';
+        if (value < 10) return 'mdi:printer-alert';
+        if (value < 30) return 'mdi:printer-low';
+        return 'mdi:printer-check';
+      }
+      if (variables.type === 'dryer') {
+        return state === 'on' ? 'mdi:tumble-dryer' : 'mdi:tumble-dryer-off';
+      }
+      if (variables.type === 'dishwasher') {
+        return state === 'run' ? 'mdi:dishwasher' : 'mdi:dishwasher-alert';
+      }
+      if (variables.type === 'freezer') {
+        const alarmDoor = states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+        const alarmTemp = states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+        return (alarmDoor === 'present' || alarmTemp === 'present') ? 'mdi:alert-circle' : 'mdi:fridge';
+      }
+      if (variables.type === 'sliding_door') {
+        return state === 'on' ? 'mdi:door-sliding-open' : 'mdi:door-sliding';
+      }
+
+      if (variables.type === 'window') {
+        return state === 'on' ? 'mdi:window-open' : 'mdi:window-closed';
+      }
+      if (variables.type === 'printer') {
+        return 'mdi:printer';
+      }        
+      if (variables.type === 'light') {
+        return states[entity.entity_id]?.attributes?.icon || 'mdi:lightbulb';
+      }
+      if (variables.type === 'motion') {
+        return state === 'on' ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
+      }
+      if (variables.type === 'door') {
+        const closedEntity = variables.closed_entity
+          ? states[variables.closed_entity]?.state
+          : null;
+        const state = entity?.state;
+      
+        if (closedEntity === 'on') {
+          return 'mdi:door-open';  // Door is open
+        }
+      
+        if (state === 'locked') {
+          return 'mdi:door-closed-lock';  // Door is closed and locked
+        }
+      
+        if (state === 'unlocked' || state === 'off' || state === 'closed') {
+          return 'mdi:door-closed';  // Door is closed but not locked
+        }
+      
+        return 'mdi:door';  // fallback for unknown states
+      }
+
+      return 'mdi:help-circle';  // default/fallback
+    ]]]
+  styles:
+    grid:
+      - grid-template-columns: 56px 1fr
+      - grid-template-areas: '"i l" "i n"'
+    icon:
+      - width: 22px
+      - color: |
+          [[[
+            if (variables.type === 'hoover') {
+              const state = entity.state;
+
+              if (state === 'error') return 'var(--gray800)';
+              if (state === 'docked') return 'var(--gray800)';
+              return 'var(--gray000)';
+            }
+
+            if (variables.type === 'sliding_door' || variables.type === 'window' || variables.type === 'motion' || variables.type === 'light') {
+              return entity.state === 'on' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+
+            if (variables.type === 'dishwasher') {
+              return entity.state === 'run' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'printer') {
+              const activeStates = ['processing', 'copying', 'scanprocessing', 'canceljob'];
+              return activeStates.includes(entity.state) ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'dryer') {
+              return entity.state === 'on' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'freezer') {
+              const alarmDoor = states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+              const alarmTemp = states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+              return (alarmDoor === 'present' || alarmTemp === 'present') ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'door') {
+              const closedState = variables.closed_entity
+                ? states[variables.closed_entity]?.state
+                : null;
+              const lockState = entity?.state;
+
+              if (closedState === 'on') {
+                return 'var(--gray000)';
+              } else if (closedState === 'off') {
+                return 'var(--gray800)';
+              }
+
+              return 'var(--gray000)';
+            }
+
+            return 'var(--gray800)'; 
+          ]]]
+    img_cell:
+      - justify-self: start
+      - width: 22px
+      - height: 22px
+      - background: |
+          [[[
+            if (variables.type === 'hoover') {
+              const state = entity.state;
+
+              if (state === 'error') return 'var(--gray800)';
+              if (state === 'cleaning') return 'var(--gray800)';
+              if (state === 'docked') return 'rgba(var(--highlight))';
+              return 'rgba(var(--highlight))';
+            }
+            if (variables.type === 'sliding_door' || variables.type === 'window' || variables.type === 'motion' || variables.type === 'light') {
+              return entity.state === 'on' ? 'var(--white)' : 'rgba(var(--highlight))';
+            }
+
+            if (variables.type === 'dishwasher') {
+              return entity.state === 'run' ? 'var(--gray800)' : 'rgba(var(--highlight))';
+            }
+            if (variables.type === 'printer') {
+              const activeStates = ['processing', 'copying', 'scanprocessing', 'canceljob'];
+              const inactiveStates = ['off', 'inpowersave'];
+              
+              if (activeStates.includes(entity.state)) return 'var(--active-appliances)';
+              if (inactiveStates.includes(entity.state)) return 'var(--gray200)';
+              return 'var(--gray200)';
+            }
+            if (variables.type === 'dryer') {
+              return entity.state === 'on' ? 'var(--gray800)' : 'rgba(var(--highlight))';
+            }
+            if (variables.type === 'freezer') {
+              const alarmDoor = states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+              const alarmTemp = states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+              return (alarmDoor === 'present' || alarmTemp === 'present') ? 'var(--red)' : 'rgba(var(--highlight))';
+            }
+
+            if (variables.type === 'door') {
+              const closedState = variables.closed_entity
+                ? states[variables.closed_entity]?.state
+                : null;
+              const lockState = entity?.state;
+
+              if (closedState === 'on') {
+                return 'var(--gray800)';
+              } else if (closedState === 'off') {
+                return 'rgba(var(--highlight))';
+              }
+
+              return 'rgba(var(--highlight))';
+            }
+
+            return 'rgba(var(--highlight))'; 
+          ]]]
+      - padding: 14px
+      - border-radius: 50%
+    label:
+      - justify-self: start
+      - font-size: 16px
+      - padding-top: 4px
+      - font-weight: 500
+      - color: |
+          [[[
+            if (variables.type === 'hoover') {
+              const state = entity.state;
+
+              if (state === 'error') return 'var(--gray000)';
+              if (state === 'docked') return 'var(--gray800)';
+              return 'var(--gray000)';
+            }
+            if (variables.type === 'cartridge') {
+              const value = parseFloat(entity.state);
+              return value < 20 ? 'var(--gray000)' : 'var(--gray800)';
+            }
+
+            if (variables.type === 'sliding_door' || variables.type === 'window' || variables.type === 'motion' || variables.type === 'light') {
+              return entity.state === 'on' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'door') {
+              const closedState = variables.closed_entity
+                ? states[variables.closed_entity]?.state
+                : null;
+              const lockState = entity?.state;
+
+              if (closedState === 'on') {
+                return 'var(--gray000)';
+              } else if (closedState === 'off') {
+                if (lockState === 'locked') {
+                  return 'var(--gray800)';
+                } else {
+                  return 'var(--gray800)';
+                }
+              }
+            if (variables.type === 'printer') {
+              const activeStates = ['processing', 'copying', 'scanprocessing', 'canceljob'];
+              return activeStates.includes(entity.state) ? 'var(--gray000)' : 'var(--gray800)';
+            }
+              return 'var(--gray000)';
+            }
+            if (variables.type === 'dishwasher') {
+              return entity.state === 'run' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'dryer') {
+              return entity.state === 'on' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+
+            return 'var(--gray800)';
+          ]]]
+    card:
+      - height: 66px
+      - border-radius: 12px
+      - padding: 4px 20px 4px 4px
+      - background: |
+          [[[
+            if (entity.state === 'unavailable') return 'var(--red)';
+
+            if (variables.type === 'hoover') {
+              const state = entity.state;
+
+              if (state === 'error') return 'var(--red)';
+              if (state === 'docked') return 'var(--gray300)';
+              return 'var(--active-appliances)';
+            }
+            if (variables.type === 'cartridge') {
+              const value = parseFloat(entity.state);
+              if (isNaN(value)) return 'var(--gray300)';
+              return value < 20 ? 'var(--red)' : 'var(--gray300)';
+            }
+
+            if (variables.type === 'sliding_door' || variables.type === 'window' || variables.type === 'motion' ) {
+              return entity.state === 'on' ? 'var(--active-big)' : 'var(--gray000)';
+            }
+            if (variables.type === 'light' ) {
+              return entity.state === 'on' ? 'var(--active-light)' : 'var(--gray000)';
+            }
+            if (variables.type === 'dishwasher') {
+              return entity.state === 'run' ? 'var(--active-appliances)' : 'var(--gray300)';
+            }
+
+            if (variables.type === 'dryer') {
+              return entity.state === 'on' ? 'var(--active-appliances)' : 'var(--gray300)';
+            } 
+            if (variables.type === 'freezer') {
+              const alarmDoor = states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+              const alarmTemp = states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+              return (alarmDoor === 'present' || alarmTemp === 'present') ? 'var(--red)' : 'var(--gray300)';
+            }
+            if (variables.type === 'printer') {
+              const activeStates = ['processing', 'copying', 'scanprocessing', 'canceljob'];
+              return activeStates.includes(entity.state) ? 'var(--active-appliances)' : 'var(--gray300)';
+            }                
+            if (variables.type === 'door') {
+              const closedState = variables.closed_entity
+                ? states[variables.closed_entity]?.state
+                : null;
+              const lockState = entity?.state;
+
+              if (closedState === 'on') {
+                return 'var(--active-big)';
+              } else if (closedState === 'off') {
+                if (lockState === 'locked') {
+                  return 'var(--gray000)';
+                } else {
+                  return 'var(--gray500)';
+                }
+              }
+
+              return 'var(--gray000)';
+            }
+
+            return 'var(--gray000)';  // fallback
+          ]]]
+    name:
+      - justify-self: start
+      - font-size: 14px
+      - color: |
+          [[[
+            if (variables.type === 'hoover') {
+              const state = entity.state;
+
+              if (state === 'error') return 'var(--gray000)';
+              if (state === 'docked') return 'var(--gray800)';
+              return 'var(--gray000)';
+            }
+            if (variables.type === 'cartridge') {
+              const value = parseFloat(entity.state);
+              return value < 20 ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'sliding_door' || variables.type === 'window' || variables.type === 'motion' || variables.type === 'light') {
+              return entity.state === 'on' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'freezer') {
+              const alarmDoor = states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+              const alarmTemp = states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+              return (alarmDoor === 'present' || alarmTemp === 'present') ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'dishwasher') {
+              return entity.state === 'run' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'dryer') {
+              return entity.state === 'on' ? 'var(--gray000)' : 'var(--gray800)';
+            }
+            if (variables.type === 'printer') {
+              const activeStates = ['processing', 'copying', 'scanprocessing', 'canceljob'];
+              return activeStates.includes(entity.state) ? 'var(--gray000)' : 'var(--gray800)';
+            }              
+            if (variables.type === 'door') {
+              const closedState = variables.closed_entity
+                ? states[variables.closed_entity]?.state
+                : null;
+              const lockState = entity?.state;
+
+              if (closedState === 'on') {
+                return 'var(--gray000)';
+              } else if (closedState === 'off') {
+                if (lockState === 'locked') {
+                  return 'var(--gray800)';
+                } else {
+                  return 'var(--gray800)';
+                }
+              }
+
+              return 'var(--gray000)';
+            }
+            return 'var(--gray800)';
+          ]]]
+      - opacity: 0.7
+      - padding-bottom: 7px

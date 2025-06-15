@@ -1,0 +1,27 @@
+# Sensor Small Swipe Template
+# Template for decluttering-card usage
+sensor_small_swipe:
+  card:
+    type: custom:css-swipe-card
+    cardID: swipe:id
+    height: 74px
+    pagination: false
+    navigation: false
+    view_layout:
+      grid-area: '[[grid-area]]'
+    cards:
+      - type: custom:button-card
+        template: sensor_small
+        entity: '[[entity]]'
+        variables:
+          type: '[[type]]'
+          closed_entity: '[[closed_entity]]'
+          height: '[[height]]'
+      - type: custom:button-card
+        template: sensor_small
+        entity: '[[entity]]'
+        variables:
+          type: '[[type]]'
+          closed_entity: '[[closed_entity]]'
+          label_last: true
+          height: '[[height]]'
