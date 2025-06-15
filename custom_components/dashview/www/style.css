@@ -990,11 +990,11 @@ h3 {
 }
 
 .header-floor-button i {
-    color: var(--gray000);
+    color: var(--gray800);
 }
 
 .header-room-button i {
-    color: var(--black);
+    color: var(--gray800);
 }
 
 .header-floor-button:hover,

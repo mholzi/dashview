@@ -441,11 +441,11 @@ class DashviewPanel extends HTMLElement {
               
               /* Ensure header icon colors are visible */
               .header-floor-button .mdi::before {
-                color: var(--gray000);
+                color: var(--gray800);
               }
               
               .header-room-button .mdi::before {
-                color: var(--black);
+                color: var(--gray800);
               }
               
               /* Generic fallback for any mdi icon without specific definition */
