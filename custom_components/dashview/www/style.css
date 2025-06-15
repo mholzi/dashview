@@ -22,6 +22,7 @@
     --blue: #c8ddfa;
     --blue-dark: #abcbf8;
     --orange: #ffd1b1;
+    --black: #000000;
 
     /* Gradients */
     --active-light: linear-gradient(145deg, rgba(255,245,200,1) 0%, rgba(255,225,130,1) 60%, rgba(255,200,90,1) 150%);
@@ -71,6 +72,7 @@
         --blue: #abcbf8;
         --blue-dark: #c8ddfa;
         --orange: #ffba8a;
+        --black: #ffffff; /* In dark mode, use white for better contrast */
     }
 }
 
@@ -97,6 +99,7 @@
     --blue: #c8ddfa;
     --blue-dark: #abcbf8;
     --orange: #ffd1b1;
+    --black: #000000;
     --active-light: linear-gradient(145deg, rgba(255,245,200,1) 0%, rgba(255,225,130,1) 60%, rgba(255,200,90,1) 150%);
     --active-big: linear-gradient(145deg, rgba(255,220,178,1) 0%, rgba(255,176,233,1) 60%, rgba(104,156,255,1) 150%);
     --active-small: linear-gradient(145deg, rgba(255,212,193,1) 0%, rgba(248,177,235,1) 100%);
@@ -143,6 +146,7 @@
         --blue: #abcbf8;
         --blue-dark: #c8ddfa;
         --orange: #ffba8a;
+        --black: #ffffff; /* In dark mode, use white for better contrast */
     }
 }
 
