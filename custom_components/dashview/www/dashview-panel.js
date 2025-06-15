@@ -93,6 +93,9 @@ class DashviewPanel extends HTMLElement {
     
     // Update Info Card
     this.updateInfoCard(shadow);
+    
+    // Update Pollen Card
+    this.updatePollenCard(shadow);
   }
 
   // Method to check if it's a weekday
@@ -588,6 +591,57 @@ class DashviewPanel extends HTMLElement {
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
+    });
+  }
+
+  // Method to update pollen card
+  updatePollenCard(shadow) {
+    const pollenButtons = shadow.querySelectorAll('.pollen-button');
+    if (!pollenButtons.length || !this._hass) return;
+
+    pollenButtons.forEach(button => {
+      const sensorId = button.getAttribute('data-sensor');
+      const pollenEntity = this._hass.states[sensorId];
+      
+      if (!pollenEntity) {
+        button.classList.add('hidden');
+        return;
+      }
+
+      const value = parseFloat(pollenEntity.state) || 0;
+      const stateElement = button.querySelector('.pollen-state');
+      
+      // Hide button if value is 0
+      if (value === 0) {
+        button.classList.add('hidden');
+        return;
+      } else {
+        button.classList.remove('hidden');
+      }
+
+      // Determine state text and background class
+      let stateText = 'n/a';
+      let levelClass = 'level-0';
+      
+      if (value === 0) {
+        stateText = 'n/a';
+        levelClass = 'level-0';
+      } else if (value < 2) {
+        stateText = 'Niedrig';
+        levelClass = 'level-1';
+      } else if (value < 3) {
+        stateText = 'Moderat';
+        levelClass = 'level-2';
+      } else {
+        stateText = 'Hoch';
+        levelClass = 'level-3';
+      }
+
+      stateElement.textContent = stateText;
+      
+      // Remove all level classes and add the appropriate one
+      button.classList.remove('level-0', 'level-1', 'level-2', 'level-3');
+      button.classList.add(levelClass);
     });
   }
 }
