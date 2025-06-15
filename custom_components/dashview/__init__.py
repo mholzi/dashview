@@ -4,7 +4,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import panel_custom
+from homeassistant.components.frontend import async_remove_panel
 from homeassistant.components.http import StaticPathConfig
+from .services import async_setup_services, async_unload_services
 
 DOMAIN = "dashview"
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +45,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             require_admin=False,
         )
         _LOGGER.info("DashView panel successfully registered.")
+        
+        # Set up services
+        await async_setup_services(hass)
 
     except Exception as e:
         _LOGGER.error("Failed to register DashView panel: %s", e, exc_info=True)
@@ -55,7 +60,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.info("Unloading DashView panel.")
-    # Clean up the panel when the integration is unloaded or reloaded.
-    panel_custom.async_remove_panel(hass, "dashview")
+    
+    try:
+        # Clean up the panel when the integration is unloaded or reloaded.
+        async_remove_panel(hass, "dashview")
+        _LOGGER.info("DashView panel successfully removed.")
+    except Exception as e:
+        _LOGGER.error("Error removing DashView panel: %s", e, exc_info=True)
+    
+    try:
+        # Unload services
+        await async_unload_services(hass)
+    except Exception as e:
+        _LOGGER.error("Error unloading DashView services: %s", e, exc_info=True)
+    
+    # Clean up data
     hass.data[DOMAIN].pop(entry.entry_id, None)
     return True
