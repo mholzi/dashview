@@ -69,8 +69,7 @@ Ensure these files exist in your `/local/dashview/` directory:
 │   ├── train-departure-card.html
 │   └── weather-button.html
 ├── config/                # Configuration files (optional)
-│   ├── floors.json
-│   ├── rooms.json
+│   ├── house_setup.json     # Main configuration file (floors, rooms, etc.)
 │   └── music.json
 └── test.html              # Test page (optional)
 ```

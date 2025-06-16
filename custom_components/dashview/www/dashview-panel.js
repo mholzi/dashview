@@ -1661,7 +1661,7 @@ class DashviewPanel extends HTMLElement {
     console.log('[DashView] Loading configuration files...');
     try {
       // Try to load consolidated config first
-      const consolidatedResponse = await fetch('/local/dashview/config/consolidated_config.json');
+      const consolidatedResponse = await fetch('/local/dashview/config/house_setup.json');
       let useConsolidatedConfig = false;
       
       if (consolidatedResponse.ok) {
@@ -1727,9 +1727,7 @@ class DashviewPanel extends HTMLElement {
       
       if (!useConsolidatedConfig) {
         // Fallback to loading individual config files
-        const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
-          fetch('/local/dashview/config/floors.json'),
-          fetch('/local/dashview/config/rooms.json'),
+        const [musicResponse, temperatureResponse, coversResponse, scenesResponse, lightsResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
           fetch('/local/dashview/config/music.json'),
           fetch('/local/dashview/config/temperature.json'),
           fetch('/local/dashview/config/covers.json'),
@@ -1743,21 +1741,11 @@ class DashviewPanel extends HTMLElement {
           fetch('/local/dashview/config/header_updates.json'),
         ]);
 
-      if (floorsResponse.ok && roomsResponse.ok) {
-        this._floorsConfig = await floorsResponse.json();
-        this._roomsConfig = await roomsResponse.json();
-        console.log('[DashView] Floor and room configurations loaded successfully');
-        if (this._debugMode) {
-          console.log('[DashView] Floors config:', this._floorsConfig);
-          console.log('[DashView] Rooms config:', this._roomsConfig);
-        }
-      } else {
-        console.warn(`[DashView] Could not load floor/room configuration files - floors: ${floorsResponse.status}, rooms: ${roomsResponse.status}`);
+        // Initialize floors and rooms config as empty since they're only in house_setup.json
         this._floorsConfig = {};
         this._roomsConfig = {};
-      }
 
-      // Load music configuration separately as it's optional
+        // Load music configuration separately as it's optional
       if (musicResponse.ok) {
         this._musicConfig = await musicResponse.json();
         console.log('[DashView] Music configuration loaded successfully');
@@ -2469,10 +2457,8 @@ class DashviewPanel extends HTMLElement {
     statusElement.textContent = 'Loading configuration...';
 
     try {
-      const [floorsResponse, roomsResponse, musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
+      const [musicResponse, temperatureResponse, coversResponse, scenesResponse, roomNotificationsResponse, windowWeatherResponse, otherDevicesResponse, floorTabsResponse, alarmResponse, headerUpdatesResponse] = await Promise.all([
 
-        fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json'),
         fetch('/local/dashview/config/music.json'),
         fetch('/local/dashview/config/temperature.json'),
         fetch('/local/dashview/config/covers.json'),
@@ -2482,20 +2468,64 @@ class DashviewPanel extends HTMLElement {
         fetch('/local/dashview/config/other_devices.json'),
         fetch('/local/dashview/config/floor_tabs.json'),
         fetch('/local/dashview/config/alarm.json'),
-        fetch('/local/dashview/config/window_weather_notifications.json'),
         fetch('/local/dashview/config/header_updates.json'),
 
       ]);
 
-      if (floorsResponse.ok && roomsResponse.ok) {
-        const floorsConfig = await floorsResponse.json();
-        const roomsConfig = await roomsResponse.json();
+      // Load house setup configuration for floors and rooms data
+      try {
+        const houseSetupResponse = await fetch('/local/dashview/config/house_setup.json');
+        if (houseSetupResponse.ok) {
+          const houseSetupConfig = await houseSetupResponse.json();
+          
+          // Extract floors config from house setup
+          const floorsConfig = {
+            floor_icons: {},
+            floor_sensors: {}
+          };
+          Object.keys(houseSetupConfig.floors || {}).forEach(floorKey => {
+            const floor = houseSetupConfig.floors[floorKey];
+            floorsConfig.floor_icons[floorKey] = floor.icon;
+            floorsConfig.floor_sensors[floorKey] = floor.sensor;
+          });
+          
+          // Extract rooms config from house setup
+          const roomsConfig = { floors: {} };
+          Object.keys(houseSetupConfig.floors || {}).forEach(floorKey => {
+            const floor = houseSetupConfig.floors[floorKey];
+            const roomSensors = [];
+            Object.keys(floor.rooms || {}).forEach(roomKey => {
+              const room = floor.rooms[roomKey];
+              roomSensors.push(room.combined_sensor);
+            });
+            roomsConfig.floors[floorKey] = roomSensors;
+          });
+          
+          if (floorsTextarea) {
+            floorsTextarea.value = JSON.stringify(floorsConfig, null, 2);
+          }
+          if (roomsTextarea) {
+            roomsTextarea.value = JSON.stringify(roomsConfig, null, 2);
+          }
+        } else {
+          if (floorsTextarea) {
+            floorsTextarea.placeholder = 'Could not load floors configuration from house_setup.json';
+          }
+          if (roomsTextarea) {
+            roomsTextarea.placeholder = 'Could not load rooms configuration from house_setup.json';
+          }
+        }
+      } catch (error) {
+        if (floorsTextarea) {
+          floorsTextarea.placeholder = 'Error loading floors configuration: ' + error.message;
+        }
+        if (roomsTextarea) {
+          roomsTextarea.placeholder = 'Error loading rooms configuration: ' + error.message;
+        }
+      }
 
-        floorsTextarea.value = JSON.stringify(floorsConfig, null, 2);
-        roomsTextarea.value = JSON.stringify(roomsConfig, null, 2);
-
-        let statusMessage = '✓ Floor and room configurations loaded successfully';
-        let configsLoaded = 2;
+      let statusMessage = '✓ Configuration files loaded';
+      let configsLoaded = 0;
 
         // Load music configuration if available
         if (musicResponse.ok && musicTextarea) {
@@ -2568,19 +2598,14 @@ class DashviewPanel extends HTMLElement {
           configsLoaded++;
         }
 
-        if (configsLoaded === 10) {
+        if (configsLoaded === 8) {
           statusMessage = '✓ All configurations loaded successfully';
         } else if (configsLoaded >= 3) {
-          statusMessage = '✓ Floor, room, and optional configurations loaded successfully';
-        } else {
-          statusMessage = '✓ Floor and room configurations loaded successfully (music, temperature, covers, scenes, floor tabs, alarm, header updates, room notifications, window/weather notifications, and other devices configs optional)';
+          statusMessage = '✓ Optional configurations loaded successfully';
         }
 
         statusElement.textContent = statusMessage;
         statusElement.style.background = 'var(--green)';
-      } else {
-        throw new Error('Could not load configuration files');
-      }
     } catch (error) {
       statusElement.textContent = '✗ Error loading configuration: ' + error.message;
       statusElement.style.background = 'var(--red)';
@@ -5961,8 +5986,7 @@ window.DashViewDebug = {
     const filesToCheck = [
       '/local/dashview/style.css',
       '/local/dashview/index.html',
-      '/local/dashview/config/floors.json',
-      '/local/dashview/config/rooms.json',
+      '/local/dashview/config/house_setup.json',
       '/local/dashview/config/music.json',
       '/local/dashview/config/temperature.json',
       '/local/dashview/config/covers.json',
