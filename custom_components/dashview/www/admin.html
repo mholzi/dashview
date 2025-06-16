@@ -5,9 +5,7 @@
 
     <div class="tabs-container" style="margin-top: 20px;">
         <div class="tab-buttons">
-            <button class="tab-button active" data-target="system-info-tab">System Info</button>
-            <button class="tab-button" data-target="config-tab">Configuration</button>
-            <button class="tab-button" data-target="weather-tab">Weather</button>
+            <button class="tab-button active" data-target="weather-tab">Weather</button>
             <button class="tab-button" data-target="header-buttons-tab">Header Buttons</button>
             <button class="tab-button" data-target="floor-tabs-tab">Floor Tabs</button>
             <button class="tab-button" data-target="temperature-tab">Temperature</button>
@@ -19,20 +17,9 @@
             <button class="tab-button" data-target="room-notifications-tab">Room Notifications</button>
             <button class="tab-button" data-target="window-weather-tab">Window/Weather</button>
             <button class="tab-button" data-target="other-devices-tab">Other Devices</button>
-            <button class="tab-button" data-target="actions-tab">Actions</button>
         </div>
 
-        <div id="system-info-tab" class="tab-content active">
-            <h4>System Information</h4>
-            <div class="placeholder">System info will be displayed here</div>
-        </div>
-
-        <div id="config-tab" class="tab-content">
-            <h4>General Configuration</h4>
-            <div class="placeholder">General settings will be displayed here</div>
-        </div>
-
-        <div id="weather-tab" class="tab-content">
+        <div id="weather-tab" class="tab-content active">
             <h4>Weather Entity</h4>
             <p>Select the primary weather entity to be used across the dashboard.</p>
             <div class="setting-row">
@@ -171,11 +158,6 @@
                 <textarea id="other-devices-config" class="config-textarea" placeholder="Other devices configuration will be loaded here..."></textarea>
                 <button id="save-other-devices-config" class="save-button">Save Other Devices Config</button>
             </div>
-        </div>
-
-        <div id="actions-tab" class="tab-content">
-            <h4>Actions</h4>
-            <div class="placeholder">Action buttons will be displayed here</div>
         </div>
     </div>
 </div>
