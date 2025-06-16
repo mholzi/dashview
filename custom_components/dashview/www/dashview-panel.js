@@ -266,18 +266,39 @@ class DashviewPanel extends HTMLElement {
       }
     ];
 
+    // Always add fallback MDI icons first (will be overridden by real MDI if it loads)
+    this.addMDIFallbackStyles(shadow);
+
     for (const stylesheet of stylesheets) {
       try {
         console.log(`[DashView] Loading ${stylesheet.name}...`);
 
         if (stylesheet.type === 'link') {
-            // Correct approach: Use a <link> element for external stylesheets with relative assets
+            // Use a <link> element for external stylesheets with proper error handling
             const linkElement = document.createElement('link');
             linkElement.setAttribute('rel', 'stylesheet');
             linkElement.setAttribute('href', stylesheet.url);
             linkElement.setAttribute('data-source', stylesheet.name);
-            shadow.insertBefore(linkElement, shadow.firstChild);
-            console.log(`[DashView] ${stylesheet.name} linked successfully`);
+            
+            // Add error handling for CSS loading failures
+            await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error(`Timeout loading ${stylesheet.name}`));
+              }, 10000); // 10 second timeout
+              
+              linkElement.onload = () => {
+                clearTimeout(timeout);
+                console.log(`[DashView] ${stylesheet.name} loaded successfully`);
+                resolve();
+              };
+              
+              linkElement.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error(`Failed to load ${stylesheet.name} from ${stylesheet.url}`));
+              };
+              
+              shadow.insertBefore(linkElement, shadow.firstChild);
+            });
         } else {
             // Inline approach for local CSS
             const response = await fetch(stylesheet.url);
@@ -431,6 +452,43 @@ class DashviewPanel extends HTMLElement {
               .mdi-motion-sensor-off::before { content: "👁️"; }
               .mdi-alert-circle::before { content: "⚠️"; }
               
+              /* Window and Blind Icons */
+              .mdi-window-open::before { content: "🪟"; }
+              .mdi-window-closed::before { content: "🪟"; }
+              .mdi-window-open-variant::before { content: "🪟"; }
+              .mdi-window-closed-variant::before { content: "🪟"; }
+              .mdi-window-shutter::before { content: "🪟"; }
+              .mdi-window-shutter-open::before { content: "🪟"; }
+              .mdi-window-shutter-alert::before { content: "🪟⚠️"; }
+              .mdi-blinds::before { content: "🪟"; }
+              .mdi-blinds-open::before { content: "🪟"; }
+              .mdi-blinds-horizontal-closed::before { content: "🪟"; }
+              
+              /* Additional Light Icons */
+              .mdi-lightbulb-variant::before { content: "💡"; }
+              .mdi-lightbulb-on::before { content: "💡"; }
+              .mdi-lightbulb-off::before { content: "💡"; }
+              .mdi-lightbulb-off-outline::before { content: "💡"; }
+              .mdi-lightbulb-group::before { content: "💡"; }
+              .mdi-lightbulb-group-off::before { content: "💡"; }
+              .mdi-lightbulb-multiple::before { content: "💡"; }
+              .mdi-lamp::before { content: "💡"; }
+              .mdi-desk-lamp::before { content: "💡"; }
+              .mdi-desk-lamp-on::before { content: "💡"; }
+              .mdi-desk-lamp-off::before { content: "💡"; }
+              .mdi-string-lights::before { content: "💡"; }
+              .mdi-candle::before { content: "🕯️"; }
+              
+              /* Monitor and Computer Icons */
+              .mdi-monitor::before { content: "🖥️"; }
+              .mdi-monitor-off::before { content: "🖥️"; }
+              .mdi-desktop-tower::before { content: "🖥️"; }
+              
+              /* Smart Home Icons */
+              .mdi-home-assistant::before { content: "🏠"; }
+              .mdi-home-automation::before { content: "🏠"; }
+              .mdi-toggle-switch::before { content: "🔘"; }
+              
               /* Ensure icons are properly sized and colored */
               .nav-button .mdi::before,
               .header-button .mdi::before,
@@ -466,6 +524,151 @@ class DashviewPanel extends HTMLElement {
     }
     
     console.log('[DashView] All stylesheets processed');
+  }
+
+  // Separate method to add MDI fallback styles
+  addMDIFallbackStyles(shadow) {
+    const fallbackStyle = document.createElement('style');
+    fallbackStyle.setAttribute('data-source', 'MDI Fallback Icons');
+    fallbackStyle.textContent = `
+      /* Material Design Icons Fallback - Using Unicode symbols */
+      /* These styles have lower specificity and will be overridden by real MDI if it loads */
+      .mdi::before {
+        display: inline-block;
+        font-style: normal;
+        font-variant: normal;
+        text-rendering: auto;
+        line-height: 1;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      
+      /* Navigation Icons */
+      .mdi-home::before { content: "🏠"; }
+      .mdi-home-floor-1::before { content: "🏠¹"; }
+      .mdi-home-roof::before { content: "🏠↗"; }
+      .mdi-stairs-down::before { content: "⬇️"; }
+      .mdi-tree::before { content: "🌳"; }
+      .mdi-security::before { content: "🔒"; }
+      .mdi-calendar::before { content: "📅"; }
+      .mdi-music::before { content: "🎵"; }
+      .mdi-cog::before { content: "⚙️"; }
+      
+      /* Room Icons */
+      .mdi-sofa::before { content: "🛋️"; }
+      .mdi-bed::before { content: "🛏️"; }
+      .mdi-silverware-fork-knife::before { content: "🍴"; }
+      .mdi-bathtub::before { content: "🛁"; }
+      .mdi-desk::before { content: "🗃️"; }
+      .mdi-baby::before { content: "👶"; }
+      .mdi-account::before { content: "👤"; }
+      .mdi-toilet::before { content: "🚽"; }
+      .mdi-stairs::before { content: "📐"; }
+      .mdi-garage::before { content: "🏠"; }
+      
+      /* Common UI Icons */
+      .mdi-menu::before { content: "☰"; }
+      .mdi-close::before { content: "✕"; }
+      .mdi-lightbulb::before { content: "💡"; }
+      .mdi-help-circle-outline::before { content: "❓"; }
+      .mdi-help-circle::before { content: "❓"; }
+      
+      /* Media Control Icons */
+      .mdi-play::before { content: "▶️"; }
+      .mdi-pause::before { content: "⏸️"; }
+      .mdi-skip-backward::before { content: "⏮️"; }
+      .mdi-skip-forward::before { content: "⏭️"; }
+      
+      /* Device Icons */  
+      .mdi-devices::before { content: "📱"; }
+      .mdi-robot-mower::before { content: "🤖"; }
+      .mdi-robot-vacuum::before { content: "🤖"; }
+      .mdi-dishwasher::before { content: "🍽️"; }
+      .mdi-washing-machine::before { content: "👕"; }
+      .mdi-tumble-dryer::before { content: "🌀"; }
+      .mdi-tumble-dryer-off::before { content: "⭕"; }
+      .mdi-printer::before { content: "🖨️"; }
+      .mdi-printer-alert::before { content: "🖨️⚠️"; }
+      .mdi-printer-pos::before { content: "🖨️"; }
+      .mdi-fridge::before { content: "❄️"; }
+      .mdi-thermometer::before { content: "🌡️"; }
+      
+      /* Door and Window Icons */
+      .mdi-door::before { content: "🚪"; }
+      .mdi-door-open::before { content: "🚪"; }
+      .mdi-door-closed::before { content: "🚪"; }
+      .mdi-door-closed-lock::before { content: "🔒"; }
+      .mdi-door-sliding::before { content: "🚪"; }
+      .mdi-door-sliding-open::before { content: "🚪"; }
+      .mdi-window-open::before { content: "🪟"; }
+      .mdi-window-closed::before { content: "🪟"; }
+      .mdi-window-open-variant::before { content: "🪟"; }
+      .mdi-window-closed-variant::before { content: "🪟"; }
+      .mdi-window-shutter::before { content: "🪟"; }
+      .mdi-window-shutter-open::before { content: "🪟"; }
+      .mdi-window-shutter-alert::before { content: "🪟⚠️"; }
+      .mdi-blinds::before { content: "🪟"; }
+      .mdi-blinds-open::before { content: "🪟"; }
+      .mdi-blinds-horizontal-closed::before { content: "🪟"; }
+      
+      /* Sensor Icons */
+      .mdi-motion-sensor::before { content: "👁️"; }
+      .mdi-motion-sensor-off::before { content: "👁️"; }
+      .mdi-alert-circle::before { content: "⚠️"; }
+      
+      /* Additional Light Icons */
+      .mdi-lightbulb-variant::before { content: "💡"; }
+      .mdi-lightbulb-on::before { content: "💡"; }
+      .mdi-lightbulb-off::before { content: "💡"; }
+      .mdi-lightbulb-off-outline::before { content: "💡"; }
+      .mdi-lightbulb-group::before { content: "💡"; }
+      .mdi-lightbulb-group-off::before { content: "💡"; }
+      .mdi-lightbulb-multiple::before { content: "💡"; }
+      .mdi-lamp::before { content: "💡"; }
+      .mdi-desk-lamp::before { content: "💡"; }
+      .mdi-desk-lamp-on::before { content: "💡"; }
+      .mdi-desk-lamp-off::before { content: "💡"; }
+      .mdi-string-lights::before { content: "💡"; }
+      .mdi-candle::before { content: "🕯️"; }
+      
+      /* Monitor and Computer Icons */
+      .mdi-monitor::before { content: "🖥️"; }
+      .mdi-monitor-off::before { content: "🖥️"; }
+      .mdi-desktop-tower::before { content: "🖥️"; }
+      
+      /* Smart Home Icons */
+      .mdi-home-assistant::before { content: "🏠"; }
+      .mdi-home-automation::before { content: "🏠"; }
+      .mdi-toggle-switch::before { content: "🔘"; }
+      
+      /* Ensure icons are properly sized and colored */
+      .nav-button .mdi::before,
+      .header-button .mdi::before,
+      .header-floor-button .mdi::before,
+      .header-room-button .mdi::before {
+        font-size: 1.2em;
+        vertical-align: middle;
+      }
+      
+      /* Ensure header icon colors are visible */
+      .header-floor-button .mdi::before {
+        color: var(--gray000);
+      }
+      
+      .header-room-button .mdi::before {
+        color: var(--gray000);
+      }
+      
+      /* Generic fallback for any mdi icon without specific definition */
+      .mdi:not([class*="::before"])::before,
+      .mdi-undefined::before,
+      .mdi-unknown::before {
+        content: "⚪";
+        color: inherit;
+      }
+    `;
+    
+    shadow.insertBefore(fallbackStyle, shadow.firstChild);
+    console.log(`[DashView] MDI fallback styles loaded`);
   }
 
   // New method to update elements based on hass state
