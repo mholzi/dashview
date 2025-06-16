@@ -73,16 +73,14 @@
             <h3><img src="/local/weather_icons/sunny.svg" alt="Weather" width="24" height="24" style="vertical-align: middle; margin-right: 8px;">Wetter</h3>
             <div class="placeholder" style="margin-bottom: 12px;">DWD Warning</div>
             <!-- Weather Forecast Card -->
-            <div class="weather-forecast-card">
-                <div class="daily-forecast">
-                    <div class="daily-icon">
-                        <img id="current-weather-icon" src="" alt="Weather" width="120" height="120">
-                    </div>
-                    <div class="daily-info">
-                        <div class="daily-title">Aktuell</div>
-                        <div class="daily-temp" id="current-temperature">--°C</div>
-                        <div class="daily-condition" id="current-condition">--</div>
-                    </div>
+            <div class="daily-forecast">
+                <div class="daily-icon">
+                    <img id="current-weather-icon" src="" alt="Weather" width="120" height="120">
+                </div>
+                <div class="daily-info">
+                    <div class="daily-title">Aktuell</div>
+                    <div class="daily-temp" id="current-temperature">--°C</div>
+                    <div class="daily-condition" id="current-condition">--</div>
                 </div>
             </div>
             
@@ -95,15 +93,13 @@
             </div>
             
             <!-- Today/Tomorrow Swipe Card -->
-            <div class="daily-forecast-container">
-                <div class="forecast-tabs">
-                    <button class="forecast-tab active" data-day="0">Heute</button>
-                    <button class="forecast-tab" data-day="1">Morgen</button>
-                    <button class="forecast-tab" data-day="2">Übermorgen</button>
-                </div>
-                <div class="forecast-content" id="daily-forecast-content">
-                    <!-- Daily forecast content will be populated by JavaScript -->
-                </div>
+            <div class="forecast-tabs">
+                <button class="forecast-tab active" data-day="0">Heute</button>
+                <button class="forecast-tab" data-day="1">Morgen</button>
+                <button class="forecast-tab" data-day="2">Übermorgen</button>
+            </div>
+            <div class="forecast-content" id="daily-forecast-content">
+                <!-- Daily forecast content will be populated by JavaScript -->
             </div>
             <!-- Pollen Card -->
             <div class="pollen-card">
