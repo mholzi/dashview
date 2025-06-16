@@ -5243,10 +5243,17 @@ class DashviewPanel extends HTMLElement {
       if (configuredEntity && weatherEntities.includes(configuredEntity)) {
         weatherSelector.value = configuredEntity;
       } else {
-        // Default to first weather entity if none configured or config not available
-        weatherSelector.value = weatherEntities[0];
-        if (!this._weatherEntity) {
-          this._weatherEntity = weatherEntities[0];
+        // Check if we have a cached entity from localStorage
+        const cachedEntity = localStorage.getItem('dashview_weather_entity');
+        if (cachedEntity && weatherEntities.includes(cachedEntity)) {
+          weatherSelector.value = cachedEntity;
+          this._weatherEntity = cachedEntity;
+        } else {
+          // Default to first weather entity if none configured or cached
+          weatherSelector.value = weatherEntities[0];
+          if (!this._weatherEntity) {
+            this._weatherEntity = weatherEntities[0];
+          }
         }
       }
 
@@ -5326,21 +5333,27 @@ class DashviewPanel extends HTMLElement {
 
   // Get the currently configured weather entity
   getCurrentWeatherEntity() {
-    if (!this._hass) return 'weather.forecast_home'; // fallback
+    if (!this._hass) {
+      // If no hass, try to get from localStorage or return null
+      const cachedEntity = localStorage.getItem('dashview_weather_entity');
+      return cachedEntity || null;
+    }
 
     // If we have a cached weather entity from our configuration, use it
     if (this._weatherEntity && this._hass.states[this._weatherEntity]) {
       return this._weatherEntity;
     }
     
-    // Fallback to first available weather entity or default
+    // Fallback to first available weather entity
     const weatherEntities = Object.keys(this._hass.states)
       .filter(entityId => entityId.startsWith('weather.'));
     
-    const defaultEntity = weatherEntities.length > 0 ? weatherEntities[0] : 'weather.forecast_home';
+    const defaultEntity = weatherEntities.length > 0 ? weatherEntities[0] : null;
     
     // Store the default for future use (but don't save to localStorage as this is just a fallback)
-    this._weatherEntity = defaultEntity;
+    if (defaultEntity) {
+      this._weatherEntity = defaultEntity;
+    }
     
     return defaultEntity;
   }

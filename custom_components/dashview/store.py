@@ -42,9 +42,8 @@ class DashViewStore:
         self._data = data
         _LOGGER.debug("Saved data to %s: %s", self._path, self._data)
 
-    def get_weather_entity(self, default="weather.forecast_home"):
+    def get_weather_entity(self, default=None):
         """Get the configured weather entity."""
-        # Default to weather.forecast_home to match existing dashboard usage
         return self._data.get("weather_entity", default)
 
     async def async_set_weather_entity(self, entity_id: str):
