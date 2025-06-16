@@ -441,11 +441,11 @@ class DashviewPanel extends HTMLElement {
               
               /* Ensure header icon colors are visible */
               .header-floor-button .mdi::before {
-                color: var(--gray800);
+                color: var(--gray000);
               }
               
               .header-room-button .mdi::before {
-                color: var(--gray800);
+                color: var(--gray000);
               }
               
               /* Generic fallback for any mdi icon without specific definition */
@@ -3683,8 +3683,8 @@ class DashviewPanel extends HTMLElement {
     if (!this._hass) {
       return {
         card: this.getDefaultCardStyles(variables),
-        icon: 'color: var(--gray800);',
-        name: 'color: var(--gray800);'
+        icon: 'color: var(--gray000);',
+        name: 'color: var(--gray000);'
       };
     }
 
