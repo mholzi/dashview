@@ -5,10 +5,12 @@ class DashviewPanel extends HTMLElement {
     this._contentReady = false;
     this._floorsConfig = {};
     this._roomsConfig = {};
+    this._houseConfig = {};
     // Admin UI state management - Principle 12
     this._adminLocalState = {
       floorsConfig: null,
       roomsConfig: null,
+      houseConfig: null,
       weatherEntity: null,
       isLoaded: false
     };
@@ -761,6 +763,16 @@ class DashviewPanel extends HTMLElement {
             this.saveRoomsConfiguration();
         }
 
+        const saveHouseBtn = e.target.closest('#save-house-config');
+        if (saveHouseBtn) {
+            this.saveHouseConfiguration();
+        }
+
+        const reloadHouseBtn = e.target.closest('#reload-house-config');
+        if (reloadHouseBtn) {
+            this.loadAdminConfiguration();
+        }
+
         const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntityConfiguration();
@@ -1159,21 +1171,33 @@ class DashviewPanel extends HTMLElement {
   // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
+      // Try to load new house configuration first
+      const houseConfig = await this._loadConfigFromAPI(['house']);
+      if (houseConfig.house && Object.keys(houseConfig.house).length > 0) {
+        this._houseConfig = houseConfig.house;
+        console.log('[DashView] House configuration loaded successfully');
+        return;
+      }
+      
+      // Fallback to old configuration for backward compatibility
       const config = await this._loadConfigFromAPI(['floors', 'rooms']);
       this._floorsConfig = config.floors;
       this._roomsConfig = config.rooms;
-      console.log('[DashView] Configuration loaded successfully');
+      console.log('[DashView] Legacy configuration loaded successfully');
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
+      this._houseConfig = {};
     }
   }
 
   // Update header buttons based on sensor states
   async updateHeaderButtons(shadow) {
-    if (!this._floorsConfig || Object.keys(this._floorsConfig).length === 0) {
-      await this.loadConfiguration();
+    if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
+      if (!this._floorsConfig || Object.keys(this._floorsConfig).length === 0) {
+        await this.loadConfiguration();
+      }
     }
 
     const container = shadow.getElementById('header-buttons');
@@ -1202,10 +1226,87 @@ class DashviewPanel extends HTMLElement {
 
   // Generate HTML for header buttons
   generateHeaderButtonsHTML() {
-    if (!this._hass || !this._floorsConfig || !this._roomsConfig) {
+    if (!this._hass) {
       return '<div class="loading-message">Loading...</div>';
     }
 
+    // Try to use new house configuration first
+    if (this._houseConfig && Object.keys(this._houseConfig).length > 0) {
+      return this._generateHeaderButtonsFromHouseConfig();
+    }
+
+    // Fallback to legacy configuration
+    if (!this._floorsConfig || !this._roomsConfig) {
+      return '<div class="loading-message">Loading...</div>';
+    }
+
+    return this._generateHeaderButtonsFromLegacyConfig();
+  }
+
+  // Generate header buttons from new house configuration
+  _generateHeaderButtonsFromHouseConfig() {
+    let buttonsHTML = '';
+    const rooms = this._houseConfig.rooms || {};
+    const floors = this._houseConfig.floors || {};
+
+    // Group rooms by floor
+    const roomsByFloor = {};
+    Object.entries(rooms).forEach(([roomKey, roomConfig]) => {
+      const floorKey = roomConfig.floor;
+      if (!roomsByFloor[floorKey]) {
+        roomsByFloor[floorKey] = [];
+      }
+      roomsByFloor[floorKey].push({ key: roomKey, config: roomConfig });
+    });
+
+    // Generate buttons for each floor
+    Object.entries(roomsByFloor).forEach(([floorKey, floorRooms]) => {
+      const floorConfig = floors[floorKey];
+      if (!floorConfig) return;
+
+      const floorSensor = floorConfig.floor_sensor;
+      const floorIcon = this._processIconName(floorConfig.icon || 'mdi:help-circle-outline');
+      
+      // Check if floor sensor is active
+      const floorEntity = this._hass.states[floorSensor];
+      const isFloorActive = floorEntity && floorEntity.state === 'on';
+
+      if (isFloorActive) {
+        // Add floor button
+        buttonsHTML += `
+          <button class="header-floor-button" data-floor="${floorKey}">
+            <i class="mdi ${floorIcon}"></i>
+          </button>
+        `;
+
+        // Add room buttons for this floor
+        floorRooms.forEach(room => {
+          const roomConfig = room.config;
+          const sensorEntity = this._hass.states[roomConfig.combined_sensor];
+          const isRoomActive = sensorEntity && sensorEntity.state === 'on';
+
+          if (isRoomActive) {
+            const roomIcon = this._processIconName(roomConfig.icon || 'mdi:home-outline');
+            buttonsHTML += `
+              <button class="header-room-button" 
+                      data-room="${room.key}" 
+                      data-floor="${floorKey}"
+                      data-sensor="${roomConfig.combined_sensor}"
+                      data-navigation="#${room.key}"
+                      title="${roomConfig.friendly_name}">
+                <i class="mdi ${roomIcon}"></i>
+              </button>
+            `;
+          }
+        });
+      }
+    });
+
+    return buttonsHTML || '<div class="no-activity">No active rooms</div>';
+  }
+
+  // Generate header buttons from legacy configuration (for backward compatibility)
+  _generateHeaderButtonsFromLegacyConfig() {
     let buttonsHTML = '';
     const floors = this._roomsConfig.floors || {};
     const floorIcons = this._floorsConfig.floor_icons || {};
@@ -1267,7 +1368,24 @@ class DashviewPanel extends HTMLElement {
       this._setStatusMessage(statusElement, 'Loading configuration...', 'loading');
 
       try {
-        // Use generic loader - Principle 2 (DRY)
+        // Try to load new house configuration first
+        const houseConfig = await this._loadConfigFromAPI(['house']);
+        if (houseConfig.house && Object.keys(houseConfig.house).length > 0) {
+          this._adminLocalState.houseConfig = houseConfig.house;
+          this._adminLocalState.isLoaded = true;
+          
+          // Populate house config textarea
+          const houseConfigTextarea = shadow.getElementById('house-config');
+          if (houseConfigTextarea) {
+            houseConfigTextarea.value = JSON.stringify(houseConfig.house, null, 2);
+          }
+          
+          this._setStatusMessage(statusElement, '✓ House configuration loaded successfully', 'success');
+          console.log('[DashView] Admin house configuration loaded successfully');
+          return;
+        }
+        
+        // Fallback to legacy configuration for backward compatibility
         const config = await this._loadConfigFromAPI(['floors', 'rooms']);
         
         // Store in local state, not directly in textareas
@@ -1275,8 +1393,20 @@ class DashviewPanel extends HTMLElement {
         this._adminLocalState.roomsConfig = config.rooms;
         this._adminLocalState.isLoaded = true;
 
-        this._setStatusMessage(statusElement, '✓ Configuration loaded successfully', 'success');
-        console.log('[DashView] Admin configuration loaded successfully');
+        // Populate textareas with loaded configuration - Principle 12
+        const floorsTextarea = shadow.getElementById('floors-config');
+        const roomsTextarea = shadow.getElementById('rooms-config');
+        
+        if (floorsTextarea && config.floors) {
+          floorsTextarea.value = JSON.stringify(config.floors, null, 2);
+        }
+        
+        if (roomsTextarea && config.rooms) {
+          roomsTextarea.value = JSON.stringify(config.rooms, null, 2);
+        }
+
+        this._setStatusMessage(statusElement, '✓ Legacy configuration loaded successfully', 'success');
+        console.log('[DashView] Admin legacy configuration loaded successfully');
       } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
         console.error('[DashView] Error loading admin configuration:', error);
@@ -1451,6 +1581,52 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error saving rooms config: ${error.message}`, 'error');
       console.error('[DashView] Error saving rooms config:', error);
+    }
+  }
+
+  // Save house configuration - Principle 1, 2 & 12
+  async saveHouseConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('house-config-status');
+
+    if (!statusElement) return;
+
+    this._setStatusMessage(statusElement, 'Saving house configuration...', 'loading');
+
+    try {
+      // Get config from textarea
+      const houseConfigTextarea = shadow.getElementById('house-config');
+      const configText = houseConfigTextarea?.value || '';
+      
+      if (!configText.trim()) {
+        this._setStatusMessage(statusElement, '✗ House configuration is empty', 'error');
+        return;
+      }
+
+      let configData;
+      try {
+        configData = JSON.parse(configText);
+      } catch (parseError) {
+        this._setStatusMessage(statusElement, '✗ Invalid JSON format', 'error');
+        return;
+      }
+
+      // Use generic saver with validation - Principle 2
+      await this._saveConfigViaAPI('house', configData, (data) => 
+        data && data.rooms && data.floors
+      );
+
+      this._setStatusMessage(statusElement, '✓ House configuration saved successfully', 'success');
+
+      // Update runtime configuration
+      this._houseConfig = configData;
+      if (this._hass) {
+        this.updateHeaderButtons(shadow);
+      }
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error saving house config: ${error.message}`, 'error');
+      console.error('[DashView] Error saving house config:', error);
     }
   }
 
