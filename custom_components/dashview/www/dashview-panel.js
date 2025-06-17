@@ -1,3 +1,6 @@
+// Domain constant for consistency
+const DOMAIN = 'dashview';
+
 class DashviewPanel extends HTMLElement {
   constructor() {
     super();
@@ -9,6 +12,7 @@ class DashviewPanel extends HTMLElement {
     this._adminLocalState = {
       floorsConfig: null,
       roomsConfig: null,
+      weatherEntity: null,
       isLoaded: false
     };
     // State management system - Principle 3
@@ -34,8 +38,9 @@ class DashviewPanel extends HTMLElement {
 
   // Check for entity state changes - Principle 3
   _checkEntityChanges() {
+    const configuredWeatherEntity = this._getConfiguredWeatherEntity();
     const entitiesToWatch = [
-      'weather.forecast_home',
+      configuredWeatherEntity,
       'person.markus',
       // Add more entities as needed
     ];
@@ -68,16 +73,15 @@ class DashviewPanel extends HTMLElement {
     if (!shadow) return;
 
     try {
-      switch (entityId) {
-        case 'weather.forecast_home':
-          this._updateWeatherButton(shadow);
-          this.updateWeatherComponents(shadow);
-          break;
-        case 'person.markus':
-          this._updatePersonButton(shadow);
-          break;
-        default:
-          console.log(`[DashView] No specific handler for entity: ${entityId}`);
+      const configuredWeatherEntity = this._getConfiguredWeatherEntity();
+      
+      if (entityId === configuredWeatherEntity) {
+        this._updateWeatherButton(shadow);
+        this.updateWeatherComponents(shadow);
+      } else if (entityId === 'person.markus') {
+        this._updatePersonButton(shadow);
+      } else {
+        console.log(`[DashView] No specific handler for entity: ${entityId}`);
       }
     } catch (error) {
       console.error(`[DashView] Error updating component for ${entityId}:`, error);
@@ -86,7 +90,8 @@ class DashviewPanel extends HTMLElement {
 
   // Update weather button component - Principle 3
   _updateWeatherButton(shadow) {
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const configuredWeatherEntity = this._getConfiguredWeatherEntity();
+    const weatherState = this._hass.states[configuredWeatherEntity];
     if (!weatherState) return;
 
     try {
@@ -746,6 +751,11 @@ class DashviewPanel extends HTMLElement {
         if (saveRoomsBtn) {
             this.saveRoomsConfiguration();
         }
+
+        const saveWeatherBtn = e.target.closest('#save-weather-entity');
+        if (saveWeatherBtn) {
+            this.saveWeatherEntityConfiguration();
+        }
     });
   }
   
@@ -753,7 +763,8 @@ class DashviewPanel extends HTMLElement {
   updateWeatherComponents(shadow) {
     if (!this._hass) return;
     
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const configuredWeatherEntity = this._getConfiguredWeatherEntity();
+    const weatherState = this._hass.states[configuredWeatherEntity];
     if (!weatherState) return;
 
     // Update current weather card
@@ -1101,6 +1112,11 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'header-buttons-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
                 }
+                
+                // Load admin configuration when weather tab is activated
+                if (targetId === 'weather-tab') {
+                    setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
@@ -1243,11 +1259,12 @@ class DashviewPanel extends HTMLElement {
 
       try {
         // Use generic loader - Principle 2 (DRY)
-        const config = await this._loadConfigFromAPI(['floors', 'rooms']);
+        const config = await this._loadConfigFromAPI(['floors', 'rooms', 'weather_entity']);
         
         // Store in local state, not directly in textareas
         this._adminLocalState.floorsConfig = config.floors;
         this._adminLocalState.roomsConfig = config.rooms;
+        this._adminLocalState.weatherEntity = config.weather_entity?.weather_entity;
         this._adminLocalState.isLoaded = true;
 
         this._setStatusMessage(statusElement, '✓ Configuration loaded successfully', 'success');
@@ -1290,6 +1307,7 @@ class DashviewPanel extends HTMLElement {
     const shadow = this.shadowRoot;
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
+    const weatherEntitySelector = shadow.getElementById('weather-entity-selector');
 
     if (!floorsTextarea || !roomsTextarea) return;
 
@@ -1314,6 +1332,51 @@ class DashviewPanel extends HTMLElement {
         // Invalid JSON, keep local state unchanged
         console.warn('[DashView] Invalid rooms JSON in textarea');
       }
+    };
+
+    // Handle weather entity selector
+    if (weatherEntitySelector) {
+      this._populateWeatherEntitySelector(weatherEntitySelector);
+    }
+  }
+
+  // Populate weather entity selector with available weather entities - Principle 2
+  _populateWeatherEntitySelector(selector) {
+    if (!this._hass) return;
+
+    // Clear existing options
+    selector.innerHTML = '';
+
+    // Get all weather entities from Home Assistant
+    const weatherEntities = Object.keys(this._hass.states)
+      .filter(entityId => entityId.startsWith('weather.'))
+      .sort();
+
+    if (weatherEntities.length === 0) {
+      selector.innerHTML = '<option value="">No weather entities found</option>';
+      return;
+    }
+
+    // Add options for each weather entity
+    weatherEntities.forEach(entityId => {
+      const option = document.createElement('option');
+      option.value = entityId;
+      option.textContent = this._hass.states[entityId]?.attributes?.friendly_name || entityId;
+      selector.appendChild(option);
+    });
+
+    // Set current selected value
+    if (this._adminLocalState.weatherEntity) {
+      selector.value = this._adminLocalState.weatherEntity;
+    } else if (weatherEntities.length > 0) {
+      // Default to first available weather entity
+      selector.value = weatherEntities[0];
+      this._adminLocalState.weatherEntity = weatherEntities[0];
+    }
+
+    // Setup change listener to update local state
+    selector.onchange = (e) => {
+      this._adminLocalState.weatherEntity = e.target.value;
     };
   }
 
@@ -1427,6 +1490,58 @@ class DashviewPanel extends HTMLElement {
       this._setStatusMessage(statusElement, `✗ Error saving rooms config: ${error.message}`, 'error');
       console.error('[DashView] Error saving rooms config:', error);
     }
+  }
+
+  // Save weather entity configuration - Principle 1, 2 & 12
+  async saveWeatherEntityConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+
+    if (!statusElement) return;
+
+    this._setStatusMessage(statusElement, 'Saving weather entity configuration...', 'loading');
+
+    try {
+      // Use local state for saving - Principle 12
+      const weatherEntity = this._adminLocalState.weatherEntity;
+      
+      if (!weatherEntity) {
+        this._setStatusMessage(statusElement, '✗ No weather entity selected', 'error');
+        return;
+      }
+
+      // Use generic saver with validation - Principle 2
+      await this._saveConfigViaAPI('weather_entity', { weather_entity: weatherEntity }, (data) => 
+        data && data.weather_entity
+      );
+
+      this._setStatusMessage(statusElement, '✓ Weather entity configuration saved successfully', 'success');
+
+      console.log('[DashView] Weather entity saved:', weatherEntity);
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error saving weather entity: ${error.message}`, 'error');
+      console.error('[DashView] Error saving weather entity:', error);
+    }
+  }
+
+  // Get the configured weather entity - Principle 2 & 3
+  _getConfiguredWeatherEntity() {
+    // First try to get from admin local state
+    if (this._adminLocalState.weatherEntity) {
+      return this._adminLocalState.weatherEntity;
+    }
+    
+    // Fallback to sensor entity if available
+    if (this._hass?.states?.[`sensor.${DOMAIN}_configured_weather`]) {
+      const sensorState = this._hass.states[`sensor.${DOMAIN}_configured_weather`];
+      if (sensorState.state && sensorState.state !== 'unknown') {
+        return sensorState.state;
+      }
+    }
+    
+    // Final fallback to default
+    return 'weather.forecast_home';
   }
 }
 
