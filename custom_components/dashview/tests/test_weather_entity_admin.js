@@ -103,6 +103,19 @@ class MockDashViewPanel {
         return 'weather.home';
     }
 
+    _getCurrentWeatherEntityId() {
+        try {
+            const weatherSensor = this._hass.states['sensor.dashview_configured_weather'];
+            if (weatherSensor && weatherSensor.state && this._hass.states[weatherSensor.state]) {
+                return weatherSensor.state;
+            }
+        } catch (error) {
+            console.warn('[DashView] Could not get current weather entity from sensor:', error);
+        }
+        
+        return 'weather.forecast_home';
+    }
+
     _populateWeatherEntityDropdown(selector, weatherEntities, currentEntity) {
         selector.innerHTML = '';
         
@@ -167,6 +180,10 @@ class WeatherEntityAdminTests {
         const currentEntity = await panel._getCurrentWeatherEntity();
         
         this.assert(currentEntity === 'weather.forecast_home', 'Should return configured weather entity from sensor');
+        
+        // Test the synchronous version used by the panel
+        const currentEntityId = panel._getCurrentWeatherEntityId();
+        this.assert(currentEntityId === 'weather.forecast_home', 'Should return configured weather entity ID synchronously');
     }
 
     // Test dropdown population
@@ -176,7 +193,7 @@ class WeatherEntityAdminTests {
         const panel = new MockDashViewPanel();
         const selector = createMockElement('select');
         const entities = panel._getWeatherEntities();
-        const currentEntity = await panel._getCurrentWeatherEntity();
+        const currentEntity = panel._getCurrentWeatherEntityId();
         
         panel._populateWeatherEntityDropdown(selector, entities, currentEntity);
         

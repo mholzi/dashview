@@ -35,8 +35,9 @@ class DashviewPanel extends HTMLElement {
 
   // Check for entity state changes - Principle 3
   _checkEntityChanges() {
+    const weatherEntityId = this._getCurrentWeatherEntityId();
     const entitiesToWatch = [
-      'weather.forecast_home',
+      weatherEntityId,
       'person.markus',
       // Add more entities as needed
     ];
@@ -69,8 +70,10 @@ class DashviewPanel extends HTMLElement {
     if (!shadow) return;
 
     try {
+      const weatherEntityId = this._getCurrentWeatherEntityId();
+      
       switch (entityId) {
-        case 'weather.forecast_home':
+        case weatherEntityId:
           this._updateWeatherButton(shadow);
           this.updateWeatherComponents(shadow);
           break;
@@ -87,7 +90,8 @@ class DashviewPanel extends HTMLElement {
 
   // Update weather button component - Principle 3
   _updateWeatherButton(shadow) {
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const weatherEntityId = this._getCurrentWeatherEntityId();
+    const weatherState = this._hass.states[weatherEntityId];
     if (!weatherState) return;
 
     try {
@@ -759,7 +763,8 @@ class DashviewPanel extends HTMLElement {
   updateWeatherComponents(shadow) {
     if (!this._hass) return;
     
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const weatherEntityId = this._getCurrentWeatherEntityId();
+    const weatherState = this._hass.states[weatherEntityId];
     if (!weatherState) return;
 
     // Update current weather card
@@ -1452,7 +1457,7 @@ class DashviewPanel extends HTMLElement {
       const weatherEntities = this._getWeatherEntities();
       
       // Get current configured weather entity
-      const currentWeatherEntity = await this._getCurrentWeatherEntity();
+      const currentWeatherEntity = this._getCurrentWeatherEntityId();
       
       // Populate dropdown
       this._populateWeatherEntityDropdown(weatherSelector, weatherEntities, currentWeatherEntity);
@@ -1481,20 +1486,20 @@ class DashviewPanel extends HTMLElement {
     return weatherEntities.sort((a, b) => a.friendlyName.localeCompare(b.friendlyName));
   }
 
-  // Get current configured weather entity
-  async _getCurrentWeatherEntity() {
+  // Get current configured weather entity with fallback - Principle 1 & 6
+  _getCurrentWeatherEntityId() {
     try {
       // Try to get from configured weather sensor
       const weatherSensor = this._hass.states['sensor.dashview_configured_weather'];
-      if (weatherSensor && weatherSensor.state) {
+      if (weatherSensor && weatherSensor.state && this._hass.states[weatherSensor.state]) {
         return weatherSensor.state;
       }
     } catch (error) {
       console.warn('[DashView] Could not get current weather entity from sensor:', error);
     }
     
-    // Fall back to default
-    return 'weather.home';
+    // Fall back to hardcoded default for backward compatibility
+    return 'weather.forecast_home';
   }
 
   // Populate weather entity dropdown
