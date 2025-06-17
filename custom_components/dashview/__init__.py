@@ -8,6 +8,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.view import HomeAssistantView
 from aiohttp import web
 from .store import DashViewStore
+from .services import async_setup_services, async_unload_services
 
 DOMAIN = "dashview"
 _LOGGER = logging.getLogger(__name__)
@@ -89,6 +90,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         
         # Register the API endpoint
         hass.http.register_view(DashViewConfigView(store))
+        
+        # Register services
+        await async_setup_services(hass)
         
         # FIX #2: Use the new, non-blocking method for registering static paths.
         www_path = os.path.join(os.path.dirname(__file__), "www")
@@ -257,6 +261,10 @@ def _convert_legacy_to_house_config(floors_config, rooms_config):
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.info("Unloading DashView panel.")
+    
+    # Unload services first
+    await async_unload_services(hass)
+    
     # Clean up the panel when the integration is unloaded or reloaded.
     try:
         # Use frontend module to remove the panel
