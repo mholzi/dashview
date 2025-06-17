@@ -647,27 +647,39 @@ class DashviewPanel extends HTMLElement {
       context.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
 
       if (hash && hash !== '#home') {
-        const popupId = hash.substring(1) + '-popup';
+        const popupType = hash.substring(1);
+        const popupId = popupType + '-popup';
         let targetPopup = context.querySelector('#' + popupId);
+        
         if (!targetPopup) {
-            targetPopup = document.createElement('div');
-            targetPopup.id = popupId;
-            targetPopup.className = 'popup';
-            context.appendChild(targetPopup);
-        }
-        if (targetPopup.innerHTML.trim() === '') {
             try {
-                const response = await fetch(`/local/dashview/${hash.substring(1)}.html`);
-                if (!response.ok) throw new Error(`File not found`);
-                const html = await response.text();
-                targetPopup.innerHTML = html;
-                this.reinitializePopupContent(targetPopup);
+                // Try to load content from external file first
+                const response = await fetch(`/local/dashview/${popupType}.html`);
+                if (response.ok) {
+                    const html = await response.text();
+                    targetPopup = this.createPopupFromTemplate(popupId, popupType, html);
+                } else {
+                    // If no external file, create with placeholder content
+                    const content = `<div class="placeholder">Content for ${this.getPopupTitleForType(popupType)}</div>`;
+                    targetPopup = this.createPopupFromTemplate(popupId, popupType, content);
+                }
+                
+                if (targetPopup) {
+                    this.reinitializePopupContent(targetPopup);
+                }
             } catch (err) {
-                targetPopup.innerHTML = `<div class="popup-content"><span class="popup-close">&times;</span>Error loading: ${err.message}</div>`;
-                 this.reinitializePopupContent(targetPopup);
+                console.error(`[DashView] Error creating popup for ${popupType}:`, err);
+                const errorContent = `<div class="placeholder">Error loading: ${err.message}</div>`;
+                targetPopup = this.createPopupFromTemplate(popupId, popupType, errorContent);
+                if (targetPopup) {
+                    this.reinitializePopupContent(targetPopup);
+                }
             }
         }
-        targetPopup.classList.add('active');
+        
+        if (targetPopup) {
+            targetPopup.classList.add('active');
+        }
       }
 
       const activeButton = context.querySelector(`.nav-button[data-hash="${hash}"]`);
@@ -973,10 +985,107 @@ class DashviewPanel extends HTMLElement {
     });
   }
   
+  // Popup icon mapping for different popup types
+  getPopupIconForType(popupType) {
+    const iconMap = {
+      'security': 'mdi-security',
+      'weather': 'mdi-weather-partly-cloudy',
+      'music': 'mdi-music',
+      'admin': 'mdi-cog',
+      'calendar': 'mdi-calendar',
+      'settings': 'mdi-cog',
+      'bahn': 'mdi-train',
+      // Room icons
+      'buero': 'mdi-briefcase',
+      'wohnzimmer': 'mdi-sofa',
+      'kueche': 'mdi-stove',
+      'kinderzimmer': 'mdi-toy-brick',
+      'gaesteklo': 'mdi-toilet',
+      'eingang': 'mdi-door',
+      'aupair': 'mdi-account',
+      'elternbereich': 'mdi-bed'
+    };
+    return iconMap[popupType] || 'mdi-help-circle';
+  }
+
+  // Get popup title for different popup types
+  getPopupTitleForType(popupType) {
+    const titleMap = {
+      'security': 'Sicherheit',
+      'weather': 'Wetter',
+      'music': 'Medien',
+      'admin': 'Admin View',
+      'calendar': 'Kalender',
+      'settings': 'Einstellungen',
+      'bahn': 'Bahn',
+      // Room titles
+      'buero': 'Büro',
+      'wohnzimmer': 'Wohnzimmer',
+      'kueche': 'Küche',
+      'kinderzimmer': 'Kinderzimmer',
+      'gaesteklo': 'Gästeklo',
+      'eingang': 'Eingang',
+      'aupair': 'Aupair',
+      'elternbereich': 'Elternbereich'
+    };
+    return titleMap[popupType] || popupType.charAt(0).toUpperCase() + popupType.slice(1);
+  }
+
+  // Create popup using template
+  createPopupFromTemplate(popupId, popupType, content) {
+    const context = this.shadowRoot;
+    const template = context.querySelector('#popup-template');
+    if (!template) {
+      console.error('[DashView] Popup template not found');
+      return null;
+    }
+
+    // Create popup container
+    const popup = document.createElement('div');
+    popup.id = popupId;
+    popup.className = 'popup';
+
+    // Clone template content
+    const templateContent = template.content.cloneNode(true);
+    
+    // Set icon and title
+    const iconElement = templateContent.querySelector('.popup-icon');
+    const titleElement = templateContent.querySelector('.popup-title');
+    const bodyElement = templateContent.querySelector('.popup-body');
+    
+    iconElement.className = `popup-icon mdi ${this.getPopupIconForType(popupType)}`;
+    titleElement.textContent = this.getPopupTitleForType(popupType);
+    bodyElement.innerHTML = content;
+
+    popup.appendChild(templateContent);
+    context.appendChild(popup);
+    
+    return popup;
+  }
+
+  // Close popup function
+  closePopup() {
+    const context = this.shadowRoot;
+    const activePopup = context.querySelector('.popup.active');
+    if (activePopup) {
+      activePopup.classList.remove('active');
+      // Update URL to home without triggering hashchange event
+      if (window.location.hash !== '#home') {
+        history.replaceState(null, null, '#home');
+      }
+      // Update nav button states
+      context.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+      const homeButton = context.querySelector('.nav-button[data-hash="#home"]');
+      if (homeButton) {
+        homeButton.classList.add('active');
+      }
+    }
+  }
+
   reinitializePopupContent(popup) {
     const closeBtn = popup.querySelector('.popup-close');
     if (closeBtn) {
-        closeBtn.onclick = () => window.history.back();
+        closeBtn.onclick = () => this.closePopup();
     }
     popup.querySelectorAll('.tabs-container').forEach(container => {
         const tabButtons = container.querySelectorAll('.tab-button');

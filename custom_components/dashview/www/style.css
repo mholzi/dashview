@@ -119,7 +119,6 @@ h3 {
 
 /* --- Pop-up styles --- */
 .popup {
-    display: none; /* Hidden by default */
     position: fixed;
     top: 0;
     left: 0;
@@ -129,10 +128,14 @@ h3 {
     backdrop-filter: blur(10px);
     z-index: 10;
     overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .popup.active {
-    display: block; /* Shown when active */
+    opacity: 1;
+    visibility: visible;
 }
 
 .popup-content {
@@ -142,6 +145,30 @@ h3 {
     border-radius: 30px;
     max-width: 600px;
     position: relative;
+    transform: translateY(100vh);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.popup.active .popup-content {
+    transform: translateY(0);
+}
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 20px 0;
+    font-weight: 700;
+    color: var(--primary-text-color);
+}
+
+.popup-icon {
+    font-size: 1.4em;
+    color: var(--primary-color);
+}
+
+.popup-title {
+    flex: 1;
 }
 
 .popup-close {

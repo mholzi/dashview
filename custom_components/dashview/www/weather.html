@@ -1,0 +1,81 @@
+<div class="placeholder">DWD Warning</div>
+<!-- Weather Forecast Card -->
+<div class="weather-forecast-card">
+    <div class="current-weather">
+        <div class="weather-icon">
+            <img id="current-weather-icon" src="" alt="Weather" width="60" height="60">
+        </div>
+        <div class="weather-info">
+            <div class="temperature" id="current-temperature">--°C</div>
+            <div class="condition" id="current-condition">--</div>
+            <div class="feels-like">Gefühlt <span id="feels-like-temp">--°C</span></div>
+        </div>
+        <div class="weather-details">
+            <div class="detail-item">
+                <span class="detail-label">Luftfeuchtigkeit</span>
+                <span class="detail-value" id="humidity">--%</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Wind</span>
+                <span class="detail-value" id="wind-speed">-- km/h</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hourly Forecast Horizontal Scroll -->
+<div class="hourly-forecast-container">
+    <h4>Stündliche Vorhersage</h4>
+    <div class="hourly-forecast-scroll" id="hourly-forecast">
+        <!-- Hourly forecast items will be populated by JavaScript -->
+    </div>
+</div>
+
+<!-- Today/Tomorrow Swipe Card -->
+<div class="daily-forecast-container">
+    <div class="forecast-tabs">
+        <button class="forecast-tab active" data-day="0">Heute</button>
+        <button class="forecast-tab" data-day="1">Morgen</button>
+        <button class="forecast-tab" data-day="2">Übermorgen</button>
+    </div>
+    <div class="forecast-content" id="daily-forecast-content">
+        <!-- Daily forecast content will be populated by JavaScript -->
+    </div>
+</div>
+<!-- Pollen Card -->
+<div class="pollen-card">
+    <div class="pollen-buttons-row">
+        <div class="pollen-button" data-pollen="birke" data-sensor="sensor.pollenflug_birke_92">
+            <div class="pollen-name">Birke</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+        <div class="pollen-button" data-pollen="erle" data-sensor="sensor.pollenflug_erle_92">
+            <div class="pollen-name">Erle</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+        <div class="pollen-button" data-pollen="hasel" data-sensor="sensor.pollenflug_hasel_92">
+            <div class="pollen-name">Hasel</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+        <div class="pollen-button" data-pollen="esche" data-sensor="sensor.pollenflug_esche_92">
+            <div class="pollen-name">Esche</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+        <div class="pollen-button" data-pollen="roggen" data-sensor="sensor.pollenflug_roggen_92">
+            <div class="pollen-name">Roggen</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+        <div class="pollen-button" data-pollen="graeser" data-sensor="sensor.pollenflug_graeser_92">
+            <div class="pollen-name">Gräser</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+        <div class="pollen-button" data-pollen="beifuss" data-sensor="sensor.pollenflug_beifuss_92">
+            <div class="pollen-name">Beifuß</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+        <div class="pollen-button" data-pollen="ambrosia" data-sensor="sensor.pollenflug_ambrosia_92">
+            <div class="pollen-name">Ambrosia</div>
+            <div class="pollen-state">n/a</div>
+        </div>
+    </div>
+</div>
