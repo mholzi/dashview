@@ -40,10 +40,12 @@ class DashViewConfigView(HomeAssistantView):
             data = self._store.get_floors_config()
         elif config_type == "rooms":
             data = self._store.get_rooms_config()
+        elif config_type == "house":
+            data = self._store.get_house_config()
         elif config_type == "weather_entity":
             data = {"weather_entity": self._store.get_weather_entity()}
         else:
-            return web.Response(status=400, text="Invalid config type. Use: floors, rooms, weather_entity")
+            return web.Response(status=400, text="Invalid config type. Use: floors, rooms, house, weather_entity")
         
         return self.json(data)
     
@@ -58,6 +60,8 @@ class DashViewConfigView(HomeAssistantView):
                 await self._store.async_set_floors_config(config_data)
             elif config_type == "rooms":
                 await self._store.async_set_rooms_config(config_data)
+            elif config_type == "house":
+                await self._store.async_set_house_config(config_data)
             elif config_type == "weather_entity":
                 await self._store.async_set_weather_entity(config_data.get("weather_entity"))
             else:
@@ -124,24 +128,130 @@ async def _migrate_config_files(hass: HomeAssistant, store: DashViewStore):
     try:
         floors_file = hass.config.path("custom_components", "dashview", "www", "config", "floors.json")
         rooms_file = hass.config.path("custom_components", "dashview", "www", "config", "rooms.json")
+        house_file = hass.config.path("custom_components", "dashview", "www", "config", "house_setup.json")
         
         import json
         
-        # Only migrate if storage is empty and files exist
-        if not store.get_floors_config() and os.path.exists(floors_file):
+        # First try to load house_setup.json if it exists and storage is empty
+        if not store.get_house_config() and os.path.exists(house_file):
+            with open(house_file, 'r') as f:
+                house_config = json.load(f)
+            await store.async_set_house_config(house_config)
+            _LOGGER.info("[DashView] Migrated house_setup.json to centralized storage")
+            return
+        
+        # If house config doesn't exist, try to migrate from legacy files
+        floors_config = {}
+        rooms_config = {}
+        
+        if os.path.exists(floors_file):
             with open(floors_file, 'r') as f:
                 floors_config = json.load(f)
+                
+        if os.path.exists(rooms_file):
+            with open(rooms_file, 'r') as f:
+                rooms_config = json.load(f)
+        
+        # Convert legacy configs to new house structure if both exist
+        if floors_config and rooms_config and not store.get_house_config():
+            house_config = _convert_legacy_to_house_config(floors_config, rooms_config)
+            await store.async_set_house_config(house_config)
+            _LOGGER.info("[DashView] Converted legacy configs to new house configuration")
+            return
+        
+        # Fallback: Only migrate if storage is empty and files exist
+        if not store.get_floors_config() and floors_config:
             await store.async_set_floors_config(floors_config)
             _LOGGER.info("[DashView] Migrated floors.json to centralized storage")
         
-        if not store.get_rooms_config() and os.path.exists(rooms_file):
-            with open(rooms_file, 'r') as f:
-                rooms_config = json.load(f)
+        if not store.get_rooms_config() and rooms_config:
             await store.async_set_rooms_config(rooms_config)
             _LOGGER.info("[DashView] Migrated rooms.json to centralized storage")
             
     except Exception as e:
         _LOGGER.warning("[DashView] Could not migrate config files: %s", e)
+
+
+def _convert_legacy_to_house_config(floors_config, rooms_config):
+    """Convert legacy floors and rooms configuration to new house structure."""
+    house_config = {
+        "rooms": {},
+        "floors": {}
+    }
+    
+    # Convert floor configuration
+    floor_icons = floors_config.get("floor_icons", {})
+    floor_sensors = floors_config.get("floor_sensors", {})
+    
+    for floor_key in floor_icons.keys():
+        house_config["floors"][floor_key] = {
+            "friendly_name": floor_key,
+            "icon": floor_icons.get(floor_key, "mdi:home"),
+            "floor_sensor": floor_sensors.get(floor_key, f"binary_sensor.floor_{floor_key.lower()}_active")
+        }
+    
+    # Convert room configuration with proper icons
+    room_icon_map = {
+        'wohnzimmer': 'mdi:sofa',
+        'buero': 'mdi:desk',
+        'kueche': 'mdi:chef-hat',
+        'eingangsflur': 'mdi:door-open',
+        'gaesteklo': 'mdi:toilet',
+        'treppe_erdgeschoss': 'mdi:stairs',
+        'kids': 'mdi:teddy-bear',
+        'kinderbad': 'mdi:shower',
+        'flur': 'mdi:floor-plan',
+        'aupair': 'mdi:bed',
+        'schlafzimmer': 'mdi:bed-double',
+        'partykeller': 'mdi:party-popper',
+        'heizungskeller': 'mdi:heating-coil',
+        'kellerflur': 'mdi:floor-plan',
+        'waschkeller': 'mdi:washing-machine',
+        'serverraum': 'mdi:server-network',
+        'buero_keller': 'mdi:desk',
+        'sauna': 'mdi:sauna',
+        'aussen': 'mdi:tree'
+    }
+    
+    room_name_map = {
+        'wohnzimmer': 'Wohnzimmer',
+        'buero': 'Büro',
+        'kueche': 'Küche',
+        'eingangsflur': 'Eingangsflur',
+        'gaesteklo': 'Gäste-WC',
+        'treppe_erdgeschoss': 'Treppe Erdgeschoss',
+        'kids': 'Kinderzimmer',
+        'kinderbad': 'Kinderbad',
+        'flur': 'Flur OG',
+        'aupair': 'Au-pair Zimmer',
+        'schlafzimmer': 'Schlafzimmer',
+        'partykeller': 'Partykeller',
+        'heizungskeller': 'Heizungskeller',
+        'kellerflur': 'Kellerflur',
+        'waschkeller': 'Waschkeller',
+        'serverraum': 'Serverraum',
+        'buero_keller': 'Büro Keller',
+        'sauna': 'Sauna',
+        'aussen': 'Außenbereich'
+    }
+    
+    floors = rooms_config.get("floors", {})
+    for floor_key, sensors in floors.items():
+        for sensor in sensors:
+            # Extract room name from sensor ID
+            room_key = sensor.replace('binary_sensor.combined_sensor_', '')
+            
+            house_config["rooms"][room_key] = {
+                "friendly_name": room_name_map.get(room_key, room_key.replace('_', ' ').title()),
+                "icon": room_icon_map.get(room_key, "mdi:home-outline"),
+                "floor": floor_key,
+                "combined_sensor": sensor,
+                "lights": [],
+                "covers": [],
+                "media_players": []
+            }
+    
+    return house_config
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

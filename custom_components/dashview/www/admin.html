@@ -3,7 +3,8 @@
 <div class="tabs-container" style="margin-top: 20px;">
     <div class="tab-buttons">
         <button class="tab-button active" data-target="weather-tab">Weather</button>
-        <button class="tab-button" data-target="header-buttons-tab">Header Buttons</button>
+        <button class="tab-button" data-target="house-setup-tab">House Setup</button>
+        <button class="tab-button" data-target="header-buttons-tab">Header Buttons (Legacy)</button>
     </div>
 
     <div id="weather-tab" class="tab-content active">
@@ -16,9 +17,27 @@
         </div>
     </div>
 
+    <div id="house-setup-tab" class="tab-content">
+        <h4>House Setup Configuration</h4>
+        <p>Configure your house with unified room and floor settings. This is the modern way to configure DashView.</p>
+        
+        <div class="config-section">
+            <h5>House Configuration Status</h5>
+            <div id="house-config-status" class="status-display">Loading...</div>
+            <button id="reload-house-config" class="action-button">Reload House Configuration</button>
+        </div>
+        
+        <div class="config-section">
+            <h5>House Setup Configuration</h5>
+            <p>Each room contains its friendly name, icon, floor assignment, combined sensor, and placeholders for lights, covers, and media players.</p>
+            <textarea id="house-config" class="config-textarea" placeholder="House configuration will be loaded here..."></textarea>
+            <button id="save-house-config" class="save-button">Save House Config</button>
+        </div>
+    </div>
+
     <div id="header-buttons-tab" class="tab-content">
-        <h4>Header Buttons Configuration</h4>
-        <p>Configure floor and room settings for the header buttons display.</p>
+        <h4>Header Buttons Configuration (Legacy)</h4>
+        <p>Configure floor and room settings for the header buttons display. This is the legacy configuration method.</p>
         
         <div class="config-section">
             <h5>Configuration Files Status</h5>

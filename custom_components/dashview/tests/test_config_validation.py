@@ -72,6 +72,81 @@ class TestDashViewStore:
         # Test invalid config
         assert "floors" not in invalid_rooms_config
     
+    def test_house_config_validation(self):
+        """Test house configuration structure validation."""
+        valid_house_config = {
+            "rooms": {
+                "wohnzimmer": {
+                    "friendly_name": "Wohnzimmer",
+                    "icon": "mdi:sofa",
+                    "floor": "EG",
+                    "combined_sensor": "binary_sensor.combined_sensor_wohnzimmer",
+                    "lights": [],
+                    "covers": [],
+                    "media_players": []
+                },
+                "buero": {
+                    "friendly_name": "Büro",
+                    "icon": "mdi:desk",
+                    "floor": "EG",
+                    "combined_sensor": "binary_sensor.combined_sensor_buero",
+                    "lights": [],
+                    "covers": [],
+                    "media_players": []
+                }
+            },
+            "floors": {
+                "EG": {
+                    "friendly_name": "Erdgeschoss",
+                    "icon": "mdi:home",
+                    "floor_sensor": "binary_sensor.floor_eg_active"
+                },
+                "OG": {
+                    "friendly_name": "Obergeschoss",
+                    "icon": "mdi:home-floor-1",
+                    "floor_sensor": "binary_sensor.floor_og_active"
+                }
+            }
+        }
+        
+        invalid_house_config = {
+            "rooms": {
+                "wohnzimmer": {
+                    "friendly_name": "Wohnzimmer",
+                    "icon": "mdi:sofa",
+                    "floor": "EG"
+                    # Missing combined_sensor and other required fields
+                }
+            }
+            # Missing floors
+        }
+        
+        # Test valid config
+        assert "rooms" in valid_house_config
+        assert "floors" in valid_house_config
+        assert isinstance(valid_house_config["rooms"], dict)
+        assert isinstance(valid_house_config["floors"], dict)
+        
+        # Test room structure
+        for room_key, room_config in valid_house_config["rooms"].items():
+            assert "friendly_name" in room_config
+            assert "icon" in room_config
+            assert "floor" in room_config
+            assert "combined_sensor" in room_config
+            assert "lights" in room_config
+            assert "covers" in room_config
+            assert "media_players" in room_config
+        
+        # Test floor structure
+        for floor_key, floor_config in valid_house_config["floors"].items():
+            assert "friendly_name" in floor_config
+            assert "icon" in floor_config
+            assert "floor_sensor" in floor_config
+        
+        # Test invalid config
+        assert "rooms" in invalid_house_config
+        assert "floors" not in invalid_house_config
+    
     def test_entity_id_validation(self):
         """Test entity ID format validation."""
         valid_entity_ids = [
@@ -145,6 +220,9 @@ if __name__ == "__main__":
         
         test_store.test_rooms_config_validation()
         print("✓ Rooms config validation test passed")
+        
+        test_store.test_house_config_validation()
+        print("✓ House config validation test passed")
         
         test_store.test_entity_id_validation()
         print("✓ Entity ID validation test passed")
