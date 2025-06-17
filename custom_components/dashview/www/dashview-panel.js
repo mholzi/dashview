@@ -30,6 +30,13 @@ class DashviewPanel extends HTMLElement {
 
     // Check for entity changes and update only affected components
     this._checkEntityChanges();
+    
+    // Update train departure cards on any HASS update
+    // This ensures they are updated on initial load and subsequent changes
+    const shadow = this.shadowRoot;
+    if (shadow) {
+      this.updateTrainDepartureCards(shadow);
+    }
   }
 
   // Check for entity state changes - Principle 3
@@ -39,6 +46,17 @@ class DashviewPanel extends HTMLElement {
       'person.markus',
       // Add more entities as needed
     ];
+
+    // Dynamically add train departure sensors from DOM
+    if (this.shadowRoot) {
+      const trainCards = this.shadowRoot.querySelectorAll('.train-departure-card');
+      trainCards.forEach(card => {
+        const sensor = card.dataset.departureSensor;
+        if (sensor && !entitiesToWatch.includes(sensor)) {
+          entitiesToWatch.push(sensor);
+        }
+      });
+    }
 
     let hasChanges = false;
     for (const entityId of entitiesToWatch) {
@@ -77,7 +95,12 @@ class DashviewPanel extends HTMLElement {
           this._updatePersonButton(shadow);
           break;
         default:
-          console.log(`[DashView] No specific handler for entity: ${entityId}`);
+          // Handle train departure sensors dynamically
+          if (entityId.includes('_departures_')) {
+            this.updateTrainDepartureCards(shadow);
+          } else {
+            console.log(`[DashView] No specific handler for entity: ${entityId}`);
+          }
       }
     } catch (error) {
       console.error(`[DashView] Error updating component for ${entityId}:`, error);

@@ -259,6 +259,115 @@ class DashViewFrontendTests {
         );
     }
 
+    // Test train departure functionality
+    testTrainDepartureFunctionality() {
+        console.log('[DashView] Testing train departure functionality...');
+
+        // Simulate the getNextTrainDeparture function
+        function getNextTrainDeparture(departureEntity, delayMin = 0) {
+            if (!departureEntity || !departureEntity.attributes.next_departures) {
+                return { time: '--:--', isDelayed: false };
+            }
+
+            const departures = departureEntity.attributes.next_departures;
+            const now = new Date();
+
+            for (const train of departures) {
+                if (train.isCancelled) continue;
+
+                const [hours, minutes] = train.scheduledDeparture.split(':').map(Number);
+                const departureTime = new Date();
+                departureTime.setHours(hours, minutes + (train.delayDeparture || 0), 0, 0);
+
+                // Check if departure is far enough in the future
+                const timeDiff = (departureTime - now) / (1000 * 60); // difference in minutes
+                if (timeDiff >= delayMin) {
+                    const totalMinutes = hours * 60 + minutes + (train.delayDeparture || 0);
+                    const displayHours = Math.floor(totalMinutes / 60) % 24;
+                    const displayMinutes = totalMinutes % 60;
+
+                    return {
+                        time: `${String(displayHours).padStart(2, '0')}:${String(displayMinutes).padStart(2, '0')}`,
+                        isDelayed: (train.delayDeparture || 0) > 0
+                    };
+                }
+            }
+
+            return { time: '--:--', isDelayed: false };
+        }
+
+        // Test with no departure entity
+        const emptyResult = getNextTrainDeparture(null);
+        this.assert(
+            emptyResult.time === '--:--' && emptyResult.isDelayed === false,
+            'Empty departure entity should return placeholder time'
+        );
+
+        // Test with mock departure data
+        const mockDepartureEntity = {
+            attributes: {
+                next_departures: [
+                    {
+                        scheduledDeparture: '14:30',
+                        delayDeparture: 0,
+                        isCancelled: false
+                    },
+                    {
+                        scheduledDeparture: '15:15',
+                        delayDeparture: 5,
+                        isCancelled: false
+                    },
+                    {
+                        scheduledDeparture: '16:00',
+                        delayDeparture: 0,
+                        isCancelled: true
+                    }
+                ]
+            }
+        };
+
+        // Test normal departure
+        const normalResult = getNextTrainDeparture(mockDepartureEntity, -1000); // Force finding a train by using negative delay
+        this.assert(
+            normalResult.time === '14:30' && normalResult.isDelayed === false,
+            'Normal departure should return correct time and not delayed'
+        );
+
+        // Test delayed departure
+        const delayedEntity = {
+            attributes: {
+                next_departures: [
+                    {
+                        scheduledDeparture: '14:30',
+                        delayDeparture: 5,
+                        isCancelled: false
+                    }
+                ]
+            }
+        };
+
+        const delayedResult = getNextTrainDeparture(delayedEntity, -1000);
+        this.assert(
+            delayedResult.time === '14:35' && delayedResult.isDelayed === true,
+            'Delayed departure should return delayed time and be marked as delayed'
+        );
+
+        // Test sensor entity identification
+        function isDepartureSensor(entityId) {
+            return entityId && entityId.includes('_departures_');
+        }
+
+        this.assert(
+            isDepartureSensor('sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag'),
+            'Train departure sensor should be identified correctly'
+        );
+
+        this.assert(
+            !isDepartureSensor('sensor.temperature'),
+            'Non-departure sensor should not be identified as departure sensor'
+        );
+    }
+
     // Run all tests
     runAllTests() {
         console.log('[DashView] Starting frontend validation tests...');
@@ -269,6 +378,7 @@ class DashViewFrontendTests {
             this.testConfigValidation();
             this.testMdiIconProcessing();
             this.testComponentIsolation();
+            this.testTrainDepartureFunctionality();
             
             console.log(`\n[DashView] Test Results:`);
             console.log(`- Total tests: ${this.testCount}`);
