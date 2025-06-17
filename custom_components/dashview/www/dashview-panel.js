@@ -5,6 +5,12 @@ class DashviewPanel extends HTMLElement {
     this._contentReady = false;
     this._floorsConfig = {};
     this._roomsConfig = {};
+    // Admin UI state management - Principle 12
+    this._adminLocalState = {
+      floorsConfig: null,
+      roomsConfig: null,
+      isLoaded: false
+    };
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -47,7 +53,7 @@ class DashviewPanel extends HTMLElement {
 
     } catch (error) {
       shadow.innerHTML = `<div style="color: red; padding: 16px;">Error loading DashView panel: ${error.message}</div>`;
-      console.error('Error loading DashView panel:', error);
+      console.error('[DashView] Error loading DashView panel:', error);
     }
   }
 
@@ -64,6 +70,7 @@ class DashviewPanel extends HTMLElement {
           el.innerHTML = `Failed to load template: ${templateName}`;
         }
       } catch (err) {
+        console.error('[DashView] Error loading template:', templateName, err);
         el.innerHTML = `Error loading template: ${templateName}`;
       }
     }
@@ -608,6 +615,8 @@ class DashviewPanel extends HTMLElement {
         // Handle admin config buttons
         const reloadConfigBtn = e.target.closest('#reload-config');
         if (reloadConfigBtn) {
+            // Reset admin state and reload - Principle 12
+            this._adminLocalState.isLoaded = false;
             this.loadAdminConfiguration();
         }
 
@@ -884,24 +893,24 @@ class DashviewPanel extends HTMLElement {
     });
   }
 
-  // Load configuration from JSON files
+  // Load configuration from centralized API - Principle 1
   async loadConfiguration() {
+    if (!this._hass) {
+      console.warn('[DashView] Cannot load configuration: HASS not available');
+      return;
+    }
+
     try {
       const [floorsResponse, roomsResponse] = await Promise.all([
-        fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json')
+        this._hass.callApi('GET', 'dashview/config?type=floors'),
+        this._hass.callApi('GET', 'dashview/config?type=rooms')
       ]);
 
-      if (floorsResponse.ok && roomsResponse.ok) {
-        this._floorsConfig = await floorsResponse.json();
-        this._roomsConfig = await roomsResponse.json();
-      } else {
-        console.warn('Could not load floor/room configuration files');
-        this._floorsConfig = {};
-        this._roomsConfig = {};
-      }
+      this._floorsConfig = floorsResponse || {};
+      this._roomsConfig = roomsResponse || {};
+      console.log('[DashView] Configuration loaded successfully');
     } catch (error) {
-      console.error('Error loading configuration:', error);
+      console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
     }
@@ -974,7 +983,7 @@ class DashviewPanel extends HTMLElement {
     return buttonsHTML || '<div class="no-activity">No active rooms</div>';
   }
 
-  // Load configuration for admin interface
+  // Load configuration for admin interface - Principle 1 & 12
   async loadAdminConfiguration() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('config-status');
@@ -982,53 +991,105 @@ class DashviewPanel extends HTMLElement {
     const roomsTextarea = shadow.getElementById('rooms-config');
 
     if (!statusElement || !floorsTextarea || !roomsTextarea) return;
+    if (!this._hass) {
+      statusElement.textContent = '✗ Home Assistant not available';
+      statusElement.style.background = 'var(--red)';
+      return;
+    }
 
-    statusElement.textContent = 'Loading configuration...';
+    // Load configuration once and store in local state - Principle 12
+    if (!this._adminLocalState.isLoaded) {
+      statusElement.textContent = 'Loading configuration...';
+      statusElement.style.background = '';
 
-    try {
-      const [floorsResponse, roomsResponse] = await Promise.all([
-        fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json')
-      ]);
+      try {
+        const [floorsResponse, roomsResponse] = await Promise.all([
+          this._hass.callApi('GET', 'dashview/config?type=floors'),
+          this._hass.callApi('GET', 'dashview/config?type=rooms')
+        ]);
 
-      if (floorsResponse.ok && roomsResponse.ok) {
-        const floorsConfig = await floorsResponse.json();
-        const roomsConfig = await roomsResponse.json();
-
-        floorsTextarea.value = JSON.stringify(floorsConfig, null, 2);
-        roomsTextarea.value = JSON.stringify(roomsConfig, null, 2);
+        // Store in local state, not directly in textareas
+        this._adminLocalState.floorsConfig = floorsResponse || {};
+        this._adminLocalState.roomsConfig = roomsResponse || {};
+        this._adminLocalState.isLoaded = true;
 
         statusElement.textContent = '✓ Configuration loaded successfully';
         statusElement.style.background = 'var(--green)';
-      } else {
-        throw new Error('Could not load configuration files');
+        console.log('[DashView] Admin configuration loaded successfully');
+      } catch (error) {
+        statusElement.textContent = '✗ Error loading configuration: ' + error.message;
+        statusElement.style.background = 'var(--red)';
+        console.error('[DashView] Error loading admin configuration:', error);
+        return;
       }
-    } catch (error) {
-      statusElement.textContent = '✗ Error loading configuration: ' + error.message;
-      statusElement.style.background = 'var(--red)';
     }
+
+    // Render the form using LOCAL state - Principle 12
+    this._renderAdminForm();
   }
 
-  // Save floors configuration
+  // Render admin form from local state - Principle 12
+  _renderAdminForm() {
+    const shadow = this.shadowRoot;
+    const floorsTextarea = shadow.getElementById('floors-config');
+    const roomsTextarea = shadow.getElementById('rooms-config');
+
+    if (!floorsTextarea || !roomsTextarea) return;
+
+    // Set values from local state
+    floorsTextarea.value = JSON.stringify(this._adminLocalState.floorsConfig, null, 2);
+    roomsTextarea.value = JSON.stringify(this._adminLocalState.roomsConfig, null, 2);
+
+    // Setup input listeners to update local state only
+    floorsTextarea.oninput = (e) => {
+      try {
+        this._adminLocalState.floorsConfig = JSON.parse(e.target.value);
+      } catch (error) {
+        // Invalid JSON, keep local state unchanged
+        console.warn('[DashView] Invalid floors JSON in textarea');
+      }
+    };
+
+    roomsTextarea.oninput = (e) => {
+      try {
+        this._adminLocalState.roomsConfig = JSON.parse(e.target.value);
+      } catch (error) {
+        // Invalid JSON, keep local state unchanged
+        console.warn('[DashView] Invalid rooms JSON in textarea');
+      }
+    };
+  }
+
+  // Save floors configuration - Principle 1 & 12
   async saveFloorsConfiguration() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('config-status');
-    const floorsTextarea = shadow.getElementById('floors-config');
 
-    if (!statusElement || !floorsTextarea) return;
+    if (!statusElement || !this._hass) return;
+
+    statusElement.textContent = 'Saving floors configuration...';
+    statusElement.style.background = 'var(--yellow)';
 
     try {
-      const configData = JSON.parse(floorsTextarea.value);
+      // Use local state for saving - Principle 12
+      const configData = this._adminLocalState.floorsConfig;
       
       // Validate structure
-      if (!configData.floor_icons || !configData.floor_sensors) {
+      if (!configData || !configData.floor_icons || !configData.floor_sensors) {
         throw new Error('Invalid floors configuration structure');
       }
 
-      statusElement.textContent = '✓ Floors configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
-      statusElement.style.background = 'var(--yellow)';
+      // Save via centralized API - Principle 1
+      await this._hass.callApi('POST', 'dashview/config', {
+        type: 'floors',
+        config: configData
+      });
 
-      // Reload the configuration for the header buttons
+      statusElement.textContent = '✓ Floors configuration saved successfully';
+      statusElement.style.background = 'var(--green)';
+      console.log('[DashView] Floors configuration saved successfully');
+
+      // Update runtime configuration
       this._floorsConfig = configData;
       if (this._hass) {
         this.updateHeaderButtons(shadow);
@@ -1037,29 +1098,40 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       statusElement.textContent = '✗ Error saving floors config: ' + error.message;
       statusElement.style.background = 'var(--red)';
+      console.error('[DashView] Error saving floors config:', error);
     }
   }
 
-  // Save rooms configuration
+  // Save rooms configuration - Principle 1 & 12
   async saveRoomsConfiguration() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('config-status');
-    const roomsTextarea = shadow.getElementById('rooms-config');
 
-    if (!statusElement || !roomsTextarea) return;
+    if (!statusElement || !this._hass) return;
+
+    statusElement.textContent = 'Saving rooms configuration...';
+    statusElement.style.background = 'var(--yellow)';
 
     try {
-      const configData = JSON.parse(roomsTextarea.value);
+      // Use local state for saving - Principle 12
+      const configData = this._adminLocalState.roomsConfig;
       
       // Validate structure
-      if (!configData.floors) {
+      if (!configData || !configData.floors) {
         throw new Error('Invalid rooms configuration structure');
       }
 
-      statusElement.textContent = '✓ Rooms configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
-      statusElement.style.background = 'var(--yellow)';
+      // Save via centralized API - Principle 1
+      await this._hass.callApi('POST', 'dashview/config', {
+        type: 'rooms',
+        config: configData
+      });
 
-      // Reload the configuration for the header buttons
+      statusElement.textContent = '✓ Rooms configuration saved successfully';
+      statusElement.style.background = 'var(--green)';
+      console.log('[DashView] Rooms configuration saved successfully');
+
+      // Update runtime configuration
       this._roomsConfig = configData;
       if (this._hass) {
         this.updateHeaderButtons(shadow);
@@ -1068,6 +1140,7 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       statusElement.textContent = '✗ Error saving rooms config: ' + error.message;
       statusElement.style.background = 'var(--red)';
+      console.error('[DashView] Error saving rooms config:', error);
     }
   }
 }
