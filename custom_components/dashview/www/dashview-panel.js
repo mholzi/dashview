@@ -9,6 +9,7 @@ class DashviewPanel extends HTMLElement {
     this._adminLocalState = {
       floorsConfig: null,
       roomsConfig: null,
+      weatherEntity: null,
       isLoaded: false
     };
     // State management system - Principle 3
@@ -34,8 +35,9 @@ class DashviewPanel extends HTMLElement {
 
   // Check for entity state changes - Principle 3
   _checkEntityChanges() {
+    const weatherEntityId = this._getCurrentWeatherEntityId();
     const entitiesToWatch = [
-      'weather.forecast_home',
+      weatherEntityId,
       'person.markus',
       'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
       'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
@@ -70,8 +72,10 @@ class DashviewPanel extends HTMLElement {
     if (!shadow) return;
 
     try {
+      const weatherEntityId = this._getCurrentWeatherEntityId();
+      
       switch (entityId) {
-        case 'weather.forecast_home':
+        case weatherEntityId:
           this._updateWeatherButton(shadow);
           this.updateWeatherComponents(shadow);
           break;
@@ -92,7 +96,8 @@ class DashviewPanel extends HTMLElement {
 
   // Update weather button component - Principle 3
   _updateWeatherButton(shadow) {
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const weatherEntityId = this._getCurrentWeatherEntityId();
+    const weatherState = this._hass.states[weatherEntityId];
     if (!weatherState) return;
 
     try {
@@ -755,6 +760,11 @@ class DashviewPanel extends HTMLElement {
         if (saveRoomsBtn) {
             this.saveRoomsConfiguration();
         }
+
+        const saveWeatherEntityBtn = e.target.closest('#save-weather-entity');
+        if (saveWeatherEntityBtn) {
+            this.saveWeatherEntityConfiguration();
+        }
     });
   }
   
@@ -762,7 +772,8 @@ class DashviewPanel extends HTMLElement {
   updateWeatherComponents(shadow) {
     if (!this._hass) return;
     
-    const weatherState = this._hass.states['weather.forecast_home'];
+    const weatherEntityId = this._getCurrentWeatherEntityId();
+    const weatherState = this._hass.states[weatherEntityId];
     if (!weatherState) return;
 
     // Update current weather card
@@ -1110,6 +1121,11 @@ class DashviewPanel extends HTMLElement {
                 if (targetId === 'header-buttons-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
                 }
+                
+                // Load weather entity configuration when weather tab is activated
+                if (targetId === 'weather-tab') {
+                    setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
+                }
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
@@ -1435,6 +1451,125 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error saving rooms config: ${error.message}`, 'error');
       console.error('[DashView] Error saving rooms config:', error);
+    }
+  }
+
+  // Load weather entity configuration - Principle 1, 2 & 12
+  async loadWeatherEntityConfiguration() {
+    const shadow = this.shadowRoot;
+    const weatherSelector = shadow.getElementById('weather-entity-selector');
+
+    if (!weatherSelector || !this._hass) return;
+
+    try {
+      // Get all weather entities from Home Assistant
+      const weatherEntities = this._getWeatherEntities();
+      
+      // Get current configured weather entity
+      const currentWeatherEntity = this._getCurrentWeatherEntityId();
+      
+      // Populate dropdown
+      this._populateWeatherEntityDropdown(weatherSelector, weatherEntities, currentWeatherEntity);
+      
+      console.log('[DashView] Weather entity configuration loaded successfully');
+    } catch (error) {
+      console.error('[DashView] Error loading weather entity configuration:', error);
+    }
+  }
+
+  // Get all weather entities from Home Assistant states
+  _getWeatherEntities() {
+    if (!this._hass) return [];
+    
+    const weatherEntities = [];
+    for (const entityId in this._hass.states) {
+      if (entityId.startsWith('weather.')) {
+        const entity = this._hass.states[entityId];
+        weatherEntities.push({
+          entityId: entityId,
+          friendlyName: entity.attributes.friendly_name || entityId
+        });
+      }
+    }
+    
+    return weatherEntities.sort((a, b) => a.friendlyName.localeCompare(b.friendlyName));
+  }
+
+  // Get current configured weather entity with fallback - Principle 1 & 6
+  _getCurrentWeatherEntityId() {
+    try {
+      // Try to get from configured weather sensor
+      const weatherSensor = this._hass.states['sensor.dashview_configured_weather'];
+      if (weatherSensor && weatherSensor.state && this._hass.states[weatherSensor.state]) {
+        return weatherSensor.state;
+      }
+    } catch (error) {
+      console.warn('[DashView] Could not get current weather entity from sensor:', error);
+    }
+    
+    // Fall back to hardcoded default for backward compatibility
+    return 'weather.forecast_home';
+  }
+
+  // Populate weather entity dropdown
+  _populateWeatherEntityDropdown(selector, weatherEntities, currentEntity) {
+    // Clear existing options
+    selector.innerHTML = '';
+    
+    if (weatherEntities.length === 0) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'No weather entities found';
+      option.disabled = true;
+      selector.appendChild(option);
+      return;
+    }
+    
+    // Add options for each weather entity
+    weatherEntities.forEach(entity => {
+      const option = document.createElement('option');
+      option.value = entity.entityId;
+      option.textContent = entity.friendlyName;
+      option.selected = entity.entityId === currentEntity;
+      selector.appendChild(option);
+    });
+  }
+
+  // Save weather entity configuration - Principle 1, 2 & 12
+  async saveWeatherEntityConfiguration() {
+    const shadow = this.shadowRoot;
+    const weatherSelector = shadow.getElementById('weather-entity-selector');
+
+    if (!weatherSelector || !this._hass) return;
+
+    const selectedEntity = weatherSelector.value;
+    if (!selectedEntity) {
+      console.warn('[DashView] No weather entity selected');
+      return;
+    }
+
+    try {
+      // Call the service to save the weather entity
+      await this._hass.callService('dashview', 'set_weather_entity', {
+        entity_id: selectedEntity
+      });
+      
+      console.log('[DashView] Weather entity saved successfully:', selectedEntity);
+      
+      // Show success feedback (if there's a status element in weather tab)
+      const statusElement = shadow.querySelector('#weather-status');
+      if (statusElement) {
+        this._setStatusMessage(statusElement, '✓ Weather entity saved successfully', 'success');
+      }
+      
+    } catch (error) {
+      console.error('[DashView] Error saving weather entity:', error);
+      
+      // Show error feedback
+      const statusElement = shadow.querySelector('#weather-status');
+      if (statusElement) {
+        this._setStatusMessage(statusElement, `✗ Error saving weather entity: ${error.message}`, 'error');
+      }
     }
   }
 }
