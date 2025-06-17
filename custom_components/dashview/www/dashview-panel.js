@@ -659,6 +659,8 @@ class DashviewPanel extends HTMLElement {
       const hash = window.location.hash || '#home';
       context.querySelectorAll('.popup').forEach(popup => popup.classList.remove('active'));
       context.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+      // Restore body scrolling when switching away from popups
+      document.body.classList.remove('popup-open');
 
       if (hash && hash !== '#home') {
         const popupType = hash.substring(1);
@@ -693,6 +695,8 @@ class DashviewPanel extends HTMLElement {
         
         if (targetPopup) {
             targetPopup.classList.add('active');
+            // Prevent body scrolling when popup is active
+            document.body.classList.add('popup-open');
         }
       }
 
@@ -1089,6 +1093,8 @@ class DashviewPanel extends HTMLElement {
     const activePopup = context.querySelector('.popup.active');
     if (activePopup) {
       activePopup.classList.remove('active');
+      // Restore body scrolling when popup is closed
+      document.body.classList.remove('popup-open');
       // Update URL to home without triggering hashchange event
       if (window.location.hash !== '#home') {
         history.replaceState(null, null, '#home');
