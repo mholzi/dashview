@@ -1533,8 +1533,8 @@ class DashviewPanel extends HTMLElement {
     }
     
     // Fallback to sensor entity if available
-    if (this._hass?.states?.[`sensor.${DOMAIN}_configured_weather`]) {
-      const sensorState = this._hass.states[`sensor.${DOMAIN}_configured_weather`];
+    if (this._hass?.states?.[`sensor.${DOMAIN}_configured_weather_entity`]) {
+      const sensorState = this._hass.states[`sensor.${DOMAIN}_configured_weather_entity`];
       if (sensorState.state && sensorState.state !== 'unknown') {
         return sensorState.state;
       }
