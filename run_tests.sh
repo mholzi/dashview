@@ -35,6 +35,16 @@ else
     exit 1
 fi
 
+# Run Shadow DOM CSS tests
+echo ""
+echo "🎨 Running Shadow DOM CSS validation tests..."
+if node custom_components/dashview/tests/test_shadow_dom_css.js > /dev/null; then
+    echo "✅ Shadow DOM CSS tests passed"
+else
+    echo "❌ Shadow DOM CSS tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."
