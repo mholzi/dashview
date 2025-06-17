@@ -1,0 +1,846 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+    /* Base Font */
+    --primary-font-family: 'Space Grotesk', sans-serif;
+
+    /* Default to light mode variables */
+    --background: #f5f7fa;
+    --popupBG: #fafbfc;
+    --highlight: rgba(40, 40, 42, 0.05);
+    --highlight-active: rgba(250, 251, 252, 0.1);
+    
+    --gray000: #edeff2;
+    --gray100: #e9eaec;
+    --gray200: #d6d7d9;
+    --gray400: #909193;
+    --gray500: #707173;
+    --gray800: #0f0f10;
+    
+    --green: #c5e4ac;
+    --purple: #e3d4f6;
+    --yellow: #faedae;
+    --red: #f0a994;
+    --blue: #c8ddfa;
+    --blue-dark: #abcbf8;
+    --orange: #ffd1b1;
+
+    /* Gradients */
+    --active-light: linear-gradient(145deg, rgba(255,245,200,1) 0%, rgba(255,225,130,1) 60%, rgba(255,200,90,1) 150%);
+    --active-big: linear-gradient(145deg, rgba(255,220,178,1) 0%, rgba(255,176,233,1) 60%, rgba(104,156,255,1) 150%);
+    --active-small: linear-gradient(145deg, rgba(255,212,193,1) 0%, rgba(248,177,235,1) 100%);
+    
+    /* Main Interface Colors */
+    --primary-color: var(--blue-dark);
+    --accent-color: var(--blue-dark);
+    --primary-background-color: var(--background);
+    --secondary-background-color: var(--background);
+    --divider-color: var(--gray100);
+
+    /* Text */
+    --primary-text-color: var(--gray800);
+    --secondary-text-color: var(--gray500);
+    --text-primary-color: var(--gray800);
+    --disabled-text-color: var(--gray400);
+
+    /* Cards */
+    --card-background-color: var(--gray000);
+    --ha-card-background: var(--gray000);
+    --ha-card-border-radius: 30px;
+    --ha-card-border-width: 0px;
+    --ha-card-box-shadow: none;
+}
+
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #28282A;
+        --popupBG: #28282A;
+        --highlight: rgba(250, 251, 252, 0.05);
+        --highlight-active: rgba(40, 40, 42, 0.1);
+        
+        --gray000: #3a3b3d;
+        --gray100: #353637;
+        --gray200: #404142;
+        --gray400: #737476;
+        --gray500: #939496;
+        --gray800: #ffffff;
+
+        --green: #d2e7d6;
+        --purple: #d5c1ed;
+        --yellow: #fbf1be;
+        --red: #e7625f;
+        --blue: #abcbf8;
+        --blue-dark: #c8ddfa;
+        --orange: #ffba8a;
+    }
+}
+
+
+/* --- Base Layout --- */
+body {
+    font-family: var(--primary-font-family);
+    background-color: var(--background);
+    color: var(--primary-text-color);
+    margin: 0;
+    padding: 12px;
+    padding-bottom: 90px; /* Space for fixed nav bar */
+}
+
+.dashboard-container {
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.placeholder {
+    background-color: var(--gray000);
+    border: 2px dashed var(--gray200);
+    border-radius: 20px;
+    padding: 16px;
+    text-align: center;
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+}
+
+.placeholder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+h3 {
+    font-weight: 700;
+    color: var(--primary-text-color);
+    margin: 0 0 12px 0;
+}
+
+/* --- Pop-up styles --- */
+.popup {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    overflow-y: auto;
+}
+
+.popup.active {
+    display: block; /* Shown when active */
+}
+
+.popup-content {
+    background-color: var(--popupBG);
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 30px;
+    max-width: 600px;
+    position: relative;
+}
+
+.popup-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--gray400);
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* --- Tab styles --- */
+.tab-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.tab-button {
+    padding: 8px 16px;
+    background-color: var(--gray100);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--primary-font-family);
+    color: var(--secondary-text-color);
+}
+.tab-button.active {
+    background: var(--active-small);
+    color: var(--gray800);
+    font-weight: 500;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+
+/* --- Fixed Navigation Bar --- */
+.bottom-nav {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 20px);
+    max-width: 500px;
+    background-color: var(--gray100);
+    border-radius: 100px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 5;
+}
+.nav-button {
+    background: none;
+    border: none;
+    color: var(--gray400);
+    cursor: pointer;
+    font-size: 24px; /* MDI icons are font-based */
+}
+.nav-button.active {
+    color: var(--blue-dark);
+}
+
+/* --- Header Grid --- */
+.header-grid {
+    display: grid;
+    grid-template-columns: min-content 1fr min-content;
+    align-items: center;
+    gap: 12px;
+    background-color: var(--gray000);
+    border-radius: 20px;
+    padding: 8px;
+}
+
+.header-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.kiosk-button .icon {
+    font-size: 24px;
+    color: var(--primary-text-color);
+    padding: 4px;
+}
+
+.weather-person-stack {
+    display: flex;
+    justify-content: flex-end; /* Aligns items to the right */
+    align-items: center;
+    gap: 12px;
+}
+
+.weather-button {
+    gap: 8px;
+}
+
+.weather-button .icon-container img {
+    width: 40px;
+    height: 40px;
+}
+
+.weather-button .text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+}
+
+.weather-button .name {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+}
+.weather-button .label {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+.weather-button .label sup {
+    font-size: 0.6em;
+}
+
+.person-button .image-container img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+/* --- Admin Settings --- */
+.setting-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 8px;
+    background-color: var(--gray000);
+    border-radius: 12px;
+}
+
+.dropdown-selector {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--gray200);
+    background-color: var(--background);
+    color: var(--primary-text-color);
+    font-family: var(--primary-font-family);
+    font-size: 1em;
+}
+
+.save-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.save-button:hover {
+    opacity: 0.8;
+}
+
+/* --- Train Departure Cards --- */
+.train-departures-section {
+    margin: 16px 0;
+}
+
+.train-departures-section h4 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin: 0 0 12px 0;
+    padding: 0 4px;
+}
+
+.train-departures-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.train-departure-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 16px;
+    gap: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: 1px solid var(--gray200);
+}
+
+.train-departure-card:hover {
+    background-color: var(--highlight);
+}
+
+.train-departure-card.hidden {
+    display: none;
+}
+
+.train-departure-card .train-icon {
+    font-size: 60px;
+    font-weight: 800;
+    line-height: 1;
+    padding-left: 80px;
+    padding-right: 8px;
+    text-align: right;
+    min-width: 80px;
+}
+
+.train-departure-card .train-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.train-departure-card .train-time {
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    line-height: 1.1;
+}
+
+.train-departure-card .train-time.delayed {
+    color: red;
+}
+
+.train-departure-card .train-destination {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    opacity: 0.7;
+}
+
+/* --- Info Card --- */
+.info-card {
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--gray200);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 1.2em;
+    line-height: 1.1em;
+    margin: 2px 0;
+}
+
+.info-section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.info-section.motion-section,
+.info-section.windows-section,
+.info-section.dryer-section {
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.info-section.motion-section:hover,
+.info-section.windows-section:hover,
+.info-section.dryer-section:hover {
+    background-color: var(--highlight);
+}
+
+.info-section.hidden {
+    display: none;
+}
+
+.info-text {
+    color: var(--gray800);
+    white-space: normal;
+    word-break: break-word;
+}
+
+.info-badge {
+    background-color: var(--gray800);
+    color: var(--gray100);
+    padding: 1px 6px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9em;
+}
+
+.info-badge.green {
+    background-color: var(--green);
+    color: var(--gray800);
+}
+
+.info-badge.red {
+    background-color: var(--red);
+    color: var(--gray100);
+}
+
+.info-badge i {
+    font-size: 1em;
+}
+
+/* --- Weather Components --- */
+.weather-forecast-card {
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.current-weather {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.weather-icon img {
+    border-radius: 10px;
+}
+
+.weather-info {
+    flex: 1;
+}
+
+.temperature {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: var(--primary-text-color);
+    line-height: 1;
+}
+
+.condition {
+    font-size: 1.1em;
+    color: var(--secondary-text-color);
+    margin-bottom: 8px;
+    text-transform: capitalize;
+}
+
+.feels-like {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+}
+
+.weather-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-label {
+    font-size: 0.85em;
+    color: var(--secondary-text-color);
+}
+
+.detail-value {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.hourly-forecast-container {
+    margin-bottom: 20px;
+}
+
+.hourly-forecast-container h4 {
+    margin-bottom: 12px;
+    color: var(--primary-text-color);
+    font-size: 1.1em;
+}
+
+.hourly-forecast-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.hourly-forecast-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.hourly-item {
+    min-width: 80px;
+    background-color: var(--card-background-color);
+    border-radius: 16px;
+    padding: 12px 8px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.hourly-time {
+    font-size: 0.8em;
+    color: var(--secondary-text-color);
+    margin-bottom: 8px;
+}
+
+.hourly-icon {
+    margin-bottom: 8px;
+}
+
+.hourly-icon img {
+    width: 32px;
+    height: 32px;
+}
+
+.hourly-temp {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.daily-forecast-container {
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.forecast-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.forecast-tab {
+    padding: 8px 16px;
+    background-color: var(--gray100);
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+    transition: all 0.2s ease;
+}
+
+.forecast-tab.active {
+    background-color: var(--primary-color);
+    color: var(--primary-text-color);
+}
+
+.forecast-content {
+    min-height: 100px;
+}
+
+.daily-forecast {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.daily-icon img {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+}
+
+.daily-info {
+    flex: 1;
+}
+
+.daily-temps {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.daily-high {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--primary-text-color);
+}
+
+.daily-low {
+    font-size: 1.1em;
+    color: var(--secondary-text-color);
+}
+
+.daily-condition {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+    margin-bottom: 4px;
+    text-transform: capitalize;
+}
+
+
+/* --- Pollen Card --- */
+.pollen-card {
+    margin: 12px 0;
+}
+
+.pollen-buttons-row {
+    display: flex;
+    gap: 14px;
+    overflow-x: scroll;
+    margin: 12px 8px 0px 0px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    padding: 4px 0;
+}
+
+.pollen-buttons-row::-webkit-scrollbar {
+    display: none;
+}
+
+.pollen-button {
+    display: flex;
+    width: 85px;
+    min-width: 85px;
+    background: #dddddd;
+    border-radius: 10px;
+    padding: 8px;
+    flex-direction: column;
+    color: var(--gray800);
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.pollen-button.hidden {
+    display: none;
+}
+
+.pollen-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gray800);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.pollen-state {
+    font-size: 10px;
+    color: var(--gray800);
+    text-align: center;
+
+/* Header Buttons Styles */
+.header-buttons-container {
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+}
+
+.header-buttons-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 8px 12px 8px;
+    overflow-x: auto;
+    width: 100%;
+    background: none;
+    box-shadow: none;
+}
+
+.header-floor-button,
+.header-room-button {
+    background: var(--gray800);
+    border: none;
+    border-radius: 50%;
+    height: 40px;
+    width: 40px;
+    margin-left: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.header-floor-button {
+    background: var(--gray800);
+}
+
+.header-room-button {
+    background: var(--active-big);
+}
+
+.header-floor-button i,
+.header-room-button i {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-floor-button i {
+    color: var(--gray000);
+}
+
+.header-room-button i {
+    color: var(--gray800);
+}
+
+.header-floor-button:hover,
+.header-room-button:hover {
+    transform: scale(1.05);
+}
+
+.loading-message,
+.no-activity {
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    padding: 8px;
+    text-align: center;
+}
+
+/* Admin Configuration Styles */
+.config-section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--card-background-color);
+    border-radius: 12px;
+}
+
+.config-section h5 {
+    margin: 0 0 12px 0;
+    color: var(--primary-text-color);
+    font-weight: 600;
+}
+
+.status-display {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--gray100);
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    margin-bottom: 12px;
+}
+
+.config-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.9em;
+    resize: vertical;
+    margin-bottom: 12px;
+    background: var(--background);
+    color: var(--primary-text-color);
+}
+
+.action-button, .save-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.action-button:hover, .save-button:hover {
+    background: var(--accent-color);
+}
+
+.setting-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.dropdown-selector {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--primary-text-color);
+
+}
