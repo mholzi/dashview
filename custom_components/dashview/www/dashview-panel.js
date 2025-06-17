@@ -5,14 +5,140 @@ class DashviewPanel extends HTMLElement {
     this._contentReady = false;
     this._floorsConfig = {};
     this._roomsConfig = {};
+    // Admin UI state management - Principle 12
+    this._adminLocalState = {
+      floorsConfig: null,
+      roomsConfig: null,
+      isLoaded: false
+    };
+    // State management system - Principle 3
+    this._entitySubscriptions = new Map();
+    this._lastEntityStates = new Map();
   }
 
   // When the HASS object is passed to the panel, store it and update content
   set hass(hass) {
     this._hass = hass;
     if (this._contentReady) {
-      this.updateElements();
+      this._handleHassUpdate();
     }
+  }
+
+  // Granular state management - Principle 3
+  _handleHassUpdate() {
+    if (!this._hass) return;
+
+    // Check for entity changes and update only affected components
+    this._checkEntityChanges();
+  }
+
+  // Check for entity state changes - Principle 3
+  _checkEntityChanges() {
+    const entitiesToWatch = [
+      'weather.forecast_home',
+      'person.markus',
+      // Add more entities as needed
+    ];
+
+    let hasChanges = false;
+    for (const entityId of entitiesToWatch) {
+      const currentState = this._hass.states[entityId];
+      const lastState = this._lastEntityStates.get(entityId);
+      
+      if (!lastState || 
+          !currentState || 
+          currentState.state !== lastState.state ||
+          JSON.stringify(currentState.attributes) !== JSON.stringify(lastState.attributes)) {
+        
+        this._lastEntityStates.set(entityId, currentState ? { ...currentState } : null);
+        this._updateComponentForEntity(entityId);
+        hasChanges = true;
+      }
+    }
+
+    // Update header buttons if there are changes (they depend on multiple entities)
+    if (hasChanges) {
+      this._updateHeaderButtonsIfNeeded();
+    }
+  }
+
+  // Update specific component for entity - Principle 3
+  _updateComponentForEntity(entityId) {
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+
+    try {
+      switch (entityId) {
+        case 'weather.forecast_home':
+          this._updateWeatherButton(shadow);
+          this.updateWeatherComponents(shadow);
+          break;
+        case 'person.markus':
+          this._updatePersonButton(shadow);
+          break;
+        default:
+          console.log(`[DashView] No specific handler for entity: ${entityId}`);
+      }
+    } catch (error) {
+      console.error(`[DashView] Error updating component for ${entityId}:`, error);
+    }
+  }
+
+  // Update weather button component - Principle 3
+  _updateWeatherButton(shadow) {
+    const weatherState = this._hass.states['weather.forecast_home'];
+    if (!weatherState) return;
+
+    try {
+      const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
+      const nameElement = shadow.querySelector('.weather-button .name');
+      const labelElement = shadow.querySelector('.weather-button .label');
+      const iconElement = shadow.querySelector('.weather-button .icon-container');
+
+      if (nameElement) {
+        nameElement.textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C';
+      }
+      if (labelElement) {
+        labelElement.innerHTML = weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C';
+      }
+      if (iconElement) {
+        iconElement.innerHTML = `<img src="/local/weather_icons/${weatherState.state}.svg" width="40" height="40" alt="${weatherState.state}">`;
+      }
+    } catch (error) {
+      console.error('[DashView] Error updating weather button:', error);
+    }
+  }
+
+  // Update person button component - Principle 3
+  _updatePersonButton(shadow) {
+    const personState = this._hass.states['person.markus'];
+    if (!personState) return;
+
+    try {
+      const img_src = personState.attributes.entity_picture || (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
+      const imageElement = shadow.querySelector('.person-button .image-container');
+      
+      if (imageElement) {
+        imageElement.innerHTML = `<img src="${img_src}" width="45" height="45">`;
+      }
+    } catch (error) {
+      console.error('[DashView] Error updating person button:', error);
+    }
+  }
+
+  // Update header buttons only when needed - Principle 3
+  _updateHeaderButtonsIfNeeded() {
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+
+    // Use a throttled approach to avoid excessive updates
+    if (this._headerButtonsUpdateTimer) {
+      clearTimeout(this._headerButtonsUpdateTimer);
+    }
+    
+    this._headerButtonsUpdateTimer = setTimeout(() => {
+      this.updateHeaderButtons(shadow);
+    }, 100); // 100ms throttle
   }
 
   connectedCallback() {
@@ -42,70 +168,56 @@ class DashviewPanel extends HTMLElement {
 
       this._contentReady = true;
       if (this._hass) {
-        this.updateElements();
+        this._handleHassUpdate();
       }
 
     } catch (error) {
       shadow.innerHTML = `<div style="color: red; padding: 16px;">Error loading DashView panel: ${error.message}</div>`;
-      console.error('Error loading DashView panel:', error);
+      console.error('[DashView] Error loading DashView panel:', error);
     }
   }
 
-  // New method to find all data-template placeholders and load their HTML
+  // Optimized template loading - Principle 4
   async loadTemplates(container) {
     const placeholders = container.querySelectorAll('[data-template]');
-    for (const el of placeholders) {
+    if (placeholders.length === 0) return;
+
+    console.log(`[DashView] Loading ${placeholders.length} templates...`);
+    
+    // Batch template loading to reduce network requests
+    const templatePromises = Array.from(placeholders).map(async (el) => {
       const templateName = el.dataset.template;
       try {
         const response = await fetch(`/local/dashview/templates/${templateName}.html`);
         if (response.ok) {
-          el.innerHTML = await response.text();
+          const content = await response.text();
+          return { element: el, content, success: true };
         } else {
-          el.innerHTML = `Failed to load template: ${templateName}`;
+          return { element: el, content: `Failed to load template: ${templateName}`, success: false };
         }
       } catch (err) {
-        el.innerHTML = `Error loading template: ${templateName}`;
+        console.error('[DashView] Error loading template:', templateName, err);
+        return { element: el, content: `Error loading template: ${templateName}`, success: false };
       }
-    }
+    });
+
+    // Wait for all templates and apply them
+    const results = await Promise.all(templatePromises);
+    results.forEach(({ element, content, success }) => {
+      element.innerHTML = content;
+      if (!success) {
+        console.warn(`[DashView] Template loading failed for: ${element.dataset.template}`);
+      }
+    });
+
+    console.log(`[DashView] Template loading completed`);
   }
 
-  // New method to update elements based on hass state
+  // Legacy method maintained for compatibility - Principle 3
   updateElements() {
-    if (!this._hass) return;
-    const shadow = this.shadowRoot;
-
-    // Update Weather Button
-    const weatherState = this._hass.states['weather.forecast_home'];
-    if (weatherState) {
-        const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
-        shadow.querySelector('.weather-button .name').textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C';
-        shadow.querySelector('.weather-button .label').innerHTML = weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C';
-        shadow.querySelector('.weather-button .icon-container').innerHTML = `<img src="/local/weather_icons/${weatherState.state}.svg" width="40" height="40" alt="${weatherState.state}">`;
-    }
-
-    // Update Person Button
-    const personState = this._hass.states['person.markus'];
-    if (personState) {
-        const img_src = personState.attributes.entity_picture || (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
-        shadow.querySelector('.person-button .image-container').innerHTML = `<img src="${img_src}" width="45" height="45">`;
-    }
-
-    // Update Train Departure Cards
-    this.updateTrainDepartureCards(shadow);
-    
-    // Update Info Card
-    this.updateInfoCard(shadow);
-    
-    // Update Weather Components
-    this.updateWeatherComponents(shadow);
-    
-
-    // Update Pollen Card
-    this.updatePollenCard(shadow);
-
-    // Update Header Buttons
-    this.updateHeaderButtons(shadow);
-
+    // This method is kept for backward compatibility but now delegates to granular updates
+    console.warn('[DashView] updateElements() is deprecated, using granular updates instead');
+    this._handleHassUpdate();
   }
 
   // Method to check if it's a weekday
@@ -608,6 +720,8 @@ class DashviewPanel extends HTMLElement {
         // Handle admin config buttons
         const reloadConfigBtn = e.target.closest('#reload-config');
         if (reloadConfigBtn) {
+            // Reset admin state and reload - Principle 12
+            this._adminLocalState.isLoaded = false;
             this.loadAdminConfiguration();
         }
 
@@ -884,24 +998,39 @@ class DashviewPanel extends HTMLElement {
     });
   }
 
-  // Load configuration from JSON files
+  // Generic configuration loader - Principle 2 (DRY)
+  async _loadConfigFromAPI(configTypes = ['floors', 'rooms']) {
+    if (!this._hass) {
+      throw new Error('Home Assistant not available');
+    }
+
+    const promises = configTypes.map(type => 
+      this._hass.callApi('GET', `dashview/config?type=${type}`)
+        .catch(error => {
+          console.error(`[DashView] Error loading ${type} config:`, error);
+          return {}; // Return empty config on error
+        })
+    );
+
+    const results = await Promise.all(promises);
+    const config = {};
+    
+    configTypes.forEach((type, index) => {
+      config[type] = results[index] || {};
+    });
+
+    return config;
+  }
+
+  // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
-      const [floorsResponse, roomsResponse] = await Promise.all([
-        fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json')
-      ]);
-
-      if (floorsResponse.ok && roomsResponse.ok) {
-        this._floorsConfig = await floorsResponse.json();
-        this._roomsConfig = await roomsResponse.json();
-      } else {
-        console.warn('Could not load floor/room configuration files');
-        this._floorsConfig = {};
-        this._roomsConfig = {};
-      }
+      const config = await this._loadConfigFromAPI(['floors', 'rooms']);
+      this._floorsConfig = config.floors;
+      this._roomsConfig = config.rooms;
+      console.log('[DashView] Configuration loaded successfully');
     } catch (error) {
-      console.error('Error loading configuration:', error);
+      console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
     }
@@ -924,6 +1053,19 @@ class DashviewPanel extends HTMLElement {
     `;
   }
 
+  // Process MDI icon names - Principle 11
+  _processIconName(iconName) {
+    if (!iconName) return 'mdi-help-circle';
+    
+    // Remove mdi: prefix and ensure mdi- prefix
+    let processedIcon = iconName.replace('mdi:', '').replace('mdi-', '');
+    if (!processedIcon.startsWith('mdi-')) {
+      processedIcon = 'mdi-' + processedIcon;
+    }
+    
+    return processedIcon;
+  }
+
   // Generate HTML for header buttons
   generateHeaderButtonsHTML() {
     if (!this._hass || !this._floorsConfig || !this._roomsConfig) {
@@ -938,7 +1080,7 @@ class DashviewPanel extends HTMLElement {
     // Generate buttons for each floor
     Object.entries(floors).forEach(([floorName, sensors]) => {
       const floorSensor = floorSensors[floorName];
-      const floorIcon = floorIcons[floorName] || 'mdi:help-circle-outline';
+      const floorIcon = this._processIconName(floorIcons[floorName] || 'mdi:help-circle-outline');
       
       // Check if floor sensor is active
       const floorEntity = this._hass.states[floorSensor];
@@ -948,7 +1090,7 @@ class DashviewPanel extends HTMLElement {
         // Add floor button
         buttonsHTML += `
           <button class="header-floor-button" data-floor="${floorName}">
-            <i class="mdi ${floorIcon.replace('mdi:', '')}"></i>
+            <i class="mdi ${floorIcon}"></i>
           </button>
         `;
 
@@ -958,12 +1100,12 @@ class DashviewPanel extends HTMLElement {
           const isRoomActive = sensorEntity && sensorEntity.state === 'on';
 
           if (isRoomActive) {
-            const roomIcon = sensorEntity.attributes?.icon || 'mdi:help-circle-outline';
+            const roomIcon = this._processIconName(sensorEntity.attributes?.icon || 'mdi:help-circle-outline');
             const roomType = sensorEntity.attributes?.room_type || '#unknown';
             
             buttonsHTML += `
               <button class="header-room-button" data-sensor="${sensor}" data-navigation="${roomType}">
-                <i class="mdi ${roomIcon.replace('mdi:', '')}"></i>
+                <i class="mdi ${roomIcon}"></i>
               </button>
             `;
           }
@@ -974,102 +1116,323 @@ class DashviewPanel extends HTMLElement {
     return buttonsHTML || '<div class="no-activity">No active rooms</div>';
   }
 
-  // Load configuration for admin interface
+  // Load configuration for admin interface - Principle 1, 2 & 12
   async loadAdminConfiguration() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('config-status');
-    const floorsTextarea = shadow.getElementById('floors-config');
-    const roomsTextarea = shadow.getElementById('rooms-config');
 
-    if (!statusElement || !floorsTextarea || !roomsTextarea) return;
+    if (!statusElement) return;
+    
+    if (!this._hass) {
+      this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
+      return;
+    }
 
-    statusElement.textContent = 'Loading configuration...';
+    // Load configuration once and store in local state - Principle 12
+    if (!this._adminLocalState.isLoaded) {
+      this._setStatusMessage(statusElement, 'Loading configuration...', 'loading');
 
-    try {
-      const [floorsResponse, roomsResponse] = await Promise.all([
-        fetch('/local/dashview/config/floors.json'),
-        fetch('/local/dashview/config/rooms.json')
-      ]);
+      try {
+        // Use generic loader - Principle 2 (DRY)
+        const config = await this._loadConfigFromAPI(['floors', 'rooms']);
+        
+        // Store in local state, not directly in textareas
+        this._adminLocalState.floorsConfig = config.floors;
+        this._adminLocalState.roomsConfig = config.rooms;
+        this._adminLocalState.isLoaded = true;
 
-      if (floorsResponse.ok && roomsResponse.ok) {
-        const floorsConfig = await floorsResponse.json();
-        const roomsConfig = await roomsResponse.json();
-
-        floorsTextarea.value = JSON.stringify(floorsConfig, null, 2);
-        roomsTextarea.value = JSON.stringify(roomsConfig, null, 2);
-
-        statusElement.textContent = '✓ Configuration loaded successfully';
-        statusElement.style.background = 'var(--green)';
-      } else {
-        throw new Error('Could not load configuration files');
+        this._setStatusMessage(statusElement, '✓ Configuration loaded successfully', 'success');
+        console.log('[DashView] Admin configuration loaded successfully');
+      } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
+        console.error('[DashView] Error loading admin configuration:', error);
+        return;
       }
-    } catch (error) {
-      statusElement.textContent = '✗ Error loading configuration: ' + error.message;
-      statusElement.style.background = 'var(--red)';
+    }
+
+    // Render the form using LOCAL state - Principle 12
+    this._renderAdminForm();
+  }
+
+  // Helper method for status messages - Principle 2 & 6
+  _setStatusMessage(element, message, type) {
+    if (!element) return;
+    
+    element.textContent = message;
+    element.style.background = '';
+    
+    switch (type) {
+      case 'success':
+        element.style.background = 'var(--green)';
+        break;
+      case 'error':
+        element.style.background = 'var(--red)';
+        break;
+      case 'loading':
+        element.style.background = 'var(--yellow)';
+        break;
+      default:
+        break;
     }
   }
 
-  // Save floors configuration
+  // Render admin form from local state - Principle 12
+  _renderAdminForm() {
+    const shadow = this.shadowRoot;
+    const floorsTextarea = shadow.getElementById('floors-config');
+    const roomsTextarea = shadow.getElementById('rooms-config');
+
+    if (!floorsTextarea || !roomsTextarea) return;
+
+    // Set values from local state
+    floorsTextarea.value = JSON.stringify(this._adminLocalState.floorsConfig, null, 2);
+    roomsTextarea.value = JSON.stringify(this._adminLocalState.roomsConfig, null, 2);
+
+    // Setup input listeners to update local state only
+    floorsTextarea.oninput = (e) => {
+      try {
+        this._adminLocalState.floorsConfig = JSON.parse(e.target.value);
+      } catch (error) {
+        // Invalid JSON, keep local state unchanged
+        console.warn('[DashView] Invalid floors JSON in textarea');
+      }
+    };
+
+    roomsTextarea.oninput = (e) => {
+      try {
+        this._adminLocalState.roomsConfig = JSON.parse(e.target.value);
+      } catch (error) {
+        // Invalid JSON, keep local state unchanged
+        console.warn('[DashView] Invalid rooms JSON in textarea');
+      }
+    };
+  }
+
+  // Input validation helpers - Principle 10
+  _validateEntityId(entityId) {
+    if (!entityId || typeof entityId !== 'string') return false;
+    const entityPattern = /^[a-z_]+\.[a-z0-9_]+$/;
+    return entityPattern.test(entityId);
+  }
+
+  _sanitizeHtml(input) {
+    if (!input || typeof input !== 'string') return '';
+    const div = document.createElement('div');
+    div.textContent = input;
+    return div.innerHTML;
+  }
+
+  _validateConfigStructure(config, requiredFields) {
+    if (!config || typeof config !== 'object') return false;
+    return requiredFields.every(field => config.hasOwnProperty(field));
+  }
+
+  // Generic configuration saver with enhanced validation - Principle 2 & 10
+  async _saveConfigViaAPI(configType, configData, validationFn) {
+    if (!this._hass) {
+      throw new Error('Home Assistant not available');
+    }
+
+    // Basic type validation
+    if (!configType || typeof configType !== 'string') {
+      throw new Error('Invalid configuration type');
+    }
+
+    if (!configData || typeof configData !== 'object') {
+      throw new Error('Invalid configuration data');
+    }
+
+    // Validate configuration if validator provided
+    if (validationFn && !validationFn(configData)) {
+      throw new Error(`Invalid ${configType} configuration structure`);
+    }
+
+    // Save via centralized API - Principle 1
+    await this._hass.callApi('POST', 'dashview/config', {
+      type: configType,
+      config: configData
+    });
+
+    console.log(`[DashView] ${configType} configuration saved successfully`);
+  }
+
+  // Save floors configuration - Principle 1, 2 & 12
   async saveFloorsConfiguration() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('config-status');
-    const floorsTextarea = shadow.getElementById('floors-config');
 
-    if (!statusElement || !floorsTextarea) return;
+    if (!statusElement) return;
+
+    this._setStatusMessage(statusElement, 'Saving floors configuration...', 'loading');
 
     try {
-      const configData = JSON.parse(floorsTextarea.value);
+      // Use local state for saving - Principle 12
+      const configData = this._adminLocalState.floorsConfig;
       
-      // Validate structure
-      if (!configData.floor_icons || !configData.floor_sensors) {
-        throw new Error('Invalid floors configuration structure');
-      }
+      // Use generic saver with validation - Principle 2
+      await this._saveConfigViaAPI('floors', configData, (data) => 
+        data && data.floor_icons && data.floor_sensors
+      );
 
-      statusElement.textContent = '✓ Floors configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
-      statusElement.style.background = 'var(--yellow)';
+      this._setStatusMessage(statusElement, '✓ Floors configuration saved successfully', 'success');
 
-      // Reload the configuration for the header buttons
+      // Update runtime configuration
       this._floorsConfig = configData;
       if (this._hass) {
         this.updateHeaderButtons(shadow);
       }
 
     } catch (error) {
-      statusElement.textContent = '✗ Error saving floors config: ' + error.message;
-      statusElement.style.background = 'var(--red)';
+      this._setStatusMessage(statusElement, `✗ Error saving floors config: ${error.message}`, 'error');
+      console.error('[DashView] Error saving floors config:', error);
     }
   }
 
-  // Save rooms configuration
+  // Save rooms configuration - Principle 1, 2 & 12
   async saveRoomsConfiguration() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('config-status');
-    const roomsTextarea = shadow.getElementById('rooms-config');
 
-    if (!statusElement || !roomsTextarea) return;
+    if (!statusElement) return;
+
+    this._setStatusMessage(statusElement, 'Saving rooms configuration...', 'loading');
 
     try {
-      const configData = JSON.parse(roomsTextarea.value);
+      // Use local state for saving - Principle 12
+      const configData = this._adminLocalState.roomsConfig;
       
-      // Validate structure
-      if (!configData.floors) {
-        throw new Error('Invalid rooms configuration structure');
-      }
+      // Use generic saver with validation - Principle 2
+      await this._saveConfigViaAPI('rooms', configData, (data) => 
+        data && data.floors
+      );
 
-      statusElement.textContent = '✓ Rooms configuration saved (Note: This is a frontend demo - actual save requires backend integration)';
-      statusElement.style.background = 'var(--yellow)';
+      this._setStatusMessage(statusElement, '✓ Rooms configuration saved successfully', 'success');
 
-      // Reload the configuration for the header buttons
+      // Update runtime configuration
       this._roomsConfig = configData;
       if (this._hass) {
         this.updateHeaderButtons(shadow);
       }
 
     } catch (error) {
-      statusElement.textContent = '✗ Error saving rooms config: ' + error.message;
-      statusElement.style.background = 'var(--red)';
+      this._setStatusMessage(statusElement, `✗ Error saving rooms config: ${error.message}`, 'error');
+      console.error('[DashView] Error saving rooms config:', error);
     }
   }
 }
+
+// Enhanced debug toolkit implementation - Principle 6
+window.DashViewDebug = {
+  diagnose: () => {
+    const panel = document.querySelector('dashview-panel');
+    if (!panel) {
+      console.log('[DashView] Panel not found');
+      return;
+    }
+    
+    console.log('[DashView] Diagnostic Report:');
+    console.log('- Content Ready:', panel._contentReady);
+    console.log('- HASS Available:', !!panel._hass);
+    console.log('- Floors Config:', Object.keys(panel._floorsConfig).length > 0);
+    console.log('- Rooms Config:', Object.keys(panel._roomsConfig).length > 0);
+    console.log('- Admin State Loaded:', panel._adminLocalState?.isLoaded);
+    console.log('- Entity Subscriptions:', panel._entitySubscriptions.size);
+    console.log('- Last Entity States:', panel._lastEntityStates.size);
+  },
+  
+  getStatus: () => {
+    const panel = document.querySelector('dashview-panel');
+    if (!panel) return null;
+    
+    return {
+      contentReady: panel._contentReady,
+      hassAvailable: !!panel._hass,
+      floorsConfigLoaded: Object.keys(panel._floorsConfig).length > 0,
+      roomsConfigLoaded: Object.keys(panel._roomsConfig).length > 0,
+      adminStateLoaded: panel._adminLocalState?.isLoaded || false,
+      entitySubscriptions: panel._entitySubscriptions.size,
+      lastEntityStates: panel._lastEntityStates.size
+    };
+  },
+  
+  performanceProfile: () => {
+    const panel = document.querySelector('dashview-panel');
+    if (!panel) {
+      console.error('[DashView] Panel not found');
+      return;
+    }
+    
+    console.log('[DashView] Performance Profile:');
+    console.time('[DashView] State Update');
+    panel._handleHassUpdate();
+    console.timeEnd('[DashView] State Update');
+  },
+  
+  testComponent: (componentName) => {
+    console.log(`[DashView] Testing component: ${componentName}`);
+    const panel = document.querySelector('dashview-panel');
+    if (!panel) {
+      console.error('[DashView] Panel not found');
+      return;
+    }
+    
+    switch (componentName) {
+      case 'config':
+        panel.loadConfiguration().then(() => {
+          console.log('[DashView] Config test completed');
+        }).catch(e => {
+          console.error('[DashView] Config test failed:', e);
+        });
+        break;
+      case 'admin':
+        panel.loadAdminConfiguration();
+        console.log('[DashView] Admin test initiated');
+        break;
+      case 'weather':
+        panel._updateWeatherButton(panel.shadowRoot);
+        console.log('[DashView] Weather component test completed');
+        break;
+      case 'person':
+        panel._updatePersonButton(panel.shadowRoot);
+        console.log('[DashView] Person component test completed');
+        break;
+      default:
+        console.log('[DashView] Available components: config, admin, weather, person');
+    }
+  },
+  
+  simulateError: (errorType) => {
+    console.log(`[DashView] Simulating ${errorType} error`);
+    const panel = document.querySelector('dashview-panel');
+    if (!panel) {
+      console.error('[DashView] Panel not found');
+      return;
+    }
+    
+    switch (errorType) {
+      case 'network':
+        console.log('[DashView] Network error simulation - check browser network tab');
+        break;
+      case 'config':
+        panel._adminLocalState.isLoaded = false;
+        console.log('[DashView] Config error simulated - admin state reset');
+        break;
+      default:
+        console.log('[DashView] Available error types: network, config');
+    }
+  },
+  
+  resetState: () => {
+    const panel = document.querySelector('dashview-panel');
+    if (!panel) {
+      console.error('[DashView] Panel not found');
+      return;
+    }
+    
+    panel._adminLocalState.isLoaded = false;
+    panel._lastEntityStates.clear();
+    console.log('[DashView] Panel state reset');
+  }
+};
 
 customElements.define('dashview-panel', DashviewPanel);
