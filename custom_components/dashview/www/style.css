@@ -133,6 +133,11 @@ h3 {
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+/* Prevent body scrolling when popup is active */
+body.popup-open {
+    overflow: hidden;
+}
+
 .popup.active {
     opacity: 1;
     visibility: visible;
