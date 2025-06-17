@@ -1156,7 +1156,10 @@ class DashviewPanel extends HTMLElement {
 
   // Update header buttons based on sensor states
   async updateHeaderButtons(shadow) {
-    if (!this._floorsConfig || Object.keys(this._floorsConfig).length === 0) {
+    // Prefer house_setup config, fall back to separate configs for backward compatibility
+    if (this._houseSetupConfig && Object.keys(this._houseSetupConfig).length > 0) {
+      // Use house_setup configuration
+    } else if (!this._floorsConfig || Object.keys(this._floorsConfig).length === 0) {
       await this.loadConfiguration();
     }
 
@@ -1186,10 +1189,79 @@ class DashviewPanel extends HTMLElement {
 
   // Generate HTML for header buttons
   generateHeaderButtonsHTML() {
-    if (!this._hass || !this._floorsConfig || !this._roomsConfig) {
+    if (!this._hass) {
       return '<div class="loading-message">Loading...</div>';
     }
 
+    // Prefer house_setup config, fall back to separate configs for backward compatibility  
+    if (this._houseSetupConfig && this._houseSetupConfig.rooms && this._houseSetupConfig.floors) {
+      return this._generateHeaderButtonsFromHouseSetup();
+    } else if (this._floorsConfig && this._roomsConfig) {
+      return this._generateHeaderButtonsFromSeparateConfigs();
+    } else {
+      return '<div class="loading-message">Loading...</div>';
+    }
+  }
+
+  // Generate header buttons from house_setup configuration
+  _generateHeaderButtonsFromHouseSetup() {
+    let buttonsHTML = '';
+    const rooms = this._houseSetupConfig.rooms || {};
+    const floors = this._houseSetupConfig.floors || {};
+
+    // Group rooms by floor
+    const roomsByFloor = {};
+    Object.entries(rooms).forEach(([roomId, roomConfig]) => {
+      const floorName = roomConfig.floor;
+      if (!roomsByFloor[floorName]) {
+        roomsByFloor[floorName] = [];
+      }
+      roomsByFloor[floorName].push({ roomId, ...roomConfig });
+    });
+
+    // Generate buttons for each floor
+    Object.entries(roomsByFloor).forEach(([floorName, floorRooms]) => {
+      const floorConfig = floors[floorName];
+      if (!floorConfig) return;
+
+      const floorSensor = floorConfig.sensor;
+      const floorIcon = this._processIconName(floorConfig.icon || 'mdi:help-circle-outline');
+      
+      // Check if floor sensor is active
+      const floorEntity = this._hass.states[floorSensor];
+      const isFloorActive = floorEntity && floorEntity.state === 'on';
+
+      if (isFloorActive) {
+        // Add floor button
+        buttonsHTML += `
+          <button class="header-floor-button" data-floor="${floorName}">
+            <i class="mdi ${floorIcon}"></i>
+          </button>
+        `;
+
+        // Add room buttons for this floor
+        floorRooms.forEach(room => {
+          const sensorEntity = this._hass.states[room.combined_sensor];
+          const isRoomActive = sensorEntity && sensorEntity.state === 'on';
+
+          if (isRoomActive) {
+            const roomIcon = this._processIconName(room.icon || 'mdi:help-circle-outline');
+            
+            buttonsHTML += `
+              <button class="header-room-button" data-sensor="${room.combined_sensor}" data-room="${room.roomId}" data-navigation="${room.roomId}">
+                <i class="mdi ${roomIcon}"></i>
+              </button>
+            `;
+          }
+        });
+      }
+    });
+
+    return buttonsHTML || '<div class="no-activity">No active rooms</div>';
+  }
+
+  // Generate header buttons from separate configurations (backward compatibility)
+  _generateHeaderButtonsFromSeparateConfigs() {
     let buttonsHTML = '';
     const floors = this._roomsConfig.floors || {};
     const floorIcons = this._floorsConfig.floor_icons || {};
