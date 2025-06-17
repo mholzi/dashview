@@ -60,6 +60,10 @@ class DashViewStore:
         """Get the rooms configuration."""
         return self._data.get("rooms_config", {})
 
+    def get_house_setup_config(self):
+        """Get the house setup configuration."""
+        return self._data.get("house_setup_config", {})
+
     async def async_set_floors_config(self, config: dict):
         """Set the floors configuration."""
         self._data["floors_config"] = config
@@ -68,4 +72,9 @@ class DashViewStore:
     async def async_set_rooms_config(self, config: dict):
         """Set the rooms configuration."""
         self._data["rooms_config"] = config
+        await self.async_save(self._data)
+
+    async def async_set_house_setup_config(self, config: dict):
+        """Set the house setup configuration."""
+        self._data["house_setup_config"] = config
         await self.async_save(self._data)

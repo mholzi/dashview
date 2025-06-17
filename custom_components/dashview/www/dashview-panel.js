@@ -5,10 +5,12 @@ class DashviewPanel extends HTMLElement {
     this._contentReady = false;
     this._floorsConfig = {};
     this._roomsConfig = {};
+    this._houseSetupConfig = {};
     // Admin UI state management - Principle 12
     this._adminLocalState = {
       floorsConfig: null,
       roomsConfig: null,
+      houseSetupConfig: null,
       isLoaded: false
     };
     // State management system - Principle 3
@@ -746,6 +748,11 @@ class DashviewPanel extends HTMLElement {
         if (saveRoomsBtn) {
             this.saveRoomsConfiguration();
         }
+
+        const saveHouseSetupBtn = e.target.closest('#save-house-setup-config');
+        if (saveHouseSetupBtn) {
+            this.saveHouseSetupConfiguration();
+        }
     });
   }
   
@@ -1108,7 +1115,7 @@ class DashviewPanel extends HTMLElement {
   }
 
   // Generic configuration loader - Principle 2 (DRY)
-  async _loadConfigFromAPI(configTypes = ['floors', 'rooms']) {
+  async _loadConfigFromAPI(configTypes = ['floors', 'rooms', 'house_setup']) {
     if (!this._hass) {
       throw new Error('Home Assistant not available');
     }
@@ -1134,14 +1141,16 @@ class DashviewPanel extends HTMLElement {
   // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
-      const config = await this._loadConfigFromAPI(['floors', 'rooms']);
+      const config = await this._loadConfigFromAPI(['floors', 'rooms', 'house_setup']);
       this._floorsConfig = config.floors;
       this._roomsConfig = config.rooms;
+      this._houseSetupConfig = config.house_setup;
       console.log('[DashView] Configuration loaded successfully');
     } catch (error) {
       console.error('[DashView] Error loading configuration:', error);
       this._floorsConfig = {};
       this._roomsConfig = {};
+      this._houseSetupConfig = {};
     }
   }
 
@@ -1243,11 +1252,12 @@ class DashviewPanel extends HTMLElement {
 
       try {
         // Use generic loader - Principle 2 (DRY)
-        const config = await this._loadConfigFromAPI(['floors', 'rooms']);
+        const config = await this._loadConfigFromAPI(['floors', 'rooms', 'house_setup']);
         
         // Store in local state, not directly in textareas
         this._adminLocalState.floorsConfig = config.floors;
         this._adminLocalState.roomsConfig = config.rooms;
+        this._adminLocalState.houseSetupConfig = config.house_setup;
         this._adminLocalState.isLoaded = true;
 
         this._setStatusMessage(statusElement, '✓ Configuration loaded successfully', 'success');
@@ -1290,12 +1300,14 @@ class DashviewPanel extends HTMLElement {
     const shadow = this.shadowRoot;
     const floorsTextarea = shadow.getElementById('floors-config');
     const roomsTextarea = shadow.getElementById('rooms-config');
+    const houseSetupTextarea = shadow.getElementById('house-setup-config');
 
-    if (!floorsTextarea || !roomsTextarea) return;
+    if (!floorsTextarea || !roomsTextarea || !houseSetupTextarea) return;
 
     // Set values from local state
     floorsTextarea.value = JSON.stringify(this._adminLocalState.floorsConfig, null, 2);
     roomsTextarea.value = JSON.stringify(this._adminLocalState.roomsConfig, null, 2);
+    houseSetupTextarea.value = JSON.stringify(this._adminLocalState.houseSetupConfig, null, 2);
 
     // Setup input listeners to update local state only
     floorsTextarea.oninput = (e) => {
@@ -1313,6 +1325,15 @@ class DashviewPanel extends HTMLElement {
       } catch (error) {
         // Invalid JSON, keep local state unchanged
         console.warn('[DashView] Invalid rooms JSON in textarea');
+      }
+    };
+
+    houseSetupTextarea.oninput = (e) => {
+      try {
+        this._adminLocalState.houseSetupConfig = JSON.parse(e.target.value);
+      } catch (error) {
+        // Invalid JSON, keep local state unchanged
+        console.warn('[DashView] Invalid house setup JSON in textarea');
       }
     };
   }
@@ -1428,6 +1449,38 @@ class DashviewPanel extends HTMLElement {
       console.error('[DashView] Error saving rooms config:', error);
     }
   }
+
+  // Save house setup configuration - Principle 1, 2 & 12
+  async saveHouseSetupConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('config-status');
+
+    if (!statusElement) return;
+
+    this._setStatusMessage(statusElement, 'Saving house setup configuration...', 'loading');
+
+    try {
+      // Use local state for saving - Principle 12
+      const configData = this._adminLocalState.houseSetupConfig;
+      
+      // Use generic saver with validation - Principle 2
+      await this._saveConfigViaAPI('house_setup', configData, (data) => 
+        data && data.rooms && data.floors
+      );
+
+      this._setStatusMessage(statusElement, '✓ House setup configuration saved successfully', 'success');
+
+      // Update runtime configuration
+      this._houseSetupConfig = configData;
+      if (this._hass) {
+        this.updateHeaderButtons(shadow);
+      }
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error saving house setup config: ${error.message}`, 'error');
+      console.error('[DashView] Error saving house setup config:', error);
+    }
+  }
 }
 
 // Enhanced debug toolkit implementation - Principle 6
@@ -1444,6 +1497,7 @@ window.DashViewDebug = {
     console.log('- HASS Available:', !!panel._hass);
     console.log('- Floors Config:', Object.keys(panel._floorsConfig).length > 0);
     console.log('- Rooms Config:', Object.keys(panel._roomsConfig).length > 0);
+    console.log('- House Setup Config:', Object.keys(panel._houseSetupConfig).length > 0);
     console.log('- Admin State Loaded:', panel._adminLocalState?.isLoaded);
     console.log('- Entity Subscriptions:', panel._entitySubscriptions.size);
     console.log('- Last Entity States:', panel._lastEntityStates.size);
@@ -1458,6 +1512,7 @@ window.DashViewDebug = {
       hassAvailable: !!panel._hass,
       floorsConfigLoaded: Object.keys(panel._floorsConfig).length > 0,
       roomsConfigLoaded: Object.keys(panel._roomsConfig).length > 0,
+      houseSetupConfigLoaded: Object.keys(panel._houseSetupConfig).length > 0,
       adminStateLoaded: panel._adminLocalState?.isLoaded || false,
       entitySubscriptions: panel._entitySubscriptions.size,
       lastEntityStates: panel._lastEntityStates.size

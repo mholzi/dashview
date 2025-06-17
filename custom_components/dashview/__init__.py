@@ -40,10 +40,12 @@ class DashViewConfigView(HomeAssistantView):
             data = self._store.get_floors_config()
         elif config_type == "rooms":
             data = self._store.get_rooms_config()
+        elif config_type == "house_setup":
+            data = self._store.get_house_setup_config()
         elif config_type == "weather_entity":
             data = {"weather_entity": self._store.get_weather_entity()}
         else:
-            return web.Response(status=400, text="Invalid config type. Use: floors, rooms, weather_entity")
+            return web.Response(status=400, text="Invalid config type. Use: floors, rooms, house_setup, weather_entity")
         
         return self.json(data)
     
@@ -58,6 +60,8 @@ class DashViewConfigView(HomeAssistantView):
                 await self._store.async_set_floors_config(config_data)
             elif config_type == "rooms":
                 await self._store.async_set_rooms_config(config_data)
+            elif config_type == "house_setup":
+                await self._store.async_set_house_setup_config(config_data)
             elif config_type == "weather_entity":
                 await self._store.async_set_weather_entity(config_data.get("weather_entity"))
             else:
@@ -124,6 +128,7 @@ async def _migrate_config_files(hass: HomeAssistant, store: DashViewStore):
     try:
         floors_file = hass.config.path("custom_components", "dashview", "www", "config", "floors.json")
         rooms_file = hass.config.path("custom_components", "dashview", "www", "config", "rooms.json")
+        house_setup_file = hass.config.path("custom_components", "dashview", "www", "config", "house_setup.json")
         
         import json
         
@@ -139,6 +144,12 @@ async def _migrate_config_files(hass: HomeAssistant, store: DashViewStore):
                 rooms_config = json.load(f)
             await store.async_set_rooms_config(rooms_config)
             _LOGGER.info("[DashView] Migrated rooms.json to centralized storage")
+
+        if not store.get_house_setup_config() and os.path.exists(house_setup_file):
+            with open(house_setup_file, 'r') as f:
+                house_setup_config = json.load(f)
+            await store.async_set_house_setup_config(house_setup_config)
+            _LOGGER.info("[DashView] Migrated house_setup.json to centralized storage")
             
     except Exception as e:
         _LOGGER.warning("[DashView] Could not migrate config files: %s", e)

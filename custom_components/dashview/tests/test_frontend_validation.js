@@ -161,6 +161,17 @@ class DashViewFrontendTests {
             'Valid rooms config should pass validation'
         );
 
+        // Test house setup configuration
+        const validHouseSetupConfig = {
+            rooms: { "wohnzimmer": { "friendly_name": "Wohnzimmer" } },
+            floors: { "EG": { "friendly_name": "Erdgeschoss" } }
+        };
+        
+        this.assert(
+            validateConfigStructure(validHouseSetupConfig, ['rooms', 'floors']),  
+            'Valid house setup config should pass validation'
+        );
+
         // Test invalid types
         this.assert(
             !validateConfigStructure(null, ['floors']),

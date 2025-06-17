@@ -72,6 +72,46 @@ class TestDashViewStore:
         # Test invalid config
         assert "floors" not in invalid_rooms_config
     
+    def test_house_setup_config_validation(self):
+        """Test house setup configuration structure validation."""
+        valid_house_setup_config = {
+            "rooms": {
+                "wohnzimmer": {
+                    "friendly_name": "Wohnzimmer",
+                    "icon": "mdi:sofa",
+                    "floor": "EG",
+                    "combined_sensor": "binary_sensor.combined_sensor_wohnzimmer",
+                    "lights": [],
+                    "covers": [],
+                    "media_players": []
+                }
+            },
+            "floors": {
+                "EG": {
+                    "friendly_name": "Erdgeschoss",
+                    "icon": "mdi:home",
+                    "sensor": "binary_sensor.floor_eg_active"
+                }
+            }
+        }
+        
+        invalid_house_setup_config = {
+            "room_data": {
+                "wohnzimmer": {}
+            }
+            # Missing rooms and floors keys
+        }
+        
+        # Test valid config
+        assert "rooms" in valid_house_setup_config
+        assert "floors" in valid_house_setup_config
+        assert isinstance(valid_house_setup_config["rooms"], dict)
+        assert isinstance(valid_house_setup_config["floors"], dict)
+        
+        # Test invalid config
+        assert "rooms" not in invalid_house_setup_config
+        assert "floors" not in invalid_house_setup_config
+    
     def test_entity_id_validation(self):
         """Test entity ID format validation."""
         valid_entity_ids = [
@@ -145,6 +185,9 @@ if __name__ == "__main__":
         
         test_store.test_rooms_config_validation()
         print("✓ Rooms config validation test passed")
+        
+        test_store.test_house_setup_config_validation()
+        print("✓ House setup config validation test passed")
         
         test_store.test_entity_id_validation()
         print("✓ Entity ID validation test passed")

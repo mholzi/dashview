@@ -1,0 +1,197 @@
+{
+  "rooms": {
+    "wohnzimmer": {
+      "friendly_name": "Wohnzimmer",
+      "icon": "mdi:sofa",
+      "floor": "EG",
+      "combined_sensor": "binary_sensor.combined_sensor_wohnzimmer",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "buero": {
+      "friendly_name": "Büro",
+      "icon": "mdi:desk",
+      "floor": "EG",
+      "combined_sensor": "binary_sensor.combined_sensor_buero",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "kueche": {
+      "friendly_name": "Küche",
+      "icon": "mdi:chef-hat",
+      "floor": "EG",
+      "combined_sensor": "binary_sensor.combined_sensor_kueche",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "eingangsflur": {
+      "friendly_name": "Eingangsflur",
+      "icon": "mdi:door",
+      "floor": "EG",
+      "combined_sensor": "binary_sensor.combined_sensor_eingangsflur",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "gaesteklo": {
+      "friendly_name": "Gästeklo",
+      "icon": "mdi:toilet",
+      "floor": "EG",
+      "combined_sensor": "binary_sensor.combined_sensor_gaesteklo",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "treppe_erdgeschoss": {
+      "friendly_name": "Treppe Erdgeschoss",
+      "icon": "mdi:stairs",
+      "floor": "EG",
+      "combined_sensor": "binary_sensor.combined_sensor_treppe_erdgeschoss",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "kids": {
+      "friendly_name": "Kinderzimmer",
+      "icon": "mdi:toy-brick",
+      "floor": "OG",
+      "combined_sensor": "binary_sensor.combined_sensor_kids",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "kinderbad": {
+      "friendly_name": "Kinderbad",
+      "icon": "mdi:shower",
+      "floor": "OG",
+      "combined_sensor": "binary_sensor.combined_sensor_kinderbad",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "flur": {
+      "friendly_name": "Flur",
+      "icon": "mdi:transit-connection-horizontal",
+      "floor": "OG",
+      "combined_sensor": "binary_sensor.combined_sensor_flur",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "aupair": {
+      "friendly_name": "Au Pair Zimmer",
+      "icon": "mdi:bed",
+      "floor": "OG",
+      "combined_sensor": "binary_sensor.combined_sensor_aupair",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "schlafzimmer": {
+      "friendly_name": "Schlafzimmer",
+      "icon": "mdi:bed-double",
+      "floor": "OG",
+      "combined_sensor": "binary_sensor.combined_sensor_schlafzimmer",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "partykeller": {
+      "friendly_name": "Partykeller",
+      "icon": "mdi:glass-mug-variant",
+      "floor": "Keller",
+      "combined_sensor": "binary_sensor.combined_sensor_partykeller",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "heizungskeller": {
+      "friendly_name": "Heizungskeller",
+      "icon": "mdi:fire",
+      "floor": "Keller",
+      "combined_sensor": "binary_sensor.combined_sensor_heizungskeller",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "kellerflur": {
+      "friendly_name": "Kellerflur",
+      "icon": "mdi:transit-connection-horizontal",
+      "floor": "Keller",
+      "combined_sensor": "binary_sensor.combined_sensor_kellerflur",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "waschkeller": {
+      "friendly_name": "Waschkeller",
+      "icon": "mdi:washing-machine",
+      "floor": "Keller",
+      "combined_sensor": "binary_sensor.combined_sensor_waschkeller",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "serverraum": {
+      "friendly_name": "Serverraum",
+      "icon": "mdi:server",
+      "floor": "Keller",
+      "combined_sensor": "binary_sensor.combined_sensor_serverraum",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "buero_keller": {
+      "friendly_name": "Büro Keller",
+      "icon": "mdi:desk",
+      "floor": "Keller",
+      "combined_sensor": "binary_sensor.combined_sensor_buero_keller",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "sauna": {
+      "friendly_name": "Sauna",
+      "icon": "mdi:heat-wave",
+      "floor": "Keller",
+      "combined_sensor": "binary_sensor.combined_sensor_sauna",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    },
+    "aussen": {
+      "friendly_name": "Außenbereich",
+      "icon": "mdi:tree",
+      "floor": "Außen",
+      "combined_sensor": "binary_sensor.combined_sensor_aussen",
+      "lights": [],
+      "covers": [],
+      "media_players": []
+    }
+  },
+  "floors": {
+    "EG": {
+      "friendly_name": "Erdgeschoss",
+      "icon": "mdi:home",
+      "sensor": "binary_sensor.floor_eg_active"
+    },
+    "OG": {
+      "friendly_name": "Obergeschoss",
+      "icon": "mdi:home-floor-1",
+      "sensor": "binary_sensor.floor_og_active"
+    },
+    "Keller": {
+      "friendly_name": "Keller",
+      "icon": "mdi:stairs-down",
+      "sensor": "binary_sensor.floor_keller_active"
+    },
+    "Außen": {
+      "friendly_name": "Außenbereich",
+      "icon": "mdi:tree",
+      "sensor": "binary_sensor.floor_aussen_active"
+    }
+  }
+}
