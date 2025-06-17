@@ -728,6 +728,7 @@ h3 {
     font-size: 10px;
     color: var(--gray800);
     text-align: center;
+}
 
 /* Header Buttons Styles */
 .header-buttons-container {
@@ -869,5 +870,4 @@ h3 {
     border-radius: 8px;
     background: var(--background);
     color: var(--primary-text-color);
-
 }
