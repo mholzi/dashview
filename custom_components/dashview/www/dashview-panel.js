@@ -37,6 +37,8 @@ class DashviewPanel extends HTMLElement {
     const entitiesToWatch = [
       'weather.forecast_home',
       'person.markus',
+      'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
+      'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
       // Add more entities as needed
     ];
 
@@ -75,6 +77,10 @@ class DashviewPanel extends HTMLElement {
           break;
         case 'person.markus':
           this._updatePersonButton(shadow);
+          break;
+        case 'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag':
+        case 'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf':
+          this.updateTrainDepartureCards(shadow);
           break;
         default:
           console.log(`[DashView] No specific handler for entity: ${entityId}`);
@@ -165,6 +171,9 @@ class DashviewPanel extends HTMLElement {
       
       await this.loadTemplates(shadow);
       this.initializeCard(shadow);
+      
+      // Initialize train departure cards with placeholders
+      this.updateTrainDepartureCards(shadow);
 
       this._contentReady = true;
       if (this._hass) {
