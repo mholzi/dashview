@@ -1,33 +1,52 @@
 # DashView Code Review - Test Artifacts and Build Files
 
-# Python cache
+# Python bytecode files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.so
 
-# Build artifacts
-dist/
-build/
-*.egg-info/
+# Python virtual environments and dependency folders
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# IDE files
+# Distribution and packaging files
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+
+# IDE/editor-specific files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS files
+# OS-specific files
 .DS_Store
 Thumbs.db
 
-# Home Assistant specific
+# Home Assistant specific files
 .storage/
-
-# Test artifacts (keep only in dev)
-# custom_components/dashview/tests/
+home-assistant.log
+home-assistant_v2.db
 
 # Log files
 *.log
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# mypy cache
+.mypy_cache/
+
+# Test artifacts (keep only in dev)
+# custom_components/dashview/tests/
