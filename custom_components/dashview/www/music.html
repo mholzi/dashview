@@ -559,6 +559,15 @@
                     }
                 });
                 
+                // If after checking all rooms, none have media players, show a message.
+                if (musicRooms.length === 0) {
+                    const musicContainer = document.querySelector('.music-tab-container');
+                    if (musicContainer) {
+                        musicContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--gray800);"><p>No music players are defined yet. Please configure them in the admin panel.</p></div>';
+                    }
+                    return false; // Stop further processing
+                }
+                
                 console.log('[DashView] Loaded music rooms from config:', musicRooms);
                 return true;
             }
@@ -566,32 +575,7 @@
             console.warn('[DashView] Could not load music rooms from config:', error);
         }
         
-        // Fallback to static configuration if dynamic loading fails
-        musicRooms = [
-            {
-                id: 'buero',
-                name: 'Büro',
-                icon: 'mdi-music',
-                mediaPlayers: [{ entity: 'media_player.echo_buero' }]
-            },
-            {
-                id: 'wohnzimmer',
-                name: 'Wohnzimmer',
-                icon: 'mdi-music',
-                mediaPlayers: [
-                    { entity: 'media_player.unnamed_room' },
-                    { entity: 'media_player.kuche' }
-                ]
-            },
-            {
-                id: 'schlafzimmer',
-                name: 'Eltern',
-                icon: 'mdi-music',
-                mediaPlayers: [{ entity: 'media_player.echo_bad' }]
-            }
-        ];
-        
-        console.log('[DashView] Using fallback music rooms configuration');
+        // If config is not available at all yet, do nothing and wait.
         return false;
     }
     
