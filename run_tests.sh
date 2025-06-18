@@ -81,6 +81,26 @@ else
     exit 1
 fi
 
+# Run CSS Colors tests
+echo ""
+echo "🎨 Running CSS Colors validation tests..."
+if node custom_components/dashview/tests/test_css_colors.js > /dev/null; then
+    echo "✅ CSS Colors tests passed"
+else
+    echo "❌ CSS Colors tests failed"
+    exit 1
+fi
+
+# Run Pollen Card Formatting tests
+echo ""
+echo "🌼 Running Pollen Card Formatting tests..."
+if node custom_components/dashview/tests/test_pollen_card_formatting.js > /dev/null; then
+    echo "✅ Pollen Card Formatting tests passed"
+else
+    echo "❌ Pollen Card Formatting tests failed"
+    exit 1
+fi
+
 # Run Floor Maintenance tests
 echo ""
 echo "🏠 Running Floor Maintenance tests..."
