@@ -44,7 +44,16 @@ class DashviewPanel extends HTMLElement {
       },
       // Add this new line for the security popup
       '#open-windows-list': (el) => this.updateSecurityLists(el.closest('.popup')),
-      '.media-container': (el) => this._initializeMediaPlayerControls(el.closest('.popup'))
+      '.media-container': (el) => {
+        const popup = el.closest('.popup');
+        if (popup && popup.id === 'music-popup') {
+          // For the music popup, generate the full content with room tabs
+          this._generateMusicPopupContent(popup);
+        } else {
+          // For other popups, just initialize the media player controls
+          this._initializeMediaPlayerControls(popup);
+        }
+      }
     };
   }
 
@@ -4079,6 +4088,158 @@ class DashviewPanel extends HTMLElement {
         this.updateMediaPlayerVolume(popup, entityId);
       }
     });
+  }
+
+  // Generate music popup content with room tabs and media player cards
+  _generateMusicPopupContent(popup) {
+    if (!this._houseConfig?.rooms) {
+      console.warn('[DashView] No room configuration available for music popup');
+      return;
+    }
+
+    // 1. Find all rooms with media players
+    const roomsWithMediaPlayers = [];
+    Object.entries(this._houseConfig.rooms).forEach(([roomId, roomConfig]) => {
+      if (roomConfig.media_players && Array.isArray(roomConfig.media_players) && roomConfig.media_players.length > 0) {
+        roomsWithMediaPlayers.push({
+          id: roomId,
+          friendly_name: roomConfig.friendly_name || roomConfig.name || roomId,
+          icon: roomConfig.icon || 'mdi-music',
+          media_players: roomConfig.media_players
+        });
+      }
+    });
+
+    if (roomsWithMediaPlayers.length === 0) {
+      console.log('[DashView] No rooms with media players found');
+      popup.innerHTML = `
+        <div class="popup-header">
+          <h2>Musik</h2>
+          <button class="popup-close">&times;</button>
+        </div>
+        <div class="popup-body">
+          <div style="padding: 40px; text-align: center; color: var(--gray800);">
+            <p>No music players are defined yet. Please configure them in the admin panel.</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // 2. Find existing music container or create new structure
+    const existingContainer = popup.querySelector('.music-tab-container');
+    const tabContainer = existingContainer ? 
+      existingContainer.querySelector('#music-room-tabs') : 
+      null;
+    const contentContainer = existingContainer ? 
+      existingContainer.querySelector('#music-tab-content') : 
+      null;
+
+    if (!tabContainer || !contentContainer) {
+      console.log('[DashView] Music container structure not found, content generation skipped');
+      return;
+    }
+
+    // 3. Clear existing content and generate new tabs and room content
+    tabContainer.innerHTML = '';
+    contentContainer.innerHTML = '';
+
+    roomsWithMediaPlayers.forEach((room, index) => {
+      // Create tab chip
+      const tabChip = document.createElement('button');
+      tabChip.className = `music-tab-chip ${index === 0 ? 'active' : ''}`;
+      tabChip.dataset.roomId = room.id;
+      tabChip.title = room.friendly_name; // Correctly use friendly_name
+      tabChip.innerHTML = `<i class="mdi ${room.icon || 'mdi-music'}"></i>`;
+      tabContainer.appendChild(tabChip);
+
+      // Create room content
+      const roomContent = document.createElement('div');
+      roomContent.className = `music-room-content ${index === 0 ? 'active' : ''}`;
+      roomContent.id = `music-room-${room.id}`;
+      roomContent.dataset.roomId = room.id;
+      roomContent.innerHTML = this._generateMusicRoomHTML(room);
+      contentContainer.appendChild(roomContent);
+    });
+
+    // 4. Setup Event Listeners
+    this._setupMusicTabSwitching(popup);
+
+    // 5. Initialize controls for the initially active tab
+    const activeRoomContent = contentContainer.querySelector('.music-room-content.active');
+    if (activeRoomContent) {
+        this._initializeMediaPlayerControls(activeRoomContent);
+    }
+  }
+
+  _generateMusicRoomHTML(room) {
+    const primaryPlayer = room.media_players[0];
+    if (!primaryPlayer) return '';
+    const entityId = primaryPlayer.entity;
+
+    const presetButtons = `
+        <button class="media-preset-button" data-entity="${entityId}" data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO" data-content-type="custom"><span class="preset-name">Dinner Jazz</span></button>
+        <button class="media-preset-button" data-entity="${entityId}" data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC" data-content-type="custom"><span class="preset-name">Happy Hits</span></button>
+    `;
+
+    return `
+        <div class="media-room-card" data-room="${room.id}">
+            <div class="media-room-header">
+                <i class="mdi ${room.icon || 'mdi-music'}"></i>
+                <span class="media-room-title">${room.friendly_name}</span>
+            </div>
+            <div class="media-presets">${presetButtons}</div>
+            <div class="media-display" data-entity="${entityId}">
+                <div class="media-image"><img src="" alt="Media Cover" class="media-cover"></div>
+                <div class="media-info">
+                    <div class="media-title">Kein Titel</div>
+                    <div class="media-artist">Unbekannt</div>
+                </div>
+            </div>
+            <div class="media-controls" data-entity="${entityId}">
+                <button class="media-control-button" data-action="media_previous_track"><i class="mdi mdi-skip-previous"></i></button>
+                <button class="media-control-button play-pause" data-action="media_play_pause"><i class="mdi mdi-play"></i></button>
+                <button class="media-control-button" data-action="media_next_track"><i class="mdi mdi-skip-next"></i></button>
+            </div>
+            <div class="media-volume-control">
+                ${room.media_players.map(p => {
+                  const entityState = this._hass.states[p.entity];
+                  const friendlyName = entityState?.attributes?.friendly_name || p.entity;
+                  return `
+                    <div class="volume-row">
+                        <span class="volume-label">${friendlyName}</span>
+                        <div class="volume-slider-container">
+                            <input type="range" class="volume-slider" data-entity="${p.entity}" min="0" max="100" value="50">
+                        </div>
+                        <span class="volume-value">50%</span>
+                    </div>
+                    `
+                }).join('')}
+            </div>
+        </div>
+    `;
+  }
+
+  _setupMusicTabSwitching(popup) {
+      const tabChips = popup.querySelectorAll('.music-tab-chip');
+      const roomContents = popup.querySelectorAll('.music-room-content');
+
+      tabChips.forEach(chip => {
+          chip.addEventListener('click', () => {
+              const roomId = chip.dataset.roomId;
+
+              tabChips.forEach(c => c.classList.remove('active'));
+              chip.classList.add('active');
+
+              roomContents.forEach(content => {
+                  const isActive = content.dataset.roomId === roomId;
+                  content.classList.toggle('active', isActive);
+                  if (isActive) {
+                      this._initializeMediaPlayerControls(content);
+                  }
+              });
+          });
+      });
   }
 
   // Update sliders and labels when a cover's state changes
