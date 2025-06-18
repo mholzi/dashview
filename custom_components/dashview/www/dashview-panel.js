@@ -956,6 +956,23 @@ class DashviewPanel extends HTMLElement {
             this._adminLocalState.weatherEntity = null;
             this.loadWeatherEntityConfiguration();
         }
+
+        // Handle floor maintenance buttons
+        const reloadFloorMaintenanceBtn = e.target.closest('#reload-floor-maintenance');
+        if (reloadFloorMaintenanceBtn) {
+            this.loadFloorMaintenance();
+        }
+
+        const addFloorBtn = e.target.closest('#add-floor');
+        if (addFloorBtn) {
+            this.addFloor();
+        }
+
+        const deleteFloorBtn = e.target.closest('.delete-button');
+        if (deleteFloorBtn) {
+            const floorKey = deleteFloorBtn.dataset.floorKey;
+            this.deleteFloor(floorKey);
+        }
     });
   }
   
@@ -1313,6 +1330,11 @@ class DashviewPanel extends HTMLElement {
                 // Load admin configuration when header buttons tab is activated
                 if (targetId === 'header-buttons-tab') {
                     setTimeout(() => this.loadAdminConfiguration(), 100);
+                }
+                
+                // Load floor maintenance when floor maintenance tab is activated
+                if (targetId === 'floor-maintenance-tab') {
+                    setTimeout(() => this.loadFloorMaintenance(), 100);
                 }
                 
                 // Load weather entity configuration when weather tab is activated
@@ -1976,6 +1998,191 @@ class DashviewPanel extends HTMLElement {
       if (statusElement) {
         this._setStatusMessage(statusElement, `✗ Error saving weather entity: ${error.message}`, 'error');
       }
+    }
+  }
+
+  // Floor Maintenance Functions - Principle 1, 2 & 12
+  async loadFloorMaintenance() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('floor-maintenance-status');
+
+    if (!statusElement) return;
+
+    if (!this._hass) {
+      this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
+      return;
+    }
+
+    this._setStatusMessage(statusElement, 'Loading floor configuration...', 'loading');
+
+    try {
+      // Load floors configuration from API
+      const config = await this._loadConfigFromAPI(['floors']);
+      this._adminLocalState.floorsConfig = config.floors || {};
+
+      // Render the floors list
+      this._renderFloorsList();
+
+      this._setStatusMessage(statusElement, '✓ Floor configuration loaded successfully', 'success');
+      console.log('[DashView] Floor maintenance loaded successfully');
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error loading floor configuration: ${error.message}`, 'error');
+      console.error('[DashView] Error loading floor maintenance:', error);
+    }
+  }
+
+  _renderFloorsList() {
+    const shadow = this.shadowRoot;
+    const floorsContainer = shadow.getElementById('floors-list');
+    
+    if (!floorsContainer) return;
+
+    const floorsConfig = this._adminLocalState.floorsConfig || {};
+    const floorIcons = floorsConfig.floor_icons || {};
+    const floorSensors = floorsConfig.floor_sensors || {};
+
+    if (Object.keys(floorIcons).length === 0) {
+      floorsContainer.innerHTML = '<p>No floors configured. Add your first floor above.</p>';
+      return;
+    }
+
+    let floorsHTML = '';
+    Object.keys(floorIcons).forEach(floorKey => {
+      const icon = floorIcons[floorKey] || 'mdi:help-circle';
+      const sensor = floorSensors[floorKey] || 'Not set';
+      
+      floorsHTML += `
+        <div class="floor-item">
+          <div class="floor-info">
+            <div class="floor-name">${floorKey}</div>
+            <div class="floor-details">Icon: ${icon} | Sensor: ${sensor}</div>
+          </div>
+          <div class="floor-actions">
+            <button class="delete-button" data-floor-key="${floorKey}">Delete</button>
+          </div>
+        </div>
+      `;
+    });
+
+    floorsContainer.innerHTML = floorsHTML;
+  }
+
+  async addFloor() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('floor-maintenance-status');
+    
+    // Get form values
+    const floorKey = shadow.getElementById('new-floor-key').value.trim();
+    const floorName = shadow.getElementById('new-floor-name').value.trim();
+    const floorIcon = shadow.getElementById('new-floor-icon').value.trim();
+    const floorSensor = shadow.getElementById('new-floor-sensor').value.trim();
+
+    // Validate inputs
+    if (!floorKey) {
+      this._setStatusMessage(statusElement, '✗ Floor key is required', 'error');
+      return;
+    }
+
+    if (!floorIcon) {
+      this._setStatusMessage(statusElement, '✗ Floor icon is required', 'error');
+      return;
+    }
+
+    if (!floorSensor) {
+      this._setStatusMessage(statusElement, '✗ Floor sensor is required', 'error');
+      return;
+    }
+
+    // Check if floor already exists
+    const floorsConfig = this._adminLocalState.floorsConfig || {};
+    const floorIcons = floorsConfig.floor_icons || {};
+    
+    if (floorIcons[floorKey]) {
+      this._setStatusMessage(statusElement, '✗ Floor with this key already exists', 'error');
+      return;
+    }
+
+    this._setStatusMessage(statusElement, 'Adding floor...', 'loading');
+
+    try {
+      // Update local state
+      if (!this._adminLocalState.floorsConfig) {
+        this._adminLocalState.floorsConfig = { floor_icons: {}, floor_sensors: {} };
+      }
+      if (!this._adminLocalState.floorsConfig.floor_icons) {
+        this._adminLocalState.floorsConfig.floor_icons = {};
+      }
+      if (!this._adminLocalState.floorsConfig.floor_sensors) {
+        this._adminLocalState.floorsConfig.floor_sensors = {};
+      }
+
+      this._adminLocalState.floorsConfig.floor_icons[floorKey] = floorIcon;
+      this._adminLocalState.floorsConfig.floor_sensors[floorKey] = floorSensor;
+
+      // Save to backend
+      await this._saveConfigViaAPI('floors', this._adminLocalState.floorsConfig, (data) => 
+        data && data.floor_icons && data.floor_sensors
+      );
+
+      // Clear form
+      shadow.getElementById('new-floor-key').value = '';
+      shadow.getElementById('new-floor-name').value = '';
+      shadow.getElementById('new-floor-icon').value = '';
+      shadow.getElementById('new-floor-sensor').value = '';
+
+      // Refresh the floors list
+      this._renderFloorsList();
+
+      this._setStatusMessage(statusElement, '✓ Floor added successfully', 'success');
+      console.log('[DashView] Floor added successfully:', floorKey);
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error adding floor: ${error.message}`, 'error');
+      console.error('[DashView] Error adding floor:', error);
+    }
+  }
+
+  async deleteFloor(floorKey) {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('floor-maintenance-status');
+    
+    if (!floorKey) {
+      this._setStatusMessage(statusElement, '✗ Floor key is required', 'error');
+      return;
+    }
+
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete the floor "${floorKey}"?`)) {
+      return;
+    }
+
+    this._setStatusMessage(statusElement, 'Deleting floor...', 'loading');
+
+    try {
+      // Update local state
+      if (this._adminLocalState.floorsConfig) {
+        if (this._adminLocalState.floorsConfig.floor_icons) {
+          delete this._adminLocalState.floorsConfig.floor_icons[floorKey];
+        }
+        if (this._adminLocalState.floorsConfig.floor_sensors) {
+          delete this._adminLocalState.floorsConfig.floor_sensors[floorKey];
+        }
+      }
+
+      // Save to backend
+      await this._saveConfigViaAPI('floors', this._adminLocalState.floorsConfig, (data) => 
+        data && data.floor_icons && data.floor_sensors
+      );
+
+      // Refresh the floors list
+      this._renderFloorsList();
+
+      this._setStatusMessage(statusElement, '✓ Floor deleted successfully', 'success');
+      console.log('[DashView] Floor deleted successfully:', floorKey);
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error deleting floor: ${error.message}`, 'error');
+      console.error('[DashView] Error deleting floor:', error);
     }
   }
 }

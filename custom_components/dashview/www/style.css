@@ -880,3 +880,89 @@ body.popup-open, :host(.popup-open) {
     background: var(--background);
     color: var(--primary-text-color);
 }
+
+/* Floor Maintenance Styles */
+.floor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-row label {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    font-size: 0.9em;
+}
+
+.form-input {
+    padding: 8px 12px;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--primary-text-color);
+    font-family: var(--primary-font-family);
+    font-size: 0.9em;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.floors-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.floor-item {
+    padding: 12px;
+    background: var(--background);
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.floor-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.floor-name {
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.floor-details {
+    font-size: 0.8em;
+    color: var(--secondary-text-color);
+}
+
+.floor-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.delete-button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 6px;
+    background: var(--red);
+    color: white;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.delete-button:hover {
+    opacity: 0.8;
+}
