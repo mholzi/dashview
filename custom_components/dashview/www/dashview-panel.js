@@ -34,8 +34,8 @@ class DashviewPanel extends HTMLElement {
           this._initializeCoversCard(popup, roomKey, roomConfig.covers);
         }
       },
-      // This registry can be expanded for future dynamic popups, e.g.:
-      // '#security-open-windows-list': (el) => this.updateSecurityWindows(el.closest('.popup')),
+      // Add this new line for the security popup
+      '#open-windows-list': (el) => this.updateSecurityLists(el.closest('.popup')),
     };
   }
 
@@ -979,6 +979,71 @@ class DashviewPanel extends HTMLElement {
   // Helper method to check if a value is a number
   isNumber(value) {
     return !isNaN(parseFloat(value)) && isFinite(value);
+  }
+
+  // New Helper Function 1: Gets all entities of a specific type from the house config
+  _getAllEntitiesByType(entityType) {
+    if (!this._houseConfig || !this._houseConfig.rooms) return [];
+    
+    const entities = [];
+    for (const room of Object.values(this._houseConfig.rooms)) {
+      if (room.header_entities && Array.isArray(room.header_entities)) {
+        for (const entityConfig of room.header_entities) {
+          if (entityConfig.entity_type === entityType) {
+            entities.push(entityConfig.entity);
+          }
+        }
+      }
+    }
+    return [...new Set(entities)]; // Return unique entity IDs
+  }
+
+  // New Helper Function 2: Renders a list of entities into a target container
+  _renderEntityList(container, entityIds, noneMessage = "None") {
+    if (!container) return;
+
+    container.innerHTML = ''; // Clear previous content
+    if (entityIds.length === 0) {
+      container.innerHTML = `<div class="entity-list-none">${noneMessage}</div>`;
+      return;
+    }
+
+    entityIds.forEach(entityId => {
+      const entityState = this._hass.states[entityId];
+      const friendlyName = entityState ? entityState.attributes.friendly_name || entityId : entityId;
+      
+      const item = document.createElement('div');
+      item.className = 'entity-list-item';
+      item.textContent = friendlyName;
+      container.appendChild(item);
+    });
+  }
+
+  // New Main Function: Updates all lists in the security popup
+  updateSecurityLists(popup) {
+    if (!this._hass || !popup) return;
+    
+    // --- Handle Windows ---
+    const allWindows = this._getAllEntitiesByType('window');
+    const openWindows = allWindows.filter(id => this._hass.states[id]?.state === 'on');
+    const closedWindows = allWindows.filter(id => this._hass.states[id]?.state === 'off');
+
+    const openWindowsList = popup.querySelector('#open-windows-list');
+    const closedWindowsList = popup.querySelector('#closed-windows-list');
+    
+    this._renderEntityList(openWindowsList, openWindows, "Alle Fenster sind geschlossen.");
+    this._renderEntityList(closedWindowsList, closedWindows, "Keine Fenster sind geschlossen.");
+
+    // --- Handle Motion Sensors ---
+    const allMotionSensors = this._getAllEntitiesByType('motion');
+    const activeMotion = allMotionSensors.filter(id => this._hass.states[id]?.state === 'on');
+    const inactiveMotion = allMotionSensors.filter(id => this._hass.states[id]?.state === 'off');
+
+    const activeMotionList = popup.querySelector('#active-motion-list');
+    const inactiveMotionList = popup.querySelector('#inactive-motion-list');
+
+    this._renderEntityList(activeMotionList, activeMotion, "Keine Bewegung erkannt.");
+    this._renderEntityList(inactiveMotionList, inactiveMotion, "Keine inaktiven Sensoren.");
   }
 
   initializeCard(context) {
