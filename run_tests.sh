@@ -331,7 +331,7 @@ fi
 # Check for direct file access (should be none after our fixes)
 file_access_count=$(grep -r "fetch('/local/dashview/config/" custom_components/dashview/www/ 2>/dev/null | wc -l)
 if [ "$file_access_count" -gt 0 ]; then
-    echo "❌ Error: Found direct file access patterns (Principle 1 violation)"
+    echo "Error: Found direct file access patterns (Principle 1 violation)"
     exit 1
 fi
 
