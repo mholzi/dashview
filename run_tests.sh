@@ -89,6 +89,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🎵 Running Media Player Admin Reversed tests..."
+if node custom_components/dashview/tests/test_media_player_admin_reversed.js > /dev/null; then
+    echo "✅ Media Player Admin Reversed tests passed"
+else
+    echo "❌ Media Player Admin Reversed tests failed"
+    exit 1
+fi
+
 # Run Shadow DOM CSS tests
 echo ""
 echo "🎨 Running Shadow DOM CSS validation tests..."
