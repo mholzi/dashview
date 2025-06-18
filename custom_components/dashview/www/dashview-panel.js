@@ -1074,14 +1074,14 @@ class DashviewPanel extends HTMLElement {
                 }
                 
                 if (targetPopup) {
-                    this.reinitializePopupContent(targetPopup);
+                    await this.reinitializePopupContent(targetPopup);
                 }
             } catch (err) {
                 console.error(`[DashView] Error creating popup for ${popupType}:`, err);
                 const errorContent = `<div class="placeholder">Error loading: ${err.message}</div>`;
                 targetPopup = this.createPopupFromTemplate(popupId, popupType, errorContent);
                 if (targetPopup) {
-                    this.reinitializePopupContent(targetPopup);
+                    await this.reinitializePopupContent(targetPopup);
                 }
             }
         }
@@ -1696,7 +1696,11 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
-  reinitializePopupContent(popup) {
+  async reinitializePopupContent(popup) {
+    if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+
     const closeBtn = popup.querySelector('.popup-close');
     if (closeBtn) {
       closeBtn.onclick = () => this.closePopup();
