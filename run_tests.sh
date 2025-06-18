@@ -208,6 +208,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🖼️  Running Popup Background Transparency tests..."
+if node custom_components/dashview/tests/test_popup_background_transparency.js > /dev/null; then
+    echo "✅ Popup Background Transparency tests passed"
+else
+    echo "❌ Popup Background Transparency tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."
