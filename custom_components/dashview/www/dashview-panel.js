@@ -48,7 +48,20 @@ class DashviewPanel extends HTMLElement {
       'person.markus',
       'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
       'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
-      // Add more entities as needed
+      // Cover entities
+      'cover.rollo_jan_philipp_3',
+      'cover.fenster_felicia_links',
+      'cover.fenster_felicia_rechts',
+      'cover.rollo_frederik_seite_3',
+      'cover.rollo_frederik_balkon_3',
+      'cover.rollo_kinderbad_2',
+      'cover.rollo_aupair_2',
+      'cover.rollo_aupair',
+      'cover.rollo_aupairbad_3',
+      'cover.velux_external_cover_awning_blinds_3',
+      'cover.velux_external_cover_awning_blinds_2',
+      'cover.velux_external_cover_awning_blinds',
+      'cover.rollo_treppenaufgang'
     ];
 
     // Force initial load of entity states if they're not already tracked
@@ -88,7 +101,20 @@ class DashviewPanel extends HTMLElement {
       'person.markus',
       'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
       'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
-      // Add more entities as needed
+      // Cover entities
+      'cover.rollo_jan_philipp_3',
+      'cover.fenster_felicia_links',
+      'cover.fenster_felicia_rechts',
+      'cover.rollo_frederik_seite_3',
+      'cover.rollo_frederik_balkon_3',
+      'cover.rollo_kinderbad_2',
+      'cover.rollo_aupair_2',
+      'cover.rollo_aupair',
+      'cover.rollo_aupairbad_3',
+      'cover.velux_external_cover_awning_blinds_3',
+      'cover.velux_external_cover_awning_blinds_2',
+      'cover.velux_external_cover_awning_blinds',
+      'cover.rollo_treppenaufgang'
     ];
 
     let hasChanges = false;
@@ -135,6 +161,21 @@ class DashviewPanel extends HTMLElement {
         case 'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag':
         case 'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf':
           this.updateTrainDepartureCards(shadow);
+          break;
+        case 'cover.rollo_jan_philipp_3':
+        case 'cover.fenster_felicia_links':
+        case 'cover.fenster_felicia_rechts':
+        case 'cover.rollo_frederik_seite_3':
+        case 'cover.rollo_frederik_balkon_3':
+        case 'cover.rollo_kinderbad_2':
+        case 'cover.rollo_aupair_2':
+        case 'cover.rollo_aupair':
+        case 'cover.rollo_aupairbad_3':
+        case 'cover.velux_external_cover_awning_blinds_3':
+        case 'cover.velux_external_cover_awning_blinds_2':
+        case 'cover.velux_external_cover_awning_blinds':
+        case 'cover.rollo_treppenaufgang':
+          this.updateCoverControls(entityId);
           break;
         default:
           console.log(`[DashView] No specific handler for entity: ${entityId}`);
@@ -222,6 +263,29 @@ class DashviewPanel extends HTMLElement {
     this._headerButtonsUpdateTimer = setTimeout(() => {
       this.updateHeaderButtons(shadow);
     }, 100); // 100ms throttle
+  }
+
+  // Update cover controls when entity states change
+  updateCoverControls(entityId) {
+    // Find all active popups and update cover controls in them
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+
+    const activePopups = shadow.querySelectorAll('.popup.active');
+    activePopups.forEach(popup => {
+      const sliders = popup.querySelectorAll(`.slider[data-entity="${entityId}"]`);
+      sliders.forEach(slider => {
+        const coverState = this._hass.states[entityId];
+        if (coverState) {
+          const position = coverState.attributes.current_position || 0;
+          slider.value = position;
+          const valueDisplay = slider.parentElement.querySelector('.slider-value');
+          if (valueDisplay) {
+            valueDisplay.textContent = Math.floor(position) + '%';
+          }
+        }
+      });
+    });
   }
 
   connectedCallback() {
@@ -1317,6 +1381,10 @@ class DashviewPanel extends HTMLElement {
     if (closeBtn) {
         closeBtn.onclick = () => this.closePopup();
     }
+    
+    // Initialize cover controls
+    this.initializeCoverControls(popup);
+    
     popup.querySelectorAll('.tabs-container').forEach(container => {
         const tabButtons = container.querySelectorAll('.tab-button');
         const tabContents = container.querySelectorAll('.tab-content');
@@ -1344,6 +1412,112 @@ class DashviewPanel extends HTMLElement {
             });
         });
         if(tabButtons.length > 0) tabButtons[0].click();
+    });
+  }
+
+  // Initialize cover controls functionality
+  initializeCoverControls(popup) {
+    if (!popup || !this._hass) return;
+
+    // Handle expand/collapse button
+    const expandButton = popup.querySelector('#expand-covers');
+    const expandedControls = popup.querySelector('#expanded-covers');
+    
+    if (expandButton && expandedControls) {
+      expandButton.addEventListener('click', () => {
+        const isExpanded = expandedControls.style.display !== 'none';
+        expandedControls.style.display = isExpanded ? 'none' : 'block';
+        expandButton.classList.toggle('expanded', !isExpanded);
+      });
+    }
+
+    // Initialize sliders and their values
+    const sliders = popup.querySelectorAll('.slider');
+    sliders.forEach(slider => {
+      const valueDisplay = slider.parentElement.querySelector('.slider-value');
+      const entityId = slider.getAttribute('data-entity');
+      
+      if (entityId && this._hass.states[entityId]) {
+        const coverState = this._hass.states[entityId];
+        const position = coverState.attributes.current_position || 0;
+        slider.value = position;
+        if (valueDisplay) {
+          valueDisplay.textContent = Math.floor(position) + '%';
+        }
+      }
+
+      // Update display when slider moves
+      slider.addEventListener('input', (e) => {
+        if (valueDisplay) {
+          valueDisplay.textContent = Math.floor(e.target.value) + '%';
+        }
+      });
+
+      // Set position when slider is released
+      slider.addEventListener('change', (e) => {
+        const entityId = e.target.getAttribute('data-entity');
+        if (entityId) {
+          this.setCoverPosition(entityId, parseInt(e.target.value));
+        }
+      });
+    });
+
+    // Handle position buttons
+    const positionButtons = popup.querySelectorAll('.position-btn');
+    const mainSlider = popup.querySelector('#main-cover-slider');
+    
+    positionButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const position = parseInt(button.getAttribute('data-position'));
+        const mainEntity = mainSlider ? mainSlider.getAttribute('data-entity') : null;
+        
+        if (mainEntity) {
+          this.setCoverPosition(mainEntity, position);
+          // Update main slider display
+          if (mainSlider) {
+            mainSlider.value = position;
+            const valueDisplay = mainSlider.parentElement.querySelector('.slider-value');
+            if (valueDisplay) {
+              valueDisplay.textContent = position + '%';
+            }
+          }
+        }
+      });
+    });
+
+    // Update cover states periodically
+    this.updateCoverStates(popup);
+  }
+
+  // Set cover position via Home Assistant service call
+  setCoverPosition(entityId, position) {
+    if (!this._hass) return;
+
+    this._hass.callService('cover', 'set_cover_position', {
+      entity_id: entityId,
+      position: position
+    }).catch(error => {
+      console.error(`[DashView] Error setting cover position for ${entityId}:`, error);
+    });
+  }
+
+  // Update cover states from Home Assistant
+  updateCoverStates(popup) {
+    if (!popup || !this._hass) return;
+
+    const sliders = popup.querySelectorAll('.slider[data-entity]');
+    sliders.forEach(slider => {
+      const entityId = slider.getAttribute('data-entity');
+      const coverState = this._hass.states[entityId];
+      
+      if (coverState) {
+        const position = coverState.attributes.current_position || 0;
+        slider.value = position;
+        const valueDisplay = slider.parentElement.querySelector('.slider-value');
+        if (valueDisplay) {
+          valueDisplay.textContent = Math.floor(position) + '%';
+        }
+      }
     });
   }
 
