@@ -1,240 +1,326 @@
-<!-- Media Player Control Panel -->
-<div class="media-container">
+<!-- Tabbed Media Player Control Panel -->
+<div class="music-tab-container media-container">
+    <!-- Tab Header with Title and Room Tabs -->
+    <div class="music-tab-header">
+        <div class="music-title">
+            <i class="mdi mdi-music"></i>
+            <span>Musik</span>
+        </div>
+        <div class="music-room-tabs" id="music-room-tabs">
+            <!-- Room tab chips -->
+            <button class="music-tab-chip active" data-room-id="buero" title="Büro">
+                <i class="mdi-music"></i>
+            </button>
+            <button class="music-tab-chip" data-room-id="wohnzimmer" title="Wohnzimmer">
+                <i class="mdi-music"></i>
+            </button>
+            <button class="music-tab-chip" data-room-id="schlafzimmer" title="Eltern">
+                <i class="mdi-music"></i>
+            </button>
+        </div>
+    </div>
     
-    <!-- Room Media Player Cards -->
-    <div class="media-rooms-container">
+    <!-- Tab Content Area -->
+    <div class="music-tab-content" id="music-tab-content">
         
-        <!-- Büro Media Player -->
-        <div class="media-room-card" data-room="buero">
-            <div class="media-room-header">
-                <i class="mdi mdi-music"></i>
-                <span class="media-room-title">Büro</span>
-            </div>
-            
-            <!-- Preset Buttons -->
-            <div class="media-presets">
-                <button class="media-preset-button" 
-                        data-entity="media_player.echo_buero"
-                        data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
-                        data-content-type="custom">
-                    <span class="preset-name">Dinner Jazz</span>
-                </button>
-                <button class="media-preset-button" 
-                        data-entity="media_player.echo_buero"
-                        data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
-                        data-content-type="custom">
-                    <span class="preset-name">Happy Hits</span>
-                </button>
-                <button class="media-preset-button" 
-                        data-entity="media_player.echo_buero"
-                        data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
-                        data-content-type="custom">
-                    <span class="preset-name">Karneval</span>
-                </button>
-            </div>
-            
-            <!-- Media Display -->
-            <div class="media-display" data-entity="media_player.echo_buero">
-                <div class="media-image">
-                    <img src="" alt="Media Cover" class="media-cover">
+        <!-- Büro Room Content -->
+        <div class="music-room-content active" data-room-id="buero">
+            <div class="media-room-card" data-room="buero">
+                <div class="media-room-header">
+                    <i class="mdi mdi-music"></i>
+                    <span class="media-room-title">Büro</span>
                 </div>
-                <div class="media-info">
-                    <div class="media-title">Kein Titel</div>
-                    <div class="media-artist">Unbekannt</div>
+                
+                <!-- Preset Buttons -->
+                <div class="media-presets">
+                    <button class="media-preset-button" 
+                            data-entity="media_player.echo_buero"
+                            data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+                            data-content-type="custom">
+                        <span class="preset-name">Dinner Jazz</span>
+                    </button>
+                    <button class="media-preset-button" 
+                            data-entity="media_player.echo_buero"
+                            data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
+                            data-content-type="custom">
+                        <span class="preset-name">Happy Hits</span>
+                    </button>
+                    <button class="media-preset-button" 
+                            data-entity="media_player.echo_buero"
+                            data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
+                            data-content-type="custom">
+                        <span class="preset-name">Karneval</span>
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Media Controls -->
-            <div class="media-controls" data-entity="media_player.echo_buero">
-                <button class="media-control-button" data-action="media_previous_track">
-                    <i class="mdi mdi-skip-previous"></i>
-                </button>
-                <button class="media-control-button play-pause" data-action="media_play_pause">
-                    <i class="mdi mdi-play"></i>
-                </button>
-                <button class="media-control-button" data-action="media_next_track">
-                    <i class="mdi mdi-skip-next"></i>
-                </button>
-            </div>
-            
-            <!-- Volume Control -->
-            <div class="media-volume-control">
-                <div class="volume-row">
-                    <span class="volume-label">Büro</span>
-                    <div class="volume-slider-container">
-                        <input type="range" class="volume-slider" 
-                               data-entity="media_player.echo_buero"
-                               min="0" max="100" value="50">
+                
+                <!-- Media Display -->
+                <div class="media-display" data-entity="media_player.echo_buero">
+                    <div class="media-image">
+                        <img src="" alt="Media Cover" class="media-cover">
                     </div>
-                    <span class="volume-value">50%</span>
+                    <div class="media-info">
+                        <div class="media-title">Kein Titel</div>
+                        <div class="media-artist">Unbekannt</div>
+                    </div>
+                </div>
+                
+                <!-- Media Controls -->
+                <div class="media-controls" data-entity="media_player.echo_buero">
+                    <button class="media-control-button" data-action="media_previous_track">
+                        <i class="mdi mdi-skip-previous"></i>
+                    </button>
+                    <button class="media-control-button play-pause" data-action="media_play_pause">
+                        <i class="mdi mdi-play"></i>
+                    </button>
+                    <button class="media-control-button" data-action="media_next_track">
+                        <i class="mdi mdi-skip-next"></i>
+                    </button>
+                </div>
+                
+                <!-- Volume Control -->
+                <div class="media-volume-control">
+                    <div class="volume-row">
+                        <span class="volume-label">Büro</span>
+                        <div class="volume-slider-container">
+                            <input type="range" class="volume-slider" 
+                                   data-entity="media_player.echo_buero"
+                                   min="0" max="100" value="50">
+                        </div>
+                        <span class="volume-value">50%</span>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Wohnzimmer Media Player -->
-        <div class="media-room-card" data-room="wohnzimmer">
-            <div class="media-room-header">
-                <i class="mdi mdi-music"></i>
-                <span class="media-room-title">Wohnzimmer</span>
-            </div>
-            
-            <!-- Preset Buttons -->
-            <div class="media-presets">
-                <button class="media-preset-button" 
-                        data-entity="media_player.unnamed_room"
-                        data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
-                        data-content-type="custom">
-                    <span class="preset-name">Dinner Jazz</span>
-                </button>
-                <button class="media-preset-button" 
-                        data-entity="media_player.unnamed_room"
-                        data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
-                        data-content-type="custom">
-                    <span class="preset-name">Happy Hits</span>
-                </button>
-                <button class="media-preset-button" 
-                        data-entity="media_player.unnamed_room"
-                        data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
-                        data-content-type="custom">
-                    <span class="preset-name">Karneval</span>
-                </button>
-            </div>
-            
-            <!-- Media Display -->
-            <div class="media-display" data-entity="media_player.unnamed_room">
-                <div class="media-image">
-                    <img src="" alt="Media Cover" class="media-cover">
+        <!-- Wohnzimmer Room Content -->
+        <div class="music-room-content" data-room-id="wohnzimmer">
+            <div class="media-room-card" data-room="wohnzimmer">
+                <div class="media-room-header">
+                    <i class="mdi mdi-music"></i>
+                    <span class="media-room-title">Wohnzimmer</span>
                 </div>
-                <div class="media-info">
-                    <div class="media-title">Kein Titel</div>
-                    <div class="media-artist">Unbekannt</div>
+                
+                <!-- Preset Buttons -->
+                <div class="media-presets">
+                    <button class="media-preset-button" 
+                            data-entity="media_player.unnamed_room"
+                            data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+                            data-content-type="custom">
+                        <span class="preset-name">Dinner Jazz</span>
+                    </button>
+                    <button class="media-preset-button" 
+                            data-entity="media_player.unnamed_room"
+                            data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
+                            data-content-type="custom">
+                        <span class="preset-name">Happy Hits</span>
+                    </button>
+                    <button class="media-preset-button" 
+                            data-entity="media_player.unnamed_room"
+                            data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
+                            data-content-type="custom">
+                        <span class="preset-name">Karneval</span>
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Media Controls -->
-            <div class="media-controls" data-entity="media_player.unnamed_room">
-                <button class="media-control-button" data-action="media_previous_track">
-                    <i class="mdi mdi-skip-previous"></i>
-                </button>
-                <button class="media-control-button play-pause" data-action="media_play_pause">
-                    <i class="mdi mdi-play"></i>
-                </button>
-                <button class="media-control-button" data-action="media_next_track">
-                    <i class="mdi mdi-skip-next"></i>
-                </button>
-            </div>
-            
-            <!-- Volume Control -->
-            <div class="media-volume-control">
-                <div class="volume-row">
-                    <span class="volume-label">Esszimmer</span>
-                    <div class="volume-slider-container">
-                        <input type="range" class="volume-slider" 
-                               data-entity="media_player.unnamed_room"
-                               min="0" max="100" value="50">
+                
+                <!-- Media Display -->
+                <div class="media-display" data-entity="media_player.unnamed_room">
+                    <div class="media-image">
+                        <img src="" alt="Media Cover" class="media-cover">
                     </div>
-                    <span class="volume-value">50%</span>
-                </div>
-                <div class="volume-row">
-                    <span class="volume-label">Küche</span>
-                    <div class="volume-slider-container">
-                        <input type="range" class="volume-slider" 
-                               data-entity="media_player.kuche"
-                               min="0" max="100" value="50">
+                    <div class="media-info">
+                        <div class="media-title">Kein Titel</div>
+                        <div class="media-artist">Unbekannt</div>
                     </div>
-                    <span class="volume-value">50%</span>
+                </div>
+                
+                <!-- Media Controls -->
+                <div class="media-controls" data-entity="media_player.unnamed_room">
+                    <button class="media-control-button" data-action="media_previous_track">
+                        <i class="mdi mdi-skip-previous"></i>
+                    </button>
+                    <button class="media-control-button play-pause" data-action="media_play_pause">
+                        <i class="mdi mdi-play"></i>
+                    </button>
+                    <button class="media-control-button" data-action="media_next_track">
+                        <i class="mdi mdi-skip-next"></i>
+                    </button>
+                </div>
+                
+                <!-- Volume Control -->
+                <div class="media-volume-control">
+                    <div class="volume-row">
+                        <span class="volume-label">Esszimmer</span>
+                        <div class="volume-slider-container">
+                            <input type="range" class="volume-slider" 
+                                   data-entity="media_player.unnamed_room"
+                                   min="0" max="100" value="50">
+                        </div>
+                        <span class="volume-value">50%</span>
+                    </div>
+                    <div class="volume-row">
+                        <span class="volume-label">Küche</span>
+                        <div class="volume-slider-container">
+                            <input type="range" class="volume-slider" 
+                                   data-entity="media_player.kuche"
+                                   min="0" max="100" value="50">
+                        </div>
+                        <span class="volume-value">50%</span>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Schlafzimmer (Eltern) Media Player -->
-        <div class="media-room-card" data-room="schlafzimmer">
-            <div class="media-room-header">
-                <i class="mdi mdi-music"></i>
-                <span class="media-room-title">Eltern</span>
-            </div>
-            
-            <!-- Preset Buttons -->
-            <div class="media-presets">
-                <button class="media-preset-button" 
-                        data-entity="media_player.echo_bad"
-                        data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
-                        data-content-type="custom">
-                    <span class="preset-name">Dinner Jazz</span>
-                </button>
-                <button class="media-preset-button" 
-                        data-entity="media_player.echo_bad"
-                        data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
-                        data-content-type="custom">
-                    <span class="preset-name">Happy Hits</span>
-                </button>
-                <button class="media-preset-button" 
-                        data-entity="media_player.echo_bad"
-                        data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
-                        data-content-type="custom">
-                    <span class="preset-name">Karneval</span>
-                </button>
-            </div>
-            
-            <!-- Media Display -->
-            <div class="media-display" data-entity="media_player.echo_bad">
-                <div class="media-image">
-                    <img src="" alt="Media Cover" class="media-cover">
+        <!-- Schlafzimmer Room Content -->
+        <div class="music-room-content" data-room-id="schlafzimmer">
+            <div class="media-room-card" data-room="schlafzimmer">
+                <div class="media-room-header">
+                    <i class="mdi mdi-music"></i>
+                    <span class="media-room-title">Eltern</span>
                 </div>
-                <div class="media-info">
-                    <div class="media-title">Kein Titel</div>
-                    <div class="media-artist">Unbekannt</div>
+                
+                <!-- Preset Buttons -->
+                <div class="media-presets">
+                    <button class="media-preset-button" 
+                            data-entity="media_player.echo_bad"
+                            data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+                            data-content-type="custom">
+                        <span class="preset-name">Dinner Jazz</span>
+                    </button>
+                    <button class="media-preset-button" 
+                            data-entity="media_player.echo_bad"
+                            data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
+                            data-content-type="custom">
+                        <span class="preset-name">Happy Hits</span>
+                    </button>
+                    <button class="media-preset-button" 
+                            data-entity="media_player.echo_bad"
+                            data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
+                            data-content-type="custom">
+                        <span class="preset-name">Karneval</span>
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Media Controls -->
-            <div class="media-controls" data-entity="media_player.echo_bad">
-                <button class="media-control-button" data-action="media_previous_track">
-                    <i class="mdi mdi-skip-previous"></i>
-                </button>
-                <button class="media-control-button play-pause" data-action="media_play_pause">
-                    <i class="mdi mdi-play"></i>
-                </button>
-                <button class="media-control-button" data-action="media_next_track">
-                    <i class="mdi mdi-skip-next"></i>
-                </button>
-            </div>
-            
-            <!-- Volume Control -->
-            <div class="media-volume-control">
-                <div class="volume-row">
-                    <span class="volume-label">Bad</span>
-                    <div class="volume-slider-container">
-                        <input type="range" class="volume-slider" 
-                               data-entity="media_player.echo_bad"
-                               min="0" max="100" value="50">
+                
+                <!-- Media Display -->
+                <div class="media-display" data-entity="media_player.echo_bad">
+                    <div class="media-image">
+                        <img src="" alt="Media Cover" class="media-cover">
                     </div>
-                    <span class="volume-value">50%</span>
+                    <div class="media-info">
+                        <div class="media-title">Kein Titel</div>
+                        <div class="media-artist">Unbekannt</div>
+                    </div>
+                </div>
+                
+                <!-- Media Controls -->
+                <div class="media-controls" data-entity="media_player.echo_bad">
+                    <button class="media-control-button" data-action="media_previous_track">
+                        <i class="mdi mdi-skip-previous"></i>
+                    </button>
+                    <button class="media-control-button play-pause" data-action="media_play_pause">
+                        <i class="mdi mdi-play"></i>
+                    </button>
+                    <button class="media-control-button" data-action="media_next_track">
+                        <i class="mdi mdi-skip-next"></i>
+                    </button>
+                </div>
+                
+                <!-- Volume Control -->
+                <div class="media-volume-control">
+                    <div class="volume-row">
+                        <span class="volume-label">Bad</span>
+                        <div class="volume-slider-container">
+                            <input type="range" class="volume-slider" 
+                                   data-entity="media_player.echo_bad"
+                                   min="0" max="100" value="50">
+                        </div>
+                        <span class="volume-value">50%</span>
+                    </div>
                 </div>
             </div>
         </div>
-        
     </div>
 </div>
 
 <style>
-.media-container {
+.music-tab-container {
     padding: 20px;
     max-height: calc(100vh - 140px);
     overflow-y: auto;
 }
 
-.media-rooms-container {
-    display: flex;
-    flex-direction: column;
+.music-tab-header {
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    align-items: center;
     gap: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.music-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gray1000);
+    white-space: nowrap;
+}
+
+.music-title i {
+    font-size: 20px;
+    color: var(--gray1000);
+}
+
+.music-room-tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.music-tab-chip {
+    padding: 13px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background: var(--gray800);
+    color: var(--gray000);
+}
+
+.music-tab-chip.active {
+    background: var(--active-big);
+    color: var(--gray000);
+}
+
+.music-tab-chip i {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+}
+
+.music-tab-content {
+    display: block;
+}
+
+.music-room-content {
+    display: none;
+}
+
+.music-room-content.active {
+    display: block;
+}
+
+/* Media Player Room Card Styles */
 .media-room-card {
     background: var(--popupBG);
     border-radius: 12px;
     padding: 16px;
-    margin: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -445,3 +531,245 @@
     }
 }
 </style>
+
+<script>
+// Dynamic Music Tab Management with Configuration Integration
+(function() {
+    'use strict';
+    
+    let musicRooms = [];
+    let activeTabId = null;
+    
+    function loadMusicRoomsFromConfig() {
+        // Try to get configuration from parent DashView panel
+        try {
+            const dashviewPanel = document.querySelector('dashview-panel');
+            if (dashviewPanel && dashviewPanel._houseConfig && dashviewPanel._houseConfig.rooms) {
+                const rooms = dashviewPanel._houseConfig.rooms;
+                musicRooms = [];
+                
+                Object.entries(rooms).forEach(([roomId, roomConfig]) => {
+                    if (roomConfig.media_players && Array.isArray(roomConfig.media_players) && roomConfig.media_players.length > 0) {
+                        musicRooms.push({
+                            id: roomId,
+                            name: roomConfig.name || roomId,
+                            icon: roomConfig.icon || 'mdi-music',
+                            mediaPlayers: roomConfig.media_players
+                        });
+                    }
+                });
+                
+                console.log('[DashView] Loaded music rooms from config:', musicRooms);
+                return true;
+            }
+        } catch (error) {
+            console.warn('[DashView] Could not load music rooms from config:', error);
+        }
+        
+        // Fallback to static configuration if dynamic loading fails
+        musicRooms = [
+            {
+                id: 'buero',
+                name: 'Büro',
+                icon: 'mdi-music',
+                mediaPlayers: [{ entity: 'media_player.echo_buero' }]
+            },
+            {
+                id: 'wohnzimmer',
+                name: 'Wohnzimmer',
+                icon: 'mdi-music',
+                mediaPlayers: [
+                    { entity: 'media_player.unnamed_room' },
+                    { entity: 'media_player.kuche' }
+                ]
+            },
+            {
+                id: 'schlafzimmer',
+                name: 'Eltern',
+                icon: 'mdi-music',
+                mediaPlayers: [{ entity: 'media_player.echo_bad' }]
+            }
+        ];
+        
+        console.log('[DashView] Using fallback music rooms configuration');
+        return false;
+    }
+    
+    function updateTabsForConfiguration() {
+        const tabContainer = document.getElementById('music-room-tabs');
+        const contentContainer = document.getElementById('music-tab-content');
+        
+        if (!tabContainer || !contentContainer) {
+            console.warn('[DashView] Music tab containers not found');
+            return;
+        }
+        
+        // Only update if we have different rooms than currently displayed
+        const currentTabs = Array.from(tabContainer.querySelectorAll('.music-tab-chip')).map(t => t.dataset.roomId);
+        const newRoomIds = musicRooms.map(r => r.id);
+        
+        if (JSON.stringify(currentTabs.sort()) === JSON.stringify(newRoomIds.sort())) {
+            // No changes needed, just set up tab switching
+            setupTabSwitching();
+            return;
+        }
+        
+        // Clear existing content
+        tabContainer.innerHTML = '';
+        contentContainer.innerHTML = '';
+        
+        // Generate new tabs and content
+        musicRooms.forEach((room, index) => {
+            // Create tab chip
+            const tabChip = document.createElement('button');
+            tabChip.className = `music-tab-chip ${index === 0 ? 'active' : ''}`;
+            tabChip.dataset.roomId = room.id;
+            tabChip.title = room.name;
+            tabChip.innerHTML = `<i class="${room.icon}"></i>`;
+            tabContainer.appendChild(tabChip);
+            
+            // Create room content
+            const roomContent = document.createElement('div');
+            roomContent.className = `music-room-content ${index === 0 ? 'active' : ''}`;
+            roomContent.dataset.roomId = room.id;
+            roomContent.innerHTML = generateRoomHTML(room);
+            contentContainer.appendChild(roomContent);
+        });
+        
+        // Set first room as active
+        if (musicRooms.length > 0) {
+            activeTabId = musicRooms[0].id;
+        }
+        
+        setupTabSwitching();
+    }
+    
+    function generateRoomHTML(room) {
+        // Generate preset buttons (same for all rooms for now)
+        const presetButtons = room.mediaPlayers.map(player => `
+            <button class="media-preset-button" 
+                    data-entity="${player.entity}"
+                    data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+                    data-content-type="custom">
+                <span class="preset-name">Dinner Jazz</span>
+            </button>
+            <button class="media-preset-button" 
+                    data-entity="${player.entity}"
+                    data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
+                    data-content-type="custom">
+                <span class="preset-name">Happy Hits</span>
+            </button>
+            <button class="media-preset-button" 
+                    data-entity="${player.entity}"
+                    data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
+                    data-content-type="custom">
+                <span class="preset-name">Karneval</span>
+            </button>
+        `).join('');
+        
+        // Generate media displays and controls for each player
+        const mediaPlayerContent = room.mediaPlayers.map((player, index) => `
+            <!-- Media Display -->
+            <div class="media-display" data-entity="${player.entity}">
+                <div class="media-image">
+                    <img src="" alt="Media Cover" class="media-cover">
+                </div>
+                <div class="media-info">
+                    <div class="media-title">Kein Titel</div>
+                    <div class="media-artist">Unbekannt</div>
+                </div>
+            </div>
+            
+            <!-- Media Controls -->
+            <div class="media-controls" data-entity="${player.entity}">
+                <button class="media-control-button" data-action="media_previous_track">
+                    <i class="mdi mdi-skip-previous"></i>
+                </button>
+                <button class="media-control-button play-pause" data-action="media_play_pause">
+                    <i class="mdi mdi-play"></i>
+                </button>
+                <button class="media-control-button" data-action="media_next_track">
+                    <i class="mdi mdi-skip-next"></i>
+                </button>
+            </div>
+            
+            ${index < room.mediaPlayers.length - 1 ? '' : `
+            <!-- Volume Control Section -->
+            <div class="media-volume-control">
+                ${room.mediaPlayers.map(p => `
+                <div class="volume-row">
+                    <span class="volume-label">${room.name}</span>
+                    <div class="volume-slider-container">
+                        <input type="range" class="volume-slider" 
+                               data-entity="${p.entity}"
+                               min="0" max="100" value="50">
+                    </div>
+                    <span class="volume-value">50%</span>
+                </div>
+                `).join('')}
+            </div>
+            `}
+        `).join('');
+        
+        return `
+            <div class="media-room-card" data-room="${room.id}">
+                <div class="media-room-header">
+                    <i class="${room.icon}"></i>
+                    <span class="media-room-title">${room.name}</span>
+                </div>
+                
+                <!-- Preset Buttons -->
+                <div class="media-presets">
+                    ${presetButtons}
+                </div>
+                
+                ${mediaPlayerContent}
+            </div>
+        `;
+    }
+    
+    function setupTabSwitching() {
+        const tabChips = document.querySelectorAll('.music-tab-chip');
+        const roomContents = document.querySelectorAll('.music-room-content');
+        
+        // Add click handlers to tab chips
+        tabChips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                const roomId = this.dataset.roomId;
+                activeTabId = roomId;
+                
+                // Update active tab
+                tabChips.forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update active content
+                roomContents.forEach(content => {
+                    content.classList.toggle('active', content.dataset.roomId === roomId);
+                });
+            });
+        });
+    }
+    
+    function initMusicTabs() {
+        console.log('[DashView] Initializing music tabs');
+        
+        // Load configuration and update UI
+        loadMusicRoomsFromConfig();
+        updateTabsForConfiguration();
+        
+        // Try to reload configuration periodically in case it becomes available later
+        setTimeout(() => {
+            if (loadMusicRoomsFromConfig()) {
+                updateTabsForConfiguration();
+            }
+        }, 1000);
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMusicTabs);
+    } else {
+        initMusicTabs();
+    }
+})();
+</script>
