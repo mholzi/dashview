@@ -16,6 +16,7 @@ function createMockElement(tagName = 'div', id = null) {
         querySelector: () => null,
         querySelectorAll: () => [],
         addEventListener: () => {},
+        removeEventListener: () => {},
         appendChild: function(child) {
             this.options.push(child);
             return child;
@@ -135,6 +136,35 @@ class MockDashViewPanel {
             option.selected = entity.entityId === currentEntity;
             selector.appendChild(option);
         });
+        
+        // Add event listener to update local state on change - Principle 12
+        selector.removeEventListener('change', this._weatherEntityChangeHandler);
+        this._weatherEntityChangeHandler = (e) => {
+            this._adminLocalState.weatherEntity = e.target.value;
+        };
+        selector.addEventListener('change', this._weatherEntityChangeHandler);
+    }
+
+    // Add loadWeatherEntityConfiguration method for testing
+    async loadWeatherEntityConfiguration() {
+        const weatherSelector = createMockElement('select');
+
+        try {
+            // Get all weather entities from Home Assistant
+            const weatherEntities = this._getWeatherEntities();
+            
+            // Load weather entity configuration only once - Principle 12
+            if (!this._adminLocalState.weatherEntity) {
+                this._adminLocalState.weatherEntity = this._getCurrentWeatherEntityId();
+            }
+            
+            // Populate dropdown using local state
+            this._populateWeatherEntityDropdown(weatherSelector, weatherEntities, this._adminLocalState.weatherEntity);
+            
+            console.log('[DashView] Weather entity configuration loaded successfully');
+        } catch (error) {
+            console.error('[DashView] Error loading weather entity configuration:', error);
+        }
     }
 }
 
@@ -221,6 +251,37 @@ class WeatherEntityAdminTests {
         this.assert(selector.options[0].disabled === true, 'Option should be disabled');
     }
 
+    // Test weather entity local state persistence - Principle 12
+    async testWeatherEntityLocalStatePersistence() {
+        console.log('[DashView] Testing weather entity local state persistence...');
+        
+        const panel = new MockDashViewPanel();
+        
+        // Simulate initial load
+        await panel.loadWeatherEntityConfiguration();
+        
+        this.assert(panel._adminLocalState.weatherEntity === 'weather.forecast_home', 'Initial state should be set from sensor');
+        
+        // Simulate user changing dropdown selection
+        const mockSelector = { value: 'weather.openweathermap' };
+        if (panel._weatherEntityChangeHandler) {
+            panel._weatherEntityChangeHandler({ target: mockSelector });
+        }
+        
+        this.assert(panel._adminLocalState.weatherEntity === 'weather.openweathermap', 'Local state should update on user selection');
+        
+        // Simulate tab switching (reloading config) - should NOT reset local state
+        await panel.loadWeatherEntityConfiguration();
+        
+        this.assert(panel._adminLocalState.weatherEntity === 'weather.openweathermap', 'Local state should persist across config reloads');
+        
+        // Simulate explicit reload (user clicks reload button)
+        panel._adminLocalState.weatherEntity = null;
+        await panel.loadWeatherEntityConfiguration();
+        
+        this.assert(panel._adminLocalState.weatherEntity === 'weather.forecast_home', 'Explicit reload should reset to sensor state');
+    }
+
     // Run all tests
     async runAllTests() {
         console.log('[DashView] Starting weather entity admin tests...\n');
@@ -230,6 +291,7 @@ class WeatherEntityAdminTests {
             await this.testGetCurrentWeatherEntity();
             await this.testPopulateWeatherEntityDropdown();
             this.testPopulateDropdownNoEntities();
+            await this.testWeatherEntityLocalStatePersistence();
             
             console.log(`\n[DashView] Weather entity admin tests completed:`);
             console.log(`  Total tests: ${this.testCount}`);
