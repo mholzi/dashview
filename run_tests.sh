@@ -236,6 +236,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🔧 Running Sensor Setup (Fenster, Rauchmelder, Vibration) tests..."
+if node custom_components/dashview/tests/test_sensor_setup_fenster_rauchmelder_vibration.js > /dev/null; then
+    echo "✅ Sensor Setup tests passed"
+else
+    echo "❌ Sensor Setup tests failed"
+    exit 1
+fi
+
 # Run Bottom Navigation Alignment tests
 echo ""
 echo "🧭 Running Bottom Navigation Alignment tests..."
