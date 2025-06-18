@@ -274,10 +274,17 @@ body.popup-open, :host(.popup-open) {
 .bottom-nav {
     position: fixed;
     bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 20px);
-    max-width: 500px;
+    /* The new centering and width mechanism */
+    left: 8px;
+    right: 8px;
+    margin: 0 auto;
+    
+    /* Set width to 100% and let max-width constrain it, just like the main container */
+    width: 100%;
+    max-width: 500px; 
+    box-sizing: border-box; /* Ensures padding is included in the width calculation */
+    
+    /* These properties remain the same */
     background-color: var(--gray100);
     border-radius: 100px;
     padding: 10px;
@@ -292,7 +299,7 @@ body.popup-open, :host(.popup-open) {
     border: none;
     color: var(--gray400);
     cursor: pointer;
-    font-size: 22px; /* MDI icons are font-based - matched to header button size */
+    font-size: 24px; /* MDI icons are font-based - matched to kiosk header button size */
 }
 .nav-button.active {
     color: var(--blue-dark);
