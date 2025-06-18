@@ -208,6 +208,16 @@ else
     exit 1
 fi
 
+# Run Motion Setup Admin tests
+echo ""
+echo "🚶 Running Motion Setup Admin tests..."
+if node custom_components/dashview/tests/test_motion_setup_admin.js > /dev/null; then
+    echo "✅ Motion Setup Admin tests passed"
+else
+    echo "❌ Motion Setup Admin tests failed"
+    exit 1
+fi
+
 # Run Bottom Navigation Alignment tests
 echo ""
 echo "🧭 Running Bottom Navigation Alignment tests..."
@@ -225,7 +235,8 @@ if node custom_components/dashview/tests/test_popup_background_transparency.js >
     echo "✅ Popup Background Transparency tests passed"
 else
     echo "❌ Popup Background Transparency tests failed"
-
+    exit 1
+fi
 
 # Run Room Setup tests
 echo ""
@@ -234,6 +245,8 @@ if node custom_components/dashview/tests/test_room_setup.js > /dev/null; then
     echo "✅ Room Setup tests passed"
 else
     echo "❌ Room Setup tests failed"
+    exit 1
+fi
 
 # Run Configuration Summary tests
 echo ""
@@ -296,12 +309,10 @@ function testConfigSummary() {
 }
 
 process.exit(testConfigSummary() ? 0 : 1);
-
+" > /dev/null; then
     echo "✅ Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"
-
-
     exit 1
 fi
 
