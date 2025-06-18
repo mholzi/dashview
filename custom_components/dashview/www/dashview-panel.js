@@ -19,6 +19,7 @@ class DashviewPanel extends HTMLElement {
     this._entitySubscriptions = new Map();
     this._lastEntityStates = new Map();
     this._watchedEntities = null;
+    this._coverEntities = new Set();
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -85,6 +86,9 @@ class DashviewPanel extends HTMLElement {
       
       // Add room header entities from house configuration
       await this._addRoomHeaderEntities();
+      
+      // Add cover entities from house configuration
+      await this._addCoverEntities();
     }
 
     // Force initial load of entity states if they're not already tracked
@@ -136,6 +140,33 @@ class DashviewPanel extends HTMLElement {
           if (entityConfig.entity) {
             this._watchedEntities.add(entityConfig.entity);
             console.log(`[DashView] Added room header entity: ${entityConfig.entity}`);
+          }
+        });
+      }
+    });
+  }
+
+  // Add cover entities from house configuration
+  async _addCoverEntities() {
+    // Load house configuration if not already loaded
+    if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
+      try {
+        await this.loadConfiguration();
+      } catch (error) {
+        console.warn('[DashView] Could not load house configuration for cover entities:', error);
+        return;
+      }
+    }
+    
+    if (!this._houseConfig || !this._houseConfig.rooms) return;
+    
+    Object.values(this._houseConfig.rooms).forEach(roomConfig => {
+      if (roomConfig.covers && Array.isArray(roomConfig.covers)) {
+        roomConfig.covers.forEach(entityId => {
+          if (entityId.startsWith('cover.')) {
+            this._watchedEntities.add(entityId);
+            this._coverEntities.add(entityId); // Keep a separate set for easy reference
+            console.log(`[DashView] Added cover entity: ${entityId}`);
           }
         });
       }
@@ -228,6 +259,8 @@ class DashviewPanel extends HTMLElement {
           // Check if it's a window sensor
           if (entityId.startsWith('binary_sensor.fenster')) {
             this.updateWindowsSection(shadow);
+          } else if (entityId.startsWith('cover.')) {
+            this.updateCoverCard(shadow, entityId);
           } else if (this._isRoomHeaderEntity(entityId)) {
             this.updateRoomHeaderIcons(shadow);
           } else {
@@ -1523,6 +1556,19 @@ class DashviewPanel extends HTMLElement {
     titleElement.textContent = this.getPopupTitleForType(popupType);
     bodyElement.innerHTML = content;
 
+    // Check if the room has covers and inject the card
+    const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseConfig.rooms[popupType] : null;
+    if (roomConfig && roomConfig.covers && roomConfig.covers.length > 0) {
+        fetch('/local/dashview/templates/room-covers-card.html')
+            .then(response => response.text())
+            .then(html => {
+                const coversContainer = document.createElement('div');
+                coversContainer.innerHTML = html;
+                bodyElement.appendChild(coversContainer);
+                this._initializeCoversCard(popup, popupType, roomConfig.covers);
+            }).catch(err => console.error('[DashView] Error loading covers card template:', err));
+    }
+
     popup.appendChild(templateContent);
     context.appendChild(popup);
     
@@ -2420,6 +2466,99 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error deleting floor: ${error.message}`, 'error');
       console.error('[DashView] Error deleting floor:', error);
+    }
+  }
+
+  // Initialize the covers card with entities and event listeners
+  _initializeCoversCard(popup, roomKey, coverEntities) {
+    const card = popup.querySelector('.covers-card');
+    if (!card) return;
+
+    const mainSlider = card.querySelector('.main-slider');
+    const mainLabel = card.querySelector('.main-position-label');
+    const positionButtons = card.querySelectorAll('.cover-position-buttons button');
+    const individualContainer = card.querySelector('.individual-covers-container');
+    const rowTemplate = card.querySelector('#cover-row-template');
+
+    if (!mainSlider || !individualContainer || !rowTemplate) return;
+
+    const masterEntity = coverEntities[0];
+
+    // Setup main slider
+    mainSlider.addEventListener('input', (e) => {
+        const position = e.target.value;
+        mainLabel.textContent = `${position}%`;
+    });
+    mainSlider.addEventListener('change', (e) => {
+        const position = e.target.value;
+        coverEntities.forEach(entityId => {
+            this._hass.callService('cover', 'set_cover_position', { entity_id: entityId, position: position });
+        });
+    });
+
+    // Setup position buttons
+    positionButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const position = button.dataset.position;
+            coverEntities.forEach(entityId => {
+                this._hass.callService('cover', 'set_cover_position', { entity_id: entityId, position: position });
+            });
+        });
+    });
+
+    // Create individual cover rows
+    individualContainer.innerHTML = ''; // Clear any existing
+    coverEntities.forEach(entityId => {
+        const row = rowTemplate.content.cloneNode(true).querySelector('.cover-row');
+        const nameEl = row.querySelector('.cover-name');
+        const sliderEl = row.querySelector('.cover-slider');
+        const labelEl = row.querySelector('.cover-position-label');
+
+        row.dataset.entityId = entityId;
+
+        const entityState = this._hass.states[entityId];
+        nameEl.textContent = entityState ? entityState.attributes.friendly_name : entityId;
+
+        sliderEl.addEventListener('change', (e) => {
+            this._hass.callService('cover', 'set_cover_position', { entity_id: entityId, position: e.target.value });
+        });
+        sliderEl.addEventListener('input', (e) => {
+            labelEl.textContent = `${e.target.value}%`;
+        });
+        
+        individualContainer.appendChild(row);
+    });
+
+    // Initial update
+    this.updateCoverCard(popup, masterEntity); // Update main slider
+    coverEntities.forEach(entityId => this.updateCoverCard(popup, entityId)); // Update individual rows
+  }
+
+  // Update sliders and labels when a cover's state changes
+  updateCoverCard(shadow, entityId) {
+    if (!this._hass || !entityId.startsWith('cover.')) return;
+
+    const entityState = this._hass.states[entityId];
+    if (!entityState) return;
+    
+    const position = entityState.attributes.current_position ?? 0;
+    const roundedPosition = Math.round(position);
+
+    // Update individual row
+    const row = shadow.querySelector(`.cover-row[data-entity-id="${entityId}"]`);
+    if (row) {
+        const sliderEl = row.querySelector('.cover-slider');
+        const labelEl = row.querySelector('.cover-position-label');
+        if (sliderEl.value != roundedPosition) sliderEl.value = roundedPosition;
+        labelEl.textContent = `${roundedPosition}%`;
+    }
+
+    // Update main slider if this is the master entity
+    const mainSlider = shadow.querySelector('.main-slider');
+    const roomConfig = Object.values(this._houseConfig.rooms).find(r => r.covers && r.covers[0] === entityId);
+    if (mainSlider && roomConfig) {
+        if (mainSlider.value != roundedPosition) mainSlider.value = roundedPosition;
+        shadow.querySelector('.main-position-label').textContent = `${roundedPosition}%`;
     }
   }
 }
