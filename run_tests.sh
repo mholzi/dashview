@@ -71,6 +71,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🎵 Running Media Player Component tests..."
+if node custom_components/dashview/tests/test_media_player_component.js > /dev/null; then
+    echo "✅ Media Player Component tests passed"
+else
+    echo "❌ Media Player Component tests failed"
+    exit 1
+fi
+
 # Run Shadow DOM CSS tests
 echo ""
 echo "🎨 Running Shadow DOM CSS validation tests..."
