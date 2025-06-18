@@ -2361,6 +2361,7 @@ class DashviewPanel extends HTMLElement {
     let buttonsHTML = '';
     const rooms = this._houseConfig.rooms || {};
     const floors = this._houseConfig.floors || {};
+    const floorSensors = this._houseConfig.floor_sensors || {};
 
     // Group rooms by floor
     const roomsByFloor = {};
@@ -2377,7 +2378,8 @@ class DashviewPanel extends HTMLElement {
       const floorConfig = floors[floorKey];
       if (!floorConfig) return;
 
-      const floorSensor = floorConfig.floor_sensor;
+      // Get floor sensor from the floor_sensors mapping, or fall back to floor config
+      const floorSensor = floorSensors[floorKey] || floorConfig.floor_sensor;
       const floorIcon = this._processIconName(floorConfig.icon || 'mdi:help-circle-outline');
       
       // Check if floor sensor is active
@@ -3307,6 +3309,9 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
+    // Store HA rooms data for later use
+    this._adminLocalState.haRooms = haRooms;
+
     const roomsConfig = this._adminLocalState.houseConfig.rooms || {};
     let roomsHTML = '';
 
@@ -3483,24 +3488,35 @@ class DashviewPanel extends HTMLElement {
     const selectedSensor = selector.value;
     const houseConfig = this._adminLocalState.houseConfig;
 
-    // Ensure room exists in config, create if not
-    if (!houseConfig.rooms[roomKey]) {
-      houseConfig.rooms[roomKey] = {
-        friendly_name: roomKey, // Or find a way to get the friendly name
-        icon: 'mdi:home-outline',
-        floor: null // Needs assignment
-      };
-    }
-
-    // Update the sensor for the specific room
-    houseConfig.rooms[roomKey].combined_sensor = selectedSensor;
-
-    this._setStatusMessage(statusElement, `Saving sensor for ${roomKey}...`, 'loading');
-
     try {
+      // Get the HA room data from stored state or fetch if not available
+      let haRoom = null;
+      if (this._adminLocalState.haRooms) {
+        haRoom = this._adminLocalState.haRooms.find(room => room.area_id === roomKey);
+      } else {
+        const haRooms = await this._hass.callApi('GET', 'dashview/config?type=ha_rooms');
+        haRoom = haRooms.find(room => room.area_id === roomKey);
+      }
+      
+      // Ensure room exists in config, create if not
+      if (!houseConfig.rooms[roomKey]) {
+        houseConfig.rooms[roomKey] = {
+          friendly_name: haRoom ? haRoom.name : roomKey,
+          icon: haRoom ? haRoom.icon : 'mdi:home-outline',
+          floor: null, // Needs manual assignment in House Setup
+          lights: [],
+          covers: [],
+          media_players: []
+        };
+      }
+
+      // Update the sensor for the specific room  
+      houseConfig.rooms[roomKey].combined_sensor = selectedSensor;
+
+      this._setStatusMessage(statusElement, `Saving sensor for ${haRoom ? haRoom.name : roomKey}...`, 'loading');
       await this._saveConfigViaAPI('house', houseConfig);
       this._adminLocalState.houseConfig = houseConfig; // Update local state
-      this._setStatusMessage(statusElement, `✓ Sensor for ${roomKey} saved successfully!`, 'success');
+      this._setStatusMessage(statusElement, `✓ Sensor for ${haRoom ? haRoom.name : roomKey} saved successfully!`, 'success');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error saving sensor: ${error.message}`, 'error');
     }
@@ -3549,12 +3565,8 @@ class DashviewPanel extends HTMLElement {
   async loadRoomMediaPlayerMaintenance() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('media-player-status');
-    const roomSelector = shadow.getElementById('room-media-player-selector');
-    const assignmentSection = shadow.getElementById('media-player-assignment-section');
 
-    if (!statusElement || !roomSelector || !assignmentSection) return;
-
-    if (!this._hass) {
+    if (!statusElement || !this._hass) {
       this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
       return;
     }
@@ -3571,33 +3583,15 @@ class DashviewPanel extends HTMLElement {
       this._adminLocalState.houseConfig = houseConfigResponse || { rooms: {}, floors: {} };
       this._adminLocalState.allMediaPlayers = allPlayersResponse || [];
 
-      // Populate the room selector dropdown
-      roomSelector.innerHTML = '<option value="">-- Select a Room --</option>';
-      for (const [roomKey, roomConfig] of Object.entries(this._adminLocalState.houseConfig.rooms)) {
-        const option = document.createElement('option');
-        option.value = roomKey;
-        option.textContent = roomConfig.friendly_name || roomKey;
-        roomSelector.appendChild(option);
-      }
+      // Render the new UI
+      this._renderMediaPlayerAssignments();
 
-      // Add event listener for room selection
-      roomSelector.onchange = (e) => {
-        const roomKey = e.target.value;
-        if (roomKey) {
-          this._displayRoomMediaPlayers(roomKey);
-          assignmentSection.style.display = 'block';
-        } else {
-          assignmentSection.style.display = 'none';
-        }
-      };
-
-      // Add event listener for save button
-      shadow.getElementById('save-room-media-players').onclick = () => {
-        const selectedRoom = roomSelector.value;
-        if (selectedRoom) this.saveRoomMediaPlayers(selectedRoom);
+      // Add event listener for the new save button
+      shadow.getElementById('save-all-media-assignments').onclick = () => {
+        this.saveAllMediaPlayerAssignments();
       };
       
-      // Add event listener for reload button
+      // Keep reload button functionality
       shadow.getElementById('reload-media-players').onclick = () => this.loadRoomMediaPlayerMaintenance();
 
       this._setStatusMessage(statusElement, '✓ Ready', 'success');
@@ -3606,63 +3600,95 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
-  _displayRoomMediaPlayers(roomKey) {
+  _renderMediaPlayerAssignments() {
     const shadow = this.shadowRoot;
-    const room = this._adminLocalState.houseConfig.rooms[roomKey];
-    if (!room) return;
+    const container = shadow.getElementById('media-player-assignment-list');
+    const rooms = this._adminLocalState.houseConfig.rooms || {};
+    const allPlayers = this._adminLocalState.allMediaPlayers || [];
 
-    shadow.getElementById('selected-room-name').textContent = room.friendly_name || roomKey;
-    const assignedContainer = shadow.getElementById('assigned-media-players');
-    const availableContainer = shadow.getElementById('available-media-players');
+    if (!container) return;
+    container.innerHTML = ''; // Clear previous content
 
-    assignedContainer.innerHTML = '';
-    availableContainer.innerHTML = '';
+    // Create a reverse map to easily find which room a player is in
+    const playerToRoomMap = new Map();
+    for (const [roomKey, roomConfig] of Object.entries(rooms)) {
+        (roomConfig.media_players || []).forEach(player => {
+            playerToRoomMap.set(player.entity, roomKey);
+        });
+    }
 
-    const assignedIds = new Set((room.media_players || []).map(p => p.entity));
+    // Create a dropdown option for each room
+    const roomOptions = Object.entries(rooms).map(([roomKey, roomConfig]) => 
+        `<option value="${roomKey}">${roomConfig.friendly_name || roomKey}</option>`
+    ).join('');
 
-    (this._adminLocalState.allMediaPlayers || []).forEach(player => {
-      const isAssigned = assignedIds.has(player.entity_id);
-      const container = isAssigned ? assignedContainer : availableContainer;
-      
-      const item = document.createElement('div');
-      item.className = 'entity-list-item';
-      item.innerHTML = `
-        <span>${player.friendly_name} (${player.entity_id})</span>
-        <button class="action-button" data-entity-id="${player.entity_id}" data-action="${isAssigned ? 'remove' : 'add'}">
-          ${isAssigned ? 'Remove' : 'Add'}
-        </button>
-      `;
-      container.appendChild(item);
-    });
-
-    // Add click handlers for Add/Remove buttons
-    shadow.querySelectorAll('#media-player-assignment-section .action-button').forEach(button => {
-      button.onclick = (e) => {
-        const entityId = e.target.dataset.entityId;
-        const action = e.target.dataset.action;
-        let players = room.media_players || [];
-
-        if (action === 'add') {
-          players.push({ entity: entityId });
-        } else {
-          players = players.filter(p => p.entity !== entityId);
+    // Generate a row for each available media player
+    allPlayers.forEach(player => {
+        const assignedRoomKey = playerToRoomMap.get(player.entity_id) || '';
+        
+        const item = document.createElement('div');
+        item.className = 'floor-item'; // Re-using existing style for consistency
+        item.innerHTML = `
+            <div class="floor-info">
+                <div class="floor-name">${player.friendly_name}</div>
+                <div class="floor-details">${player.entity_id}</div>
+            </div>
+            <div class="setting-row">
+                <select class="dropdown-selector player-room-selector" data-entity-id="${player.entity_id}">
+                    <option value="">-- Unassigned --</option>
+                    ${roomOptions}
+                </select>
+            </div>
+        `;
+        
+        // Set the currently assigned room as selected in the dropdown
+        const selector = item.querySelector('.player-room-selector');
+        if (selector) {
+            selector.value = assignedRoomKey;
         }
-        this._adminLocalState.houseConfig.rooms[roomKey].media_players = players;
-        this._displayRoomMediaPlayers(roomKey); // Re-render the lists
-      };
+
+        container.appendChild(item);
     });
   }
 
-  async saveRoomMediaPlayers(roomKey) {
+  async saveAllMediaPlayerAssignments() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('media-player-status');
-    this._setStatusMessage(statusElement, 'Saving media player assignments...', 'loading');
+    this._setStatusMessage(statusElement, 'Saving all media player assignments...', 'loading');
 
+    const houseConfig = this._adminLocalState.houseConfig;
+
+    // 1. Clear all existing media player assignments from all rooms
+    for (const roomKey in houseConfig.rooms) {
+        if (houseConfig.rooms[roomKey].media_players) {
+            houseConfig.rooms[roomKey].media_players = [];
+        }
+    }
+
+    // 2. Iterate through the UI and rebuild the assignments
+    const selectors = shadow.querySelectorAll('.player-room-selector');
+    selectors.forEach(selector => {
+        const entityId = selector.dataset.entityId;
+        const roomKey = selector.value;
+
+        // If a room is selected (i.e., not "Unassigned")
+        if (roomKey && houseConfig.rooms[roomKey]) {
+            // Ensure the media_players array exists
+            if (!houseConfig.rooms[roomKey].media_players) {
+                houseConfig.rooms[roomKey].media_players = [];
+            }
+            // Add the player to the selected room
+            houseConfig.rooms[roomKey].media_players.push({ entity: entityId });
+        }
+    });
+
+    // 3. Save the entire updated houseConfig
     try {
-      await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
-      this._setStatusMessage(statusElement, `✓ Assignments for ${roomKey} saved!`, 'success');
+        await this._hass.callApi('POST', 'dashview/config', houseConfig);
+        this._adminLocalState.houseConfig = houseConfig; // Update local state
+        this._setStatusMessage(statusElement, '✓ All assignments saved successfully!', 'success');
     } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error saving: ${error.message}`, 'error');
+        this._setStatusMessage(statusElement, `✗ Error saving assignments: ${error.message}`, 'error');
     }
   }
 
