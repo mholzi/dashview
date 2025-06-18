@@ -1456,6 +1456,12 @@ class DashviewPanel extends HTMLElement {
   
   // Popup icon mapping for different popup types
   getPopupIconForType(popupType) {
+    // For rooms, the icon MUST come from the house config - Principle 13
+    if (this._houseConfig && this._houseConfig.rooms && this._houseConfig.rooms[popupType]) {
+      return this._processIconName(this._houseConfig.rooms[popupType].icon);
+    }
+
+    // Keep a fallback map ONLY for non-room popups (e.g., system views)
     const iconMap = {
       'security': 'mdi-security',
       'weather': 'mdi-weather-partly-cloudy',
@@ -1463,22 +1469,19 @@ class DashviewPanel extends HTMLElement {
       'admin': 'mdi-cog',
       'calendar': 'mdi-calendar',
       'settings': 'mdi-cog',
-      'bahn': 'mdi-train',
-      // Room icons
-      'buero': 'mdi-briefcase',
-      'wohnzimmer': 'mdi-sofa',
-      'kueche': 'mdi-stove',
-      'kinderzimmer': 'mdi-toy-brick',
-      'gaesteklo': 'mdi-toilet',
-      'eingang': 'mdi-door',
-      'aupair': 'mdi-account',
-      'elternbereich': 'mdi-bed'
+      'bahn': 'mdi-train'
     };
     return iconMap[popupType] || 'mdi-help-circle';
   }
 
   // Get popup title for different popup types
   getPopupTitleForType(popupType) {
+    // For rooms, the title MUST come from the house config - Principle 13
+    if (this._houseConfig && this._houseConfig.rooms && this._houseConfig.rooms[popupType]) {
+      return this._houseConfig.rooms[popupType].friendly_name;
+    }
+
+    // Keep a fallback map ONLY for non-room popups (e.g., system views)
     const titleMap = {
       'security': 'Sicherheit',
       'weather': 'Wetter',
@@ -1486,16 +1489,7 @@ class DashviewPanel extends HTMLElement {
       'admin': 'Admin View',
       'calendar': 'Kalender',
       'settings': 'Einstellungen',
-      'bahn': 'Bahn',
-      // Room titles
-      'buero': 'Büro',
-      'wohnzimmer': 'Wohnzimmer',
-      'kueche': 'Küche',
-      'kinderzimmer': 'Kinderzimmer',
-      'gaesteklo': 'Gästeklo',
-      'eingang': 'Eingang',
-      'aupair': 'Aupair',
-      'elternbereich': 'Elternbereich'
+      'bahn': 'Bahn'
     };
     return titleMap[popupType] || popupType.charAt(0).toUpperCase() + popupType.slice(1);
   }
