@@ -114,11 +114,29 @@ class DashViewConfigView(HomeAssistantView):
                     "friendly_name": entity.name or entity.entity_id
                 })
             data = sorted(media_players, key=lambda p: p["friendly_name"])
+        elif config_type == "ha_floors":
+            # Fetch floors from Home Assistant floor registry
+            try:
+                # Use the proper Home Assistant API for floor registry
+                from homeassistant.helpers import floor_registry as fr
+                floor_registry = fr.async_get(self._hass)
+                floors = []
+                for floor in floor_registry.floors.values():
+                    floors.append({
+                        "floor_id": floor.floor_id,
+                        "name": floor.name,
+                        "icon": floor.icon or "mdi:home",
+                        "level": getattr(floor, 'level', None)
+                    })
+                data = floors
+            except Exception as e:
+                _LOGGER.warning("Error fetching floors from Home Assistant registry: %s", e)
+                data = []
         elif config_type is None:
             # Return the full house_config when no type is specified
             data = config_data.get("house_config", {})
         else:
-            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players")
+            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players, ha_floors")
         
         return self.json(data)
     
