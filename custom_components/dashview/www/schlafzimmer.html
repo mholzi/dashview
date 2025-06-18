@@ -1,0 +1,58 @@
+<div class="room-container">
+    <div class="room-header">
+        <h2>Schlafzimmer</h2>
+        <i class="mdi mdi-bed-double room-icon"></i>
+    </div>
+    
+    <div class="covers-card" data-room="schlafzimmer">
+        <div class="cover-card-header">
+            <div class="cover-card-title">
+                <i class="mdi mdi-window-shutter-open"></i>
+                <span>Rollos</span>
+            </div>
+            <div class="cover-main-controls">
+                <div class="cover-position-slider">
+                    <input type="range" min="0" max="100" value="0" class="slider" id="main-cover-slider" data-entity="cover.velux_external_cover_awning_blinds">
+                    <div class="slider-value">0%</div>
+                </div>
+            </div>
+            <button class="expand-button" id="expand-covers">
+                <i class="mdi mdi-chevron-down"></i>
+            </button>
+        </div>
+        
+        <div class="cover-quick-controls">
+            <button class="position-btn" data-position="0">0%</button>
+            <button class="position-btn" data-position="25">25%</button>
+            <button class="position-btn" data-position="50">50%</button>
+            <button class="position-btn" data-position="75">75%</button>
+            <button class="position-btn" data-position="100">100%</button>
+        </div>
+        
+        <div class="cover-expanded-controls" id="expanded-covers" style="display: none;">
+            <div class="individual-cover" data-entity="cover.velux_external_cover_awning_blinds">
+                <div class="cover-name">Velux Blinds 1</div>
+                <div class="cover-control">
+                    <input type="range" min="0" max="100" value="0" class="slider individual-slider" data-entity="cover.velux_external_cover_awning_blinds">
+                    <div class="slider-value">0%</div>
+                </div>
+            </div>
+            
+            <div class="individual-cover" data-entity="cover.velux_external_cover_awning_blinds_2">
+                <div class="cover-name">Velux Blinds 2</div>
+                <div class="cover-control">
+                    <input type="range" min="0" max="100" value="0" class="slider individual-slider" data-entity="cover.velux_external_cover_awning_blinds_2">
+                    <div class="slider-value">0%</div>
+                </div>
+            </div>
+            
+            <div class="individual-cover" data-entity="cover.velux_external_cover_awning_blinds_3">
+                <div class="cover-name">Velux Blinds 3</div>
+                <div class="cover-control">
+                    <input type="range" min="0" max="100" value="0" class="slider individual-slider" data-entity="cover.velux_external_cover_awning_blinds_3">
+                    <div class="slider-value">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

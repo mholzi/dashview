@@ -55,6 +55,26 @@ else
     exit 1
 fi
 
+# Run Cover Card tests
+echo ""
+echo "🏠 Running Cover Card tests..."
+if node custom_components/dashview/tests/test_cover_cards.js > /dev/null; then
+    echo "✅ Cover Card tests passed"
+else
+    echo "❌ Cover Card tests failed"
+    exit 1
+fi
+
+# Run Cover Entity Mapping tests
+echo ""
+echo "🔗 Running Cover Entity Mapping tests..."
+if node custom_components/dashview/tests/test_cover_entity_mapping.js > /dev/null; then
+    echo "✅ Cover Entity Mapping tests passed"
+else
+    echo "❌ Cover Entity Mapping tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."

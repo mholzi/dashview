@@ -39,6 +39,22 @@ class DashviewPanel extends HTMLElement {
     this._checkEntityChanges();
   }
 
+  // Get all cover entities from configuration - Principle 1 & 5
+  _getAllCoverEntities() {
+    const coverEntities = [];
+    
+    // Get covers from house configuration loaded from API
+    if (this._houseConfig && this._houseConfig.rooms) {
+      Object.values(this._houseConfig.rooms).forEach(room => {
+        if (room.covers && Array.isArray(room.covers)) {
+          coverEntities.push(...room.covers);
+        }
+      });
+    }
+    
+    return [...new Set(coverEntities)]; // Remove duplicates
+  }
+
   // Ensure initial entity states are properly loaded - Issue #34 fix
   _ensureInitialEntityStates() {
     if (!this._hass) return;
@@ -80,6 +96,12 @@ class DashviewPanel extends HTMLElement {
         if (entityId.startsWith('binary_sensor.fenster')) {
           this._watchedEntities.add(entityId);
         }
+      });
+      
+      // Add cover entities from configuration - Principle 1 & 5
+      const coverEntities = this._getAllCoverEntities();
+      coverEntities.forEach(entityId => {
+        this._watchedEntities.add(entityId);
       });
     }
 
@@ -195,8 +217,13 @@ class DashviewPanel extends HTMLElement {
           this.updatePollenCard(shadow);
           break;
         default:
+          // Check if it's a cover entity
+          const coverEntities = this._getAllCoverEntities();
+          if (coverEntities.includes(entityId)) {
+            this.updateCoverControls(entityId);
+          }
           // Check if it's a window sensor
-          if (entityId.startsWith('binary_sensor.fenster')) {
+          else if (entityId.startsWith('binary_sensor.fenster')) {
             this.updateWindowsSection(shadow);
           } else {
             console.log(`[DashView] No specific handler for entity: ${entityId}`);
@@ -416,6 +443,15 @@ class DashviewPanel extends HTMLElement {
       } catch (error) {
         console.warn('[DashView] Non-critical error in updateTrainDepartureCards:', error);
         // Continue with content loading even if train cards fail
+      }
+
+      // Load configuration before enabling entity watching - addresses timing issue from PR comments
+      try {
+        await this.loadConfiguration();
+        console.log('[DashView] Configuration loaded before entity watching initialization');
+      } catch (error) {
+        console.warn('[DashView] Non-critical error loading configuration:', error);
+        // Continue even if configuration loading fails
       }
 
       // Always set content ready to ensure entity loading works
@@ -889,6 +925,136 @@ class DashviewPanel extends HTMLElement {
       batteryLevelElement.style.display = 'none';
       batterySuffixElement.style.display = 'none';
     }
+  }
+
+  // Update cover controls when entity states change - Principle 3
+  updateCoverControls(entityId) {
+    // Find all active popups and update cover controls in them
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+
+    const activePopups = shadow.querySelectorAll('.popup.active');
+    activePopups.forEach(popup => {
+      const sliders = popup.querySelectorAll(`.slider[data-entity="${entityId}"]`);
+      sliders.forEach(slider => {
+        const coverState = this._hass.states[entityId];
+        if (coverState) {
+          const position = coverState.attributes.current_position || 0;
+          slider.value = position;
+          const valueDisplay = slider.parentElement.querySelector('.slider-value');
+          if (valueDisplay) {
+            valueDisplay.textContent = Math.floor(position) + '%';
+          }
+        }
+      });
+    });
+  }
+
+  // Set cover position via Home Assistant service call - Principle 5
+  setCoverPosition(entityId, position) {
+    if (!this._hass) return;
+
+    console.log(`[DashView] Setting cover ${entityId} to position ${position}%`);
+    this._hass.callService('cover', 'set_cover_position', {
+      entity_id: entityId,
+      position: position
+    }).catch(error => {
+      console.error(`[DashView] Error setting cover position for ${entityId}:`, error);
+    });
+  }
+
+  // Update cover states from Home Assistant - Principle 3
+  updateCoverStates(popup) {
+    if (!popup || !this._hass) return;
+
+    const sliders = popup.querySelectorAll('.slider[data-entity]');
+    sliders.forEach(slider => {
+      const entityId = slider.getAttribute('data-entity');
+      const coverState = this._hass.states[entityId];
+      
+      if (coverState) {
+        const position = coverState.attributes.current_position || 0;
+        slider.value = position;
+        const valueDisplay = slider.parentElement.querySelector('.slider-value');
+        if (valueDisplay) {
+          valueDisplay.textContent = Math.floor(position) + '%';
+        }
+      }
+    });
+  }
+
+  // Initialize cover controls functionality - Principle 3
+  initializeCoverControls(popup) {
+    if (!popup || !this._hass) return;
+
+    // Handle expand/collapse button
+    const expandButton = popup.querySelector('#expand-covers');
+    const expandedControls = popup.querySelector('#expanded-covers');
+    
+    if (expandButton && expandedControls) {
+      expandButton.addEventListener('click', () => {
+        const isExpanded = expandedControls.style.display !== 'none';
+        expandedControls.style.display = isExpanded ? 'none' : 'block';
+        expandButton.classList.toggle('expanded', !isExpanded);
+      });
+    }
+
+    // Initialize sliders and their values
+    const sliders = popup.querySelectorAll('.slider');
+    sliders.forEach(slider => {
+      const valueDisplay = slider.parentElement.querySelector('.slider-value');
+      const entityId = slider.getAttribute('data-entity');
+      
+      if (entityId && this._hass.states[entityId]) {
+        const coverState = this._hass.states[entityId];
+        const position = coverState.attributes.current_position || 0;
+        slider.value = position;
+        if (valueDisplay) {
+          valueDisplay.textContent = Math.floor(position) + '%';
+        }
+      }
+
+      // Update display when slider moves
+      slider.addEventListener('input', (e) => {
+        if (valueDisplay) {
+          valueDisplay.textContent = Math.floor(e.target.value) + '%';
+        }
+      });
+
+      // Set position when slider is released
+      slider.addEventListener('change', (e) => {
+        const entityId = e.target.getAttribute('data-entity');
+        if (entityId) {
+          this.setCoverPosition(entityId, parseInt(e.target.value));
+        }
+      });
+    });
+
+    // Handle position buttons
+    const positionButtons = popup.querySelectorAll('.position-btn');
+    const mainSlider = popup.querySelector('#main-cover-slider');
+    
+    positionButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const position = parseInt(button.getAttribute('data-position'));
+        const mainEntity = mainSlider ? mainSlider.getAttribute('data-entity') : null;
+        
+        if (mainEntity) {
+          this.setCoverPosition(mainEntity, position);
+          // Update main slider display
+          if (mainSlider) {
+            mainSlider.value = position;
+            const valueDisplay = mainSlider.parentElement.querySelector('.slider-value');
+            if (valueDisplay) {
+              valueDisplay.textContent = position + '%';
+            }
+          }
+        }
+      });
+    });
+
+    // Update cover states periodically
+    this.updateCoverStates(popup);
   }
 
   // Helper method to check if a value is a number
@@ -1390,6 +1556,10 @@ class DashviewPanel extends HTMLElement {
     if (closeBtn) {
         closeBtn.onclick = () => this.closePopup();
     }
+    
+    // Initialize cover controls for room popups - Principle 3
+    this.initializeCoverControls(popup);
+    
     popup.querySelectorAll('.tabs-container').forEach(container => {
         const tabButtons = container.querySelectorAll('.tab-button');
         const tabContents = container.querySelectorAll('.tab-content');
