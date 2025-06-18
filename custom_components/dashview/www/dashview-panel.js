@@ -396,6 +396,9 @@ class DashviewPanel extends HTMLElement {
         // Continue with content loading even if train cards fail
       }
 
+      // Load configuration before enabling entity watching
+      await this.loadConfiguration();
+      
       // Always set content ready to ensure entity loading works
       this._contentReady = true;
       if (this._hass) {
@@ -2019,6 +2022,8 @@ class DashviewPanel extends HTMLElement {
       this._houseConfig = configData;
       if (this._hass) {
         this.updateHeaderButtons(shadow);
+        // Re-initialize entity watching with new cover entities
+        this._handleHassUpdate();
       }
 
     } catch (error) {
