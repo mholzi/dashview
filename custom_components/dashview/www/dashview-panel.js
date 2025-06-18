@@ -421,7 +421,7 @@ class DashviewPanel extends HTMLElement {
 
         /* Default to light mode variables */
         --background: #f5f7fa;
-        --popupBG: #fafbfc;
+        --popupBG: rgba(250, 251, 252, 0.3);
         --highlight: rgba(40, 40, 42, 0.05);
         --highlight-active: rgba(250, 251, 252, 0.1);
         
@@ -470,7 +470,7 @@ class DashviewPanel extends HTMLElement {
       @media (prefers-color-scheme: dark) {
         :host, :root {
           --background: #28282A;
-          --popupBG: #28282A;
+          --popupBG: rgba(40, 40, 42, 0.3);
           --highlight: rgba(250, 251, 252, 0.05);
           --highlight-active: rgba(40, 40, 42, 0.1);
           

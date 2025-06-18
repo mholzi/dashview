@@ -209,6 +209,14 @@ else
 fi
 
 
+echo ""
+echo "🖼️  Running Popup Background Transparency tests..."
+if node custom_components/dashview/tests/test_popup_background_transparency.js > /dev/null; then
+    echo "✅ Popup Background Transparency tests passed"
+else
+    echo "❌ Popup Background Transparency tests failed"
+
+
 # Run Room Setup tests
 echo ""
 echo "🏠 Running Room Setup tests..."
@@ -282,6 +290,7 @@ process.exit(testConfigSummary() ? 0 : 1);
     echo "✅ Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"
+
 
     exit 1
 fi
