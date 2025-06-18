@@ -1156,6 +1156,61 @@ body.popup-open, :host(.popup-open) {
     background: var(--green);
 }
 
+/* --- Room Header Entities for Popups --- */
+.room-header-entities {
+    margin-bottom: 12px;
+}
+
+.header-entities-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.header-entities-container::-webkit-scrollbar {
+    display: none;
+}
+
+.header-info-chip {
+    display: flex;
+    align-items: center;
+    height: 42px;
+    padding: 4px;
+    border-radius: 12px;
+    min-width: 0;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.chip-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: var(--gray800);
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.chip-icon-container i {
+    width: 22px;
+    font-size: 22px;
+}
+
+.chip-name {
+    font-size: 13px;
+    white-space: normal;
+    overflow: visible;
+    padding-right: 6px;
+}
+
 /* --- Covers Card --- */
 .covers-card {
     margin: 8px 0;

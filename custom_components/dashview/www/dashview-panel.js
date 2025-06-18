@@ -305,7 +305,9 @@ class DashviewPanel extends HTMLElement {
           } else if (entityId.startsWith('media_player.')) {
             this.updateMediaPlayerInPopups(shadow, entityId);
           } else if (this._isRoomHeaderEntity(entityId)) {
+            // Update room header icons in both main screen and active room popups
             this.updateRoomHeaderIcons(shadow);
+            this.updateRoomHeaderEntitiesInPopups(shadow, entityId);
           } else {
             console.log(`[DashView] No specific handler for entity: ${entityId}`);
           }
@@ -1510,6 +1512,42 @@ class DashviewPanel extends HTMLElement {
     const roomCardsHTML = this._generateRoomHeaderCards();
     roomHeaderIconsContainer.innerHTML = roomCardsHTML;
   }
+
+  // Update room header entities in active popups
+  updateRoomHeaderEntitiesInPopups(shadow, changedEntityId) {
+    if (!this._houseConfig || !this._houseConfig.rooms) return;
+
+    // Find which room the entity belongs to
+    let roomKey = null;
+    Object.entries(this._houseConfig.rooms).forEach(([key, roomConfig]) => {
+      if (roomConfig.header_entities && roomConfig.header_entities.some(e => e.entity === changedEntityId)) {
+        roomKey = key;
+      }
+    });
+
+    if (!roomKey) return;
+
+    // Check if the room popup is currently active
+    const roomPopup = shadow.querySelector(`#${roomKey}-popup`);
+    if (roomPopup && roomPopup.classList.contains('active')) {
+      // Re-render the room header entities in this popup
+      const roomConfig = this._houseConfig.rooms[roomKey];
+      const roomHeaderEntitiesHTML = this._generateRoomHeaderEntitiesForPopup(roomConfig);
+      
+      const existingContainer = roomPopup.querySelector('.room-header-entities');
+      if (existingContainer) {
+        existingContainer.outerHTML = roomHeaderEntitiesHTML || '';
+      } else if (roomHeaderEntitiesHTML) {
+        // Add as first child of popup body
+        const popupBody = roomPopup.querySelector('.popup-body');
+        if (popupBody) {
+          const container = document.createElement('div');
+          container.innerHTML = roomHeaderEntitiesHTML;
+          popupBody.insertBefore(container, popupBody.firstChild);
+        }
+      }
+    }
+  }
   
   // Generate room header cards for active rooms
   _generateRoomHeaderCards() {
@@ -1577,6 +1615,54 @@ class DashviewPanel extends HTMLElement {
       `;
     }).join('');
   }
+
+  // Generate room header entities for popup using the new format specification
+  _generateRoomHeaderEntitiesForPopup(roomConfig) {
+    if (!roomConfig.header_entities || !Array.isArray(roomConfig.header_entities)) {
+      return '';
+    }
+
+    // Filter to only show active/relevant entities based on display logic
+    const activeEntities = roomConfig.header_entities.filter(entityConfig => {
+      const entity = this._hass.states[entityConfig.entity];
+      if (!entity) return false;
+      
+      return this._shouldDisplayHeaderEntity(entity, entityConfig.entity_type);
+    });
+
+    if (activeEntities.length === 0) {
+      return '';
+    }
+
+    // Generate the horizontal stack of entity cards
+    const entityCards = activeEntities.map(entityConfig => {
+      const entity = this._hass.states[entityConfig.entity];
+      const name = this._getHeaderEntityName(entity, entityConfig.entity_type);
+      const icon = this._getHeaderEntityIcon(entity, entityConfig.entity_type);
+      const backgroundColor = this._getHeaderEntityBackground(entity, entityConfig.entity_type);
+      const textColor = this._getHeaderEntityTextColor(entity, entityConfig.entity_type);
+
+      return `
+        <div class="header-info-chip" 
+             data-entity="${entityConfig.entity}" 
+             data-type="${entityConfig.entity_type}"
+             style="background: ${backgroundColor};">
+          <div class="chip-icon-container">
+            <i class="mdi ${icon}" style="color: var(--gray000);"></i>
+          </div>
+          <div class="chip-name" style="color: ${textColor};">${name}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="room-header-entities">
+        <div class="header-entities-container">
+          ${entityCards}
+        </div>
+      </div>
+    `;
+  }
   
   // Get icon for entity type
   _getIconForEntityType(entityType) {
@@ -1622,6 +1708,145 @@ class DashviewPanel extends HTMLElement {
       default:
         return entity.state === 'on' ? 'active' : 'inactive';
     }
+  }
+
+  // Determine if header entity should be displayed based on the template logic
+  _shouldDisplayHeaderEntity(entity, entityType) {
+    if (!entity) return false;
+
+    const state = entity.state;
+    
+    switch (entityType) {
+      case 'motion':
+        return true; // Always show motion sensors
+      case 'music':
+      case 'tv':
+        return state === 'playing';
+      case 'freezer':
+        // Check for alarm states
+        const doorAlarm = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+        const tempAlarm = this._hass.states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+        return (doorAlarm === 'present' || tempAlarm === 'present');
+      case 'mower':
+        const error = entity.attributes?.error;
+        return ['cleaning', 'error'].includes(state) && error !== 'OFF_DISABLED';
+      default:
+        return state === 'on';
+    }
+  }
+
+  // Get display name for header entity based on template logic
+  _getHeaderEntityName(entity, entityType) {
+    if (!entity) return '–';
+
+    switch (entityType) {
+      case 'dishwasher':
+        const remaining = this._hass.states['sensor.geschirrspuler_remaining_program_time'];
+        if (!remaining || !remaining.state || ['unknown', 'unavailable'].includes(remaining.state)) {
+          return 'Unknown';
+        }
+        const end = new Date(remaining.state).getTime();
+        const now = new Date().getTime();
+        const diffMin = Math.round((end - now) / 60000);
+        return diffMin > 0 ? `in ${diffMin}m` : 'Ready';
+
+      case 'motion':
+        const lastChanged = new Date(entity.last_changed);
+        const currentTime = new Date();
+        const diffSec = Math.floor((currentTime - lastChanged) / 1000);
+        if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+        if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+        return `${Math.floor(diffSec / 86400)}d ago`;
+
+      case 'mower':
+        const state = entity.state;
+        const error = entity.attributes?.error;
+
+        const errorMessages = {
+          'Wheel motor blocked': 'Radmotor blockiert',
+          'Wheel motor overloaded': 'Radmotor überlastet',
+          'Cutting system blocked': 'Mähwerk blockiert',
+          'No loop signal': 'Kein Schleifensignal',
+          'Upside down': 'Mäher umgekippt',
+          'Battery problem': 'Batterieproblem',
+          'Collision sensor problem': 'Kollisionssensor defekt',
+          'Lift sensor problem': 'Anhebesensor defekt',
+          'Charging station blocked': 'Ladestation blockiert',
+          'Outside working area': 'Außerhalb des Arbeitsbereichs',
+          'Trapped': 'Mäher festgefahren',
+          'Low battery': 'Batterie fast leer',
+          'OFF_HATCH_CLOSED': 'Klappe offen'
+        };
+
+        const stateDescriptions = {
+          'cleaning': 'Mäht',
+          'error': errorMessages[error] || 'Fehler',
+          'returning': 'Fährt zur Ladestation',
+          'paused': 'Pause',
+          'docked': 'Geparkt',
+          'idle': 'Bereit'
+        };
+
+        return stateDescriptions[state] || state;
+
+      default:
+        return entity.attributes?.friendly_name || '–';
+    }
+  }
+
+  // Get icon for header entity based on template logic
+  _getHeaderEntityIcon(entity, entityType) {
+    switch (entityType) {
+      case 'motion':
+        return entity.state === 'off' ? 'mdi-motion-sensor-off' : 'mdi-motion-sensor';
+      case 'window':
+        return 'mdi-window-open-variant';
+      case 'smoke':
+        return 'mdi-smoke-detector-variant-alert';
+      case 'music':
+        return 'mdi-music-note';
+      case 'tv':
+        return 'mdi-television-play';
+      case 'dishwasher':
+        return 'mdi-dishwasher';
+      case 'freezer':
+        const doorAlarm = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+        const tempAlarm = this._hass.states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+        return (doorAlarm === 'present' || tempAlarm === 'present') ? 'mdi-alert-circle' : 'mdi-fridge';
+      case 'mower':
+        return 'mdi-robot-mower';
+      default:
+        return 'mdi-help-circle-outline';
+    }
+  }
+
+  // Get background color for header entity based on template logic
+  _getHeaderEntityBackground(entity, entityType) {
+    if (entityType === 'smoke') return 'var(--red)';
+    
+    if (entityType === 'freezer') {
+      const doorAlarm = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+      const tempAlarm = this._hass.states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+      return (doorAlarm === 'present' || tempAlarm === 'present') ? 'var(--active-big)' : 'transparent';
+    }
+    
+    if (entityType === 'mower') {
+      return entity.state === 'error' ? 'var(--red)' : 'var(--active-big)';
+    }
+    
+    if (entityType === 'motion') {
+      return entity.state === 'off' ? 'var(--gray000)' : 'var(--active-big)';
+    }
+    
+    return 'var(--active-big)';
+  }
+
+  // Get text color for header entity based on template logic
+  _getHeaderEntityTextColor(entity, entityType) {
+    if (entityType === 'motion' && entity.state === 'off') {
+      return 'var(--gray800)';
+    }
+    return 'var(--gray000)';
   }
   
   // Popup icon mapping for different popup types
@@ -1693,6 +1918,14 @@ class DashviewPanel extends HTMLElement {
     // Check if the room has covers and inject the card
     const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseConfig.rooms[popupType] : null;
     if (roomConfig) { // Check if the popup corresponds to a configured room
+        // Add room header entities first (just under the header)
+        const roomHeaderEntitiesHTML = this._generateRoomHeaderEntitiesForPopup(roomConfig);
+        if (roomHeaderEntitiesHTML) {
+            const headerEntitiesContainer = document.createElement('div');
+            headerEntitiesContainer.innerHTML = roomHeaderEntitiesHTML;
+            bodyElement.appendChild(headerEntitiesContainer);
+        }
+
         if (roomConfig.covers && roomConfig.covers.length > 0) {
             // If covers exist, fetch and add the interactive card
             fetch('/local/dashview/templates/room-covers-card.html')
