@@ -91,6 +91,16 @@ else
     exit 1
 fi
 
+# Run Icon Size Consistency tests
+echo ""
+echo "🎯 Running Icon Size Consistency tests..."
+if node custom_components/dashview/tests/test_icon_size_consistency.js > /dev/null; then
+    echo "✅ Icon Size Consistency tests passed"
+else
+    echo "❌ Icon Size Consistency tests failed"
+    exit 1
+fi
+
 # Run Pollen Card Formatting tests
 echo ""
 echo "🌼 Running Pollen Card Formatting tests..."
