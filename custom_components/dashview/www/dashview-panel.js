@@ -17,6 +17,7 @@ class DashviewPanel extends HTMLElement {
     // State management system - Principle 3
     this._entitySubscriptions = new Map();
     this._lastEntityStates = new Map();
+    this._watchedEntities = null;
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -42,18 +43,49 @@ class DashviewPanel extends HTMLElement {
   _ensureInitialEntityStates() {
     if (!this._hass) return;
     
-    const weatherEntityId = this._getCurrentWeatherEntityId();
-    const entitiesToWatch = [
-      weatherEntityId,
-      'person.markus',
-      'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
-      'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
-      // Add more entities as needed
-    ];
+    // Build comprehensive entity list if not already done
+    if (!this._watchedEntities) {
+      this._watchedEntities = new Set();
+      
+      // Add existing entities
+      const weatherEntityId = this._getCurrentWeatherEntityId();
+      this._watchedEntities.add(weatherEntityId);
+      this._watchedEntities.add('person.markus');
+      this._watchedEntities.add('sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag');
+      this._watchedEntities.add('sensor.dreieich_buchschlag_departures_via_frankfurt_hbf');
+      
+      // Add info-card entities
+      this._watchedEntities.add('binary_sensor.motion_presence_home');
+      this._watchedEntities.add('sensor.geschirrspuler_operation_state');
+      this._watchedEntities.add('sensor.geschirrspuler_remaining_program_time');
+      this._watchedEntities.add('sensor.waschmaschine_operation_state');
+      this._watchedEntities.add('sensor.waschmaschine_remaining_program_time');
+      this._watchedEntities.add('vacuum.mova_e30_ultra');
+      this._watchedEntities.add('input_boolean.trockner_an');
+      this._watchedEntities.add('sensor.foxess_solar');
+      this._watchedEntities.add('sensor.foxess_bat_soc');
+      
+      // Add pollen card entities
+      this._watchedEntities.add('sensor.pollenflug_birke_92');
+      this._watchedEntities.add('sensor.pollenflug_erle_92');
+      this._watchedEntities.add('sensor.pollenflug_hasel_92');
+      this._watchedEntities.add('sensor.pollenflug_esche_92');
+      this._watchedEntities.add('sensor.pollenflug_roggen_92');
+      this._watchedEntities.add('sensor.pollenflug_graeser_92');
+      this._watchedEntities.add('sensor.pollenflug_beifuss_92');
+      this._watchedEntities.add('sensor.pollenflug_ambrosia_92');
+      
+      // Dynamically add window sensors
+      Object.keys(this._hass.states).forEach(entityId => {
+        if (entityId.startsWith('binary_sensor.fenster')) {
+          this._watchedEntities.add(entityId);
+        }
+      });
+    }
 
     // Force initial load of entity states if they're not already tracked
     let initializedCount = 0;
-    for (const entityId of entitiesToWatch) {
+    for (const entityId of this._watchedEntities) {
       if (!this._lastEntityStates.has(entityId)) {
         const currentState = this._hass.states[entityId];
         this._lastEntityStates.set(entityId, currentState ? { ...currentState } : null);
@@ -82,17 +114,10 @@ class DashviewPanel extends HTMLElement {
 
   // Check for entity state changes - Principle 3
   _checkEntityChanges() {
-    const weatherEntityId = this._getCurrentWeatherEntityId();
-    const entitiesToWatch = [
-      weatherEntityId,
-      'person.markus',
-      'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
-      'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
-      // Add more entities as needed
-    ];
+    if (!this._watchedEntities) return;
 
     let hasChanges = false;
-    for (const entityId of entitiesToWatch) {
+    for (const entityId of this._watchedEntities) {
       const currentState = this._hass.states[entityId];
       const lastState = this._lastEntityStates.get(entityId);
       
@@ -136,8 +161,46 @@ class DashviewPanel extends HTMLElement {
         case 'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf':
           this.updateTrainDepartureCards(shadow);
           break;
+        // Info-card entities
+        case 'binary_sensor.motion_presence_home':
+          this.updateMotionSection(shadow);
+          break;
+        case 'sensor.geschirrspuler_operation_state':
+        case 'sensor.geschirrspuler_remaining_program_time':
+          this.updateDishwasherSection(shadow);
+          break;
+        case 'sensor.waschmaschine_operation_state':
+        case 'sensor.waschmaschine_remaining_program_time':
+          this.updateWashingSection(shadow);
+          break;
+        case 'vacuum.mova_e30_ultra':
+          this.updateVacuumSection(shadow);
+          break;
+        case 'input_boolean.trockner_an':
+          this.updateDryerSection(shadow);
+          break;
+        case 'sensor.foxess_solar':
+        case 'sensor.foxess_bat_soc':
+          this.updateSolarSection(shadow);
+          break;
+        // Pollen card entities
+        case 'sensor.pollenflug_birke_92':
+        case 'sensor.pollenflug_erle_92':
+        case 'sensor.pollenflug_hasel_92':
+        case 'sensor.pollenflug_esche_92':
+        case 'sensor.pollenflug_roggen_92':
+        case 'sensor.pollenflug_graeser_92':
+        case 'sensor.pollenflug_beifuss_92':
+        case 'sensor.pollenflug_ambrosia_92':
+          this.updatePollenCard(shadow);
+          break;
         default:
-          console.log(`[DashView] No specific handler for entity: ${entityId}`);
+          // Check if it's a window sensor
+          if (entityId.startsWith('binary_sensor.fenster')) {
+            this.updateWindowsSection(shadow);
+          } else {
+            console.log(`[DashView] No specific handler for entity: ${entityId}`);
+          }
       }
     } catch (error) {
       console.error(`[DashView] Error updating component for ${entityId}:`, error);
