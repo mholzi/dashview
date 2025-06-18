@@ -1263,7 +1263,9 @@ class DashviewPanel extends HTMLElement {
 
         const saveRoomBtn = e.target.closest('#save-room-button');
         if (saveRoomBtn) {
-            this.saveRoom();
+            // Note: saveRoom() function is for legacy manual room form
+            // which has been replaced by the new HA rooms workflow
+            console.warn('[DashView] saveRoom called but manual form no longer exists');
         }
 
         const editRoomBtn = e.target.closest('.room-edit-button');
@@ -1276,6 +1278,12 @@ class DashviewPanel extends HTMLElement {
         if (deleteRoomBtn) {
             const roomKey = deleteRoomBtn.dataset.roomKey;
             this.deleteRoom(roomKey);
+        }
+
+        const saveRoomSensorBtn = e.target.closest('.room-sensor-save-button');
+        if (saveRoomSensorBtn) {
+            const roomKey = saveRoomSensorBtn.dataset.roomId;
+            this.saveRoomCombinedSensor(roomKey);
         }
     });
   }
@@ -3083,22 +3091,22 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
-    this._setStatusMessage(statusElement, 'Loading house configuration...', 'loading');
+    this._setStatusMessage(statusElement, 'Loading rooms and sensors...', 'loading');
 
     try {
-      // Load house configuration from API
-      const config = await this._loadConfigFromAPI(['house']);
-      // Ensure floors object exists for the dropdown
-      this._adminLocalState.houseConfig = config.house || { rooms: {}, floors: {} };
+      // Fetch HA rooms, available sensors, and current house config
+      const [haRooms, combinedSensors, houseConfigResponse] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=ha_rooms'),
+        this._hass.callApi('GET', 'dashview/config?type=combined_sensors'),
+        this._hass.callApi('GET', 'dashview/config?type=house')
+      ]);
 
-      // Render the rooms list
-      this._renderRoomsList();
-      
-      // Populate the new floor dropdown
-      this._populateFloorDropdown();
+      this._adminLocalState.houseConfig = houseConfigResponse || { rooms: {}, floors: {} };
 
-      this._setStatusMessage(statusElement, '✓ Room configuration loaded successfully', 'success');
-      this._updateAdminSummary(); // <-- ADD THIS LINE
+      // Render the new list with dropdowns
+      this._renderHARoomsList(haRooms, combinedSensors);
+      this._setStatusMessage(statusElement, '✓ Rooms loaded successfully', 'success');
+      this._updateAdminSummary();
       console.log('[DashView] Room maintenance loaded successfully');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
@@ -3106,42 +3114,56 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
-  _renderRoomsList() {
+  _renderHARoomsList(haRooms, combinedSensors) {
     const shadow = this.shadowRoot;
     const roomsContainer = shadow.getElementById('rooms-list');
     
     if (!roomsContainer) return;
 
-    const rooms = this._adminLocalState.houseConfig.rooms || {};
-
-    if (Object.keys(rooms).length === 0) {
-      roomsContainer.innerHTML = '<p>No rooms configured.</p>';
+    if (!haRooms || haRooms.length === 0) {
+      roomsContainer.innerHTML = '<p>No rooms found in Home Assistant areas.</p>';
       return;
     }
 
+    const roomsConfig = this._adminLocalState.houseConfig.rooms || {};
     let roomsHTML = '';
-    Object.entries(rooms).forEach(([key, config]) => {
+
+    haRooms.forEach(room => {
+      const roomKey = room.area_id;
+      const currentSensor = roomsConfig[roomKey]?.combined_sensor || '';
+
+      const optionsHTML = combinedSensors.map(sensor =>
+        `<option value="${sensor.entity_id}" ${currentSensor === sensor.entity_id ? 'selected' : ''}>
+          ${sensor.friendly_name}
+        </option>`
+      ).join('');
+
       roomsHTML += `
         <div class="floor-item">
           <div class="floor-info">
-            <div class="floor-name">${config.friendly_name} (${key})</div>
-            <div class="floor-details">Floor: ${config.floor} | Sensor: ${config.combined_sensor}</div>
+            <div class="floor-name">${room.name}</div>
+            <div class="floor-details">ID: ${room.area_id}</div>
           </div>
-          <div class="floor-actions">
-            <button class="edit-button room-edit-button" data-room-key="${key}">Edit</button>
-            <button class="delete-button room-delete-button" data-room-key="${key}">Delete</button>
+          <div class="setting-row">
+            <select class="dropdown-selector" id="room-sensor-${roomKey}">
+              <option value="">-- No Sensor --</option>
+              ${optionsHTML}
+            </select>
+            <button class="save-button room-sensor-save-button" data-room-id="${roomKey}">Save</button>
           </div>
         </div>
       `;
     });
-
     roomsContainer.innerHTML = roomsHTML;
   }
 
   _populateFloorDropdown() {
     const shadow = this.shadowRoot;
     const selector = shadow.getElementById('new-room-floor');
-    if (!selector) return;
+    if (!selector) {
+      // Dropdown no longer exists in new HA rooms workflow
+      return;
+    }
 
     selector.innerHTML = ''; // Clear existing options
     const floors = this._adminLocalState.houseConfig?.floors || {};
@@ -3169,6 +3191,13 @@ class DashviewPanel extends HTMLElement {
     
     if (!room) return;
 
+    // Check if the manual room form still exists
+    const roomKeyInput = shadow.getElementById('new-room-key');
+    if (!roomKeyInput) {
+      console.warn('[DashView] _startEditRoom called but manual room form no longer exists');
+      return;
+    }
+
     // Populate the form with the room's data
     shadow.getElementById('editing-room-key').value = roomKey;
     shadow.getElementById('new-room-key').value = roomKey;
@@ -3185,6 +3214,16 @@ class DashviewPanel extends HTMLElement {
   async saveRoom() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('room-maintenance-status');
+
+    // Check if the manual room form still exists
+    const roomKeyInput = shadow.getElementById('new-room-key');
+    if (!roomKeyInput) {
+      console.warn('[DashView] saveRoom called but manual room form no longer exists');
+      if (statusElement) {
+        this._setStatusMessage(statusElement, '✗ Manual room form no longer available - use HA rooms workflow', 'error');
+      }
+      return;
+    }
 
     // Get the key of the room being edited, if any
     const originalKey = shadow.getElementById('editing-room-key').value;
@@ -3245,6 +3284,43 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error saving room: ${error.message}`, 'error');
       console.error('[DashView] Error saving room:', error);
+    }
+  }
+
+  // New function to save a single room's sensor
+  async saveRoomCombinedSensor(roomKey) {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('room-maintenance-status');
+    const selector = shadow.getElementById(`room-sensor-${roomKey}`);
+
+    if (!roomKey || !selector) {
+      this._setStatusMessage(statusElement, '✗ Could not find room to save.', 'error');
+      return;
+    }
+
+    const selectedSensor = selector.value;
+    const houseConfig = this._adminLocalState.houseConfig;
+
+    // Ensure room exists in config, create if not
+    if (!houseConfig.rooms[roomKey]) {
+      houseConfig.rooms[roomKey] = {
+        friendly_name: roomKey, // Or find a way to get the friendly name
+        icon: 'mdi:home-outline',
+        floor: null // Needs assignment
+      };
+    }
+
+    // Update the sensor for the specific room
+    houseConfig.rooms[roomKey].combined_sensor = selectedSensor;
+
+    this._setStatusMessage(statusElement, `Saving sensor for ${roomKey}...`, 'loading');
+
+    try {
+      await this._saveConfigViaAPI('house', houseConfig);
+      this._adminLocalState.houseConfig = houseConfig; // Update local state
+      this._setStatusMessage(statusElement, `✓ Sensor for ${roomKey} saved successfully!`, 'success');
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error saving sensor: ${error.message}`, 'error');
     }
   }
 

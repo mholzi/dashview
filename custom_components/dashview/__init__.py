@@ -132,11 +132,43 @@ class DashViewConfigView(HomeAssistantView):
             except Exception as e:
                 _LOGGER.warning("Error fetching floors from Home Assistant registry: %s", e)
                 data = []
+        elif config_type == "ha_rooms":
+            # NEW: Fetch rooms from Home Assistant area registry
+            try:
+                from homeassistant.helpers import area_registry as ar
+                area_registry = ar.async_get(self._hass)
+                rooms = [
+                    {
+                        "area_id": area.id,
+                        "name": area.name,
+                        "icon": area.icon or "mdi:home-outline"
+                    }
+                    for area in area_registry.async_list_areas()
+                ]
+                data = sorted(rooms, key=lambda r: r["name"])
+            except Exception as e:
+                _LOGGER.warning("Error fetching rooms from Home Assistant area registry: %s", e)
+                data = []
+        elif config_type == "combined_sensors":
+            # NEW: Fetch all sensors matching the binary_sensor.combined* pattern
+            try:
+                combined_sensors = [
+                    {
+                        "entity_id": entity.entity_id,
+                        "friendly_name": entity.name or entity.entity_id
+                    }
+                    for entity in self._hass.states.async_all('binary_sensor')
+                    if entity.entity_id.startswith("binary_sensor.combined")
+                ]
+                data = sorted(combined_sensors, key=lambda s: s["friendly_name"])
+            except Exception as e:
+                _LOGGER.warning("Error fetching combined sensors: %s", e)
+                data = []
         elif config_type is None:
             # Return the full house_config when no type is specified
             data = config_data.get("house_config", {})
         else:
-            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players, ha_floors")
+            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players, ha_floors, ha_rooms, combined_sensors")
         
         return self.json(data)
     
