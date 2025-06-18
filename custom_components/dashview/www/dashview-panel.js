@@ -31,8 +31,53 @@ class DashviewPanel extends HTMLElement {
   _handleHassUpdate() {
     if (!this._hass) return;
 
+    // Ensure initial entity states are loaded (Issue #34 fix)
+    this._ensureInitialEntityStates();
+
     // Check for entity changes and update only affected components
     this._checkEntityChanges();
+  }
+
+  // Ensure initial entity states are properly loaded - Issue #34 fix
+  _ensureInitialEntityStates() {
+    if (!this._hass) return;
+    
+    const weatherEntityId = this._getCurrentWeatherEntityId();
+    const entitiesToWatch = [
+      weatherEntityId,
+      'person.markus',
+      'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
+      'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
+      // Add more entities as needed
+    ];
+
+    // Force initial load of entity states if they're not already tracked
+    let initializedCount = 0;
+    for (const entityId of entitiesToWatch) {
+      if (!this._lastEntityStates.has(entityId)) {
+        const currentState = this._hass.states[entityId];
+        this._lastEntityStates.set(entityId, currentState ? { ...currentState } : null);
+        
+        // Try to update the component, but don't fail if DOM isn't ready
+        try {
+          this._updateComponentForEntity(entityId);
+          initializedCount++;
+        } catch (error) {
+          console.warn(`[DashView] Could not update component for ${entityId} during initialization:`, error);
+        }
+      }
+    }
+    
+    if (initializedCount > 0) {
+      console.log(`[DashView] Initialized ${initializedCount} entities on first load`);
+      
+      // Update header buttons if any entities were initialized
+      try {
+        this._updateHeaderButtonsIfNeeded();
+      } catch (error) {
+        console.warn('[DashView] Could not update header buttons during initialization:', error);
+      }
+    }
   }
 
   // Check for entity state changes - Principle 3
@@ -71,7 +116,10 @@ class DashviewPanel extends HTMLElement {
   // Update specific component for entity - Principle 3
   _updateComponentForEntity(entityId) {
     const shadow = this.shadowRoot;
-    if (!shadow) return;
+    if (!shadow) {
+      console.warn(`[DashView] Shadow DOM not ready for ${entityId} update`);
+      return;
+    }
 
     try {
       const weatherEntityId = this._getCurrentWeatherEntityId();
@@ -93,14 +141,18 @@ class DashviewPanel extends HTMLElement {
       }
     } catch (error) {
       console.error(`[DashView] Error updating component for ${entityId}:`, error);
+      // Don't rethrow the error to prevent breaking the entire update cycle
     }
   }
 
-  // Update weather button component - Principle 3
+  // Update weather button component - Principle 3  
   _updateWeatherButton(shadow) {
     const weatherEntityId = this._getCurrentWeatherEntityId();
     const weatherState = this._hass.states[weatherEntityId];
-    if (!weatherState) return;
+    if (!weatherState) {
+      console.warn(`[DashView] Weather entity ${weatherEntityId} not found in HASS states`);
+      return;
+    }
 
     try {
       const temp = (weatherState.forecast && weatherState.forecast.length > 0) ? weatherState.forecast[0].temperature : null;
@@ -110,13 +162,25 @@ class DashviewPanel extends HTMLElement {
 
       if (nameElement) {
         nameElement.textContent = temp ? `${temp.toFixed(1)}°C` : '-- °C';
+      } else {
+        console.debug('[DashView] Weather button name element not found in DOM');
       }
+      
       if (labelElement) {
         labelElement.innerHTML = weatherState.attributes.temperature ? `${weatherState.attributes.temperature.toFixed(1)}<sup>°C</sup>` : '-- °C';
+      } else {
+        console.debug('[DashView] Weather button label element not found in DOM');
       }
+      
       if (iconElement) {
         iconElement.innerHTML = `<img src="/local/weather_icons/${weatherState.state}.svg" width="40" height="40" alt="${weatherState.state}">`;
+      } else {
+        console.debug('[DashView] Weather button icon element not found in DOM');
       }
+      
+      // Log successful update for debugging
+      console.debug(`[DashView] Weather button updated for ${weatherEntityId}: ${weatherState.state}`);
+      
     } catch (error) {
       console.error('[DashView] Error updating weather button:', error);
     }
@@ -125,7 +189,10 @@ class DashviewPanel extends HTMLElement {
   // Update person button component - Principle 3
   _updatePersonButton(shadow) {
     const personState = this._hass.states['person.markus'];
-    if (!personState) return;
+    if (!personState) {
+      console.warn('[DashView] Person entity person.markus not found in HASS states');
+      return;
+    }
 
     try {
       const img_src = personState.attributes.entity_picture || (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
@@ -133,6 +200,9 @@ class DashviewPanel extends HTMLElement {
       
       if (imageElement) {
         imageElement.innerHTML = `<img src="${img_src}" width="45" height="45">`;
+        console.debug(`[DashView] Person button updated: ${personState.state}`);
+      } else {
+        console.debug('[DashView] Person button image element not found in DOM');
       }
     } catch (error) {
       console.error('[DashView] Error updating person button:', error);
@@ -263,11 +333,23 @@ class DashviewPanel extends HTMLElement {
       shadow.appendChild(content);
       
       await this.loadTemplates(shadow);
-      this.initializeCard(shadow);
+      
+      try {
+        this.initializeCard(shadow);
+      } catch (error) {
+        console.warn('[DashView] Non-critical error in initializeCard:', error);
+        // Continue with content loading even if card initialization fails
+      }
       
       // Initialize train departure cards with placeholders
-      this.updateTrainDepartureCards(shadow);
+      try {
+        this.updateTrainDepartureCards(shadow);
+      } catch (error) {
+        console.warn('[DashView] Non-critical error in updateTrainDepartureCards:', error);
+        // Continue with content loading even if train cards fail
+      }
 
+      // Always set content ready to ensure entity loading works
       this._contentReady = true;
       if (this._hass) {
         this._handleHassUpdate();
