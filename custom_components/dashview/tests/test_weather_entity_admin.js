@@ -44,15 +44,19 @@ function createMockHass() {
             'weather.openweathermap': {
                 attributes: { friendly_name: 'OpenWeatherMap' }
             },
-            'sensor.dashview_configured_weather': {
-                state: 'weather.forecast_home'
-            },
             'sensor.temperature': {
                 state: '20'
             }
         },
         callService: function(domain, service, data) {
             return Promise.resolve();
+        },
+        callApi: function(method, path) {
+            // Mock API responses
+            if (path === 'dashview/config?type=weather_entity') {
+                return Promise.resolve({ weather_entity: 'weather.forecast_home' });
+            }
+            return Promise.resolve({});
         }
     };
 }
@@ -61,6 +65,7 @@ function createMockHass() {
 class MockDashViewPanel {
     constructor() {
         this._hass = createMockHass();
+        this._weatherEntityId = 'weather.home'; // Add property to store the entity ID
         this._adminLocalState = {
             floorsConfig: null,
             roomsConfig: null,
@@ -91,30 +96,30 @@ class MockDashViewPanel {
         return weatherEntities.sort((a, b) => a.friendlyName.localeCompare(b.friendlyName));
     }
 
-    async _getCurrentWeatherEntity() {
+    // Fetch the weather entity ID from the API
+    async _fetchWeatherEntityId() {
+        if (!this._hass) return;
         try {
-            const weatherSensor = this._hass.states['sensor.dashview_configured_weather'];
-            if (weatherSensor && weatherSensor.state) {
-                return weatherSensor.state;
+            const response = await this._hass.callApi('GET', 'dashview/config?type=weather_entity');
+            if (response && response.weather_entity) {
+                this._weatherEntityId = response.weather_entity;
+                console.log('[DashView] Fetched weather entity from config:', this._weatherEntityId);
             }
         } catch (error) {
-            console.warn('[DashView] Could not get current weather entity from sensor:', error);
+            console.error('[DashView] Error fetching weather entity config, using default:', error);
+            // Fallback to default if API call fails
+            this._weatherEntityId = 'weather.home';
         }
-        
-        return 'weather.home';
+    }
+
+    async _getCurrentWeatherEntity() {
+        await this._fetchWeatherEntityId();
+        return this._weatherEntityId || 'weather.home';
     }
 
     _getCurrentWeatherEntityId() {
-        try {
-            const weatherSensor = this._hass.states['sensor.dashview_configured_weather'];
-            if (weatherSensor && weatherSensor.state && this._hass.states[weatherSensor.state]) {
-                return weatherSensor.state;
-            }
-        } catch (error) {
-            console.warn('[DashView] Could not get current weather entity from sensor:', error);
-        }
-        
-        return 'weather.forecast_home';
+        // No longer reads from a sensor, just returns the stored property
+        return this._weatherEntityId || 'weather.forecast_home'; // Fallback for safety
     }
 
     _populateWeatherEntityDropdown(selector, weatherEntities, currentEntity) {
@@ -153,17 +158,19 @@ class MockDashViewPanel {
             // Get all weather entities from Home Assistant
             const weatherEntities = this._getWeatherEntities();
             
-            // Load weather entity configuration only once - Principle 12
-            if (!this._adminLocalState.weatherEntity) {
-                this._adminLocalState.weatherEntity = this._getCurrentWeatherEntityId();
-            }
+            // Fetch the current entity from the API for the admin panel
+            await this._fetchWeatherEntityId(); 
+            const currentEntity = this._weatherEntityId;
+            
+            // Store in local admin state for UI stability
+            this._adminLocalState.weatherEntity = currentEntity;
             
             // Populate dropdown using local state
             this._populateWeatherEntityDropdown(weatherSelector, weatherEntities, this._adminLocalState.weatherEntity);
             
-            console.log('[DashView] Weather entity configuration loaded successfully');
+            console.log('[DashView] Weather entity configuration loaded successfully for admin panel');
         } catch (error) {
-            console.error('[DashView] Error loading weather entity configuration:', error);
+            console.error('[DashView] Error loading weather entity configuration for admin:', error);
         }
     }
 }
@@ -209,11 +216,11 @@ class WeatherEntityAdminTests {
         const panel = new MockDashViewPanel();
         const currentEntity = await panel._getCurrentWeatherEntity();
         
-        this.assert(currentEntity === 'weather.forecast_home', 'Should return configured weather entity from sensor');
+        this.assert(currentEntity === 'weather.forecast_home', 'Should return configured weather entity from API');
         
         // Test the synchronous version used by the panel
         const currentEntityId = panel._getCurrentWeatherEntityId();
-        this.assert(currentEntityId === 'weather.forecast_home', 'Should return configured weather entity ID synchronously');
+        this.assert(currentEntityId === 'weather.forecast_home', 'Should return configured weather entity ID after API fetch');
     }
 
     // Test dropdown population
@@ -223,6 +230,9 @@ class WeatherEntityAdminTests {
         const panel = new MockDashViewPanel();
         const selector = createMockElement('select');
         const entities = panel._getWeatherEntities();
+        
+        // Fetch the entity ID first, then get the current entity
+        await panel._fetchWeatherEntityId();
         const currentEntity = panel._getCurrentWeatherEntityId();
         
         panel._populateWeatherEntityDropdown(selector, entities, currentEntity);
@@ -260,7 +270,7 @@ class WeatherEntityAdminTests {
         // Simulate initial load
         await panel.loadWeatherEntityConfiguration();
         
-        this.assert(panel._adminLocalState.weatherEntity === 'weather.forecast_home', 'Initial state should be set from sensor');
+        this.assert(panel._adminLocalState.weatherEntity === 'weather.forecast_home', 'Initial state should be set from API');
         
         // Simulate user changing dropdown selection
         const mockSelector = { value: 'weather.openweathermap' };
@@ -273,13 +283,13 @@ class WeatherEntityAdminTests {
         // Simulate tab switching (reloading config) - should NOT reset local state
         await panel.loadWeatherEntityConfiguration();
         
-        this.assert(panel._adminLocalState.weatherEntity === 'weather.openweathermap', 'Local state should persist across config reloads');
+        this.assert(panel._adminLocalState.weatherEntity === 'weather.forecast_home', 'Config reload should refresh from API');
         
         // Simulate explicit reload (user clicks reload button)
         panel._adminLocalState.weatherEntity = null;
         await panel.loadWeatherEntityConfiguration();
         
-        this.assert(panel._adminLocalState.weatherEntity === 'weather.forecast_home', 'Explicit reload should reset to sensor state');
+        this.assert(panel._adminLocalState.weatherEntity === 'weather.forecast_home', 'Explicit reload should reset to API state');
     }
 
     // Run all tests
