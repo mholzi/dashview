@@ -208,6 +208,15 @@ else
     exit 1
 fi
 
+
+# Run Room Setup tests
+echo ""
+echo "🏠 Running Room Setup tests..."
+if node custom_components/dashview/tests/test_room_setup.js > /dev/null; then
+    echo "✅ Room Setup tests passed"
+else
+    echo "❌ Room Setup tests failed"
+
 # Run Configuration Summary tests
 echo ""
 echo "📊 Running Configuration Summary tests..."
@@ -269,10 +278,11 @@ function testConfigSummary() {
 }
 
 process.exit(testConfigSummary() ? 0 : 1);
-" > /dev/null; then
+
     echo "✅ Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"
+
     exit 1
 fi
 

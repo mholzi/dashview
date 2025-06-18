@@ -3074,10 +3074,14 @@ class DashviewPanel extends HTMLElement {
     try {
       // Load house configuration from API
       const config = await this._loadConfigFromAPI(['house']);
-      this._adminLocalState.houseConfig = config.house || { rooms: {} };
+      // Ensure floors object exists for the dropdown
+      this._adminLocalState.houseConfig = config.house || { rooms: {}, floors: {} };
 
       // Render the rooms list
       this._renderRoomsList();
+      
+      // Populate the new floor dropdown
+      this._populateFloorDropdown();
 
       this._setStatusMessage(statusElement, '✓ Room configuration loaded successfully', 'success');
       this._updateAdminSummary(); // <-- ADD THIS LINE
@@ -3120,6 +3124,31 @@ class DashviewPanel extends HTMLElement {
     roomsContainer.innerHTML = roomsHTML;
   }
 
+  _populateFloorDropdown() {
+    const shadow = this.shadowRoot;
+    const selector = shadow.getElementById('new-room-floor');
+    if (!selector) return;
+
+    selector.innerHTML = ''; // Clear existing options
+    const floors = this._adminLocalState.houseConfig?.floors || {};
+
+    if (Object.keys(floors).length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No floors configured';
+        option.disabled = true;
+        selector.appendChild(option);
+        return;
+    }
+
+    for (const [floorKey, floorConfig] of Object.entries(floors)) {
+        const option = document.createElement('option');
+        option.value = floorKey;
+        option.textContent = floorConfig.friendly_name || floorKey;
+        selector.appendChild(option);
+    }
+  }
+
   _startEditRoom(roomKey) {
     const shadow = this.shadowRoot;
     const room = this._adminLocalState.houseConfig.rooms[roomKey];
@@ -3152,11 +3181,11 @@ class DashviewPanel extends HTMLElement {
     const newRoomData = {
       friendly_name: shadow.getElementById('new-room-name').value.trim(),
       icon: shadow.getElementById('new-room-icon').value.trim(),
-      floor: shadow.getElementById('new-room-floor').value.trim(),
+      floor: shadow.getElementById('new-room-floor').value, // .value is correct for a select dropdown
       combined_sensor: shadow.getElementById('new-room-sensor').value.trim(),
-      lights: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].lights || []) : [],
-      covers: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].covers || []) : [],
-      media_players: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].media_players || []) : [],
+      lights: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.lights || []) : [],
+      covers: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.covers || []) : [],
+      media_players: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.media_players || []) : [],
     };
 
     // Validate inputs
@@ -3165,7 +3194,6 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
-    // If not editing and key already exists, show error
     if (!isEditing && this._adminLocalState.houseConfig.rooms[newKey]) {
       this._setStatusMessage(statusElement, '✗ Room with this key already exists', 'error');
       return;
@@ -3174,25 +3202,18 @@ class DashviewPanel extends HTMLElement {
     this._setStatusMessage(statusElement, 'Saving room...', 'loading');
 
     try {
-      // Update local state
-      if (!this._adminLocalState.houseConfig) {
-        this._adminLocalState.houseConfig = { rooms: {}, floors: {} };
-      }
-      if (!this._adminLocalState.houseConfig.rooms) {
-        this._adminLocalState.houseConfig.rooms = {};
-      }
+      const updatedHouseConfig = JSON.parse(JSON.stringify(this._adminLocalState.houseConfig));
 
-      // If editing and the key has changed, we need to remove the old entry
       if (isEditing && originalKey !== newKey) {
-        delete this._adminLocalState.houseConfig.rooms[originalKey];
+        delete updatedHouseConfig.rooms[originalKey];
       }
+      updatedHouseConfig.rooms[newKey] = newRoomData;
 
-      this._adminLocalState.houseConfig.rooms[newKey] = newRoomData;
+      // Use the new, more direct API format by sending the entire config object.
+      await this._hass.callApi('POST', 'dashview/config', updatedHouseConfig);
 
-      // Save to backend
-      await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig, (data) => 
-        data && data.rooms && data.floors
-      );
+      // Update the local state with the successfully saved config
+      this._adminLocalState.houseConfig = updatedHouseConfig;
 
       // Clear form and reset editing state
       shadow.getElementById('editing-room-key').value = '';
@@ -3201,11 +3222,9 @@ class DashviewPanel extends HTMLElement {
       shadow.getElementById('new-room-icon').value = '';
       shadow.getElementById('new-room-floor').value = '';
       shadow.getElementById('new-room-sensor').value = '';
-      shadow.getElementById('new-room-key').disabled = false; // Re-enable for next time
+      shadow.getElementById('new-room-key').disabled = false;
 
-      // Refresh the rooms list
       this._renderRoomsList();
-
       this._setStatusMessage(statusElement, '✓ Room saved successfully', 'success');
       console.log('[DashView] Room saved successfully:', newKey);
 
