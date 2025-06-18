@@ -508,20 +508,18 @@ body.popup-open, :host(.popup-open) {
     border-radius: 20px;
     padding: 16px;
     border: 1px solid var(--gray200);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
     font-size: 1.2em;
-    line-height: 1.1em;
+    line-height: 1.4em; /* Increased for better readability on wrap */
     margin: 2px 0;
 }
 
 .info-section {
-    display: flex;
+    display: inline-flex; /* This is the key change to make sections sit side-by-side */
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    margin-right: 8px; /* Adds a space between the sentences */
+    margin-bottom: 4px; /* Adds a little space if a line wraps */
 }
 
 .info-section.motion-section,
