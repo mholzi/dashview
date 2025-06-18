@@ -2,16 +2,12 @@
 import logging
 from homeassistant.core import HomeAssistant, ServiceCall
 from .const import DOMAIN
-from .store import DashViewStore
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up services for DashView."""
-    
-    store = DashViewStore(hass)
-    await store.async_load()
 
     async def refresh_dashboard(service_call: ServiceCall) -> None:
         """Refresh the DashView dashboard."""
@@ -22,11 +18,21 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         """Handle the service call to set the weather entity."""
         entity_id = service_call.data.get("entity_id")
         _LOGGER.info("Service called to set weather entity to: %s", entity_id)
+        
         if entity_id and entity_id.startswith("weather."):
-            await store.async_set_weather_entity(entity_id)
-            
-            # Fire an event to notify the frontend to refresh its config
-            hass.bus.async_fire(f"{DOMAIN}_config_updated", {"type": "weather_entity"})
+            # Find the DashView config entry and update it
+            for entry in hass.config_entries.async_entries(DOMAIN):
+                current_data = entry.options or entry.data
+                house_config = current_data.get("house_config", {})
+                house_config["weather_entity"] = entity_id
+                
+                hass.config_entries.async_update_entry(
+                    entry, options={"house_config": house_config}
+                )
+                
+                # Fire an event to notify the frontend to refresh its config
+                hass.bus.async_fire(f"{DOMAIN}_config_updated", {"type": "weather_entity"})
+                break
         else:
             _LOGGER.warning("Invalid entity_id received for set_weather_entity: %s", entity_id)
 
