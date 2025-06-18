@@ -95,14 +95,7 @@ class DashviewPanel extends HTMLElement {
       this._watchedEntities.add('sensor.pollenflug_beifuss_92');
       this._watchedEntities.add('sensor.pollenflug_ambrosia_92');
       
-      // Dynamically add window sensors
-      Object.keys(this._hass.states).forEach(entityId => {
-        if (entityId.startsWith('binary_sensor.fenster')) {
-          this._watchedEntities.add(entityId);
-        }
-      });
-      
-      // Add room header entities from house configuration
+      // Add room header entities from house configuration (includes window/motion sensors)
       await this._addRoomHeaderEntities();
       
       // Add cover entities from house configuration
@@ -304,8 +297,8 @@ class DashviewPanel extends HTMLElement {
           this.updatePollenCard(shadow);
           break;
         default:
-          // Check if it's a window sensor
-          if (entityId.startsWith('binary_sensor.fenster')) {
+          // Check if it's a window sensor based on configuration
+          if (this._isEntityOfType(entityId, 'window')) {
             this.updateWindowsSection(shadow);
           } else if (entityId.startsWith('cover.')) {
             this.updateCoverCard(shadow, entityId);
@@ -793,13 +786,11 @@ class DashviewPanel extends HTMLElement {
     const section = shadow.querySelector('.windows-section');
     if (!section) return;
     
-    // Count open windows
-    let openWindows = 0;
-    Object.values(this._hass.states).forEach(entity => {
-      if (entity.entity_id.includes('binary_sensor.fenster') && entity.state === 'on') {
-        openWindows++;
-      }
-    });
+    // Count open windows using configuration
+    const allWindows = this._getAllEntitiesByType('window');
+    const openWindows = allWindows.filter(entityId => 
+      this._hass.states[entityId]?.state === 'on'
+    ).length;
     
     if (openWindows > 0) {
       section.classList.remove('hidden');
@@ -1029,6 +1020,22 @@ class DashviewPanel extends HTMLElement {
       }
     }
     return [...new Set(entities)]; // Return unique entity IDs
+  }
+
+  // Helper Method: Check if an entity is of a specific type based on configuration
+  _isEntityOfType(entityId, entityType) {
+    if (!this._houseConfig || !this._houseConfig.rooms) return false;
+    
+    for (const room of Object.values(this._houseConfig.rooms)) {
+      if (room.header_entities && Array.isArray(room.header_entities)) {
+        for (const entityConfig of room.header_entities) {
+          if (entityConfig.entity === entityId && entityConfig.entity_type === entityType) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   // New Helper Method 2: Renders a list of entities into a target container
@@ -1810,14 +1817,16 @@ class DashviewPanel extends HTMLElement {
       if (popupId === 'security-popup') {
         console.log(`[DashView] Force refreshing security popup entities`);
         
-        // Update motion sensor
-        this._updateComponentForEntity('binary_sensor.motion_presence_home');
+        // Update motion sensors from configuration
+        const allMotionSensors = this._getAllEntitiesByType('motion');
+        allMotionSensors.forEach(entityId => {
+          this._updateComponentForEntity(entityId);
+        });
         
-        // Update window sensors
-        Object.keys(this._hass.states).forEach(entityId => {
-          if (entityId.startsWith('binary_sensor.fenster')) {
-            this._updateComponentForEntity(entityId);
-          }
+        // Update window sensors from configuration
+        const allWindowSensors = this._getAllEntitiesByType('window');
+        allWindowSensors.forEach(entityId => {
+          this._updateComponentForEntity(entityId);
         });
       }
       
