@@ -1353,17 +1353,20 @@ class DashviewPanel extends HTMLElement {
     
     return activeRooms.map(room => {
       const iconsHTML = this._generateRoomIcons(room.config);
-      if (!iconsHTML) return '';
+      // If iconsHTML is empty, create the fallback message.
+      const containerContent = iconsHTML 
+          ? iconsHTML 
+          : `<div class="no-activity" style="text-align: left; padding: 0 8px; width: 100%;">No active header entities for ${room.config.friendly_name}</div>`;
       
       return `
         <div class="room-header-card" data-room="${room.key}">
           <div class="room-name">${room.config.friendly_name}</div>
           <div class="room-icons-container">
-            ${iconsHTML}
+            ${containerContent}
           </div>
         </div>
       `;
-    }).filter(html => html).join('');
+    }).join('');
   }
   
   // Get active rooms (rooms with active sensors or room header entities)
