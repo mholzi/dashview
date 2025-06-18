@@ -45,6 +45,16 @@ else
     exit 1
 fi
 
+# Run Floor Maintenance tests
+echo ""
+echo "🏠 Running Floor Maintenance tests..."
+if node custom_components/dashview/tests/test_floor_maintenance.js > /dev/null; then
+    echo "✅ Floor Maintenance tests passed"
+else
+    echo "❌ Floor Maintenance tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."
