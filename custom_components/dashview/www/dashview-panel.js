@@ -1266,6 +1266,29 @@ class DashviewPanel extends HTMLElement {
             const floorKey = deleteFloorBtn.dataset.floorKey;
             this.deleteFloor(floorKey);
         }
+
+        // Handle room maintenance buttons
+        const reloadRoomBtn = e.target.closest('#reload-room-maintenance');
+        if (reloadRoomBtn) {
+            this.loadRoomMaintenance();
+        }
+
+        const saveRoomBtn = e.target.closest('#save-room-button');
+        if (saveRoomBtn) {
+            this.saveRoom();
+        }
+
+        const editRoomBtn = e.target.closest('.room-edit-button');
+        if (editRoomBtn) {
+            const roomKey = editRoomBtn.dataset.roomKey;
+            this._startEditRoom(roomKey);
+        }
+
+        const deleteRoomBtn = e.target.closest('.room-delete-button');
+        if (deleteRoomBtn) {
+            const roomKey = deleteRoomBtn.dataset.roomKey;
+            this.deleteRoom(roomKey);
+        }
     });
   }
   
@@ -2053,6 +2076,9 @@ class DashviewPanel extends HTMLElement {
           }
           if (targetId === 'floor-maintenance-tab') {
             setTimeout(() => this.loadFloorMaintenance(), 100);
+          }
+          if (targetId === 'room-maintenance-tab') {
+            setTimeout(() => this.loadRoomMaintenance(), 100);
           }
           if (targetId === 'weather-tab') {
             setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
@@ -3023,6 +3049,202 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error deleting floor: ${error.message}`, 'error');
       console.error('[DashView] Error deleting floor:', error);
+    }
+  }
+
+  // Room Maintenance Functions - Principle 1, 2 & 12
+  async loadRoomMaintenance() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('room-maintenance-status');
+
+    if (!statusElement) return;
+
+    if (!this._hass) {
+      this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
+      return;
+    }
+
+    this._setStatusMessage(statusElement, 'Loading house configuration...', 'loading');
+
+    try {
+      // Load house configuration from API
+      const config = await this._loadConfigFromAPI(['house']);
+      this._adminLocalState.houseConfig = config.house || { rooms: {} };
+
+      // Render the rooms list
+      this._renderRoomsList();
+
+      this._setStatusMessage(statusElement, '✓ Room configuration loaded successfully', 'success');
+      console.log('[DashView] Room maintenance loaded successfully');
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
+      console.error('[DashView] Error loading room maintenance:', error);
+    }
+  }
+
+  _renderRoomsList() {
+    const shadow = this.shadowRoot;
+    const roomsContainer = shadow.getElementById('rooms-list');
+    
+    if (!roomsContainer) return;
+
+    const rooms = this._adminLocalState.houseConfig.rooms || {};
+
+    if (Object.keys(rooms).length === 0) {
+      roomsContainer.innerHTML = '<p>No rooms configured.</p>';
+      return;
+    }
+
+    let roomsHTML = '';
+    Object.entries(rooms).forEach(([key, config]) => {
+      roomsHTML += `
+        <div class="floor-item">
+          <div class="floor-info">
+            <div class="floor-name">${config.friendly_name} (${key})</div>
+            <div class="floor-details">Floor: ${config.floor} | Sensor: ${config.combined_sensor}</div>
+          </div>
+          <div class="floor-actions">
+            <button class="edit-button room-edit-button" data-room-key="${key}">Edit</button>
+            <button class="delete-button room-delete-button" data-room-key="${key}">Delete</button>
+          </div>
+        </div>
+      `;
+    });
+
+    roomsContainer.innerHTML = roomsHTML;
+  }
+
+  _startEditRoom(roomKey) {
+    const shadow = this.shadowRoot;
+    const room = this._adminLocalState.houseConfig.rooms[roomKey];
+    
+    if (!room) return;
+
+    // Populate the form with the room's data
+    shadow.getElementById('editing-room-key').value = roomKey;
+    shadow.getElementById('new-room-key').value = roomKey;
+    shadow.getElementById('new-room-name').value = room.friendly_name;
+    shadow.getElementById('new-room-icon').value = room.icon;
+    shadow.getElementById('new-room-floor').value = room.floor;
+    shadow.getElementById('new-room-sensor').value = room.combined_sensor;
+
+    // Disable the key field to prevent changing it during an edit
+    shadow.getElementById('new-room-key').disabled = true;
+    shadow.getElementById('new-room-name').focus();
+  }
+
+  async saveRoom() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('room-maintenance-status');
+
+    // Get the key of the room being edited, if any
+    const originalKey = shadow.getElementById('editing-room-key').value;
+    const isEditing = !!originalKey;
+
+    // Get form values
+    const newKey = shadow.getElementById('new-room-key').value.trim();
+    const newRoomData = {
+      friendly_name: shadow.getElementById('new-room-name').value.trim(),
+      icon: shadow.getElementById('new-room-icon').value.trim(),
+      floor: shadow.getElementById('new-room-floor').value.trim(),
+      combined_sensor: shadow.getElementById('new-room-sensor').value.trim(),
+      lights: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].lights || []) : [],
+      covers: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].covers || []) : [],
+      media_players: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].media_players || []) : [],
+    };
+
+    // Validate inputs
+    if (!newKey || !newRoomData.friendly_name || !newRoomData.icon || !newRoomData.floor || !newRoomData.combined_sensor) {
+      this._setStatusMessage(statusElement, '✗ All fields are required', 'error');
+      return;
+    }
+
+    // If not editing and key already exists, show error
+    if (!isEditing && this._adminLocalState.houseConfig.rooms[newKey]) {
+      this._setStatusMessage(statusElement, '✗ Room with this key already exists', 'error');
+      return;
+    }
+
+    this._setStatusMessage(statusElement, 'Saving room...', 'loading');
+
+    try {
+      // Update local state
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = { rooms: {}, floors: {} };
+      }
+      if (!this._adminLocalState.houseConfig.rooms) {
+        this._adminLocalState.houseConfig.rooms = {};
+      }
+
+      // If editing and the key has changed, we need to remove the old entry
+      if (isEditing && originalKey !== newKey) {
+        delete this._adminLocalState.houseConfig.rooms[originalKey];
+      }
+
+      this._adminLocalState.houseConfig.rooms[newKey] = newRoomData;
+
+      // Save to backend
+      await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig, (data) => 
+        data && data.rooms && data.floors
+      );
+
+      // Clear form and reset editing state
+      shadow.getElementById('editing-room-key').value = '';
+      shadow.getElementById('new-room-key').value = '';
+      shadow.getElementById('new-room-name').value = '';
+      shadow.getElementById('new-room-icon').value = '';
+      shadow.getElementById('new-room-floor').value = '';
+      shadow.getElementById('new-room-sensor').value = '';
+      shadow.getElementById('new-room-key').disabled = false; // Re-enable for next time
+
+      // Refresh the rooms list
+      this._renderRoomsList();
+
+      this._setStatusMessage(statusElement, '✓ Room saved successfully', 'success');
+      console.log('[DashView] Room saved successfully:', newKey);
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error saving room: ${error.message}`, 'error');
+      console.error('[DashView] Error saving room:', error);
+    }
+  }
+
+  async deleteRoom(roomKey) {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('room-maintenance-status');
+    
+    if (!roomKey) {
+      this._setStatusMessage(statusElement, '✗ Room key is required', 'error');
+      return;
+    }
+
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete the room "${roomKey}"?`)) {
+      return;
+    }
+
+    this._setStatusMessage(statusElement, 'Deleting room...', 'loading');
+
+    try {
+      // Update local state
+      if (this._adminLocalState.houseConfig && this._adminLocalState.houseConfig.rooms) {
+        delete this._adminLocalState.houseConfig.rooms[roomKey];
+      }
+
+      // Save to backend
+      await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig, (data) => 
+        data && data.rooms && data.floors
+      );
+
+      // Refresh the rooms list
+      this._renderRoomsList();
+
+      this._setStatusMessage(statusElement, '✓ Room deleted successfully', 'success');
+      console.log('[DashView] Room deleted successfully:', roomKey);
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error deleting room: ${error.message}`, 'error');
+      console.error('[DashView] Error deleting room:', error);
     }
   }
 
