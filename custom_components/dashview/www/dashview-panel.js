@@ -1244,6 +1244,17 @@ class DashviewPanel extends HTMLElement {
             this.loadWeatherEntityConfiguration();
         }
 
+        // Handle motion setup buttons
+        const reloadMotionSensorsBtn = e.target.closest('#reload-motion-sensors');
+        if (reloadMotionSensorsBtn) {
+            this.loadMotionSensorSetup();
+        }
+
+        const saveMotionSensorConfigBtn = e.target.closest('#save-motion-sensor-config');
+        if (saveMotionSensorConfigBtn) {
+            this.saveMotionSensorConfig();
+        }
+
         // Handle floor maintenance buttons
         const reloadFloorMaintenanceBtn = e.target.closest('#reload-floor-maintenance');
         if (reloadFloorMaintenanceBtn) {
@@ -2077,6 +2088,9 @@ class DashviewPanel extends HTMLElement {
           if (targetId === 'house-setup-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }
+          if (targetId === 'motion-setup-tab') {
+            setTimeout(() => this.loadMotionSensorSetup(), 100);
+          }
           if (targetId === 'header-buttons-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }
@@ -2855,6 +2869,164 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error saving weather entity: ${error.message}`, 'error');
     }
+  }
+
+  // Motion Setup Functions - Motion admin functionality
+  async loadMotionSensorSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('motion-setup-status');
+    this._setStatusMessage(statusElement, 'Loading motion sensors from Home Assistant...', 'loading');
+
+    try {
+      // The API call uses the new label-based endpoint
+      const [entitiesByRoom, houseConfig] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Motion'),
+        this._hass.callApi('GET', 'dashview/config?type=house')
+      ]);
+
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+      this._renderMotionSensorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Motion sensors loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading motion sensor setup:', error);
+      this._setStatusMessage(statusElement, `✗ Error loading motion sensors: ${error.message}`, 'error');
+    }
+  }
+
+  _renderMotionSensorSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('motion-sensors-by-room');
+    
+    if (!container) return;
+
+    let html = '';
+    
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+      html = '<div class="placeholder">No motion sensors with "Motion" label found. Please assign the "Motion" label to your motion sensors in Home Assistant.</div>';
+    } else {
+      Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+        html += `
+          <div class="room-config">
+            <h6>${areaData.name}</h6>
+            <div class="entity-list">
+        `;
+        
+        areaData.entities.forEach(entity => {
+          // Check if this entity is already configured in the house config
+          const isConfigured = this._isMotionSensorConfigured(entity.entity_id, houseConfig);
+          const checkedAttr = isConfigured ? 'checked' : '';
+          
+          html += `
+            <div class="entity-list-item">
+              <label class="checkbox-label">
+                <input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}>
+                <span class="checkmark"></span>
+                ${entity.name}
+              </label>
+              <span class="entity-id">${entity.entity_id}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    container.innerHTML = html;
+  }
+
+  _isMotionSensorConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    
+    return Object.values(houseConfig.rooms).some(room => {
+      return room.header_entities && room.header_entities.some(headerEntity => 
+        headerEntity.entity_id === entityId && headerEntity.entity_type === 'motion'
+      );
+    });
+  }
+
+  async saveMotionSensorConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('motion-setup-status');
+    const checkboxes = shadow.querySelectorAll('#motion-sensors-by-room input[type="checkbox"]');
+    
+    this._setStatusMessage(statusElement, 'Saving motion sensor configuration...', 'loading');
+
+    try {
+      // Ensure we have a house config to work with
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = { rooms: {} };
+      }
+
+      // First, remove all existing motion sensors from room configurations
+      Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+        if (room.header_entities) {
+          room.header_entities = room.header_entities.filter(entity => entity.entity_type !== 'motion');
+        }
+      });
+
+      // Add selected motion sensors to the appropriate rooms
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const entityId = checkbox.getAttribute('data-entity-id');
+          const roomName = checkbox.getAttribute('data-room');
+          
+          // Find or create the room configuration based on room name
+          let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+          
+          if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+            this._adminLocalState.houseConfig.rooms[roomKey] = {
+              friendly_name: roomName,
+              icon: "mdi:home-outline",
+              floor: "ground_floor",
+              combined_sensor: "",
+              lights: [],
+              covers: [],
+              media_players: [],
+              header_entities: []
+            };
+          }
+
+          if (!this._adminLocalState.houseConfig.rooms[roomKey].header_entities) {
+            this._adminLocalState.houseConfig.rooms[roomKey].header_entities = [];
+          }
+
+          // Add the motion sensor
+          this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({
+            entity_id: entityId,
+            entity_type: 'motion',
+            icon: 'mdi:motion-sensor'
+          });
+        }
+      });
+
+      // Save the updated configuration
+      await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Motion sensor configuration saved successfully!', 'success');
+      
+    } catch (error) {
+      console.error('[DashView] Error saving motion sensor configuration:', error);
+      this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
+  }
+
+  _findRoomKeyByName(roomName) {
+    if (!this._adminLocalState.houseConfig || !this._adminLocalState.houseConfig.rooms) return null;
+    
+    return Object.keys(this._adminLocalState.houseConfig.rooms).find(key => 
+      this._adminLocalState.houseConfig.rooms[key].friendly_name === roomName
+    );
+  }
+
+  _createRoomKeyFromName(roomName) {
+    return roomName.toLowerCase()
+      .replace(/[äöüß]/g, match => ({ 'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss' }[match]))
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
   }
 
   // Floor Maintenance Functions - Principle 1, 2 & 12
