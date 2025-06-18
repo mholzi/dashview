@@ -2945,7 +2945,7 @@ class DashviewPanel extends HTMLElement {
     
     return Object.values(houseConfig.rooms).some(room => {
       return room.header_entities && room.header_entities.some(headerEntity => 
-        headerEntity.entity_id === entityId && headerEntity.entity_type === 'motion'
+        headerEntity.entity === entityId && headerEntity.entity_type === 'motion'
       );
     });
   }
@@ -2998,7 +2998,7 @@ class DashviewPanel extends HTMLElement {
 
           // Add the motion sensor
           this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({
-            entity_id: entityId,
+            entity: entityId,
             entity_type: 'motion',
             icon: 'mdi:motion-sensor'
           });
