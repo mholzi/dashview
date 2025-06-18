@@ -217,6 +217,16 @@ else
     exit 1
 fi
 
+# Run Motion Setup Admin tests
+echo ""
+echo "🚶 Running Motion Setup Admin tests..."
+if node custom_components/dashview/tests/test_motion_setup_admin.js > /dev/null; then
+    echo "✅ Motion Setup Admin tests passed"
+else
+    echo "❌ Motion Setup Admin tests failed"
+    exit 1
+fi
+
 # Run Bottom Navigation Alignment tests
 echo ""
 echo "🧭 Running Bottom Navigation Alignment tests..."
@@ -309,7 +319,11 @@ function testConfigSummary() {
 
 process.exit(testConfigSummary() ? 0 : 1);
 
+" > /dev/null; then
+
+
 "; then
+
     echo "✅ Configuration Summary tests passed"
 
     echo "[OK] Configuration Summary tests passed"

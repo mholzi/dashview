@@ -164,11 +164,55 @@ class DashViewConfigView(HomeAssistantView):
             except Exception as e:
                 _LOGGER.warning("Error fetching combined sensors: %s", e)
                 data = []
+        elif config_type == "entities_by_room":
+            # NEW: Fetch entities grouped by room, filtered by a specific HA Label
+            try:
+                from homeassistant.helpers import entity_registry as er, area_registry as ar, label_registry as lr
+                
+                entity_registry = er.async_get(self._hass)
+                area_registry = ar.async_get(self._hass)
+                label_registry = lr.async_get(self._hass) # Get the label registry
+                
+                label_filter = request.query.get("label") # Get the label from the request, e.g., "Motion"
+                
+                if not label_filter:
+                    return web.Response(status=400, text="A 'label' query parameter is required.")
+
+                # Find the label ID from the label name
+                label_id = None
+                for label in label_registry.labels.values():
+                    if label.name.lower() == label_filter.lower():
+                        label_id = label.label_id
+                        break
+                
+                entities_by_area = {}
+                if label_id:
+                    for entity in entity_registry.entities.values():
+                        # Check if the entity has the requested label and is in a room
+                        if label_id in entity.labels and entity.area_id:
+                            
+                            if entity.area_id not in entities_by_area:
+                                area = area_registry.async_get_area(entity.area_id)
+                                entities_by_area[entity.area_id] = {
+                                    "name": area.name if area else "Unknown Area",
+                                    "entities": []
+                                }
+                            
+                            entities_by_area[entity.area_id]["entities"].append({
+                                "entity_id": entity.entity_id,
+                                "name": entity.name or entity.original_name or entity.entity_id
+                            })
+                
+                data = entities_by_area
+
+            except Exception as e:
+                _LOGGER.warning("Error fetching entities by room and label: %s", e)
+                data = {}
         elif config_type is None:
             # Return the full house_config when no type is specified
             data = config_data.get("house_config", {})
         else:
-            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players, ha_floors, ha_rooms, combined_sensors")
+            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players, ha_floors, ha_rooms, combined_sensors, entities_by_room")
         
         return self.json(data)
     

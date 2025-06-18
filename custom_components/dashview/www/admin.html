@@ -4,6 +4,7 @@
     <div class="tab-buttons">
         <button class="tab-button active" data-target="weather-tab">Weather</button>
         <button class="tab-button" data-target="house-setup-tab">House Setup</button>
+        <button class="tab-button" data-target="motion-setup-tab">Motion Setup</button>
         <button class="tab-button" data-target="floor-maintenance-tab">Floor Maintenance</button>
         <button class="tab-button" data-target="room-maintenance-tab">Room Maintenance</button>
         <button class="tab-button" data-target="media-player-maintenance-tab">Media Players</button>
@@ -36,6 +37,25 @@
             <p>Each room contains its friendly name, icon, floor assignment, combined sensor, and placeholders for lights, covers, and media players.</p>
             <textarea id="house-config" class="config-textarea" placeholder="House configuration will be loaded here..."></textarea>
             <button id="save-house-config" class="save-button">Save House Config</button>
+        </div>
+    </div>
+
+    <div id="motion-setup-tab" class="tab-content">
+        <h4>Motion Setup</h4>
+        <p>Configure motion sensors based on Home Assistant labels. Select motion sensors labeled "Motion" to assign to rooms.</p>
+        
+        <div class="config-section">
+            <h5>Motion Sensor Status</h5>
+            <div id="motion-setup-status" class="status-display">Ready</div>
+            <button id="reload-motion-sensors" class="action-button">Reload Motion Sensors</button>
+        </div>
+        
+        <div class="config-section">
+            <h5>Available Motion Sensors by Room</h5>
+            <div id="motion-sensors-by-room" class="floors-container">
+                <!-- Motion sensors will be populated here -->
+            </div>
+            <button id="save-motion-sensor-config" class="save-button" style="margin-top: 12px;">Save Motion Sensor Configuration</button>
         </div>
     </div>
 
