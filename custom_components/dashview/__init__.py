@@ -26,12 +26,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DashView from a config entry."""
     _LOGGER.info("Setting up DashView panel from config entry.")
     
-    # The config entry is the single source of truth.
-    # Use options if they exist, otherwise fall back to data.
-    config_data = entry.options or entry.data
-    
     # Migrate existing config files to ConfigEntry if needed
     await _migrate_config_files(hass, entry)
+    
+    # Get the config data AFTER migration to ensure we have the latest data
+    config_data = entry.options or entry.data
     
     # Register the API endpoint, passing the hass instance and entry object
     hass.http.register_view(DashViewConfigView(hass, entry))
@@ -46,6 +45,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         StaticPathConfig(f"/local/{panel_name}", www_path, False)
     ])
 
+    # Prepare panel config - use None if config is empty or has no meaningful data
+    panel_config = None
+    if config_data and isinstance(config_data, dict) and config_data.get("house_config"):
+        panel_config = config_data
+        _LOGGER.debug("DashView panel config prepared with house_config data")
+    else:
+        _LOGGER.debug("DashView panel config set to None (no house_config data)")
+
     # Register the panel
     try:
         await panel_custom.async_register_panel(
@@ -56,7 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             sidebar_icon="mdi:view-dashboard",
             module_url=f"/local/{panel_name}/dashview-panel.js",
             require_admin=False,
-            config=config_data, # Pass config to the panel
+            config=panel_config,
         )
         _LOGGER.info("DashView panel successfully registered.")
     except ValueError as ve:
