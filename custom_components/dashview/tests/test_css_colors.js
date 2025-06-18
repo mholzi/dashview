@@ -82,6 +82,25 @@ function testCSSVariables() {
         'color: var(--gray800)'        // primary text
     ];
     
+    // Test 6: Validate that both room and floor button icons use gray000
+    const headerButtonIconRules = [
+        '.header-floor-button i {\n    color: var(--gray000);',
+        '.header-room-button i {\n    color: var(--gray000);'
+    ];
+    
+    const missingIconRules = [];
+    for (const rule of headerButtonIconRules) {
+        if (!cssContent.includes(rule)) {
+            missingIconRules.push(rule);
+        }
+    }
+    
+    if (missingIconRules.length > 0) {
+        console.error(`❌ Header button icon color rules missing: ${missingIconRules.join(', ')}`);
+        return false;
+    }
+    console.log('✅ Both room and floor button icons use gray000 color');
+    
     const missingApplications = [];
     for (const application of criticalColorApplications) {
         if (!cssContent.includes(application)) {

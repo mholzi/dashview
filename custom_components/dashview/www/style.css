@@ -798,7 +798,7 @@ body.popup-open, :host(.popup-open) {
 }
 
 .header-room-button i {
-    color: var(--gray800);
+    color: var(--gray000);
 }
 
 .header-floor-button:hover,
