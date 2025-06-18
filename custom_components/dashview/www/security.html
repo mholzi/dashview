@@ -8,19 +8,40 @@
         <button class="tab-button" data-target="temperatur-tab">Temperatur</button>
     </div>
     <div id="fenster-tab" class="tab-content active">
-        <h4>Offene Fenster</h4>
-        <div class="placeholder">List of open windows...</div>
-        <h4>Geschlossene Fenster</h4>
-        <div class="placeholder">List of closed windows...</div>
+        <h4><i class="mdi mdi-window-open"></i> Offene Fenster</h4>
+        <div id="open-windows-list" class="entity-list">
+        </div>
+        <h4 style="margin-top: 20px;"><i class="mdi mdi-window-closed"></i> Geschlossene Fenster</h4>
+        <div id="closed-windows-list" class="entity-list">
+        </div>
     </div>
     <div id="bewegung-tab" class="tab-content">
-        <h4>Räume mit Bewegung</h4>
-        <div class="placeholder">List of rooms with motion...</div>
-        <h4>Räume ohne Bewegung</h4>
-        <div class="placeholder">List of rooms without motion...</div>
+        <h4><i class="mdi mdi-run-fast"></i> Aktive Bewegungsmelder</h4>
+        <div id="active-motion-list" class="entity-list">
+        </div>
+        <h4 style="margin-top: 20px;"><i class="mdi mdi-motion-sensor-off"></i> Inaktive Bewegungsmelder</h4>
+        <div id="inactive-motion-list" class="entity-list">
+        </div>
     </div>
      <div id="temperatur-tab" class="tab-content">
         <h4>Temperaturen</h4>
         <div class="placeholder">List of temperatures...</div>
     </div>
 </div>
+
+<style>
+    .entity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .entity-list-item {
+        padding: 12px;
+        background-color: var(--gray000);
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    .entity-list-none {
+        color: var(--secondary-text-color);
+    }
+</style>
