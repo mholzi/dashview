@@ -1366,23 +1366,33 @@ class DashviewPanel extends HTMLElement {
     const tabs = shadow.querySelectorAll('.forecast-tab');
     const content = shadow.querySelector('#daily-forecast-content');
     
-    if (!tabs.length || !content || !dailyData || dailyData.length === 0) return;
+    if (!tabs.length || !content) {
+      console.error('[DashView] Daily forecast tabs or content container not found.');
+      return;
+    }
 
+    // This function will be called by the event listeners and for the initial render.
+    const updateForecastDisplay = (dayIndex) => {
+        // First, update the active state on the tabs
+        tabs.forEach(t => {
+            t.classList.toggle('active', parseInt(t.dataset.day) === dayIndex);
+        });
+
+        // Now, render the content based on the selected day
+        this.showDailyForecast(content, dailyData, dayIndex);
+    };
+
+    // Always attach click listeners so the tabs are interactive.
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        // Remove active class from all tabs
-        tabs.forEach(t => t.classList.remove('active'));
-        // Add active class to the clicked tab
-        tab.classList.add('active');
-        
         const dayIndex = parseInt(tab.dataset.day);
-        this.showDailyForecast(content, dailyData, dayIndex);
+        updateForecastDisplay(dayIndex);
       });
     });
 
-    // Show today's forecast by default
-    // We can simulate a click on the first tab to initialize the view
-    tabs[0].click();
+    // Explicitly render the initial state for "Heute" (day 0)
+    // This replaces the problematic tabs[0].click()
+    updateForecastDisplay(0);
   }
 
   // This function now correctly renders the selected day's forecast
