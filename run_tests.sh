@@ -320,12 +320,6 @@ function testConfigSummary() {
 process.exit(testConfigSummary() ? 0 : 1);
 
 " > /dev/null; then
-
-
-"; then
-
-    echo "✅ Configuration Summary tests passed"
-
     echo "[OK] Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"
