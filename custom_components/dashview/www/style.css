@@ -801,7 +801,6 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray800);
 }
 
-.header-floor-button:hover,
 .header-room-button:hover {
     transform: scale(1.05);
 }
