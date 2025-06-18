@@ -150,10 +150,11 @@ body.popup-open, :host(.popup-open) {
 
 .popup-content {
     background-color: var(--popupBG);
-    margin: 0;
+    margin: 0 auto; /* Center like main view */
     padding: 20px;
     border-radius: 30px;
-    width: calc(100% - 16px); /* Match main view width with minimal margin */
+    max-width: 500px; /* Match main view max-width */
+    width: calc(100% - 16px); /* Responsive width within max-width constraint */
     position: relative;
     transform: translateY(100vh);
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
