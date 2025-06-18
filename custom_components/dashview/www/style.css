@@ -1026,3 +1026,110 @@ body.popup-open, :host(.popup-open) {
 .delete-button:hover {
     opacity: 0.8;
 }
+
+/* Room Header Icons Styles */
+.room-header-icons {
+    margin-bottom: 8px;
+}
+
+.room-header-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.room-header-card {
+    background: var(--card-background-color);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.room-header-card .room-name {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    font-size: 0.9em;
+    min-width: 80px;
+}
+
+.room-icons-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex: 1;
+}
+
+.room-icons-container::-webkit-scrollbar {
+    display: none;
+}
+
+.room-header-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.room-header-icon.active {
+    background: var(--active-small);
+    color: var(--gray800);
+}
+
+.room-header-icon.inactive {
+    background: var(--gray200);
+    color: var(--gray500);
+}
+
+.room-header-icon.unknown {
+    background: var(--gray100);
+    color: var(--gray400);
+}
+
+.room-header-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Entity type specific colors */
+.room-header-icon.motion.active {
+    background: var(--yellow);
+}
+
+.room-header-icon.window.active {
+    background: var(--blue);
+}
+
+.room-header-icon.smoke.active {
+    background: var(--red);
+}
+
+.room-header-icon.vibration.active {
+    background: var(--orange);
+}
+
+.room-header-icon.music.active,
+.room-header-icon.tv.active {
+    background: var(--purple);
+}
+
+.room-header-icon.dishwasher.active,
+.room-header-icon.washing.active,
+.room-header-icon.dryer.active,
+.room-header-icon.freezer.active {
+    background: var(--green);
+}
+
+.room-header-icon.mower.active {
+    background: var(--green);
+}

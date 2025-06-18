@@ -7,7 +7,15 @@
       "combined_sensor": "binary_sensor.combined_sensor_wohnzimmer",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_terrasse", "entity_type": "window" },
+        { "entity": "binary_sensor.fenster_esszimmer_contact", "entity_type": "window" },
+        { "entity": "binary_sensor.fenster_wohnzimmer_contact", "entity_type": "window" },
+        { "entity": "binary_sensor.rauchmelder_wohnzimmer_smoke", "entity_type": "smoke" },
+        { "entity": "media_player.unnamed_room", "entity_type": "music" },
+        { "entity": "media_player.wohnzimmer", "entity_type": "tv" }
+      ]
     },
     "buero": {
       "friendly_name": "Büro",
@@ -16,7 +24,14 @@
       "combined_sensor": "binary_sensor.combined_sensor_buero",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.motion_buro_presence_sensor_1", "entity_type": "motion" },
+        { "entity": "binary_sensor.fenster_buero_contact", "entity_type": "window" },
+        { "entity": "binary_sensor.vibration_buero_vibration", "entity_type": "vibration" },
+        { "entity": "binary_sensor.rauchmelder_buro_smoke", "entity_type": "smoke" },
+        { "entity": "media_player.echo_buero", "entity_type": "music" }
+      ]
     },
     "kueche": {
       "friendly_name": "Küche",
@@ -25,7 +40,14 @@
       "combined_sensor": "binary_sensor.combined_sensor_kueche",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.motion_kuche_presence_sensor_1", "entity_type": "motion" },
+        { "entity": "binary_sensor.fenster_kuche", "entity_type": "window" },
+        { "entity": "sensor.geschirrspuler_operation_state", "entity_type": "dishwasher" },
+        { "entity": "sensor.gefrierschrank_door_alarm_freezer", "entity_type": "freezer" },
+        { "entity": "media_player.unnamed_room", "entity_type": "music" }
+      ]
     },
     "eingangsflur": {
       "friendly_name": "Eingangsflur",
@@ -34,7 +56,8 @@
       "combined_sensor": "binary_sensor.combined_sensor_eingangsflur",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": []
     },
     "gaesteklo": {
       "friendly_name": "Gäste-WC",
@@ -43,7 +66,10 @@
       "combined_sensor": "binary_sensor.combined_sensor_gaesteklo",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.motion_gasteklo_occupancy", "entity_type": "motion" }
+      ]
     },
     "treppe_erdgeschoss": {
       "friendly_name": "Treppe Erdgeschoss",
@@ -52,7 +78,8 @@
       "combined_sensor": "binary_sensor.combined_sensor_treppe_erdgeschoss",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": []
     },
     "kids": {
       "friendly_name": "Kinderzimmer",
@@ -61,7 +88,15 @@
       "combined_sensor": "binary_sensor.combined_sensor_kids",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_felicia_links", "entity_type": "window" },
+        { "entity": "binary_sensor.fenster_jp_contact", "entity_type": "window" },
+        { "entity": "binary_sensor.fenster_frederik_contact", "entity_type": "window" },
+        { "entity": "binary_sensor.rauchmelder_jan_philipp_smoke", "entity_type": "smoke" },
+        { "entity": "binary_sensor.rauchmelder_frederik_smoke", "entity_type": "smoke" },
+        { "entity": "binary_sensor.rauchmelder_felicia_smoke", "entity_type": "smoke" }
+      ]
     },
     "kinderbad": {
       "friendly_name": "Kinderbad",
@@ -70,7 +105,10 @@
       "combined_sensor": "binary_sensor.combined_sensor_kinderbad",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_kinderbad_opening", "entity_type": "window" }
+      ]
     },
     "flur": {
       "friendly_name": "Flur OG",
@@ -79,7 +117,8 @@
       "combined_sensor": "binary_sensor.combined_sensor_flur",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": []
     },
     "aupair": {
       "friendly_name": "Au-pair Zimmer",
@@ -88,7 +127,11 @@
       "combined_sensor": "binary_sensor.combined_sensor_aupair",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_aupair", "entity_type": "window" },
+        { "entity": "binary_sensor.fenster_aupairbad_2", "entity_type": "window" }
+      ]
     },
     "schlafzimmer": {
       "friendly_name": "Schlafzimmer",
@@ -97,7 +140,13 @@
       "combined_sensor": "binary_sensor.combined_sensor_schlafzimmer",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_elternbad_contact", "entity_type": "window" },
+        { "entity": "binary_sensor.fenster_schlafzimmer_contact", "entity_type": "window" },
+        { "entity": "binary_sensor.rauchmelder_schlafzimmer_smoke", "entity_type": "smoke" },
+        { "entity": "media_player.echo_bad", "entity_type": "music" }
+      ]
     },
     "partykeller": {
       "friendly_name": "Partykeller",
@@ -106,7 +155,12 @@
       "combined_sensor": "binary_sensor.combined_sensor_partykeller",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.motion_partykeller_group", "entity_type": "motion" },
+        { "entity": "binary_sensor.fenster_partykeller", "entity_type": "window" },
+        { "entity": "binary_sensor.rauchmelder_partykeller1_smoke", "entity_type": "smoke" }
+      ]
     },
     "heizungskeller": {
       "friendly_name": "Heizungskeller",
@@ -115,7 +169,11 @@
       "combined_sensor": "binary_sensor.combined_sensor_heizungskeller",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_heizungskeller_opening", "entity_type": "window" },
+        { "entity": "binary_sensor.motion_heizungskeller_occupancy", "entity_type": "motion" }
+      ]
     },
     "kellerflur": {
       "friendly_name": "Kellerflur",
@@ -124,7 +182,10 @@
       "combined_sensor": "binary_sensor.combined_sensor_kellerflur",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.motion_kellerflur", "entity_type": "motion" }
+      ]
     },
     "waschkeller": {
       "friendly_name": "Waschkeller",
@@ -133,7 +194,13 @@
       "combined_sensor": "binary_sensor.combined_sensor_waschkeller",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.motion_waschkeller_occupancy", "entity_type": "motion" },
+        { "entity": "binary_sensor.fenster_waschekeller_opening", "entity_type": "window" },
+        { "entity": "sensor.waschmaschine_operation_state", "entity_type": "washing" },
+        { "entity": "input_boolean.trockner_an", "entity_type": "dryer" }
+      ]
     },
     "serverraum": {
       "friendly_name": "Serverraum",
@@ -142,7 +209,11 @@
       "combined_sensor": "binary_sensor.combined_sensor_serverraum",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_serverraum_opening", "entity_type": "window" },
+        { "entity": "binary_sensor.motion_serverraum_occupancy", "entity_type": "motion" }
+      ]
     },
     "buero_keller": {
       "friendly_name": "Büro Keller",
@@ -151,7 +222,11 @@
       "combined_sensor": "binary_sensor.combined_sensor_buero_keller",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.fenster_buro_keller_opening", "entity_type": "window" },
+        { "entity": "binary_sensor.motion_buro_keller_occupancy", "entity_type": "motion" }
+      ]
     },
     "sauna": {
       "friendly_name": "Sauna",
@@ -160,7 +235,8 @@
       "combined_sensor": "binary_sensor.combined_sensor_sauna",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": []
     },
     "aussen": {
       "friendly_name": "Außenbereich",
@@ -169,7 +245,11 @@
       "combined_sensor": "binary_sensor.combined_sensor_aussen",
       "lights": [],
       "covers": [],
-      "media_players": []
+      "media_players": [],
+      "header_entities": [
+        { "entity": "binary_sensor.motion_garage_motion", "entity_type": "motion" },
+        { "entity": "vacuum.sileno", "entity_type": "mower" }
+      ]
     }
   },
   "floors": {
