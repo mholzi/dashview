@@ -159,6 +159,16 @@ else
     exit 1
 fi
 
+# Run Room Covers Placeholder tests
+echo ""
+echo "🏠 Running Room Covers Placeholder tests..."
+if node custom_components/dashview/tests/test_room_covers_placeholder.js > /dev/null; then
+    echo "✅ Room Covers Placeholder tests passed"
+else
+    echo "❌ Room Covers Placeholder tests failed"
+    exit 1
+fi
+
 # Run House Setup Tab Loading tests
 echo ""
 echo "🏠 Running House Setup Tab Loading tests..."

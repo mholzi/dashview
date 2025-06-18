@@ -1682,16 +1682,25 @@ class DashviewPanel extends HTMLElement {
 
     // Check if the room has covers and inject the card
     const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseConfig.rooms[popupType] : null;
-    if (roomConfig && roomConfig.covers && roomConfig.covers.length > 0) {
-        fetch('/local/dashview/templates/room-covers-card.html')
-            .then(response => response.text())
-            .then(html => {
-                const coversContainer = document.createElement('div');
-                coversContainer.innerHTML = html;
-                bodyElement.appendChild(coversContainer);
-                // The new dispatcher system will handle initialization
-                // when reinitializePopupContent is called
-            }).catch(err => console.error('[DashView] Error loading covers card template:', err));
+    if (roomConfig) { // Check if the popup corresponds to a configured room
+        if (roomConfig.covers && roomConfig.covers.length > 0) {
+            // If covers exist, fetch and add the interactive card
+            fetch('/local/dashview/templates/room-covers-card.html')
+                .then(response => response.text())
+                .then(html => {
+                    const coversContainer = document.createElement('div');
+                    coversContainer.innerHTML = html;
+                    bodyElement.appendChild(coversContainer);
+                    // The new dispatcher system will handle initialization
+                    // when reinitializePopupContent is called
+                }).catch(err => console.error('[DashView] Error loading covers card template:', err));
+        } else {
+            // If no covers exist, add a placeholder
+            const placeholder = document.createElement('div');
+            placeholder.className = 'placeholder'; // Use existing placeholder style
+            placeholder.textContent = 'No covers configured for this room.';
+            bodyElement.appendChild(placeholder);
+        }
     }
 
     popup.appendChild(templateContent);
