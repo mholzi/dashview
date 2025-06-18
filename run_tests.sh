@@ -227,6 +227,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🎯 Running Motion-Driven Header Icons tests..."
+if node custom_components/dashview/tests/test_motion_driven_header_icons.js > /dev/null; then
+    echo "✅ Motion-Driven Header Icons tests passed"
+else
+    echo "❌ Motion-Driven Header Icons tests failed"
+    exit 1
+fi
+
 # Run Bottom Navigation Alignment tests
 echo ""
 echo "🧭 Running Bottom Navigation Alignment tests..."
@@ -320,12 +329,6 @@ function testConfigSummary() {
 process.exit(testConfigSummary() ? 0 : 1);
 
 " > /dev/null; then
-
-
-"; then
-
-    echo "✅ Configuration Summary tests passed"
-
     echo "[OK] Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"

@@ -2361,9 +2361,8 @@ class DashviewPanel extends HTMLElement {
     let buttonsHTML = '';
     const rooms = this._houseConfig.rooms || {};
     const floors = this._houseConfig.floors || {};
-    const floorSensors = this._houseConfig.floor_sensors || {};
 
-    // Group rooms by floor
+    // 1. Group rooms by their assigned floor
     const roomsByFloor = {};
     Object.entries(rooms).forEach(([roomKey, roomConfig]) => {
       const floorKey = roomConfig.floor;
@@ -2373,54 +2372,52 @@ class DashviewPanel extends HTMLElement {
       roomsByFloor[floorKey].push({ key: roomKey, config: roomConfig });
     });
 
-    // Generate buttons for each floor
+    // 2. Iterate through each floor to check for motion
     Object.entries(roomsByFloor).forEach(([floorKey, floorRooms]) => {
       const floorConfig = floors[floorKey];
-      if (!floorConfig) return;
+      if (!floorConfig) return; // Skip if floor is not configured
 
-      // Get floor sensor from the floor_sensors mapping, or fall back to floor config
-      const floorSensor = floorSensors[floorKey] || floorConfig.floor_sensor;
-      const floorIcon = this._processIconName(floorConfig.icon || 'mdi:help-circle-outline');
-      
-      // Check if floor sensor is active
-      const floorEntity = this._hass.states[floorSensor];
-      const isFloorActive = floorEntity && floorEntity.state === 'on';
+      // 3. Find all rooms on this floor that have an active motion sensor
+      const activeMotionRooms = floorRooms.filter(room => {
+        // Find the motion sensor configured for this room in the admin panel
+        if (!room.config.header_entities) return false;
+        const motionEntityConfig = room.config.header_entities.find(e => e.entity_type === 'motion');
+        if (!motionEntityConfig || !motionEntityConfig.entity) return false;
 
-      if (isFloorActive) {
-        // Add floor button
+        // Check if the motion sensor's state is 'on'
+        const sensorState = this._hass.states[motionEntityConfig.entity];
+        return sensorState && sensorState.state === 'on';
+      });
+
+      // 4. If at least one room has active motion, display the floor and room icons
+      if (activeMotionRooms.length > 0) {
+        const floorIcon = this._processIconName(floorConfig.icon || 'mdi:help-circle-outline');
+
+        // Add the floor icon button
         buttonsHTML += `
           <button class="header-floor-button" data-floor="${floorKey}">
             <i class="mdi ${floorIcon}"></i>
           </button>
         `;
 
-        // Add room buttons for this floor
-        floorRooms.forEach(room => {
+        // Add the icon buttons ONLY for the rooms with active motion
+        activeMotionRooms.forEach(room => {
           const roomConfig = room.config;
-          const sensorEntity = this._hass.states[roomConfig.combined_sensor];
-          const isRoomActive = sensorEntity && sensorEntity.state === 'on';
-
-          if (isRoomActive) {
-            // Use configured icon first, fallback to storage mapping, then to default
-            const configuredIcon = roomConfig.icon;
-            const storageIcon = this._getRoomIconFromStorage(room.key);
-            const roomIcon = this._processIconName(configuredIcon || storageIcon);
-            buttonsHTML += `
+          const roomIcon = this._processIconName(roomConfig.icon || 'mdi:home-outline');
+          buttonsHTML += `
               <button class="header-room-button" 
                       data-room="${room.key}" 
                       data-floor="${floorKey}"
-                      data-sensor="${roomConfig.combined_sensor}"
                       data-navigation="#${room.key}"
                       title="${roomConfig.friendly_name}">
                 <i class="mdi ${roomIcon}"></i>
               </button>
             `;
-          }
         });
       }
     });
 
-    return buttonsHTML || '<div class="no-activity">No active rooms</div>';
+    return buttonsHTML || 'No active rooms';
   }
 
   // Generate header buttons from legacy configuration (for backward compatibility)
