@@ -45,6 +45,15 @@ else
 fi
 
 echo ""
+echo "🎯 Running Popup Icon Consistency tests..."
+if node custom_components/dashview/tests/test_popup_icon_consistency.js > /dev/null; then
+    echo "✅ Popup Icon Consistency tests passed"
+else
+    echo "❌ Popup Icon Consistency tests failed"
+    exit 1
+fi
+
+echo ""
 echo "💾 Running Entity Persistence tests..."
 if node custom_components/dashview/tests/test_entity_persistence.js > /dev/null; then
     echo "✅ Entity Persistence tests passed"
