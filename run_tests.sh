@@ -139,13 +139,23 @@ else
     exit 1
 fi
 
-# Run Popup Refresh tests
+# Run Weather Forecast tests
 echo ""
 echo "🌤️  Running Weather Forecast tests..."
 if node custom_components/dashview/tests/test_weather_forecast.js > /dev/null; then
     echo "✅ Weather Forecast tests passed"
 else
     echo "❌ Weather Forecast tests failed"
+    exit 1
+fi
+
+# Run Daily Forecast Initialization tests
+echo ""
+echo "📅 Running Daily Forecast Initialization tests..."
+if node custom_components/dashview/tests/test_daily_forecast_initialization.js > /dev/null; then
+    echo "✅ Daily Forecast Initialization tests passed"
+else
+    echo "❌ Daily Forecast Initialization tests failed"
     exit 1
 fi
 
