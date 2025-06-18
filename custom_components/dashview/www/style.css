@@ -876,3 +876,89 @@ body.popup-open {
     background: var(--background);
     color: var(--primary-text-color);
 }
+
+/* Door Management Styles */
+.door-management-section {
+    margin-top: 20px;
+}
+
+.door-actions {
+    margin-bottom: 20px;
+}
+
+.doors-list {
+    margin-top: 20px;
+}
+
+.door-entry {
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 16px;
+    background: var(--background);
+}
+
+.door-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.door-header h6 {
+    margin: 0;
+    color: var(--primary-text-color);
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.door-header .door-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+}
+
+.edit-door-btn, .delete-door-btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.edit-door-btn {
+    background: var(--blue);
+    color: var(--primary-text-color);
+}
+
+.edit-door-btn:hover {
+    background: var(--blue-dark);
+}
+
+.delete-door-btn {
+    background: var(--red);
+    color: white;
+}
+
+.delete-door-btn:hover {
+    background: #d4896b;
+}
+
+.door-details {
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+}
+
+.door-details p {
+    margin: 4px 0;
+}
+
+.no-doors-message {
+    text-align: center;
+    color: var(--secondary-text-color);
+    font-style: italic;
+    padding: 40px 20px;
+    background: var(--highlight);
+    border-radius: 8px;
+}

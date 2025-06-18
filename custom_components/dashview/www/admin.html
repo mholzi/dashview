@@ -4,6 +4,7 @@
     <div class="tab-buttons">
         <button class="tab-button active" data-target="weather-tab">Weather</button>
         <button class="tab-button" data-target="house-setup-tab">House Setup</button>
+        <button class="tab-button" data-target="maintenance-tab">Maintenance</button>
         <button class="tab-button" data-target="header-buttons-tab">Header Buttons (Legacy)</button>
     </div>
 
@@ -32,6 +33,39 @@
             <p>Each room contains its friendly name, icon, floor assignment, combined sensor, and placeholders for lights, covers, and media players.</p>
             <textarea id="house-config" class="config-textarea" placeholder="House configuration will be loaded here..."></textarea>
             <button id="save-house-config" class="save-button">Save House Config</button>
+        </div>
+    </div>
+
+    <div id="maintenance-tab" class="tab-content">
+        <h4>Maintenance - Door Attributes</h4>
+        <p>Configure door attributes including sensors, locks, and access control devices.</p>
+        
+        <div class="config-section">
+            <h5>Door Configuration Status</h5>
+            <div id="doors-config-status" class="status-display">Loading...</div>
+            <button id="reload-doors-config" class="action-button">Reload Door Configuration</button>
+        </div>
+        
+        <div class="config-section">
+            <h5>Door Attributes Management</h5>
+            <p>Manage door sensors, locks, and access control devices. Each door can have sensors, locks, and notification settings.</p>
+            
+            <div class="door-management-section">
+                <div class="door-actions">
+                    <button id="add-door" class="action-button">Add New Door</button>
+                </div>
+                
+                <div id="doors-list" class="doors-list">
+                    <!-- Door entries will be populated here -->
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h5>Raw Door Configuration</h5>
+                <p>Advanced: Direct JSON configuration for doors. Use the management interface above for easier configuration.</p>
+                <textarea id="doors-config" class="config-textarea" placeholder="Door configuration will be loaded here..."></textarea>
+                <button id="save-doors-config" class="save-button">Save Door Config</button>
+            </div>
         </div>
     </div>
 

@@ -11,6 +11,7 @@ class DashviewPanel extends HTMLElement {
       floorsConfig: null,
       roomsConfig: null,
       houseConfig: null,
+      doorsConfig: null,
       weatherEntity: null,
       isLoaded: false
     };
@@ -858,6 +859,21 @@ class DashviewPanel extends HTMLElement {
             this.saveHouseConfiguration();
         }
 
+        const reloadDoorsBtn = e.target.closest('#reload-doors-config');
+        if (reloadDoorsBtn) {
+            this.loadDoorsConfiguration();
+        }
+
+        const saveDoorsBtn = e.target.closest('#save-doors-config');
+        if (saveDoorsBtn) {
+            this.saveDoorsConfiguration();
+        }
+
+        const addDoorBtn = e.target.closest('#add-door');
+        if (addDoorBtn) {
+            this._addNewDoor();
+        }
+
         const reloadHouseBtn = e.target.closest('#reload-house-config');
         if (reloadHouseBtn) {
             this.loadAdminConfiguration();
@@ -1229,6 +1245,11 @@ class DashviewPanel extends HTMLElement {
                 // Load weather entity configuration when weather tab is activated
                 if (targetId === 'weather-tab') {
                     setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
+                }
+                
+                // Load doors configuration when maintenance tab is activated
+                if (targetId === 'maintenance-tab') {
+                    setTimeout(() => this.loadDoorsConfiguration(), 100);
                 }
             });
         });
@@ -1839,6 +1860,232 @@ class DashviewPanel extends HTMLElement {
         this._setStatusMessage(statusElement, `✗ Error saving weather entity: ${error.message}`, 'error');
       }
     }
+  }
+
+  // Load doors configuration - Principle 1, 2 & 12
+  async loadDoorsConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('doors-config-status');
+
+    if (!statusElement) return;
+    
+    if (!this._hass) {
+      this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
+      return;
+    }
+
+    this._setStatusMessage(statusElement, 'Loading doors configuration...', 'loading');
+
+    try {
+      const config = await this._loadConfigFromAPI(['doors']);
+      
+      // Store in local state
+      this._adminLocalState.doorsConfig = config.doors || {};
+      
+      // Populate textarea with loaded configuration
+      const doorsTextarea = shadow.getElementById('doors-config');
+      if (doorsTextarea) {
+        doorsTextarea.value = JSON.stringify(this._adminLocalState.doorsConfig, null, 2);
+      }
+
+      // Render door management interface
+      this._renderDoorsManagementInterface();
+
+      this._setStatusMessage(statusElement, '✓ Doors configuration loaded successfully', 'success');
+      console.log('[DashView] Doors configuration loaded successfully');
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error loading doors configuration: ${error.message}`, 'error');
+      console.error('[DashView] Error loading doors configuration:', error);
+    }
+  }
+
+  // Save doors configuration - Principle 1, 2 & 12
+  async saveDoorsConfiguration() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('doors-config-status');
+
+    if (!statusElement) return;
+
+    this._setStatusMessage(statusElement, 'Saving doors configuration...', 'loading');
+
+    try {
+      // Get config from textarea
+      const doorsConfigTextarea = shadow.getElementById('doors-config');
+      const configText = doorsConfigTextarea?.value || '';
+      
+      let configData;
+      if (configText.trim()) {
+        try {
+          configData = JSON.parse(configText);
+        } catch (parseError) {
+          this._setStatusMessage(statusElement, '✗ Invalid JSON format', 'error');
+          return;
+        }
+      } else {
+        // Use local state if textarea is empty
+        configData = this._adminLocalState.doorsConfig || {};
+      }
+
+      // Use generic saver with validation - Principle 2
+      await this._saveConfigViaAPI('doors', configData, (data) => 
+        data && typeof data === 'object'
+      );
+
+      this._setStatusMessage(statusElement, '✓ Doors configuration saved successfully', 'success');
+
+      // Update local state
+      this._adminLocalState.doorsConfig = configData;
+
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error saving doors config: ${error.message}`, 'error');
+      console.error('[DashView] Error saving doors config:', error);
+    }
+  }
+
+  // Render doors management interface - Principle 2 & 12
+  _renderDoorsManagementInterface() {
+    const shadow = this.shadowRoot;
+    const doorsList = shadow.getElementById('doors-list');
+    
+    if (!doorsList) return;
+
+    const doorsConfig = this._adminLocalState.doorsConfig || {};
+    
+    // Clear existing content
+    doorsList.innerHTML = '';
+    
+    // Create door entries
+    Object.keys(doorsConfig).forEach(doorId => {
+      const doorConfig = doorsConfig[doorId];
+      const doorEntry = this._createDoorEntryElement(doorId, doorConfig);
+      doorsList.appendChild(doorEntry);
+    });
+    
+    // If no doors, show helpful message
+    if (Object.keys(doorsConfig).length === 0) {
+      doorsList.innerHTML = '<p class="no-doors-message">No doors configured yet. Click "Add New Door" to get started.</p>';
+    }
+  }
+
+  // Create door entry element - Principle 2
+  _createDoorEntryElement(doorId, doorConfig) {
+    const doorEntry = document.createElement('div');
+    doorEntry.className = 'door-entry';
+    doorEntry.innerHTML = `
+      <div class="door-header">
+        <h6>${doorConfig.friendly_name || doorId}</h6>
+        <div class="door-actions">
+          <button class="edit-door-btn" data-door-id="${doorId}">Edit</button>
+          <button class="delete-door-btn" data-door-id="${doorId}">Delete</button>
+        </div>
+      </div>
+      <div class="door-details">
+        <p><strong>ID:</strong> ${doorId}</p>
+        <p><strong>Sensor:</strong> ${doorConfig.sensor || 'Not configured'}</p>
+        <p><strong>Lock:</strong> ${doorConfig.lock || 'Not configured'}</p>
+        <p><strong>Type:</strong> ${doorConfig.type || 'door'}</p>
+      </div>
+    `;
+    
+    // Add event listeners for edit and delete
+    const editBtn = doorEntry.querySelector('.edit-door-btn');
+    const deleteBtn = doorEntry.querySelector('.delete-door-btn');
+    
+    editBtn.addEventListener('click', () => this._editDoor(doorId));
+    deleteBtn.addEventListener('click', () => this._deleteDoor(doorId));
+    
+    return doorEntry;
+  }
+
+  // Add new door - Principle 2 & 12
+  _addNewDoor() {
+    const doorId = prompt('Enter door ID (e.g., front_door, back_door):');
+    if (!doorId || !doorId.trim()) return;
+    
+    const cleanDoorId = doorId.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    
+    // Check if door already exists
+    if (this._adminLocalState.doorsConfig && this._adminLocalState.doorsConfig[cleanDoorId]) {
+      alert('Door with this ID already exists!');
+      return;
+    }
+    
+    // Create new door configuration
+    const newDoorConfig = {
+      friendly_name: cleanDoorId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      sensor: '',
+      lock: '',
+      type: 'door',
+      notifications: true
+    };
+    
+    // Add to local state
+    if (!this._adminLocalState.doorsConfig) {
+      this._adminLocalState.doorsConfig = {};
+    }
+    this._adminLocalState.doorsConfig[cleanDoorId] = newDoorConfig;
+    
+    // Update textarea
+    const doorsTextarea = this.shadowRoot.getElementById('doors-config');
+    if (doorsTextarea) {
+      doorsTextarea.value = JSON.stringify(this._adminLocalState.doorsConfig, null, 2);
+    }
+    
+    // Re-render interface
+    this._renderDoorsManagementInterface();
+  }
+
+  // Edit door - Principle 2 & 12
+  _editDoor(doorId) {
+    const doorConfig = this._adminLocalState.doorsConfig[doorId];
+    if (!doorConfig) return;
+    
+    const friendlyName = prompt('Friendly name:', doorConfig.friendly_name || doorId);
+    if (friendlyName === null) return; // User cancelled
+    
+    const sensor = prompt('Door sensor entity ID:', doorConfig.sensor || '');
+    if (sensor === null) return;
+    
+    const lock = prompt('Door lock entity ID (optional):', doorConfig.lock || '');
+    if (lock === null) return;
+    
+    const type = prompt('Door type (door, gate, garage):', doorConfig.type || 'door');
+    if (type === null) return;
+    
+    // Update configuration
+    this._adminLocalState.doorsConfig[doorId] = {
+      ...doorConfig,
+      friendly_name: friendlyName,
+      sensor: sensor,
+      lock: lock,
+      type: type
+    };
+    
+    // Update textarea
+    const doorsTextarea = this.shadowRoot.getElementById('doors-config');
+    if (doorsTextarea) {
+      doorsTextarea.value = JSON.stringify(this._adminLocalState.doorsConfig, null, 2);
+    }
+    
+    // Re-render interface
+    this._renderDoorsManagementInterface();
+  }
+
+  // Delete door - Principle 2 & 12
+  _deleteDoor(doorId) {
+    if (!confirm(`Are you sure you want to delete door "${doorId}"?`)) return;
+    
+    // Remove from local state
+    delete this._adminLocalState.doorsConfig[doorId];
+    
+    // Update textarea
+    const doorsTextarea = this.shadowRoot.getElementById('doors-config');
+    if (doorsTextarea) {
+      doorsTextarea.value = JSON.stringify(this._adminLocalState.doorsConfig, null, 2);
+    }
+    
+    // Re-render interface
+    this._renderDoorsManagementInterface();
   }
 }
 

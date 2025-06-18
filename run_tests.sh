@@ -15,9 +15,18 @@ fi
 echo ""
 echo "🐍 Running Python configuration validation tests..."
 if python custom_components/dashview/tests/test_config_validation.py; then
-    echo "✅ Python tests passed"
+    echo "✅ Python configuration tests passed"
 else
-    echo "❌ Python tests failed"
+    echo "❌ Python configuration tests failed"
+    exit 1
+fi
+
+echo ""
+echo "🚪 Running Python door configuration tests..."
+if python custom_components/dashview/tests/test_doors_config.py; then
+    echo "✅ Python door configuration tests passed"
+else
+    echo "❌ Python door configuration tests failed"
     exit 1
 fi
 

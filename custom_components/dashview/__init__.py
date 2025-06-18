@@ -43,10 +43,12 @@ class DashViewConfigView(HomeAssistantView):
             data = self._store.get_rooms_config()
         elif config_type == "house":
             data = self._store.get_house_config()
+        elif config_type == "doors":
+            data = self._store.get_doors_config()
         elif config_type == "weather_entity":
             data = {"weather_entity": self._store.get_weather_entity()}
         else:
-            return web.Response(status=400, text="Invalid config type. Use: floors, rooms, house, weather_entity")
+            return web.Response(status=400, text="Invalid config type. Use: floors, rooms, house, doors, weather_entity")
         
         return self.json(data)
     
@@ -63,6 +65,8 @@ class DashViewConfigView(HomeAssistantView):
                 await self._store.async_set_rooms_config(config_data)
             elif config_type == "house":
                 await self._store.async_set_house_config(config_data)
+            elif config_type == "doors":
+                await self._store.async_set_doors_config(config_data)
             elif config_type == "weather_entity":
                 await self._store.async_set_weather_entity(config_data.get("weather_entity"))
             else:
