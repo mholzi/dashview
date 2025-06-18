@@ -2169,25 +2169,27 @@ class DashviewPanel extends HTMLElement {
     if (!entityId) return;
 
     try {
-        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId}`);
+        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callWS`);
+
+        // Fetch daily forecast using the correct hass.callWS method
+        const dailyForecasts = await this._hass.callWS({
+            type: 'weather/subscribe_forecast',
+            forecast_type: 'daily',
+            entity_id: entityId
+        });
+
+        // Fetch hourly forecast using the correct hass.callWS method
+        const hourlyForecasts = await this._hass.callWS({
+            type: 'weather/subscribe_forecast',
+            forecast_type: 'hourly',
+            entity_id: entityId
+        });
         
-        // Corrected service call structure
-        const dailyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-            target: { entity_id: entityId },
-            type: 'daily'
-        }, true);
+        // Store the forecasts from the response
+        this._weatherForecasts.daily = dailyForecasts.forecast || [];
+        this._weatherForecasts.hourly = hourlyForecasts.forecast || [];
 
-        // Corrected service call structure
-        const hourlyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-            target: { entity_id: entityId },
-            type: 'hourly'
-        }, true);
-
-        // Store the forecasts
-        this._weatherForecasts.daily = dailyForecasts[entityId]?.forecast || [];
-        this._weatherForecasts.hourly = hourlyForecasts[entityId]?.forecast || [];
-
-        console.log('[DashView] Forecasts updated');
+        console.log('[DashView] Forecasts updated successfully via callWS');
     } catch (error) {
         console.error(`[DashView] Error fetching weather forecasts for ${entityId}:`, error);
         this._weatherForecasts.daily = [];

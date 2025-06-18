@@ -75,6 +75,27 @@ function createMockHass() {
             }
             
             return Promise.resolve();
+        },
+        callWS: function(message) {
+            console.log(`[Test] Mock WebSocket call: ${message.type} for ${message.entity_id} forecast_type ${message.forecast_type}`);
+            
+            if (message.type === 'weather/subscribe_forecast') {
+                const mockForecast = message.forecast_type === 'daily' ? [
+                    { datetime: '2023-12-01T12:00:00Z', condition: 'sunny', temperature: 22, templow: 15 },
+                    { datetime: '2023-12-02T12:00:00Z', condition: 'cloudy', temperature: 18, templow: 12 },
+                    { datetime: '2023-12-03T12:00:00Z', condition: 'rainy', temperature: 16, templow: 10 }
+                ] : [
+                    { datetime: '2023-12-01T13:00:00Z', condition: 'sunny', temperature: 22 },
+                    { datetime: '2023-12-01T14:00:00Z', condition: 'sunny', temperature: 23 },
+                    { datetime: '2023-12-01T15:00:00Z', condition: 'partly-cloudy', temperature: 21 }
+                ];
+                
+                return Promise.resolve({
+                    forecast: mockForecast
+                });
+            }
+            
+            return Promise.resolve({});
         }
     };
 }
@@ -98,22 +119,27 @@ class MockDashViewPanel {
         if (!entityId) return;
 
         try {
-            console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId}`);
+            console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callWS`);
+
+            // Fetch daily forecast using the correct hass.callWS method
+            const dailyForecasts = await this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                forecast_type: 'daily',
+                entity_id: entityId
+            });
+
+            // Fetch hourly forecast using the correct hass.callWS method
+            const hourlyForecasts = await this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                forecast_type: 'hourly',
+                entity_id: entityId
+            });
             
-            const dailyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-                target: { entity_id: entityId },
-                type: 'daily'
-            }, true);
+            // Store the forecasts from the response
+            this._weatherForecasts.daily = dailyForecasts.forecast || [];
+            this._weatherForecasts.hourly = hourlyForecasts.forecast || [];
 
-            const hourlyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-                target: { entity_id: entityId },
-                type: 'hourly'
-            }, true);
-
-            this._weatherForecasts.daily = dailyForecasts[entityId]?.forecast || [];
-            this._weatherForecasts.hourly = hourlyForecasts[entityId]?.forecast || [];
-
-            console.log('[DashView] Forecasts updated');
+            console.log('[DashView] Forecasts updated successfully via callWS');
         } catch (error) {
             console.error(`[DashView] Error fetching weather forecasts for ${entityId}:`, error);
             this._weatherForecasts.daily = [];
