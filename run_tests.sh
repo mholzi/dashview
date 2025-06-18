@@ -62,6 +62,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🎛️  Running Cover Functionality tests..."
+if node custom_components/dashview/tests/test_cover_functionality.js > /dev/null; then
+    echo "✅ Cover Functionality tests passed"
+else
+    echo "❌ Cover Functionality tests failed"
+    exit 1
+fi
+
 # Run Shadow DOM CSS tests
 echo ""
 echo "🎨 Running Shadow DOM CSS validation tests..."

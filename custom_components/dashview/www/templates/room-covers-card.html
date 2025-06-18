@@ -1,0 +1,34 @@
+<div class="covers-card">
+  <details class="covers-expander">
+    <summary class="covers-summary">
+      <div class="covers-header">
+        <span class="covers-title">Rollos</span>
+        <div class="cover-main-slider-container">
+          <input type="range" min="0" max="100" value="50" class="cover-slider main-slider" />
+        </div>
+        <span class="cover-position-label main-position-label">--%</span>
+      </div>
+    </summary>
+    <div class="covers-content">
+      <div class="cover-position-buttons">
+        <button data-position="0">0%</button>
+        <button data-position="25">25%</button>
+        <button data-position="50">50%</button>
+        <button data-position="75">75%</button>
+        <button data-position="100">100%</button>
+      </div>
+      <div class="individual-covers-container">
+        </div>
+    </div>
+  </details>
+</div>
+
+<template id="cover-row-template">
+  <div class="cover-row">
+    <span class="cover-name">Cover Name</span>
+    <div class="cover-slider-container">
+      <input type="range" min="0" max="100" value="50" class="cover-slider" />
+    </div>
+    <span class="cover-position-label">--%</span>
+  </div>
+</template>
