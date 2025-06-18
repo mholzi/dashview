@@ -981,7 +981,7 @@ class DashviewPanel extends HTMLElement {
     return !isNaN(parseFloat(value)) && isFinite(value);
   }
 
-  // New Helper Function 1: Gets all entities of a specific type from the house config
+  // New Helper Method 1: Gets all entities of a specific type from the house config
   _getAllEntitiesByType(entityType) {
     if (!this._houseConfig || !this._houseConfig.rooms) return [];
     
@@ -998,7 +998,7 @@ class DashviewPanel extends HTMLElement {
     return [...new Set(entities)]; // Return unique entity IDs
   }
 
-  // New Helper Function 2: Renders a list of entities into a target container
+  // New Helper Method 2: Renders a list of entities into a target container
   _renderEntityList(container, entityIds, noneMessage = "None") {
     if (!container) return;
 
@@ -1019,7 +1019,7 @@ class DashviewPanel extends HTMLElement {
     });
   }
 
-  // New Main Function: Updates all lists in the security popup
+  // New Main Method: Updates all lists in the security popup
   updateSecurityLists(popup) {
     if (!this._hass || !popup) return;
     
