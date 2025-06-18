@@ -2479,6 +2479,7 @@ class DashviewPanel extends HTMLElement {
           }
           
           this._setStatusMessage(statusElement, '✓ House configuration loaded successfully', 'success');
+          this._updateAdminSummary(); // <-- ADD THIS LINE
           console.log('[DashView] Admin house configuration loaded successfully');
           return;
         }
@@ -2504,6 +2505,7 @@ class DashviewPanel extends HTMLElement {
         }
 
         this._setStatusMessage(statusElement, '✓ Legacy configuration loaded successfully', 'success');
+        this._updateAdminSummary(); // <-- ADD THIS LINE
         console.log('[DashView] Admin legacy configuration loaded successfully');
       } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
@@ -2869,6 +2871,7 @@ class DashviewPanel extends HTMLElement {
       this._renderFloorsList();
 
       this._setStatusMessage(statusElement, '✓ Floor configuration loaded successfully', 'success');
+      this._updateAdminSummary(); // <-- ADD THIS LINE
       console.log('[DashView] Floor maintenance loaded successfully');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error loading floor configuration: ${error.message}`, 'error');
@@ -3081,6 +3084,7 @@ class DashviewPanel extends HTMLElement {
       this._populateFloorDropdown();
 
       this._setStatusMessage(statusElement, '✓ Room configuration loaded successfully', 'success');
+      this._updateAdminSummary(); // <-- ADD THIS LINE
       console.log('[DashView] Room maintenance loaded successfully');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
@@ -3266,6 +3270,81 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error deleting room: ${error.message}`, 'error');
       console.error('[DashView] Error deleting room:', error);
+    }
+  }
+
+  // Update configuration summary - Principle 12
+  _updateAdminSummary() {
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+
+    const container = shadow.getElementById('config-summary-container');
+    
+    if (!container) return;
+
+    // Handle both new house config and legacy formats
+    let floors = {};
+    let rooms = {};
+    
+    if (this._adminLocalState.houseConfig) {
+      // New house configuration format
+      floors = this._adminLocalState.houseConfig.floors || {};
+      rooms = this._adminLocalState.houseConfig.rooms || {};
+    } else if (this._adminLocalState.floorsConfig && this._adminLocalState.roomsConfig) {
+      // Legacy configuration format
+      floors = this._adminLocalState.floorsConfig.floor_icons ? 
+        this._adminLocalState.floorsConfig.floor_icons : {};
+      rooms = this._adminLocalState.roomsConfig || {};
+    } else {
+      container.innerHTML = '<p>Could not load configuration summary.</p>';
+      return;
+    }
+
+    const stats = {
+      Floors: Object.keys(floors).length,
+      Rooms: Object.keys(rooms).length,
+    };
+
+    const entityCounts = {};
+
+    // Initialize counters for known entity types
+    const knownEntityTypes = [
+      'motion', 'window', 'smoke', 'vibration', 'music', 'tv',
+      'dishwasher', 'washing', 'dryer', 'freezer', 'mower',
+      'lights', 'covers', 'media_players'
+    ];
+    knownEntityTypes.forEach(type => entityCounts[type] = 0);
+
+    Object.values(rooms).forEach(room => {
+      if (room.lights) entityCounts.lights += room.lights.length;
+      if (room.covers) entityCounts.covers += room.covers.length;
+      if (room.media_players) entityCounts.media_players += room.media_players.length;
+
+      if (room.header_entities) {
+        room.header_entities.forEach(entity => {
+          if (entityCounts.hasOwnProperty(entity.entity_type)) {
+            entityCounts[entity.entity_type]++;
+          }
+        });
+      }
+    });
+
+    let summaryHTML = '';
+    Object.entries(stats).forEach(([name, count]) => {
+      summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
+    });
+
+    Object.entries(entityCounts).forEach(([type, count]) => {
+      if (count > 0) {
+        const name = type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
+      }
+    });
+
+    if (summaryHTML === '') {
+      container.innerHTML = '<p>No items found in configuration.</p>';
+    } else {
+      container.innerHTML = summaryHTML;
     }
   }
 
