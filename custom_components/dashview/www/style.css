@@ -1049,6 +1049,34 @@ body.popup-open, :host(.popup-open) {
     opacity: 0.8;
 }
 
+/* Entity list styles for media player management */
+.entity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--background);
+}
+
+.entity-list-item {
+    padding: 8px 12px;
+    background: var(--card-background);
+    border: 1px solid var(--gray200);
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.entity-list-item:hover {
+    background: var(--highlight);
+}
+
 .edit-button {
     padding: 4px 8px;
     border: none;
