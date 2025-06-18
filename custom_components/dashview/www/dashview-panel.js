@@ -1647,6 +1647,9 @@ class DashviewPanel extends HTMLElement {
           tabContents.forEach(content => content.classList.toggle('active', content.id === targetId));
           
           // Keep existing tab logic for admin panel
+          if (targetId === 'house-setup-tab') {
+            setTimeout(() => this.loadAdminConfiguration(), 100);
+          }
           if (targetId === 'header-buttons-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }

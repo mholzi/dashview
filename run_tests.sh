@@ -120,6 +120,16 @@ else
     exit 1
 fi
 
+# Run House Setup Tab Loading tests
+echo ""
+echo "🏠 Running House Setup Tab Loading tests..."
+if node custom_components/dashview/tests/test_house_setup_tab_loading.js > /dev/null; then
+    echo "✅ House Setup Tab Loading tests passed"
+else
+    echo "❌ House Setup Tab Loading tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."
