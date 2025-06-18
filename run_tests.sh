@@ -89,6 +89,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🎵 Running Media Player Admin Reversed tests..."
+if node custom_components/dashview/tests/test_media_player_admin_reversed.js > /dev/null; then
+    echo "✅ Media Player Admin Reversed tests passed"
+else
+    echo "❌ Media Player Admin Reversed tests failed"
+    exit 1
+fi
+
 # Run Shadow DOM CSS tests
 echo ""
 echo "🎨 Running Shadow DOM CSS validation tests..."
@@ -225,7 +234,8 @@ if node custom_components/dashview/tests/test_popup_background_transparency.js >
     echo "[OK] Popup Background Transparency tests passed"
 else
     echo "❌ Popup Background Transparency tests failed"
-
+    exit 1
+fi
 
 # Run Room Setup tests
 echo ""
@@ -234,6 +244,8 @@ if node custom_components/dashview/tests/test_room_setup.js > /dev/null; then
     echo "[OK] Room Setup tests passed"
 else
     echo "❌ Room Setup tests failed"
+    exit 1
+fi
 
 # Run Configuration Summary tests
 echo ""
@@ -297,11 +309,12 @@ function testConfigSummary() {
 
 process.exit(testConfigSummary() ? 0 : 1);
 
+"; then
+    echo "✅ Configuration Summary tests passed"
+
     echo "[OK] Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"
-
-
     exit 1
 fi
 
@@ -364,17 +377,17 @@ echo "🎉 All tests and validations passed!"
 echo ""
 
 echo "Summary of Principle Compliance:"
-echo "  [OK] Principle 1: Centralized Data Persistence"
-echo "  [OK] Principle 2: Code Reuse - DRY"
-echo "  [OK] Principle 3: Efficient State Management"
-echo "  [OK] Principle 4: Asset Bundling Optimizations"
-echo "  [OK] Principle 5: API Centralization"
-echo "  [OK] Principle 6: Component Modularity"
-echo "  [OK] Principle 7: Robust Error Handling"
-echo "  [OK] Principle 8: Performance Optimization"
-echo "  [OK] Principle 9: Room Header Performance"
-echo "  [OK] Principle 10: Security Best Practices"
-echo "  [OK] Principle 11: MDI Icon Usage"
-echo "  [OK] Principle 12: Admin UI State Management"
+
+echo "  ✅ Principle 1: Centralized Data Persistence"
+echo "  ✅ Principle 2: Code Reuse - DRY"
+echo "  ✅ Principle 3: Efficient State Management"
+echo "  ✅ Principle 4: Asset Bundling Optimizations"
+echo "  ✅ Principle 5: API Centralization"
+echo "  ✅ Principle 6: Error Handling & Debugging"
+echo "  ✅ Principle 7: Testing & Validation"
+echo "  ✅ Principle 10: Security Best Practices"
+echo "  ✅ Principle 11: MDI Icon Usage"
+echo "  ✅ Principle 12: Admin UI State Management"
+
 echo ""
 echo "DashView code review completed successfully!"

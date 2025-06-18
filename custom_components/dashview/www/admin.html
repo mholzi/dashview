@@ -78,7 +78,7 @@
 
     <div id="media-player-maintenance-tab" class="tab-content">
         <h4>Media Player Management</h4>
-        <p>Assign available media players from Home Assistant to your configured rooms.</p>
+        <p>Assign each available media player from Home Assistant to one of your configured rooms.</p>
         
         <div class="config-section">
             <h5>Management Status</h5>
@@ -87,24 +87,10 @@
         </div>
 
         <div class="config-section">
-            <h5>Select a Room</h5>
-            <div class="setting-row">
-                <select id="room-media-player-selector" class="dropdown-selector">
-                    <option value="">-- Select a Room --</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="config-section" id="media-player-assignment-section" style="display: none;">
-            <h5>Assigned to <span id="selected-room-name"></span></h5>
-            <div id="assigned-media-players" class="entity-list">
-            </div>
-
-            <h5 style="margin-top: 20px;">Available Media Players</h5>
-            <div id="available-media-players" class="entity-list">
-            </div>
-
-            <button id="save-room-media-players" class="save-button" style="margin-top: 20px;">Save Assignments for this Room</button>
+            <h5>Player Assignments</h5>
+            <div id="media-player-assignment-list" class="floors-container">
+                </div>
+            <button id="save-all-media-assignments" class="save-button" style="margin-top: 20px;">Save All Assignments</button>
         </div>
     </div>
 
