@@ -235,6 +235,8 @@ class DashviewPanel extends HTMLElement {
       :host, :root {
         /* Base Font */
         --primary-font-family: 'Space Grotesk', sans-serif;
+        /* Ensure MDI font is available throughout the host */
+        font-family: var(--primary-font-family), 'Material Design Icons', sans-serif;
 
         /* Default to light mode variables */
         --background: #f5f7fa;
@@ -306,6 +308,10 @@ class DashviewPanel extends HTMLElement {
           --blue-dark: #c8ddfa;
           --orange: #ffba8a;
         }
+      }
+      /* Explicitly add MDI font-family for elements inside Shadow DOM that might need it */
+      .mdi {
+        font-family: 'Material Design Icons', sans-serif !important;
       }
     `;
     shadow.appendChild(cssVariables);

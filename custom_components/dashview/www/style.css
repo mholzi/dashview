@@ -83,7 +83,7 @@ body, :host {
     background-color: var(--background);
     color: var(--primary-text-color);
     margin: 0;
-    padding: 12px;
+    padding: 12px 8px; /* Changed from 12px to 12px top/bottom and 8px left/right */
     padding-bottom: 90px; /* Space for fixed nav bar */
 }
 
@@ -152,7 +152,7 @@ body.popup-open, :host(.popup-open) {
     padding: 20px;
     border-radius: 30px;
     max-width: 600px;
-    width: calc(100% - 40px);
+    width: calc(100% - 16px); /* Adjusted from 40px to 16px to achieve 8px left/right margin */
     position: relative;
     transform: translateY(100vh);
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -169,11 +169,16 @@ body.popup-open, :host(.popup-open) {
     margin: 0 0 20px 0;
     font-weight: 700;
     color: var(--primary-text-color);
+    background: var(--popupBG) !important; /* To explicitly mirror bubble-card header background */
 }
 
 .popup-icon {
-    font-size: 1.4em;
-    color: var(--primary-color);
+    background-color: var(--green) !important; /* For the icon container background */
+    color: var(--gray800) !important; /* To mirror ha-icon color */
+    opacity: 1 !important; /* To mirror ha-icon opacity */
+    font-size: 24px !important; /* To mirror bubble-icon size */
+    border-radius: 50%; /* Often icons in bubble cards are circular */
+    padding: 8px; /* Add some padding around the icon within its background */
 }
 
 .popup-title {
@@ -189,6 +194,42 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray400);
     cursor: pointer;
     line-height: 1;
+    background: none; /* To mirror bubble-card header button background */
+}
+
+/* --- Ensure no margin-bottom inside popup content for card-like elements --- */
+/* This section aims to emulate the 'ha-card { margin-bottom: 0px !important; }'
+   and '--vertical-stack-card-gap: 0px!important;' within the popup. */
+.popup-body > .weather-forecast-card,
+.popup-body > .hourly-forecast-container,
+.popup-body > .daily-forecast-container,
+.popup-body > .pollen-card {
+    margin-bottom: 0px !important; /* Remove bottom margin for cards directly inside popup body */
+    margin-top: 0px !important; /* Also remove top margin if present, for continuous stacking */
+}
+
+.popup-body > .hourly-forecast-container h4,
+.popup-body > .daily-forecast-container h4 {
+    margin-top: 12px; /* Re-add some top margin for section headers if they are now flush */
+}
+
+/* Any section within .popup-body that acts like a stacked item should have its internal margin adjusted */
+.popup-body .info-section,
+.popup-body .train-departures-container .train-departure-card {
+    margin-bottom: 0px !important; /* Remove any default bottom margins */
+    margin-top: 0px !important;
+}
+
+/* Adjust general spacing within popup-body if it now looks too cramped */
+.popup-body > div {
+    padding-bottom: 12px; /* Add internal padding to sections instead of relying on margin-bottom */
+}
+
+/* Ensure no excessive gap if elements are using flex/grid with gap property inside popup-body */
+.popup-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0px !important; /* Emulate --vertical-stack-card-gap: 0px!important; */
 }
 
 /* --- Tab styles --- */
@@ -245,6 +286,27 @@ body.popup-open, :host(.popup-open) {
 }
 .nav-button.active {
     color: var(--blue-dark);
+}
+
+/* --- MDI Icon Support --- */
+/* Add or ensure the following .mdi class definition is present.
+   The 'Material Design Icons' font-family is provided by Home Assistant. */
+.mdi {
+    font-family: 'Material Design Icons', sans-serif !important; /* Ensure this is set and has a generic fallback */
+    font-weight: normal;
+    font-style: normal;
+    font-size: inherit;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
 }
 
 /* --- Header Grid --- */
