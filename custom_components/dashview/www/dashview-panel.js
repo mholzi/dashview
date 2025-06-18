@@ -1263,7 +1263,9 @@ class DashviewPanel extends HTMLElement {
 
         const saveRoomBtn = e.target.closest('#save-room-button');
         if (saveRoomBtn) {
-            this.saveRoom();
+            // Note: saveRoom() function is for legacy manual room form
+            // which has been replaced by the new HA rooms workflow
+            console.warn('[DashView] saveRoom called but manual form no longer exists');
         }
 
         const editRoomBtn = e.target.closest('.room-edit-button');
@@ -3158,7 +3160,10 @@ class DashviewPanel extends HTMLElement {
   _populateFloorDropdown() {
     const shadow = this.shadowRoot;
     const selector = shadow.getElementById('new-room-floor');
-    if (!selector) return;
+    if (!selector) {
+      // Dropdown no longer exists in new HA rooms workflow
+      return;
+    }
 
     selector.innerHTML = ''; // Clear existing options
     const floors = this._adminLocalState.houseConfig?.floors || {};
@@ -3186,6 +3191,13 @@ class DashviewPanel extends HTMLElement {
     
     if (!room) return;
 
+    // Check if the manual room form still exists
+    const roomKeyInput = shadow.getElementById('new-room-key');
+    if (!roomKeyInput) {
+      console.warn('[DashView] _startEditRoom called but manual room form no longer exists');
+      return;
+    }
+
     // Populate the form with the room's data
     shadow.getElementById('editing-room-key').value = roomKey;
     shadow.getElementById('new-room-key').value = roomKey;
@@ -3202,6 +3214,16 @@ class DashviewPanel extends HTMLElement {
   async saveRoom() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('room-maintenance-status');
+
+    // Check if the manual room form still exists
+    const roomKeyInput = shadow.getElementById('new-room-key');
+    if (!roomKeyInput) {
+      console.warn('[DashView] saveRoom called but manual room form no longer exists');
+      if (statusElement) {
+        this._setStatusMessage(statusElement, '✗ Manual room form no longer available - use HA rooms workflow', 'error');
+      }
+      return;
+    }
 
     // Get the key of the room being edited, if any
     const originalKey = shadow.getElementById('editing-room-key').value;
