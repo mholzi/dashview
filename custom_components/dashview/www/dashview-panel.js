@@ -2083,6 +2083,9 @@ class DashviewPanel extends HTMLElement {
           if (targetId === 'weather-tab') {
             setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
           }
+          if (targetId === 'media-player-maintenance-tab') {
+            setTimeout(() => this.loadRoomMediaPlayerMaintenance(), 100);
+          }
         });
       });
       if(tabButtons.length > 0) tabButtons[0].click();
@@ -3247,6 +3250,120 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error deleting room: ${error.message}`, 'error');
       console.error('[DashView] Error deleting room:', error);
+    }
+  }
+
+  // Media Player Management Methods
+  async loadRoomMediaPlayerMaintenance() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('media-player-status');
+    const roomSelector = shadow.getElementById('room-media-player-selector');
+    const assignmentSection = shadow.getElementById('media-player-assignment-section');
+
+    this._setStatusMessage(statusElement, 'Loading configuration...', 'loading');
+
+    try {
+        // Fetch house config and all available media players
+        const [houseConfigResponse, allPlayersResponse] = await Promise.all([
+            this._hass.callApi('GET', 'dashview/config?type=house'),
+            this._hass.callApi('GET', 'dashview/config?type=available_media_players')
+        ]);
+        
+        this._adminLocalState.houseConfig = houseConfigResponse || { rooms: {}, floors: {} };
+        this._adminLocalState.allMediaPlayers = allPlayersResponse || [];
+
+        // Populate the room selector dropdown
+        roomSelector.innerHTML = '<option value="">-- Select a Room --</option>';
+        for (const [roomKey, roomConfig] of Object.entries(this._adminLocalState.houseConfig.rooms)) {
+            const option = document.createElement('option');
+            option.value = roomKey;
+            option.textContent = roomConfig.friendly_name || roomKey;
+            roomSelector.appendChild(option);
+        }
+
+        // Add event listener for room selection
+        roomSelector.onchange = (e) => {
+            const roomKey = e.target.value;
+            if (roomKey) {
+                this._displayRoomMediaPlayers(roomKey);
+                assignmentSection.style.display = 'block';
+            } else {
+                assignmentSection.style.display = 'none';
+            }
+        };
+
+        // Add event listener for save button
+        shadow.getElementById('save-room-media-players').onclick = () => {
+            const selectedRoom = roomSelector.value;
+            if (selectedRoom) this.saveRoomMediaPlayers(selectedRoom);
+        };
+        
+        // Add event listener for reload button
+        shadow.getElementById('reload-media-players').onclick = () => this.loadRoomMediaPlayerMaintenance();
+
+        this._setStatusMessage(statusElement, '✓ Ready', 'success');
+    } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
+    }
+  }
+
+  _displayRoomMediaPlayers(roomKey) {
+    const shadow = this.shadowRoot;
+    const room = this._adminLocalState.houseConfig.rooms[roomKey];
+    if (!room) return;
+
+    shadow.getElementById('selected-room-name').textContent = room.friendly_name || roomKey;
+    const assignedContainer = shadow.getElementById('assigned-media-players');
+    const availableContainer = shadow.getElementById('available-media-players');
+
+    assignedContainer.innerHTML = '';
+    availableContainer.innerHTML = '';
+
+    const assignedIds = new Set((room.media_players || []).map(p => p.entity));
+
+    (this._adminLocalState.allMediaPlayers || []).forEach(player => {
+        const isAssigned = assignedIds.has(player.entity_id);
+        const container = isAssigned ? assignedContainer : availableContainer;
+        
+        const item = document.createElement('div');
+        item.className = 'entity-list-item';
+        item.innerHTML = `
+            <span>${player.friendly_name} (${player.entity_id})</span>
+            <button class="action-button" data-entity-id="${player.entity_id}" data-action="${isAssigned ? 'remove' : 'add'}">
+                ${isAssigned ? 'Remove' : 'Add'}
+            </button>
+        `;
+        container.appendChild(item);
+    });
+
+    // Add click handlers for Add/Remove buttons
+    shadow.querySelectorAll('#media-player-assignment-section .action-button').forEach(button => {
+        button.onclick = (e) => {
+            const entityId = e.target.dataset.entityId;
+            const action = e.target.dataset.action;
+            let players = room.media_players || [];
+
+            if (action === 'add') {
+                players.push({ entity: entityId });
+            } else {
+                players = players.filter(p => p.entity !== entityId);
+            }
+            this._adminLocalState.houseConfig.rooms[roomKey].media_players = players;
+            this._displayRoomMediaPlayers(roomKey); // Re-render the lists
+        };
+    });
+  }
+
+  async saveRoomMediaPlayers(roomKey) {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('media-player-status');
+    this._setStatusMessage(statusElement, 'Saving media player assignments...', 'loading');
+
+    try {
+        await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
+        this._setStatusMessage(statusElement, `✓ Assignments for ${roomKey} saved!`, 'success');
+    } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error saving: ${error.message}`, 'error');
     }
   }
 

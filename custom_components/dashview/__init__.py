@@ -106,11 +106,19 @@ class DashViewConfigView(HomeAssistantView):
         elif config_type == "weather_entity":
             house_config = config_data.get("house_config", {})
             data = {"weather_entity": house_config.get("weather_entity", "weather.forecast_home")}
+        elif config_type == "available_media_players":
+            media_players = []
+            for entity in self._hass.states.async_all('media_player'):
+                media_players.append({
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.name
+                })
+            data = sorted(media_players, key=lambda p: p["friendly_name"])
         elif config_type is None:
             # Return the full house_config when no type is specified
             data = config_data.get("house_config", {})
         else:
-            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity")
+            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players")
         
         return self.json(data)
     
