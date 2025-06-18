@@ -2479,6 +2479,7 @@ class DashviewPanel extends HTMLElement {
           }
           
           this._setStatusMessage(statusElement, '✓ House configuration loaded successfully', 'success');
+          this._updateAdminSummary(); // <-- ADD THIS LINE
           console.log('[DashView] Admin house configuration loaded successfully');
           return;
         }
@@ -2504,6 +2505,7 @@ class DashviewPanel extends HTMLElement {
         }
 
         this._setStatusMessage(statusElement, '✓ Legacy configuration loaded successfully', 'success');
+        this._updateAdminSummary(); // <-- ADD THIS LINE
         console.log('[DashView] Admin legacy configuration loaded successfully');
       } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
@@ -2869,6 +2871,7 @@ class DashviewPanel extends HTMLElement {
       this._renderFloorsList();
 
       this._setStatusMessage(statusElement, '✓ Floor configuration loaded successfully', 'success');
+      this._updateAdminSummary(); // <-- ADD THIS LINE
       console.log('[DashView] Floor maintenance loaded successfully');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error loading floor configuration: ${error.message}`, 'error');
@@ -3071,12 +3074,17 @@ class DashviewPanel extends HTMLElement {
     try {
       // Load house configuration from API
       const config = await this._loadConfigFromAPI(['house']);
-      this._adminLocalState.houseConfig = config.house || { rooms: {} };
+      // Ensure floors object exists for the dropdown
+      this._adminLocalState.houseConfig = config.house || { rooms: {}, floors: {} };
 
       // Render the rooms list
       this._renderRoomsList();
+      
+      // Populate the new floor dropdown
+      this._populateFloorDropdown();
 
       this._setStatusMessage(statusElement, '✓ Room configuration loaded successfully', 'success');
+      this._updateAdminSummary(); // <-- ADD THIS LINE
       console.log('[DashView] Room maintenance loaded successfully');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error loading configuration: ${error.message}`, 'error');
@@ -3116,6 +3124,31 @@ class DashviewPanel extends HTMLElement {
     roomsContainer.innerHTML = roomsHTML;
   }
 
+  _populateFloorDropdown() {
+    const shadow = this.shadowRoot;
+    const selector = shadow.getElementById('new-room-floor');
+    if (!selector) return;
+
+    selector.innerHTML = ''; // Clear existing options
+    const floors = this._adminLocalState.houseConfig?.floors || {};
+
+    if (Object.keys(floors).length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No floors configured';
+        option.disabled = true;
+        selector.appendChild(option);
+        return;
+    }
+
+    for (const [floorKey, floorConfig] of Object.entries(floors)) {
+        const option = document.createElement('option');
+        option.value = floorKey;
+        option.textContent = floorConfig.friendly_name || floorKey;
+        selector.appendChild(option);
+    }
+  }
+
   _startEditRoom(roomKey) {
     const shadow = this.shadowRoot;
     const room = this._adminLocalState.houseConfig.rooms[roomKey];
@@ -3148,11 +3181,11 @@ class DashviewPanel extends HTMLElement {
     const newRoomData = {
       friendly_name: shadow.getElementById('new-room-name').value.trim(),
       icon: shadow.getElementById('new-room-icon').value.trim(),
-      floor: shadow.getElementById('new-room-floor').value.trim(),
+      floor: shadow.getElementById('new-room-floor').value, // .value is correct for a select dropdown
       combined_sensor: shadow.getElementById('new-room-sensor').value.trim(),
-      lights: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].lights || []) : [],
-      covers: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].covers || []) : [],
-      media_players: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey].media_players || []) : [],
+      lights: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.lights || []) : [],
+      covers: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.covers || []) : [],
+      media_players: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.media_players || []) : [],
     };
 
     // Validate inputs
@@ -3161,7 +3194,6 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
-    // If not editing and key already exists, show error
     if (!isEditing && this._adminLocalState.houseConfig.rooms[newKey]) {
       this._setStatusMessage(statusElement, '✗ Room with this key already exists', 'error');
       return;
@@ -3170,25 +3202,18 @@ class DashviewPanel extends HTMLElement {
     this._setStatusMessage(statusElement, 'Saving room...', 'loading');
 
     try {
-      // Update local state
-      if (!this._adminLocalState.houseConfig) {
-        this._adminLocalState.houseConfig = { rooms: {}, floors: {} };
-      }
-      if (!this._adminLocalState.houseConfig.rooms) {
-        this._adminLocalState.houseConfig.rooms = {};
-      }
+      const updatedHouseConfig = JSON.parse(JSON.stringify(this._adminLocalState.houseConfig));
 
-      // If editing and the key has changed, we need to remove the old entry
       if (isEditing && originalKey !== newKey) {
-        delete this._adminLocalState.houseConfig.rooms[originalKey];
+        delete updatedHouseConfig.rooms[originalKey];
       }
+      updatedHouseConfig.rooms[newKey] = newRoomData;
 
-      this._adminLocalState.houseConfig.rooms[newKey] = newRoomData;
+      // Use the new, more direct API format by sending the entire config object.
+      await this._hass.callApi('POST', 'dashview/config', updatedHouseConfig);
 
-      // Save to backend
-      await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig, (data) => 
-        data && data.rooms && data.floors
-      );
+      // Update the local state with the successfully saved config
+      this._adminLocalState.houseConfig = updatedHouseConfig;
 
       // Clear form and reset editing state
       shadow.getElementById('editing-room-key').value = '';
@@ -3197,11 +3222,9 @@ class DashviewPanel extends HTMLElement {
       shadow.getElementById('new-room-icon').value = '';
       shadow.getElementById('new-room-floor').value = '';
       shadow.getElementById('new-room-sensor').value = '';
-      shadow.getElementById('new-room-key').disabled = false; // Re-enable for next time
+      shadow.getElementById('new-room-key').disabled = false;
 
-      // Refresh the rooms list
       this._renderRoomsList();
-
       this._setStatusMessage(statusElement, '✓ Room saved successfully', 'success');
       console.log('[DashView] Room saved successfully:', newKey);
 
@@ -3247,6 +3270,81 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error deleting room: ${error.message}`, 'error');
       console.error('[DashView] Error deleting room:', error);
+    }
+  }
+
+  // Update configuration summary - Principle 12
+  _updateAdminSummary() {
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+
+    const container = shadow.getElementById('config-summary-container');
+    
+    if (!container) return;
+
+    // Handle both new house config and legacy formats
+    let floors = {};
+    let rooms = {};
+    
+    if (this._adminLocalState.houseConfig) {
+      // New house configuration format
+      floors = this._adminLocalState.houseConfig.floors || {};
+      rooms = this._adminLocalState.houseConfig.rooms || {};
+    } else if (this._adminLocalState.floorsConfig && this._adminLocalState.roomsConfig) {
+      // Legacy configuration format
+      floors = this._adminLocalState.floorsConfig.floor_icons ? 
+        this._adminLocalState.floorsConfig.floor_icons : {};
+      rooms = this._adminLocalState.roomsConfig || {};
+    } else {
+      container.innerHTML = '<p>Could not load configuration summary.</p>';
+      return;
+    }
+
+    const stats = {
+      Floors: Object.keys(floors).length,
+      Rooms: Object.keys(rooms).length,
+    };
+
+    const entityCounts = {};
+
+    // Initialize counters for known entity types
+    const knownEntityTypes = [
+      'motion', 'window', 'smoke', 'vibration', 'music', 'tv',
+      'dishwasher', 'washing', 'dryer', 'freezer', 'mower',
+      'lights', 'covers', 'media_players'
+    ];
+    knownEntityTypes.forEach(type => entityCounts[type] = 0);
+
+    Object.values(rooms).forEach(room => {
+      if (room.lights) entityCounts.lights += room.lights.length;
+      if (room.covers) entityCounts.covers += room.covers.length;
+      if (room.media_players) entityCounts.media_players += room.media_players.length;
+
+      if (room.header_entities) {
+        room.header_entities.forEach(entity => {
+          if (entityCounts.hasOwnProperty(entity.entity_type)) {
+            entityCounts[entity.entity_type]++;
+          }
+        });
+      }
+    });
+
+    let summaryHTML = '';
+    Object.entries(stats).forEach(([name, count]) => {
+      summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
+    });
+
+    Object.entries(entityCounts).forEach(([type, count]) => {
+      if (count > 0) {
+        const name = type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
+      }
+    });
+
+    if (summaryHTML === '') {
+      container.innerHTML = '<p>No items found in configuration.</p>';
+    } else {
+      container.innerHTML = summaryHTML;
     }
   }
 

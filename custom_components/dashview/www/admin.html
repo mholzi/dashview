@@ -109,8 +109,8 @@
                     <input type="text" id="new-room-icon" placeholder="e.g., mdi:sofa" class="form-input">
                 </div>
                 <div class="form-row">
-                    <label for="new-room-floor">Assigned Floor Key:</label>
-                    <input type="text" id="new-room-floor" placeholder="e.g., ground_floor" class="form-input">
+                    <label for="new-room-floor">Assigned Floor:</label>
+                    <select id="new-room-floor" class="form-input"></select>
                 </div>
                 <div class="form-row">
                     <label for="new-room-sensor">Combined Sensor:</label>
@@ -148,6 +148,13 @@
             <h5>Room Configuration</h5>
             <textarea id="rooms-config" class="config-textarea" placeholder="Room configuration will be loaded here..."></textarea>
             <button id="save-rooms-config" class="save-button">Save Rooms Config</button>
+        </div>
+    </div>
+
+    <div class="config-section">
+        <h5>Configuration Summary</h5>
+        <div id="config-summary-container" class="summary-grid">
+            <p>Load a configuration tab to view summary.</p>
         </div>
     </div>
 </div>

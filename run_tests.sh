@@ -208,12 +208,90 @@ else
     exit 1
 fi
 
+
 echo ""
 echo "🖼️  Running Popup Background Transparency tests..."
 if node custom_components/dashview/tests/test_popup_background_transparency.js > /dev/null; then
     echo "✅ Popup Background Transparency tests passed"
 else
     echo "❌ Popup Background Transparency tests failed"
+
+
+# Run Room Setup tests
+echo ""
+echo "🏠 Running Room Setup tests..."
+if node custom_components/dashview/tests/test_room_setup.js > /dev/null; then
+    echo "✅ Room Setup tests passed"
+else
+    echo "❌ Room Setup tests failed"
+
+# Run Configuration Summary tests
+echo ""
+echo "📊 Running Configuration Summary tests..."
+if node -e "
+const tests = {
+    testsPassed: 0,
+    testsFailed: 0,
+    
+    assert(condition, message) {
+        if (condition) {
+            this.testsPassed++;
+        } else {
+            this.testsFailed++;
+            console.error('✗ ' + message);
+        }
+    }
+};
+
+function testConfigSummary() {
+    const floors = { ground_floor: {}, first_floor: {} };
+    const rooms = { 
+        living_room: { 
+            lights: ['light.1', 'light.2'], 
+            covers: ['cover.1'],
+            header_entities: [
+                { entity_type: 'motion' },
+                { entity_type: 'window' }
+            ]
+        }
+    };
+    
+    const stats = {
+        Floors: Object.keys(floors).length,
+        Rooms: Object.keys(rooms).length,
+    };
+    
+    const entityCounts = { lights: 0, covers: 0, motion: 0, window: 0 };
+    
+    Object.values(rooms).forEach(room => {
+        if (room.lights) entityCounts.lights += room.lights.length;
+        if (room.covers) entityCounts.covers += room.covers.length;
+        if (room.header_entities) {
+            room.header_entities.forEach(entity => {
+                if (entityCounts.hasOwnProperty(entity.entity_type)) {
+                    entityCounts[entity.entity_type]++;
+                }
+            });
+        }
+    });
+    
+    tests.assert(stats.Floors === 2, 'Should count 2 floors');
+    tests.assert(stats.Rooms === 1, 'Should count 1 room');
+    tests.assert(entityCounts.lights === 2, 'Should count 2 lights');
+    tests.assert(entityCounts.covers === 1, 'Should count 1 cover');
+    tests.assert(entityCounts.motion === 1, 'Should count 1 motion sensor');
+    tests.assert(entityCounts.window === 1, 'Should count 1 window sensor');
+    
+    return tests.testsFailed === 0;
+}
+
+process.exit(testConfigSummary() ? 0 : 1);
+
+    echo "✅ Configuration Summary tests passed"
+else
+    echo "❌ Configuration Summary tests failed"
+
+
     exit 1
 fi
 
