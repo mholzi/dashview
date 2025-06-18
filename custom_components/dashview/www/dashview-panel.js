@@ -1250,21 +1250,9 @@ class DashviewPanel extends HTMLElement {
             this.loadFloorMaintenance();
         }
 
-        const saveFloorBtn = e.target.closest('#save-floor-button');
-        if (saveFloorBtn) {
-            this.saveFloor();
-        }
-
-        const editFloorBtn = e.target.closest('.edit-button');
-        if (editFloorBtn) {
-            const floorKey = editFloorBtn.dataset.floorKey;
-            this._startEditFloor(floorKey);
-        }
-
-        const deleteFloorBtn = e.target.closest('.delete-button');
-        if (deleteFloorBtn) {
-            const floorKey = deleteFloorBtn.dataset.floorKey;
-            this.deleteFloor(floorKey);
+        const saveFloorSensorsBtn = e.target.closest('#save-floor-sensors');
+        if (saveFloorSensorsBtn) {
+            this.saveFloorSensors();
         }
 
         // Handle room maintenance buttons
@@ -2856,67 +2844,90 @@ class DashviewPanel extends HTMLElement {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('floor-maintenance-status');
 
-    if (!statusElement) return;
-
-    if (!this._hass) {
-      this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
-      return;
+    if (!statusElement || !this._hass) {
+        this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
+        return;
     }
 
-    this._setStatusMessage(statusElement, 'Loading floor configuration...', 'loading');
+    this._setStatusMessage(statusElement, 'Loading floors from Home Assistant...', 'loading');
 
     try {
-      // Load floors configuration from API
-      const config = await this._loadConfigFromAPI(['floors']);
-      this._adminLocalState.floorsConfig = config.floors || {};
+        // Fetch floors from Home Assistant floor registry
+        const floors = await this._loadConfigFromAPI(['ha_floors']);
+        
+        // Fetch the current sensor configuration
+        const houseConfig = this._adminLocalState.houseConfig || (await this._loadConfigFromAPI(['house'])).house || {};
+        const floorSensors = houseConfig.floor_sensors || {};
 
-      // Render the floors list
-      this._renderFloorsList();
+        this._renderFloorsList(floors.ha_floors, floorSensors);
 
-      this._setStatusMessage(statusElement, '✓ Floor configuration loaded successfully', 'success');
-      this._updateAdminSummary(); // <-- ADD THIS LINE
-      console.log('[DashView] Floor maintenance loaded successfully');
+        this._setStatusMessage(statusElement, '✓ Floors loaded successfully', 'success');
     } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error loading floor configuration: ${error.message}`, 'error');
-      console.error('[DashView] Error loading floor maintenance:', error);
+        this._setStatusMessage(statusElement, `✗ Error loading floors: ${error.message}`, 'error');
+        console.error('[DashView] Error loading floors:', error);
     }
   }
 
-  _renderFloorsList() {
+  _renderFloorsList(floors, floorSensors) {
     const shadow = this.shadowRoot;
     const floorsContainer = shadow.getElementById('floors-list');
     
     if (!floorsContainer) return;
 
-    const floorsConfig = this._adminLocalState.floorsConfig || {};
-    const floorIcons = floorsConfig.floor_icons || {};
-    const floorSensors = floorsConfig.floor_sensors || {};
-
-    if (Object.keys(floorIcons).length === 0) {
-      floorsContainer.innerHTML = '<p>No floors configured. Add your first floor above.</p>';
-      return;
+    if (!floors || floors.length === 0) {
+        floorsContainer.innerHTML = '<p>No floors configured in Home Assistant.</p>';
+        return;
     }
 
     let floorsHTML = '';
-    Object.keys(floorIcons).forEach(floorKey => {
-      const icon = floorIcons[floorKey] || 'mdi:help-circle';
-      const sensor = floorSensors[floorKey] || 'Not set';
-      
-      floorsHTML += `
-        <div class="floor-item">
-          <div class="floor-info">
-            <div class="floor-name">${floorKey}</div>
-            <div class="floor-details">Icon: ${icon} | Sensor: ${sensor}</div>
-          </div>
-          <div class="floor-actions">
-            <button class="edit-button" data-floor-key="${floorKey}">Edit</button>
-            <button class="delete-button" data-floor-key="${floorKey}">Delete</button>
-          </div>
-        </div>
-      `;
+    floors.forEach(floor => {
+        const sensor = floorSensors[floor.floor_id] || '';
+        floorsHTML += `
+            <div class="floor-item">
+                <div class="floor-info">
+                    <div class="floor-name">${floor.name}</div>
+                    <div class="floor-details">Icon: ${floor.icon}</div>
+                </div>
+                <div class="form-row">
+                    <label for="floor-sensor-${floor.floor_id}">Activity Sensor:</label>
+                    <input type="text" id="floor-sensor-${floor.floor_id}" class="form-input" value="${sensor}" placeholder="e.g., binary_sensor.ground_floor_active">
+                </div>
+            </div>
+        `;
     });
 
     floorsContainer.innerHTML = floorsHTML;
+  }
+
+  async saveFloorSensors() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('floor-maintenance-status');
+    
+    try {
+        // Get current house config
+        const houseConfig = this._adminLocalState.houseConfig || (await this._loadConfigFromAPI(['house'])).house || {};
+        
+        // Get the floors from Home Assistant
+        const floors = await this._loadConfigFromAPI(['ha_floors']);
+        const newFloorSensors = {};
+        
+        floors.ha_floors.forEach(floor => {
+            const input = shadow.getElementById(`floor-sensor-${floor.floor_id}`);
+            if (input && input.value) {
+                newFloorSensors[floor.floor_id] = input.value.trim();
+            }
+        });
+
+        houseConfig.floor_sensors = newFloorSensors;
+
+        this._setStatusMessage(statusElement, 'Saving floor sensors...', 'loading');
+        
+        await this._saveConfigViaAPI('house', houseConfig, (data) => data && data.rooms);
+        this._adminLocalState.houseConfig = houseConfig;
+        this._setStatusMessage(statusElement, '✓ Floor sensors saved successfully', 'success');
+    } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error saving floor sensors: ${error.message}`, 'error');
+    }
   }
 
   _startEditFloor(floorKey) {

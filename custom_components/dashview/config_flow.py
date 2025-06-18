@@ -47,7 +47,8 @@ class DashViewConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "house_config": {
                     "weather_entity": "weather.forecast_home",
                     "rooms": {},
-                    "floors": {}
+                    "floors": {},
+                    "floor_sensors": {}
                 }
             }
             return self.async_create_entry(title="DashView", data=default_data, options={})
