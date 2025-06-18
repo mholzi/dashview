@@ -142,6 +142,12 @@ async def _migrate_config_files(hass: HomeAssistant, store: DashViewStore):
                 house_config = json.load(f)
             await store.async_set_house_config(house_config)
             _LOGGER.info("[DashView] Migrated house_setup.json to centralized storage")
+
+            # Extract and save the weather entity if it exists
+            weather_entity = house_config.get("weather_entity")
+            if weather_entity and not store.get_weather_entity(None):
+                await store.async_set_weather_entity(weather_entity)
+                _LOGGER.info("[DashView] Migrated weather_entity from house_setup.json")
             return
         
         # If house config doesn't exist, try to migrate from legacy files
