@@ -35,6 +35,24 @@ else
     exit 1
 fi
 
+echo ""
+echo "🏠 Running Room Header Icons tests..."
+if node custom_components/dashview/tests/test_room_header_icons.js > /dev/null; then
+    echo "✅ Room Header Icons tests passed"
+else
+    echo "❌ Room Header Icons tests failed"
+    exit 1
+fi
+
+echo ""
+echo "💾 Running Entity Persistence tests..."
+if node custom_components/dashview/tests/test_entity_persistence.js > /dev/null; then
+    echo "✅ Entity Persistence tests passed"
+else
+    echo "❌ Entity Persistence tests failed"
+    exit 1
+fi
+
 # Run Shadow DOM CSS tests
 echo ""
 echo "🎨 Running Shadow DOM CSS validation tests..."
