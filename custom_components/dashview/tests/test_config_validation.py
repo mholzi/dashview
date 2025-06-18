@@ -7,9 +7,10 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from store import DashViewStore
+    # Note: ConfigEntry validation would require Home Assistant for real ConfigEntry
+    print("[DashView] Note: ConfigEntry validation skipped (requires Home Assistant)")
 except ImportError:
-    print("[DashView] Note: DashViewStore import skipped (requires Home Assistant)")
+    print("[DashView] Note: ConfigEntry import skipped (requires Home Assistant)")
     DashViewStore = None
 
 

@@ -1,24 +1,71 @@
+"""The DashView integration."""
 import os
 import logging
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.view import HomeAssistantView
 from aiohttp import web
-from .store import DashViewStore
+
+from .const import DOMAIN
 from .services import async_setup_services, async_unload_services
 
-DOMAIN = "dashview"
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the DashView component."""
     # This function is called by Home Assistant to initialize the component.
     # We leave it minimal to allow for UI-based setup.
     hass.data.setdefault(DOMAIN, {})
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up DashView from a config entry."""
+    _LOGGER.info("Setting up DashView panel from config entry.")
+    
+    # The config entry is the single source of truth.
+    # Use options if they exist, otherwise fall back to data.
+    config_data = entry.options or entry.data
+    
+    # Migrate existing config files to ConfigEntry if needed
+    await _migrate_config_files(hass, entry)
+    
+    # Register the API endpoint, passing the hass instance and entry object
+    hass.http.register_view(DashViewConfigView(hass, entry))
+    
+    # Register services
+    await async_setup_services(hass)
+    
+    # Register the www/ panel directory
+    panel_name = "dashview"
+    www_path = os.path.join(os.path.dirname(__file__), "www")
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(f"/local/{panel_name}", www_path, False)
+    ])
+
+    # Register the panel
+    try:
+        await panel_custom.async_register_panel(
+            hass,
+            webcomponent_name="dashview-panel",
+            frontend_url_path=panel_name,
+            sidebar_title="DashView",
+            sidebar_icon="mdi:view-dashboard",
+            module_url=f"/local/{panel_name}/dashview-panel.js",
+            require_admin=False,
+            config=config_data, # Pass config to the panel
+        )
+        _LOGGER.info("DashView panel successfully registered.")
+    except ValueError as ve:
+        if "Overwriting panel" in str(ve):
+            _LOGGER.info("DashView panel already exists, skipping registration.")
+        else:
+            raise
+
+    hass.data[DOMAIN][entry.entry_id] = entry
     return True
 
 
@@ -29,125 +76,102 @@ class DashViewConfigView(HomeAssistantView):
     name = "api:dashview:config"
     requires_auth = True
     
-    def __init__(self, store: DashViewStore):
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
         """Initialize the config view."""
-        self._store = store
+        self._hass = hass
+        self._entry = entry
     
     async def get(self, request):
-        """Get configuration data."""
+        """Get configuration data from the ConfigEntry."""
+        config_data = self._entry.options or self._entry.data
         config_type = request.query.get("type")
         
-        if config_type == "floors":
-            data = self._store.get_floors_config()
+        if config_type == "house":
+            data = config_data.get("house_config", {})
+        elif config_type == "floors":
+            # Legacy support - extract from house_config
+            house_config = config_data.get("house_config", {})
+            data = house_config.get("floors", {})
         elif config_type == "rooms":
-            data = self._store.get_rooms_config()
-        elif config_type == "house":
-            data = self._store.get_house_config()
+            # Legacy support - extract from house_config
+            house_config = config_data.get("house_config", {})
+            data = house_config.get("rooms", {})
         elif config_type == "weather_entity":
-            data = {"weather_entity": self._store.get_weather_entity()}
+            house_config = config_data.get("house_config", {})
+            data = {"weather_entity": house_config.get("weather_entity", "weather.home")}
+        elif config_type is None:
+            # Return the full house_config when no type is specified
+            data = config_data.get("house_config", {})
         else:
-            return web.Response(status=400, text="Invalid config type. Use: floors, rooms, house, weather_entity")
+            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity")
         
         return self.json(data)
     
     async def post(self, request):
-        """Save configuration data."""
+        """Save configuration data by updating the ConfigEntry."""
         try:
             data = await request.json()
-            config_type = data.get("type")
-            config_data = data.get("config")
             
-            if config_type == "floors":
-                await self._store.async_set_floors_config(config_data)
-            elif config_type == "rooms":
-                await self._store.async_set_rooms_config(config_data)
-            elif config_type == "house":
-                await self._store.async_set_house_config(config_data)
-            elif config_type == "weather_entity":
-                await self._store.async_set_weather_entity(config_data.get("weather_entity"))
+            # Handle both new and legacy API formats
+            if isinstance(data, dict) and "type" in data and "config" in data:
+                # Legacy format: {"type": "house", "config": {...}}
+                config_type = data.get("type")
+                new_config_data = data.get("config")
+                
+                if config_type == "house":
+                    # Update the house_config directly
+                    self._hass.config_entries.async_update_entry(
+                        self._entry, options={"house_config": new_config_data}
+                    )
+                else:
+                    # For legacy types, update the appropriate section within house_config
+                    current_data = self._entry.options or self._entry.data
+                    house_config = current_data.get("house_config", {})
+                    
+                    if config_type == "floors":
+                        house_config["floors"] = new_config_data
+                    elif config_type == "rooms":
+                        house_config["rooms"] = new_config_data
+                    elif config_type == "weather_entity":
+                        house_config["weather_entity"] = new_config_data.get("weather_entity", "weather.home")
+                    
+                    self._hass.config_entries.async_update_entry(
+                        self._entry, options={"house_config": house_config}
+                    )
             else:
-                return web.Response(status=400, text="Invalid config type")
+                # New format: direct house config data
+                self._hass.config_entries.async_update_entry(
+                    self._entry, options={"house_config": data}
+                )
             
             return self.json({"status": "success"})
         except Exception as e:
-            _LOGGER.error("[DashView] Error saving config: %s", e)
-            return web.Response(status=500, text=f"Error saving configuration: {str(e)}")
+            _LOGGER.error("[DashView] Error saving config to entry: %s", e)
+            return self.json({"status": "error", "message": str(e)}, status_code=500)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up DashView from a config entry (the primary setup method)."""
-    _LOGGER.info("Setting up DashView panel from config entry.")
-    
-    panel_name = "dashview"
-    
+async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
+    """Migrate existing config files to ConfigEntry."""
     try:
-        # Initialize the store
-        store = DashViewStore(hass)
-        await store.async_load()
-        
-        # Migrate existing config files to storage if they exist and storage is empty
-        await _migrate_config_files(hass, store)
-        
-        # Register the API endpoint
-        hass.http.register_view(DashViewConfigView(store))
-        
-        # Register services
-        await async_setup_services(hass)
-        
-        # FIX #2: Use the new, non-blocking method for registering static paths.
-        www_path = os.path.join(os.path.dirname(__file__), "www")
-        await hass.http.async_register_static_paths([
-            StaticPathConfig(f"/local/{panel_name}", www_path, False)
-        ])
-
-        # FIX #1: This logic now only runs once within async_setup_entry,
-        # preventing the "Overwriting panel" error.
-        try:
-            await panel_custom.async_register_panel(
-                hass,
-                webcomponent_name="dashview-panel",
-                frontend_url_path=panel_name,
-                sidebar_title="DashView",
-                sidebar_icon="mdi:view-dashboard",
-                module_url=f"/local/{panel_name}/dashview-panel.js",
-                require_admin=False,
-            )
-            _LOGGER.info("DashView panel successfully registered.")
-        except ValueError as ve:
-            if "Overwriting panel" in str(ve):
-                _LOGGER.info("DashView panel already exists, skipping registration.")
-            else:
-                raise
-
-    except Exception as e:
-        _LOGGER.error("Failed to register DashView panel: %s", e, exc_info=True)
-        return False
-
-    hass.data[DOMAIN][entry.entry_id] = store
-    return True
-
-
-async def _migrate_config_files(hass: HomeAssistant, store: DashViewStore):
-    """Migrate existing config files to centralized storage."""
-    try:
+        # Only migrate if ConfigEntry doesn't have house_config yet
+        current_data = entry.options or entry.data
+        if current_data.get("house_config"):
+            return  # Already has configuration
+            
         floors_file = hass.config.path("custom_components", "dashview", "www", "config", "floors.json")
         rooms_file = hass.config.path("custom_components", "dashview", "www", "config", "rooms.json")
         house_file = hass.config.path("custom_components", "dashview", "www", "config", "house_setup.json")
         
         import json
         
-        # First try to load house_setup.json if it exists and storage is empty
-        if not store.get_house_config() and os.path.exists(house_file):
+        # First try to load house_setup.json if it exists
+        if os.path.exists(house_file):
             with open(house_file, 'r') as f:
                 house_config = json.load(f)
-            await store.async_set_house_config(house_config)
-            _LOGGER.info("[DashView] Migrated house_setup.json to centralized storage")
-
-            # Extract and save the weather entity if it exists
-            weather_entity = house_config.get("weather_entity")
-            if weather_entity and not store.get_weather_entity(None):
-                await store.async_set_weather_entity(weather_entity)
-                _LOGGER.info("[DashView] Migrated weather_entity from house_setup.json")
+            hass.config_entries.async_update_entry(
+                entry, options={"house_config": house_config}
+            )
+            _LOGGER.info("[DashView] Migrated house_setup.json to ConfigEntry")
             return
         
         # If house config doesn't exist, try to migrate from legacy files
@@ -163,20 +187,33 @@ async def _migrate_config_files(hass: HomeAssistant, store: DashViewStore):
                 rooms_config = json.load(f)
         
         # Convert legacy configs to new house structure if both exist
-        if floors_config and rooms_config and not store.get_house_config():
+        if floors_config and rooms_config:
             house_config = _convert_legacy_to_house_config(floors_config, rooms_config)
-            await store.async_set_house_config(house_config)
-            _LOGGER.info("[DashView] Converted legacy configs to new house configuration")
+            hass.config_entries.async_update_entry(
+                entry, options={"house_config": house_config}
+            )
+            _LOGGER.info("[DashView] Converted legacy configs to new house configuration in ConfigEntry")
             return
         
-        # Fallback: Only migrate if storage is empty and files exist
-        if not store.get_floors_config() and floors_config:
-            await store.async_set_floors_config(floors_config)
-            _LOGGER.info("[DashView] Migrated floors.json to centralized storage")
+        # Fallback: create basic structure from individual configs
+        house_config = {
+            "weather_entity": "weather.home",
+            "rooms": {},
+            "floors": {}
+        }
         
-        if not store.get_rooms_config() and rooms_config:
-            await store.async_set_rooms_config(rooms_config)
-            _LOGGER.info("[DashView] Migrated rooms.json to centralized storage")
+        if floors_config:
+            house_config["floors"] = floors_config
+            _LOGGER.info("[DashView] Migrated floors.json to ConfigEntry")
+        
+        if rooms_config:
+            house_config["rooms"] = rooms_config
+            _LOGGER.info("[DashView] Migrated rooms.json to ConfigEntry")
+            
+        if floors_config or rooms_config:
+            hass.config_entries.async_update_entry(
+                entry, options={"house_config": house_config}
+            )
             
     except Exception as e:
         _LOGGER.warning("[DashView] Could not migrate config files: %s", e)
@@ -267,18 +304,8 @@ def _convert_legacy_to_house_config(floors_config, rooms_config):
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.info("Unloading DashView panel.")
-    
-    # Unload services first
     await async_unload_services(hass)
-    
-    # Clean up the panel when the integration is unloaded or reloaded.
-    try:
-        # Use frontend module to remove the panel
-        from homeassistant.components import frontend
-        frontend.async_remove_panel(hass, "dashview")
-    except (AttributeError, ImportError) as e:
-        # If removal method doesn't exist or fails, log but don't fail unload
-        _LOGGER.warning("Could not remove panel during unload: %s", e)
-    
+    from homeassistant.components import frontend
+    frontend.async_remove_panel(hass, "dashview")
     hass.data[DOMAIN].pop(entry.entry_id, None)
     return True

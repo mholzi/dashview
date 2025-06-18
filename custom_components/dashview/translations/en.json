@@ -11,5 +11,13 @@
     "abort": {
       "single_instance_allowed": "Only a single instance of DashView is allowed."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "DashView Configuration",
+        "description": "Use the custom admin panel to configure DashView at: {admin_url}"
+      }
+    }
   }
 }

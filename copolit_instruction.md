@@ -19,17 +19,17 @@ When analyzing the DashView codebase, you must:
 
 ### **Principle 1: Enforce Centralized and Secure Data Persistence**
 
-**Rule:** All configuration data must be managed through the backend and stored securely in the Home Assistant `.storage` directory. Do not store configuration files directly in the `www` folder. The `house_setup_v2.json` stored via `DashViewStore` is the single source of truth for UI structure.
+**Rule:** All configuration data must be managed through the Home Assistant `ConfigEntry`. The `ConfigEntry`'s `options` dictionary is the single source of truth for all UI structure and settings. The component MUST NOT read from or write to any custom files in `.storage` or the `www` directory for its configuration.
 
 * **Instruction:**
     * Verify that `dashview-panel.js` fetches all configuration using the centralized `/api/dashview/config` endpoint.
-    * Confirm that the backend (`__init__.py` and `store.py`) uses `DashViewStore` to persist data in the `.storage` directory.
+    * Confirm that the backend (`__init__.py`) reads from and writes to the integration's `ConfigEntry`.
     * Flag any instance of the frontend trying to load JSON files directly from a `www/config` directory.
 * **Anti-Pattern to Detect:** `fetch('/local/dashview/config/some_config.json')` in the JavaScript.
 * **Validation Steps:**
     * Check that all configuration API calls use the centralized endpoint pattern
     * Verify no direct file reads from www/config directory exist
-    * Confirm all persistent data goes through DashViewStore
+    * Confirm all persistent data goes through ConfigEntry options
     * Test that configuration survives Home Assistant restarts
 * **Common Violations:**
     * Direct JSON file loading: `fetch('/local/dashview/config/house.json')`
@@ -40,9 +40,10 @@ When analyzing the DashView codebase, you must:
     // Frontend API call
     const response = await this._hass.callApi('GET', 'dashview/config?type=house_setup');
     
-    // Backend storage (store.py)
-    self._path = hass.config.path(".storage", "dashview.config")
-    await self.async_save(data)
+    // Backend storage (ConfigEntry)
+    updated_data = self._hass.config_entries.async_update_entry(
+        self._entry, options={"house_config": new_config_data}
+    )
     ```
 
 ---
@@ -510,9 +511,9 @@ When analyzing the DashView codebase, you must:
 
 ---
 
-### **Principle 12: Ensure Stable and Intentional Admin UI State**
+### **Principle 12: Mandate the Custom Admin Panel for Configuration**
 
-**Rule:** Administrative interfaces must decouple their form state from the global Home Assistant state to prevent unintended refreshes during user interaction. UI input elements must reflect a stable, local component state during editing, and data should only be persisted to the backend upon an explicit user action (e.g., a 'Save' button click).
+**Rule:** The custom web interface located at `/local/dashview/admin.html` is the designated UI for all ongoing configuration management. A standard Home Assistant "Options Flow" UI must **not** be implemented. The custom admin panel must interact with a backend API endpoint (`/api/dashview/config`) that reads from and writes to the integration's `ConfigEntry`. The panel must maintain its own local state during editing to provide a stable user experience, only persisting changes to the backend when the user explicitly clicks a "Save" button.
 
 * **Instruction:**
     * Verify that admin panel inputs (like `<input>`, `<textarea>`, `<select>`) are not re-rendered or have their values reset on every hass state update.
@@ -532,11 +533,10 @@ When analyzing the DashView codebase, you must:
     * Test that if a save operation fails, the UI clearly shows an error and does not keep the unsaved value.
 * **Correct Implementation:**
     ```javascript
-    // Example of a stable admin component
-    class AdminSettingsComponent {
-      constructor(hass, configManager) {
+    // Example of the custom admin panel working with ConfigEntry backend
+    class CustomAdminPanel {
+      constructor(hass) {
         this.hass = hass;
-        this.configManager = configManager;
         this.localConfig = {}; // Local state for the form
         this.isLoaded = false;
       }
@@ -544,7 +544,8 @@ When analyzing the DashView codebase, you must:
       // 1. Load data ONCE when the panel is shown
       async show() {
         if (!this.isLoaded) {
-          this.localConfig = await this.configManager.getConfig('my_settings');
+          const response = await this.hass.callApi('GET', 'dashview/config');
+          this.localConfig = response;
           this.isLoaded = true;
         }
         this.render();
@@ -552,24 +553,28 @@ When analyzing the DashView codebase, you must:
 
       // 2. Render the form using the LOCAL state
       render() {
-        const input = this.shadowRoot.querySelector('#my-setting-input');
-        input.value = this.localConfig.someValue || '';
+        const textarea = this.shadowRoot.querySelector('#house-config');
+        textarea.value = JSON.stringify(this.localConfig, null, 2);
 
         // Add listener for user input
-        input.oninput = (e) => {
-          // 3. Update the LOCAL state only, not the backend
-          this.localConfig.someValue = e.target.value;
+        textarea.oninput = (e) => {
+          try {
+            // 3. Update the LOCAL state only, not the backend
+            this.localConfig = JSON.parse(e.target.value);
+          } catch (error) {
+            // Invalid JSON, keep local state unchanged
+          }
         };
       }
 
-      // 4. Save data to the backend ONLY on explicit user action
+      // 4. Save data to ConfigEntry ONLY on explicit user action
       async save() {
         const statusEl = this.shadowRoot.querySelector('.status');
         statusEl.textContent = 'Saving...';
 
         try {
-          await this.configManager.saveConfig('my_settings', this.localConfig);
-          statusEl.textContent = '✓ Saved successfully!';
+          await this.hass.callApi('POST', 'dashview/config', this.localConfig);
+          statusEl.textContent = '✓ Saved to ConfigEntry successfully!';
         } catch (error) {
           statusEl.textContent = `✗ Error: ${error.message}`;
         }
@@ -637,7 +642,7 @@ For each merged PR, systematically validate against **ALL** principles:
 **✅ Principle 1: Centralized and Secure Data Persistence**
 - [ ] Verify no new direct file access patterns in `/www/config/`
 - [ ] Confirm all new configuration uses `/api/dashview/config` endpoint
-- [ ] Check that any new persistent data goes through `DashViewStore`
+- [ ] Check that any new persistent data goes through `ConfigEntry`
 - [ ] Test configuration persistence across Home Assistant restarts
 - [ ] Validate no hardcoded configuration values were introduced
 
