@@ -208,6 +208,16 @@ else
     exit 1
 fi
 
+# Run Room Setup tests
+echo ""
+echo "🏠 Running Room Setup tests..."
+if node custom_components/dashview/tests/test_room_setup.js > /dev/null; then
+    echo "✅ Room Setup tests passed"
+else
+    echo "❌ Room Setup tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."
