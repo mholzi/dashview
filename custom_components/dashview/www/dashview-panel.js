@@ -2225,12 +2225,16 @@ class DashviewPanel extends HTMLElement {
             entity_id: selectedEntity
         });
         
-        // Update the panel's internal state after a successful save
+        // 1. Update the panel's main internal state
         this._weatherEntityId = selectedEntity;
+
+        // 2. FIX: Also update the admin panel's local state to prevent reverting on reload
+        this._adminLocalState.weatherEntity = selectedEntity;
 
         this._setStatusMessage(statusElement, '✓ Weather entity saved successfully', 'success');
         
-        // Trigger a manual update of weather components
+        // 3. FIX: Trigger a manual update of ALL weather components, not just the popup
+        this._updateWeatherButton(this.shadowRoot);
         this.updateWeatherComponents(this.shadowRoot);
 
     } catch (error) {
