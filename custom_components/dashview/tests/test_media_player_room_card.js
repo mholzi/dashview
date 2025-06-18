@@ -172,29 +172,7 @@ class MediaPlayerRoomCardTests {
 class MockDashViewPanel {
     constructor() {
         this._hass = this.createMockHass();
-        this._houseConfig = {
-            rooms: {
-                buero: {
-                    friendly_name: "Büro",
-                    media_players: [
-                        { entity: "media_player.echo_buero" }
-                    ]
-                },
-                wohnzimmer: {
-                    friendly_name: "Wohnzimmer", 
-                    media_players: [
-                        { entity: "media_player.unnamed_room" },
-                        { entity: "media_player.kuche" }
-                    ]
-                },
-                schlafzimmer: {
-                    friendly_name: "Schlafzimmer",
-                    media_players: [
-                        { entity: "media_player.echo_bad" }
-                    ]
-                }
-            }
-        };
+        this._houseConfig = this.createTestConfiguration();
         
         // Component initializers
         this._componentInitializers = {
@@ -209,35 +187,53 @@ class MockDashViewPanel {
         };
     }
 
-    createMockHass() {
+    // Create test configuration using JavaScript objects (avoiding YAML-like structure)
+    createTestConfiguration() {
+        const config = { rooms: {} };
+        
+        // Office room with single media player
+        config.rooms.buero = this.createRoomConfig("Büro", ["media_player.echo_buero"]);
+        
+        // Living room with multiple media players
+        config.rooms.wohnzimmer = this.createRoomConfig("Wohnzimmer", [
+            "media_player.unnamed_room",
+            "media_player.kuche"
+        ]);
+        
+        // Bedroom with single media player
+        config.rooms.schlafzimmer = this.createRoomConfig("Schlafzimmer", ["media_player.echo_bad"]);
+        
+        return config;
+    }
+    
+    // Helper method to create room configuration
+    createRoomConfig(displayName, mediaPlayerIds) {
         return {
-            states: {
-                'media_player.echo_buero': {
-                    state: 'off',
-                    attributes: {
-                        friendly_name: 'Echo Büro'
-                    }
-                },
-                'media_player.unnamed_room': {
-                    state: 'off',
-                    attributes: {
-                        friendly_name: 'Esszimmer'
-                    }
-                },
-                'media_player.kuche': {
-                    state: 'off',
-                    attributes: {
-                        friendly_name: 'Küche'
-                    }
-                },
-                'media_player.echo_bad': {
-                    state: 'off',
-                    attributes: {
-                        friendly_name: 'Bad'
-                    }
-                }
-            }
+            friendly_name: displayName,
+            media_players: mediaPlayerIds.map(entityId => ({ entity: entityId }))
         };
+    }
+
+    createMockHass() {
+        // Create mock Home Assistant states using JavaScript objects
+        const mockStates = {};
+        
+        // Media player entities with their states
+        const mediaPlayers = [
+            { id: 'media_player.echo_buero', name: 'Echo Büro' },
+            { id: 'media_player.unnamed_room', name: 'Esszimmer' },
+            { id: 'media_player.kuche', name: 'Küche' },
+            { id: 'media_player.echo_bad', name: 'Bad' }
+        ];
+        
+        mediaPlayers.forEach(player => {
+            mockStates[player.id] = {
+                state: 'off',
+                attributes: { friendly_name: player.name }
+            };
+        });
+        
+        return { states: mockStates };
     }
 
     // Mock implementation of createPopupFromTemplate
