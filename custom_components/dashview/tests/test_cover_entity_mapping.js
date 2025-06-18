@@ -108,23 +108,28 @@ class CoverEntityMappingTests {
         const jsPath = path.join(__dirname, '../www/dashview-panel.js');
         const jsContent = fs.readFileSync(jsPath, 'utf8');
         
-        // Get all unique cover entities from the original mapping
-        const allCoverEntities = new Set();
-        for (const entities of Object.values(this.originalMapping)) {
-            entities.forEach(entity => allCoverEntities.add(entity));
-        }
+        // Check that cover entities are dynamically loaded from configuration
+        // Look for the _getAllCoverEntities method instead of hardcoded entities
+        const hasGetAllCoverEntitiesMethod = jsContent.includes('_getAllCoverEntities()');
+        const hasCoverEntitiesSpread = jsContent.includes('...coverEntities');
+        const hasConfigurationLoad = jsContent.includes('this._houseConfig.rooms');
         
-        let allEntitiesTracked = true;
-        for (const entity of allCoverEntities) {
-            if (!jsContent.includes(`'${entity}'`)) {
-                allEntitiesTracked = false;
-                console.log(`❌ Entity ${entity} not found in JavaScript tracking`);
-                break;
+        const allEntitiesTracked = hasGetAllCoverEntitiesMethod && hasCoverEntitiesSpread && hasConfigurationLoad;
+        
+        if (!allEntitiesTracked) {
+            if (!hasGetAllCoverEntitiesMethod) {
+                console.log('❌ _getAllCoverEntities method not found');
+            }
+            if (!hasCoverEntitiesSpread) {
+                console.log('❌ Cover entities spread operator not found in entitiesToWatch');
+            }
+            if (!hasConfigurationLoad) {
+                console.log('❌ Configuration-based entity loading not found');
             }
         }
         
         this.testResults.push({
-            name: 'All cover entities are tracked in JavaScript',
+            name: 'Cover entities are dynamically loaded from configuration',
             passed: allEntitiesTracked
         });
     }

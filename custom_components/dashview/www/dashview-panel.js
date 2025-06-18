@@ -38,30 +38,34 @@ class DashviewPanel extends HTMLElement {
     this._checkEntityChanges();
   }
 
+  // Get all cover entities from configuration
+  _getAllCoverEntities() {
+    const coverEntities = [];
+    
+    // Get covers from house configuration
+    if (this._houseConfig && this._houseConfig.rooms) {
+      Object.values(this._houseConfig.rooms).forEach(room => {
+        if (room.covers && Array.isArray(room.covers)) {
+          coverEntities.push(...room.covers);
+        }
+      });
+    }
+    
+    return [...new Set(coverEntities)]; // Remove duplicates
+  }
+
   // Ensure initial entity states are properly loaded - Issue #34 fix
   _ensureInitialEntityStates() {
     if (!this._hass) return;
     
     const weatherEntityId = this._getCurrentWeatherEntityId();
+    const coverEntities = this._getAllCoverEntities();
     const entitiesToWatch = [
       weatherEntityId,
       'person.markus',
       'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
       'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
-      // Cover entities
-      'cover.rollo_jan_philipp_3',
-      'cover.fenster_felicia_links',
-      'cover.fenster_felicia_rechts',
-      'cover.rollo_frederik_seite_3',
-      'cover.rollo_frederik_balkon_3',
-      'cover.rollo_kinderbad_2',
-      'cover.rollo_aupair_2',
-      'cover.rollo_aupair',
-      'cover.rollo_aupairbad_3',
-      'cover.velux_external_cover_awning_blinds_3',
-      'cover.velux_external_cover_awning_blinds_2',
-      'cover.velux_external_cover_awning_blinds',
-      'cover.rollo_treppenaufgang'
+      ...coverEntities
     ];
 
     // Force initial load of entity states if they're not already tracked
@@ -96,25 +100,13 @@ class DashviewPanel extends HTMLElement {
   // Check for entity state changes - Principle 3
   _checkEntityChanges() {
     const weatherEntityId = this._getCurrentWeatherEntityId();
+    const coverEntities = this._getAllCoverEntities();
     const entitiesToWatch = [
       weatherEntityId,
       'person.markus',
       'sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag',
       'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf',
-      // Cover entities
-      'cover.rollo_jan_philipp_3',
-      'cover.fenster_felicia_links',
-      'cover.fenster_felicia_rechts',
-      'cover.rollo_frederik_seite_3',
-      'cover.rollo_frederik_balkon_3',
-      'cover.rollo_kinderbad_2',
-      'cover.rollo_aupair_2',
-      'cover.rollo_aupair',
-      'cover.rollo_aupairbad_3',
-      'cover.velux_external_cover_awning_blinds_3',
-      'cover.velux_external_cover_awning_blinds_2',
-      'cover.velux_external_cover_awning_blinds',
-      'cover.rollo_treppenaufgang'
+      ...coverEntities
     ];
 
     let hasChanges = false;
@@ -149,6 +141,7 @@ class DashviewPanel extends HTMLElement {
 
     try {
       const weatherEntityId = this._getCurrentWeatherEntityId();
+      const coverEntities = this._getAllCoverEntities();
       
       switch (entityId) {
         case weatherEntityId:
@@ -162,23 +155,13 @@ class DashviewPanel extends HTMLElement {
         case 'sensor.dreieich_buchschlag_departures_via_frankfurt_hbf':
           this.updateTrainDepartureCards(shadow);
           break;
-        case 'cover.rollo_jan_philipp_3':
-        case 'cover.fenster_felicia_links':
-        case 'cover.fenster_felicia_rechts':
-        case 'cover.rollo_frederik_seite_3':
-        case 'cover.rollo_frederik_balkon_3':
-        case 'cover.rollo_kinderbad_2':
-        case 'cover.rollo_aupair_2':
-        case 'cover.rollo_aupair':
-        case 'cover.rollo_aupairbad_3':
-        case 'cover.velux_external_cover_awning_blinds_3':
-        case 'cover.velux_external_cover_awning_blinds_2':
-        case 'cover.velux_external_cover_awning_blinds':
-        case 'cover.rollo_treppenaufgang':
-          this.updateCoverControls(entityId);
-          break;
         default:
-          console.log(`[DashView] No specific handler for entity: ${entityId}`);
+          // Check if it's a cover entity
+          if (coverEntities.includes(entityId)) {
+            this.updateCoverControls(entityId);
+          } else {
+            console.log(`[DashView] No specific handler for entity: ${entityId}`);
+          }
       }
     } catch (error) {
       console.error(`[DashView] Error updating component for ${entityId}:`, error);
