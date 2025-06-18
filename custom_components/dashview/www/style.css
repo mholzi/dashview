@@ -78,7 +78,7 @@
 
 
 /* --- Base Layout --- */
-body {
+body, :host {
     font-family: var(--primary-font-family);
     background-color: var(--background);
     color: var(--primary-text-color);
@@ -134,7 +134,7 @@ h3 {
 }
 
 /* Prevent body scrolling when popup is active */
-body.popup-open {
+body.popup-open, :host(.popup-open) {
     overflow: hidden;
 }
 

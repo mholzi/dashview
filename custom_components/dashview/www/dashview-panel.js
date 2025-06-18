@@ -162,7 +162,7 @@ class DashviewPanel extends HTMLElement {
   _injectCSSVariables(shadow) {
     const cssVariables = document.createElement('style');
     cssVariables.textContent = `
-      :root {
+      :host, :root {
         /* Base Font */
         --primary-font-family: 'Space Grotesk', sans-serif;
 
@@ -215,7 +215,7 @@ class DashviewPanel extends HTMLElement {
 
       /* Dark Mode Overrides */
       @media (prefers-color-scheme: dark) {
-        :root {
+        :host, :root {
           --background: #28282A;
           --popupBG: #28282A;
           --highlight: rgba(250, 251, 252, 0.05);
