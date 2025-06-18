@@ -36,6 +36,7 @@ class DashviewPanel extends HTMLElement {
       },
       // Add this new line for the security popup
       '#open-windows-list': (el) => this.updateSecurityLists(el.closest('.popup')),
+      '.media-container': (el) => this._initializeMediaPlayerControls(el.closest('.popup'))
     };
   }
 
@@ -106,6 +107,9 @@ class DashviewPanel extends HTMLElement {
       
       // Add cover entities from house configuration
       await this._addCoverEntities();
+      
+      // Add media player entities from house configuration
+      await this._addMediaPlayerEntities();
     }
 
     // Force initial load of entity states if they're not already tracked
@@ -184,6 +188,33 @@ class DashviewPanel extends HTMLElement {
             this._watchedEntities.add(entityId);
             this._coverEntities.add(entityId); // Keep a separate set for easy reference
             console.log(`[DashView] Added cover entity: ${entityId}`);
+          }
+        });
+      }
+    });
+  }
+
+  // Add media player entities from house configuration
+  async _addMediaPlayerEntities() {
+    // Load house configuration if not already loaded
+    if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
+      try {
+        await this.loadConfiguration();
+      } catch (error) {
+        console.warn('[DashView] Could not load house configuration for media player entities:', error);
+        return;
+      }
+    }
+    
+    if (!this._houseConfig || !this._houseConfig.rooms) return;
+    
+    Object.values(this._houseConfig.rooms).forEach(roomConfig => {
+      if (roomConfig.media_players && Array.isArray(roomConfig.media_players)) {
+        roomConfig.media_players.forEach(mediaPlayerConfig => {
+          const entityId = mediaPlayerConfig.entity;
+          if (entityId && entityId.startsWith('media_player.')) {
+            this._watchedEntities.add(entityId);
+            console.log(`[DashView] Added media player entity: ${entityId}`);
           }
         });
       }
@@ -278,6 +309,8 @@ class DashviewPanel extends HTMLElement {
             this.updateWindowsSection(shadow);
           } else if (entityId.startsWith('cover.')) {
             this.updateCoverCard(shadow, entityId);
+          } else if (entityId.startsWith('media_player.')) {
+            this.updateMediaPlayerInPopups(shadow, entityId);
           } else if (this._isRoomHeaderEntity(entityId)) {
             this.updateRoomHeaderIcons(shadow);
           } else {
@@ -2735,6 +2768,170 @@ class DashviewPanel extends HTMLElement {
     // Initial update
     this.updateCoverCard(popup, masterEntity); // Update main slider
     coverEntities.forEach(entityId => this.updateCoverCard(popup, entityId)); // Update individual rows
+  }
+
+  // Initialize media player controls
+  _initializeMediaPlayerControls(popup) {
+    if (!this._hass) return;
+    
+    console.log('[DashView] Initializing media player controls');
+    
+    // Initialize preset buttons
+    const presetButtons = popup.querySelectorAll('.media-preset-button');
+    presetButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const entity = button.dataset.entity;
+        const contentId = button.dataset.contentId;
+        const contentType = button.dataset.contentType;
+        
+        if (entity && contentId) {
+          this._hass.callService('media_player', 'play_media', {
+            entity_id: entity,
+            media_content_id: contentId,
+            media_content_type: contentType
+          });
+        }
+      });
+    });
+    
+    // Initialize media control buttons
+    const controlButtons = popup.querySelectorAll('.media-control-button');
+    controlButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const mediaControls = button.closest('.media-controls');
+        const entity = mediaControls.dataset.entity;
+        const action = button.dataset.action;
+        
+        if (entity && action) {
+          this._hass.callService('media_player', action, {
+            entity_id: entity
+          });
+        }
+      });
+    });
+    
+    // Initialize volume sliders
+    const volumeSliders = popup.querySelectorAll('.volume-slider');
+    volumeSliders.forEach(slider => {
+      // Update volume display on input
+      slider.addEventListener('input', (e) => {
+        const volumeValue = e.target.closest('.volume-row').querySelector('.volume-value');
+        volumeValue.textContent = `${e.target.value}%`;
+      });
+      
+      // Set volume on change
+      slider.addEventListener('change', (e) => {
+        const entity = e.target.dataset.entity;
+        const volume = parseFloat(e.target.value) / 100;
+        
+        if (entity && volume >= 0 && volume <= 1) {
+          this._hass.callService('media_player', 'volume_set', {
+            entity_id: entity,
+            volume_level: volume
+          });
+        }
+      });
+    });
+    
+    // Initialize media displays for all entities
+    const mediaDisplays = popup.querySelectorAll('.media-display');
+    mediaDisplays.forEach(display => {
+      const entity = display.dataset.entity;
+      if (entity) {
+        this.updateMediaPlayerDisplay(popup, entity);
+      }
+    });
+    
+    // Initialize volume controls for all entities
+    volumeSliders.forEach(slider => {
+      const entity = slider.dataset.entity;
+      if (entity) {
+        this.updateMediaPlayerVolume(popup, entity);
+      }
+    });
+  }
+
+  // Update media player display (image, title, artist)
+  updateMediaPlayerDisplay(popup, entityId) {
+    if (!this._hass || !entityId.startsWith('media_player.')) return;
+    
+    const entityState = this._hass.states[entityId];
+    if (!entityState) return;
+    
+    const display = popup.querySelector(`.media-display[data-entity="${entityId}"]`);
+    if (!display) return;
+    
+    const mediaImage = display.querySelector('.media-cover');
+    const mediaTitle = display.querySelector('.media-title');
+    const mediaArtist = display.querySelector('.media-artist');
+    
+    // Update media image
+    if (mediaImage && entityState.attributes.entity_picture) {
+      mediaImage.src = entityState.attributes.entity_picture;
+      mediaImage.style.display = 'block';
+    } else if (mediaImage) {
+      mediaImage.style.display = 'none';
+    }
+    
+    // Update title and artist
+    const title = entityState.attributes.media_title || 'Kein Titel';
+    const artist = entityState.attributes.media_artist || 'Unbekannt';
+    
+    if (mediaTitle) mediaTitle.textContent = title;
+    if (mediaArtist) mediaArtist.textContent = artist;
+    
+    // Update play/pause button
+    const controls = popup.querySelector(`.media-controls[data-entity="${entityId}"]`);
+    if (controls) {
+      const playPauseButton = controls.querySelector('.play-pause i');
+      if (playPauseButton) {
+        const isPlaying = ['playing', 'on'].includes(entityState.state);
+        playPauseButton.className = isPlaying ? 'mdi mdi-pause' : 'mdi mdi-play';
+      }
+    }
+  }
+
+  // Update media player volume control
+  updateMediaPlayerVolume(popup, entityId) {
+    if (!this._hass || !entityId.startsWith('media_player.')) return;
+    
+    const entityState = this._hass.states[entityId];
+    if (!entityState) return;
+    
+    const volumeSlider = popup.querySelector(`.volume-slider[data-entity="${entityId}"]`);
+    const volumeValue = volumeSlider?.closest('.volume-row')?.querySelector('.volume-value');
+    
+    if (!volumeSlider || !volumeValue) return;
+    
+    const volumeLevel = entityState.attributes.volume_level || 0;
+    const volumePercent = Math.round(volumeLevel * 100);
+    
+    if (volumeSlider.value != volumePercent) {
+      volumeSlider.value = volumePercent;
+    }
+    volumeValue.textContent = `${volumePercent}%`;
+  }
+
+  // Update media player in all open popups
+  updateMediaPlayerInPopups(shadow, entityId) {
+    // Update media player display in music popup
+    const musicPopup = shadow.querySelector('#music-popup');
+    if (musicPopup && musicPopup.classList.contains('active')) {
+      this.updateMediaPlayerDisplay(musicPopup, entityId);
+      this.updateMediaPlayerVolume(musicPopup, entityId);
+    }
+    
+    // Also update any room popups that might contain media player controls
+    const activePopups = shadow.querySelectorAll('.popup.active');
+    activePopups.forEach(popup => {
+      const mediaDisplays = popup.querySelectorAll(`.media-display[data-entity="${entityId}"]`);
+      const volumeSliders = popup.querySelectorAll(`.volume-slider[data-entity="${entityId}"]`);
+      
+      if (mediaDisplays.length > 0 || volumeSliders.length > 0) {
+        this.updateMediaPlayerDisplay(popup, entityId);
+        this.updateMediaPlayerVolume(popup, entityId);
+      }
+    });
   }
 
   // Update sliders and labels when a cover's state changes
