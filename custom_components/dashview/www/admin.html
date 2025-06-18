@@ -5,6 +5,9 @@
         <button class="tab-button active" data-target="weather-tab">Weather</button>
         <button class="tab-button" data-target="house-setup-tab">House Setup</button>
         <button class="tab-button" data-target="motion-setup-tab">Motion Setup</button>
+        <button class="tab-button" data-target="window-setup-tab">Window Setup</button>
+        <button class="tab-button" data-target="smoke-detector-setup-tab">Smoke Detector Setup</button>
+        <button class="tab-button" data-target="vibration-setup-tab">Vibration Setup</button>
         <button class="tab-button" data-target="floor-maintenance-tab">Floor Maintenance</button>
         <button class="tab-button" data-target="room-maintenance-tab">Room Maintenance</button>
         <button class="tab-button" data-target="media-player-maintenance-tab">Media Players</button>
@@ -56,6 +59,63 @@
                 <!-- Motion sensors will be populated here -->
             </div>
             <button id="save-motion-sensor-config" class="save-button" style="margin-top: 12px;">Save Motion Sensor Configuration</button>
+        </div>
+    </div>
+
+    <div id="window-setup-tab" class="tab-content">
+        <h4>Window Setup</h4>
+        <p>Configure window sensors based on Home Assistant labels. Select window sensors labeled "Fenster" to assign to rooms.</p>
+        
+        <div class="config-section">
+            <h5>Window Sensor Status</h5>
+            <div id="window-setup-status" class="status-display">Ready</div>
+            <button id="reload-window-sensors" class="action-button">Reload Window Sensors</button>
+        </div>
+        
+        <div class="config-section">
+            <h5>Available Window Sensors by Room</h5>
+            <div id="window-sensors-by-room" class="floors-container">
+                <!-- Window sensors will be populated here -->
+            </div>
+            <button id="save-window-sensor-config" class="save-button" style="margin-top: 12px;">Save Window Sensor Configuration</button>
+        </div>
+    </div>
+
+    <div id="smoke-detector-setup-tab" class="tab-content">
+        <h4>Smoke Detector Setup</h4>
+        <p>Configure smoke detector sensors based on Home Assistant labels. Select smoke detectors labeled "Rauchmelder" to assign to rooms.</p>
+        
+        <div class="config-section">
+            <h5>Smoke Detector Status</h5>
+            <div id="smoke-detector-setup-status" class="status-display">Ready</div>
+            <button id="reload-smoke-detector-sensors" class="action-button">Reload Smoke Detectors</button>
+        </div>
+        
+        <div class="config-section">
+            <h5>Available Smoke Detectors by Room</h5>
+            <div id="smoke-detector-sensors-by-room" class="floors-container">
+                <!-- Smoke detector sensors will be populated here -->
+            </div>
+            <button id="save-smoke-detector-sensor-config" class="save-button" style="margin-top: 12px;">Save Smoke Detector Configuration</button>
+        </div>
+    </div>
+
+    <div id="vibration-setup-tab" class="tab-content">
+        <h4>Vibration Setup</h4>
+        <p>Configure vibration sensors based on Home Assistant labels. Select vibration sensors labeled "Vibration" to assign to rooms.</p>
+        
+        <div class="config-section">
+            <h5>Vibration Sensor Status</h5>
+            <div id="vibration-setup-status" class="status-display">Ready</div>
+            <button id="reload-vibration-sensors" class="action-button">Reload Vibration Sensors</button>
+        </div>
+        
+        <div class="config-section">
+            <h5>Available Vibration Sensors by Room</h5>
+            <div id="vibration-sensors-by-room" class="floors-container">
+                <!-- Vibration sensors will be populated here -->
+            </div>
+            <button id="save-vibration-sensor-config" class="save-button" style="margin-top: 12px;">Save Vibration Sensor Configuration</button>
         </div>
     </div>
 
