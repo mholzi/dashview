@@ -3,6 +3,7 @@ class DashviewPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this._contentReady = false;
+    this._weatherEntityId = 'weather.home'; // Add a property to store the entity ID
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._houseConfig = {};
@@ -385,6 +386,9 @@ class DashviewPanel extends HTMLElement {
     if (!shadow) return;
 
     try {
+      // Fetch the initial weather entity ID when the panel loads
+      await this._fetchWeatherEntityId();
+
       // Inject CSS variables for Shadow DOM compatibility
       this._injectCSSVariables(shadow);
 
@@ -1444,6 +1448,22 @@ class DashviewPanel extends HTMLElement {
     return config;
   }
 
+  // Fetch the weather entity ID from the API
+  async _fetchWeatherEntityId() {
+      if (!this._hass) return;
+      try {
+          const response = await this._hass.callApi('GET', 'dashview/config?type=weather_entity');
+          if (response && response.weather_entity) {
+              this._weatherEntityId = response.weather_entity;
+              console.log('[DashView] Fetched weather entity from config:', this._weatherEntityId);
+          }
+      } catch (error) {
+          console.error('[DashView] Error fetching weather entity config, using default:', error);
+          // Fallback to default if API call fails
+          this._weatherEntityId = 'weather.home';
+      }
+  }
+
   // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
@@ -1954,17 +1974,19 @@ class DashviewPanel extends HTMLElement {
       // Get all weather entities from Home Assistant
       const weatherEntities = this._getWeatherEntities();
       
-      // Load weather entity configuration only once - Principle 12
-      if (!this._adminLocalState.weatherEntity) {
-        this._adminLocalState.weatherEntity = this._getCurrentWeatherEntityId();
-      }
+      // Fetch the current entity from the API for the admin panel
+      await this._fetchWeatherEntityId(); 
+      const currentEntity = this._weatherEntityId;
+      
+      // Store in local admin state for UI stability
+      this._adminLocalState.weatherEntity = currentEntity;
       
       // Populate dropdown using local state
       this._populateWeatherEntityDropdown(weatherSelector, weatherEntities, this._adminLocalState.weatherEntity);
       
-      console.log('[DashView] Weather entity configuration loaded successfully');
+      console.log('[DashView] Weather entity configuration loaded successfully for admin panel');
     } catch (error) {
-      console.error('[DashView] Error loading weather entity configuration:', error);
+      console.error('[DashView] Error loading weather entity configuration for admin:', error);
     }
   }
 
@@ -1988,18 +2010,8 @@ class DashviewPanel extends HTMLElement {
 
   // Get current configured weather entity with fallback - Principle 1 & 6
   _getCurrentWeatherEntityId() {
-    try {
-      // Try to get from configured weather sensor
-      const weatherSensor = this._hass.states['sensor.dashview_configured_weather'];
-      if (weatherSensor && weatherSensor.state && this._hass.states[weatherSensor.state]) {
-        return weatherSensor.state;
-      }
-    } catch (error) {
-      console.warn('[DashView] Could not get current weather entity from sensor:', error);
-    }
-    
-    // Fall back to hardcoded default for backward compatibility
-    return 'weather.forecast_home';
+    // No longer reads from a sensor, just returns the stored property
+    return this._weatherEntityId || 'weather.forecast_home'; // Fallback for safety
   }
 
   // Populate weather entity dropdown
@@ -2037,40 +2049,31 @@ class DashviewPanel extends HTMLElement {
   async saveWeatherEntityConfiguration() {
     const shadow = this.shadowRoot;
     const weatherSelector = shadow.getElementById('weather-entity-selector');
+    const statusElement = shadow.querySelector('#weather-status');
 
     if (!weatherSelector || !this._hass) return;
+    const selectedEntity = this._adminLocalState.weatherEntity || weatherSelector.value;
 
-    const selectedEntity = weatherSelector.value;
     if (!selectedEntity) {
-      console.warn('[DashView] No weather entity selected');
-      return;
+        this._setStatusMessage(statusElement, '✗ No weather entity selected', 'error');
+        return;
     }
 
     try {
-      // Call the service to save the weather entity
-      await this._hass.callService('dashview', 'set_weather_entity', {
-        entity_id: selectedEntity
-      });
-      
-      // Update local state only after successful save - Principle 12
-      this._adminLocalState.weatherEntity = selectedEntity;
-      
-      console.log('[DashView] Weather entity saved successfully:', selectedEntity);
-      
-      // Show success feedback (if there's a status element in weather tab)
-      const statusElement = shadow.querySelector('#weather-status');
-      if (statusElement) {
+        await this._hass.callService('dashview', 'set_weather_entity', {
+            entity_id: selectedEntity
+        });
+        
+        // Update the panel's internal state after a successful save
+        this._weatherEntityId = selectedEntity;
+
         this._setStatusMessage(statusElement, '✓ Weather entity saved successfully', 'success');
-      }
-      
+        
+        // Trigger a manual update of weather components
+        this.updateWeatherComponents(this.shadowRoot);
+
     } catch (error) {
-      console.error('[DashView] Error saving weather entity:', error);
-      
-      // Show error feedback
-      const statusElement = shadow.querySelector('#weather-status');
-      if (statusElement) {
         this._setStatusMessage(statusElement, `✗ Error saving weather entity: ${error.message}`, 'error');
-      }
     }
   }
 

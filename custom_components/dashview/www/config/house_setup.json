@@ -1,4 +1,5 @@
 {
+  "weather_entity": "weather.home",
   "rooms": {
     "wohnzimmer": {
       "friendly_name": "Wohnzimmer",
