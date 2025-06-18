@@ -198,6 +198,16 @@ else
     exit 1
 fi
 
+# Run Bottom Navigation Alignment tests
+echo ""
+echo "🧭 Running Bottom Navigation Alignment tests..."
+if node custom_components/dashview/tests/test_bottom_nav_alignment.js > /dev/null; then
+    echo "✅ Bottom Navigation Alignment tests passed"
+else
+    echo "❌ Bottom Navigation Alignment tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."
