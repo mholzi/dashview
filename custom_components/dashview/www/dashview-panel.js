@@ -867,6 +867,13 @@ class DashviewPanel extends HTMLElement {
         if (saveWeatherEntityBtn) {
             this.saveWeatherEntityConfiguration();
         }
+
+        const reloadWeatherBtn = e.target.closest('#reload-weather-config');
+        if (reloadWeatherBtn) {
+            // Reset weather admin state and reload - Principle 12
+            this._adminLocalState.weatherEntity = null;
+            this.loadWeatherEntityConfiguration();
+        }
     });
   }
   
@@ -1733,11 +1740,13 @@ class DashviewPanel extends HTMLElement {
       // Get all weather entities from Home Assistant
       const weatherEntities = this._getWeatherEntities();
       
-      // Get current configured weather entity
-      const currentWeatherEntity = this._getCurrentWeatherEntityId();
+      // Load weather entity configuration only once - Principle 12
+      if (!this._adminLocalState.weatherEntity) {
+        this._adminLocalState.weatherEntity = this._getCurrentWeatherEntityId();
+      }
       
-      // Populate dropdown
-      this._populateWeatherEntityDropdown(weatherSelector, weatherEntities, currentWeatherEntity);
+      // Populate dropdown using local state
+      this._populateWeatherEntityDropdown(weatherSelector, weatherEntities, this._adminLocalState.weatherEntity);
       
       console.log('[DashView] Weather entity configuration loaded successfully');
     } catch (error) {
@@ -1801,6 +1810,13 @@ class DashviewPanel extends HTMLElement {
       option.selected = entity.entityId === currentEntity;
       selector.appendChild(option);
     });
+    
+    // Add event listener to update local state on change - Principle 12
+    selector.removeEventListener('change', this._weatherEntityChangeHandler);
+    this._weatherEntityChangeHandler = (e) => {
+      this._adminLocalState.weatherEntity = e.target.value;
+    };
+    selector.addEventListener('change', this._weatherEntityChangeHandler);
   }
 
   // Save weather entity configuration - Principle 1, 2 & 12
@@ -1821,6 +1837,9 @@ class DashviewPanel extends HTMLElement {
       await this._hass.callService('dashview', 'set_weather_entity', {
         entity_id: selectedEntity
       });
+      
+      // Update local state only after successful save - Principle 12
+      this._adminLocalState.weatherEntity = selectedEntity;
       
       console.log('[DashView] Weather entity saved successfully:', selectedEntity);
       
