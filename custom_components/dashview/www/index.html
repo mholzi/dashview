@@ -8,6 +8,119 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 </head>
 <body>
+    <!-- Embedded Templates - Principle 4: Asset Bundling -->
+    <template id="kiosk-button-template">
+        <div class="header-button kiosk-button">
+            <span class="icon mdi mdi-menu"></span>
+        </div>
+    </template>
+    
+    <template id="weather-button-template">
+        <div class="header-button weather-button" data-hash="#weather">
+            <div class="icon-container">
+                </div>
+            <div class="text-container">
+                <span class="name">-- °C</span>
+                <span class="label">-- °C</span>
+            </div>
+        </div>
+    </template>
+    
+    <template id="person-button-template">
+        <div class="header-button person-button" data-hash="#markus">
+            <div class="image-container">
+                </div>
+        </div>
+    </template>
+    
+    <template id="header-buttons-template">
+        <div class="header-buttons-container" id="header-buttons">
+            <div class="loading-message">Loading room buttons...</div>
+        </div>
+    </template>
+    
+    <template id="room-header-icons-template">
+        <div class="room-header-icons" id="room-header-icons">
+          <!-- Room header icons will be populated dynamically by JavaScript -->
+          <div class="room-header-cards">
+            <!-- Each active room will have its own card with icons -->
+          </div>
+        </div>
+    </template>
+    
+    <template id="info-card-template">
+        <div class="info-card">
+          <!-- Bewegung Section -->
+          <div class="info-section motion-section" data-entity="binary_sensor.motion_presence_home">
+            <span class="info-text" data-type="motion-prefix">Im Haus ist seit</span>
+            <span class="info-badge" data-type="motion-time">Jetzt</span>
+            <span class="info-text" data-type="motion-suffix">Bewegung.</span>
+          </div>
+
+          <!-- Fenster Section -->
+          <div class="info-section windows-section" data-entities="binary_sensor.fenster">
+            <span class="info-text">Aktuell sind</span>
+            <span class="info-badge" data-type="window-count">0 🪟</span>
+            <span class="info-text">offen.</span>
+          </div>
+
+          <!-- Spülmaschine Section -->
+          <div class="info-section dishwasher-section" data-entity="sensor.geschirrspuler_operation_state">
+            <span class="info-text">Die Spülmaschine läuft noch</span>
+            <span class="info-badge" data-type="dishwasher-time">
+              <i class="mdi mdi-dishwasher"></i>
+              <span data-type="time-remaining">30min</span>
+            </span>
+            <span class="info-text">.</span>
+          </div>
+
+          <!-- Waschmaschine Section -->
+          <div class="info-section washing-section" data-entity="sensor.waschmaschine_operation_state">
+            <span class="info-text" data-type="washing-prefix">Die Waschmaschine läuft noch</span>
+            <span class="info-badge" data-type="washing-time">30min👕</span>
+            <span class="info-text">.</span>
+          </div>
+
+          <!-- Staubsauger Section -->
+          <div class="info-section vacuum-section" data-entity="vacuum.mova_e30_ultra">
+            <span class="info-text">Im</span>
+            <span class="info-badge" data-type="vacuum-room">
+              <i class="mdi mdi-robot-vacuum"></i>
+              <span data-type="room-name">Wohnzimmer</span>
+            </span>
+            <span class="info-text">wird gesaugt.</span>
+          </div>
+
+          <!-- Trockner Section -->
+          <div class="info-section dryer-section" data-entity="input_boolean.trockner_an">
+            <span class="info-text">Der</span>
+            <span class="info-badge" data-type="dryer-status">
+              <i class="mdi mdi-tumble-dryer"></i>
+              Trockner
+            </span>
+            <span class="info-text">läuft gerade.</span>
+          </div>
+
+          <!-- Solar Section -->
+          <div class="info-section solar-section" data-entity="sensor.foxess_solar">
+            <span class="info-text">Die Solarproduktion liegt bei</span>
+            <span class="info-badge" data-type="solar-production">5.2 kWh ☀️</span>
+            <span class="info-text" data-type="battery-prefix">und die Batterie ist zu</span>
+            <span class="info-badge" data-type="battery-level">75% 🔋</span>
+            <span class="info-text" data-type="battery-suffix">geladen.</span>
+          </div>
+        </div>
+    </template>
+    
+    <template id="train-departure-card-template">
+        <div class="train-departure-card" data-departure-sensor="" data-destination="" data-delay-min="0">
+            <div class="train-icon">🚆</div>
+            <div class="train-info">
+                <div class="train-time">--:--</div>
+                <div class="train-destination"></div>
+            </div>
+        </div>
+    </template>
     <div class="dashboard-container">
         <div class="header-grid">
             <div data-template="kiosk-button"></div>

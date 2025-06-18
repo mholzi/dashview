@@ -461,36 +461,28 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
-  // Optimized template loading - Principle 4
+  // Optimized template loading - Principle 4: Use embedded templates
   async loadTemplates(container) {
     const placeholders = container.querySelectorAll('[data-template]');
     if (placeholders.length === 0) return;
 
-    console.log(`[DashView] Loading ${placeholders.length} templates...`);
+    console.log(`[DashView] Loading ${placeholders.length} embedded templates...`);
     
-    // Batch template loading to reduce network requests
-    const templatePromises = Array.from(placeholders).map(async (el) => {
+    // Use embedded templates instead of fetch requests
+    Array.from(placeholders).forEach((el) => {
       const templateName = el.dataset.template;
-      try {
-        const response = await fetch(`/local/dashview/templates/${templateName}.html`);
-        if (response.ok) {
-          const content = await response.text();
-          return { element: el, content, success: true };
-        } else {
-          return { element: el, content: `Failed to load template: ${templateName}`, success: false };
-        }
-      } catch (err) {
-        console.error('[DashView] Error loading template:', templateName, err);
-        return { element: el, content: `Error loading template: ${templateName}`, success: false };
-      }
-    });
-
-    // Wait for all templates and apply them
-    const results = await Promise.all(templatePromises);
-    results.forEach(({ element, content, success }) => {
-      element.innerHTML = content;
-      if (!success) {
-        console.warn(`[DashView] Template loading failed for: ${element.dataset.template}`);
+      const templateId = `${templateName}-template`;
+      const template = container.querySelector(`#${templateId}`);
+      
+      if (template) {
+        // Clone the template content and replace the placeholder
+        const templateContent = template.content.cloneNode(true);
+        el.innerHTML = '';
+        el.appendChild(templateContent);
+        console.log(`[DashView] Loaded embedded template: ${templateName}`);
+      } else {
+        console.error(`[DashView] Template not found: ${templateId}`);
+        el.innerHTML = `<div class="error">Template ${templateName} not found</div>`;
       }
     });
 
