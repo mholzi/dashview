@@ -60,7 +60,7 @@
 
     <div id="room-maintenance-tab" class="tab-content">
         <h4>Room Maintenance</h4>
-        <p>Manage your rooms with their names, icons, floor assignments, and sensors.</p>
+        <p>Assign a combined activity sensor to each of your Home Assistant rooms.</p>
 
         <div class="config-section">
             <h5>Room Maintenance Status</h5>
@@ -69,36 +69,7 @@
         </div>
 
         <div class="config-section">
-            <h5>Add or Edit Room</h5>
-            <div class="floor-form">
-                <input type="hidden" id="editing-room-key">
-
-                <div class="form-row">
-                    <label for="new-room-key">Room Key:</label>
-                    <input type="text" id="new-room-key" placeholder="e.g., living_room" class="form-input">
-                </div>
-                <div class="form-row">
-                    <label for="new-room-name">Display Name:</label>
-                    <input type="text" id="new-room-name" placeholder="e.g., Living Room" class="form-input">
-                </div>
-                <div class="form-row">
-                    <label for="new-room-icon">Icon:</label>
-                    <input type="text" id="new-room-icon" placeholder="e.g., mdi:sofa" class="form-input">
-                </div>
-                <div class="form-row">
-                    <label for="new-room-floor">Assigned Floor:</label>
-                    <select id="new-room-floor" class="form-input"></select>
-                </div>
-                <div class="form-row">
-                    <label for="new-room-sensor">Combined Sensor:</label>
-                    <input type="text" id="new-room-sensor" placeholder="e.g., binary_sensor.combined_sensor_living_room" class="form-input">
-                </div>
-                <button id="save-room-button" class="save-button">Save Room</button>
-            </div>
-        </div>
-
-        <div class="config-section">
-            <h5>Existing Rooms</h5>
+            <h5>Configured Rooms</h5>
             <div id="rooms-list" class="floors-container">
                 <!-- Rooms will be populated here -->
             </div>
