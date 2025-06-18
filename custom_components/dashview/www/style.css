@@ -709,8 +709,9 @@ body.popup-open, :host(.popup-open) {
 }
 
 .forecast-tab.active {
-    background-color: var(--primary-color);
-    color: var(--primary-text-color);
+    background: var(--active-big);
+    color: var(--gray000);
+    font-weight: 500; /* Added for better visibility */
 }
 
 .forecast-content {

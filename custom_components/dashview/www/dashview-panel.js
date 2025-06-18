@@ -4,6 +4,7 @@ class DashviewPanel extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._contentReady = false;
     this._weatherEntityId = 'weather.home'; // Add a property to store the entity ID
+    this._weatherForecasts = { daily: null, hourly: null };
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._houseConfig = {};
@@ -1134,21 +1135,21 @@ class DashviewPanel extends HTMLElement {
   }
   
   // Method to update weather components
-  updateWeatherComponents(shadow) {
+  // Main entry point to update all weather components in the popup
+  async updateWeatherComponents(shadow) {
     if (!this._hass) return;
     
+    // Fetch fresh forecast data first
+    await this._fetchWeatherForecasts();
+
     const weatherEntityId = this._getCurrentWeatherEntityId();
     const weatherState = this._hass.states[weatherEntityId];
     if (!weatherState) return;
 
-    // Update current weather card
+    // Update the various parts of the popup
     this.updateCurrentWeather(shadow, weatherState);
-    
-    // Update hourly forecast
-    this.updateHourlyForecast(shadow, weatherState);
-    
-    // Initialize daily forecast tabs
-    this.initializeDailyForecast(shadow, weatherState);
+    this.updateHourlyForecast(shadow, this._weatherForecasts.hourly);
+    this.initializeDailyForecast(shadow, this._weatherForecasts.daily);
   }
 
   // Method to update current weather display
@@ -1186,20 +1187,18 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
-  // Method to update hourly forecast
-  updateHourlyForecast(shadow, weatherState) {
+  // This function is now simpler, just rendering the data it's given
+  updateHourlyForecast(shadow, hourlyData) {
     const container = shadow.getElementById('hourly-forecast');
-    if (!container || !weatherState.attributes.forecast) return;
+    if (!container || !hourlyData) return;
 
     container.innerHTML = '';
     
-    // Show next 8 hours of forecast
-    const hourlyData = weatherState.attributes.forecast.slice(0, 8);
+    const next8Hours = hourlyData.slice(0, 8);
     
-    hourlyData.forEach(forecast => {
+    next8Hours.forEach(forecast => {
       const hourlyItem = document.createElement('div');
       hourlyItem.className = 'hourly-item';
-      
       const date = new Date(forecast.datetime);
       const timeString = date.getHours().toString().padStart(2, '0') + ':00';
       
@@ -1210,55 +1209,53 @@ class DashviewPanel extends HTMLElement {
         </div>
         <div class="hourly-temp">${Math.round(forecast.temperature)}°</div>
       `;
-      
       container.appendChild(hourlyItem);
     });
   }
 
-  // Method to initialize daily forecast tabs
-  initializeDailyForecast(shadow, weatherState) {
+  // This function now correctly sets up the click events
+  initializeDailyForecast(shadow, dailyData) {
     const tabs = shadow.querySelectorAll('.forecast-tab');
     const content = shadow.getElementById('daily-forecast-content');
     
-    if (!tabs.length || !content || !weatherState.attributes.forecast) return;
+    if (!tabs.length || !content || !dailyData || dailyData.length === 0) return;
 
-    // Add click handlers to tabs
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
+        // Remove active class from all tabs
         tabs.forEach(t => t.classList.remove('active'));
+        // Add active class to the clicked tab
         tab.classList.add('active');
         
         const dayIndex = parseInt(tab.dataset.day);
-        this.showDailyForecast(content, weatherState, dayIndex);
+        this.showDailyForecast(content, dailyData, dayIndex);
       });
     });
 
     // Show today's forecast by default
-    this.showDailyForecast(content, weatherState, 0);
+    // We can simulate a click on the first tab to initialize the view
+    tabs[0].click();
   }
 
-  // Method to show daily forecast for a specific day
-  showDailyForecast(container, weatherState, dayIndex) {
-    if (!weatherState.attributes.forecast) return;
-
-    // Get forecast for the specified day
-    const dailyForecast = this.getDailyForecast(weatherState.attributes.forecast, dayIndex);
-    
-    if (!dailyForecast) {
+  // This function now correctly renders the selected day's forecast
+  showDailyForecast(container, dailyData, dayIndex) {
+    if (!dailyData || dailyData.length <= dayIndex) {
       container.innerHTML = '<div>Keine Daten verfügbar</div>';
       return;
     }
 
+    const dayForecast = dailyData[dayIndex];
+
     container.innerHTML = `
       <div class="daily-forecast">
         <div class="daily-icon">
-          <img src="/local/weather_icons/${dailyForecast.condition}.svg" alt="${dailyForecast.condition}">
+          <img src="/local/weather_icons/${dayForecast.condition}.svg" alt="${dayForecast.condition}" width="50" height="50">
         </div>
         <div class="daily-info">
-          <div class="daily-condition">${this.translateWeatherCondition(dailyForecast.condition)}</div>
+          <div class="daily-condition">${this.translateWeatherCondition(dayForecast.condition)}</div>
           <div class="daily-temps">
-            <span class="daily-high">${Math.round(dailyForecast.temperature)}°C</span>
-            <span class="daily-low">${dailyForecast.templow ? Math.round(dailyForecast.templow) + '°C' : ''}</span>
+            <span class="daily-high">${Math.round(dayForecast.temperature)}°C</span>
+            <span class="daily-low">${dayForecast.templow ? Math.round(dayForecast.templow) + '°C' : ''}</span>
           </div>
         </div>
       </div>
@@ -1765,6 +1762,39 @@ class DashviewPanel extends HTMLElement {
           // Fallback to default if API call fails
           this._weatherEntityId = 'weather.home';
       }
+  }
+
+  // Add this new method to the DashviewPanel class
+  async _fetchWeatherForecasts() {
+    if (!this._hass) return;
+
+    const entityId = this._getCurrentWeatherEntityId();
+    if (!entityId) return;
+
+    try {
+        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId}`);
+        // Fetch Daily Forecast
+        const dailyForecasts = await this._hass.callService('weather', 'get_forecasts', {
+            entity_id: entityId,
+            type: 'daily'
+        }, true); // The 'true' returns the response
+
+        // Fetch Hourly Forecast
+        const hourlyForecasts = await this._hass.callService('weather', 'get_forecasts', {
+            entity_id: entityId,
+            type: 'hourly'
+        }, true);
+
+        // Store the forecasts
+        this._weatherForecasts.daily = dailyForecasts[entityId]?.forecast || [];
+        this._weatherForecasts.hourly = hourlyForecasts[entityId]?.forecast || [];
+
+        console.log('[DashView] Forecasts updated');
+    } catch (error) {
+        console.error(`[DashView] Error fetching weather forecasts for ${entityId}:`, error);
+        this._weatherForecasts.daily = [];
+        this._weatherForecasts.hourly = [];
+    }
   }
 
   // Load configuration from centralized API - Principle 1 & 2
