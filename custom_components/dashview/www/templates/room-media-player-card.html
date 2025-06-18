@@ -1,0 +1,275 @@
+<div class="media-player-card">
+  <details class="media-player-expander" open>
+    <summary class="media-player-summary">
+      <div class="media-player-header">
+        <i class="mdi mdi-music media-player-icon"></i>
+        <span class="media-player-title">Musik</span>
+      </div>
+    </summary>
+    <div class="media-player-content">
+      <!-- Media player content will be dynamically populated -->
+      <div class="media-player-container">
+        <!-- This will be populated with media player controls -->
+      </div>
+    </div>
+  </details>
+</div>
+
+<style>
+.media-player-card {
+  margin: 8px;
+  border-radius: 12px;
+  background: var(--gray200);
+}
+
+.media-player-expander {
+  border: none;
+  background: var(--gray200);
+  border-radius: 12px;
+  margin: 0;
+}
+
+.media-player-expander[open] {
+  border-radius: 12px;
+}
+
+.media-player-summary {
+  background: transparent;
+  padding: 3px 3px;
+  margin-left: -15px;
+  border-radius: 12px;
+  cursor: pointer;
+  list-style: none;
+  overflow: visible;
+}
+
+.media-player-summary::-webkit-details-marker {
+  display: none;
+}
+
+.media-player-header {
+  display: grid;
+  grid-template-areas: "i n";
+  grid-template-columns: min-content 1fr;
+  align-items: center;
+}
+
+.media-player-icon {
+  grid-area: i;
+  width: 22px;
+  padding-left: 12px;
+  padding-right: 12px;
+  color: var(--gray1000);
+}
+
+.media-player-title {
+  grid-area: n;
+  color: var(--gray1000);
+  font-size: 16px;
+  font-weight: 500;
+  justify-self: start;
+  align-self: center;
+}
+
+.media-player-content {
+  padding: 10px 0;
+  margin: 0;
+}
+
+.media-player-container {
+  /* Media player styles from music.html will be applied here */
+  background: var(--popupBG);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Compact styles for room cards */
+.media-player-card .media-presets {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.media-player-card .media-presets::-webkit-scrollbar {
+  display: none;
+}
+
+.media-player-card .media-preset-button {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  background-color: var(--popupBG);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: var(--gray800);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.media-player-card .media-preset-button:hover {
+  background-color: var(--highlight);
+  transform: scale(1.05);
+}
+
+.media-player-card .preset-name {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.media-player-card .media-display {
+  margin-bottom: 12px;
+}
+
+.media-player-card .media-image {
+  width: 100%;
+  height: 150px;
+  background: var(--gray200);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-player-card .media-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-player-card .media-info {
+  text-align: center;
+  padding: 0 12px;
+}
+
+.media-player-card .media-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray1000);
+  margin-bottom: 4px;
+}
+
+.media-player-card .media-artist {
+  font-size: 12px;
+  color: var(--gray800);
+}
+
+.media-player-card .media-controls {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.media-player-card .media-control-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--popupBG);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--gray1000);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.media-player-card .media-control-button:hover {
+  background: var(--highlight);
+  transform: scale(1.1);
+}
+
+.media-player-card .media-control-button.play-pause {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(145deg, rgba(255,200,138,1) 0%, rgba(238,149,255,1) 100%);
+  color: white;
+}
+
+.media-player-card .media-control-button i {
+  font-size: 18px;
+}
+
+.media-player-card .media-volume-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.media-player-card .volume-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 60px;
+  align-items: center;
+  gap: 8px;
+}
+
+.media-player-card .volume-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray1000);
+}
+
+.media-player-card .volume-slider-container {
+  position: relative;
+}
+
+.media-player-card .volume-slider {
+  width: 100%;
+  height: 6px;
+  background: #494949;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.media-player-card .volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.media-player-card .volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.media-player-card .volume-value {
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--gray1000);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .media-player-card .media-player-container {
+    background: var(--popupBG);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .media-player-card .media-image {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+</style>

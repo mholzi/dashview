@@ -34,6 +34,14 @@ class DashviewPanel extends HTMLElement {
           this._initializeCoversCard(popup, roomKey, roomConfig.covers);
         }
       },
+      '.media-player-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig?.media_players?.length > 0) {
+          this._initializeMediaPlayerCard(popup, roomKey, roomConfig.media_players);
+        }
+      },
       // Add this new line for the security popup
       '#open-windows-list': (el) => this.updateSecurityLists(el.closest('.popup')),
       '.media-container': (el) => this._initializeMediaPlayerControls(el.closest('.popup'))
@@ -1947,6 +1955,20 @@ class DashviewPanel extends HTMLElement {
             placeholder.textContent = 'No covers configured for this room.';
             bodyElement.appendChild(placeholder);
         }
+        
+        // Check if the room has media players and inject the card
+        if (roomConfig.media_players && roomConfig.media_players.length > 0) {
+            // If media players exist, fetch and add the interactive card
+            fetch('/local/dashview/templates/room-media-player-card.html')
+                .then(response => response.text())
+                .then(html => {
+                    const mediaPlayerContainer = document.createElement('div');
+                    mediaPlayerContainer.innerHTML = html;
+                    bodyElement.appendChild(mediaPlayerContainer);
+                    // The new dispatcher system will handle initialization
+                    // when reinitializePopupContent is called
+                }).catch(err => console.error('[DashView] Error loading media player card template:', err));
+        }
     }
 
     popup.appendChild(templateContent);
@@ -3038,6 +3060,94 @@ class DashviewPanel extends HTMLElement {
     // Initial update
     this.updateCoverCard(popup, masterEntity); // Update main slider
     coverEntities.forEach(entityId => this.updateCoverCard(popup, entityId)); // Update individual rows
+  }
+
+  // Initialize room media player card
+  _initializeMediaPlayerCard(popup, roomKey, mediaPlayerEntities) {
+    const card = popup.querySelector('.media-player-card');
+    if (!card) return;
+
+    const mediaPlayerContainer = card.querySelector('.media-player-container');
+    if (!mediaPlayerContainer) return;
+
+    // Generate media player content for the primary media player
+    const primaryPlayer = mediaPlayerEntities[0];
+    const entityId = primaryPlayer.entity;
+    
+    // Create media player content structure
+    const mediaPlayerContent = `
+      <!-- Preset Buttons -->
+      <div class="media-presets">
+        <button class="media-preset-button" 
+                data-entity="${entityId}"
+                data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+                data-content-type="custom">
+            <span class="preset-name">Dinner Jazz</span>
+        </button>
+        <button class="media-preset-button" 
+                data-entity="${entityId}"
+                data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
+                data-content-type="custom">
+            <span class="preset-name">Happy Hits</span>
+        </button>
+        <button class="media-preset-button" 
+                data-entity="${entityId}"
+                data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
+                data-content-type="custom">
+            <span class="preset-name">Karneval</span>
+        </button>
+      </div>
+      
+      <!-- Media Display -->
+      <div class="media-display" data-entity="${entityId}">
+        <div class="media-image">
+          <img src="" alt="Media Cover" class="media-cover">
+        </div>
+        <div class="media-info">
+          <div class="media-title">Kein Titel</div>
+          <div class="media-artist">Unbekannt</div>
+        </div>
+      </div>
+      
+      <!-- Media Controls -->
+      <div class="media-controls" data-entity="${entityId}">
+        <button class="media-control-button" data-action="media_previous_track">
+          <i class="mdi mdi-skip-previous"></i>
+        </button>
+        <button class="media-control-button play-pause" data-action="media_play_pause">
+          <i class="mdi mdi-play"></i>
+        </button>
+        <button class="media-control-button" data-action="media_next_track">
+          <i class="mdi mdi-skip-next"></i>
+        </button>
+      </div>
+      
+      <!-- Volume Control -->
+      <div class="media-volume-control">
+        ${mediaPlayerEntities.map(player => {
+          const entity = this._hass.states[player.entity];
+          const friendlyName = entity ? entity.attributes.friendly_name : player.entity;
+          return `
+            <div class="volume-row">
+              <span class="volume-label">${friendlyName}</span>
+              <div class="volume-slider-container">
+                <input type="range" class="volume-slider" 
+                       data-entity="${player.entity}"
+                       min="0" max="100" value="50">
+              </div>
+              <span class="volume-value">50%</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    
+    mediaPlayerContainer.innerHTML = mediaPlayerContent;
+    
+    // Initialize media player controls for this card
+    this._initializeMediaPlayerControls(popup);
+    
+    console.log(`[DashView] Initialized media player card for room ${roomKey} with ${mediaPlayerEntities.length} players`);
   }
 
   // Initialize media player controls

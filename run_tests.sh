@@ -80,6 +80,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🎵 Running Media Player Room Card tests..."
+if node custom_components/dashview/tests/test_media_player_room_card.js > /dev/null; then
+    echo "✅ Media Player Room Card tests passed"
+else
+    echo "❌ Media Player Room Card tests failed"
+    exit 1
+fi
+
 # Run Shadow DOM CSS tests
 echo ""
 echo "🎨 Running Shadow DOM CSS validation tests..."
