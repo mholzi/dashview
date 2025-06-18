@@ -93,6 +93,15 @@ fi
 
 # Run Popup Refresh tests
 echo ""
+echo "🌤️  Running Weather Forecast tests..."
+if node custom_components/dashview/tests/test_weather_forecast.js > /dev/null; then
+    echo "✅ Weather Forecast tests passed"
+else
+    echo "❌ Weather Forecast tests failed"
+    exit 1
+fi
+
+echo ""
 echo "🔄 Running Popup Refresh tests..."
 if node custom_components/dashview/tests/test_popup_refresh.js > /dev/null; then
     echo "✅ Popup Refresh tests passed"
