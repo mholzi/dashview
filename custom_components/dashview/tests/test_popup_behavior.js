@@ -12,7 +12,7 @@ class PopupBehaviorTests {
     runAllTests() {
         console.log('[DashView] Testing popup behavior requirements...');
         this.testPopupWidthMatchesMainView();
-        this.testPopupTopMargin();
+        this.testPopupBottomPositioning();
         this.testPopupScrollbarHidden();
         this.testPopupBlurBackground();
         this.reportResults();
@@ -50,29 +50,29 @@ class PopupBehaviorTests {
         }
     }
 
-    testPopupTopMargin() {
+    testPopupBottomPositioning() {
         const cssPath = path.join(__dirname, '../www/style.css');
         const cssContent = fs.readFileSync(cssPath, 'utf8');
         
-        // Check that popup has 80px top margin
+        // Check that popup positions content at bottom
         const popupSection = cssContent.match(/\.popup\s*{[^}]*}/s);
         if (popupSection) {
             const sectionText = popupSection[0];
             
-            // Should have padding-top: 80px
-            const hasTopMargin = /padding-top:\s*80px/.test(sectionText);
-            // Should use flex-start for alignment
-            const hasFlexStart = /align-items:\s*flex-start/.test(sectionText);
+            // Should use flex-end for bottom alignment
+            const hasBottomAlignment = /align-items:\s*flex-end/.test(sectionText);
+            // Should NOT have padding-top since content is at bottom
+            const hasNoPaddingTop = !/padding-top:\s*\d+px/.test(sectionText);
             
-            if (hasTopMargin && hasFlexStart) {
-                this.testResults.push({ name: 'Popup has 80px top margin', passed: true });
-                console.log('✓ Popup has 80px top margin');
+            if (hasBottomAlignment && hasNoPaddingTop) {
+                this.testResults.push({ name: 'Popup positions content at bottom', passed: true });
+                console.log('✓ Popup positions content at bottom of screen');
             } else {
-                this.testResults.push({ name: 'Popup has 80px top margin', passed: false });
-                console.log('❌ Popup does not have 80px top margin');
+                this.testResults.push({ name: 'Popup positions content at bottom', passed: false });
+                console.log('❌ Popup does not position content at bottom');
             }
         } else {
-            this.testResults.push({ name: 'Popup has 80px top margin', passed: false });
+            this.testResults.push({ name: 'Popup positions content at bottom', passed: false });
             console.log('❌ Could not find popup CSS section');
         }
     }
