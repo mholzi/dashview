@@ -1385,6 +1385,35 @@ class DashviewPanel extends HTMLElement {
     `;
   }
 
+  // Get room icon from storage/mapping - Principle 11
+  _getRoomIconFromStorage(roomKey) {
+    // Room icon mapping based on storage configuration
+    const roomIconMap = {
+      'wohnzimmer': 'mdi:sofa',
+      'buero': 'mdi:desk',
+      'kueche': 'mdi:chef-hat',
+      'eingangsflur': 'mdi:door-open',
+      'gaesteklo': 'mdi:toilet',
+      'treppe_erdgeschoss': 'mdi:stairs',
+      'kids': 'mdi:teddy-bear',
+      'kinderzimmer': 'mdi:teddy-bear',
+      'kinderbad': 'mdi:shower',
+      'flur': 'mdi:floor-plan',
+      'aupair': 'mdi:bed',
+      'schlafzimmer': 'mdi:bed-double',
+      'partykeller': 'mdi:party-popper',
+      'heizungskeller': 'mdi:heating-coil',
+      'kellerflur': 'mdi:floor-plan',
+      'waschkeller': 'mdi:washing-machine',
+      'serverraum': 'mdi:server-network',
+      'buero_keller': 'mdi:desk',
+      'sauna': 'mdi:sauna',
+      'aussen': 'mdi:tree'
+    };
+    
+    return roomIconMap[roomKey] || 'mdi:home-outline';
+  }
+
   // Process MDI icon names - Principle 11
   _processIconName(iconName) {
     if (!iconName) return 'mdi-help-circle';
@@ -1460,7 +1489,10 @@ class DashviewPanel extends HTMLElement {
           const isRoomActive = sensorEntity && sensorEntity.state === 'on';
 
           if (isRoomActive) {
-            const roomIcon = this._processIconName(roomConfig.icon || 'mdi:home-outline');
+            // Use configured icon first, fallback to storage mapping, then to default
+            const configuredIcon = roomConfig.icon;
+            const storageIcon = this._getRoomIconFromStorage(room.key);
+            const roomIcon = this._processIconName(configuredIcon || storageIcon);
             buttonsHTML += `
               <button class="header-room-button" 
                       data-room="${room.key}" 
@@ -1509,8 +1541,13 @@ class DashviewPanel extends HTMLElement {
           const isRoomActive = sensorEntity && sensorEntity.state === 'on';
 
           if (isRoomActive) {
-            const roomIcon = this._processIconName(sensorEntity.attributes?.icon || 'mdi:help-circle-outline');
-            const roomType = sensorEntity.attributes?.room_type || '#unknown';
+            // Extract room key from sensor name (e.g., binary_sensor.combined_sensor_wohnzimmer -> wohnzimmer)
+            const roomKey = sensor.replace('binary_sensor.combined_sensor_', '');
+            // Get icon from storage mapping first, fallback to entity attribute, then to default
+            const storageIcon = this._getRoomIconFromStorage(roomKey);
+            const entityIcon = sensorEntity.attributes?.icon;
+            const roomIcon = this._processIconName(entityIcon || storageIcon);
+            const roomType = sensorEntity.attributes?.room_type || '#' + roomKey;
             
             buttonsHTML += `
               <button class="header-room-button" data-sensor="${sensor}" data-navigation="${roomType}">
