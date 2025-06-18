@@ -563,7 +563,7 @@ body.popup-open, :host(.popup-open) {
 
 .info-badge.green {
     background-color: var(--green);
-    color: var(--gray800);
+    color: var(--gray000);
 }
 
 .info-badge.red {
