@@ -1049,6 +1049,21 @@ body.popup-open, :host(.popup-open) {
     opacity: 0.8;
 }
 
+.edit-button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 6px;
+    background: var(--blue);
+    color: var(--gray800);
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.edit-button:hover {
+    opacity: 0.8;
+}
+
 /* Room Header Icons Styles */
 .room-header-icons {
     margin-bottom: 8px;

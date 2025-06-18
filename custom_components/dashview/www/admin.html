@@ -48,8 +48,10 @@
         </div>
         
         <div class="config-section">
-            <h5>Add New Floor</h5>
+            <h5>Add or Edit Floor</h5>
             <div class="floor-form">
+                <input type="hidden" id="editing-floor-key">
+
                 <div class="form-row">
                     <label for="new-floor-key">Floor Key:</label>
                     <input type="text" id="new-floor-key" placeholder="e.g., ground_floor" class="form-input">
@@ -66,7 +68,7 @@
                     <label for="new-floor-sensor">Floor Sensor:</label>
                     <input type="text" id="new-floor-sensor" placeholder="e.g., binary_sensor.ground_floor_active" class="form-input">
                 </div>
-                <button id="add-floor" class="save-button">Add Floor</button>
+                <button id="save-floor-button" class="save-button">Save Floor</button>
             </div>
         </div>
         

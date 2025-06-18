@@ -1250,9 +1250,15 @@ class DashviewPanel extends HTMLElement {
             this.loadFloorMaintenance();
         }
 
-        const addFloorBtn = e.target.closest('#add-floor');
-        if (addFloorBtn) {
-            this.addFloor();
+        const saveFloorBtn = e.target.closest('#save-floor-button');
+        if (saveFloorBtn) {
+            this.saveFloor();
+        }
+
+        const editFloorBtn = e.target.closest('.edit-button');
+        if (editFloorBtn) {
+            const floorKey = editFloorBtn.dataset.floorKey;
+            this._startEditFloor(floorKey);
         }
 
         const deleteFloorBtn = e.target.closest('.delete-button');
@@ -2869,6 +2875,7 @@ class DashviewPanel extends HTMLElement {
             <div class="floor-details">Icon: ${icon} | Sensor: ${sensor}</div>
           </div>
           <div class="floor-actions">
+            <button class="edit-button" data-floor-key="${floorKey}">Edit</button>
             <button class="delete-button" data-floor-key="${floorKey}">Delete</button>
           </div>
         </div>
@@ -2878,9 +2885,33 @@ class DashviewPanel extends HTMLElement {
     floorsContainer.innerHTML = floorsHTML;
   }
 
-  async addFloor() {
+  _startEditFloor(floorKey) {
+    const shadow = this.shadowRoot;
+    const floorsConfig = this._adminLocalState.floorsConfig || {};
+    const floorIcons = floorsConfig.floor_icons || {};
+    const floorSensors = floorsConfig.floor_sensors || {};
+
+    if (!floorIcons[floorKey]) return;
+
+    // Populate the form with the floor's data
+    shadow.getElementById('editing-floor-key').value = floorKey;
+    shadow.getElementById('new-floor-key').value = floorKey;
+    shadow.getElementById('new-floor-name').value = floorKey; // Assuming key and name are the same initially
+    shadow.getElementById('new-floor-icon').value = floorIcons[floorKey];
+    shadow.getElementById('new-floor-sensor').value = floorSensors[floorKey] || '';
+
+    // Disable the key field to prevent changing it during an edit
+    shadow.getElementById('new-floor-key').disabled = true;
+    shadow.getElementById('new-floor-name').focus();
+  }
+
+  async saveFloor() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('floor-maintenance-status');
+
+    // Get the key of the floor being edited, if any
+    const originalKey = shadow.getElementById('editing-floor-key').value;
+    const isEditing = !!originalKey;
     
     // Get form values
     const floorKey = shadow.getElementById('new-floor-key').value.trim();
@@ -2889,31 +2920,21 @@ class DashviewPanel extends HTMLElement {
     const floorSensor = shadow.getElementById('new-floor-sensor').value.trim();
 
     // Validate inputs
-    if (!floorKey) {
-      this._setStatusMessage(statusElement, '✗ Floor key is required', 'error');
+    if (!floorKey || !floorName || !floorIcon || !floorSensor) {
+      this._setStatusMessage(statusElement, '✗ All fields are required', 'error');
       return;
     }
 
-    if (!floorIcon) {
-      this._setStatusMessage(statusElement, '✗ Floor icon is required', 'error');
-      return;
-    }
-
-    if (!floorSensor) {
-      this._setStatusMessage(statusElement, '✗ Floor sensor is required', 'error');
-      return;
-    }
-
-    // Check if floor already exists
     const floorsConfig = this._adminLocalState.floorsConfig || {};
     const floorIcons = floorsConfig.floor_icons || {};
-    
-    if (floorIcons[floorKey]) {
+
+    // If not editing and key already exists, show error
+    if (!isEditing && floorIcons[floorKey]) {
       this._setStatusMessage(statusElement, '✗ Floor with this key already exists', 'error');
       return;
     }
 
-    this._setStatusMessage(statusElement, 'Adding floor...', 'loading');
+    this._setStatusMessage(statusElement, 'Saving floor...', 'loading');
 
     try {
       // Update local state
@@ -2927,6 +2948,12 @@ class DashviewPanel extends HTMLElement {
         this._adminLocalState.floorsConfig.floor_sensors = {};
       }
 
+      // If editing and the key has changed, we need to remove the old entry
+      if (isEditing && originalKey !== floorKey) {
+        delete this._adminLocalState.floorsConfig.floor_icons[originalKey];
+        delete this._adminLocalState.floorsConfig.floor_sensors[originalKey];
+      }
+
       this._adminLocalState.floorsConfig.floor_icons[floorKey] = floorIcon;
       this._adminLocalState.floorsConfig.floor_sensors[floorKey] = floorSensor;
 
@@ -2935,21 +2962,23 @@ class DashviewPanel extends HTMLElement {
         data && data.floor_icons && data.floor_sensors
       );
 
-      // Clear form
+      // Clear form and reset editing state
+      shadow.getElementById('editing-floor-key').value = '';
       shadow.getElementById('new-floor-key').value = '';
       shadow.getElementById('new-floor-name').value = '';
       shadow.getElementById('new-floor-icon').value = '';
       shadow.getElementById('new-floor-sensor').value = '';
+      shadow.getElementById('new-floor-key').disabled = false; // Re-enable for next time
 
       // Refresh the floors list
       this._renderFloorsList();
 
-      this._setStatusMessage(statusElement, '✓ Floor added successfully', 'success');
-      console.log('[DashView] Floor added successfully:', floorKey);
+      this._setStatusMessage(statusElement, '✓ Floor saved successfully', 'success');
+      console.log('[DashView] Floor saved successfully:', floorKey);
 
     } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error adding floor: ${error.message}`, 'error');
-      console.error('[DashView] Error adding floor:', error);
+      this._setStatusMessage(statusElement, `✗ Error saving floor: ${error.message}`, 'error');
+      console.error('[DashView] Error saving floor:', error);
     }
   }
 
