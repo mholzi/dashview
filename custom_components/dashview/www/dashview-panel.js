@@ -3440,6 +3440,13 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
+    // Validate floor reference
+    const floors = this._adminLocalState.houseConfig?.floors || {};
+    if (!floors[newRoomData.floor]) {
+      this._setStatusMessage(statusElement, `✗ Floor '${newRoomData.floor}' does not exist. Please create the floor first or select an existing floor.`, 'error');
+      return;
+    }
+
     if (!isEditing && this._adminLocalState.houseConfig.rooms[newKey]) {
       this._setStatusMessage(statusElement, '✗ Room with this key already exists', 'error');
       return;
@@ -3730,6 +3737,36 @@ class DashviewPanel extends HTMLElement {
       Rooms: Object.keys(rooms).length,
     };
 
+    // Check floor-room consistency
+    let consistencyHTML = '';
+    if (this._adminLocalState.houseConfig) {
+      const consistencyReport = this._checkFloorRoomConsistency(this._adminLocalState.houseConfig);
+      
+      if (!consistencyReport.isConsistent) {
+        consistencyHTML += '<div class="consistency-warning"><h6>⚠️ Floor-Room Link Issues:</h6>';
+        
+        if (consistencyReport.orphanedRooms.length > 0) {
+          consistencyHTML += '<div class="warning-item">';
+          consistencyHTML += `<strong>Orphaned Rooms (${consistencyReport.orphanedRooms.length}):</strong> `;
+          consistencyHTML += consistencyReport.orphanedRooms.map(r => 
+            `${r.roomKey} → ${r.invalidFloor || 'No Floor'}`
+          ).join(', ');
+          consistencyHTML += '</div>';
+        }
+        
+        if (consistencyReport.unusedFloors.length > 0) {
+          consistencyHTML += '<div class="info-item">';
+          consistencyHTML += `<strong>Unused Floors (${consistencyReport.unusedFloors.length}):</strong> `;
+          consistencyHTML += consistencyReport.unusedFloors.join(', ');
+          consistencyHTML += '</div>';
+        }
+        
+        consistencyHTML += '</div>';
+      } else {
+        consistencyHTML += '<div class="consistency-ok">✅ All room-floor links are valid</div>';
+      }
+    }
+
     const entityCounts = {};
 
     // Initialize counters for known entity types
@@ -3769,7 +3806,7 @@ class DashviewPanel extends HTMLElement {
     if (summaryHTML === '') {
       container.innerHTML = '<p>No items found in configuration.</p>';
     } else {
-      container.innerHTML = summaryHTML;
+      container.innerHTML = consistencyHTML + summaryHTML;
     }
   }
 
@@ -4268,6 +4305,106 @@ class DashviewPanel extends HTMLElement {
         if (mainSlider.value != roundedPosition) mainSlider.value = roundedPosition;
         shadow.querySelector('.main-position-label').textContent = `${roundedPosition}%`;
     }
+  }
+
+  // Floor-Room Link Integrity Helper Methods
+  _findOrphanedRooms(houseConfig) {
+    const floors = houseConfig?.floors || {};
+    const rooms = houseConfig?.rooms || {};
+    const orphanedRooms = [];
+
+    Object.entries(rooms).forEach(([roomKey, roomConfig]) => {
+      if (!roomConfig.floor || !floors[roomConfig.floor]) {
+        orphanedRooms.push({
+          roomKey,
+          roomConfig,
+          invalidFloor: roomConfig.floor || null
+        });
+      }
+    });
+
+    return orphanedRooms;
+  }
+
+  _checkFloorRoomConsistency(houseConfig) {
+    const floors = houseConfig?.floors || {};
+    const rooms = houseConfig?.rooms || {};
+    
+    const orphanedRooms = this._findOrphanedRooms(houseConfig);
+    
+    // Find unused floors
+    const usedFloors = new Set();
+    Object.values(rooms).forEach(roomConfig => {
+      if (roomConfig.floor && floors[roomConfig.floor]) {
+        usedFloors.add(roomConfig.floor);
+      }
+    });
+    
+    const unusedFloors = Object.keys(floors).filter(floorKey => !usedFloors.has(floorKey));
+    
+    return {
+      isConsistent: orphanedRooms.length === 0,
+      orphanedRooms: orphanedRooms.map(o => ({
+        roomKey: o.roomKey,
+        invalidFloor: o.invalidFloor
+      })),
+      unusedFloors,
+      totalFloors: Object.keys(floors).length,
+      totalRooms: Object.keys(rooms).length,
+      validRooms: Object.keys(rooms).length - orphanedRooms.length
+    };
+  }
+
+  _validateRoomFloorReference(roomConfig, houseConfig) {
+    const floors = houseConfig?.floors || {};
+    return roomConfig.floor && floors[roomConfig.floor];
+  }
+
+  // Method to handle floor deletion and its impact on rooms
+  _handleFloorDeletion(floorKey, houseConfig) {
+    const rooms = houseConfig?.rooms || {};
+    const impactedRooms = [];
+
+    Object.entries(rooms).forEach(([roomKey, roomConfig]) => {
+      if (roomConfig.floor === floorKey) {
+        impactedRooms.push(roomKey);
+      }
+    });
+
+    return {
+      impactedRooms,
+      canDelete: impactedRooms.length === 0,
+      warningMessage: impactedRooms.length > 0 
+        ? `Warning: Deleting floor '${floorKey}' will orphan ${impactedRooms.length} room(s): ${impactedRooms.join(', ')}`
+        : null
+    };
+  }
+
+  // Method to auto-fix orphaned rooms by assigning them to the first available floor
+  _autoFixOrphanedRooms(houseConfig) {
+    const floors = houseConfig?.floors || {};
+    const rooms = houseConfig?.rooms || {};
+    const floorKeys = Object.keys(floors);
+    
+    if (floorKeys.length === 0) {
+      return { success: false, message: 'No floors available to assign orphaned rooms to' };
+    }
+
+    const orphanedRooms = this._findOrphanedRooms(houseConfig);
+    const fixedRooms = [];
+    const defaultFloor = floorKeys[0]; // Use first available floor as default
+
+    orphanedRooms.forEach(({ roomKey, roomConfig }) => {
+      rooms[roomKey].floor = defaultFloor;
+      fixedRooms.push(roomKey);
+    });
+
+    return {
+      success: true,
+      fixedRooms,
+      assignedFloor: floors[defaultFloor]?.friendly_name || defaultFloor,
+      message: `Assigned ${fixedRooms.length} orphaned room(s) to '${floors[defaultFloor]?.friendly_name || defaultFloor}'`
+    };
   }
 }
 
