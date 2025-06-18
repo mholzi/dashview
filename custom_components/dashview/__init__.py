@@ -189,7 +189,7 @@ class DashViewConfigView(HomeAssistantView):
                 if label_id:
                     for entity in entity_registry.entities.values():
                         # Check if the entity has the requested label and is in a room
-                        if label_id in entity.labels and entity.area_id:
+                        if label_id in entity.labels and entity.area_id and entity.domain != 'automation':
                             
                             if entity.area_id not in entities_by_area:
                                 area = area_registry.async_get_area(entity.area_id)
