@@ -1265,12 +1265,14 @@ class DashviewPanel extends HTMLElement {
 
   // Method to update current weather display
   updateCurrentWeather(shadow, weatherState) {
-    const iconElement = shadow.getElementById('current-weather-icon');
-    const tempElement = shadow.getElementById('current-temperature');
-    const conditionElement = shadow.getElementById('current-condition');
-    const feelsLikeElement = shadow.getElementById('feels-like-temp');
-    const humidityElement = shadow.getElementById('humidity');
-    const windElement = shadow.getElementById('wind-speed');
+    // By using querySelector with the '#' to indicate an ID, this code will now
+    // work correctly whether 'shadow' is the shadowRoot or a regular element.
+    const iconElement = shadow.querySelector('#current-weather-icon');
+    const tempElement = shadow.querySelector('#current-temperature');
+    const conditionElement = shadow.querySelector('#current-condition');
+    const feelsLikeElement = shadow.querySelector('#feels-like-temp');
+    const humidityElement = shadow.querySelector('#humidity');
+    const windElement = shadow.querySelector('#wind-speed');
 
     if (iconElement && weatherState.state) {
       iconElement.src = `/local/weather_icons/${weatherState.state}.svg`;
@@ -1300,7 +1302,7 @@ class DashviewPanel extends HTMLElement {
 
   // This function is now simpler, just rendering the data it's given
   updateHourlyForecast(shadow, hourlyData) {
-    const container = shadow.getElementById('hourly-forecast');
+    const container = shadow.querySelector('#hourly-forecast');
     if (!container || !hourlyData) return;
 
     container.innerHTML = '';
@@ -1327,7 +1329,7 @@ class DashviewPanel extends HTMLElement {
   // This function now correctly sets up the click events
   initializeDailyForecast(shadow, dailyData) {
     const tabs = shadow.querySelectorAll('.forecast-tab');
-    const content = shadow.getElementById('daily-forecast-content');
+    const content = shadow.querySelector('#daily-forecast-content');
     
     if (!tabs.length || !content || !dailyData || dailyData.length === 0) return;
 
