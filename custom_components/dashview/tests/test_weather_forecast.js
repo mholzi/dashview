@@ -49,11 +49,13 @@ function createMockHass() {
             }
         },
         callService: function(domain, service, data, returnResponse = false) {
-            console.log(`[Test] Mock service call: ${domain}.${service} for ${data.entity_id} type ${data.type}`);
+            // Extract entity_id from either old format (data.entity_id) or new format (data.target.entity_id)
+            const entityId = data.target?.entity_id || data.entity_id;
+            console.log(`[Test] Mock service call: ${domain}.${service} for ${entityId} type ${data.type}`);
             
             if (domain === 'weather' && service === 'get_forecasts') {
                 const mockForecasts = {
-                    [data.entity_id]: {
+                    [entityId]: {
                         forecast: data.type === 'daily' ? [
                             { datetime: '2023-12-01T12:00:00Z', condition: 'sunny', temperature: 22, templow: 15 },
                             { datetime: '2023-12-02T12:00:00Z', condition: 'cloudy', temperature: 18, templow: 12 },
@@ -99,12 +101,12 @@ class MockDashViewPanel {
             console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId}`);
             
             const dailyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-                entity_id: entityId,
+                target: { entity_id: entityId },
                 type: 'daily'
             }, true);
 
             const hourlyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-                entity_id: entityId,
+                target: { entity_id: entityId },
                 type: 'hourly'
             }, true);
 

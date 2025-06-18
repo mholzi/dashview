@@ -1773,15 +1773,16 @@ class DashviewPanel extends HTMLElement {
 
     try {
         console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId}`);
-        // Fetch Daily Forecast
+        
+        // Corrected service call structure
         const dailyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-            entity_id: entityId,
+            target: { entity_id: entityId },
             type: 'daily'
-        }, true); // The 'true' returns the response
+        }, true);
 
-        // Fetch Hourly Forecast
+        // Corrected service call structure
         const hourlyForecasts = await this._hass.callService('weather', 'get_forecasts', {
-            entity_id: entityId,
+            target: { entity_id: entityId },
             type: 'hourly'
         }, true);
 
