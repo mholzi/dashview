@@ -149,7 +149,7 @@ body.popup-open, :host(.popup-open) {
 }
 
 .popup-content {
-    background-color: var(--popupBG);
+    background-color: var(--background);
     margin: 0 auto; /* Center like main view */
     padding: 20px;
     border-radius: 30px;
