@@ -26,10 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DashView from a config entry."""
     _LOGGER.info("Setting up DashView panel from config entry.")
     
-    # Migrate existing config files to ConfigEntry if needed
-    await _migrate_config_files(hass, entry)
-    
-    # Get the config data AFTER migration to ensure we have the latest data
+    # Get the config data
     config_data = entry.options or entry.data
     
     # Register the API endpoint, passing the hass instance and entry object
@@ -95,14 +92,6 @@ class DashViewConfigView(HomeAssistantView):
         
         if config_type == "house":
             data = config_data.get("house_config", {})
-        elif config_type == "floors":
-            # Legacy support - extract from house_config
-            house_config = config_data.get("house_config", {})
-            data = house_config.get("floors", {})
-        elif config_type == "rooms":
-            # Legacy support - extract from house_config
-            house_config = config_data.get("house_config", {})
-            data = house_config.get("rooms", {})
         elif config_type == "weather_entity":
             house_config = config_data.get("house_config", {})
             data = {"weather_entity": house_config.get("weather_entity", "weather.forecast_home")}
@@ -110,7 +99,7 @@ class DashViewConfigView(HomeAssistantView):
             # Return the full house_config when no type is specified
             data = config_data.get("house_config", {})
         else:
-            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity")
+            return web.Response(status=400, text="Invalid config type. Use: house, weather_entity")
         
         return self.json(data)
     
@@ -119,193 +108,15 @@ class DashViewConfigView(HomeAssistantView):
         try:
             data = await request.json()
             
-            # Handle both new and legacy API formats
-            if isinstance(data, dict) and "type" in data and "config" in data:
-                # Legacy format: {"type": "house", "config": {...}}
-                config_type = data.get("type")
-                new_config_data = data.get("config")
-                
-                if config_type == "house":
-                    # Update the house_config directly
-                    self._hass.config_entries.async_update_entry(
-                        self._entry, options={"house_config": new_config_data}
-                    )
-                else:
-                    # For legacy types, update the appropriate section within house_config
-                    current_data = self._entry.options or self._entry.data
-                    house_config = current_data.get("house_config", {})
-                    
-                    if config_type == "floors":
-                        house_config["floors"] = new_config_data
-                    elif config_type == "rooms":
-                        house_config["rooms"] = new_config_data
-                    elif config_type == "weather_entity":
-                        house_config["weather_entity"] = new_config_data.get("weather_entity", "weather.forecast_home")
-                    
-                    self._hass.config_entries.async_update_entry(
-                        self._entry, options={"house_config": house_config}
-                    )
-            else:
-                # New format: direct house config data
-                self._hass.config_entries.async_update_entry(
-                    self._entry, options={"house_config": data}
-                )
+            # The new format is a direct house config data
+            self._hass.config_entries.async_update_entry(
+                self._entry, options={"house_config": data}
+            )
             
             return self.json({"status": "success"})
         except Exception as e:
             _LOGGER.error("[DashView] Error saving config to entry: %s", e)
             return self.json({"status": "error", "message": str(e)}, status_code=500)
-
-
-async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
-    """Migrate existing config files to ConfigEntry."""
-    try:
-        # Only migrate if ConfigEntry doesn't have house_config yet
-        current_data = entry.options or entry.data
-        if current_data.get("house_config"):
-            return  # Already has configuration
-            
-        floors_file = hass.config.path("custom_components", "dashview", "www", "config", "floors.json")
-        rooms_file = hass.config.path("custom_components", "dashview", "www", "config", "rooms.json")
-        house_file = hass.config.path("custom_components", "dashview", "www", "config", "house_setup.json")
-        
-        import json
-        
-        # First try to load house_setup.json if it exists
-        if os.path.exists(house_file):
-            with open(house_file, 'r') as f:
-                house_config = json.load(f)
-            hass.config_entries.async_update_entry(
-                entry, options={"house_config": house_config}
-            )
-            _LOGGER.info("[DashView] Migrated house_setup.json to ConfigEntry")
-            return
-        
-        # If house config doesn't exist, try to migrate from legacy files
-        floors_config = {}
-        rooms_config = {}
-        
-        if os.path.exists(floors_file):
-            with open(floors_file, 'r') as f:
-                floors_config = json.load(f)
-                
-        if os.path.exists(rooms_file):
-            with open(rooms_file, 'r') as f:
-                rooms_config = json.load(f)
-        
-        # Convert legacy configs to new house structure if both exist
-        if floors_config and rooms_config:
-            house_config = _convert_legacy_to_house_config(floors_config, rooms_config)
-            hass.config_entries.async_update_entry(
-                entry, options={"house_config": house_config}
-            )
-            _LOGGER.info("[DashView] Converted legacy configs to new house configuration in ConfigEntry")
-            return
-        
-        # Fallback: create basic structure from individual configs
-        house_config = {
-            "weather_entity": "weather.forecast_home",
-            "rooms": {},
-            "floors": {}
-        }
-        
-        if floors_config:
-            house_config["floors"] = floors_config
-            _LOGGER.info("[DashView] Migrated floors.json to ConfigEntry")
-        
-        if rooms_config:
-            house_config["rooms"] = rooms_config
-            _LOGGER.info("[DashView] Migrated rooms.json to ConfigEntry")
-            
-        if floors_config or rooms_config:
-            hass.config_entries.async_update_entry(
-                entry, options={"house_config": house_config}
-            )
-            
-    except Exception as e:
-        _LOGGER.warning("[DashView] Could not migrate config files: %s", e)
-
-
-def _convert_legacy_to_house_config(floors_config, rooms_config):
-    """Convert legacy floors and rooms configuration to new house structure."""
-    house_config = {
-        "rooms": {},
-        "floors": {}
-    }
-    
-    # Convert floor configuration
-    floor_icons = floors_config.get("floor_icons", {})
-    floor_sensors = floors_config.get("floor_sensors", {})
-    
-    for floor_key in floor_icons.keys():
-        house_config["floors"][floor_key] = {
-            "friendly_name": floor_key,
-            "icon": floor_icons.get(floor_key, "mdi:home"),
-            "floor_sensor": floor_sensors.get(floor_key, f"binary_sensor.floor_{floor_key.lower()}_active")
-        }
-    
-    # Convert room configuration with proper icons
-    room_icon_map = {
-        'wohnzimmer': 'mdi:sofa',
-        'buero': 'mdi:desk',
-        'kueche': 'mdi:chef-hat',
-        'eingangsflur': 'mdi:door-open',
-        'gaesteklo': 'mdi:toilet',
-        'treppe_erdgeschoss': 'mdi:stairs',
-        'kids': 'mdi:teddy-bear',
-        'kinderbad': 'mdi:shower',
-        'flur': 'mdi:floor-plan',
-        'aupair': 'mdi:bed',
-        'schlafzimmer': 'mdi:bed-double',
-        'partykeller': 'mdi:party-popper',
-        'heizungskeller': 'mdi:heating-coil',
-        'kellerflur': 'mdi:floor-plan',
-        'waschkeller': 'mdi:washing-machine',
-        'serverraum': 'mdi:server-network',
-        'buero_keller': 'mdi:desk',
-        'sauna': 'mdi:sauna',
-        'aussen': 'mdi:tree'
-    }
-    
-    room_name_map = {
-        'wohnzimmer': 'Wohnzimmer',
-        'buero': 'Büro',
-        'kueche': 'Küche',
-        'eingangsflur': 'Eingangsflur',
-        'gaesteklo': 'Gäste-WC',
-        'treppe_erdgeschoss': 'Treppe Erdgeschoss',
-        'kids': 'Kinderzimmer',
-        'kinderbad': 'Kinderbad',
-        'flur': 'Flur OG',
-        'aupair': 'Au-pair Zimmer',
-        'schlafzimmer': 'Schlafzimmer',
-        'partykeller': 'Partykeller',
-        'heizungskeller': 'Heizungskeller',
-        'kellerflur': 'Kellerflur',
-        'waschkeller': 'Waschkeller',
-        'serverraum': 'Serverraum',
-        'buero_keller': 'Büro Keller',
-        'sauna': 'Sauna',
-        'aussen': 'Außenbereich'
-    }
-    
-    floors = rooms_config.get("floors", {})
-    for floor_key, sensors in floors.items():
-        for sensor in sensors:
-            # Extract room name from sensor ID
-            room_key = sensor.replace('binary_sensor.combined_sensor_', '')
-            
-            house_config["rooms"][room_key] = {
-                "friendly_name": room_name_map.get(room_key, room_key.replace('_', ' ').title()),
-                "icon": room_icon_map.get(room_key, "mdi:home-outline"),
-                "floor": floor_key,
-                "combined_sensor": sensor,
-                "lights": [],
-                "covers": [],
-                "media_players": []
-            }
-    
-    return house_config
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

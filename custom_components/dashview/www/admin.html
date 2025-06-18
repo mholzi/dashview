@@ -40,7 +40,7 @@
 
     <div id="floor-maintenance-tab" class="tab-content">
         <h4>Floor Maintenance</h4>
-        <p>Manage your floors with their names, icons, and sensors. This view focuses on floor attributes only, not room allocation.</p>
+        <p>Assign an activity sensor to each of your Home Assistant floors.</p>
         
         <div class="config-section">
             <h5>Floor Maintenance Status</h5>
@@ -49,35 +49,11 @@
         </div>
         
         <div class="config-section">
-            <h5>Add or Edit Floor</h5>
-            <div class="floor-form">
-                <input type="hidden" id="editing-floor-key">
-
-                <div class="form-row">
-                    <label for="new-floor-key">Floor Key:</label>
-                    <input type="text" id="new-floor-key" placeholder="e.g., ground_floor" class="form-input">
-                </div>
-                <div class="form-row">
-                    <label for="new-floor-name">Display Name:</label>
-                    <input type="text" id="new-floor-name" placeholder="e.g., Ground Floor" class="form-input">
-                </div>
-                <div class="form-row">
-                    <label for="new-floor-icon">Icon:</label>
-                    <input type="text" id="new-floor-icon" placeholder="e.g., mdi:home" class="form-input">
-                </div>
-                <div class="form-row">
-                    <label for="new-floor-sensor">Floor Sensor:</label>
-                    <input type="text" id="new-floor-sensor" placeholder="e.g., binary_sensor.ground_floor_active" class="form-input">
-                </div>
-                <button id="save-floor-button" class="save-button">Save Floor</button>
-            </div>
-        </div>
-        
-        <div class="config-section">
-            <h5>Existing Floors</h5>
+            <h5>Configured Floors</h5>
             <div id="floors-list" class="floors-container">
                 <!-- Floors will be populated here -->
             </div>
+            <button id="save-floor-sensors" class="save-button" style="margin-top: 12px;">Save Floor Sensors</button>
         </div>
     </div>
 
