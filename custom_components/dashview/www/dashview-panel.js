@@ -1722,6 +1722,9 @@ class DashviewPanel extends HTMLElement {
       case 'music':
       case 'tv':
         return state === 'playing';
+      case 'dishwasher':
+      case 'washing':
+        return ['Run', 'run', 'running'].includes(state);
       case 'freezer':
         // Check for alarm states
         const doorAlarm = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;

@@ -179,6 +179,16 @@ else
     exit 1
 fi
 
+# Run Room Header Entities in Popups tests
+echo ""
+echo "🏠 Running Room Header Entities in Popups tests..."
+if node custom_components/dashview/tests/test_room_header_entities_in_popups.js > /dev/null; then
+    echo "✅ Room Header Entities in Popups tests passed"
+else
+    echo "❌ Room Header Entities in Popups tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."
