@@ -266,6 +266,16 @@ else
     exit 1
 fi
 
+# Run Info Card Hover tests
+echo ""
+echo "🎯 Running Info Card Hover tests..."
+if node custom_components/dashview/tests/test_info_card_hover.js > /dev/null; then
+    echo "[OK] Info Card Hover tests passed"
+else
+    echo "❌ Info Card Hover tests failed"
+    exit 1
+fi
+
 # Run Configuration Summary tests
 echo ""
 echo "📊 Running Configuration Summary tests..."
