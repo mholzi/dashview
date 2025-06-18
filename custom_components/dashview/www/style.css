@@ -282,7 +282,7 @@ body.popup-open, :host(.popup-open) {
     border: none;
     color: var(--gray400);
     cursor: pointer;
-    font-size: 24px; /* MDI icons are font-based */
+    font-size: 22px; /* MDI icons are font-based - matched to header button size */
 }
 .nav-button.active {
     color: var(--blue-dark);
@@ -488,7 +488,6 @@ body.popup-open, :host(.popup-open) {
 
 /* --- Info Card --- */
 .info-card {
-    background-color: var(--card-background-color);
     border-radius: 20px;
     padding: 16px;
     border: 1px solid var(--gray200);
