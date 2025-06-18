@@ -225,7 +225,8 @@ if node custom_components/dashview/tests/test_popup_background_transparency.js >
     echo "✅ Popup Background Transparency tests passed"
 else
     echo "❌ Popup Background Transparency tests failed"
-
+    exit 1
+fi
 
 # Run Room Setup tests
 echo ""
@@ -234,6 +235,8 @@ if node custom_components/dashview/tests/test_room_setup.js > /dev/null; then
     echo "✅ Room Setup tests passed"
 else
     echo "❌ Room Setup tests failed"
+    exit 1
+fi
 
 # Run Configuration Summary tests
 echo ""
@@ -296,12 +299,10 @@ function testConfigSummary() {
 }
 
 process.exit(testConfigSummary() ? 0 : 1);
-
+"; then
     echo "✅ Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"
-
-
     exit 1
 fi
 
@@ -341,7 +342,7 @@ fi
 # Check for direct file access (should be none after our fixes)
 # file_access_count=$(grep -r "fetch('/local/dashview/config/" custom_components/dashview/www/ 2>/dev/null | wc -l)
 # if [ "$file_access_count" -gt 0 ]; then
-#     echo "Error: Found direct file access patterns (Principle 1 violation)"
+#     echo "Error: Found direct file access patterns - Principle 1 violation"
 #     exit 1
 # fi
 
@@ -353,7 +354,7 @@ fi
 
 eval_usage=$(grep -r "\beval\b\|\bFunction\b" custom_components/dashview/www/ 2>/dev/null | wc -l)
 if [ "$eval_usage" -gt 0 ]; then
-    echo "❌ Error: Found eval or Function constructor usage (security risk)"
+    echo "❌ Error: Found eval or Function constructor usage - security risk"
     exit 1
 fi
 
@@ -364,7 +365,7 @@ echo "🎉 All tests and validations passed!"
 echo ""
 echo "Summary of Principle Compliance:"
 echo "  ✅ Principle 1: Centralized Data Persistence"
-echo "  ✅ Principle 2: Code Reuse (DRY)"
+echo "  ✅ Principle 2: Code Reuse - DRY"
 echo "  ✅ Principle 3: Efficient State Management"
 echo "  ✅ Principle 4: Asset Bundling Optimizations"
 echo "  ✅ Principle 5: API Centralization"
