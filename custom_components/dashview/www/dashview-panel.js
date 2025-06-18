@@ -761,6 +761,7 @@ class DashviewPanel extends HTMLElement {
     
     const prefixElement = section.querySelector('[data-type="motion-prefix"]');
     const badgeElement = section.querySelector('[data-type="motion-time"]');
+    const suffixElement = section.querySelector('[data-type="motion-suffix"]');
     const badge = section.querySelector('.info-badge');
     
     // Calculate time difference for both states
@@ -769,12 +770,14 @@ class DashviewPanel extends HTMLElement {
     
     if (motionEntity.state === 'on') {
       prefixElement.textContent = 'Im Haus ist seit';
+      suffixElement.textContent = 'Bewegung.';
       section.classList.remove('hidden');
       badge.classList.add('green');
       badge.classList.remove('red');
       badgeElement.textContent = `${timeText}🏡`;
     } else {
       prefixElement.textContent = 'Die letzte Bewegung im Haus war vor';
+      suffixElement.textContent = '.';
       section.classList.remove('hidden');
       badge.classList.remove('green');
       badge.classList.add('red');
@@ -1161,13 +1164,16 @@ class DashviewPanel extends HTMLElement {
             window.location.hash = '#bahn';
         }
 
-        // Handle info card section clicks
-        const infoSection = e.target.closest('.info-section');
-        if (infoSection) {
-            if (infoSection.classList.contains('motion-section') || infoSection.classList.contains('windows-section')) {
-                window.location.hash = '#security';
-            } else if (infoSection.classList.contains('dryer-section')) {
-                window.location.hash = '#waschkeller';
+        // Handle info card badge clicks (only badges, not full sections)
+        const infoBadge = e.target.closest('.info-badge');
+        if (infoBadge) {
+            const infoSection = infoBadge.closest('.info-section');
+            if (infoSection) {
+                if (infoSection.classList.contains('motion-section') || infoSection.classList.contains('windows-section')) {
+                    window.location.hash = '#security';
+                } else if (infoSection.classList.contains('dryer-section')) {
+                    window.location.hash = '#waschkeller';
+                }
             }
         }
 

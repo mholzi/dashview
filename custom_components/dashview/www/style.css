@@ -527,7 +527,6 @@ body.popup-open, :host(.popup-open) {
 .info-section.motion-section,
 .info-section.windows-section,
 .info-section.dryer-section {
-    cursor: pointer;
     padding: 4px;
     border-radius: 8px;
     transition: background-color 0.2s;
@@ -547,17 +546,19 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray800);
     white-space: normal;
     word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .info-badge {
     background-color: var(--gray800);
     color: var(--gray100);
-    padding: 1px 6px;
+    padding: 2px 6px;
     border-radius: 12px;
     display: inline-flex;
     align-items: center;
     gap: 4px;
     font-size: 0.9em;
+    cursor: pointer;
 }
 
 .info-badge.green {
