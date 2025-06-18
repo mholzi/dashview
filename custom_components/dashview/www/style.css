@@ -1361,3 +1361,36 @@ body.popup-open, :host(.popup-open) {
     border-radius: 50%;
     border: none;
 }
+
+/* Configuration Summary Styles */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    padding-top: 10px;
+}
+
+.summary-item {
+    background-color: var(--gray000);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+    border: 1px solid var(--gray200);
+}
+
+.summary-item strong {
+    color: var(--primary-text-color);
+    font-weight: 500;
+}
+
+.summary-item span {
+    font-weight: 700;
+    font-size: 1.1em;
+    color: var(--primary-color);
+    background-color: var(--gray100);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
