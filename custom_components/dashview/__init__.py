@@ -232,7 +232,8 @@ async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
         house_config = {
             "weather_entity": "weather.forecast_home",
             "rooms": {},
-            "floors": {}
+            "floors": {},
+            "floor_sensors": {}
         }
         
         if floors_config:
@@ -256,7 +257,8 @@ def _convert_legacy_to_house_config(floors_config, rooms_config):
     """Convert legacy floors and rooms configuration to new house structure."""
     house_config = {
         "rooms": {},
-        "floors": {}
+        "floors": {},
+        "floor_sensors": {}
     }
     
     # Convert floor configuration

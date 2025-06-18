@@ -1250,26 +1250,9 @@ class DashviewPanel extends HTMLElement {
             this.loadFloorMaintenance();
         }
 
-        const saveFloorBtn = e.target.closest('#save-floor-button');
-        if (saveFloorBtn) {
-            this.saveFloor();
-        }
-
         const saveFloorSensorsBtn = e.target.closest('#save-floor-sensors');
         if (saveFloorSensorsBtn) {
             this.saveFloorSensors();
-        }
-
-        const editFloorBtn = e.target.closest('.edit-button');
-        if (editFloorBtn) {
-            const floorKey = editFloorBtn.dataset.floorKey;
-            this._startEditFloor(floorKey);
-        }
-
-        const deleteFloorBtn = e.target.closest('.delete-button');
-        if (deleteFloorBtn) {
-            const floorKey = deleteFloorBtn.dataset.floorKey;
-            this.deleteFloor(floorKey);
         }
 
         // Handle room maintenance buttons
