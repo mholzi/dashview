@@ -29,18 +29,18 @@ class DashviewPanel extends HTMLElement {
   }
 
   // Granular state management - Principle 3
-  _handleHassUpdate() {
+  async _handleHassUpdate() {
     if (!this._hass) return;
 
     // Ensure initial entity states are loaded (Issue #34 fix)
-    this._ensureInitialEntityStates();
+    await this._ensureInitialEntityStates();
 
     // Check for entity changes and update only affected components
     this._checkEntityChanges();
   }
 
   // Ensure initial entity states are properly loaded - Issue #34 fix
-  _ensureInitialEntityStates() {
+  async _ensureInitialEntityStates() {
     if (!this._hass) return;
     
     // Build comprehensive entity list if not already done
@@ -81,6 +81,9 @@ class DashviewPanel extends HTMLElement {
           this._watchedEntities.add(entityId);
         }
       });
+      
+      // Add room header entities from house configuration
+      await this._addRoomHeaderEntities();
     }
 
     // Force initial load of entity states if they're not already tracked
@@ -110,6 +113,32 @@ class DashviewPanel extends HTMLElement {
         console.warn('[DashView] Could not update header buttons during initialization:', error);
       }
     }
+  }
+
+  // Add room header entities from house configuration
+  async _addRoomHeaderEntities() {
+    // Load house configuration if not already loaded
+    if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
+      try {
+        await this.loadConfiguration();
+      } catch (error) {
+        console.warn('[DashView] Could not load house configuration for room header entities:', error);
+        return;
+      }
+    }
+    
+    if (!this._houseConfig || !this._houseConfig.rooms) return;
+    
+    Object.values(this._houseConfig.rooms).forEach(roomConfig => {
+      if (roomConfig.header_entities && Array.isArray(roomConfig.header_entities)) {
+        roomConfig.header_entities.forEach(entityConfig => {
+          if (entityConfig.entity) {
+            this._watchedEntities.add(entityConfig.entity);
+            console.log(`[DashView] Added room header entity: ${entityConfig.entity}`);
+          }
+        });
+      }
+    });
   }
 
   // Check for entity state changes - Principle 3
@@ -198,6 +227,8 @@ class DashviewPanel extends HTMLElement {
           // Check if it's a window sensor
           if (entityId.startsWith('binary_sensor.fenster')) {
             this.updateWindowsSection(shadow);
+          } else if (this._isRoomHeaderEntity(entityId)) {
+            this.updateRoomHeaderIcons(shadow);
           } else {
             console.log(`[DashView] No specific handler for entity: ${entityId}`);
           }
@@ -1280,6 +1311,139 @@ class DashviewPanel extends HTMLElement {
         button.style.display = 'none';
       }
     });
+  }
+  
+  // Check if entity is a room header entity
+  _isRoomHeaderEntity(entityId) {
+    if (!this._houseConfig || !this._houseConfig.rooms) return false;
+    
+    return Object.values(this._houseConfig.rooms).some(roomConfig => {
+      return roomConfig.header_entities && roomConfig.header_entities.some(entityConfig => {
+        return entityConfig.entity === entityId;
+      });
+    });
+  }
+  
+  // Update room header icons - Principle 3
+  updateRoomHeaderIcons(shadow) {
+    if (!this._houseConfig || !this._houseConfig.rooms) return;
+    
+    const roomHeaderIconsContainer = shadow.querySelector('.room-header-cards');
+    if (!roomHeaderIconsContainer) return;
+    
+    // Generate room header cards for all active rooms
+    const roomCardsHTML = this._generateRoomHeaderCards();
+    roomHeaderIconsContainer.innerHTML = roomCardsHTML;
+  }
+  
+  // Generate room header cards for active rooms
+  _generateRoomHeaderCards() {
+    if (!this._houseConfig || !this._houseConfig.rooms) return '';
+    
+    const activeRooms = this._getActiveRooms();
+    if (activeRooms.length === 0) return '<div class="no-activity">No active rooms with entities</div>';
+    
+    return activeRooms.map(room => {
+      const iconsHTML = this._generateRoomIcons(room.config);
+      if (!iconsHTML) return '';
+      
+      return `
+        <div class="room-header-card" data-room="${room.key}">
+          <div class="room-name">${room.config.friendly_name}</div>
+          <div class="room-icons-container">
+            ${iconsHTML}
+          </div>
+        </div>
+      `;
+    }).filter(html => html).join('');
+  }
+  
+  // Get active rooms (rooms with active sensors or room header entities)
+  _getActiveRooms() {
+    if (!this._houseConfig || !this._houseConfig.rooms) return [];
+    
+    return Object.entries(this._houseConfig.rooms)
+      .filter(([roomKey, roomConfig]) => {
+        // Check if room has combined sensor active
+        const sensorEntity = this._hass.states[roomConfig.combined_sensor];
+        const isRoomActive = sensorEntity && sensorEntity.state === 'on';
+        
+        // Or check if room has header entities configured
+        const hasHeaderEntities = roomConfig.header_entities && 
+                                  Array.isArray(roomConfig.header_entities) && 
+                                  roomConfig.header_entities.length > 0;
+        
+        return isRoomActive || hasHeaderEntities;
+      })
+      .map(([roomKey, roomConfig]) => ({ key: roomKey, config: roomConfig }));
+  }
+  
+  // Generate room icons HTML
+  _generateRoomIcons(roomConfig) {
+    if (!roomConfig.header_entities || !Array.isArray(roomConfig.header_entities)) {
+      return '';
+    }
+    
+    return roomConfig.header_entities.map(entityConfig => {
+      const entity = this._hass.states[entityConfig.entity];
+      const iconClass = this._getIconForEntityType(entityConfig.entity_type);
+      const stateClass = this._getStateClassForEntity(entity, entityConfig.entity_type);
+      
+      return `
+        <div class="room-header-icon ${entityConfig.entity_type} ${stateClass}" 
+             data-entity="${entityConfig.entity}" 
+             data-type="${entityConfig.entity_type}"
+             title="${entityConfig.entity}">
+          <i class="mdi ${iconClass}"></i>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  // Get icon for entity type
+  _getIconForEntityType(entityType) {
+    const iconMap = {
+      'motion': 'mdi-motion-sensor',
+      'window': 'mdi-window-open',
+      'smoke': 'mdi-smoke-detector',
+      'vibration': 'mdi-vibrate',
+      'music': 'mdi-music',
+      'tv': 'mdi-television',
+      'dishwasher': 'mdi-dishwasher',
+      'washing': 'mdi-washing-machine',
+      'dryer': 'mdi-tumble-dryer',
+      'freezer': 'mdi-fridge-outline',
+      'mower': 'mdi-robot-mower'
+    };
+    return iconMap[entityType] || 'mdi-help-circle';
+  }
+  
+  // Get state class for entity
+  _getStateClassForEntity(entity, entityType) {
+    if (!entity) return 'unknown';
+    
+    // Handle different entity types
+    switch (entityType) {
+      case 'motion':
+      case 'window':
+      case 'smoke':
+      case 'vibration':
+        return entity.state === 'on' ? 'active' : 'inactive';
+      case 'music':
+      case 'tv':
+        return ['playing', 'on'].includes(entity.state) ? 'active' : 'inactive';
+      case 'dishwasher':
+      case 'washing':
+        return ['Run', 'run', 'running'].includes(entity.state) ? 'active' : 'inactive';
+      case 'dryer':
+        return entity.state === 'on' ? 'active' : 'inactive';
+      case 'freezer':
+        return entity.state === 'on' ? 'active' : 'inactive';  // Door alarm
+      case 'mower':
+        return ['mowing', 'cutting'].includes(entity.state) ? 'active' : 'inactive';
+      default:
+        return entity.state === 'on' ? 'active' : 'inactive';
+    }
   }
   
   // Popup icon mapping for different popup types
