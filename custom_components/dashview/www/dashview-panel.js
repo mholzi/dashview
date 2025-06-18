@@ -1104,27 +1104,35 @@ class DashviewPanel extends HTMLElement {
         let targetPopup = context.querySelector('#' + popupId);
         
         if (!targetPopup) {
-            try {
-                // Try to load content from external file first
-                const response = await fetch(`/local/dashview/${popupType}.html`);
-                if (response.ok) {
-                    const html = await response.text();
-                    targetPopup = this.createPopupFromTemplate(popupId, popupType, html);
-                } else {
-                    // If no external file, create with placeholder content
-                    const content = `<div class="placeholder">Content for ${this.getPopupTitleForType(popupType)}</div>`;
-                    targetPopup = this.createPopupFromTemplate(popupId, popupType, content);
-                }
-                
+            // First, check if the popupType corresponds to a configured room.
+            const isRoom = this._houseConfig && this._houseConfig.rooms && this._houseConfig.rooms[popupType];
+
+            if (isRoom) {
+                // It's a room. Create the popup dynamically with no initial content.
+                // The content (like covers or placeholders) will be added by other functions.
+                targetPopup = this.createPopupFromTemplate(popupId, popupType, ''); // Pass empty string for content
                 if (targetPopup) {
                     await this.reinitializePopupContent(targetPopup);
                 }
-            } catch (err) {
-                console.error(`[DashView] Error creating popup for ${popupType}:`, err);
-                const errorContent = `<div class="placeholder">Error loading: ${err.message}</div>`;
-                targetPopup = this.createPopupFromTemplate(popupId, popupType, errorContent);
-                if (targetPopup) {
-                    await this.reinitializePopupContent(targetPopup);
+            } else {
+                // It's a system page (like 'security' or 'admin'). Try to fetch its HTML file.
+                try {
+                    const response = await fetch(`/local/dashview/${popupType}.html`);
+                    if (response.ok) {
+                        const html = await response.text();
+                        targetPopup = this.createPopupFromTemplate(popupId, popupType, html);
+                    } else {
+                        // If the system page HTML doesn't exist, create a generic placeholder.
+                        const content = `<div class="placeholder">Content for ${this.getPopupTitleForType(popupType)}</div>`;
+                        targetPopup = this.createPopupFromTemplate(popupId, popupType, content);
+                    }
+                    if (targetPopup) {
+                        await this.reinitializePopupContent(targetPopup);
+                    }
+                } catch (err) {
+                    console.error(`[DashView] Error creating popup for ${popupType}:`, err);
+                    const errorContent = `<div class="placeholder">Error loading: ${err.message}</div>`;
+                    targetPopup = this.createPopupFromTemplate(popupId, popupType, errorContent);
                 }
             }
         }
