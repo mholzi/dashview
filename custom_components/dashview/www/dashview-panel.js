@@ -2347,6 +2347,7 @@ class DashviewPanel extends HTMLElement {
     let buttonsHTML = '';
     const rooms = this._houseConfig.rooms || {};
     const floors = this._houseConfig.floors || {};
+    const floorSensors = this._houseConfig.floor_sensors || {};
 
     // Group rooms by floor
     const roomsByFloor = {};
@@ -2363,7 +2364,8 @@ class DashviewPanel extends HTMLElement {
       const floorConfig = floors[floorKey];
       if (!floorConfig) return;
 
-      const floorSensor = floorConfig.floor_sensor;
+      // Get floor sensor from the floor_sensors mapping, or fall back to floor config
+      const floorSensor = floorSensors[floorKey] || floorConfig.floor_sensor;
       const floorIcon = this._processIconName(floorConfig.icon || 'mdi:help-circle-outline');
       
       // Check if floor sensor is active
@@ -3135,6 +3137,9 @@ class DashviewPanel extends HTMLElement {
       return;
     }
 
+    // Store HA rooms data for later use
+    this._adminLocalState.haRooms = haRooms;
+
     const roomsConfig = this._adminLocalState.houseConfig.rooms || {};
     let roomsHTML = '';
 
@@ -3311,24 +3316,35 @@ class DashviewPanel extends HTMLElement {
     const selectedSensor = selector.value;
     const houseConfig = this._adminLocalState.houseConfig;
 
-    // Ensure room exists in config, create if not
-    if (!houseConfig.rooms[roomKey]) {
-      houseConfig.rooms[roomKey] = {
-        friendly_name: roomKey, // Or find a way to get the friendly name
-        icon: 'mdi:home-outline',
-        floor: null // Needs assignment
-      };
-    }
-
-    // Update the sensor for the specific room
-    houseConfig.rooms[roomKey].combined_sensor = selectedSensor;
-
-    this._setStatusMessage(statusElement, `Saving sensor for ${roomKey}...`, 'loading');
-
     try {
+      // Get the HA room data from stored state or fetch if not available
+      let haRoom = null;
+      if (this._adminLocalState.haRooms) {
+        haRoom = this._adminLocalState.haRooms.find(room => room.area_id === roomKey);
+      } else {
+        const haRooms = await this._hass.callApi('GET', 'dashview/config?type=ha_rooms');
+        haRoom = haRooms.find(room => room.area_id === roomKey);
+      }
+      
+      // Ensure room exists in config, create if not
+      if (!houseConfig.rooms[roomKey]) {
+        houseConfig.rooms[roomKey] = {
+          friendly_name: haRoom ? haRoom.name : roomKey,
+          icon: haRoom ? haRoom.icon : 'mdi:home-outline',
+          floor: null, // Needs manual assignment in House Setup
+          lights: [],
+          covers: [],
+          media_players: []
+        };
+      }
+
+      // Update the sensor for the specific room  
+      houseConfig.rooms[roomKey].combined_sensor = selectedSensor;
+
+      this._setStatusMessage(statusElement, `Saving sensor for ${haRoom ? haRoom.name : roomKey}...`, 'loading');
       await this._saveConfigViaAPI('house', houseConfig);
       this._adminLocalState.houseConfig = houseConfig; // Update local state
-      this._setStatusMessage(statusElement, `✓ Sensor for ${roomKey} saved successfully!`, 'success');
+      this._setStatusMessage(statusElement, `✓ Sensor for ${haRoom ? haRoom.name : roomKey} saved successfully!`, 'success');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error saving sensor: ${error.message}`, 'error');
     }

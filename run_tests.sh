@@ -15,7 +15,7 @@ fi
 echo ""
 echo "🐍 Running Python configuration validation tests..."
 if python custom_components/dashview/tests/test_config_validation.py; then
-    echo "✅ Python tests passed"
+    echo "[OK] Python tests passed"
 else
     echo "❌ Python tests failed"
     exit 1
@@ -29,7 +29,7 @@ const tests = require('./custom_components/dashview/tests/test_frontend_validati
 const testRunner = new tests();
 testRunner.runAllTests();
 " > /dev/null; then
-    echo "✅ JavaScript tests passed"
+    echo "[OK] JavaScript tests passed"
 else
     echo "❌ JavaScript tests failed"
     exit 1
@@ -38,7 +38,7 @@ fi
 echo ""
 echo "🏠 Running Room Header Icons tests..."
 if node custom_components/dashview/tests/test_room_header_icons.js > /dev/null; then
-    echo "✅ Room Header Icons tests passed"
+    echo "[OK] Room Header Icons tests passed"
 else
     echo "❌ Room Header Icons tests failed"
     exit 1
@@ -47,7 +47,7 @@ fi
 echo ""
 echo "🎯 Running Popup Icon Consistency tests..."
 if node custom_components/dashview/tests/test_popup_icon_consistency.js > /dev/null; then
-    echo "✅ Popup Icon Consistency tests passed"
+    echo "[OK] Popup Icon Consistency tests passed"
 else
     echo "❌ Popup Icon Consistency tests failed"
     exit 1
@@ -56,7 +56,7 @@ fi
 echo ""
 echo "💾 Running Entity Persistence tests..."
 if node custom_components/dashview/tests/test_entity_persistence.js > /dev/null; then
-    echo "✅ Entity Persistence tests passed"
+    echo "[OK] Entity Persistence tests passed"
 else
     echo "❌ Entity Persistence tests failed"
     exit 1
@@ -65,7 +65,7 @@ fi
 echo ""
 echo "🎛️  Running Cover Functionality tests..."
 if node custom_components/dashview/tests/test_cover_functionality.js > /dev/null; then
-    echo "✅ Cover Functionality tests passed"
+    echo "[OK] Cover Functionality tests passed"
 else
     echo "❌ Cover Functionality tests failed"
     exit 1
@@ -74,7 +74,7 @@ fi
 echo ""
 echo "🎵 Running Media Player Component tests..."
 if node custom_components/dashview/tests/test_media_player_component.js > /dev/null; then
-    echo "✅ Media Player Component tests passed"
+    echo "[OK] Media Player Component tests passed"
 else
     echo "❌ Media Player Component tests failed"
     exit 1
@@ -83,7 +83,7 @@ fi
 echo ""
 echo "🎵 Running Media Player Room Card tests..."
 if node custom_components/dashview/tests/test_media_player_room_card.js > /dev/null; then
-    echo "✅ Media Player Room Card tests passed"
+    echo "[OK] Media Player Room Card tests passed"
 else
     echo "❌ Media Player Room Card tests failed"
     exit 1
@@ -102,7 +102,7 @@ fi
 echo ""
 echo "🎨 Running Shadow DOM CSS validation tests..."
 if node custom_components/dashview/tests/test_shadow_dom_css.js > /dev/null; then
-    echo "✅ Shadow DOM CSS tests passed"
+    echo "[OK] Shadow DOM CSS tests passed"
 else
     echo "❌ Shadow DOM CSS tests failed"
     exit 1
@@ -112,7 +112,7 @@ fi
 echo ""
 echo "🎨 Running CSS Colors validation tests..."
 if node custom_components/dashview/tests/test_css_colors.js > /dev/null; then
-    echo "✅ CSS Colors tests passed"
+    echo "[OK] CSS Colors tests passed"
 else
     echo "❌ CSS Colors tests failed"
     exit 1
@@ -122,7 +122,7 @@ fi
 echo ""
 echo "🎯 Running Icon Size Consistency tests..."
 if node custom_components/dashview/tests/test_icon_size_consistency.js > /dev/null; then
-    echo "✅ Icon Size Consistency tests passed"
+    echo "[OK] Icon Size Consistency tests passed"
 else
     echo "❌ Icon Size Consistency tests failed"
     exit 1
@@ -132,7 +132,7 @@ fi
 echo ""
 echo "🌼 Running Pollen Card Formatting tests..."
 if node custom_components/dashview/tests/test_pollen_card_formatting.js > /dev/null; then
-    echo "✅ Pollen Card Formatting tests passed"
+    echo "[OK] Pollen Card Formatting tests passed"
 else
     echo "❌ Pollen Card Formatting tests failed"
     exit 1
@@ -142,7 +142,7 @@ fi
 echo ""
 echo "🏠 Running Floor Maintenance tests..."
 if node custom_components/dashview/tests/test_floor_maintenance.js > /dev/null; then
-    echo "✅ Floor Maintenance tests passed"
+    echo "[OK] Floor Maintenance tests passed"
 else
     echo "❌ Floor Maintenance tests failed"
     exit 1
@@ -152,7 +152,7 @@ fi
 echo ""
 echo "🌤️  Running Weather Forecast tests..."
 if node custom_components/dashview/tests/test_weather_forecast.js > /dev/null; then
-    echo "✅ Weather Forecast tests passed"
+    echo "[OK] Weather Forecast tests passed"
 else
     echo "❌ Weather Forecast tests failed"
     exit 1
@@ -162,7 +162,7 @@ fi
 echo ""
 echo "📅 Running Daily Forecast Initialization tests..."
 if node custom_components/dashview/tests/test_daily_forecast_initialization.js > /dev/null; then
-    echo "✅ Daily Forecast Initialization tests passed"
+    echo "[OK] Daily Forecast Initialization tests passed"
 else
     echo "❌ Daily Forecast Initialization tests failed"
     exit 1
@@ -171,7 +171,7 @@ fi
 echo ""
 echo "🔄 Running Popup Refresh tests..."
 if node custom_components/dashview/tests/test_popup_refresh.js > /dev/null; then
-    echo "✅ Popup Refresh tests passed"
+    echo "[OK] Popup Refresh tests passed"
 else
     echo "❌ Popup Refresh tests failed"
     exit 1
@@ -179,9 +179,9 @@ fi
 
 # Run Popup Dynamic Initialization tests
 echo ""
-echo "🚀 Running Popup Dynamic Initialization tests..."
+echo "rocket Running Popup Dynamic Initialization tests..."
 if node custom_components/dashview/tests/test_popup_dynamic_initialization.js > /dev/null; then
-    echo "✅ Popup Dynamic Initialization tests passed"
+    echo "[OK] Popup Dynamic Initialization tests passed"
 else
     echo "❌ Popup Dynamic Initialization tests failed"
     exit 1
@@ -191,7 +191,7 @@ fi
 echo ""
 echo "🏠 Running Room Covers Placeholder tests..."
 if node custom_components/dashview/tests/test_room_covers_placeholder.js > /dev/null; then
-    echo "✅ Room Covers Placeholder tests passed"
+    echo "[OK] Room Covers Placeholder tests passed"
 else
     echo "❌ Room Covers Placeholder tests failed"
     exit 1
@@ -201,7 +201,7 @@ fi
 echo ""
 echo "🏠 Running House Setup Tab Loading tests..."
 if node custom_components/dashview/tests/test_house_setup_tab_loading.js > /dev/null; then
-    echo "✅ House Setup Tab Loading tests passed"
+    echo "[OK] House Setup Tab Loading tests passed"
 else
     echo "❌ House Setup Tab Loading tests failed"
     exit 1
@@ -211,7 +211,7 @@ fi
 echo ""
 echo "🏠 Running Room Header Entities in Popups tests..."
 if node custom_components/dashview/tests/test_room_header_entities_in_popups.js > /dev/null; then
-    echo "✅ Room Header Entities in Popups tests passed"
+    echo "[OK] Room Header Entities in Popups tests passed"
 else
     echo "❌ Room Header Entities in Popups tests failed"
     exit 1
@@ -221,7 +221,7 @@ fi
 echo ""
 echo "🧭 Running Bottom Navigation Alignment tests..."
 if node custom_components/dashview/tests/test_bottom_nav_alignment.js > /dev/null; then
-    echo "✅ Bottom Navigation Alignment tests passed"
+    echo "[OK] Bottom Navigation Alignment tests passed"
 else
     echo "❌ Bottom Navigation Alignment tests failed"
     exit 1
@@ -231,7 +231,7 @@ fi
 echo ""
 echo "🖼️  Running Popup Background Transparency tests..."
 if node custom_components/dashview/tests/test_popup_background_transparency.js > /dev/null; then
-    echo "✅ Popup Background Transparency tests passed"
+    echo "[OK] Popup Background Transparency tests passed"
 else
     echo "❌ Popup Background Transparency tests failed"
     exit 1
@@ -241,7 +241,7 @@ fi
 echo ""
 echo "🏠 Running Room Setup tests..."
 if node custom_components/dashview/tests/test_room_setup.js > /dev/null; then
-    echo "✅ Room Setup tests passed"
+    echo "[OK] Room Setup tests passed"
 else
     echo "❌ Room Setup tests failed"
     exit 1
@@ -308,8 +308,11 @@ function testConfigSummary() {
 }
 
 process.exit(testConfigSummary() ? 0 : 1);
+
 "; then
     echo "✅ Configuration Summary tests passed"
+
+    echo "[OK] Configuration Summary tests passed"
 else
     echo "❌ Configuration Summary tests failed"
     exit 1
@@ -335,7 +338,7 @@ if ! node -c custom_components/dashview/www/dashview-panel.js; then
     exit 1
 fi
 
-echo "✅ All syntax checks passed"
+echo "[OK] All syntax checks passed"
 
 # Basic validation commands from copilot_instruction.md
 echo ""
@@ -367,12 +370,14 @@ if [ "$eval_usage" -gt 0 ]; then
     exit 1
 fi
 
-echo "✅ Code analysis completed"
+echo "[OK] Code analysis completed"
 
 echo ""
 echo "🎉 All tests and validations passed!"
 echo ""
+
 echo "Summary of Principle Compliance:"
+
 echo "  ✅ Principle 1: Centralized Data Persistence"
 echo "  ✅ Principle 2: Code Reuse - DRY"
 echo "  ✅ Principle 3: Efficient State Management"
@@ -383,5 +388,6 @@ echo "  ✅ Principle 7: Testing & Validation"
 echo "  ✅ Principle 10: Security Best Practices"
 echo "  ✅ Principle 11: MDI Icon Usage"
 echo "  ✅ Principle 12: Admin UI State Management"
+
 echo ""
-echo "DashView code review completed successfully! 🚀"
+echo "DashView code review completed successfully!"
