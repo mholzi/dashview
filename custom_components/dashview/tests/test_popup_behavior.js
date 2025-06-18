@@ -22,22 +22,27 @@ class PopupBehaviorTests {
         const cssPath = path.join(__dirname, '../www/style.css');
         const cssContent = fs.readFileSync(cssPath, 'utf8');
         
-        // Check that popup-content no longer has max-width constraint
+        // Check that popup-content matches main view width constraints
         const popupContentSection = cssContent.match(/\.popup-content\s*{[^}]*}/s);
         if (popupContentSection) {
             const sectionText = popupContentSection[0];
             
-            // Should not have max-width constraint
-            const hasMaxWidth = /max-width:\s*\d+px/.test(sectionText);
-            // Should have width that matches main view (calc(100% - 16px))
+            // Should have max-width constraint like main view (500px)
+            const hasMaxWidth = /max-width:\s*500px/.test(sectionText);
+            // Should have responsive width (calc(100% - 16px))
             const hasFullWidth = /width:\s*calc\(100%\s*-\s*16px\)/.test(sectionText);
+            // Should be centered like main view
+            const hasCentering = /margin:\s*0\s+auto/.test(sectionText);
             
-            if (!hasMaxWidth && hasFullWidth) {
+            if (hasMaxWidth && hasFullWidth && hasCentering) {
                 this.testResults.push({ name: 'Popup width matches main view', passed: true });
-                console.log('✓ Popup width matches main view (no max-width constraint)');
+                console.log('✓ Popup width matches main view (max-width: 500px, centered)');
             } else {
                 this.testResults.push({ name: 'Popup width matches main view', passed: false });
                 console.log('❌ Popup width does not match main view requirements');
+                console.log(`  - Max-width 500px: ${hasMaxWidth}`);
+                console.log(`  - Responsive width: ${hasFullWidth}`);
+                console.log(`  - Centered: ${hasCentering}`);
             }
         } else {
             this.testResults.push({ name: 'Popup width matches main view', passed: false });
