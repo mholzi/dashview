@@ -3,7 +3,7 @@ class DashviewPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this._contentReady = false;
-    this._weatherEntityId = 'weather.home'; // Add a property to store the entity ID
+    this._weatherEntityId = 'weather.forecast_home'; // Add a property to store the entity ID
     this._weatherForecasts = { daily: null, hourly: null };
     this._floorsConfig = {};
     this._roomsConfig = {};
@@ -1899,7 +1899,7 @@ class DashviewPanel extends HTMLElement {
       } catch (error) {
           console.error('[DashView] Error fetching weather entity config, using default:', error);
           // Fallback to default if API call fails
-          this._weatherEntityId = 'weather.home';
+          this._weatherEntityId = 'weather.forecast_home';
       }
   }
 

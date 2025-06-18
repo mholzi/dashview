@@ -45,7 +45,7 @@ class DashViewConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # This is the "structural" setup.
             default_data = {
                 "house_config": {
-                    "weather_entity": "weather.home",
+                    "weather_entity": "weather.forecast_home",
                     "rooms": {},
                     "floors": {}
                 }

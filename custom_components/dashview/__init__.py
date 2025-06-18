@@ -98,7 +98,7 @@ class DashViewConfigView(HomeAssistantView):
             data = house_config.get("rooms", {})
         elif config_type == "weather_entity":
             house_config = config_data.get("house_config", {})
-            data = {"weather_entity": house_config.get("weather_entity", "weather.home")}
+            data = {"weather_entity": house_config.get("weather_entity", "weather.forecast_home")}
         elif config_type is None:
             # Return the full house_config when no type is specified
             data = config_data.get("house_config", {})
@@ -133,7 +133,7 @@ class DashViewConfigView(HomeAssistantView):
                     elif config_type == "rooms":
                         house_config["rooms"] = new_config_data
                     elif config_type == "weather_entity":
-                        house_config["weather_entity"] = new_config_data.get("weather_entity", "weather.home")
+                        house_config["weather_entity"] = new_config_data.get("weather_entity", "weather.forecast_home")
                     
                     self._hass.config_entries.async_update_entry(
                         self._entry, options={"house_config": house_config}
@@ -197,7 +197,7 @@ async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
         
         # Fallback: create basic structure from individual configs
         house_config = {
-            "weather_entity": "weather.home",
+            "weather_entity": "weather.forecast_home",
             "rooms": {},
             "floors": {}
         }
