@@ -101,6 +101,16 @@ else
     exit 1
 fi
 
+# Run Popup Dynamic Initialization tests
+echo ""
+echo "🚀 Running Popup Dynamic Initialization tests..."
+if node custom_components/dashview/tests/test_popup_dynamic_initialization.js > /dev/null; then
+    echo "✅ Popup Dynamic Initialization tests passed"
+else
+    echo "❌ Popup Dynamic Initialization tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."

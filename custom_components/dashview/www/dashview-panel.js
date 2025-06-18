@@ -20,6 +20,22 @@ class DashviewPanel extends HTMLElement {
     this._lastEntityStates = new Map();
     this._watchedEntities = null;
     this._coverEntities = new Set();
+    
+    // Component Initializer Registry - Systemic popup initialization fix
+    this._componentInitializers = {
+      '.weather-forecast-card': (el) => this.updateWeatherComponents(el.closest('.popup')),
+      '.pollen-card': (el) => this.updatePollenCard(el.closest('.popup')),
+      '.covers-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig?.covers?.length > 0) {
+          this._initializeCoversCard(popup, roomKey, roomConfig.covers);
+        }
+      },
+      // This registry can be expanded for future dynamic popups, e.g.:
+      // '#security-open-windows-list': (el) => this.updateSecurityWindows(el.closest('.popup')),
+    };
   }
 
   // When the HASS object is passed to the panel, store it and update content
@@ -1565,7 +1581,8 @@ class DashviewPanel extends HTMLElement {
                 const coversContainer = document.createElement('div');
                 coversContainer.innerHTML = html;
                 bodyElement.appendChild(coversContainer);
-                this._initializeCoversCard(popup, popupType, roomConfig.covers);
+                // The new dispatcher system will handle initialization
+                // when reinitializePopupContent is called
             }).catch(err => console.error('[DashView] Error loading covers card template:', err));
     }
 
@@ -1596,42 +1613,59 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
+  // Generic Content Initialization Dispatcher - Systemic popup initialization fix
+  _initializeDynamicContent(container) {
+    if (!container) return;
+    console.log(`[DashView] Initializing dynamic content in`, container);
+
+    for (const [selector, initializer] of Object.entries(this._componentInitializers)) {
+      const elements = container.querySelectorAll(selector);
+      if (elements.length > 0) {
+        console.log(`[DashView] Found dynamic component(s) with selector: ${selector}`);
+        elements.forEach(element => {
+          try {
+            // Call the registered initializer function for the found element
+            initializer(element);
+          } catch (error) {
+            console.error(`[DashView] Error initializing component for selector "${selector}":`, error);
+          }
+        });
+      }
+    }
+  }
+
   reinitializePopupContent(popup) {
     const closeBtn = popup.querySelector('.popup-close');
     if (closeBtn) {
-        closeBtn.onclick = () => this.closePopup();
+      closeBtn.onclick = () => this.closePopup();
     }
     popup.querySelectorAll('.tabs-container').forEach(container => {
-        const tabButtons = container.querySelectorAll('.tab-button');
-        const tabContents = container.querySelectorAll('.tab-content');
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.getAttribute('data-target');
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                tabContents.forEach(content => content.classList.toggle('active', content.id === targetId));
-                
-                // Load admin configuration when header buttons tab is activated
-                if (targetId === 'header-buttons-tab') {
-                    setTimeout(() => this.loadAdminConfiguration(), 100);
-                }
-                
-                // Load floor maintenance when floor maintenance tab is activated
-                if (targetId === 'floor-maintenance-tab') {
-                    setTimeout(() => this.loadFloorMaintenance(), 100);
-                }
-                
-                // Load weather entity configuration when weather tab is activated
-                if (targetId === 'weather-tab') {
-                    setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
-                }
-            });
+      const tabButtons = container.querySelectorAll('.tab-button');
+      const tabContents = container.querySelectorAll('.tab-content');
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const targetId = button.getAttribute('data-target');
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          tabContents.forEach(content => content.classList.toggle('active', content.id === targetId));
+          
+          // Keep existing tab logic for admin panel
+          if (targetId === 'header-buttons-tab') {
+            setTimeout(() => this.loadAdminConfiguration(), 100);
+          }
+          if (targetId === 'floor-maintenance-tab') {
+            setTimeout(() => this.loadFloorMaintenance(), 100);
+          }
+          if (targetId === 'weather-tab') {
+            setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
+          }
         });
-        if(tabButtons.length > 0) tabButtons[0].click();
+      });
+      if(tabButtons.length > 0) tabButtons[0].click();
     });
-    
-    // Force immediate refresh of all entities in the popup
-    this._forceRefreshPopupEntities(popup);
+
+    // --- REPLACED old patch logic with a single call to the new dispatcher ---
+    this._initializeDynamicContent(popup);
   }
 
   // Force refresh all entities within a popup - Issue #75 fix
