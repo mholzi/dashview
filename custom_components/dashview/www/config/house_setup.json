@@ -10,12 +10,10 @@
       "covers": [],
       "media_players": [
         {
-          "entity": "media_player.unnamed_room",
-          "room_name": "Esszimmer"
+          "entity": "media_player.unnamed_room"
         },
         {
-          "entity": "media_player.kuche",
-          "room_name": "Küche"
+          "entity": "media_player.kuche"
         }
       ],
       "header_entities": [
@@ -36,8 +34,7 @@
       "covers": [],
       "media_players": [
         {
-          "entity": "media_player.echo_buero",
-          "room_name": "Büro"
+          "entity": "media_player.echo_buero"
         }
       ],
       "header_entities": [
@@ -174,8 +171,7 @@
       ],
       "media_players": [
         {
-          "entity": "media_player.echo_bad",
-          "room_name": "Bad"
+          "entity": "media_player.echo_bad"
         }
       ],
       "header_entities": [

@@ -56,10 +56,6 @@ class MediaPlayerTests {
             bueroConfig[0].entity === 'media_player.echo_buero',
             'Büro media player entity should be media_player.echo_buero'
         );
-        this.assert(
-            bueroConfig[0].room_name === 'Büro',
-            'Büro media player room_name should be Büro'
-        );
         
         // Test Wohnzimmer configuration (multiple players)
         const wohnzimmerConfig = panel._houseConfig.rooms.wohnzimmer.media_players;
@@ -228,8 +224,7 @@ class MockDashViewPanel {
                     friendly_name: "Büro",
                     media_players: [
                         {
-                            entity: "media_player.echo_buero",
-                            room_name: "Büro"
+                            entity: "media_player.echo_buero"
                         }
                     ]
                 },
@@ -237,12 +232,10 @@ class MockDashViewPanel {
                     friendly_name: "Wohnzimmer",
                     media_players: [
                         {
-                            entity: "media_player.unnamed_room",
-                            room_name: "Esszimmer"
+                            entity: "media_player.unnamed_room"
                         },
                         {
-                            entity: "media_player.kuche",
-                            room_name: "Küche"
+                            entity: "media_player.kuche"
                         }
                     ]
                 },
@@ -250,8 +243,7 @@ class MockDashViewPanel {
                     friendly_name: "Schlafzimmer",
                     media_players: [
                         {
-                            entity: "media_player.echo_bad",
-                            room_name: "Bad"
+                            entity: "media_player.echo_bad"
                         }
                     ]
                 }
