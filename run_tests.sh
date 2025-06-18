@@ -82,6 +82,16 @@ else
     exit 1
 fi
 
+# Run Popup Refresh tests
+echo ""
+echo "🔄 Running Popup Refresh tests..."
+if node custom_components/dashview/tests/test_popup_refresh.js > /dev/null; then
+    echo "✅ Popup Refresh tests passed"
+else
+    echo "❌ Popup Refresh tests failed"
+    exit 1
+fi
+
 # Syntax validation
 echo ""
 echo "📋 Running syntax validation..."

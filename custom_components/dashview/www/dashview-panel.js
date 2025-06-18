@@ -1583,6 +1583,68 @@ class DashviewPanel extends HTMLElement {
         });
         if(tabButtons.length > 0) tabButtons[0].click();
     });
+    
+    // Force immediate refresh of all entities in the popup
+    this._forceRefreshPopupEntities(popup);
+  }
+
+  // Force refresh all entities within a popup - Issue #75 fix
+  _forceRefreshPopupEntities(popup) {
+    if (!this._hass || !popup) return;
+    
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    
+    // Get the popup ID to determine which entities to refresh
+    const popupId = popup.id;
+    
+    try {
+      // Weather popup entities
+      if (popupId === 'weather-popup') {
+        const weatherEntityId = this._getCurrentWeatherEntityId();
+        console.log(`[DashView] Force refreshing weather popup entities`);
+        
+        // Update weather components immediately
+        this._updateComponentForEntity(weatherEntityId);
+        
+        // Update pollen card entities
+        const pollenEntities = [
+          'sensor.pollenflug_birke_92',
+          'sensor.pollenflug_erle_92', 
+          'sensor.pollenflug_hasel_92',
+          'sensor.pollenflug_esche_92',
+          'sensor.pollenflug_roggen_92',
+          'sensor.pollenflug_graeser_92',
+          'sensor.pollenflug_beifuss_92',
+          'sensor.pollenflug_ambrosia_92'
+        ];
+        
+        pollenEntities.forEach(entityId => {
+          this._updateComponentForEntity(entityId);
+        });
+      }
+      
+      // Security popup entities  
+      if (popupId === 'security-popup') {
+        console.log(`[DashView] Force refreshing security popup entities`);
+        
+        // Update motion sensor
+        this._updateComponentForEntity('binary_sensor.motion_presence_home');
+        
+        // Update window sensors
+        Object.keys(this._hass.states).forEach(entityId => {
+          if (entityId.startsWith('binary_sensor.fenster')) {
+            this._updateComponentForEntity(entityId);
+          }
+        });
+      }
+      
+      // For other popups, refresh common entities that might be displayed
+      console.log(`[DashView] Force refreshing entities for popup: ${popupId}`);
+      
+    } catch (error) {
+      console.warn(`[DashView] Error force refreshing popup entities:`, error);
+    }
   }
 
   // Generic configuration loader - Principle 2 (DRY)
