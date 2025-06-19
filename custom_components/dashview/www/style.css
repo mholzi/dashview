@@ -1420,3 +1420,42 @@ body.popup-open, :host(.popup-open) {
     padding: 2px 8px;
     border-radius: 12px;
 }
+
+/* Floor-Room Consistency Warning Styles */
+.consistency-warning {
+    background-color: rgba(240, 169, 148, 0.1);
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.consistency-warning h6 {
+    margin: 0 0 8px 0;
+    color: #d63031;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.consistency-warning .warning-item {
+    font-size: 0.85em;
+    color: #d63031;
+    margin-bottom: 4px;
+}
+
+.consistency-warning .info-item {
+    font-size: 0.85em;
+    color: #636e72;
+    margin-bottom: 4px;
+}
+
+.consistency-ok {
+    background-color: rgba(197, 228, 172, 0.1);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    font-size: 0.85em;
+    color: #00b894;
+    font-weight: 500;
+}

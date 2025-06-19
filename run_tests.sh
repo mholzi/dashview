@@ -148,6 +148,16 @@ else
     exit 1
 fi
 
+# Run Floor-Room Link Integrity tests
+echo ""
+echo "🔗 Running Floor-Room Link Integrity tests..."
+if node custom_components/dashview/tests/test_floor_room_link_integrity.js > /dev/null; then
+    echo "[OK] Floor-Room Link Integrity tests passed"
+else
+    echo "❌ Floor-Room Link Integrity tests failed"
+    exit 1
+fi
+
 # Run Weather Forecast tests
 echo ""
 echo "🌤️  Running Weather Forecast tests..."
