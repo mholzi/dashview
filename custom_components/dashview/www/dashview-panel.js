@@ -3011,7 +3011,17 @@ class DashviewPanel extends HTMLElement {
     let html = '';
     
     if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
-      html = '<div class="placeholder">No motion sensors with "Motion" label found. Please assign the "Motion" label to your motion sensors in Home Assistant.</div>';
+      html = `<div class="placeholder">
+        <p>No motion sensors with "Motion" label found.</p>
+        <p><strong>To fix this:</strong></p>
+        <ol>
+          <li>Go to <strong>Settings → Labels</strong> in Home Assistant</li>
+          <li>Create a label called "Motion" (case-insensitive)</li>
+          <li>Assign this label to your motion sensor entities</li>
+          <li>Click "Reload Motion Sensors" above</li>
+        </ol>
+        <p><small>Supported label names: Motion, motion, MOTION, bewegung, etc.</small></p>
+      </div>`;
     } else {
       Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
         html += `
@@ -3436,7 +3446,17 @@ class DashviewPanel extends HTMLElement {
     let html = '';
     
     if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
-      html = '<div class="placeholder">No window sensors with "Fenster" label found. Please assign the "Fenster" label to your window sensors in Home Assistant.</div>';
+      html = `<div class="placeholder">
+        <p>No window sensors with "Fenster" label found.</p>
+        <p><strong>To fix this:</strong></p>
+        <ol>
+          <li>Go to <strong>Settings → Labels</strong> in Home Assistant</li>
+          <li>Create a label called "Fenster" (case-insensitive)</li>
+          <li>Assign this label to your window sensor entities</li>
+          <li>Click "Reload Window Sensors" above</li>
+        </ol>
+        <p><small>Supported label names: Fenster, fenster, FENSTER, Window, window, etc.</small></p>
+      </div>`;
     } else {
       Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
         html += `
@@ -3572,7 +3592,17 @@ class DashviewPanel extends HTMLElement {
     let html = '';
     
     if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
-      html = '<div class="placeholder">No smoke detectors with "Rauchmelder" label found. Please assign the "Rauchmelder" label to your smoke detectors in Home Assistant.</div>';
+      html = `<div class="placeholder">
+        <p>No smoke detectors with "Rauchmelder" label found.</p>
+        <p><strong>To fix this:</strong></p>
+        <ol>
+          <li>Go to <strong>Settings → Labels</strong> in Home Assistant</li>
+          <li>Create a label called "Rauchmelder" (case-insensitive)</li>
+          <li>Assign this label to your smoke detector entities</li>
+          <li>Click "Reload Smoke Detectors" above</li>
+        </ol>
+        <p><small>Supported label names: Rauchmelder, rauchmelder, RAUCHMELDER, Smoke, smoke, etc.</small></p>
+      </div>`;
     } else {
       Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
         html += `
@@ -3708,7 +3738,17 @@ class DashviewPanel extends HTMLElement {
     let html = '';
     
     if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
-      html = '<div class="placeholder">No vibration sensors with "Vibration" label found. Please assign the "Vibration" label to your vibration sensors in Home Assistant.</div>';
+      html = `<div class="placeholder">
+        <p>No vibration sensors with "Vibration" label found.</p>
+        <p><strong>To fix this:</strong></p>
+        <ol>
+          <li>Go to <strong>Settings → Labels</strong> in Home Assistant</li>
+          <li>Create a label called "Vibration" (case-insensitive)</li>
+          <li>Assign this label to your vibration sensor entities</li>
+          <li>Click "Reload Vibration Sensors" above</li>
+        </ol>
+        <p><small>Supported label names: Vibration, vibration, VIBRATION, etc.</small></p>
+      </div>`;
     } else {
       Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
         html += `
