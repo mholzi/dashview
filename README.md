@@ -34,10 +34,3 @@ The component automatically injects all custom CSS properties into its Shadow DO
 - Card styling properties
 - Popup background colors
 
-This resolves issues where popups and other elements would appear transparent or with incorrect colors due to Shadow DOM CSS isolation.
-
-## Recent Changes
-
-### Music Tab UI Improvement
-- Removed redundant room name display above media cover images in the Music Tab for a cleaner, more focused interface
-- Room identification is still available through tab titles and media player labels
