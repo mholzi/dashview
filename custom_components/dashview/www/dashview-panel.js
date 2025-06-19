@@ -2418,26 +2418,27 @@ class DashviewPanel extends HTMLElement {
     try {
         console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callWS`);
 
-        // Fetch daily forecast using the correct hass.callWS method
-        const dailyForecasts = await this._hass.callWS({
-            type: 'weather/subscribe_forecast',
-            forecast_type: 'daily',
-            entity_id: entityId
-        });
-
-        // Fetch hourly forecast using the correct hass.callWS method
-        const hourlyForecasts = await this._hass.callWS({
-            type: 'weather/subscribe_forecast',
-            forecast_type: 'hourly',
-            entity_id: entityId
-        });
+        // Use Promise.all to fetch both forecasts concurrently and add individual error handling
+        const [dailyResult, hourlyResult] = await Promise.all([
+            this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                forecast_type: 'daily',
+                entity_id: entityId
+            }).catch(e => { console.error('[DashView] Daily forecast fetch failed:', e); return null; }),
+            this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                forecast_type: 'hourly',
+                entity_id: entityId
+            }).catch(e => { console.error('[DashView] Hourly forecast fetch failed:', e); return null; })
+        ]);
         
-        // Store the forecasts from the response
-        this._weatherForecasts.daily = dailyForecasts.forecast || [];
-        this._weatherForecasts.hourly = hourlyForecasts.forecast || [];
+        // Defensively check for null results before accessing the 'forecast' property
+        this._weatherForecasts.daily = dailyResult ? dailyResult.forecast || [] : [];
+        this._weatherForecasts.hourly = hourlyResult ? hourlyResult.forecast || [] : [];
 
         console.log('[DashView] Forecasts updated successfully via callWS');
     } catch (error) {
+        // This outer catch will handle other unexpected errors during the fetch process
         console.error(`[DashView] Error fetching weather forecasts for ${entityId}:`, error);
         this._weatherForecasts.daily = [];
         this._weatherForecasts.hourly = [];
