@@ -1,13 +1,9 @@
 <!-- Tabbed Media Player Control Panel -->
 <div class="music-tab-container media-container">
-    <!-- Tab Header with Title and Room Tabs -->
+    <!-- Tab Header with Room Tabs -->
     <div class="music-tab-header">
-        <div class="music-title">
-            <i class="mdi mdi-music"></i>
-            <span>Musik</span>
-        </div>
         <div class="music-room-tabs" id="music-room-tabs">
-            <!-- Room tab chips will be dynamically generated -->
+            <!-- Room tab buttons will be dynamically generated -->
         </div>
     </div>
     
@@ -25,59 +21,34 @@
 }
 
 .music-tab-header {
-    display: grid;
-    grid-template-columns: min-content 1fr;
-    align-items: center;
-    gap: 20px;
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.music-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--gray1000);
-    white-space: nowrap;
-}
-
-.music-title i {
-    font-size: 20px;
-    color: var(--gray1000);
-}
-
+/* NEW: Styles for text-based room tabs, inspired by the weather card */
 .music-room-tabs {
     display: flex;
     gap: 8px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Allow tabs to wrap on smaller screens */
 }
 
-.music-tab-chip {
-    padding: 13px;
-    border-radius: 50%;
+.music-tab-button {
+    padding: 8px 16px;
+    background-color: var(--gray100);
     border: none;
+    border-radius: 16px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 0.9em;
+    font-family: var(--primary-font-family);
+    color: var(--secondary-text-color);
     transition: all 0.2s ease;
-    background: var(--gray800);
-    color: var(--gray000);
 }
 
-.music-tab-chip.active {
+.music-tab-button.active {
     background: var(--active-big);
     color: var(--gray000);
-}
-
-.music-tab-chip i {
-    width: 22px;
-    height: 22px;
-    font-size: 22px;
+    font-weight: 500;
 }
 
 .music-tab-content {
@@ -328,8 +299,7 @@
                     if (roomConfig.media_players && Array.isArray(roomConfig.media_players) && roomConfig.media_players.length > 0) {
                         musicRooms.push({
                             id: roomId,
-                            name: roomConfig.name || roomId,
-                            icon: roomConfig.icon || 'mdi-music',
+                            name: roomConfig.friendly_name || roomConfig.name || roomId, // Use friendly_name
                             mediaPlayers: roomConfig.media_players
                         });
                     }
@@ -365,7 +335,7 @@
         }
         
         // Only update if we have different rooms than currently displayed
-        const currentTabs = Array.from(tabContainer.querySelectorAll('.music-tab-chip')).map(t => t.dataset.roomId);
+        const currentTabs = Array.from(tabContainer.querySelectorAll('.music-tab-button')).map(t => t.dataset.roomId);
         const newRoomIds = musicRooms.map(r => r.id);
         
         if (JSON.stringify(currentTabs.sort()) === JSON.stringify(newRoomIds.sort())) {
@@ -380,13 +350,12 @@
         
         // Generate new tabs and content
         musicRooms.forEach((room, index) => {
-            // Create tab chip
-            const tabChip = document.createElement('button');
-            tabChip.className = `music-tab-chip ${index === 0 ? 'active' : ''}`;
-            tabChip.dataset.roomId = room.id;
-            tabChip.title = room.name;
-            tabChip.innerHTML = `<i class="${room.icon}"></i>`;
-            tabContainer.appendChild(tabChip);
+            // MODIFIED: Create a text-based tab button
+            const tabButton = document.createElement('button');
+            tabButton.className = `music-tab-button ${index === 0 ? 'active' : ''}`;
+            tabButton.dataset.roomId = room.id;
+            tabButton.textContent = room.name; // Set text to friendly name
+            tabContainer.appendChild(tabButton);
             
             // Create room content
             const roomContent = document.createElement('div');
@@ -474,7 +443,7 @@
         return `
             <div class="media-room-card" data-room="${room.id}">
                 <div class="media-room-header">
-                    <i class="${room.icon}"></i>
+                    <i class="mdi mdi-music"></i>
                     <span class="media-room-title">${room.name}</span>
                 </div>
                 
@@ -489,17 +458,17 @@
     }
     
     function setupTabSwitching() {
-        const tabChips = document.querySelectorAll('.music-tab-chip');
+        const tabButtons = document.querySelectorAll('.music-tab-button');
         const roomContents = document.querySelectorAll('.music-room-content');
         
-        // Add click handlers to tab chips
-        tabChips.forEach(chip => {
-            chip.addEventListener('click', function() {
+        // Add click handlers to tab buttons
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
                 const roomId = this.dataset.roomId;
                 activeTabId = roomId;
                 
                 // Update active tab
-                tabChips.forEach(c => c.classList.remove('active'));
+                tabButtons.forEach(c => c.classList.remove('active'));
                 this.classList.add('active');
                 
                 // Update active content
