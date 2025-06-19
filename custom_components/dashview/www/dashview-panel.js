@@ -1286,6 +1286,28 @@ class DashviewPanel extends HTMLElement {
             this.saveMotionSensorConfig();
         }
 
+        // Handle cover setup buttons
+        const reloadCoverEntitiesBtn = e.target.closest('#reload-cover-entities');
+        if (reloadCoverEntitiesBtn) {
+            this.loadCoverSetup();
+        }
+
+        const saveCoverConfigBtn = e.target.closest('#save-cover-config');
+        if (saveCoverConfigBtn) {
+            this.saveCoverConfig();
+        }
+
+        // Handle light setup buttons
+        const reloadLightEntitiesBtn = e.target.closest('#reload-light-entities');
+        if (reloadLightEntitiesBtn) {
+            this.loadLightSetup();
+        }
+
+        const saveLightConfigBtn = e.target.closest('#save-light-config');
+        if (saveLightConfigBtn) {
+            this.saveLightConfig();
+        }
+
         // Handle window setup buttons
         const reloadWindowSensorsBtn = e.target.closest('#reload-window-sensors');
         if (reloadWindowSensorsBtn) {
@@ -2154,6 +2176,12 @@ class DashviewPanel extends HTMLElement {
           }
           if (targetId === 'motion-setup-tab') {
             setTimeout(() => this.loadMotionSensorSetup(), 100);
+          }
+          if (targetId === 'cover-setup-tab') {
+            setTimeout(() => this.loadCoverSetup(), 100);
+          }
+          if (targetId === 'light-setup-tab') {
+            setTimeout(() => this.loadLightSetup(), 100);
           }
           if (targetId === 'window-setup-tab') {
             setTimeout(() => this.loadWindowSensorSetup(), 100);
@@ -3099,6 +3127,274 @@ class DashviewPanel extends HTMLElement {
       .replace(/[^a-z0-9]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '');
+  }
+
+  // Cover Setup Functions - Following same pattern as motion sensors
+  async loadCoverSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('cover-setup-status');
+    this._setStatusMessage(statusElement, 'Loading covers from Home Assistant...', 'loading');
+
+    try {
+      // Use domain-based API call instead of label-based
+      const [entitiesByRoom, houseConfig] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&domain=cover'),
+        this._hass.callApi('GET', 'dashview/config?type=house')
+      ]);
+
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+      this._renderCoverSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Covers loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading cover setup:', error);
+      this._setStatusMessage(statusElement, `✗ Error loading covers: ${error.message}`, 'error');
+    }
+  }
+
+  _renderCoverSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('covers-by-room');
+    
+    if (!container) return;
+
+    let html = '';
+    
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+      html = '<div class="placeholder">No cover entities found in Home Assistant rooms. Make sure your covers are assigned to rooms in Home Assistant.</div>';
+    } else {
+      Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+        html += `
+          <div class="room-config">
+            <h6>${areaData.name}</h6>
+            <div class="entity-list">
+        `;
+        
+        areaData.entities.forEach(entity => {
+          // Check if this entity is already configured in the house config
+          const isConfigured = this._isCoverConfigured(entity.entity_id, houseConfig);
+          const checkedAttr = isConfigured ? 'checked' : '';
+          
+          html += `
+            <div class="entity-list-item">
+              <label class="checkbox-label">
+                <input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}>
+                <span class="checkmark"></span>
+                ${entity.name}
+              </label>
+              <span class="entity-id">${entity.entity_id}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    container.innerHTML = html;
+  }
+
+  _isCoverConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    
+    return Object.values(houseConfig.rooms).some(room => {
+      return room.covers && room.covers.includes(entityId);
+    });
+  }
+
+  async saveCoverConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('cover-setup-status');
+    const checkboxes = shadow.querySelectorAll('#covers-by-room input[type="checkbox"]');
+    
+    this._setStatusMessage(statusElement, 'Saving cover configuration...', 'loading');
+
+    try {
+      // Ensure we have a house config to work with
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = { rooms: {} };
+      }
+
+      // First, remove all existing covers from room configurations
+      Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+        room.covers = [];
+      });
+
+      // Add selected covers to the appropriate rooms
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const entityId = checkbox.getAttribute('data-entity-id');
+          const roomName = checkbox.getAttribute('data-room');
+          
+          // Find or create the room configuration based on room name
+          let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+          
+          if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+            this._adminLocalState.houseConfig.rooms[roomKey] = {
+              friendly_name: roomName,
+              icon: "mdi:home-outline",
+              floor: "ground_floor",
+              combined_sensor: "",
+              lights: [],
+              covers: [],
+              media_players: [],
+              header_entities: []
+            };
+          }
+
+          if (!this._adminLocalState.houseConfig.rooms[roomKey].covers) {
+            this._adminLocalState.houseConfig.rooms[roomKey].covers = [];
+          }
+
+          // Add the cover entity
+          this._adminLocalState.houseConfig.rooms[roomKey].covers.push(entityId);
+        }
+      });
+
+      // Save the updated configuration
+      await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Cover configuration saved successfully!', 'success');
+      
+    } catch (error) {
+      console.error('[DashView] Error saving cover configuration:', error);
+      this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
+  }
+
+  // Light Setup Functions - Following same pattern as covers
+  async loadLightSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('light-setup-status');
+    this._setStatusMessage(statusElement, 'Loading lights from Home Assistant...', 'loading');
+
+    try {
+      // Use domain-based API call instead of label-based
+      const [entitiesByRoom, houseConfig] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&domain=light'),
+        this._hass.callApi('GET', 'dashview/config?type=house')
+      ]);
+
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+      this._renderLightSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Lights loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading light setup:', error);
+      this._setStatusMessage(statusElement, `✗ Error loading lights: ${error.message}`, 'error');
+    }
+  }
+
+  _renderLightSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('lights-by-room');
+    
+    if (!container) return;
+
+    let html = '';
+    
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+      html = '<div class="placeholder">No light entities found in Home Assistant rooms. Make sure your lights are assigned to rooms in Home Assistant.</div>';
+    } else {
+      Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+        html += `
+          <div class="room-config">
+            <h6>${areaData.name}</h6>
+            <div class="entity-list">
+        `;
+        
+        areaData.entities.forEach(entity => {
+          // Check if this entity is already configured in the house config
+          const isConfigured = this._isLightConfigured(entity.entity_id, houseConfig);
+          const checkedAttr = isConfigured ? 'checked' : '';
+          
+          html += `
+            <div class="entity-list-item">
+              <label class="checkbox-label">
+                <input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}>
+                <span class="checkmark"></span>
+                ${entity.name}
+              </label>
+              <span class="entity-id">${entity.entity_id}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    container.innerHTML = html;
+  }
+
+  _isLightConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    
+    return Object.values(houseConfig.rooms).some(room => {
+      return room.lights && room.lights.includes(entityId);
+    });
+  }
+
+  async saveLightConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('light-setup-status');
+    const checkboxes = shadow.querySelectorAll('#lights-by-room input[type="checkbox"]');
+    
+    this._setStatusMessage(statusElement, 'Saving light configuration...', 'loading');
+
+    try {
+      // Ensure we have a house config to work with
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = { rooms: {} };
+      }
+
+      // First, remove all existing lights from room configurations
+      Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+        room.lights = [];
+      });
+
+      // Add selected lights to the appropriate rooms
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const entityId = checkbox.getAttribute('data-entity-id');
+          const roomName = checkbox.getAttribute('data-room');
+          
+          // Find or create the room configuration based on room name
+          let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+          
+          if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+            this._adminLocalState.houseConfig.rooms[roomKey] = {
+              friendly_name: roomName,
+              icon: "mdi:home-outline",
+              floor: "ground_floor",
+              combined_sensor: "",
+              lights: [],
+              covers: [],
+              media_players: [],
+              header_entities: []
+            };
+          }
+
+          if (!this._adminLocalState.houseConfig.rooms[roomKey].lights) {
+            this._adminLocalState.houseConfig.rooms[roomKey].lights = [];
+          }
+
+          // Add the light entity
+          this._adminLocalState.houseConfig.rooms[roomKey].lights.push(entityId);
+        }
+      });
+
+      // Save the updated configuration
+      await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Light configuration saved successfully!', 'success');
+      
+    } catch (error) {
+      console.error('[DashView] Error saving light configuration:', error);
+      this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
   }
 
   // Window Setup Functions - Following same pattern as motion sensors

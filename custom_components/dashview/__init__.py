@@ -174,22 +174,32 @@ class DashViewConfigView(HomeAssistantView):
                 label_registry = lr.async_get(self._hass) # Get the label registry
                 
                 label_filter = request.query.get("label") # Get the label from the request, e.g., "Motion"
+                domain_filter = request.query.get("domain") # Get the domain from the request, e.g., "cover", "light"
                 
-                if not label_filter:
-                    return web.Response(status=400, text="A 'label' query parameter is required.")
+                if not label_filter and not domain_filter:
+                    return web.Response(status=400, text="Either 'label' or 'domain' query parameter is required.")
 
-                # Find the label ID from the label name
+                # Find the label ID from the label name if label filter is used
                 label_id = None
-                for label in label_registry.labels.values():
-                    if label.name.lower() == label_filter.lower():
-                        label_id = label.label_id
-                        break
+                if label_filter:
+                    for label in label_registry.labels.values():
+                        if label.name.lower() == label_filter.lower():
+                            label_id = label.label_id
+                            break
                 
                 entities_by_area = {}
-                if label_id:
-                    for entity in entity_registry.entities.values():
-                        # Check if the entity has the requested label and is in a room
-                        if label_id in entity.labels and entity.area_id and entity.domain != 'automation':
+                
+                for entity in entity_registry.entities.values():
+                    # Check filtering conditions based on whether we're using label or domain filtering
+                    if entity.area_id and entity.domain != 'automation':
+                        matches_filter = False
+                        
+                        if label_filter and label_id and label_id in entity.labels:
+                            matches_filter = True
+                        elif domain_filter and entity.domain == domain_filter:
+                            matches_filter = True
+                        
+                        if matches_filter:
                             
                             if entity.area_id not in entities_by_area:
                                 area = area_registry.async_get_area(entity.area_id)
@@ -206,7 +216,7 @@ class DashViewConfigView(HomeAssistantView):
                 data = entities_by_area
 
             except Exception as e:
-                _LOGGER.warning("Error fetching entities by room and label: %s", e)
+                _LOGGER.warning("Error fetching entities by room and label/domain: %s", e)
                 data = {}
         elif config_type is None:
             # Return the full house_config when no type is specified

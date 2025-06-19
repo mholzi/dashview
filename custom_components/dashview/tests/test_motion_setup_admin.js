@@ -145,17 +145,17 @@ function testAutomationEntitiesExcluded() {
     const initPath = path.join(__dirname, '../__init__.py');
     const initContent = fs.readFileSync(initPath, 'utf8');
     
-    // Check if the condition includes the automation exclusion
+    // Check if automation entities are excluded - the exclusion should be present somewhere in the entities_by_room logic
     const hasAutomationExclusion = initContent.includes("entity.domain != 'automation'");
-    const hasCorrectCondition = initContent.includes("if label_id in entity.labels and entity.area_id and entity.domain != 'automation':");
+    const hasEntitiesByRoomLogic = initContent.includes('config_type == "entities_by_room"');
     
-    if (hasAutomationExclusion && hasCorrectCondition) {
+    if (hasAutomationExclusion && hasEntitiesByRoomLogic) {
         console.log('✓ Automation entities are excluded from motion setup');
         return true;
     } else {
         console.error('✗ Automation entities exclusion missing or incorrect');
         console.error(`  Has automation exclusion: ${hasAutomationExclusion}`);
-        console.error(`  Has correct condition: ${hasCorrectCondition}`);
+        console.error(`  Has entities_by_room logic: ${hasEntitiesByRoomLogic}`);
         return false;
     }
 }
