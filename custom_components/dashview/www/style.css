@@ -1461,3 +1461,83 @@ body.popup-open, :host(.popup-open) {
     color: #00b894;
     font-weight: 500;
 }
+
+/* --- Lights Card --- */
+.lights-card {
+    margin: 8px 0;
+    background-color: var(--gray200);
+    border-radius: 12px;
+}
+
+.lights-expander {
+    padding: 6px 0;
+}
+
+.lights-summary {
+    list-style: none; /* Hide the default expander arrow */
+    cursor: pointer;
+    padding: 0 12px;
+}
+.lights-summary::-webkit-details-marker {
+    display: none; /* Hide arrow in Chrome/Safari */
+}
+
+.lights-header {
+    display: grid;
+    grid-template-columns: min-content 1fr min-content;
+    align-items: center;
+    gap: 12px;
+    height: 46px;
+}
+
+.lights-header .mdi {
+    color: var(--gray1000);
+    width: 22px;
+}
+
+.lights-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    justify-self: start;
+}
+
+.lights-count {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+    text-align: right;
+}
+
+.lights-content {
+    padding: 0 12px 12px 12px;
+    border-top: 1px solid var(--gray100);
+    margin-top: 6px;
+}
+
+.individual-lights-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 12px;
+}
+
+.light-row {
+    display: grid;
+    grid-template-columns: 1fr 40px;
+    align-items: center;
+    gap: 12px;
+    height: 30px;
+}
+
+.light-name {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--secondary-text-color);
+}
+
+.light-toggle {
+    justify-self: end;
+}
