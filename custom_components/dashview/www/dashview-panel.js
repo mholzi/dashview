@@ -8,6 +8,15 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._houseConfig = {};
+    
+    // Label constants for case-insensitive entity queries - ensures consistent lowercase usage
+    this._entityLabels = {
+      MOTION: 'motion',
+      WINDOW: 'fenster', 
+      SMOKE: 'rauchmelder',
+      VIBRATION: 'vibration'
+    };
+    
     // Admin UI state management - Principle 12
     this._adminLocalState = {
       floorsConfig: null,
@@ -2980,7 +2989,7 @@ class DashviewPanel extends HTMLElement {
     try {
       // The API call uses the new label-based endpoint
       const [entitiesByRoom, houseConfig] = await Promise.all([
-        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Motion'),
+        this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.MOTION}`),
         this._hass.callApi('GET', 'dashview/config?type=house')
       ]);
 
@@ -3405,7 +3414,7 @@ class DashviewPanel extends HTMLElement {
 
     try {
       const [entitiesByRoom, houseConfig] = await Promise.all([
-        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Fenster'),
+        this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.WINDOW}`),
         this._hass.callApi('GET', 'dashview/config?type=house')
       ]);
 
@@ -3541,7 +3550,7 @@ class DashviewPanel extends HTMLElement {
 
     try {
       const [entitiesByRoom, houseConfig] = await Promise.all([
-        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Rauchmelder'),
+        this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.SMOKE}`),
         this._hass.callApi('GET', 'dashview/config?type=house')
       ]);
 
@@ -3677,7 +3686,7 @@ class DashviewPanel extends HTMLElement {
 
     try {
       const [entitiesByRoom, houseConfig] = await Promise.all([
-        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Vibration'),
+        this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.VIBRATION}`),
         this._hass.callApi('GET', 'dashview/config?type=house')
       ]);
 
@@ -4989,10 +4998,6 @@ class DashviewPanel extends HTMLElement {
 
     return `
         <div class="media-room-card" data-room="${room.id}">
-            <div class="media-room-header">
-                <i class="mdi ${room.icon || 'mdi-music'}"></i>
-                <span class="media-room-title">${room.friendly_name}</span>
-            </div>
             <div class="media-presets">${presetButtons}</div>
             <div class="media-display" data-entity="${entityId}">
                 <div class="media-image"><img src="" alt="Media Cover" class="media-cover"></div>

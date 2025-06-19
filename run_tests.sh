@@ -90,11 +90,20 @@ else
 fi
 
 echo ""
-echo "🎵 Running Media Player Admin Reversed tests..."
+echo "🎵 Running Music Player Admin Reversed tests..."
 if node custom_components/dashview/tests/test_media_player_admin_reversed.js > /dev/null; then
     echo "✅ Media Player Admin Reversed tests passed"
 else
     echo "❌ Media Player Admin Reversed tests failed"
+    exit 1
+fi
+
+echo ""
+echo "🎵 Running Music Room Name Removal tests..."
+if node custom_components/dashview/tests/test_music_room_name_removal.js > /dev/null; then
+    echo "✅ Music Room Name Removal tests passed"
+else
+    echo "❌ Music Room Name Removal tests failed"
     exit 1
 fi
 
@@ -246,12 +255,23 @@ else
     exit 1
 fi
 
+# Run Sensor Setup (Fenster, Rauchmelder, Vibration) tests
 echo ""
 echo "🔧 Running Sensor Setup (Fenster, Rauchmelder, Vibration) tests..."
 if node custom_components/dashview/tests/test_sensor_setup_fenster_rauchmelder_vibration.js > /dev/null; then
     echo "✅ Sensor Setup tests passed"
 else
     echo "❌ Sensor Setup tests failed"
+    exit 1
+fi
+
+# Run Label Case Consistency tests
+echo ""
+echo "🔤 Running Label Case Consistency tests..."
+if node custom_components/dashview/tests/test_label_case_consistency.js > /dev/null; then
+    echo "✅ Label Case Consistency tests passed"
+else
+    echo "❌ Label Case Consistency tests failed"
     exit 1
 fi
 
@@ -293,6 +313,9 @@ if node custom_components/dashview/tests/test_popup_bottom_border_radius.js > /d
     echo "[OK] Popup Bottom Border Radius tests passed"
 else
     echo "❌ Popup Bottom Border Radius tests failed"
+    exit 1
+fi
+
 # Run Info Card Hover tests
 echo ""
 echo "🎯 Running Info Card Hover tests..."
