@@ -1145,83 +1145,83 @@ class DashviewPanel extends HTMLElement {
 
   // Update Security Header Buttons
   _updateSecurityHeaderButtons(popup) {
-    if (!this._hass || !popup) return;
-
-    // --- Motion Sensor Button ---
-    const motionButton = popup.querySelector('.motion-button');
-    const motionIcon = motionButton?.querySelector('.mdi');
-    const motionTimestamp = motionButton?.querySelector('.security-timestamp');
-    
-    if (motionButton && motionIcon && motionTimestamp) {
-      const allMotionSensors = this._getAllEntitiesByType('motion');
-      let mostRecentMotion = null;
-      let mostRecentTime = 0;
+      if (!this._hass || !popup) return;
+  
+      // --- Motion Sensor Button ---
+      const motionButton = popup.querySelector('.motion-button');
+      const motionIcon = motionButton?.querySelector('.mdi');
+      const motionTimestamp = motionButton?.querySelector('.security-timestamp');
       
-      // Find the most recently active motion sensor
-      allMotionSensors.forEach(entityId => {
-        const entity = this._hass.states[entityId];
-        if (entity) {
-          const lastChanged = new Date(entity.last_changed).getTime();
-          if (entity.state === 'on' || lastChanged > mostRecentTime) {
-            mostRecentMotion = entity;
-            mostRecentTime = lastChanged;
+      if (motionButton && motionIcon && motionTimestamp) {
+        const allMotionSensors = this._getAllEntitiesByType('motion');
+        const activeMotionSensors = allMotionSensors.filter(id => this._hass.states[id]?.state === 'on');
+  
+        // Only show the button if there are active motion sensors
+        if (activeMotionSensors.length > 0) {
+          motionButton.style.display = 'flex';
+          motionButton.classList.add('active');
+          motionIcon.className = 'mdi mdi-motion-sensor';
+  
+          // Find the most recently triggered sensor among the active ones
+          let mostRecentTime = 0;
+          activeMotionSensors.forEach(entityId => {
+              const entity = this._hass.states[entityId];
+              if (entity) {
+                  const lastChanged = new Date(entity.last_changed).getTime();
+                  if (lastChanged > mostRecentTime) {
+                      mostRecentTime = lastChanged;
+                  }
+              }
+          });
+  
+          // Calculate and display the time ago for the most recent motion
+          const timeDiff = Math.floor((Date.now() - mostRecentTime) / 1000);
+          let timeAgo;
+          if (timeDiff < 3600) {
+            timeAgo = `${Math.floor(timeDiff / 60)}m ago`;
+          } else if (timeDiff < 86400) {
+            timeAgo = `${Math.floor(timeDiff / 3600)}h ago`;
+          } else {
+            timeAgo = `${Math.floor(timeDiff / 86400)}d ago`;
           }
-        }
-      });
-
-      if (mostRecentMotion) {
-        const isActive = mostRecentMotion.state === 'on';
-        motionIcon.className = isActive ? 'mdi mdi-motion-sensor' : 'mdi mdi-motion-sensor-off';
-        motionButton.classList.toggle('active', isActive);
-        
-        // Calculate time ago
-        const timeDiff = Math.floor((Date.now() - mostRecentTime) / 1000);
-        let timeAgo;
-        if (timeDiff < 3600) {
-          timeAgo = `${Math.floor(timeDiff / 60)}m ago`;
-        } else if (timeDiff < 86400) {
-          timeAgo = `${Math.floor(timeDiff / 3600)}h ago`;
+          motionTimestamp.textContent = timeAgo;
+  
         } else {
-          timeAgo = `${Math.floor(timeDiff / 86400)}d ago`;
+          // Hide the button if no motion is detected
+          motionButton.style.display = 'none';
         }
-        motionTimestamp.textContent = timeAgo;
-      } else {
-        motionIcon.className = 'mdi mdi-motion-sensor-off';
-        motionButton.classList.remove('active');
-        motionTimestamp.textContent = '--';
+      }
+  
+      // --- Windows Button ---
+      const windowsButton = popup.querySelector('.windows-button');
+      const windowsCount = windowsButton?.querySelector('.security-count');
+      
+      if (windowsButton && windowsCount) {
+        const allWindows = this._getAllEntitiesByType('window');
+        const openWindows = allWindows.filter(id => this._hass.states[id]?.state === 'on');
+        
+        windowsButton.classList.toggle('active', openWindows.length > 0);
+        windowsCount.textContent = `${openWindows.length} offen`;
+      }
+  
+      // --- Smoke Detector Button ---
+      const smokeButton = popup.querySelector('.smoke-button');
+      const smokeCount = smokeButton?.querySelector('.security-count');
+      
+      if (smokeButton && smokeCount) {
+        const allSmokeDetectors = this._getAllEntitiesByType('smoke');
+        const activeSmokeDetectors = allSmokeDetectors.filter(id => this._hass.states[id]?.state === 'on');
+        
+        // Show/hide smoke detector button based on activity
+        if (activeSmokeDetectors.length > 0) {
+          smokeButton.style.display = 'flex';
+          smokeButton.classList.add('active');
+          smokeCount.textContent = `${activeSmokeDetectors.length} aktiv`;
+        } else {
+          smokeButton.style.display = 'none';
+        }
       }
     }
-
-    // --- Windows Button ---
-    const windowsButton = popup.querySelector('.windows-button');
-    const windowsCount = windowsButton?.querySelector('.security-count');
-    
-    if (windowsButton && windowsCount) {
-      const allWindows = this._getAllEntitiesByType('window');
-      const openWindows = allWindows.filter(id => this._hass.states[id]?.state === 'on');
-      
-      windowsButton.classList.toggle('active', openWindows.length > 0);
-      windowsCount.textContent = `${openWindows.length} offen`;
-    }
-
-    // --- Smoke Detector Button ---
-    const smokeButton = popup.querySelector('.smoke-button');
-    const smokeCount = smokeButton?.querySelector('.security-count');
-    
-    if (smokeButton && smokeCount) {
-      const allSmokeDetectors = this._getAllEntitiesByType('smoke');
-      const activeSmokeDetectors = allSmokeDetectors.filter(id => this._hass.states[id]?.state === 'on');
-      
-      // Show/hide smoke detector button based on activity
-      if (activeSmokeDetectors.length > 0) {
-        smokeButton.style.display = 'flex';
-        smokeButton.classList.add('active');
-        smokeCount.textContent = `${activeSmokeDetectors.length} aktiv`;
-      } else {
-        smokeButton.style.display = 'none';
-      }
-    }
-  }
 
   // Initialize Security Button Click Handlers
   _initializeSecurityButton(button) {
