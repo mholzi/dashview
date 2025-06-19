@@ -179,8 +179,10 @@ class DashViewConfigView(HomeAssistantView):
             data = sorted(combined_sensors, key=lambda s: s["friendly_name"])
         elif config_type == "entities_by_room":
             # This is also still useful for assigning entities
+            from homeassistant.helpers import device_registry as dr
             entity_registry = er.async_get(self._hass)
             area_registry = ar.async_get(self._hass)
+            device_registry = dr.async_get(self._hass)
             
             from homeassistant.helpers import label_registry as lr
             label_registry = lr.async_get(self._hass)
@@ -200,19 +202,27 @@ class DashViewConfigView(HomeAssistantView):
             
             entities_by_area = {}
             for entity in entity_registry.entities.values():
-                if entity.area_id and entity.domain != 'automation':
+                # Determine the area_id, preferring the entity's but falling back to its device's
+                area_id = entity.area_id
+                if not area_id and entity.device_id:
+                    device = device_registry.async_get(entity.device_id)
+                    if device:
+                        area_id = device.area_id
+
+                # Now proceed with the original logic, but using our found area_id
+                if area_id and entity.domain != 'automation':
                     matches_filter = (label_id and label_id in entity.labels) or \
                                      (domain_filter and entity.domain == domain_filter)
                     if matches_filter:
-                        if entity.area_id not in entities_by_area:
-                            area = area_registry.async_get_area(entity.area_id)
-                            entities_by_area[entity.area_id] = {
+                        if area_id not in entities_by_area:
+                            area = area_registry.async_get_area(area_id)
+                            entities_by_area[area_id] = {
                                 "name": area.name if area else "Unknown Area",
                                 "entities": []
                             }
 # This now correctly handles entities without a friendly name by generating one.
                         friendly_name = entity.name or entity.original_name or entity.entity_id.split('.')[-1].replace('_', ' ').title()
-                        entities_by_area[entity.area_id]["entities"].append({
+                        entities_by_area[area_id]["entities"].append({
                             "entity_id": entity.entity_id,
                             "name": friendly_name
                         })
