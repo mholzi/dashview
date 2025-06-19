@@ -43,6 +43,14 @@ class DashviewPanel extends HTMLElement {
           this._initializeCoversCard(popup, roomKey, roomConfig.covers);
         }
       },
+      '.lights-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig?.lights?.length > 0) {
+          this._initializeLightsCard(popup, roomKey, roomConfig.lights);
+        }
+      },
       '.media-player-card': (el) => {
         const popup = el.closest('.popup');
         const roomKey = popup.id.replace('-popup', '');
@@ -127,7 +135,7 @@ class DashviewPanel extends HTMLElement {
       
       // Add cover entities from house configuration
       await this._addCoverEntities();
-      
+      await this._addLightEntities();      
       // Add media player entities from house configuration
       await this._addMediaPlayerEntities();
     }
@@ -213,7 +221,24 @@ class DashviewPanel extends HTMLElement {
       }
     });
   }
-
+async _addLightEntities() {
+    if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
+      await this.loadConfiguration();
+    }
+    
+    if (!this._houseConfig || !this._houseConfig.rooms) return;
+    
+    Object.values(this._houseConfig.rooms).forEach(roomConfig => {
+      if (roomConfig.lights && Array.isArray(roomConfig.lights)) {
+        roomConfig.lights.forEach(entityId => {
+          if (entityId.startsWith('light.')) {
+            this._watchedEntities.add(entityId);
+            console.log(`[DashView] Added light entity: ${entityId}`);
+          }
+        });
+      }
+    });
+  }
   // Add media player entities from house configuration
   async _addMediaPlayerEntities() {
     // Load house configuration if not already loaded
@@ -329,6 +354,11 @@ class DashviewPanel extends HTMLElement {
             this.updateWindowsSection(shadow);
           } else if (entityId.startsWith('cover.')) {
             this.updateCoverCard(shadow, entityId);
+          } else if (entityId.startsWith('light.')) {
+              const activePopup = shadow.querySelector('.popup.active');
+              if (activePopup) {
+                  this.updateLightsCard(activePopup, entityId);
+              }
           } else if (entityId.startsWith('media_player.')) {
             this.updateMediaPlayerInPopups(shadow, entityId);
           } else if (this._isRoomHeaderEntity(entityId)) {
@@ -2181,7 +2211,15 @@ class DashviewPanel extends HTMLElement {
             placeholder.textContent = 'No covers configured for this room.';
             bodyElement.appendChild(placeholder);
         }
-        
+        if (roomConfig.lights && roomConfig.lights.length > 0) {
+            fetch('/local/dashview/templates/room-lights-card.html')
+                .then(response => response.text())
+                .then(html => {
+                    const lightsContainer = document.createElement('div');
+                    lightsContainer.innerHTML = html;
+                    bodyElement.appendChild(lightsContainer);
+                }).catch(err => console.error('[DashView] Error loading lights card template:', err));
+        }
         // Check if the room has media players and inject the card
         if (roomConfig.media_players && roomConfig.media_players.length > 0) {
             // If media players exist, fetch and add the interactive card
@@ -4284,7 +4322,76 @@ class DashviewPanel extends HTMLElement {
       container.innerHTML = consistencyHTML + summaryHTML;
     }
   }
+// ADD THESE TWO NEW FUNCTIONS to the DashviewPanel class:
 
+  // Initialize the lights card with entities and event listeners
+  _initializeLightsCard(popup, roomKey, lightEntities) {
+    const card = popup.querySelector('.lights-card');
+    if (!card) return;
+
+    const individualContainer = card.querySelector('.individual-lights-container');
+    const rowTemplate = card.querySelector('#light-row-template');
+
+    if (!individualContainer || !rowTemplate) return;
+
+    // Create individual light rows
+    individualContainer.innerHTML = ''; // Clear any existing
+    lightEntities.forEach(entityId => {
+        const row = rowTemplate.content.cloneNode(true).querySelector('.light-row');
+        const nameEl = row.querySelector('.light-name');
+        const toggleEl = row.querySelector('.light-toggle');
+
+        row.dataset.entityId = entityId;
+
+        const entityState = this._hass.states[entityId];
+        nameEl.textContent = entityState ? entityState.attributes.friendly_name || entityId : entityId;
+        
+        // Setup the toggle switch
+        toggleEl.hass = this._hass;
+        toggleEl.checked = entityState.state === 'on';
+        toggleEl.addEventListener('change', () => {
+            this._hass.callService('light', 'toggle', { entity_id: entityId });
+        });
+
+        individualContainer.appendChild(row);
+    });
+
+    // Initial update of the card
+    this.updateLightsCard(popup, lightEntities[0]);
+  }
+
+  // Update the lights card when an entity state changes
+  updateLightsCard(popup, changedEntityId) {
+      if (!this._hass || !changedEntityId) return;
+  
+      const roomKey = Object.keys(this._houseConfig.rooms).find(key => 
+          this._houseConfig.rooms[key].lights?.includes(changedEntityId)
+      );
+  
+      if (!roomKey) return;
+  
+      const card = popup.querySelector('.lights-card');
+      if (!card) return;
+  
+      // Update the individual light row toggle
+      const lightRow = card.querySelector(`.light-row[data-entity-id="${changedEntityId}"]`);
+      if (lightRow) {
+          const toggleEl = lightRow.querySelector('.light-toggle');
+          const entityState = this._hass.states[changedEntityId];
+          if (toggleEl && entityState) {
+              toggleEl.checked = entityState.state === 'on';
+          }
+      }
+  
+      // Update the total count in the header
+      const countEl = card.querySelector('.lights-count');
+      const lightEntities = this._houseConfig.rooms[roomKey].lights;
+      if (countEl && lightEntities) {
+          const onCount = lightEntities.filter(id => this._hass.states[id]?.state === 'on').length;
+          const totalCount = lightEntities.length;
+          countEl.textContent = `${onCount} / ${totalCount}`;
+      }
+  }
   // Initialize the covers card with entities and event listeners
   _initializeCoversCard(popup, roomKey, coverEntities) {
     const card = popup.querySelector('.covers-card');
