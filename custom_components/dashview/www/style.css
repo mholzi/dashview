@@ -1,3 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+    /* Base Font */
+    --primary-font-family: 'Space Grotesk', sans-serif;
+
+    /* Default to light mode variables */
+    --background: #f5f7fa;
+    --popupBG: rgba(250, 251, 252, 0.3);
+    --highlight: rgba(40, 40, 42, 0.05);
+    --highlight-active: rgba(250, 251, 252, 0.1);
+    
+    --gray000: #edeff2;
+    --gray100: #e9eaec;
+    --gray200: #d6d7d9;
+    --gray400: #909193;
+    --gray500: #707173;
+    --gray800: #0f0f10;
+    
+    --green: #c5e4ac;
+    --purple: #e3d4f6;
+    --yellow: #faedae;
+    --red: #f0a994;
+    --blue: #c8ddfa;
+    --blue-dark: #abcbf8;
+    --orange: #ffd1b1;
+
+    /* Gradients */
+    --active-light: linear-gradient(145deg, rgba(255,245,200,1) 0%, rgba(255,225,130,1) 60%, rgba(255,200,90,1) 150%);
+    --active-big: linear-gradient(145deg, rgba(255,220,178,1) 0%, rgba(255,176,233,1) 60%, rgba(104,156,255,1) 150%);
+    --active-small: linear-gradient(145deg, rgba(255,212,193,1) 0%, rgba(248,177,235,1) 100%);
+    
+    /* Main Interface Colors */
+    --primary-color: var(--blue-dark);
+    --accent-color: var(--blue-dark);
+    --primary-background-color: var(--background);
+    --secondary-background-color: var(--background);
+    --divider-color: var(--gray100);
+
+    /* Text */
+    --primary-text-color: var(--gray800);
+    --secondary-text-color: var(--gray500);
+    --text-primary-color: var(--gray800);
+    --disabled-text-color: var(--gray400);
+
+    /* Cards */
+    --card-background-color: var(--gray000);
+    --ha-card-background: var(--gray000);
+    --ha-card-border-radius: 30px;
+    --ha-card-border-width: 0px;
+    --ha-card-box-shadow: none;
+}
+
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #28282A;
+        --popupBG: rgba(40, 40, 42, 0.3);
+        --highlight: rgba(250, 251, 252, 0.05);
+        --highlight-active: rgba(40, 40, 42, 0.1);
+        
+        --gray000: #3a3b3d;
+        --gray100: #353637;
+        --gray200: #404142;
+        --gray400: #737476;
+        --gray500: #939496;
+        --gray800: #ffffff;
+
+        --green: #d2e7d6;
+        --purple: #d5c1ed;
+        --yellow: #fbf1be;
+        --red: #e7625f;
+        --blue: #abcbf8;
+        --blue-dark: #c8ddfa;
+        --orange: #ffba8a;
+    }
+}
+
+
+/* --- Base Layout --- */
 body, :host {
     font-family: var(--primary-font-family);
     background-color: var(--background);
@@ -14,6 +94,183 @@ body, :host {
     flex-direction: column;
     gap: 12px;
 }
+
+.placeholder {
+    background-color: var(--gray000);
+    border: 2px dashed var(--gray200);
+    border-radius: 20px;
+    padding: 16px;
+    text-align: center;
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+}
+
+.placeholder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+h3 {
+    font-weight: 700;
+    color: var(--primary-text-color);
+    margin: 0 0 12px 0;
+}
+
+/* --- Pop-up styles --- */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--popupBG);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* Prevent body scrolling when popup is active */
+body.popup-open, :host(.popup-open) {
+    overflow: hidden;
+}
+
+.popup.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.popup-content {
+    background-color: var(--background);
+    margin: 0 auto; /* Center like main view */
+    padding: 20px;
+    border-radius: 30px 30px 0 0;
+    max-width: 500px; /* Match main view max-width */
+    width: calc(100% - 16px); /* Responsive width within max-width constraint */
+    position: relative;
+    transform: translateY(100vh);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    max-height: calc(100vh - 40px); /* Leave some space from edges */
+    overflow-y: auto;
+    /* Hide scrollbar while allowing scrolling */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.popup-content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.popup.active .popup-content {
+    transform: translateY(0);
+}
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 20px 0;
+    font-weight: 700;
+    color: var(--primary-text-color);
+    background: var(--popupBG) !important; /* To explicitly mirror bubble-card header background */
+}
+
+.popup-icon {
+    background-color: var(--green) !important; /* For the icon container background */
+    color: var(--gray800) !important; /* To mirror ha-icon color */
+    opacity: 1 !important; /* To mirror ha-icon opacity */
+    font-size: 24px !important; /* To mirror bubble-icon size */
+    border-radius: 50%; /* Often icons in bubble cards are circular */
+    padding: 8px; /* Add some padding around the icon within its background */
+}
+
+.popup-title {
+    flex: 1;
+}
+
+.popup-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--gray400);
+    cursor: pointer;
+    line-height: 1;
+    background: none; /* To mirror bubble-card header button background */
+}
+
+/* --- Ensure no margin-bottom inside popup content for card-like elements --- */
+/* This section aims to emulate the 'ha-card { margin-bottom: 0px !important; }'
+   and '--vertical-stack-card-gap: 0px!important;' within the popup. */
+.popup-body > .weather-forecast-card,
+.popup-body > .hourly-forecast-container,
+.popup-body > .daily-forecast-container,
+.popup-body > .pollen-card {
+    margin-bottom: 0px !important; /* Remove bottom margin for cards directly inside popup body */
+    margin-top: 0px !important; /* Also remove top margin if present, for continuous stacking */
+}
+
+.popup-body > .hourly-forecast-container h4,
+.popup-body > .daily-forecast-container h4 {
+    margin-top: 12px; /* Re-add some top margin for section headers if they are now flush */
+}
+
+/* Any section within .popup-body that acts like a stacked item should have its internal margin adjusted */
+.popup-body .info-section,
+.popup-body .train-departures-container .train-departure-card {
+    margin-bottom: 0px !important; /* Remove any default bottom margins */
+    margin-top: 0px !important;
+}
+
+/* Adjust general spacing within popup-body if it now looks too cramped */
+.popup-body > div {
+    padding-bottom: 12px; /* Add internal padding to sections instead of relying on margin-bottom */
+}
+
+/* Ensure no excessive gap if elements are using flex/grid with gap property inside popup-body */
+.popup-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0px !important; /* Emulate --vertical-stack-card-gap: 0px!important; */
+}
+
+/* --- Tab styles --- */
+.tab-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.tab-button {
+    padding: 8px 16px;
+    background-color: var(--gray100);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--primary-font-family);
+    color: var(--secondary-text-color);
+}
+.tab-button.active {
+    background: var(--active-small);
+    color: var(--gray800);
+    font-weight: 500;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+
+/* --- Fixed Navigation Bar --- */
 .bottom-nav {
     position: fixed;
     bottom: 10px;
@@ -35,4 +292,1170 @@ body, :host {
     align-items: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     z-index: 5;
+}
+.nav-button {
+    background: none;
+    border: none;
+    color: var(--gray400);
+    cursor: pointer;
+    font-size: 24px; /* MDI icons are font-based - matched to kiosk header button size */
+}
+.nav-button.active {
+    color: var(--blue-dark);
+}
+
+/* --- MDI Icon Support --- */
+/* Add or ensure the following .mdi class definition is present.
+   The 'Material Design Icons' font-family is provided by Home Assistant. */
+.mdi {
+    font-family: 'Material Design Icons', sans-serif !important; /* Ensure this is set and has a generic fallback */
+    font-weight: normal;
+    font-style: normal;
+    font-size: inherit;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
+}
+
+/* --- Header Grid --- */
+.header-grid {
+    display: grid;
+    grid-template-columns: min-content 1fr min-content;
+    align-items: center;
+    gap: 12px;
+    background-color: var(--gray000);
+    border-radius: 20px;
+    padding: 8px;
+}
+
+.header-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.kiosk-button .icon {
+    font-size: 24px;
+    color: var(--primary-text-color);
+    padding: 4px;
+}
+
+.weather-person-stack {
+    display: flex;
+    justify-content: flex-end; /* Aligns items to the right */
+    align-items: center;
+    gap: 12px;
+}
+
+.weather-button {
+    gap: 8px;
+}
+
+.weather-button .icon-container img {
+    width: 40px;
+    height: 40px;
+}
+
+.weather-button .text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+}
+
+.weather-button .name {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+}
+.weather-button .label {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+.weather-button .label sup {
+    font-size: 0.6em;
+}
+
+.person-button .image-container img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+/* --- Admin Settings --- */
+.setting-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 8px;
+    background-color: var(--gray000);
+    border-radius: 12px;
+}
+
+.dropdown-selector {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--gray200);
+    background-color: var(--background);
+    color: var(--primary-text-color);
+    font-family: var(--primary-font-family);
+    font-size: 1em;
+}
+
+.save-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.save-button:hover {
+    opacity: 0.8;
+}
+
+/* --- Train Departure Cards --- */
+.train-departures-section {
+    margin: 16px 0;
+}
+
+.train-departures-section h4 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin: 0 0 12px 0;
+    padding: 0 4px;
+}
+
+.train-departures-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.train-departure-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 16px;
+    gap: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: 1px solid var(--gray200);
+}
+
+.train-departure-card:hover {
+    background-color: var(--highlight);
+}
+
+.train-departure-card.hidden {
+    display: none;
+}
+
+.train-departure-card .train-icon {
+    font-size: 60px;
+    font-weight: 800;
+    line-height: 1;
+    padding-left: 80px;
+    padding-right: 8px;
+    text-align: right;
+    min-width: 80px;
+}
+
+.train-departure-card .train-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.train-departure-card .train-time {
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    line-height: 1.1;
+}
+
+.train-departure-card .train-time.delayed {
+    color: red;
+}
+
+.train-departure-card .train-destination {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    opacity: 0.7;
+}
+
+/* --- Info Card --- */
+.info-card {
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--gray200);
+    font-size: 1.2em;
+    line-height: 1.4em; /* Increased for better readability on wrap */
+    margin: 2px 0;
+    word-spacing: normal; /* Improve word spacing for better flow */
+}
+
+.info-section {
+    display: inline-flex; /* This is the key change to make sections sit side-by-side */
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-right: 4px; /* Reduced margin for tighter text flow */
+    margin-bottom: 4px; /* Adds a little space if a line wraps */
+}
+
+/* Remove section-level hover effects - only badges should be clickable */
+
+.info-section.hidden {
+    display: none;
+}
+
+.info-text {
+    color: var(--gray800);
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.info-badge {
+    background-color: var(--gray800);
+    color: var(--gray100);
+    padding: 2px 6px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+/* Add hover effects only for clickable badges in sections with tap actions */
+.info-section.motion-section .info-badge:hover,
+.info-section.motion-section .info-badge:focus,
+.info-section.windows-section .info-badge:hover,
+.info-section.windows-section .info-badge:focus,
+.info-section.dryer-section .info-badge:hover,
+.info-section.dryer-section .info-badge:focus {
+    background-color: var(--highlight);
+    transform: scale(1.05);
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.info-badge.green {
+    background-color: var(--green);
+    color: var(--gray000);
+}
+
+.info-badge.red {
+    background-color: var(--red);
+    color: var(--gray100);
+}
+
+.info-badge i {
+    font-size: 1em;
+}
+
+/* --- Weather Components --- */
+.weather-forecast-card {
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.current-weather {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.weather-icon img {
+    border-radius: 10px;
+}
+
+.weather-info {
+    flex: 1;
+}
+
+.temperature {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: var(--primary-text-color);
+    line-height: 1;
+}
+
+.condition {
+    font-size: 1.1em;
+    color: var(--secondary-text-color);
+    margin-bottom: 8px;
+    text-transform: capitalize;
+}
+
+.feels-like {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+}
+
+.weather-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-label {
+    font-size: 0.85em;
+    color: var(--secondary-text-color);
+}
+
+.detail-value {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.hourly-forecast-container {
+    margin-bottom: 20px;
+}
+
+.hourly-forecast-container h4 {
+    margin-bottom: 12px;
+    color: var(--primary-text-color);
+    font-size: 1.1em;
+}
+
+.hourly-forecast-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.hourly-forecast-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.hourly-item {
+    min-width: 80px;
+    background-color: var(--card-background-color);
+    border-radius: 16px;
+    padding: 12px 8px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.hourly-time {
+    font-size: 0.8em;
+    color: var(--secondary-text-color);
+    margin-bottom: 8px;
+}
+
+.hourly-icon {
+    margin-bottom: 8px;
+}
+
+.hourly-icon img {
+    width: 32px;
+    height: 32px;
+}
+
+.hourly-temp {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.daily-forecast-container {
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.forecast-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.forecast-tab {
+    padding: 8px 16px;
+    background-color: var(--gray100);
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+    transition: all 0.2s ease;
+}
+
+.forecast-tab.active {
+    background: var(--active-big);
+    color: var(--gray000);
+    font-weight: 500; /* Added for better visibility */
+}
+
+.forecast-content {
+    min-height: 100px;
+}
+
+.daily-forecast {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.daily-icon img {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+}
+
+.daily-info {
+    flex: 1;
+}
+
+.daily-temps {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.daily-high {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--primary-text-color);
+}
+
+.daily-low {
+    font-size: 1.1em;
+    color: var(--secondary-text-color);
+}
+
+.daily-condition {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+    margin-bottom: 4px;
+    text-transform: capitalize;
+}
+
+
+/* --- Pollen Card --- */
+.pollen-card {
+    margin: 12px 0;
+}
+
+.pollen-buttons-row {
+    display: flex;
+    gap: 14px;
+    overflow-x: scroll;
+    margin: 12px 8px 0px 0px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    padding: 4px 0;
+}
+
+.pollen-buttons-row::-webkit-scrollbar {
+    display: none;
+}
+
+.pollen-button {
+    display: flex;
+    width: 85px;
+    min-width: 85px;
+    height: 62px;
+    background: #dddddd;
+    border-radius: 10px;
+    padding: 8px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray000);
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.pollen-button.hidden {
+    display: none;
+}
+
+.pollen-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gray000);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.pollen-state {
+    font-size: 10px;
+    color: var(--gray000);
+    text-align: center;
+}
+
+/* Header Buttons Styles */
+.header-buttons-container {
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+}
+
+.header-buttons-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 8px 12px 8px;
+    overflow-x: auto;
+    width: 100%;
+    background: none;
+    box-shadow: none;
+}
+
+.header-floor-button,
+.header-room-button {
+    background: var(--gray800);
+    border: none;
+    border-radius: 50%;
+    height: 40px;
+    width: 40px;
+    margin-left: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.header-floor-button {
+    background: var(--gray800);
+}
+
+.header-room-button {
+    background: var(--active-big);
+}
+
+.header-floor-button i,
+.header-room-button i {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-floor-button i {
+    color: var(--gray000);
+}
+
+.header-room-button i {
+    color: var(--gray000);
+}
+
+.header-room-button:hover {
+    transform: scale(1.05);
+}
+
+.loading-message,
+.no-activity {
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    padding: 8px;
+    text-align: center;
+}
+
+/* Admin Configuration Styles */
+.config-section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--card-background-color);
+    border-radius: 12px;
+}
+
+.config-section h5 {
+    margin: 0 0 12px 0;
+    color: var(--primary-text-color);
+    font-weight: 600;
+}
+
+.status-display {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--gray100);
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    margin-bottom: 12px;
+}
+
+.config-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.9em;
+    resize: vertical;
+    margin-bottom: 12px;
+    background: var(--background);
+    color: var(--primary-text-color);
+}
+
+.action-button, .save-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.action-button:hover, .save-button:hover {
+    background: var(--accent-color);
+}
+
+.setting-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.dropdown-selector {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--primary-text-color);
+}
+
+/* Floor Maintenance Styles */
+.floor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-row label {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    font-size: 0.9em;
+}
+
+.form-input {
+    padding: 8px 12px;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--primary-text-color);
+    font-family: var(--primary-font-family);
+    font-size: 0.9em;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.floors-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.floor-item {
+    padding: 12px;
+    background: var(--background);
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.floor-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.floor-name {
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.floor-details {
+    font-size: 0.8em;
+    color: var(--secondary-text-color);
+}
+
+.floor-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.delete-button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 6px;
+    background: var(--red);
+    color: white;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.delete-button:hover {
+    opacity: 0.8;
+}
+
+/* Entity list styles for media player management */
+.entity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--background);
+}
+
+.entity-list-item {
+    padding: 8px 12px;
+    background: var(--card-background);
+    border: 1px solid var(--gray200);
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.entity-list-item:hover {
+    background: var(--highlight);
+}
+
+.edit-button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 6px;
+    background: var(--blue);
+    color: var(--gray800);
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.edit-button:hover {
+    opacity: 0.8;
+}
+
+/* Room Header Icons Styles */
+.room-header-icons {
+    margin-bottom: 8px;
+}
+
+.room-header-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.room-header-card {
+    background: var(--card-background-color);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.room-header-card .room-name {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    font-size: 0.9em;
+    min-width: 80px;
+}
+
+.room-icons-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex: 1;
+}
+
+.room-icons-container::-webkit-scrollbar {
+    display: none;
+}
+
+.room-header-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.room-header-icon.active {
+    background: var(--active-small);
+    color: var(--gray800);
+}
+
+.room-header-icon.inactive {
+    background: var(--gray200);
+    color: var(--gray500);
+}
+
+.room-header-icon.unknown {
+    background: var(--gray100);
+    color: var(--gray400);
+}
+
+.room-header-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Entity type specific colors */
+.room-header-icon.motion.active {
+    background: var(--yellow);
+}
+
+.room-header-icon.window.active {
+    background: var(--blue);
+}
+
+.room-header-icon.smoke.active {
+    background: var(--red);
+}
+
+.room-header-icon.vibration.active {
+    background: var(--orange);
+}
+
+.room-header-icon.music.active,
+.room-header-icon.tv.active {
+    background: var(--purple);
+}
+
+.room-header-icon.dishwasher.active,
+.room-header-icon.washing.active,
+.room-header-icon.dryer.active,
+.room-header-icon.freezer.active {
+    background: var(--green);
+}
+
+.room-header-icon.mower.active {
+    background: var(--green);
+}
+
+/* --- Room Header Entities for Popups --- */
+.room-header-entities {
+    margin-bottom: 12px;
+}
+
+.header-entities-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.header-entities-container::-webkit-scrollbar {
+    display: none;
+}
+
+.header-info-chip {
+    display: flex;
+    align-items: center;
+    height: 42px;
+    padding: 4px;
+    border-radius: 12px;
+    min-width: 0;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.chip-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: var(--gray800);
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.chip-icon-container i {
+    width: 22px;
+    font-size: 22px;
+}
+
+.chip-name {
+    font-size: 13px;
+    white-space: normal;
+    overflow: visible;
+    padding-right: 6px;
+}
+
+/* --- Covers Card --- */
+.covers-card {
+    margin: 8px 0;
+    background-color: var(--gray200);
+    border-radius: 12px;
+}
+
+.covers-expander {
+    padding: 6px 0;
+}
+
+.covers-summary {
+    list-style: none; /* Hide the default expander arrow */
+    cursor: pointer;
+    padding: 0 12px;
+}
+.covers-summary::-webkit-details-marker {
+    display: none; /* Hide arrow in Chrome/Safari */
+}
+
+.covers-header {
+    display: grid;
+    grid-template-columns: 100px 1fr 50px;
+    align-items: center;
+    gap: 12px;
+    height: 46px;
+}
+
+.covers-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.cover-position-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    text-align: right;
+}
+
+.covers-content {
+    padding: 0 12px 12px 12px;
+    border-top: 1px solid var(--gray100);
+    margin-top: 6px;
+}
+
+.cover-position-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-top: 12px;
+}
+
+.cover-position-buttons button {
+    flex-grow: 1;
+    background-color: var(--gray000);
+    color: var(--primary-text-color);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.cover-position-buttons button:hover {
+    background-color: var(--gray400);
+}
+
+.individual-covers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cover-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 50px;
+    align-items: center;
+    gap: 12px;
+    height: 30px;
+}
+
+.cover-name {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--secondary-text-color);
+}
+
+/* --- Slider Styles --- */
+.cover-slider-container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.cover-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: var(--gray100);
+    border-radius: 4px;
+    outline: none;
+    opacity: 0.9;
+    transition: opacity .2s;
+    cursor: pointer;
+}
+
+.cover-slider:hover {
+    opacity: 1;
+}
+
+.cover-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--active-big);
+    border-radius: 50%;
+    border: none;
+}
+
+.cover-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--active-big);
+    border-radius: 50%;
+    border: none;
+}
+
+/* Configuration Summary Styles */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    padding-top: 10px;
+}
+
+.summary-item {
+    background-color: var(--gray000);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+    border: 1px solid var(--gray200);
+}
+
+.summary-item strong {
+    color: var(--primary-text-color);
+    font-weight: 500;
+}
+
+.summary-item span {
+    font-weight: 700;
+    font-size: 1.1em;
+    color: var(--primary-color);
+    background-color: var(--gray100);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+/* Floor-Room Consistency Warning Styles */
+.consistency-warning {
+    background-color: rgba(240, 169, 148, 0.1);
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.consistency-warning h6 {
+    margin: 0 0 8px 0;
+    color: #d63031;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.consistency-warning .warning-item {
+    font-size: 0.85em;
+    color: #d63031;
+    margin-bottom: 4px;
+}
+
+.consistency-warning .info-item {
+    font-size: 0.85em;
+    color: #636e72;
+    margin-bottom: 4px;
+}
+
+.consistency-ok {
+    background-color: rgba(197, 228, 172, 0.1);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    font-size: 0.85em;
+    color: #00b894;
+    font-weight: 500;
 }
