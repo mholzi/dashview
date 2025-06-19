@@ -2409,37 +2409,34 @@ class DashviewPanel extends HTMLElement {
   }
 
   // Add this new method to the DashviewPanel class
-  async _fetchWeatherForecasts() {
+    async _fetchWeatherForecasts() {
     if (!this._hass) return;
 
     const entityId = this._getCurrentWeatherEntityId();
     if (!entityId) return;
 
     try {
-        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callWS`);
+        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callService`);
 
-        // Use Promise.all to fetch both forecasts concurrently and add individual error handling
-        const [dailyResult, hourlyResult] = await Promise.all([
-            this._hass.callWS({
-                type: 'weather/subscribe_forecast',
-                forecast_type: 'daily',
-                entity_id: entityId
-            }).catch(e => { console.error('[DashView] Daily forecast fetch failed:', e); return null; }),
-            this._hass.callWS({
-                type: 'weather/subscribe_forecast',
-                forecast_type: 'hourly',
-                entity_id: entityId
-            }).catch(e => { console.error('[DashView] Hourly forecast fetch failed:', e); return null; })
-        ]);
-        
-        // Defensively check for null results before accessing the 'forecast' property
-        this._weatherForecasts.daily = dailyResult ? dailyResult.forecast || [] : [];
-        this._weatherForecasts.hourly = hourlyResult ? hourlyResult.forecast || [] : [];
+        // Use hass.callService to get the daily forecast
+        const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
+            entity_id: entityId,
+            type: 'daily'
+        }, true); // The 'true' is crucial to get the response back
 
-        console.log('[DashView] Forecasts updated successfully via callWS');
+        // Use hass.callService to get the hourly forecast
+        const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
+            entity_id: entityId,
+            type: 'hourly'
+        }, true);
+
+        // The response is structured like { "weather.forecast_home": { "forecast": [...] } }
+        this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
+        this._weatherForecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
+
+        console.log('[DashView] Forecasts updated successfully via callService');
     } catch (error) {
-        // This outer catch will handle other unexpected errors during the fetch process
-        console.error(`[DashView] Error fetching weather forecasts for ${entityId}:`, error);
+        console.error(`[DashView] Error fetching weather forecasts for ${entityId} via callService:`, error);
         this._weatherForecasts.daily = [];
         this._weatherForecasts.hourly = [];
     }
