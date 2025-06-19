@@ -181,13 +181,20 @@ class DashViewConfigView(HomeAssistantView):
 
                 # Find the label ID from the label name if label filter is used
                 label_id = None
+                available_labels = []
                 if label_filter:
                     for label in label_registry.labels.values():
+                        available_labels.append(label.name)
                         if label.name.lower() == label_filter.lower():
                             label_id = label.label_id
+                            _LOGGER.debug(f"[DashView] Found label '{label.name}' with ID: {label_id}")
                             break
+                    
+                    if not label_id:
+                        _LOGGER.warning(f"[DashView] Label '{label_filter}' not found. Available labels: {available_labels}")
                 
                 entities_by_area = {}
+                matched_entities_count = 0
                 
                 for entity in entity_registry.entities.values():
                     # Check filtering conditions based on whether we're using label or domain filtering
@@ -200,6 +207,7 @@ class DashViewConfigView(HomeAssistantView):
                             matches_filter = True
                         
                         if matches_filter:
+                            matched_entities_count += 1
                             
                             if entity.area_id not in entities_by_area:
                                 area = area_registry.async_get_area(entity.area_id)
@@ -213,10 +221,11 @@ class DashViewConfigView(HomeAssistantView):
                                 "name": entity.name or entity.original_name or entity.entity_id
                             })
                 
+                _LOGGER.debug(f"[DashView] Found {matched_entities_count} entities for label/domain: {label_filter or domain_filter}")
                 data = entities_by_area
 
             except Exception as e:
-                _LOGGER.warning("Error fetching entities by room and label/domain: %s", e)
+                _LOGGER.error("Error fetching entities by room and label/domain: %s", e)
                 data = {}
         elif config_type is None:
             # Return the full house_config when no type is specified
