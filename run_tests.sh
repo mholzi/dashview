@@ -293,6 +293,9 @@ if node custom_components/dashview/tests/test_popup_bottom_border_radius.js > /d
     echo "[OK] Popup Bottom Border Radius tests passed"
 else
     echo "❌ Popup Bottom Border Radius tests failed"
+    exit 1
+fi
+
 # Run Info Card Hover tests
 echo ""
 echo "🎯 Running Info Card Hover tests..."
