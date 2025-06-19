@@ -2567,20 +2567,37 @@ class DashviewPanel extends HTMLElement {
       const floorConfig = floors[floorKey];
       if (!floorConfig) return; // Skip if floor is not configured
 
-      // 3. Find all rooms on this floor that have an active motion sensor
-      const activeMotionRooms = floorRooms.filter(room => {
-        // Find the motion sensor configured for this room in the admin panel
-        if (!room.config.header_entities) return false;
-        const motionEntityConfig = room.config.header_entities.find(e => e.entity_type === 'motion');
-        if (!motionEntityConfig || !motionEntityConfig.entity) return false;
+      // 3. Find all rooms on this floor that have an active entity (motion, light, media, etc.)
+      const activeRooms = floorRooms.filter(room => {
+        const config = room.config;
+        if (!this._hass || !this._hass.states) return false;
 
-        // Check if the motion sensor's state is 'on'
-        const sensorState = this._hass.states[motionEntityConfig.entity];
-        return sensorState && sensorState.state === 'on';
+        // Check Lights
+        if (config.lights && config.lights.some(entityId => this._hass.states[entityId]?.state === 'on')) {
+            return true;
+        }
+
+        // Check Media Players
+        if (config.media_players && config.media_players.some(playerConfig => this._hass.states[playerConfig.entity]?.state === 'playing')) {
+            return true;
+        }
+
+        // Check Header Entities (motion, smoke, vibration)
+        if (config.header_entities && config.header_entities.some(entityConfig => {
+            const entityState = this._hass.states[entityConfig.entity];
+            if (entityState && entityState.state === 'on' && ['motion', 'smoke', 'vibration'].includes(entityConfig.entity_type)) {
+                return true;
+            }
+            return false;
+        })) {
+            return true;
+        }
+
+        return false;
       });
 
-      // 4. If at least one room has active motion, display the floor and room icons
-      if (activeMotionRooms.length > 0) {
+      // 4. If at least one room is active, display the floor and room icons
+      if (activeRooms.length > 0) {
         const floorIcon = this._processIconName(floorConfig.icon || 'mdi:help-circle-outline');
 
         // Add the floor icon button
@@ -2590,8 +2607,8 @@ class DashviewPanel extends HTMLElement {
           </button>
         `;
 
-        // Add the icon buttons ONLY for the rooms with active motion
-        activeMotionRooms.forEach(room => {
+        // Add the icon buttons ONLY for the active rooms
+        activeRooms.forEach(room => {
           const roomConfig = room.config;
           const roomIcon = this._processIconName(roomConfig.icon || 'mdi:home-outline');
           buttonsHTML += `
