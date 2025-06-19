@@ -4641,13 +4641,12 @@ class DashviewPanel extends HTMLElement {
     contentContainer.innerHTML = '';
 
     roomsWithMediaPlayers.forEach((room, index) => {
-      // Create tab chip
-      const tabChip = document.createElement('button');
-      tabChip.className = `music-tab-chip ${index === 0 ? 'active' : ''}`;
-      tabChip.dataset.roomId = room.id;
-      tabChip.title = room.friendly_name; // Correctly use friendly_name
-      tabChip.innerHTML = `<i class="mdi ${room.icon || 'mdi-music'}"></i>`;
-      tabContainer.appendChild(tabChip);
+      // Create text-based tab button
+      const tabButton = document.createElement('button');
+      tabButton.className = `music-tab-button ${index === 0 ? 'active' : ''}`;
+      tabButton.dataset.roomId = room.id;
+      tabButton.textContent = room.friendly_name; // Use friendly_name for visible text
+      tabContainer.appendChild(tabButton);
 
       // Create room content
       const roomContent = document.createElement('div');
