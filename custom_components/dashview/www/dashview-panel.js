@@ -2409,7 +2409,7 @@ class DashviewPanel extends HTMLElement {
   }
 
   // Add this new method to the DashviewPanel class
-    async _fetchWeatherForecasts() {
+  async _fetchWeatherForecasts() {
     if (!this._hass) return;
 
     const entityId = this._getCurrentWeatherEntityId();
@@ -2418,19 +2418,17 @@ class DashviewPanel extends HTMLElement {
     try {
         console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callService`);
 
-        // Use hass.callService to get the daily forecast
+        // Use hass.callService to get the daily forecast, with return_response as the 4th argument
         const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
             target: { entity_id: entityId },
-            type: 'daily',
-            return_response: true
-        });
+            type: 'daily'
+        }, true);
 
-        // Use hass.callService to get the hourly forecast
+        // Use hass.callService to get the hourly forecast, with return_response as the 4th argument
         const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
             target: { entity_id: entityId },
-            type: 'hourly',
-            return_response: true
-        });
+            type: 'hourly'
+        }, true);
 
         // The response is structured like { "weather.forecast_home": { "forecast": [...] } }
         this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
@@ -2443,7 +2441,6 @@ class DashviewPanel extends HTMLElement {
         this._weatherForecasts.hourly = [];
     }
   }
-
   // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
