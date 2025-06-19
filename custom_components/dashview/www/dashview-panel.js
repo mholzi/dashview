@@ -1106,6 +1106,28 @@ class DashviewPanel extends HTMLElement {
 
     this._renderEntityList(activeMotionList, activeMotion, "Keine Bewegung erkannt.");
     this._renderEntityList(inactiveMotionList, inactiveMotion, "Keine inaktiven Sensoren.");
+
+    // --- Handle Smoke Detectors ---
+    const allSmokeDetectors = this._getAllEntitiesByType('smoke');
+    const activeSmokeDetectors = allSmokeDetectors.filter(id => this._hass.states[id]?.state === 'on');
+    const inactiveSmokeDetectors = allSmokeDetectors.filter(id => this._hass.states[id]?.state === 'off');
+
+    const activeSmokeDetectorList = popup.querySelector('#active-smoke-detector-list');
+    const inactiveSmokeDetectorList = popup.querySelector('#inactive-smoke-detector-list');
+
+    this._renderEntityList(activeSmokeDetectorList, activeSmokeDetectors, "Keine aktiven Rauchmelder.");
+    this._renderEntityList(inactiveSmokeDetectorList, inactiveSmokeDetectors, "Keine inaktiven Rauchmelder.");
+
+    // --- Handle Vibration Sensors ---
+    const allVibrationSensors = this._getAllEntitiesByType('vibration');
+    const activeVibrationSensors = allVibrationSensors.filter(id => this._hass.states[id]?.state === 'on');
+    const inactiveVibrationSensors = allVibrationSensors.filter(id => this._hass.states[id]?.state === 'off');
+
+    const activeVibrationList = popup.querySelector('#active-vibration-list');
+    const inactiveVibrationList = popup.querySelector('#inactive-vibration-list');
+
+    this._renderEntityList(activeVibrationList, activeVibrationSensors, "Keine aktiven Vibrationssensoren.");
+    this._renderEntityList(inactiveVibrationList, inactiveVibrationSensors, "Keine inaktiven Vibrationssensoren.");
   }
 
   initializeCard(context) {
@@ -1262,6 +1284,39 @@ class DashviewPanel extends HTMLElement {
         const saveMotionSensorConfigBtn = e.target.closest('#save-motion-sensor-config');
         if (saveMotionSensorConfigBtn) {
             this.saveMotionSensorConfig();
+        }
+
+        // Handle window setup buttons
+        const reloadWindowSensorsBtn = e.target.closest('#reload-window-sensors');
+        if (reloadWindowSensorsBtn) {
+            this.loadWindowSensorSetup();
+        }
+
+        const saveWindowSensorConfigBtn = e.target.closest('#save-window-sensor-config');
+        if (saveWindowSensorConfigBtn) {
+            this.saveWindowSensorConfig();
+        }
+
+        // Handle smoke detector setup buttons
+        const reloadSmokeDetectorSensorsBtn = e.target.closest('#reload-smoke-detector-sensors');
+        if (reloadSmokeDetectorSensorsBtn) {
+            this.loadSmokeDetectorSetup();
+        }
+
+        const saveSmokeDetectorConfigBtn = e.target.closest('#save-smoke-detector-sensor-config');
+        if (saveSmokeDetectorConfigBtn) {
+            this.saveSmokeDetectorConfig();
+        }
+
+        // Handle vibration setup buttons
+        const reloadVibrationSensorsBtn = e.target.closest('#reload-vibration-sensors');
+        if (reloadVibrationSensorsBtn) {
+            this.loadVibrationSetup();
+        }
+
+        const saveVibrationConfigBtn = e.target.closest('#save-vibration-sensor-config');
+        if (saveVibrationConfigBtn) {
+            this.saveVibrationConfig();
         }
 
         // Handle floor maintenance buttons
@@ -2099,6 +2154,15 @@ class DashviewPanel extends HTMLElement {
           }
           if (targetId === 'motion-setup-tab') {
             setTimeout(() => this.loadMotionSensorSetup(), 100);
+          }
+          if (targetId === 'window-setup-tab') {
+            setTimeout(() => this.loadWindowSensorSetup(), 100);
+          }
+          if (targetId === 'smoke-detector-setup-tab') {
+            setTimeout(() => this.loadSmokeDetectorSetup(), 100);
+          }
+          if (targetId === 'vibration-setup-tab') {
+            setTimeout(() => this.loadVibrationSetup(), 100);
           }
           if (targetId === 'header-buttons-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
@@ -3035,6 +3099,414 @@ class DashviewPanel extends HTMLElement {
       .replace(/[^a-z0-9]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '');
+  }
+
+  // Window Setup Functions - Following same pattern as motion sensors
+  async loadWindowSensorSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('window-setup-status');
+    this._setStatusMessage(statusElement, 'Loading window sensors from Home Assistant...', 'loading');
+
+    try {
+      const [entitiesByRoom, houseConfig] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Fenster'),
+        this._hass.callApi('GET', 'dashview/config?type=house')
+      ]);
+
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+      this._renderWindowSensorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Window sensors loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading window sensor setup:', error);
+      this._setStatusMessage(statusElement, `✗ Error loading window sensors: ${error.message}`, 'error');
+    }
+  }
+
+  _renderWindowSensorSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('window-sensors-by-room');
+    
+    if (!container) return;
+
+    let html = '';
+    
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+      html = '<div class="placeholder">No window sensors with "Fenster" label found. Please assign the "Fenster" label to your window sensors in Home Assistant.</div>';
+    } else {
+      Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+        html += `
+          <div class="room-config">
+            <h6>${areaData.name}</h6>
+            <div class="entity-list">
+        `;
+        
+        areaData.entities.forEach(entity => {
+          const isConfigured = this._isWindowSensorConfigured(entity.entity_id, houseConfig);
+          const checkedAttr = isConfigured ? 'checked' : '';
+          
+          html += `
+            <div class="entity-list-item">
+              <label class="checkbox-label">
+                <input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}>
+                <span class="checkmark"></span>
+                ${entity.name}
+              </label>
+              <span class="entity-id">${entity.entity_id}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    container.innerHTML = html;
+  }
+
+  _isWindowSensorConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    
+    return Object.values(houseConfig.rooms).some(room => {
+      return room.header_entities && room.header_entities.some(headerEntity => 
+        headerEntity.entity === entityId && headerEntity.entity_type === 'window'
+      );
+    });
+  }
+
+  async saveWindowSensorConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('window-setup-status');
+    const checkboxes = shadow.querySelectorAll('#window-sensors-by-room input[type="checkbox"]');
+    
+    this._setStatusMessage(statusElement, 'Saving window sensor configuration...', 'loading');
+
+    try {
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = { rooms: {} };
+      }
+
+      // Remove all existing window sensors from room configurations
+      Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+        if (room.header_entities) {
+          room.header_entities = room.header_entities.filter(entity => entity.entity_type !== 'window');
+        }
+      });
+
+      // Add selected window sensors to the appropriate rooms
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const entityId = checkbox.getAttribute('data-entity-id');
+          const roomName = checkbox.getAttribute('data-room');
+          
+          let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+          
+          if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+            this._adminLocalState.houseConfig.rooms[roomKey] = {
+              friendly_name: roomName,
+              icon: "mdi:home-outline",
+              floor: "ground_floor",
+              combined_sensor: "",
+              lights: [],
+              covers: [],
+              media_players: [],
+              header_entities: []
+            };
+          }
+
+          if (!this._adminLocalState.houseConfig.rooms[roomKey].header_entities) {
+            this._adminLocalState.houseConfig.rooms[roomKey].header_entities = [];
+          }
+
+          this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({
+            entity: entityId,
+            entity_type: 'window',
+            icon: 'mdi:window-open'
+          });
+        }
+      });
+
+      await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Window sensor configuration saved successfully!', 'success');
+      
+    } catch (error) {
+      console.error('[DashView] Error saving window sensor configuration:', error);
+      this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
+  }
+
+  // Smoke Detector Setup Functions - Following same pattern as motion sensors
+  async loadSmokeDetectorSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('smoke-detector-setup-status');
+    this._setStatusMessage(statusElement, 'Loading smoke detectors from Home Assistant...', 'loading');
+
+    try {
+      const [entitiesByRoom, houseConfig] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Rauchmelder'),
+        this._hass.callApi('GET', 'dashview/config?type=house')
+      ]);
+
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+      this._renderSmokeDetectorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Smoke detectors loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading smoke detector setup:', error);
+      this._setStatusMessage(statusElement, `✗ Error loading smoke detectors: ${error.message}`, 'error');
+    }
+  }
+
+  _renderSmokeDetectorSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('smoke-detector-sensors-by-room');
+    
+    if (!container) return;
+
+    let html = '';
+    
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+      html = '<div class="placeholder">No smoke detectors with "Rauchmelder" label found. Please assign the "Rauchmelder" label to your smoke detectors in Home Assistant.</div>';
+    } else {
+      Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+        html += `
+          <div class="room-config">
+            <h6>${areaData.name}</h6>
+            <div class="entity-list">
+        `;
+        
+        areaData.entities.forEach(entity => {
+          const isConfigured = this._isSmokeDetectorConfigured(entity.entity_id, houseConfig);
+          const checkedAttr = isConfigured ? 'checked' : '';
+          
+          html += `
+            <div class="entity-list-item">
+              <label class="checkbox-label">
+                <input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}>
+                <span class="checkmark"></span>
+                ${entity.name}
+              </label>
+              <span class="entity-id">${entity.entity_id}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    container.innerHTML = html;
+  }
+
+  _isSmokeDetectorConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    
+    return Object.values(houseConfig.rooms).some(room => {
+      return room.header_entities && room.header_entities.some(headerEntity => 
+        headerEntity.entity === entityId && headerEntity.entity_type === 'smoke'
+      );
+    });
+  }
+
+  async saveSmokeDetectorConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('smoke-detector-setup-status');
+    const checkboxes = shadow.querySelectorAll('#smoke-detector-sensors-by-room input[type="checkbox"]');
+    
+    this._setStatusMessage(statusElement, 'Saving smoke detector configuration...', 'loading');
+
+    try {
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = { rooms: {} };
+      }
+
+      // Remove all existing smoke detector sensors from room configurations
+      Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+        if (room.header_entities) {
+          room.header_entities = room.header_entities.filter(entity => entity.entity_type !== 'smoke');
+        }
+      });
+
+      // Add selected smoke detector sensors to the appropriate rooms
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const entityId = checkbox.getAttribute('data-entity-id');
+          const roomName = checkbox.getAttribute('data-room');
+          
+          let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+          
+          if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+            this._adminLocalState.houseConfig.rooms[roomKey] = {
+              friendly_name: roomName,
+              icon: "mdi:home-outline",
+              floor: "ground_floor",
+              combined_sensor: "",
+              lights: [],
+              covers: [],
+              media_players: [],
+              header_entities: []
+            };
+          }
+
+          if (!this._adminLocalState.houseConfig.rooms[roomKey].header_entities) {
+            this._adminLocalState.houseConfig.rooms[roomKey].header_entities = [];
+          }
+
+          this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({
+            entity: entityId,
+            entity_type: 'smoke',
+            icon: 'mdi:smoke-detector'
+          });
+        }
+      });
+
+      await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Smoke detector configuration saved successfully!', 'success');
+      
+    } catch (error) {
+      console.error('[DashView] Error saving smoke detector configuration:', error);
+      this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
+  }
+
+  // Vibration Setup Functions - Following same pattern as motion sensors
+  async loadVibrationSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('vibration-setup-status');
+    this._setStatusMessage(statusElement, 'Loading vibration sensors from Home Assistant...', 'loading');
+
+    try {
+      const [entitiesByRoom, houseConfig] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=entities_by_room&label=Vibration'),
+        this._hass.callApi('GET', 'dashview/config?type=house')
+      ]);
+
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+      this._renderVibrationSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Vibration sensors loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading vibration sensor setup:', error);
+      this._setStatusMessage(statusElement, `✗ Error loading vibration sensors: ${error.message}`, 'error');
+    }
+  }
+
+  _renderVibrationSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('vibration-sensors-by-room');
+    
+    if (!container) return;
+
+    let html = '';
+    
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+      html = '<div class="placeholder">No vibration sensors with "Vibration" label found. Please assign the "Vibration" label to your vibration sensors in Home Assistant.</div>';
+    } else {
+      Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+        html += `
+          <div class="room-config">
+            <h6>${areaData.name}</h6>
+            <div class="entity-list">
+        `;
+        
+        areaData.entities.forEach(entity => {
+          const isConfigured = this._isVibrationSensorConfigured(entity.entity_id, houseConfig);
+          const checkedAttr = isConfigured ? 'checked' : '';
+          
+          html += `
+            <div class="entity-list-item">
+              <label class="checkbox-label">
+                <input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}>
+                <span class="checkmark"></span>
+                ${entity.name}
+              </label>
+              <span class="entity-id">${entity.entity_id}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    container.innerHTML = html;
+  }
+
+  _isVibrationSensorConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    
+    return Object.values(houseConfig.rooms).some(room => {
+      return room.header_entities && room.header_entities.some(headerEntity => 
+        headerEntity.entity === entityId && headerEntity.entity_type === 'vibration'
+      );
+    });
+  }
+
+  async saveVibrationConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('vibration-setup-status');
+    const checkboxes = shadow.querySelectorAll('#vibration-sensors-by-room input[type="checkbox"]');
+    
+    this._setStatusMessage(statusElement, 'Saving vibration sensor configuration...', 'loading');
+
+    try {
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = { rooms: {} };
+      }
+
+      // Remove all existing vibration sensors from room configurations
+      Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+        if (room.header_entities) {
+          room.header_entities = room.header_entities.filter(entity => entity.entity_type !== 'vibration');
+        }
+      });
+
+      // Add selected vibration sensors to the appropriate rooms
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const entityId = checkbox.getAttribute('data-entity-id');
+          const roomName = checkbox.getAttribute('data-room');
+          
+          let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+          
+          if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+            this._adminLocalState.houseConfig.rooms[roomKey] = {
+              friendly_name: roomName,
+              icon: "mdi:home-outline",
+              floor: "ground_floor",
+              combined_sensor: "",
+              lights: [],
+              covers: [],
+              media_players: [],
+              header_entities: []
+            };
+          }
+
+          if (!this._adminLocalState.houseConfig.rooms[roomKey].header_entities) {
+            this._adminLocalState.houseConfig.rooms[roomKey].header_entities = [];
+          }
+
+          this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({
+            entity: entityId,
+            entity_type: 'vibration',
+            icon: 'mdi:vibrate'
+          });
+        }
+      });
+
+      await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Vibration sensor configuration saved successfully!', 'success');
+      
+    } catch (error) {
+      console.error('[DashView] Error saving vibration sensor configuration:', error);
+      this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
   }
 
   // Floor Maintenance Functions - Principle 1, 2 & 12

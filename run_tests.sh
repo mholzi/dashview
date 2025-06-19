@@ -236,6 +236,15 @@ else
     exit 1
 fi
 
+echo ""
+echo "🔧 Running Sensor Setup (Fenster, Rauchmelder, Vibration) tests..."
+if node custom_components/dashview/tests/test_sensor_setup_fenster_rauchmelder_vibration.js > /dev/null; then
+    echo "✅ Sensor Setup tests passed"
+else
+    echo "❌ Sensor Setup tests failed"
+    exit 1
+fi
+
 # Run Bottom Navigation Alignment tests
 echo ""
 echo "🧭 Running Bottom Navigation Alignment tests..."
@@ -266,6 +275,7 @@ else
     exit 1
 fi
 
+
 # Run Popup Bottom Border Radius tests
 echo ""
 echo "🔘 Running Popup Bottom Border Radius tests..."
@@ -273,6 +283,15 @@ if node custom_components/dashview/tests/test_popup_bottom_border_radius.js > /d
     echo "[OK] Popup Bottom Border Radius tests passed"
 else
     echo "❌ Popup Bottom Border Radius tests failed"
+# Run Info Card Hover tests
+echo ""
+echo "🎯 Running Info Card Hover tests..."
+output=$(node custom_components/dashview/tests/test_info_card_hover.js 2>&1)
+if [ $? -eq 0 ]; then
+    echo "[OK] Info Card Hover tests passed"
+else
+    echo "❌ Info Card Hover tests failed"
+    echo "$output"
     exit 1
 fi
 

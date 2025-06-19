@@ -510,6 +510,7 @@ body.popup-open, :host(.popup-open) {
     font-size: 1.2em;
     line-height: 1.4em; /* Increased for better readability on wrap */
     margin: 2px 0;
+    word-spacing: normal; /* Improve word spacing for better flow */
 }
 
 .info-section {
@@ -517,23 +518,11 @@ body.popup-open, :host(.popup-open) {
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-    margin-right: 8px; /* Adds a space between the sentences */
+    margin-right: 4px; /* Reduced margin for tighter text flow */
     margin-bottom: 4px; /* Adds a little space if a line wraps */
 }
 
-.info-section.motion-section,
-.info-section.windows-section,
-.info-section.dryer-section {
-    padding: 4px;
-    border-radius: 8px;
-    transition: background-color 0.2s;
-}
-
-.info-section.motion-section:hover,
-.info-section.windows-section:hover,
-.info-section.dryer-section:hover {
-    background-color: var(--highlight);
-}
+/* Remove section-level hover effects - only badges should be clickable */
 
 .info-section.hidden {
     display: none;
@@ -556,6 +545,18 @@ body.popup-open, :host(.popup-open) {
     gap: 4px;
     font-size: 0.9em;
     cursor: pointer;
+}
+
+/* Add hover effects only for clickable badges in sections with tap actions */
+.info-section.motion-section .info-badge:hover,
+.info-section.motion-section .info-badge:focus,
+.info-section.windows-section .info-badge:hover,
+.info-section.windows-section .info-badge:focus,
+.info-section.dryer-section .info-badge:hover,
+.info-section.dryer-section .info-badge:focus {
+    background-color: var(--highlight);
+    transform: scale(1.05);
+    transition: background-color 0.2s, transform 0.2s;
 }
 
 .info-badge.green {

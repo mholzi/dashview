@@ -5,6 +5,8 @@
     <div class="tab-buttons">
         <button class="tab-button active" data-target="fenster-tab">Fenster</button>
         <button class="tab-button" data-target="bewegung-tab">Bewegung</button>
+        <button class="tab-button" data-target="rauchmelder-tab">Rauchmelder</button>
+        <button class="tab-button" data-target="vibration-tab">Vibration</button>
         <button class="tab-button" data-target="temperatur-tab">Temperatur</button>
     </div>
     <div id="fenster-tab" class="tab-content active">
@@ -21,6 +23,22 @@
         </div>
         <h4 style="margin-top: 20px;"><i class="mdi mdi-motion-sensor-off"></i> Inaktive Bewegungsmelder</h4>
         <div id="inactive-motion-list" class="entity-list">
+        </div>
+    </div>
+    <div id="rauchmelder-tab" class="tab-content">
+        <h4><i class="mdi mdi-smoke-detector"></i> Aktive Rauchmelder</h4>
+        <div id="active-smoke-detector-list" class="entity-list">
+        </div>
+        <h4 style="margin-top: 20px;"><i class="mdi mdi-smoke-detector-off"></i> Inaktive Rauchmelder</h4>
+        <div id="inactive-smoke-detector-list" class="entity-list">
+        </div>
+    </div>
+    <div id="vibration-tab" class="tab-content">
+        <h4><i class="mdi mdi-vibrate"></i> Aktive Vibrationssensoren</h4>
+        <div id="active-vibration-list" class="entity-list">
+        </div>
+        <h4 style="margin-top: 20px;"><i class="mdi mdi-vibrate-off"></i> Inaktive Vibrationssensoren</h4>
+        <div id="inactive-vibration-list" class="entity-list">
         </div>
     </div>
      <div id="temperatur-tab" class="tab-content">
