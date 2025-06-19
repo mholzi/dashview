@@ -549,8 +549,11 @@ body.popup-open, :host(.popup-open) {
 
 /* Add hover effects only for clickable badges in sections with tap actions */
 .info-section.motion-section .info-badge:hover,
+.info-section.motion-section .info-badge:focus,
 .info-section.windows-section .info-badge:hover,
-.info-section.dryer-section .info-badge:hover {
+.info-section.windows-section .info-badge:focus,
+.info-section.dryer-section .info-badge:hover,
+.info-section.dryer-section .info-badge:focus {
     background-color: var(--highlight);
     transform: scale(1.05);
     transition: background-color 0.2s, transform 0.2s;
