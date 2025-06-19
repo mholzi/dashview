@@ -10,6 +10,8 @@ A comprehensive Home Assistant dashboard component with Shadow DOM support and c
 
 - **Component Isolation**: Uses Shadow DOM for proper component encapsulation while maintaining access to custom CSS variables.
 
+
+- **Clean Music Interface**: The Music Tab provides a streamlined interface with media controls and cover art display without redundant room name headers.
 - **Case-Insensitive Label Matching**: Entity discovery by labels (motion, window, smoke, vibration sensors) works with any capitalization in your Home Assistant labels. You can use "Motion", "motion", "MOTION", etc. - the system will find all matching entities regardless of case.
 
 ## Entity Label Configuration
@@ -33,3 +35,9 @@ The component automatically injects all custom CSS properties into its Shadow DO
 - Popup background colors
 
 This resolves issues where popups and other elements would appear transparent or with incorrect colors due to Shadow DOM CSS isolation.
+
+## Recent Changes
+
+### Music Tab UI Improvement
+- Removed redundant room name display above media cover images in the Music Tab for a cleaner, more focused interface
+- Room identification is still available through tab titles and media player labels
