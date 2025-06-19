@@ -2169,9 +2169,6 @@ class DashviewPanel extends HTMLElement {
           if (targetId === 'header-buttons-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }
-          if (targetId === 'floor-maintenance-tab') {
-            setTimeout(() => this.loadFloorMaintenance(), 100);
-          }
           if (targetId === 'room-maintenance-tab') {
             setTimeout(() => this.loadRoomMaintenance(), 100);
           }
