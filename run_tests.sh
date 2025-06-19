@@ -269,10 +269,12 @@ fi
 # Run Info Card Hover tests
 echo ""
 echo "🎯 Running Info Card Hover tests..."
-if node custom_components/dashview/tests/test_info_card_hover.js > /dev/null; then
+output=$(node custom_components/dashview/tests/test_info_card_hover.js 2>&1)
+if [ $? -eq 0 ]; then
     echo "[OK] Info Card Hover tests passed"
 else
     echo "❌ Info Card Hover tests failed"
+    echo "$output"
     exit 1
 fi
 
