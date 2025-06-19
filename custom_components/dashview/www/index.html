@@ -9,68 +9,66 @@
 </head>
 <body>
     <div class="dashboard-container">
-        <div class="header-grid">
-            <div data-template="kiosk-button"></div>
-            <div class="weather-person-stack" data-template="weather-button"></div>
-            <div data-template="person-button"></div>
-        </div>
-        <div data-template="header-buttons"></div>
-        <div data-template="room-header-icons"></div>
-        <div class="placeholder">Alarm</div>
-        <div class="placeholder">Scene Buttons</div>
-        <div class="placeholder">Header Updates</div>
-        <div data-template="info-card"></div>
-        <div class="train-departures-section">
-            <div class="train-departures-container">
-                <div class="train-departure-card" 
-                     data-conditions="zone.deutsche_bank>0,weekday"
-                     data-departure-sensor="sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag"
-                     data-destination="Nach Buchschlag"
-                     data-delay-min="0">
-                    <div class="train-icon">🚆</div>
-                    <div class="train-info">
-                        <div class="train-time">--:--</div>
-                        <div class="train-destination">Nach Buchschlag</div>
+        <div class="content-scroll-area">
+            <div class="header-grid">
+                <div data-template="kiosk-button"></div>
+                <div class="weather-person-stack" data-template="weather-button"></div>
+                <div data-template="person-button"></div>
+            </div>
+            <div data-template="header-buttons"></div>
+            <div data-template="room-header-icons"></div>
+            <div class="placeholder">Alarm</div>
+            <div class="placeholder">Scene Buttons</div>
+            <div class="placeholder">Header Updates</div>
+            <div data-template="info-card"></div>
+            <div class="train-departures-section">
+                <div class="train-departures-container">
+                    <div class="train-departure-card" 
+                         data-conditions="zone.deutsche_bank>0,weekday"
+                         data-departure-sensor="sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag"
+                         data-destination="Nach Buchschlag"
+                         data-delay-min="0">
+                        <div class="train-icon">🚆</div>
+                        <div class="train-info">
+                            <div class="train-time">--:--</div>
+                            <div class="train-destination">Nach Buchschlag</div>
+                        </div>
                     </div>
-                </div>
-                <div class="train-departure-card" 
-                     data-conditions="zone.buchschlag_bahnhof!=0,binary_sensor.before_9am=on,weekday"
-                     data-departure-sensor="sensor.dreieich_buchschlag_departures_via_frankfurt_hbf"
-                     data-destination="Nach Frankfurt"
-                     data-delay-min="0">
-                    <div class="train-icon">🚆</div>
-                    <div class="train-info">
-                        <div class="train-time">--:--</div>
-                        <div class="train-destination">Nach Frankfurt</div>
+                    <div class="train-departure-card" 
+                         data-conditions="zone.buchschlag_bahnhof!=0,binary_sensor.before_9am=on,weekday"
+                         data-departure-sensor="sensor.dreieich_buchschlag_departures_via_frankfurt_hbf"
+                         data-destination="Nach Frankfurt"
+                         data-delay-min="0">
+                        <div class="train-icon">🚆</div>
+                        <div class="train-info">
+                            <div class="train-time">--:--</div>
+                            <div class="train-destination">Nach Frankfurt</div>
+                        </div>
                     </div>
-                </div>
-                <div class="train-departure-card" 
-                     data-conditions="person.markus=home,binary_sensor.before_9am=on,weekday"
-                     data-departure-sensor="sensor.dreieich_buchschlag_departures_via_frankfurt_hbf"
-                     data-destination="Nach Frankfurt"
-                     data-delay-min="10">
-                    <div class="train-icon">🚆</div>
-                    <div class="train-info">
-                        <div class="train-time">--:--</div>
-                        <div class="train-destination">Nach Frankfurt</div>
+                    <div class="train-departure-card" 
+                         data-conditions="person.markus=home,binary_sensor.before_9am=on,weekday"
+                         data-departure-sensor="sensor.dreieich_buchschlag_departures_via_frankfurt_hbf"
+                         data-destination="Nach Frankfurt"
+                         data-delay-min="10">
+                        <div class="train-icon">🚆</div>
+                        <div class="train-info">
+                            <div class="train-time">--:--</div>
+                            <div class="train-destination">Nach Frankfurt</div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div class="placeholder">Window/Weather Notifications</div>
+            <div class="placeholder">DWD Warning</div>
+            <div class="placeholder">Erdgeschoss Floor Tab</div>
         </div>
-        <div class="placeholder">Window/Weather Notifications</div>
-        <div class="placeholder">DWD Warning</div>
-        <div class="placeholder">Erdgeschoss Floor Tab</div>
+        <nav class="bottom-nav">
+            <button class="nav-button mdi mdi-home" data-hash="#home"></button> <button class="nav-button mdi mdi-security" data-hash="#security"></button>
+            <button class="nav-button mdi mdi-calendar" data-hash="#calendar"></button>
+            <button class="nav-button mdi mdi-music" data-hash="#music"></button>
+            <button class="nav-button mdi mdi-cog" data-hash="#admin"></button> </nav>
     </div>
 
-    <nav class="bottom-nav">
-        <button class="nav-button mdi mdi-home" data-hash="#home"></button> <!-- Added home button -->
-        <button class="nav-button mdi mdi-security" data-hash="#security"></button>
-        <button class="nav-button mdi mdi-calendar" data-hash="#calendar"></button>
-        <button class="nav-button mdi mdi-music" data-hash="#music"></button>
-        <button class="nav-button mdi mdi-cog" data-hash="#admin"></button> <!-- Changed icon and hash -->
-    </nav>
-
-    <!-- Reusable popup template -->
     <template id="popup-template">
         <div class="popup-content">
             <span class="popup-close">&times;</span>
