@@ -2421,14 +2421,16 @@ class DashviewPanel extends HTMLElement {
         // Use hass.callService to get the daily forecast
         const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
             target: { entity_id: entityId },
-            type: 'daily'
-        }, true); // The 'true' is crucial to get the response back
+            type: 'daily',
+            return_response: true
+        });
 
         // Use hass.callService to get the hourly forecast
         const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
             target: { entity_id: entityId },
-            type: 'hourly'
-        }, true);
+            type: 'hourly',
+            return_response: true
+        });
 
         // The response is structured like { "weather.forecast_home": { "forecast": [...] } }
         this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
