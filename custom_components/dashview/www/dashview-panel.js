@@ -53,6 +53,7 @@ class DashviewPanel extends HTMLElement {
       },
       // Add this new line for the security popup
       '#open-windows-list': (el) => this.updateSecurityLists(el.closest('.popup')),
+      '.security-button': (el) => this._initializeSecurityButton(el),
       '.media-container': (el) => {
         const popup = el.closest('.popup');
         if (popup && popup.id === 'music-popup') {
@@ -1137,6 +1138,125 @@ class DashviewPanel extends HTMLElement {
 
     this._renderEntityList(activeVibrationList, activeVibrationSensors, "Keine aktiven Vibrationssensoren.");
     this._renderEntityList(inactiveVibrationList, inactiveVibrationSensors, "Keine inaktiven Vibrationssensoren.");
+    
+    // --- Update Security Header Buttons ---
+    this._updateSecurityHeaderButtons(popup);
+  }
+
+  // Update Security Header Buttons
+  _updateSecurityHeaderButtons(popup) {
+    if (!this._hass || !popup) return;
+
+    // --- Motion Sensor Button ---
+    const motionButton = popup.querySelector('.motion-button');
+    const motionIcon = motionButton?.querySelector('.mdi');
+    const motionTimestamp = motionButton?.querySelector('.security-timestamp');
+    
+    if (motionButton && motionIcon && motionTimestamp) {
+      const allMotionSensors = this._getAllEntitiesByType('motion');
+      let mostRecentMotion = null;
+      let mostRecentTime = 0;
+      
+      // Find the most recently active motion sensor
+      allMotionSensors.forEach(entityId => {
+        const entity = this._hass.states[entityId];
+        if (entity) {
+          const lastChanged = new Date(entity.last_changed).getTime();
+          if (entity.state === 'on' || lastChanged > mostRecentTime) {
+            mostRecentMotion = entity;
+            mostRecentTime = lastChanged;
+          }
+        }
+      });
+
+      if (mostRecentMotion) {
+        const isActive = mostRecentMotion.state === 'on';
+        motionIcon.className = isActive ? 'mdi mdi-motion-sensor' : 'mdi mdi-motion-sensor-off';
+        motionButton.classList.toggle('active', isActive);
+        
+        // Calculate time ago
+        const timeDiff = Math.floor((Date.now() - mostRecentTime) / 1000);
+        let timeAgo;
+        if (timeDiff < 3600) {
+          timeAgo = `${Math.floor(timeDiff / 60)}m ago`;
+        } else if (timeDiff < 86400) {
+          timeAgo = `${Math.floor(timeDiff / 3600)}h ago`;
+        } else {
+          timeAgo = `${Math.floor(timeDiff / 86400)}d ago`;
+        }
+        motionTimestamp.textContent = timeAgo;
+      } else {
+        motionIcon.className = 'mdi mdi-motion-sensor-off';
+        motionButton.classList.remove('active');
+        motionTimestamp.textContent = '--';
+      }
+    }
+
+    // --- Windows Button ---
+    const windowsButton = popup.querySelector('.windows-button');
+    const windowsCount = windowsButton?.querySelector('.security-count');
+    
+    if (windowsButton && windowsCount) {
+      const allWindows = this._getAllEntitiesByType('window');
+      const openWindows = allWindows.filter(id => this._hass.states[id]?.state === 'on');
+      
+      windowsButton.classList.toggle('active', openWindows.length > 0);
+      windowsCount.textContent = `${openWindows.length} offen`;
+    }
+
+    // --- Smoke Detector Button ---
+    const smokeButton = popup.querySelector('.smoke-button');
+    const smokeCount = smokeButton?.querySelector('.security-count');
+    
+    if (smokeButton && smokeCount) {
+      const allSmokeDetectors = this._getAllEntitiesByType('smoke');
+      const activeSmokeDetectors = allSmokeDetectors.filter(id => this._hass.states[id]?.state === 'on');
+      
+      // Show/hide smoke detector button based on activity
+      if (activeSmokeDetectors.length > 0) {
+        smokeButton.style.display = 'flex';
+        smokeButton.classList.add('active');
+        smokeCount.textContent = `${activeSmokeDetectors.length} aktiv`;
+      } else {
+        smokeButton.style.display = 'none';
+      }
+    }
+  }
+
+  // Initialize Security Button Click Handlers
+  _initializeSecurityButton(button) {
+    if (!button) return;
+    
+    button.addEventListener('click', () => {
+      const buttonType = button.getAttribute('data-type');
+      const popup = button.closest('.popup');
+      
+      if (!popup || !buttonType) return;
+      
+      // Map button types to tab targets
+      const tabMap = {
+        'motion': 'bewegung-tab',
+        'windows': 'fenster-tab', 
+        'smoke': 'rauchmelder-tab'
+      };
+      
+      const targetTabId = tabMap[buttonType];
+      if (targetTabId) {
+        // Activate the corresponding tab
+        const targetTab = popup.querySelector(`#${targetTabId}`);
+        const targetButton = popup.querySelector(`[data-target="${targetTabId}"]`);
+        
+        if (targetTab && targetButton) {
+          // Hide all tab contents and remove active class from all tab buttons
+          popup.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+          popup.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+          
+          // Show target tab and activate its button
+          targetTab.classList.add('active');
+          targetButton.classList.add('active');
+        }
+      }
+    });
   }
 
   initializeCard(context) {

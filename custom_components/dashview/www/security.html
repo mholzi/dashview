@@ -1,4 +1,36 @@
-<div class="placeholder">Motion / Windows / Smoke Detectors</div>
+<div class="security-header-buttons">
+  <div class="security-buttons-row">
+    <!-- Motion Sensor Button -->
+    <button class="security-button motion-button" data-type="motion">
+      <div class="security-button-icon">
+        <i class="mdi mdi-motion-sensor-off"></i>
+      </div>
+      <div class="security-button-name">
+        <span class="security-timestamp">--</span>
+      </div>
+    </button>
+    
+    <!-- Windows Button -->
+    <button class="security-button windows-button" data-type="windows">
+      <div class="security-button-icon">
+        <i class="mdi mdi-window-open"></i>
+      </div>
+      <div class="security-button-name">
+        <span class="security-count">0 offen</span>
+      </div>
+    </button>
+    
+    <!-- Smoke Detector Button -->
+    <button class="security-button smoke-button" data-type="smoke" style="display: none;">
+      <div class="security-button-icon">
+        <i class="mdi mdi-smoke-detector-alert"></i>
+      </div>
+      <div class="security-button-name">
+        <span class="security-count">0 aktiv</span>
+      </div>
+    </button>
+  </div>
+</div>
 <div class="placeholder">Alarm Panel Card</div>
 
 <div class="tabs-container" style="margin-top: 20px;">
@@ -48,6 +80,75 @@
 </div>
 
 <style>
+    /* Security header buttons styling */
+    .security-header-buttons {
+        margin: 24px 8px 0 8px;
+    }
+    
+    .security-buttons-row {
+        display: flex;
+        gap: 8px;
+        overflow-x: scroll;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        justify-content: flex-start;
+    }
+    
+    .security-buttons-row::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .security-button {
+        display: flex;
+        flex-basis: 1;
+        flex-shrink: 0;
+        background: var(--gray800);
+        border: none;
+        border-radius: 24px;
+        color: var(--black);
+        height: 34px;
+        padding: 0;
+        cursor: pointer;
+        align-items: center;
+        transition: all 0.2s ease;
+    }
+    
+    .security-button.active {
+        background: var(--active-big);
+    }
+    
+    .security-button.active .security-button-name {
+        color: var(--black);
+    }
+    
+    .security-button.active .security-button-icon {
+        background-color: var(--white);
+        color: var(--black);
+    }
+    
+    .security-button-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        margin-left: -2px;
+        justify-content: center;
+        align-items: center;
+        background: var(--gray000);
+        border-radius: 50%;
+        color: var(--gray800);
+    }
+    
+    .security-button-icon .mdi {
+        font-size: 26px;
+    }
+    
+    .security-button-name {
+        padding: 0 10px;
+        color: var(--black);
+        font-size: 0.9em;
+    }
+    
+    /* Entity list styling */
     .entity-list {
         display: flex;
         flex-direction: column;
