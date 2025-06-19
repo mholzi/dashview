@@ -1372,11 +1372,6 @@ class DashviewPanel extends HTMLElement {
             this.loadAdminConfiguration();
         }
 
-        const saveFloorsBtn = e.target.closest('#save-floors-config');
-        if (saveFloorsBtn) {
-            this.saveFloorsConfiguration();
-        }
-
         const saveRoomsBtn = e.target.closest('#save-rooms-config');
         if (saveRoomsBtn) {
             this.saveRoomsConfiguration();
@@ -1470,40 +1465,10 @@ class DashviewPanel extends HTMLElement {
             this.saveVibrationConfig();
         }
 
-        // Handle floor maintenance buttons
-        const reloadFloorMaintenanceBtn = e.target.closest('#reload-floor-maintenance');
-        if (reloadFloorMaintenanceBtn) {
-            this.loadFloorMaintenance();
-        }
-
-        const saveFloorSensorsBtn = e.target.closest('#save-floor-sensors');
-        if (saveFloorSensorsBtn) {
-            this.saveFloorSensors();
-        }
-
         // Handle room maintenance buttons
         const reloadRoomBtn = e.target.closest('#reload-room-maintenance');
         if (reloadRoomBtn) {
             this.loadRoomMaintenance();
-        }
-
-        const saveRoomBtn = e.target.closest('#save-room-button');
-        if (saveRoomBtn) {
-            // Note: saveRoom() function is for legacy manual room form
-            // which has been replaced by the new HA rooms workflow
-            console.warn('[DashView] saveRoom called but manual form no longer exists');
-        }
-
-        const editRoomBtn = e.target.closest('.room-edit-button');
-        if (editRoomBtn) {
-            const roomKey = editRoomBtn.dataset.roomKey;
-            this._startEditRoom(roomKey);
-        }
-
-        const deleteRoomBtn = e.target.closest('.room-delete-button');
-        if (deleteRoomBtn) {
-            const roomKey = deleteRoomBtn.dataset.roomKey;
-            this.deleteRoom(roomKey);
         }
 
         const saveRoomSensorBtn = e.target.closest('.room-sensor-save-button');
@@ -2324,9 +2289,6 @@ class DashviewPanel extends HTMLElement {
           if (targetId === 'header-buttons-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }
-          if (targetId === 'floor-maintenance-tab') {
-            setTimeout(() => this.loadFloorMaintenance(), 100);
-          }
           if (targetId === 'room-maintenance-tab') {
             setTimeout(() => this.loadRoomMaintenance(), 100);
           }
@@ -2873,37 +2835,6 @@ class DashviewPanel extends HTMLElement {
   }
 
   // Save floors configuration - Principle 1, 2 & 12
-  async saveFloorsConfiguration() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('config-status');
-
-    if (!statusElement) return;
-
-    this._setStatusMessage(statusElement, 'Saving floors configuration...', 'loading');
-
-    try {
-      // Use local state for saving - Principle 12
-      const configData = this._adminLocalState.floorsConfig;
-      
-      // Use generic saver with validation - Principle 2
-      await this._saveConfigViaAPI('floors', configData, (data) => 
-        data && data.floor_icons && data.floor_sensors
-      );
-
-      this._setStatusMessage(statusElement, '✓ Floors configuration saved successfully', 'success');
-
-      // Update runtime configuration
-      this._floorsConfig = configData;
-      if (this._hass) {
-        this.updateHeaderButtons(shadow);
-      }
-
-    } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error saving floors config: ${error.message}`, 'error');
-      console.error('[DashView] Error saving floors config:', error);
-    }
-  }
-
   // Save rooms configuration - Principle 1, 2 & 12
   async saveRoomsConfiguration() {
     const shadow = this.shadowRoot;
@@ -3975,237 +3906,6 @@ class DashviewPanel extends HTMLElement {
   }
 
   // Floor Maintenance Functions - Principle 1, 2 & 12
-  async loadFloorMaintenance() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('floor-maintenance-status');
-
-    if (!statusElement || !this._hass) {
-        this._setStatusMessage(statusElement, '✗ Home Assistant not available', 'error');
-        return;
-    }
-
-    this._setStatusMessage(statusElement, 'Loading floors from Home Assistant...', 'loading');
-
-    try {
-        // Fetch floors from Home Assistant floor registry
-        const floors = await this._loadConfigFromAPI(['ha_floors']);
-        
-        // Fetch the current sensor configuration
-        const houseConfig = this._adminLocalState.houseConfig || (await this._loadConfigFromAPI(['house'])).house || {};
-        const floorSensors = houseConfig.floor_sensors || {};
-
-        this._renderFloorsList(floors.ha_floors, floorSensors);
-
-        this._setStatusMessage(statusElement, '✓ Floors loaded successfully', 'success');
-    } catch (error) {
-        this._setStatusMessage(statusElement, `✗ Error loading floors: ${error.message}`, 'error');
-        console.error('[DashView] Error loading floors:', error);
-    }
-  }
-
-  _renderFloorsList(floors, floorSensors) {
-    const shadow = this.shadowRoot;
-    const floorsContainer = shadow.getElementById('floors-list');
-    
-    if (!floorsContainer) return;
-
-    if (!floors || floors.length === 0) {
-        floorsContainer.innerHTML = '<p>No floors configured in Home Assistant.</p>';
-        return;
-    }
-
-    let floorsHTML = '';
-    floors.forEach(floor => {
-        const sensor = floorSensors[floor.floor_id] || '';
-        floorsHTML += `
-            <div class="floor-item">
-                <div class="floor-info">
-                    <div class="floor-name">${floor.name}</div>
-                    <div class="floor-details">Icon: ${floor.icon}</div>
-                </div>
-                <div class="form-row">
-                    <label for="floor-sensor-${floor.floor_id}">Activity Sensor:</label>
-                    <input type="text" id="floor-sensor-${floor.floor_id}" class="form-input" value="${sensor}" placeholder="e.g., binary_sensor.ground_floor_active">
-                </div>
-            </div>
-        `;
-    });
-
-    floorsContainer.innerHTML = floorsHTML;
-  }
-
-  async saveFloorSensors() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('floor-maintenance-status');
-    
-    try {
-        // Get current house config
-        const houseConfig = this._adminLocalState.houseConfig || (await this._loadConfigFromAPI(['house'])).house || {};
-        
-        // Get the floors from Home Assistant
-        const floors = await this._loadConfigFromAPI(['ha_floors']);
-        const newFloorSensors = {};
-        
-        floors.ha_floors.forEach(floor => {
-            const input = shadow.getElementById(`floor-sensor-${floor.floor_id}`);
-            if (input && input.value) {
-                newFloorSensors[floor.floor_id] = input.value.trim();
-            }
-        });
-
-        houseConfig.floor_sensors = newFloorSensors;
-
-        this._setStatusMessage(statusElement, 'Saving floor sensors...', 'loading');
-        
-        await this._saveConfigViaAPI('house', houseConfig, (data) => data && data.rooms);
-        this._adminLocalState.houseConfig = houseConfig;
-        this._setStatusMessage(statusElement, '✓ Floor sensors saved successfully', 'success');
-    } catch (error) {
-        this._setStatusMessage(statusElement, `✗ Error saving floor sensors: ${error.message}`, 'error');
-    }
-  }
-
-  _startEditFloor(floorKey) {
-    const shadow = this.shadowRoot;
-    const floorsConfig = this._adminLocalState.floorsConfig || {};
-    const floorIcons = floorsConfig.floor_icons || {};
-    const floorSensors = floorsConfig.floor_sensors || {};
-
-    if (!floorIcons[floorKey]) return;
-
-    // Populate the form with the floor's data
-    shadow.getElementById('editing-floor-key').value = floorKey;
-    shadow.getElementById('new-floor-key').value = floorKey;
-    shadow.getElementById('new-floor-name').value = floorKey; // Assuming key and name are the same initially
-    shadow.getElementById('new-floor-icon').value = floorIcons[floorKey];
-    shadow.getElementById('new-floor-sensor').value = floorSensors[floorKey] || '';
-
-    // Disable the key field to prevent changing it during an edit
-    shadow.getElementById('new-floor-key').disabled = true;
-    shadow.getElementById('new-floor-name').focus();
-  }
-
-  async saveFloor() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('floor-maintenance-status');
-
-    // Get the key of the floor being edited, if any
-    const originalKey = shadow.getElementById('editing-floor-key').value;
-    const isEditing = !!originalKey;
-    
-    // Get form values
-    const floorKey = shadow.getElementById('new-floor-key').value.trim();
-    const floorName = shadow.getElementById('new-floor-name').value.trim();
-    const floorIcon = shadow.getElementById('new-floor-icon').value.trim();
-    const floorSensor = shadow.getElementById('new-floor-sensor').value.trim();
-
-    // Validate inputs
-    if (!floorKey || !floorName || !floorIcon || !floorSensor) {
-      this._setStatusMessage(statusElement, '✗ All fields are required', 'error');
-      return;
-    }
-
-    const floorsConfig = this._adminLocalState.floorsConfig || {};
-    const floorIcons = floorsConfig.floor_icons || {};
-
-    // If not editing and key already exists, show error
-    if (!isEditing && floorIcons[floorKey]) {
-      this._setStatusMessage(statusElement, '✗ Floor with this key already exists', 'error');
-      return;
-    }
-
-    this._setStatusMessage(statusElement, 'Saving floor...', 'loading');
-
-    try {
-      // Update local state
-      if (!this._adminLocalState.floorsConfig) {
-        this._adminLocalState.floorsConfig = { floor_icons: {}, floor_sensors: {} };
-      }
-      if (!this._adminLocalState.floorsConfig.floor_icons) {
-        this._adminLocalState.floorsConfig.floor_icons = {};
-      }
-      if (!this._adminLocalState.floorsConfig.floor_sensors) {
-        this._adminLocalState.floorsConfig.floor_sensors = {};
-      }
-
-      // If editing and the key has changed, we need to remove the old entry
-      if (isEditing && originalKey !== floorKey) {
-        delete this._adminLocalState.floorsConfig.floor_icons[originalKey];
-        delete this._adminLocalState.floorsConfig.floor_sensors[originalKey];
-      }
-
-      this._adminLocalState.floorsConfig.floor_icons[floorKey] = floorIcon;
-      this._adminLocalState.floorsConfig.floor_sensors[floorKey] = floorSensor;
-
-      // Save to backend
-      await this._saveConfigViaAPI('floors', this._adminLocalState.floorsConfig, (data) => 
-        data && data.floor_icons && data.floor_sensors
-      );
-
-      // Clear form and reset editing state
-      shadow.getElementById('editing-floor-key').value = '';
-      shadow.getElementById('new-floor-key').value = '';
-      shadow.getElementById('new-floor-name').value = '';
-      shadow.getElementById('new-floor-icon').value = '';
-      shadow.getElementById('new-floor-sensor').value = '';
-      shadow.getElementById('new-floor-key').disabled = false; // Re-enable for next time
-
-      // Refresh the floors list
-      this._renderFloorsList();
-
-      this._setStatusMessage(statusElement, '✓ Floor saved successfully', 'success');
-      console.log('[DashView] Floor saved successfully:', floorKey);
-
-    } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error saving floor: ${error.message}`, 'error');
-      console.error('[DashView] Error saving floor:', error);
-    }
-  }
-
-  async deleteFloor(floorKey) {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('floor-maintenance-status');
-    
-    if (!floorKey) {
-      this._setStatusMessage(statusElement, '✗ Floor key is required', 'error');
-      return;
-    }
-
-    // Confirm deletion
-    if (!confirm(`Are you sure you want to delete the floor "${floorKey}"?`)) {
-      return;
-    }
-
-    this._setStatusMessage(statusElement, 'Deleting floor...', 'loading');
-
-    try {
-      // Update local state
-      if (this._adminLocalState.floorsConfig) {
-        if (this._adminLocalState.floorsConfig.floor_icons) {
-          delete this._adminLocalState.floorsConfig.floor_icons[floorKey];
-        }
-        if (this._adminLocalState.floorsConfig.floor_sensors) {
-          delete this._adminLocalState.floorsConfig.floor_sensors[floorKey];
-        }
-      }
-
-      // Save to backend
-      await this._saveConfigViaAPI('floors', this._adminLocalState.floorsConfig, (data) => 
-        data && data.floor_icons && data.floor_sensors
-      );
-
-      // Refresh the floors list
-      this._renderFloorsList();
-
-      this._setStatusMessage(statusElement, '✓ Floor deleted successfully', 'success');
-      console.log('[DashView] Floor deleted successfully:', floorKey);
-
-    } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error deleting floor: ${error.message}`, 'error');
-      console.error('[DashView] Error deleting floor:', error);
-    }
-  }
-
   // Room Maintenance Functions - Principle 1, 2 & 12
   async loadRoomMaintenance() {
     const shadow = this.shadowRoot;
@@ -4287,143 +3987,6 @@ class DashviewPanel extends HTMLElement {
     roomsContainer.innerHTML = roomsHTML;
   }
 
-  _populateFloorDropdown() {
-    const shadow = this.shadowRoot;
-    const selector = shadow.getElementById('new-room-floor');
-    if (!selector) {
-      // Dropdown no longer exists in new HA rooms workflow
-      return;
-    }
-
-    selector.innerHTML = ''; // Clear existing options
-    const floors = this._adminLocalState.houseConfig?.floors || {};
-
-    if (Object.keys(floors).length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'No floors configured';
-        option.disabled = true;
-        selector.appendChild(option);
-        return;
-    }
-
-    for (const [floorKey, floorConfig] of Object.entries(floors)) {
-        const option = document.createElement('option');
-        option.value = floorKey;
-        option.textContent = floorConfig.friendly_name || floorKey;
-        selector.appendChild(option);
-    }
-  }
-
-  _startEditRoom(roomKey) {
-    const shadow = this.shadowRoot;
-    const room = this._adminLocalState.houseConfig.rooms[roomKey];
-    
-    if (!room) return;
-
-    // Check if the manual room form still exists
-    const roomKeyInput = shadow.getElementById('new-room-key');
-    if (!roomKeyInput) {
-      console.warn('[DashView] _startEditRoom called but manual room form no longer exists');
-      return;
-    }
-
-    // Populate the form with the room's data
-    shadow.getElementById('editing-room-key').value = roomKey;
-    shadow.getElementById('new-room-key').value = roomKey;
-    shadow.getElementById('new-room-name').value = room.friendly_name;
-    shadow.getElementById('new-room-icon').value = room.icon;
-    shadow.getElementById('new-room-floor').value = room.floor;
-    shadow.getElementById('new-room-sensor').value = room.combined_sensor;
-
-    // Disable the key field to prevent changing it during an edit
-    shadow.getElementById('new-room-key').disabled = true;
-    shadow.getElementById('new-room-name').focus();
-  }
-
-  async saveRoom() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('room-maintenance-status');
-
-    // Check if the manual room form still exists
-    const roomKeyInput = shadow.getElementById('new-room-key');
-    if (!roomKeyInput) {
-      console.warn('[DashView] saveRoom called but manual room form no longer exists');
-      if (statusElement) {
-        this._setStatusMessage(statusElement, '✗ Manual room form no longer available - use HA rooms workflow', 'error');
-      }
-      return;
-    }
-
-    // Get the key of the room being edited, if any
-    const originalKey = shadow.getElementById('editing-room-key').value;
-    const isEditing = !!originalKey;
-
-    // Get form values
-    const newKey = shadow.getElementById('new-room-key').value.trim();
-    const newRoomData = {
-      friendly_name: shadow.getElementById('new-room-name').value.trim(),
-      icon: shadow.getElementById('new-room-icon').value.trim(),
-      floor: shadow.getElementById('new-room-floor').value, // .value is correct for a select dropdown
-      combined_sensor: shadow.getElementById('new-room-sensor').value.trim(),
-      lights: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.lights || []) : [],
-      covers: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.covers || []) : [],
-      media_players: isEditing ? (this._adminLocalState.houseConfig.rooms[originalKey]?.media_players || []) : [],
-    };
-
-    // Validate inputs
-    if (!newKey || !newRoomData.friendly_name || !newRoomData.icon || !newRoomData.floor || !newRoomData.combined_sensor) {
-      this._setStatusMessage(statusElement, '✗ All fields are required', 'error');
-      return;
-    }
-
-    // Validate floor reference
-    const floors = this._adminLocalState.houseConfig?.floors || {};
-    if (!floors[newRoomData.floor]) {
-      this._setStatusMessage(statusElement, `✗ Floor '${newRoomData.floor}' does not exist. Please create the floor first or select an existing floor.`, 'error');
-      return;
-    }
-
-    if (!isEditing && this._adminLocalState.houseConfig.rooms[newKey]) {
-      this._setStatusMessage(statusElement, '✗ Room with this key already exists', 'error');
-      return;
-    }
-
-    this._setStatusMessage(statusElement, 'Saving room...', 'loading');
-
-    try {
-      const updatedHouseConfig = JSON.parse(JSON.stringify(this._adminLocalState.houseConfig));
-
-      if (isEditing && originalKey !== newKey) {
-        delete updatedHouseConfig.rooms[originalKey];
-      }
-      updatedHouseConfig.rooms[newKey] = newRoomData;
-
-      // Use the new, more direct API format by sending the entire config object.
-      await this._hass.callApi('POST', 'dashview/config', updatedHouseConfig);
-
-      // Update the local state with the successfully saved config
-      this._adminLocalState.houseConfig = updatedHouseConfig;
-
-      // Clear form and reset editing state
-      shadow.getElementById('editing-room-key').value = '';
-      shadow.getElementById('new-room-key').value = '';
-      shadow.getElementById('new-room-name').value = '';
-      shadow.getElementById('new-room-icon').value = '';
-      shadow.getElementById('new-room-floor').value = '';
-      shadow.getElementById('new-room-sensor').value = '';
-      shadow.getElementById('new-room-key').disabled = false;
-
-      this._renderRoomsList();
-      this._setStatusMessage(statusElement, '✓ Room saved successfully', 'success');
-      console.log('[DashView] Room saved successfully:', newKey);
-
-    } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error saving room: ${error.message}`, 'error');
-      console.error('[DashView] Error saving room:', error);
-    }
-  }
-
   // New function to save a single room's sensor
   async saveRoomCombinedSensor(roomKey) {
     const shadow = this.shadowRoot;
@@ -4469,45 +4032,6 @@ class DashviewPanel extends HTMLElement {
       this._setStatusMessage(statusElement, `✓ Sensor for ${haRoom ? haRoom.name : roomKey} saved successfully!`, 'success');
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error saving sensor: ${error.message}`, 'error');
-    }
-  }
-
-  async deleteRoom(roomKey) {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('room-maintenance-status');
-    
-    if (!roomKey) {
-      this._setStatusMessage(statusElement, '✗ Room key is required', 'error');
-      return;
-    }
-
-    // Confirm deletion
-    if (!confirm(`Are you sure you want to delete the room "${roomKey}"?`)) {
-      return;
-    }
-
-    this._setStatusMessage(statusElement, 'Deleting room...', 'loading');
-
-    try {
-      // Update local state
-      if (this._adminLocalState.houseConfig && this._adminLocalState.houseConfig.rooms) {
-        delete this._adminLocalState.houseConfig.rooms[roomKey];
-      }
-
-      // Save to backend
-      await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig, (data) => 
-        data && data.rooms && data.floors
-      );
-
-      // Refresh the rooms list
-      this._renderRoomsList();
-
-      this._setStatusMessage(statusElement, '✓ Room deleted successfully', 'success');
-      console.log('[DashView] Room deleted successfully:', roomKey);
-
-    } catch (error) {
-      this._setStatusMessage(statusElement, `✗ Error deleting room: ${error.message}`, 'error');
-      console.error('[DashView] Error deleting room:', error);
     }
   }
 
