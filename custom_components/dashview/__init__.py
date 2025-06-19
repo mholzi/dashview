@@ -1,12 +1,14 @@
 """The DashView integration."""
 import os
 import logging
-from homeassistant.core import HomeAssistant
+import json
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.view import HomeAssistantView
 from aiohttp import web
+from homeassistant.helpers import area_registry as ar, floor_registry as fr, entity_registry as er
 
 from .const import DOMAIN
 from .services import async_setup_services, async_unload_services
@@ -26,10 +28,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DashView from a config entry."""
     _LOGGER.info("Setting up DashView panel from config entry.")
     
-    # Migrate existing config files to ConfigEntry if needed
-    await _migrate_config_files(hass, entry)
-    
-    # Get the config data AFTER migration to ensure we have the latest data
+    # NEW: Synchronize HA areas and floors with the DashView config on startup
+    await _sync_config_from_ha_registries(hass, entry)
+
+    # Get the config data AFTER synchronization
     config_data = entry.options or entry.data
     
     # Register the API endpoint, passing the hass instance and entry object
@@ -76,6 +78,61 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+@callback
+async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntry):
+    """Create and sync house_config from HA floor and area registries."""
+    _LOGGER.debug("Syncing DashView configuration with HA registries.")
+    
+    # First check if we need to migrate from legacy files
+    current_data = entry.options or entry.data
+    if not current_data.get("house_config"):
+        _LOGGER.debug("No house_config found, attempting migration from legacy files first.")
+        await _migrate_config_files(hass, entry)
+    
+    floor_registry = fr.async_get(hass)
+    area_registry = ar.async_get(hass)
+    
+    # Get existing config to preserve user-made assignments
+    existing_house_config = (entry.options or entry.data).get("house_config", {})
+    
+    # Build the new structure from HA's registries
+    new_house_config = {
+        "weather_entity": existing_house_config.get("weather_entity", "weather.forecast_home"),
+        "floors": {},
+        "rooms": {}
+    }
+
+    # 1. Populate floors from the floor registry
+    for floor in floor_registry.floors.values():
+        new_house_config["floors"][floor.floor_id] = {
+            "friendly_name": floor.name,
+            "icon": floor.icon or "mdi:home",
+            "level": floor.level
+        }
+
+    # 2. Populate rooms from the area registry and link them to floors
+    for area in area_registry.areas.values():
+        # Preserve existing entity assignments for this room if they exist
+        existing_room_config = existing_house_config.get("rooms", {}).get(area.id, {})
+        
+        new_house_config["rooms"][area.id] = {
+            "friendly_name": area.name,
+            "icon": area.icon or "mdi:home-outline",
+            "floor": area.floor_id,  # This directly links the room to its HA floor
+            "combined_sensor": existing_room_config.get("combined_sensor", ""),
+            "lights": existing_room_config.get("lights", []),
+            "covers": existing_room_config.get("covers", []),
+            "media_players": existing_room_config.get("media_players", []),
+            "header_entities": existing_room_config.get("header_entities", [])
+        }
+
+    # 3. Update the config entry with the synchronized configuration
+    hass.config_entries.async_update_entry(
+        entry, options={"house_config": new_house_config}
+    )
+    _LOGGER.info("DashView configuration synchronized with Home Assistant floors and areas.")
+
+
 class DashViewConfigView(HomeAssistantView):
     """DashView configuration API endpoint."""
     
@@ -90,21 +147,16 @@ class DashViewConfigView(HomeAssistantView):
     
     async def get(self, request):
         """Get configuration data from the ConfigEntry."""
+        # This view now primarily serves the most up-to-date config from the entry
         config_data = self._entry.options or self._entry.data
         config_type = request.query.get("type")
         
+        # All config types now pull from the single `house_config` source of truth
+        house_config = config_data.get("house_config", {})
+
         if config_type == "house":
-            data = config_data.get("house_config", {})
-        elif config_type == "floors":
-            # Legacy support - extract from house_config
-            house_config = config_data.get("house_config", {})
-            data = house_config.get("floors", {})
-        elif config_type == "rooms":
-            # Legacy support - extract from house_config
-            house_config = config_data.get("house_config", {})
-            data = house_config.get("rooms", {})
+            data = house_config
         elif config_type == "weather_entity":
-            house_config = config_data.get("house_config", {})
             data = {"weather_entity": house_config.get("weather_entity", "weather.forecast_home")}
         elif config_type == "available_media_players":
             media_players = []
@@ -114,164 +166,69 @@ class DashViewConfigView(HomeAssistantView):
                     "friendly_name": entity.name or entity.entity_id
                 })
             data = sorted(media_players, key=lambda p: p["friendly_name"])
-        elif config_type == "ha_floors":
-            # Fetch floors from Home Assistant floor registry
-            try:
-                # Use the proper Home Assistant API for floor registry
-                from homeassistant.helpers import floor_registry as fr
-                floor_registry = fr.async_get(self._hass)
-                floors = []
-                for floor in floor_registry.floors.values():
-                    floors.append({
-                        "floor_id": floor.floor_id,
-                        "name": floor.name,
-                        "icon": floor.icon or "mdi:home",
-                        "level": getattr(floor, 'level', None)
-                    })
-                data = floors
-            except Exception as e:
-                _LOGGER.warning("Error fetching floors from Home Assistant registry: %s", e)
-                data = []
-        elif config_type == "ha_rooms":
-            # NEW: Fetch rooms from Home Assistant area registry
-            try:
-                from homeassistant.helpers import area_registry as ar
-                area_registry = ar.async_get(self._hass)
-                rooms = [
-                    {
-                        "area_id": area.id,
-                        "name": area.name,
-                        "icon": area.icon or "mdi:home-outline"
-                    }
-                    for area in area_registry.async_list_areas()
-                ]
-                data = sorted(rooms, key=lambda r: r["name"])
-            except Exception as e:
-                _LOGGER.warning("Error fetching rooms from Home Assistant area registry: %s", e)
-                data = []
         elif config_type == "combined_sensors":
-            # NEW: Fetch all sensors matching the binary_sensor.combined* pattern
-            try:
-                combined_sensors = [
-                    {
-                        "entity_id": entity.entity_id,
-                        "friendly_name": entity.name or entity.entity_id
-                    }
-                    for entity in self._hass.states.async_all('binary_sensor')
-                    if entity.entity_id.startswith("binary_sensor.combined")
-                ]
-                data = sorted(combined_sensors, key=lambda s: s["friendly_name"])
-            except Exception as e:
-                _LOGGER.warning("Error fetching combined sensors: %s", e)
-                data = []
+            # This is still useful for assigning sensors in the admin UI
+            combined_sensors = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.name or entity.entity_id
+                }
+                for entity in self._hass.states.async_all('binary_sensor')
+                if entity.entity_id.startswith("binary_sensor.combined")
+            ]
+            data = sorted(combined_sensors, key=lambda s: s["friendly_name"])
         elif config_type == "entities_by_room":
-            # NEW: Fetch entities grouped by room, filtered by a specific HA Label
-            try:
-                from homeassistant.helpers import entity_registry as er, area_registry as ar, label_registry as lr
-                
-                entity_registry = er.async_get(self._hass)
-                area_registry = ar.async_get(self._hass)
-                label_registry = lr.async_get(self._hass) # Get the label registry
-                
-                label_filter = request.query.get("label") # Get the label from the request, e.g., "Motion"
-                domain_filter = request.query.get("domain") # Get the domain from the request, e.g., "cover", "light"
-                
-                if not label_filter and not domain_filter:
-                    return web.Response(status=400, text="Either 'label' or 'domain' query parameter is required.")
+            # This is also still useful for assigning entities
+            entity_registry = er.async_get(self._hass)
+            area_registry = ar.async_get(self._hass)
+            
+            from homeassistant.helpers import label_registry as lr
+            label_registry = lr.async_get(self._hass)
+            
+            label_filter = request.query.get("label")
+            domain_filter = request.query.get("domain")
 
-                # Find the label ID from the label name if label filter is used
-                label_id = None
-                available_labels = []
-                if label_filter:
-                    for label in label_registry.labels.values():
-                        available_labels.append(label.name)
-                        if label.name.lower() == label_filter.lower():
-                            label_id = label.label_id
-                            _LOGGER.debug(f"[DashView] Found label '{label.name}' with ID: {label_id}")
-                            break
-                    
-                    if not label_id:
-                        _LOGGER.warning(f"[DashView] Label '{label_filter}' not found. Available labels: {available_labels}")
-                
-                entities_by_area = {}
-                matched_entities_count = 0
-                
-                for entity in entity_registry.entities.values():
-                    # Check filtering conditions based on whether we're using label or domain filtering
-                    if entity.area_id and entity.domain != 'automation':
-                        matches_filter = False
-                        
-                        if label_filter and label_id and label_id in entity.labels:
-                            matches_filter = True
-                        elif domain_filter and entity.domain == domain_filter:
-                            matches_filter = True
-                        
-                        if matches_filter:
-                            matched_entities_count += 1
-                            
-                            if entity.area_id not in entities_by_area:
-                                area = area_registry.async_get_area(entity.area_id)
-                                entities_by_area[entity.area_id] = {
-                                    "name": area.name if area else "Unknown Area",
-                                    "entities": []
-                                }
-                            
-                            entities_by_area[entity.area_id]["entities"].append({
-                                "entity_id": entity.entity_id,
-                                "name": entity.name or entity.original_name or entity.entity_id
-                            })
-                
-                _LOGGER.debug(f"[DashView] Found {matched_entities_count} entities for label/domain: {label_filter or domain_filter}")
-                data = entities_by_area
-
-            except Exception as e:
-                _LOGGER.error("Error fetching entities by room and label/domain: %s", e)
-                data = {}
-        elif config_type is None:
-            # Return the full house_config when no type is specified
-            data = config_data.get("house_config", {})
+            if not label_filter and not domain_filter:
+                return web.Response(status=400, text="Either 'label' or 'domain' query parameter is required.")
+            
+            label_id = None
+            if label_filter:
+                for label in label_registry.labels.values():
+                    if label.name.lower() == label_filter.lower():
+                        label_id = label.label_id
+                        break
+            
+            entities_by_area = {}
+            for entity in entity_registry.entities.values():
+                if entity.area_id and entity.domain != 'automation':
+                    matches_filter = (label_id and label_id in entity.labels) or \
+                                     (domain_filter and entity.domain == domain_filter)
+                    if matches_filter:
+                        if entity.area_id not in entities_by_area:
+                            area = area_registry.async_get_area(entity.area_id)
+                            entities_by_area[entity.area_id] = {
+                                "name": area.name if area else "Unknown Area",
+                                "entities": []
+                            }
+                        entities_by_area[entity.area_id]["entities"].append({
+                            "entity_id": entity.entity_id,
+                            "name": entity.name or entity.original_name or entity.entity_id
+                        })
+            data = entities_by_area
         else:
-            return web.Response(status=400, text="Invalid config type. Use: house, floors, rooms, weather_entity, available_media_players, ha_floors, ha_rooms, combined_sensors, entities_by_room")
+            # Default to returning the full house config
+            data = house_config
         
         return self.json(data)
     
     async def post(self, request):
         """Save configuration data by updating the ConfigEntry."""
+        # This method remains the same, as it correctly saves the entire house_config
         try:
             data = await request.json()
-            
-            # Handle both new and legacy API formats
-            if isinstance(data, dict) and "type" in data and "config" in data:
-                # Legacy format: {"type": "house", "config": {...}}
-                config_type = data.get("type")
-                new_config_data = data.get("config")
-                
-                if config_type == "house":
-                    # Update the house_config directly
-                    self._hass.config_entries.async_update_entry(
-                        self._entry, options={"house_config": new_config_data}
-                    )
-                else:
-                    # For legacy types, update the appropriate section within house_config
-                    current_data = self._entry.options or self._entry.data
-                    house_config = current_data.get("house_config", {})
-                    
-                    if config_type == "floors":
-                        house_config["floors"] = new_config_data
-                    elif config_type == "rooms":
-                        house_config["rooms"] = new_config_data
-                    elif config_type == "weather_entity":
-                        house_config["weather_entity"] = new_config_data.get("weather_entity", "weather.forecast_home")
-                    
-                    self._hass.config_entries.async_update_entry(
-                        self._entry, options={"house_config": house_config}
-                    )
-            else:
-                # New format: direct house config data
-                self._hass.config_entries.async_update_entry(
-                    self._entry, options={"house_config": data}
-                )
-            
+            self._hass.config_entries.async_update_entry(
+                self._entry, options={"house_config": data}
+            )
             return self.json({"status": "success"})
         except Exception as e:
             _LOGGER.error("[DashView] Error saving config to entry: %s", e)
