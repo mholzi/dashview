@@ -4728,15 +4728,16 @@ class DashviewPanel extends HTMLElement {
   }
 
   _setupMusicTabSwitching(popup) {
-      const tabChips = popup.querySelectorAll('.music-tab-chip');
+      // The selector here is changed from '.music-tab-chip' to the correct '.music-tab-button'
+      const tabButtons = popup.querySelectorAll('.music-tab-button');
       const roomContents = popup.querySelectorAll('.music-room-content');
 
-      tabChips.forEach(chip => {
-          chip.addEventListener('click', () => {
-              const roomId = chip.dataset.roomId;
+      tabButtons.forEach(button => {
+          button.addEventListener('click', () => {
+              const roomId = button.dataset.roomId;
 
-              tabChips.forEach(c => c.classList.remove('active'));
-              chip.classList.add('active');
+              tabButtons.forEach(c => c.classList.remove('active'));
+              button.classList.add('active');
 
               roomContents.forEach(content => {
                   const isActive = content.dataset.roomId === roomId;
@@ -4748,7 +4749,6 @@ class DashviewPanel extends HTMLElement {
           });
       });
   }
-
   // Update sliders and labels when a cover's state changes
   updateCoverCard(shadow, entityId) {
     if (!this._hass || !entityId.startsWith('cover.')) return;
