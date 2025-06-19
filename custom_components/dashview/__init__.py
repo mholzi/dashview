@@ -210,10 +210,13 @@ class DashViewConfigView(HomeAssistantView):
                                 "name": area.name if area else "Unknown Area",
                                 "entities": []
                             }
+# This now correctly handles entities without a friendly name by generating one.
+                        friendly_name = entity.name or entity.original_name or entity.entity_id.split('.')[-1].replace('_', ' ').title()
                         entities_by_area[entity.area_id]["entities"].append({
                             "entity_id": entity.entity_id,
-                            "name": entity.name or entity.original_name or entity.entity_id
+                            "name": friendly_name
                         })
+
             data = entities_by_area
         else:
             # Default to returning the full house config
