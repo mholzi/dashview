@@ -4693,10 +4693,6 @@ class DashviewPanel extends HTMLElement {
 
     return `
         <div class="media-room-card" data-room="${room.id}">
-            <div class="media-room-header">
-                <i class="mdi ${room.icon || 'mdi-music'}"></i>
-                <span class="media-room-title">${room.friendly_name}</span>
-            </div>
             <div class="media-presets">${presetButtons}</div>
             <div class="media-display" data-entity="${entityId}">
                 <div class="media-image"><img src="" alt="Media Cover" class="media-cover"></div>
