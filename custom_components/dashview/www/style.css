@@ -118,6 +118,7 @@ h3 {
 }
 
 /* --- Pop-up styles --- */
+/* --- Pop-up styles --- */
 .popup {
     position: fixed;
     top: 0;
@@ -132,7 +133,11 @@ h3 {
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
     box-sizing: border-box;
-    padding-top: 100px;
+    /* --- Changes Start Here --- */
+    display: flex;
+    align-items: flex-end; /* This pushes the .popup-content to the bottom */
+    padding-top: 0; /* Remove the top padding */
+    /* --- Changes End Here --- */
 }
 
 /* Prevent body scrolling when popup is active */
@@ -161,7 +166,6 @@ body.popup-open, :host(.popup-open) {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
 }
-
 .popup-content::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
 }
