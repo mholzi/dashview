@@ -1497,7 +1497,69 @@ body.popup-open, :host(.popup-open) {
     gap: 12px;
     height: 46px;
 }
+.light-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    border-radius: 12px;
+    padding: 0 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
 
+.light-row[state="on"] {
+    background: var(--active-light);
+    color: var(--gray800);
+}
+
+.light-row[state="off"] {
+    background: var(--gray000);
+    color: var(--secondary-text-color);
+}
+
+.light-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.light-icon-container .mdi {
+    font-size: 24px;
+}
+
+.light-row[state="on"] .light-icon-container .mdi {
+    color: var(--gray800);
+}
+
+.light-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.light-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.light-row[state="on"] .light-name {
+    color: var(--gray800);
+}
+
+.light-state-label {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.light-toggle {
+    justify-self: end;
+    pointer-events: none; /* The row is clickable, so disable pointer on the switch */
+}
 .lights-header .mdi {
     color: var(--gray1000);
     width: 22px;
