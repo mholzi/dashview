@@ -2186,7 +2186,7 @@ async _addLightEntities() {
     bodyElement.innerHTML = content;
 
     // Check if the room has covers and inject the card
-    const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseConfig.rooms[popupType] : null;
+const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseConfig.rooms[popupType] : null;
     if (roomConfig) { // Check if the popup corresponds to a configured room
         // Add room header entities first (just under the header)
         const roomHeaderEntitiesHTML = this._generateRoomHeaderEntitiesForPopup(roomConfig);
