@@ -1203,23 +1203,33 @@ body.popup-open, :host(.popup-open) {
 
 /* --- Room Header Entities for Popups --- */
 .room-header-entities {
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .header-entities-container {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 0px;
-    padding-left: 8px;
-    padding-right: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
 }
 
-.header-entities-container::-webkit-scrollbar {
-    display: none;
+.header-entity-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    color: var(--gray000);
+    height: 60px;
+    box-sizing: border-box;
+}
+
+.header-entity-icon .mdi {
+    font-size: 28px;
+}
+
+.header-entity-name {
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .header-info-chip {
