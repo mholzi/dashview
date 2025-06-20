@@ -2207,13 +2207,7 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
                     // Initialize the content that was just added to fix the race condition.
                     this._initializeDynamicContent(coversContainer);
                 }).catch(err => console.error('[DashView] Error loading covers card template:', err));
-        } else {
-            // If no covers exist, add a placeholder
-            const placeholder = document.createElement('div');
-            placeholder.className = 'placeholder'; // Use existing placeholder style
-            placeholder.textContent = 'No covers configured for this room.';
-            bodyElement.appendChild(placeholder);
-        }
+        } 
         
         // --- CORRECTED LIGHTS BLOCK ---
         if (roomConfig.lights && roomConfig.lights.length > 0) {
@@ -4369,8 +4363,7 @@ async _fetchWeatherForecasts() {
         });
         
         individualContainer.appendChild(row);
-        // Initial update for this specific light row
-        this.updateLightsCard(popup, entityId);
+        this.updateLightsCard(popup, entityId); // Initial update for this row
     });
 
     // Initial update for the main count
@@ -4380,7 +4373,7 @@ async _fetchWeatherForecasts() {
     countEl.textContent = `${onCount} / ${totalCount}`;
   }
 
-  // Update the lights card when an entity state changes
+  // --- REPLACE THE EXISTING updateLightsCard FUNCTION WITH THIS ---
   updateLightsCard(popup, changedEntityId) {
       if (!this._hass || !changedEntityId) return;
   
@@ -4400,23 +4393,11 @@ async _fetchWeatherForecasts() {
           const isOn = entityState && entityState.state === 'on';
 
           // Update icon
-          const iconEl = lightRow.querySelector('.light-icon-container i');
+          const iconEl = lightRow.querySelector('.mdi');
           if (iconEl) {
               iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-off';
           }
-
-          // Update state label
-          const labelEl = lightRow.querySelector('.light-state-label');
-          if (labelEl) {
-              labelEl.textContent = isOn ? 'An' : 'Aus';
-          }
           
-          // Update toggle
-          const toggleEl = lightRow.querySelector('.light-toggle');
-          if (toggleEl) {
-              toggleEl.checked = isOn;
-          }
-
           // Update card state for styling
           lightRow.setAttribute('state', isOn ? 'on' : 'off');
       }
