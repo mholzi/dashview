@@ -302,6 +302,8 @@ body.popup-open, :host(.popup-open) {
     border: none;
     color: var(--gray000);
     cursor: pointer;
+    height: 32px;
+    width: 32px;
     font-size: 40px; /* MDI icons are font-based - matched to kiosk header button size */
 }
 .nav-button.active {
