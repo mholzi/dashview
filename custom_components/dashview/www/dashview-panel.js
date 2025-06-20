@@ -2459,23 +2459,23 @@ async _fetchWeatherForecasts() {
     try {
         console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callWS`);
 
-        // Fetch daily forecast using the correct hass.callWS method
+        // Fetch daily forecast
         const dailyForecasts = await this._hass.callWS({
             type: 'weather/subscribe_forecast',
             forecast_type: 'daily',
             entity_id: entityId
         });
 
-        // Fetch hourly forecast using the correct hass.callWS method
+        // Fetch hourly forecast
         const hourlyForecasts = await this._hass.callWS({
             type: 'weather/subscribe_forecast',
             forecast_type: 'hourly',
             entity_id: entityId
         });
         
-        // Store the forecasts from the response
-        this._weatherForecasts.daily = dailyForecasts.forecast || [];
-        this._weatherForecasts.hourly = hourlyForecasts.forecast || [];
+        // **FIX:** Use optional chaining (?.) to safely access the .forecast property
+        this._weatherForecasts.daily = dailyForecasts?.forecast || [];
+        this._weatherForecasts.hourly = hourlyForecasts?.forecast || [];
 
         console.log('[DashView] Forecasts updated successfully via callWS');
     } catch (error) {
