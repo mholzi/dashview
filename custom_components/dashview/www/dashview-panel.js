@@ -4349,7 +4349,7 @@ async _fetchWeatherForecasts() {
     if (!card) return;
 
     const individualContainer = card.querySelector('.individual-lights-container');
-    const rowTemplate = card.querySelector('#light-row-template');
+    const rowTemplate = popup.querySelector('#light-row-template'); // <-- FIX IS HERE
 
     if (!individualContainer || !rowTemplate) return;
 
@@ -4420,8 +4420,7 @@ async _fetchWeatherForecasts() {
     const mainLabel = card.querySelector('.main-position-label');
     const positionButtons = card.querySelectorAll('.cover-position-buttons button');
     const individualContainer = card.querySelector('.individual-covers-container');
-    const rowTemplate = card.querySelector('#cover-row-template');
-
+    const rowTemplate = popup.querySelector('#cover-row-template');
     if (!mainSlider || !individualContainer || !rowTemplate) return;
 
     const masterEntity = coverEntities[0];
