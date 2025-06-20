@@ -2197,23 +2197,17 @@ async _addLightEntities() {
         }
 
         if (roomConfig.covers && roomConfig.covers.length > 0) {
-            // If covers exist, fetch and add the interactive card
             fetch('/local/dashview/templates/room-covers-card.html')
                 .then(response => response.text())
                 .then(html => {
                     const coversContainer = document.createElement('div');
                     coversContainer.innerHTML = html;
                     bodyElement.appendChild(coversContainer);
-                    // The new dispatcher system will handle initialization
-                    // when reinitializePopupContent is called
+                    // *** SOLUTION: Initialize the card right after inserting its HTML ***
+                    this._initializeCoversCard(popup, popupType, roomConfig.covers);
                 }).catch(err => console.error('[DashView] Error loading covers card template:', err));
-        } else {
-            // If no covers exist, add a placeholder
-            const placeholder = document.createElement('div');
-            placeholder.className = 'placeholder'; // Use existing placeholder style
-            placeholder.textContent = 'No covers configured for this room.';
-            bodyElement.appendChild(placeholder);
         }
+
         if (roomConfig.lights && roomConfig.lights.length > 0) {
             fetch('/local/dashview/templates/room-lights-card.html')
                 .then(response => response.text())
@@ -2221,19 +2215,20 @@ async _addLightEntities() {
                     const lightsContainer = document.createElement('div');
                     lightsContainer.innerHTML = html;
                     bodyElement.appendChild(lightsContainer);
+                    // *** SOLUTION: Initialize the card right after inserting its HTML ***
+                    this._initializeLightsCard(popup, popupType, roomConfig.lights);
                 }).catch(err => console.error('[DashView] Error loading lights card template:', err));
         }
-        // Check if the room has media players and inject the card
+
         if (roomConfig.media_players && roomConfig.media_players.length > 0) {
-            // If media players exist, fetch and add the interactive card
             fetch('/local/dashview/templates/room-media-player-card.html')
                 .then(response => response.text())
                 .then(html => {
                     const mediaPlayerContainer = document.createElement('div');
                     mediaPlayerContainer.innerHTML = html;
                     bodyElement.appendChild(mediaPlayerContainer);
-                    // The new dispatcher system will handle initialization
-                    // when reinitializePopupContent is called
+                    // *** SOLUTION: Initialize the card right after inserting its HTML ***
+                    this._initializeMediaPlayerCard(popup, popupType, roomConfig.media_players);
                 }).catch(err => console.error('[DashView] Error loading media player card template:', err));
         }
     }
@@ -4488,7 +4483,6 @@ async _fetchWeatherForecasts() {
     
     // Create media player content structure
     const mediaPlayerContent = `
-      <!-- Preset Buttons -->
       <div class="media-presets">
         <button class="media-preset-button" 
                 data-entity="${entityId}"
@@ -4510,7 +4504,6 @@ async _fetchWeatherForecasts() {
         </button>
       </div>
       
-      <!-- Media Display -->
       <div class="media-display" data-entity="${entityId}">
         <div class="media-image">
           <img src="" alt="Media Cover" class="media-cover">
@@ -4521,7 +4514,6 @@ async _fetchWeatherForecasts() {
         </div>
       </div>
       
-      <!-- Media Controls -->
       <div class="media-controls" data-entity="${entityId}">
         <button class="media-control-button" data-action="media_previous_track">
           <i class="mdi mdi-skip-previous"></i>
@@ -4534,7 +4526,6 @@ async _fetchWeatherForecasts() {
         </button>
       </div>
       
-      <!-- Volume Control -->
       <div class="media-volume-control">
         ${mediaPlayerEntities.map(player => {
           const entity = this._hass.states[player.entity];
