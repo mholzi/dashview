@@ -1,35 +1,22 @@
-<div class="security-header-buttons">
-  <div class="security-buttons-row">
-    <!-- Motion Sensor Button -->
-    <button class="security-button motion-button" data-type="motion">
-      <div class="security-button-icon">
-        <i class="mdi mdi-motion-sensor-off"></i>
-      </div>
-      <div class="security-button-name">
-        <span class="security-timestamp">--</span>
-      </div>
-    </button>
-    
-    <!-- Windows Button -->
-    <button class="security-button windows-button" data-type="windows">
-      <div class="security-button-icon">
-        <i class="mdi mdi-window-open"></i>
-      </div>
-      <div class="security-button-name">
-        <span class="security-count">0 offen</span>
-      </div>
-    </button>
-    
-    <!-- Smoke Detector Button -->
-    <button class="security-button smoke-button" data-type="smoke" style="display: none;">
-      <div class="security-button-icon">
-        <i class="mdi mdi-smoke-detector-alert"></i>
-      </div>
-      <div class="security-button-name">
-        <span class="security-count">0 aktiv</span>
-      </div>
-    </button>
-  </div>
+<div class="header-entities-container" id="security-header-chips">
+    <div class="header-info-chip" data-type="motion" style="display: none; cursor: pointer;">
+        <div class="chip-icon-container">
+            <i class="mdi mdi-motion-sensor-off"></i>
+        </div>
+        <div class="chip-name">--</div>
+    </div>
+    <div class="header-info-chip" data-type="windows" style="display: none; cursor: pointer;">
+        <div class="chip-icon-container">
+            <i class="mdi mdi-window-open"></i>
+        </div>
+        <div class="chip-name">0 offen</div>
+    </div>
+    <div class="header-info-chip" data-type="smoke" style="display: none; cursor: pointer;">
+        <div class="chip-icon-container">
+            <i class="mdi mdi-smoke-detector-alert"></i>
+        </div>
+        <div class="chip-name">0 aktiv</div>
+    </div>
 </div>
 <div class="placeholder">Alarm Panel Card</div>
 
