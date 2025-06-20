@@ -1903,7 +1903,7 @@ _initializeSecurityChip(chip) {
              data-type="${entityConfig.entity_type}"
              style="background: ${backgroundColor};">
           <div class="chip-icon-container">
-            <i class="mdi ${icon}" style="color: var(--gray000);"></i>
+            <i class="mdi ${icon}"></i>
           </div>
           <div class="chip-name" style="color: ${textColor};">${name}</div>
         </div>
