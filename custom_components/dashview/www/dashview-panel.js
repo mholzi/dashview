@@ -4408,6 +4408,36 @@ async _fetchWeatherForecasts() {
       }
   }
   // Initialize the covers card with entities and event listeners
+  _initializeLightsCard(popup, roomKey, lightEntities) {
+    const card = popup.querySelector('.lights-card');
+    if (!card) return;
+
+    const individualContainer = card.querySelector('.individual-lights-container');
+    const rowTemplate = card.querySelector('#light-row-template');
+
+    if (!individualContainer || !rowTemplate) return;
+
+    // Create individual light rows
+    individualContainer.innerHTML = ''; // Clear any existing
+    lightEntities.forEach(entityId => {
+        const row = rowTemplate.content.cloneNode(true).querySelector('.light-row');
+        const nameEl = row.querySelector('.light-name');
+        const toggleEl = row.querySelector('.light-toggle');
+
+        row.dataset.entityId = entityId;
+
+        const entityState = this._hass.states[entityId];
+        nameEl.textContent = entityState ? entityState.attributes.friendly_name || entityId : entityId;
+        
+        // Setup the toggle switch
+        toggleEl.hass = this._hass;
+        toggleEl.checked = entityState.state === 'on';
+        toggleEl.addEventListener('change', () => {
+            this._hass.callService('light', 'toggle', { entity_id: entityId });
+        });
+
+        individualContainer.appendChild(row);
+    });
   _initializeCoversCard(popup, roomKey, coverEntities) {
     const card = popup.querySelector('.covers-card');
     if (!card) return;
