@@ -1472,7 +1472,7 @@ body.popup-open, :host(.popup-open) {
 
 /* --- Lights Card --- */
 .lights-card {
-    margin: 8px 0;
+    margin: 8px;
     background-color: var(--gray200);
     border-radius: 12px;
 }
@@ -1518,25 +1518,26 @@ body.popup-open, :host(.popup-open) {
 }
 
 .light-row .mdi {
-    fon.light-row {
-    display: flex; /* Changed from grid to flex */
-    align-items: center; /* Vertically center the text */
-    gap: 16px;
-    height: 60px; /* Set height to 60px */
-    border-radius: 12px;
-    padding: 0 16px; /* Add padding for text alignment */
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    font-size: 24px;
+    color: var(--secondary-text-color); /* Default color for off state */
+    transition: color 0.2s ease-in-out;
 }
 
-.light-row[state="on"] {
-    background: var(--active-light);
+.light-row .light-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary-text-color); /* Default color for off state */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease-in-out;
 }
 
-.light-row[state="off"] {
-    background: var(--gray000);
+/* New rule for text/icon color when ON */
+.light-row[state="on"] .mdi,
+.light-row[state="on"] .light-name {
+    color: var(--gray800);
 }
-
 .light-info {
     display: flex;
     flex-direction: column;
