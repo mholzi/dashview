@@ -4344,39 +4344,40 @@ async _fetchWeatherForecasts() {
 // ADD THESE TWO NEW FUNCTIONS to the DashviewPanel class:
 
   // Initialize the lights card with entities and event listeners
+  // --- REPLACE THE EXISTING _initializeLightsCard FUNCTION WITH THIS ---
   _initializeLightsCard(popup, roomKey, lightEntities) {
     const card = popup.querySelector('.lights-card');
     if (!card) return;
 
     const individualContainer = card.querySelector('.individual-lights-container');
-    const rowTemplate = popup.querySelector('#light-row-template'); // <-- FIX IS HERE
+    const rowTemplate = popup.querySelector('#light-row-template');
 
     if (!individualContainer || !rowTemplate) return;
 
-    // Create individual light rows
     individualContainer.innerHTML = ''; // Clear any existing
     lightEntities.forEach(entityId => {
         const row = rowTemplate.content.cloneNode(true).querySelector('.light-row');
-        const nameEl = row.querySelector('.light-name');
-        const toggleEl = row.querySelector('.light-toggle');
-
         row.dataset.entityId = entityId;
 
+        const nameEl = row.querySelector('.light-name');
         const entityState = this._hass.states[entityId];
         nameEl.textContent = entityState ? entityState.attributes.friendly_name || entityId : entityId;
         
-        // Setup the toggle switch
-        toggleEl.hass = this._hass;
-        toggleEl.checked = entityState.state === 'on';
-        toggleEl.addEventListener('change', () => {
+        // Add click listener to the entire row to toggle the light
+        row.addEventListener('click', () => {
             this._hass.callService('light', 'toggle', { entity_id: entityId });
         });
-
+        
         individualContainer.appendChild(row);
+        // Initial update for this specific light row
+        this.updateLightsCard(popup, entityId);
     });
 
-    // Initial update of the card
-    this.updateLightsCard(popup, lightEntities[0]);
+    // Initial update for the main count
+    const countEl = card.querySelector('.lights-count');
+    const totalCount = lightEntities.length;
+    const onCount = lightEntities.filter(id => this._hass.states[id]?.state === 'on').length;
+    countEl.textContent = `${onCount} / ${totalCount}`;
   }
 
   // Update the lights card when an entity state changes
@@ -4392,14 +4393,32 @@ async _fetchWeatherForecasts() {
       const card = popup.querySelector('.lights-card');
       if (!card) return;
   
-      // Update the individual light row toggle
+      // Update the individual light row
       const lightRow = card.querySelector(`.light-row[data-entity-id="${changedEntityId}"]`);
       if (lightRow) {
-          const toggleEl = lightRow.querySelector('.light-toggle');
           const entityState = this._hass.states[changedEntityId];
-          if (toggleEl && entityState) {
-              toggleEl.checked = entityState.state === 'on';
+          const isOn = entityState && entityState.state === 'on';
+
+          // Update icon
+          const iconEl = lightRow.querySelector('.light-icon-container i');
+          if (iconEl) {
+              iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-off';
           }
+
+          // Update state label
+          const labelEl = lightRow.querySelector('.light-state-label');
+          if (labelEl) {
+              labelEl.textContent = isOn ? 'An' : 'Aus';
+          }
+          
+          // Update toggle
+          const toggleEl = lightRow.querySelector('.light-toggle');
+          if (toggleEl) {
+              toggleEl.checked = isOn;
+          }
+
+          // Update card state for styling
+          lightRow.setAttribute('state', isOn ? 'on' : 'off');
       }
   
       // Update the total count in the header
