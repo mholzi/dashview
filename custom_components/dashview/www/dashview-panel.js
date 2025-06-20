@@ -2587,7 +2587,9 @@ async _addLightEntities() {
   }
 
   // Generate header buttons from new house configuration
+// Generate header buttons from new house configuration
   _generateHeaderButtonsFromHouseConfig() {
+    console.log('[DashView Debug] Generating header buttons from houseConfig.');
     let buttonsHTML = '';
     const rooms = this._houseConfig.rooms || {};
     const floors = this._houseConfig.floors || {};
@@ -2601,24 +2603,31 @@ async _addLightEntities() {
       }
       roomsByFloor[floorKey].push({ key: roomKey, config: roomConfig });
     });
+    console.log('[DashView Debug] Rooms grouped by floor:', roomsByFloor);
 
-    // 2. Iterate through each floor to check for motion
+    // 2. Iterate through each floor to find active rooms
     Object.entries(roomsByFloor).forEach(([floorKey, floorRooms]) => {
+      console.log(`[DashView Debug] Processing floor: ${floorKey}`);
       const floorConfig = floors[floorKey];
-      if (!floorConfig) return; // Skip if floor is not configured
+      if (!floorConfig) {
+        console.warn(`[DashView Debug] No config found for floor: ${floorKey}. Skipping.`);
+        return;
+      }
 
-      // 3. Find all rooms on this floor that have an active entity (motion, light, media, etc.)
+      // 3. Find all rooms on this floor that have an active entity
       const activeRooms = floorRooms.filter(room => {
         const config = room.config;
         if (!this._hass || !this._hass.states) return false;
 
         // Check Lights
         if (config.lights && config.lights.some(entityId => this._hass.states[entityId]?.state === 'on')) {
+            console.log(`[DashView Debug] Active light found in room: ${room.key}`);
             return true;
         }
 
         // Check Media Players
         if (config.media_players && config.media_players.some(playerConfig => this._hass.states[playerConfig.entity]?.state === 'playing')) {
+            console.log(`[DashView Debug] Active media player found in room: ${room.key}`);
             return true;
         }
 
@@ -2626,6 +2635,7 @@ async _addLightEntities() {
         if (config.header_entities && config.header_entities.some(entityConfig => {
             const entityState = this._hass.states[entityConfig.entity];
             if (entityState && entityState.state === 'on' && ['motion', 'smoke', 'vibration'].includes(entityConfig.entity_type)) {
+                console.log(`[DashView Debug] Active header entity (${entityConfig.entity_type}) found in room: ${room.key}`);
                 return true;
             }
             return false;
@@ -2635,6 +2645,7 @@ async _addLightEntities() {
 
         return false;
       });
+      console.log(`[DashView Debug] Active rooms for floor ${floorKey}:`, activeRooms.map(r => r.key));
 
       // 4. If at least one room is active, display the floor and room icons
       if (activeRooms.length > 0) {
@@ -2664,7 +2675,8 @@ async _addLightEntities() {
       }
     });
 
-    return buttonsHTML || 'No active rooms';
+    console.log('[DashView Debug] Final generated buttons HTML:', buttonsHTML);
+    return buttonsHTML || '<div class="no-activity">No active rooms</div>';
   }
 
   // Generate header buttons from legacy configuration (for backward compatibility)
