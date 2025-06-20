@@ -280,6 +280,7 @@ body.popup-open, :host(.popup-open) {
 .bottom-nav {
     position: sticky;
     bottom: 10px;
+    height: 50px;
     width: 100%; /* Now it's 100% of the parent .dashboard-container */
     
     /* No need for max-width or horizontal centering, it's inherited */
