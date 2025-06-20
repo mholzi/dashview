@@ -1278,10 +1278,16 @@ body.popup-open, :host(.popup-open) {
 
 .covers-header {
     display: grid;
-    grid-template-columns: 100px 1fr 50px;
+    grid-template-columns: min-content auto 1fr 50px;
     align-items: center;
     gap: 12px;
     height: 46px;
+}
+
+/* Add this new rule for the covers icon */
+.covers-header .mdi {
+    color: var(--gray1000);
+    width: 22px;
 }
 
 .covers-title {
