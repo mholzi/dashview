@@ -5000,8 +5000,6 @@ async _fetchWeatherForecasts() {
   }
 }
 
-  }
-
 // Enhanced debug toolkit implementation - Principle 6
 window.DashViewDebug = {
   diagnose: () => {
