@@ -45,6 +45,11 @@ class DashviewPanel extends HTMLElement {
           this._initializeCoversCard(popup, roomKey, roomConfig.covers);
         }
       },
+      '.thermostat-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        this.updateThermostatCard(popup, roomKey);
+      },
       '.lights-card': (el) => {
         const popup = el.closest('.popup');
         const roomKey = popup.id.replace('-popup', '');
@@ -354,7 +359,18 @@ async _addLightEntities() {
           // Check if it's a window sensor based on configuration
           if (this._isEntityOfType(entityId, 'window')) {
             this.updateWindowsSection(shadow);
-          } else if (entityId.startsWith('cover.')) {
+          } 
+
+          else if (this._isEntityOfType(entityId, 'temperatur') || this._isEntityOfType(entityId, 'humidity')) {
+              const activePopup = shadow.querySelector('.popup.active');
+              if (activePopup) {
+                  const roomKey = activePopup.id.replace('-popup', '');
+                  this.updateThermostatCard(activePopup, roomKey);
+              }
+            }
+          // ... (existing default case)
+            
+            else if (entityId.startsWith('cover.')) {
             const activePopup = shadow.querySelector('.popup.active');
             if (activePopup) {
                 this.updateCoverCard(activePopup, entityId);
@@ -2384,6 +2400,20 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
                     // Initialize the content that was just added to fix the race condition.
                     this._initializeDynamicContent(lightsContainer);
                 }).catch(err => console.error('[DashView] Error loading lights card template:', err));
+        }
+        const hasTempSensor = roomConfig.header_entities?.some(e => e.entity_type === 'temperatur');
+        const hasHumSensor = roomConfig.header_entities?.some(e => e.entity_type === 'humidity');
+    
+        if (hasTempSensor || hasHumSensor) {
+            fetch('/local/dashview/templates/room-thermostat-card.html')
+                .then(response => response.text())
+                .then(html => {
+                    const thermostatContainer = document.createElement('div');
+                    thermostatContainer.innerHTML = html;
+                    bodyElement.appendChild(thermostatContainer);
+                    // Initialize the new content
+                    this._initializeDynamicContent(thermostatContainer);
+                }).catch(err => console.error('[DashView] Error loading thermostat card template:', err));
         }
         
         // --- CORRECTED MEDIA PLAYER BLOCK ---
@@ -4543,7 +4573,50 @@ async _fetchWeatherForecasts() {
     countEl.textContent = `${onCount} / ${totalCount}`;
   }
 
-  // --- REPLACE THE EXISTING updateLightsCard FUNCTION WITH THIS ---
+  // --- REPLACE THE EXISTING updateLightsCard FUNCTION WITH THIS --
+// Add this new method to the DashviewPanel class
+  updateThermostatCard(popup, roomKey) {
+      if (!this._hass || !roomKey) return;
+  
+      const roomConfig = this._houseConfig.rooms[roomKey];
+      if (!roomConfig) return;
+  
+      const card = popup.querySelector('.thermostat-card');
+      if (!card) return;
+  
+      // Find the configured sensors
+      const tempSensorId = roomConfig.header_entities?.find(e => e.entity_type === 'temperatur')?.entity;
+      const humSensorId = roomConfig.header_entities?.find(e => e.entity_type === 'humidity')?.entity;
+  
+      const tempEntity = tempSensorId ? this._hass.states[tempSensorId] : null;
+      const humEntity = humSensorId ? this._hass.states[humSensorId] : null;
+  
+      // Update the DOM elements
+      const tempEl = card.querySelector('.temperature');
+      const humEl = card.querySelector('.humidity');
+      const nameEl = card.querySelector('.thermostat-name');
+  
+      if (nameEl) {
+          nameEl.textContent = roomConfig.friendly_name || roomKey;
+      }
+  
+      if (tempEl) {
+          if (tempEntity && !isNaN(tempEntity.state)) {
+              tempEl.textContent = `${Number(tempEntity.state).toFixed(1)}°`;
+          } else {
+              tempEl.textContent = '--°';
+          }
+      }
+  
+      if (humEl) {
+          if (humEntity && !isNaN(humEntity.state)) {
+              humEl.style.display = '';
+              humEl.textContent = `${Number(humEntity.state).toFixed(0)}%`;
+          } else {
+              humEl.style.display = 'none'; // Hide if no humidity sensor
+          }
+      }
+  }
   updateLightsCard(popup, changedEntityId) {
       if (!this._hass || !changedEntityId) return;
   
