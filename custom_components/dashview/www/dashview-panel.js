@@ -4336,7 +4336,6 @@ async _fetchWeatherForecasts() {
     } else {
       container.innerHTML = consistencyHTML + summaryHTML;
     }
-  }
 // ADD THESE TWO NEW FUNCTIONS to the DashviewPanel class:
 
   // Initialize the lights card with entities and event listeners
@@ -5029,6 +5028,8 @@ async _fetchWeatherForecasts() {
     };
   }
 }
+
+  }
 
 // Enhanced debug toolkit implementation - Principle 6
 window.DashViewDebug = {
