@@ -353,7 +353,10 @@ async _addLightEntities() {
           if (this._isEntityOfType(entityId, 'window')) {
             this.updateWindowsSection(shadow);
           } else if (entityId.startsWith('cover.')) {
-            this.updateCoverCard(shadow, entityId);
+            const activePopup = shadow.querySelector('.popup.active');
+            if (activePopup) {
+                this.updateCoverCard(activePopup, entityId);
+            }
           } else if (entityId.startsWith('light.')) {
               const activePopup = shadow.querySelector('.popup.active');
               if (activePopup) {
