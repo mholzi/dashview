@@ -2196,8 +2196,8 @@ async _addLightEntities() {
             bodyElement.appendChild(headerEntitiesContainer);
         }
 
+        // --- CORRECTED COVERS BLOCK ---
         if (roomConfig.covers && roomConfig.covers.length > 0) {
-            // If covers exist, fetch and add the interactive card
             fetch('/local/dashview/templates/room-covers-card.html')
                 .then(response => response.text())
                 .then(html => {
@@ -2207,7 +2207,6 @@ async _addLightEntities() {
                     // Initialize the content that was just added to fix the race condition.
                     this._initializeDynamicContent(coversContainer);
                 }).catch(err => console.error('[DashView] Error loading covers card template:', err));
-        
         } else {
             // If no covers exist, add a placeholder
             const placeholder = document.createElement('div');
@@ -2215,6 +2214,8 @@ async _addLightEntities() {
             placeholder.textContent = 'No covers configured for this room.';
             bodyElement.appendChild(placeholder);
         }
+        
+        // --- CORRECTED LIGHTS BLOCK ---
         if (roomConfig.lights && roomConfig.lights.length > 0) {
             fetch('/local/dashview/templates/room-lights-card.html')
                 .then(response => response.text())
@@ -2226,20 +2227,9 @@ async _addLightEntities() {
                     this._initializeDynamicContent(lightsContainer);
                 }).catch(err => console.error('[DashView] Error loading lights card template:', err));
         }
-        // Check if the room has media players and inject the card
+        
+        // --- CORRECTED MEDIA PLAYER BLOCK ---
         if (roomConfig.media_players && roomConfig.media_players.length > 0) {
-            // If media players exist, fetch and add the interactive card
-            fetch('/local/dashview/templates/room-media-player-card.html')
-                .then(response => response.text())
-                .then(html => {
-                    const mediaPlayerContainer = document.createElement('div');
-                    mediaPlayerContainer.innerHTML = html;
-                    bodyElement.appendChild(mediaPlayerContainer);
-                    // The new dispatcher system will handle initialization
-                    // when reinitializePopupContent is called
-                }).catch(err => console.error('[DashView] Error loading media player card template:', err));
-        }if (roomConfig.media_players && roomConfig.media_players.length > 0) {
-            // If media players exist, fetch and add the interactive card
             fetch('/local/dashview/templates/room-media-player-card.html')
                 .then(response => response.text())
                 .then(html => {
