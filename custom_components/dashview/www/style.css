@@ -1499,24 +1499,44 @@ body.popup-open, :host(.popup-open) {
 }
 .light-row {
     display: grid;
-    grid-template-columns: 40px 1fr 40px;
+    grid-template-columns: min-content 1fr; /* For icon and name */
     align-items: center;
-    gap: 12px;
-    height: 52px;
+    gap: 16px;
+    height: 60px; /* New requested height */
     border-radius: 12px;
-    padding: 0 12px;
+    padding: 0 16px;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
 }
 
 .light-row[state="on"] {
     background: var(--active-light);
-    color: var(--gray800);
 }
 
 .light-row[state="off"] {
     background: var(--gray000);
-    color: var(--secondary-text-color);
+}
+
+.light-row .mdi {
+    font-size: 24px;
+    color: var(--secondary-text-color); /* Default color for off state */
+    transition: color 0.2s ease-in-out;
+}
+
+.light-row .light-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary-text-color); /* Default color for off state */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease-in-out;
+}
+
+/* New rule for text/icon color when ON */
+.light-row[state="on"] .mdi,
+.light-row[state="on"] .light-name {
+    color: var(--gray000);
 }
 
 .light-icon-container {
