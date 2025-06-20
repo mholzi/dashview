@@ -2450,7 +2450,7 @@ async _addLightEntities() {
   }
 
   // Add this new method to the DashviewPanel class
-  async _fetchWeatherForecasts() {
+async _fetchWeatherForecasts() {
     if (!this._hass) return;
 
     const entityId = this._getCurrentWeatherEntityId();
