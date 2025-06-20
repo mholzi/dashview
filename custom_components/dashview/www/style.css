@@ -1498,11 +1498,10 @@ body.popup-open, :host(.popup-open) {
     height: 46px;
 }
 .light-row {
-    display: grid;
-    grid-template-columns: min-content 1fr; /* For icon and name */
+    display: flex; /* Use flexbox instead of grid */
     align-items: center;
     gap: 16px;
-    height: 60px; /* New requested height */
+    height: 60px;
     border-radius: 12px;
     padding: 0 16px;
     cursor: pointer;
@@ -1519,24 +1518,24 @@ body.popup-open, :host(.popup-open) {
 
 .light-row .mdi {
     font-size: 24px;
-    color: var(--secondary-text-color); /* Default color for off state */
+    color: var(--secondary-text-color);
     transition: color 0.2s ease-in-out;
 }
 
-.light-row .light-name {
+.light-name {
     font-size: 14px;
     font-weight: 500;
-    color: var(--secondary-text-color); /* Default color for off state */
-    white-space: nowrap;
+    color: var(--secondary-text-color);
+    white-space: nowrap; /* Prevent text from wrapping */
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: ellipsis; /* Add ellipsis (...) for long text */
     transition: color 0.2s ease-in-out;
 }
 
-/* New rule for text/icon color when ON */
+/* Set icon and text color to gray000 when ON */
 .light-row[state="on"] .mdi,
 .light-row[state="on"] .light-name {
-    color: var(--gray800);
+    color: var(--gray000);
 }
 .light-info {
     display: flex;
