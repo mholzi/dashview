@@ -1486,7 +1486,7 @@ body.popup-open, :host(.popup-open) {
 
 .lights-header {
     display: grid;
-    grid-template-columns: min-content 1fr min-content;
+    grid-template-columns: min-content 1fr 60px;
     align-items: center;
     gap: 12px;
     height: 46px;
