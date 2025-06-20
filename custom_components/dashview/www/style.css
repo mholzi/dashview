@@ -133,11 +133,10 @@ h3 {
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
     box-sizing: border-box;
-    /* --- Changes Start Here --- */
+    /* --- Changes to position content from the top with a gap --- */
     display: flex;
-    align-items: flex-start; /* Align content to the top */
-    padding-top: 80px;      /* Add space from the top of the screen */
-    /* --- Changes End Here --- */
+    align-items: flex-start; /* Aligns the content box to the top */
+    padding-top: 40px;      /* Creates the 40px gap you requested */
 }
 
 /* Prevent body scrolling when popup is active */
