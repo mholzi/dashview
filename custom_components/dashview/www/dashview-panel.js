@@ -2457,33 +2457,33 @@ async _fetchWeatherForecasts() {
     if (!entityId) return;
 
     try {
-        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callWS`);
+        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using weather.get_forecasts`);
 
-        // Fetch daily forecast
+        // Fetch daily forecast using the correct service call
         const dailyForecasts = await this._hass.callWS({
-            type: 'weather/subscribe_forecast',
-            forecast_type: 'daily',
-            entity_id: entityId
+            type: 'weather/get_forecasts', // Use the modern service call
+            entity_id: entityId,
+            forecast_type: 'daily'
         });
 
         // Fetch hourly forecast
         const hourlyForecasts = await this._hass.callWS({
-            type: 'weather/subscribe_forecast',
-            forecast_type: 'hourly',
-            entity_id: entityId
+            type: 'weather/get_forecasts', // Use the modern service call
+            entity_id: entityId,
+            forecast_type: 'hourly'
         });
         
-        // **FIX:** Use optional chaining (?.) to safely access the .forecast property
-        this._weatherForecasts.daily = dailyForecasts?.forecast || [];
-        this._weatherForecasts.hourly = hourlyForecasts?.forecast || [];
+        // Correctly extract the forecast array from the new response structure
+        this._weatherForecasts.daily = dailyForecasts[entityId]?.forecast || [];
+        this._weatherForecasts.hourly = hourlyForecasts[entityId]?.forecast || [];
 
-        console.log('[DashView] Forecasts updated successfully via callWS');
+        console.log('[DashView] Forecasts updated successfully via weather.get_forecasts service.');
     } catch (error) {
         console.error(`[DashView] Error fetching weather forecasts for ${entityId}:`, error);
         this._weatherForecasts.daily = [];
         this._weatherForecasts.hourly = [];
     }
-  }
+}
   // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
