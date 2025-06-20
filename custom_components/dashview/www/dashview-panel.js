@@ -14,7 +14,7 @@ class DashviewPanel extends HTMLElement {
       MOTION: 'motion',
       WINDOW: 'fenster', 
       SMOKE: 'rauchmelder',
-      VIBRATION: 'vibration'
+      VIBRATION: 'vibration',
       TEMPERATUR: 'temperatur',
       HUMIDITY: 'humidity'
     };
