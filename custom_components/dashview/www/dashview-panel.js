@@ -61,7 +61,7 @@ class DashviewPanel extends HTMLElement {
       },
       // Add this new line for the security popup
       '#open-windows-list': (el) => this.updateSecurityLists(el.closest('.popup')),
-      '.security-button': (el) => this._initializeSecurityButton(el),
+      '#security-header-chips .header-info-chip': (el) => this._initializeSecurityChip(el),
       '.media-container': (el) => {
         const popup = el.closest('.popup');
         if (popup && popup.id === 'music-popup') {
@@ -1177,120 +1177,108 @@ async _addLightEntities() {
   }
 
   // Update Security Header Buttons
-  _updateSecurityHeaderButtons(popup) {
-      if (!this._hass || !popup) return;
-  
-      // --- Motion Sensor Button ---
-      const motionButton = popup.querySelector('.motion-button');
-      const motionIcon = motionButton?.querySelector('.mdi');
-      const motionTimestamp = motionButton?.querySelector('.security-timestamp');
-      
-      if (motionButton && motionIcon && motionTimestamp) {
+// START: Replace with this new function
+_updateSecurityHeaderButtons(popup) {
+    if (!this._hass || !popup) return;
+
+    // --- Motion Sensor Chip ---
+    const motionChip = popup.querySelector('.header-info-chip[data-type="motion"]');
+    if (motionChip) {
         const allMotionSensors = this._getAllEntitiesByType('motion');
         const activeMotionSensors = allMotionSensors.filter(id => this._hass.states[id]?.state === 'on');
-  
-        // Only show the button if there are active motion sensors
+
         if (activeMotionSensors.length > 0) {
-          motionButton.style.display = 'flex';
-          motionButton.classList.add('active');
-          motionIcon.className = 'mdi mdi-motion-sensor';
-  
-          // Find the most recently triggered sensor among the active ones
-          let mostRecentTime = 0;
-          activeMotionSensors.forEach(entityId => {
-              const entity = this._hass.states[entityId];
-              if (entity) {
-                  const lastChanged = new Date(entity.last_changed).getTime();
-                  if (lastChanged > mostRecentTime) {
-                      mostRecentTime = lastChanged;
-                  }
-              }
-          });
-  
-          // Calculate and display the time ago for the most recent motion
-          const timeDiff = Math.floor((Date.now() - mostRecentTime) / 1000);
-          let timeAgo;
-          if (timeDiff < 3600) {
-            timeAgo = `${Math.floor(timeDiff / 60)}m ago`;
-          } else if (timeDiff < 86400) {
-            timeAgo = `${Math.floor(timeDiff / 3600)}h ago`;
-          } else {
-            timeAgo = `${Math.floor(timeDiff / 86400)}d ago`;
-          }
-          motionTimestamp.textContent = timeAgo;
-  
+            motionChip.style.display = 'flex';
+            motionChip.style.background = 'var(--active-big)';
+            motionChip.querySelector('.chip-name').style.color = 'var(--gray000)';
+            motionChip.querySelector('.chip-icon-container i').className = 'mdi mdi-motion-sensor';
+
+            let mostRecentTime = 0;
+            activeMotionSensors.forEach(entityId => {
+                const entity = this._hass.states[entityId];
+                if (entity) {
+                    const lastChanged = new Date(entity.last_changed).getTime();
+                    if (lastChanged > mostRecentTime) {
+                        mostRecentTime = lastChanged;
+                    }
+                }
+            });
+
+            const timeDiff = Math.floor((Date.now() - mostRecentTime) / 1000);
+            let timeAgo;
+            if (timeDiff < 3600) {
+                timeAgo = `${Math.floor(timeDiff / 60)}m ago`;
+            } else if (timeDiff < 86400) {
+                timeAgo = `${Math.floor(timeDiff / 3600)}h ago`;
+            } else {
+                timeAgo = `${Math.floor(timeDiff / 86400)}d ago`;
+            }
+            motionChip.querySelector('.chip-name').textContent = timeAgo;
         } else {
-          // Hide the button if no motion is detected
-          motionButton.style.display = 'none';
+            motionChip.style.display = 'none';
         }
-      }
-  
-      // --- Windows Button ---
-      const windowsButton = popup.querySelector('.windows-button');
-      const windowsCount = windowsButton?.querySelector('.security-count');
-      
-      if (windowsButton && windowsCount) {
-        const allWindows = this._getAllEntitiesByType('window');
-        const openWindows = allWindows.filter(id => this._hass.states[id]?.state === 'on');
-        
-        windowsButton.classList.toggle('active', openWindows.length > 0);
-        windowsCount.textContent = `${openWindows.length} offen`;
-      }
-  
-      // --- Smoke Detector Button ---
-      const smokeButton = popup.querySelector('.smoke-button');
-      const smokeCount = smokeButton?.querySelector('.security-count');
-      
-      if (smokeButton && smokeCount) {
-        const allSmokeDetectors = this._getAllEntitiesByType('smoke');
-        const activeSmokeDetectors = allSmokeDetectors.filter(id => this._hass.states[id]?.state === 'on');
-        
-        // Show/hide smoke detector button based on activity
-        if (activeSmokeDetectors.length > 0) {
-          smokeButton.style.display = 'flex';
-          smokeButton.classList.add('active');
-          smokeCount.textContent = `${activeSmokeDetectors.length} aktiv`;
-        } else {
-          smokeButton.style.display = 'none';
-        }
-      }
     }
 
-  // Initialize Security Button Click Handlers
-  _initializeSecurityButton(button) {
-    if (!button) return;
-    
-    button.addEventListener('click', () => {
-      const buttonType = button.getAttribute('data-type');
-      const popup = button.closest('.popup');
-      
-      if (!popup || !buttonType) return;
-      
-      // Map button types to tab targets
-      const tabMap = {
-        'motion': 'bewegung-tab',
-        'windows': 'fenster-tab', 
-        'smoke': 'rauchmelder-tab'
-      };
-      
-      const targetTabId = tabMap[buttonType];
-      if (targetTabId) {
-        // Activate the corresponding tab
-        const targetTab = popup.querySelector(`#${targetTabId}`);
-        const targetButton = popup.querySelector(`[data-target="${targetTabId}"]`);
-        
-        if (targetTab && targetButton) {
-          // Hide all tab contents and remove active class from all tab buttons
-          popup.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-          popup.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-          
-          // Show target tab and activate its button
-          targetTab.classList.add('active');
-          targetButton.classList.add('active');
+    // --- Windows Chip ---
+    const windowsChip = popup.querySelector('.header-info-chip[data-type="windows"]');
+    if (windowsChip) {
+        const allWindows = this._getAllEntitiesByType('window');
+        const openWindows = allWindows.filter(id => this._hass.states[id]?.state === 'on');
+
+        if (openWindows.length > 0) {
+            windowsChip.style.display = 'flex';
+            windowsChip.style.background = 'var(--active-big)';
+            windowsChip.querySelector('.chip-name').style.color = 'var(--gray000)';
+            windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} offen`;
+        } else {
+            windowsChip.style.display = 'none';
         }
-      }
+    }
+
+    // --- Smoke Detector Chip ---
+    const smokeChip = popup.querySelector('.header-info-chip[data-type="smoke"]');
+    if (smokeChip) {
+        const allSmokeDetectors = this._getAllEntitiesByType('smoke');
+        const activeSmokeDetectors = allSmokeDetectors.filter(id => this._hass.states[id]?.state === 'on');
+
+        if (activeSmokeDetectors.length > 0) {
+            smokeChip.style.display = 'flex';
+            smokeChip.style.background = 'var(--red)'; // Special color for smoke
+            smokeChip.querySelector('.chip-name').style.color = 'var(--gray000)';
+            smokeChip.querySelector('.chip-name').textContent = `${activeSmokeDetectors.length} aktiv`;
+        } else {
+            smokeChip.style.display = 'none';
+        }
+    }
+}
+// END: Replacement of function
+
+  // Initialize Security Button Click Handlers
+// START: Replace the old _initializeSecurityButton function with this new one
+_initializeSecurityChip(chip) {
+    if (!chip) return;
+
+    chip.addEventListener('click', () => {
+        const chipType = chip.getAttribute('data-type');
+        const popup = chip.closest('.popup');
+        if (!popup || !chipType) return;
+
+        const tabMap = {
+            'motion': 'bewegung-tab',
+            'windows': 'fenster-tab',
+            'smoke': 'rauchmelder-tab'
+        };
+
+        const targetTabId = tabMap[chipType];
+        if (targetTabId) {
+            const targetButton = popup.querySelector(`.tab-button[data-target="${targetTabId}"]`);
+            if (targetButton) {
+                targetButton.click(); // Simulate a click on the corresponding tab button
+            }
+        }
     });
-  }
+}
+// END: Replacement of function
 
   initializeCard(context) {
     // --- This section is the same as before ---
