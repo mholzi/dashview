@@ -1648,3 +1648,57 @@ body.popup-open, :host(.popup-open) {
 .light-toggle {
     justify-self: end;
 }
+/* --- Thermostat Card Styles --- */
+.thermostat-card {
+  position: relative;
+  display: grid;
+  grid-template-areas: "values" "name";
+  grid-template-rows: 1fr 25px; /* Defines a large top area for values and a smaller bottom area for the name */
+  height: 160px;
+  padding: 6px;
+  border-radius: 20px; /* Consistent with other cards */
+  background-color: var(--card-background-color);
+  overflow: hidden; /* Ensures the graph background doesn't bleed out */
+  margin: 8px 0;
+}
+
+.thermostat-values {
+  grid-area: values;
+  justify-self: start;
+  align-self: end;
+  font-size: 2.6em;
+  font-weight: 300;
+  padding-left: 20px;
+  padding-bottom: 5px; /* Adjust vertical alignment */
+  z-index: 2; /* Ensure values are on top of the graph */
+  color: var(--primary-text-color);
+}
+
+.thermostat-values .humidity {
+  font-size: 0.4em; /* Relative to the temperature font size */
+  font-weight: 400;
+  color: var(--secondary-text-color);
+  margin-left: 4px;
+}
+
+.thermostat-name {
+  grid-area: name;
+  justify-self: start;
+  align-self: start;
+  font-size: 14px;
+  padding-left: 20px;
+  z-index: 2;
+  color: var(--secondary-text-color);
+}
+
+.thermostat-graph {
+  grid-area: 1 / 1 / 3 / 2; /* Makes the graph span the entire card area behind other elements */
+  position: absolute;
+  width: 100%;
+  left: 0;
+  bottom: 0;
+  height: 85px; /* Matches the height from your YAML */
+  background: linear-gradient(to top, rgba(104, 156, 255, 0.2), transparent); /* A simple gradient to simulate a graph */
+  z-index: 1;
+  border-radius: 0 0 20px 20px;
+}
