@@ -2197,17 +2197,23 @@ async _addLightEntities() {
         }
 
         if (roomConfig.covers && roomConfig.covers.length > 0) {
+            // If covers exist, fetch and add the interactive card
             fetch('/local/dashview/templates/room-covers-card.html')
                 .then(response => response.text())
                 .then(html => {
                     const coversContainer = document.createElement('div');
                     coversContainer.innerHTML = html;
                     bodyElement.appendChild(coversContainer);
-                    // *** SOLUTION: Initialize the card right after inserting its HTML ***
-                    this._initializeCoversCard(popup, popupType, roomConfig.covers);
+                    // The new dispatcher system will handle initialization
+                    // when reinitializePopupContent is called
                 }).catch(err => console.error('[DashView] Error loading covers card template:', err));
+        } else {
+            // If no covers exist, add a placeholder
+            const placeholder = document.createElement('div');
+            placeholder.className = 'placeholder'; // Use existing placeholder style
+            placeholder.textContent = 'No covers configured for this room.';
+            bodyElement.appendChild(placeholder);
         }
-
         if (roomConfig.lights && roomConfig.lights.length > 0) {
             fetch('/local/dashview/templates/room-lights-card.html')
                 .then(response => response.text())
@@ -2215,20 +2221,19 @@ async _addLightEntities() {
                     const lightsContainer = document.createElement('div');
                     lightsContainer.innerHTML = html;
                     bodyElement.appendChild(lightsContainer);
-                    // *** SOLUTION: Initialize the card right after inserting its HTML ***
-                    this._initializeLightsCard(popup, popupType, roomConfig.lights);
                 }).catch(err => console.error('[DashView] Error loading lights card template:', err));
         }
-
+        // Check if the room has media players and inject the card
         if (roomConfig.media_players && roomConfig.media_players.length > 0) {
+            // If media players exist, fetch and add the interactive card
             fetch('/local/dashview/templates/room-media-player-card.html')
                 .then(response => response.text())
                 .then(html => {
                     const mediaPlayerContainer = document.createElement('div');
                     mediaPlayerContainer.innerHTML = html;
                     bodyElement.appendChild(mediaPlayerContainer);
-                    // *** SOLUTION: Initialize the card right after inserting its HTML ***
-                    this._initializeMediaPlayerCard(popup, popupType, roomConfig.media_players);
+                    // The new dispatcher system will handle initialization
+                    // when reinitializePopupContent is called
                 }).catch(err => console.error('[DashView] Error loading media player card template:', err));
         }
     }
@@ -2452,33 +2457,31 @@ async _fetchWeatherForecasts() {
     if (!entityId) return;
 
     try {
-        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using weather.get_forecasts`);
+        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callService`);
 
-        // Fetch daily forecast using the correct service call
-        const dailyForecasts = await this._hass.callWS({
-            type: 'weather/get_forecasts', // Use the modern service call
-            entity_id: entityId,
-            forecast_type: 'daily'
-        });
+        // Use hass.callService to get the daily forecast, with return_response as the 4th argument
+        const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
+            target: { entity_id: entityId },
+            type: 'daily'
+        }, true);
 
-        // Fetch hourly forecast
-        const hourlyForecasts = await this._hass.callWS({
-            type: 'weather/get_forecasts', // Use the modern service call
-            entity_id: entityId,
-            forecast_type: 'hourly'
-        });
-        
-        // Correctly extract the forecast array from the new response structure
-        this._weatherForecasts.daily = dailyForecasts[entityId]?.forecast || [];
-        this._weatherForecasts.hourly = hourlyForecasts[entityId]?.forecast || [];
+        // Use hass.callService to get the hourly forecast, with return_response as the 4th argument
+        const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
+            target: { entity_id: entityId },
+            type: 'hourly'
+        }, true);
 
-        console.log('[DashView] Forecasts updated successfully via weather.get_forecasts service.');
+        // The response is structured like { "weather.forecast_home": { "forecast": [...] } }
+        this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
+        this._weatherForecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
+
+        console.log('[DashView] Forecasts updated successfully via callService');
     } catch (error) {
-        console.error(`[DashView] Error fetching weather forecasts for ${entityId}:`, error);
+        console.error(`[DashView] Error fetching weather forecasts for ${entityId} via callService:`, error);
         this._weatherForecasts.daily = [];
         this._weatherForecasts.hourly = [];
     }
-}
+  }
   // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
@@ -4483,6 +4486,7 @@ async _fetchWeatherForecasts() {
     
     // Create media player content structure
     const mediaPlayerContent = `
+      <!-- Preset Buttons -->
       <div class="media-presets">
         <button class="media-preset-button" 
                 data-entity="${entityId}"
@@ -4504,6 +4508,7 @@ async _fetchWeatherForecasts() {
         </button>
       </div>
       
+      <!-- Media Display -->
       <div class="media-display" data-entity="${entityId}">
         <div class="media-image">
           <img src="" alt="Media Cover" class="media-cover">
@@ -4514,6 +4519,7 @@ async _fetchWeatherForecasts() {
         </div>
       </div>
       
+      <!-- Media Controls -->
       <div class="media-controls" data-entity="${entityId}">
         <button class="media-control-button" data-action="media_previous_track">
           <i class="mdi mdi-skip-previous"></i>
@@ -4526,6 +4532,7 @@ async _fetchWeatherForecasts() {
         </button>
       </div>
       
+      <!-- Volume Control -->
       <div class="media-volume-control">
         ${mediaPlayerEntities.map(player => {
           const entity = this._hass.states[player.entity];
