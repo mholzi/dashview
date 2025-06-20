@@ -15,6 +15,8 @@ class DashviewPanel extends HTMLElement {
       WINDOW: 'fenster', 
       SMOKE: 'rauchmelder',
       VIBRATION: 'vibration'
+      TEMPERATUR: 'temperatur',
+      HUMIDITY: 'humidity'
     };
     
     // Admin UI state management - Principle 12
@@ -1485,7 +1487,22 @@ _initializeSecurityChip(chip) {
         if (saveVibrationConfigBtn) {
             this.saveVibrationConfig();
         }
-
+        const reloadTemperaturSensorsBtn = e.target.closest('#reload-temperatur-sensors');
+        if (reloadTemperaturSensorsBtn) {
+            this.loadTemperaturSensorSetup();
+        }
+        const saveTemperaturSensorConfigBtn = e.target.closest('#save-temperatur-sensor-config');
+        if (saveTemperaturSensorConfigBtn) {
+            this.saveTemperaturSensorConfig();
+        }
+        const reloadHumiditySensorsBtn = e.target.closest('#reload-humidity-sensors');
+        if (reloadHumiditySensorsBtn) {
+            this.loadHumiditySensorSetup();
+        }
+        const saveHumiditySensorConfigBtn = e.target.closest('#save-humidity-sensor-config');
+        if (saveHumiditySensorConfigBtn) {
+            this.saveHumiditySensorConfig();
+        }
         // Handle room maintenance buttons
         const reloadRoomBtn = e.target.closest('#reload-room-maintenance');
         if (reloadRoomBtn) {
@@ -1499,7 +1516,166 @@ _initializeSecurityChip(chip) {
         }
     });
   }
-  
+async loadTemperaturSensorSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('temperatur-setup-status');
+    this._setStatusMessage(statusElement, 'Loading temperatur sensors from Home Assistant...', 'loading');
+
+    try {
+        const [entitiesByRoom, houseConfig] = await Promise.all([
+            this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.TEMPERATUR}`),
+            this._hass.callApi('GET', 'dashview/config?type=house')
+        ]);
+
+        this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+        this._renderTemperaturSensorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+        this._setStatusMessage(statusElement, '✓ Temperatur sensors loaded successfully', 'success');
+    } catch (error) {
+        console.error('[DashView] Error loading temperatur sensor setup:', error);
+        this._setStatusMessage(statusElement, `✗ Error loading temperatur sensors: ${error.message}`, 'error');
+    }
+}
+
+_renderTemperaturSensorSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('temperatur-sensors-by-room');
+    if (!container) return;
+    let html = '';
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+        html = `<div class="placeholder"><p>No sensors with "Temperatur" label found.</p></div>`;
+    } else {
+        Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+            html += `<div class="room-config"><h6>${areaData.name}</h6><div class="entity-list">`;
+            areaData.entities.forEach(entity => {
+                const isConfigured = this._isTemperaturSensorConfigured(entity.entity_id, houseConfig);
+                const checkedAttr = isConfigured ? 'checked' : '';
+                html += `<div class="entity-list-item"><label class="checkbox-label"><input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}><span class="checkmark"></span>${entity.name}</label><span class="entity-id">${entity.entity_id}</span></div>`;
+            });
+            html += `</div></div>`;
+        });
+    }
+    container.innerHTML = html;
+}
+
+_isTemperaturSensorConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    return Object.values(houseConfig.rooms).some(room =>
+        room.header_entities && room.header_entities.some(headerEntity =>
+            headerEntity.entity === entityId && headerEntity.entity_type === 'temperatur'
+        )
+    );
+}
+
+async saveTemperaturSensorConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('temperatur-setup-status');
+    const checkboxes = shadow.querySelectorAll('#temperatur-sensors-by-room input[type="checkbox"]');
+    this._setStatusMessage(statusElement, 'Saving temperatur sensor configuration...', 'loading');
+    try {
+        if (!this._adminLocalState.houseConfig) this._adminLocalState.houseConfig = { rooms: {} };
+        Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+            if (room.header_entities) room.header_entities = room.header_entities.filter(entity => entity.entity_type !== 'temperatur');
+        });
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const entityId = checkbox.getAttribute('data-entity-id');
+                const roomName = checkbox.getAttribute('data-room');
+                let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+                if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+                    this._adminLocalState.houseConfig.rooms[roomKey] = { friendly_name: roomName, icon: "mdi:home-outline", floor: "ground_floor", header_entities: [] };
+                }
+                if (!this._adminLocalState.houseConfig.rooms[roomKey].header_entities) {
+                    this._adminLocalState.houseConfig.rooms[roomKey].header_entities = [];
+                }
+                this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({ entity: entityId, entity_type: 'temperatur', icon: 'mdi:thermometer' });
+            }
+        });
+        await this._hass.callApi('POST', 'dashview/config', { house_config: this._adminLocalState.houseConfig });
+        this._setStatusMessage(statusElement, '✓ Temperatur sensor configuration saved!', 'success');
+    } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
+}
+// END: Add Temperatur Sensor Functions
+
+// START: Add Humidity Sensor Functions
+async loadHumiditySensorSetup() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('humidity-setup-status');
+    this._setStatusMessage(statusElement, 'Loading humidity sensors from Home Assistant...', 'loading');
+    try {
+        const [entitiesByRoom, houseConfig] = await Promise.all([
+            this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.HUMIDITY}`),
+            this._hass.callApi('GET', 'dashview/config?type=house')
+        ]);
+        this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+        this._renderHumiditySensorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+        this._setStatusMessage(statusElement, '✓ Humidity sensors loaded successfully', 'success');
+    } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error loading humidity sensors: ${error.message}`, 'error');
+    }
+}
+
+_renderHumiditySensorSetup(entitiesByRoom, houseConfig) {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('humidity-sensors-by-room');
+    if (!container) return;
+    let html = '';
+    if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
+        html = `<div class="placeholder"><p>No sensors with "Humidity" label found.</p></div>`;
+    } else {
+        Object.entries(entitiesByRoom).forEach(([areaId, areaData]) => {
+            html += `<div class="room-config"><h6>${areaData.name}</h6><div class="entity-list">`;
+            areaData.entities.forEach(entity => {
+                const isConfigured = this._isHumiditySensorConfigured(entity.entity_id, houseConfig);
+                const checkedAttr = isConfigured ? 'checked' : '';
+                html += `<div class="entity-list-item"><label class="checkbox-label"><input type="checkbox" data-entity-id="${entity.entity_id}" data-room="${areaData.name}" ${checkedAttr}><span class="checkmark"></span>${entity.name}</label><span class="entity-id">${entity.entity_id}</span></div>`;
+            });
+            html += `</div></div>`;
+        });
+    }
+    container.innerHTML = html;
+}
+
+_isHumiditySensorConfigured(entityId, houseConfig) {
+    if (!houseConfig || !houseConfig.rooms) return false;
+    return Object.values(houseConfig.rooms).some(room =>
+        room.header_entities && room.header_entities.some(headerEntity =>
+            headerEntity.entity === entityId && headerEntity.entity_type === 'humidity'
+        )
+    );
+}
+
+async saveHumiditySensorConfig() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('humidity-setup-status');
+    const checkboxes = shadow.querySelectorAll('#humidity-sensors-by-room input[type="checkbox"]');
+    this._setStatusMessage(statusElement, 'Saving humidity sensor configuration...', 'loading');
+    try {
+        if (!this._adminLocalState.houseConfig) this._adminLocalState.houseConfig = { rooms: {} };
+        Object.values(this._adminLocalState.houseConfig.rooms).forEach(room => {
+            if (room.header_entities) room.header_entities = room.header_entities.filter(entity => entity.entity_type !== 'humidity');
+        });
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const entityId = checkbox.getAttribute('data-entity-id');
+                const roomName = checkbox.getAttribute('data-room');
+                let roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
+                if (!this._adminLocalState.houseConfig.rooms[roomKey]) {
+                    this._adminLocalState.houseConfig.rooms[roomKey] = { friendly_name: roomName, icon: "mdi:home-outline", floor: "ground_floor", header_entities: [] };
+                }
+                if (!this._adminLocalState.houseConfig.rooms[roomKey].header_entities) {
+                    this._adminLocalState.houseConfig.rooms[roomKey].header_entities = [];
+                }
+                this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({ entity: entityId, entity_type: 'humidity', icon: 'mdi:water-percent' });
+            }
+        });
+        await this._hass.callApi('POST', 'dashview/config', { house_config: this._adminLocalState.houseConfig });
+        this._setStatusMessage(statusElement, '✓ Humidity sensor configuration saved!', 'success');
+    } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
+    }
+}  
   // Method to update weather components
   // Main entry point to update all weather components in the popup
   async updateWeatherComponents(shadow) {
@@ -2316,6 +2492,12 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           if (targetId === 'header-buttons-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }
+          if (targetId === 'temperatur-setup-tab') {
+              setTimeout(() => this.loadTemperaturSensorSetup(), 100);
+          }
+          if (targetId === 'humidity-setup-tab') {
+              setTimeout(() => this.loadHumiditySensorSetup(), 100);
+          }  
           if (targetId === 'room-maintenance-tab') {
             setTimeout(() => this.loadRoomMaintenance(), 100);
           }
