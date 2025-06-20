@@ -1884,42 +1884,34 @@ async _addLightEntities() {
   }
 
   // Generate room header entities for popup using the new format specification
-  _generateRoomHeaderEntitiesForPopup(roomConfig) {
+   _generateRoomHeaderEntitiesForPopup(roomConfig) {
     if (!roomConfig.header_entities || !Array.isArray(roomConfig.header_entities)) {
-      return '';
+        return '';
     }
 
-    // Filter to only show active/relevant entities based on display logic
     const activeEntities = roomConfig.header_entities.filter(entityConfig => {
-      const entity = this._hass.states[entityConfig.entity];
-      if (!entity) return false;
-      
-      return this._shouldDisplayHeaderEntity(entity, entityConfig.entity_type);
+        const entity = this._hass.states[entityConfig.entity];
+        return entity && this._shouldDisplayHeaderEntity(entity, entityConfig.entity_type);
     });
 
     if (activeEntities.length === 0) {
-      return '';
+        return '';
     }
 
-    // Generate the horizontal stack of entity cards
     const entityCards = activeEntities.map(entityConfig => {
-      const entity = this._hass.states[entityConfig.entity];
-      const name = this._getHeaderEntityName(entity, entityConfig.entity_type);
-      const icon = this._getHeaderEntityIcon(entity, entityConfig.entity_type);
-      const backgroundColor = this._getHeaderEntityBackground(entity, entityConfig.entity_type);
-      const textColor = this._getHeaderEntityTextColor(entity, entityConfig.entity_type);
+        const entity = this._hass.states[entityConfig.entity];
+        const name = this._getHeaderEntityName(entity, entityConfig.entity_type);
+        const icon = this._getHeaderEntityIcon(entity, entityConfig.entity_type);
+        const background = this._getHeaderEntityBackground(entity, entityConfig.entity_type);
 
-      return `
-        <div class="header-info-chip" 
-             data-entity="${entityConfig.entity}" 
-             data-type="${entityConfig.entity_type}"
-             style="background: ${backgroundColor};">
-          <div class="chip-icon-container">
-            <i class="mdi ${icon}" style="color: var(--gray000);"></i>
-          </div>
-          <div class="chip-name" style="color: ${textColor};">${name}</div>
-        </div>
-      `;
+        return `
+            <div class="header-entity-card" style="background: ${background};">
+              <div class="header-entity-icon">
+                <i class="mdi ${icon}"></i>
+              </div>
+              <div class="header-entity-name">${name}</div>
+            </div>
+        `;
     }).join('');
 
     return `
