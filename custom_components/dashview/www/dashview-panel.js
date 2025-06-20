@@ -4336,6 +4336,7 @@ async _fetchWeatherForecasts() {
     } else {
       container.innerHTML = consistencyHTML + summaryHTML;
     }
+  }
 // ADD THESE TWO NEW FUNCTIONS to the DashviewPanel class:
 
   // Initialize the lights card with entities and event listeners
@@ -4407,7 +4408,6 @@ async _fetchWeatherForecasts() {
       }
   }
   // Initialize the covers card with entities and event listeners
-
   _initializeCoversCard(popup, roomKey, coverEntities) {
     const card = popup.querySelector('.covers-card');
     if (!card) return;
