@@ -1606,12 +1606,61 @@ async saveTemperaturSensorConfig() {
                 this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({ entity: entityId, entity_type: 'temperatur', icon: 'mdi:thermometer' });
             }
         });
-        await this._hass.callApi('POST', 'dashview/config', { house_config: this._adminLocalState.houseConfig });
+        await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
         this._setStatusMessage(statusElement, '✓ Temperatur sensor configuration saved!', 'success');
     } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
     }
 }
+_renderTemperatureGraph(graphContainer, historyData) {
+    if (!graphContainer || !historyData || historyData.length < 2) {
+        graphContainer.innerHTML = ''; // Clear if no data
+        return;
+    }
+
+    const temperatures = historyData.map(d => d.state);
+    const minTemp = Math.min(...temperatures);
+    const maxTemp = Math.max(...temperatures);
+    const tempRange = maxTemp - minTemp || 1;
+
+    const svgWidth = graphContainer.clientWidth || 300;
+    const svgHeight = 85; // Fixed height from CSS
+    const padding = 5;
+
+    const points = historyData.map((d, i) => {
+        const x = (i / (historyData.length - 1)) * (svgWidth - padding * 2) + padding;
+        const y = svgHeight - ((d.state - minTemp) / tempRange) * (svgHeight - padding * 2) - padding;
+        return { x, y };
+    });
+
+    let pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+        const x_mid = (points[i].x + points[i+1].x) / 2;
+        const y_mid = (points[i].y + points[i+1].y) / 2;
+        const cp_x1 = (x_mid + points[i].x) / 2;
+        const cp_y1 = (y_mid + points[i].y) / 2;
+        const cp_x2 = (x_mid + points[i+1].x) / 2;
+        const cp_y2 = (y_mid + points[i+1].y) / 2;
+        pathD += ` Q ${points[i].x} ${points[i].y}, ${x_mid} ${y_mid}`;
+    }
+    pathD += ` L ${points[points.length-1].x} ${points[points.length-1].y}`;
+    
+    const filledPathD = `${pathD} V ${svgHeight} H ${points[0].x} Z`;
+
+    graphContainer.innerHTML = `
+        <svg viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="graph-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:var(--blue); stop-opacity:0.4" />
+                    <stop offset="100%" style="stop-color:var(--blue); stop-opacity:0.05" />
+                </linearGradient>
+            </defs>
+            <path d="${filledPathD}" class="graph-fill" />
+            <path d="${pathD}" class="graph-path" />
+        </svg>
+    `;
+}
+
 // END: Add Temperatur Sensor Functions
 
 // START: Add Humidity Sensor Functions
@@ -1686,7 +1735,7 @@ async saveHumiditySensorConfig() {
                 this._adminLocalState.houseConfig.rooms[roomKey].header_entities.push({ entity: entityId, entity_type: 'humidity', icon: 'mdi:water-percent' });
             }
         });
-        await this._hass.callApi('POST', 'dashview/config', { house_config: this._adminLocalState.houseConfig });
+        await this._hass.callApi('POST', 'dashview/config', this._adminLocalState.houseConfig);
         this._setStatusMessage(statusElement, '✓ Humidity sensor configuration saved!', 'success');
     } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
@@ -4575,48 +4624,49 @@ async _fetchWeatherForecasts() {
 
   // --- REPLACE THE EXISTING updateLightsCard FUNCTION WITH THIS --
 // Add this new method to the DashviewPanel class
-  updateThermostatCard(popup, roomKey) {
-      if (!this._hass || !roomKey) return;
-  
-      const roomConfig = this._houseConfig.rooms[roomKey];
-      if (!roomConfig) return;
-  
-      const card = popup.querySelector('.thermostat-card');
-      if (!card) return;
-  
-      // Find the configured sensors
-      const tempSensorId = roomConfig.header_entities?.find(e => e.entity_type === 'temperatur')?.entity;
-      const humSensorId = roomConfig.header_entities?.find(e => e.entity_type === 'humidity')?.entity;
-  
-      const tempEntity = tempSensorId ? this._hass.states[tempSensorId] : null;
-      const humEntity = humSensorId ? this._hass.states[humSensorId] : null;
-  
-      // Update the DOM elements
-      const tempEl = card.querySelector('.temperature');
-      const humEl = card.querySelector('.humidity');
-      const nameEl = card.querySelector('.thermostat-name');
-  
-      if (nameEl) {
-          nameEl.textContent = roomConfig.friendly_name || roomKey;
-      }
-  
-      if (tempEl) {
-          if (tempEntity && !isNaN(tempEntity.state)) {
-              tempEl.textContent = `${Number(tempEntity.state).toFixed(1)}°`;
-          } else {
-              tempEl.textContent = '--°';
-          }
-      }
-  
-      if (humEl) {
-          if (humEntity && !isNaN(humEntity.state)) {
-              humEl.style.display = '';
-              humEl.textContent = `${Number(humEntity.state).toFixed(0)}%`;
-          } else {
-              humEl.style.display = 'none'; // Hide if no humidity sensor
-          }
-      }
-  }
+async updateThermostatCard(popup, roomKey) {
+    if (!this._hass || !roomKey) return;
+
+    const roomConfig = this._houseConfig.rooms[roomKey];
+    if (!roomConfig) return;
+
+    const card = popup.querySelector('.thermostat-card');
+    if (!card) return;
+
+    // ... (existing logic to update temp/humidity text) ...
+    if (nameEl) {
+        nameEl.textContent = roomConfig.friendly_name || roomKey;
+    }
+
+    if (tempEl) {
+        if (tempEntity && !isNaN(tempEntity.state)) {
+            tempEl.textContent = `${Number(tempEntity.state).toFixed(1)}°`;
+        } else {
+            tempEl.textContent = '--°';
+        }
+    }
+
+    if (humEl) {
+        if (humEntity && !isNaN(humEntity.state)) {
+            humEl.style.display = '';
+            humEl.textContent = `${Number(humEntity.state).toFixed(0)}%`;
+        } else {
+            humEl.style.display = 'none'; // Hide if no humidity sensor
+        }
+    }
+    // *** END of existing logic ***
+    
+    // *** ADD THIS NEW LOGIC to fetch and render the graph ***
+    const graphContainer = card.querySelector('.thermostat-graph');
+    if (graphContainer && tempSensorId) {
+        try {
+            const historyData = await this._hass.callApi('GET', `dashview/config?type=history&entity_id=${tempSensorId}`);
+            this._renderTemperatureGraph(graphContainer, historyData);
+        } catch (error) {
+            console.error(`[DashView] Error fetching history for ${tempSensorId}:`, error);
+        }
+    }
+}
   updateLightsCard(popup, changedEntityId) {
       if (!this._hass || !changedEntityId) return;
   
