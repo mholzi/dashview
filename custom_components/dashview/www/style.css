@@ -1535,7 +1535,7 @@ body.popup-open, :host(.popup-open) {
 
 .light-row {
     display: flex; /* As requested */
-    height: 80px; /* As requested */
+    height: 60px; /* As requested */
     align-items: center;
     gap: 16px;
     border-radius: 12px;
@@ -1571,6 +1571,8 @@ body.popup-open, :host(.popup-open) {
 /* "ON" state styles for icon and name */
 .light-row[state="on"] .mdi,
 .light-row[state="on"] .light-name {
+    color: var(--gray000); /* As requested */
+.light-row[state="on"] .light-info {
     color: var(--gray000); /* As requested */
 }
 
