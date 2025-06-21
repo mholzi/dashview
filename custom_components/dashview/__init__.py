@@ -8,7 +8,13 @@ from homeassistant.components import panel_custom, history
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.view import HomeAssistantView
 from aiohttp import web
-from homeassistant.helpers import area_registry as ar, floor_registry as fr, entity_registry as er
+from homeassistant.helpers import (
+    area_registry as ar,
+    device_registry as dr,
+    entity_registry as er,
+    floor_registry as fr,
+    label_registry as lr,
+)
 from homeassistant.util import dt as dt_util
 from datetime import timedelta
 from .const import DOMAIN
@@ -136,13 +142,13 @@ class DashViewConfigView(HomeAssistantView):
         config_type = request.query.get("type")
         
         house_config = config_data.get("house_config", {})
-        area_registry = ar.async_get(self._hass)
 
         if config_type == "house":
             data = house_config
         elif config_type == "weather_entity":
             data = {"weather_entity": house_config.get("weather_entity", "weather.forecast_home")}
-        elif config_type == "ha_rooms":  # FIX: Added explicit handler
+        elif config_type == "ha_rooms":
+            area_registry = ar.async_get(self._hass)
             areas = area_registry.areas.values()
             data = sorted(
                 [
@@ -155,7 +161,7 @@ class DashViewConfigView(HomeAssistantView):
                 ],
                 key=lambda r: r["name"],
             )
-        elif config_type == "combined_sensors":  # FIX: Added explicit handler
+        elif config_type == "combined_sensors":
             combined_sensors = [
                 {
                     "entity_id": entity.entity_id,
@@ -197,9 +203,11 @@ class DashViewConfigView(HomeAssistantView):
             
             return self.json(data)
         elif config_type == "entities_by_room":
+            # FIX: Use modern, direct registry getters
+            area_registry = ar.async_get(self._hass)
             entity_registry = er.async_get(self._hass)
-            device_registry = self._hass.helpers.device_registry.async_get(self._hass)
-            label_registry = self._hass.helpers.label_registry.async_get(self._hass)
+            device_registry = dr.async_get(self._hass)
+            label_registry = lr.async_get(self._hass)
             
             label_filter = request.query.get("label")
             domain_filter = request.query.get("domain")
@@ -218,7 +226,6 @@ class DashViewConfigView(HomeAssistantView):
             for entity in entity_registry.entities.values():
                 area_id = entity.area_id
                 if not area_id and entity.device_id:
-                    # FIX: Use the correct method to get a device from the registry
                     device = device_registry.devices.get(entity.device_id)
                     if device:
                         area_id = device.area_id
@@ -228,7 +235,6 @@ class DashViewConfigView(HomeAssistantView):
                                      (domain_filter and entity.domain == domain_filter)
                     if matches_filter:
                         if area_id not in entities_by_area:
-                            area_registry = ar.async_get(self._hass)
                             area = area_registry.areas.get(area_id)
                             entities_by_area[area_id] = {
                                 "name": area.name if area else "Unknown Area",
