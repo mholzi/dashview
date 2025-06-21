@@ -8,6 +8,7 @@ class DashviewPanel extends HTMLElement {
     this._floorsConfig = {};
     this._roomsConfig = {};
     this._houseConfig = {};
+    this._integrationsConfig = {};
     
     // Label constants for case-insensitive entity queries - ensures consistent lowercase usage
     this._entityLabels = {
@@ -115,7 +116,9 @@ class DashviewPanel extends HTMLElement {
       this._watchedEntities.add('person.markus');
       this._watchedEntities.add('sensor.frankfurt_m_taunusanlage_departures_via_dreieich_buchschlag');
       this._watchedEntities.add('sensor.dreieich_buchschlag_departures_via_frankfurt_hbf');
-      
+      if (this._integrationsConfig?.dwd_sensor) {
+           this._watchedEntities.add(this._integrationsConfig.dwd_sensor);
+      }      
       // Add info-card entities
       this._watchedEntities.add('binary_sensor.motion_presence_home');
       this._watchedEntities.add('sensor.geschirrspuler_operation_state');
@@ -357,6 +360,10 @@ async _addLightEntities() {
           break;
         default:
           // Check if it's a window sensor based on configuration
+          if (this._integrationsConfig?.dwd_sensor && entityId === this._integrationsConfig.dwd_sensor) {
+              this.updateDwdWarningCard();
+          }
+          
           if (this._isEntityOfType(entityId, 'window')) {
             this.updateWindowsSection(shadow);
           } 
@@ -1380,7 +1387,14 @@ _initializeSecurityChip(chip) {
         if (trainCard) {
             window.location.hash = '#bahn';
         }
-
+        const saveDwdBtn = e.target.closest('#save-dwd-config');
+        if (saveDwdBtn) {
+            this.saveDwdConfig();
+        }
+        const reloadDwdBtn = e.target.closest('#reload-dwd-config');
+        if (reloadDwdBtn) {
+            this.loadDwdConfig();
+        }
         // Handle info card badge clicks (only badges, not full sections)
         const infoBadge = e.target.closest('.info-badge');
         if (infoBadge) {
@@ -1532,6 +1546,104 @@ _initializeSecurityChip(chip) {
         }
     });
   }
+async loadDwdConfig() {
+    const shadow = this.shadowRoot;
+    const statusEl = shadow.getElementById('dwd-config-status');
+    const inputEl = shadow.getElementById('dwd-sensor-entity');
+    if (!statusEl || !inputEl) return;
+
+    this._setStatusMessage(statusEl, 'Loading DWD configuration...', 'loading');
+    try {
+        const integrationsConfig = await this._hass.callApi('GET', 'dashview/config?type=integrations');
+        const dwdSensor = integrationsConfig?.dwd_sensor || '';
+        inputEl.value = dwdSensor;
+        this._setStatusMessage(statusEl, '✓ DWD configuration loaded', 'success');
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error loading DWD config: ${e.message}`, 'error');
+    }
+}
+
+async saveDwdConfig() {
+    const shadow = this.shadowRoot;
+    const statusEl = shadow.getElementById('dwd-config-status');
+    const inputEl = shadow.getElementById('dwd-sensor-entity');
+    if (!statusEl || !inputEl) return;
+
+    const sensorEntity = inputEl.value.trim();
+    if (!this._validateEntityId(sensorEntity)) {
+        this._setStatusMessage(statusEl, '✗ Invalid Entity ID format.', 'error');
+        return;
+    }
+
+    this._setStatusMessage(statusEl, 'Saving...', 'loading');
+    try {
+        const configToSave = { dwd_sensor: sensorEntity };
+        await this._hass.callApi('POST', 'dashview/config', {
+            type: 'integrations',
+            config: configToSave
+        });
+        this._setStatusMessage(statusEl, '✓ DWD configuration saved!', 'success');
+        
+        // Update the running config and refresh the card
+        if (!this._integrationsConfig) this._integrationsConfig = {};
+        this._integrationsConfig.dwd_sensor = sensorEntity;
+        this._watchedEntities.add(sensorEntity); // Start watching the new entity
+        this.updateDwdWarningCard();
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error saving DWD config: ${e.message}`, 'error');
+    }
+}
+
+async updateDwdWarningCard() {
+    const shadow = this.shadowRoot;
+    if (!shadow || !this._hass) return;
+
+    const container = shadow.getElementById('dwd-warning-card-container');
+    if (!container) return;
+
+    const sensorEntity = this._integrationsConfig?.dwd_sensor;
+    if (!sensorEntity) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const dwdState = this._hass.states[sensorEntity];
+    if (!dwdState || dwdState.state === '0' || dwdState.state === 'unavailable') {
+        container.innerHTML = ''; // Hide card if no warning
+        return;
+    }
+
+    const template = `
+      {% set dwdstate = states('${sensorEntity}') %}
+      {% if dwdstate != "unavailable" %}
+      {% set dwdcount = state_attr('${sensorEntity}', 'warning_count') | int(0) %}
+      {% if dwdcount >= 1 %}
+      <ha-alert alert-type="{% if dwdstate | int >= 2 %}error{% else %}warning{% endif %}" title="Wetterwarnung (DWD)">
+      {% for i in range(1, dwdcount + 1) %}
+        {% set name = state_attr('${sensorEntity}', 'warning_' ~ i ~ '_name') %}
+        {% set level = state_attr('${sensorEntity}', 'warning_' ~ i ~ '_level') | int %}
+        {% set end_time = state_attr('${sensorEntity}', 'warning_' ~ i ~ '_end') %}
+        {% set level_text = {
+            0: 'Information vor', 1: 'Warnung vor', 2: 'Warnung vor markantem', 
+            3: 'Unwetterwarnung vor', 4: 'Achtung! Extremem Unwetter -'
+           }.get(level, 'Warnung vor') 
+        %}
+        {{ level_text }} {{ name }} bis {{ as_timestamp(end_time) | timestamp_custom('%d.%m %H:%M Uhr') }}.
+      {% endfor %}
+      <a href="https://www.dwd.de/DE/wetter/warnungen_gemeinden/warnWetter_node.html?ort=dreieich" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color); text-decoration: none;">Weitere Informationen</a>
+      </ha-alert>
+      {% endif %}{% endif %}
+    `;
+
+    try {
+        const renderedHtml = await this._hass.callApi('POST', 'template', { template });
+        const cardModStyle = "margin: 8px; border: none; border-radius: 25px;";
+        container.innerHTML = `<div style="${cardModStyle}">${renderedHtml}</div>`;
+    } catch (e) {
+        console.error("Error rendering DWD template:", e);
+        container.innerHTML = \`<div class="placeholder error">Error rendering DWD warning.</div>\`;
+    }
+}
 async loadTemperaturSensorSetup() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('temperatur-setup-status');
@@ -2622,6 +2734,9 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           // Keep existing tab logic for admin panel
           if (targetId === 'house-setup-tab') {
             setTimeout(() => this.loadAdminConfiguration(), 100);
+          }
+          if (targetId === 'integrations-tab') {
+            setTimeout(() => this.loadDwdConfig(), 100);
           }
           if (targetId === 'motion-setup-tab') {
             setTimeout(() => this.loadMotionSensorSetup(), 100);
