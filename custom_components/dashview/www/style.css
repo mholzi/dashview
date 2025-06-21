@@ -1470,10 +1470,9 @@ body.popup-open, :host(.popup-open) {
     color: #00b894;
     font-weight: 500;
 }
-
 /* --- Lights Card --- */
 .lights-card {
-    margin: 8px;
+    margin: 8px 0;
     background-color: var(--gray200);
     border-radius: 12px;
 }
@@ -1483,12 +1482,13 @@ body.popup-open, :host(.popup-open) {
 }
 
 .lights-summary {
-    list-style: none; /* Hide the default expander arrow */
+    list-style: none;
     cursor: pointer;
     padding: 0 12px;
 }
+
 .lights-summary::-webkit-details-marker {
-    display: none; /* Hide arrow in Chrome/Safari */
+    display: none;
 }
 
 .lights-header {
@@ -1498,105 +1498,7 @@ body.popup-open, :host(.popup-open) {
     gap: 12px;
     height: 46px;
 }
-.light-row {
-    display: flex; /* Use flexbox instead of grid */
-    align-items: center;
-    gap: 16px;
-    height: 60px;
-    border-radius: 12px;
-    padding: 0 16px;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-}
 
-.light-row[state="on"] {
-    background: var(--active-light);
-}
-
-.light-row[state="off"] {
-    background: var(--gray000);
-}
-
-.light-row .mdi {
-    font-size: 24px;
-    color: var(--secondary-text-color);
-    transition: color 0.2s ease-in-out;
-}
-
-.light-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--secondary-text-color);
-    white-space: nowrap; /* Prevent text from wrapping */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Add ellipsis (...) for long text */
-    transition: color 0.2s ease-in-out;
-}
-
-/* Set icon and text color to gray000 when ON */
-.light-row[state="on"] .mdi,
-.light-row[state="on"] .light-name {
-    color: var(--gray000);
-}
-.light-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.light-row[state="on"] .light-name {
-    color: var(--gray800);
-}
-
-/* Hide the toggle as it's removed from HTML */
-.light-toggle {
-    display: none;
-}
-
-.light-icon-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.light-icon-container .mdi {
-    font-size: 24px;
-}
-
-.light-row[state="on"] .light-icon-container .mdi {
-    color: var(--gray800);
-}
-
-.light-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.light-name {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.light-row[state="on"] .light-name {
-    color: var(--gray800);
-}
-
-.light-state-label {
-    font-size: 12px;
-    opacity: 0.7;
-}
-
-.light-toggle {
-    justify-self: end;
-    pointer-events: none; /* The row is clickable, so disable pointer on the switch */
-}
 .lights-header .mdi {
     color: var(--gray1000);
     width: 22px;
@@ -1629,25 +1531,59 @@ body.popup-open, :host(.popup-open) {
     padding-top: 12px;
 }
 
+/* === Consolidated Light Row Styles Start === */
+
 .light-row {
-    display: grid;
-    grid-template-columns: 1fr 40px;
+    display: flex; /* As requested */
+    height: 80px; /* As requested */
     align-items: center;
-    gap: 12px;
-    height: 30px;
+    gap: 16px;
+    border-radius: 12px;
+    padding: 0 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.light-row[state="off"] {
+    background: var(--gray000);
+}
+
+.light-row[state="on"] {
+    background: var(--active-light);
+}
+
+.light-row .mdi {
+    font-size: 24px;
+    color: var(--secondary-text-color);
+    transition: color 0.2s ease-in-out;
 }
 
 .light-name {
     font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary-text-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--secondary-text-color);
+    transition: color 0.2s ease-in-out;
 }
 
-.light-toggle {
-    justify-self: end;
+/* "ON" state styles for icon and name */
+.light-row[state="on"] .mdi,
+.light-row[state="on"] .light-name {
+    color: var(--gray000); /* As requested */
 }
+
+.light-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* === Consolidated Light Row Styles End === */
 /* --- Thermostat Card Styles --- */
 .thermostat-card {
   position: relative;
