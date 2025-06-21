@@ -358,44 +358,38 @@ async _addLightEntities() {
         case 'sensor.pollenflug_ambrosia_92':
           this.updatePollenCard(shadow);
           break;
-        default:
-          // Check if it's a window sensor based on configuration
-          if (this._integrationsConfig?.dwd_sensor && entityId === this._integrationsConfig.dwd_sensor) {
-              this.updateDwdWarningCard();
+      default:
+        // Use an if/else-if chain for clarity and to prevent multiple updates for one entity
+        if (this._integrationsConfig?.dwd_sensor && entityId === this._integrationsConfig.dwd_sensor) {
+          this.updateDwdWarningCard();
+        } else if (this._isEntityOfType(entityId, 'window')) {
+          this.updateWindowsSection(shadow);
+        } else if (this._isEntityOfType(entityId, 'temperatur') || this._isEntityOfType(entityId, 'humidity')) {
+          const activePopup = shadow.querySelector('.popup.active');
+          if (activePopup) {
+            const roomKey = activePopup.id.replace('-popup', '');
+            this.updateThermostatCard(activePopup, roomKey);
           }
-          
-          if (this._isEntityOfType(entityId, 'window')) {
-            this.updateWindowsSection(shadow);
-          } 
-
-          else if (this._isEntityOfType(entityId, 'temperatur') || this._isEntityOfType(entityId, 'humidity')) {
-              const activePopup = shadow.querySelector('.popup.active');
-              if (activePopup) {
-                  const roomKey = activePopup.id.replace('-popup', '');
-                  this.updateThermostatCard(activePopup, roomKey);
-              }
-            }
-          // ... (existing default case)
-            
-            else if (entityId.startsWith('cover.')) {
-            const activePopup = shadow.querySelector('.popup.active');
-            if (activePopup) {
-                this.updateCoverCard(activePopup, entityId);
-            }
-          } else if (entityId.startsWith('light.')) {
-              const activePopup = shadow.querySelector('.popup.active');
-              if (activePopup) {
-                  this.updateLightsCard(activePopup, entityId);
-              }
-          } else if (entityId.startsWith('media_player.')) {
-            this.updateMediaPlayerInPopups(shadow, entityId);
-          } else if (this._isRoomHeaderEntity(entityId)) {
-            // Update room header icons in both main screen and active room popups
-            this.updateRoomHeaderIcons(shadow);
-            this.updateRoomHeaderEntitiesInPopups(shadow, entityId);
-          } else {
-            console.log(`[DashView] No specific handler for entity: ${entityId}`);
+        } else if (entityId.startsWith('cover.')) {
+          const activePopup = shadow.querySelector('.popup.active');
+          if (activePopup) {
+            this.updateCoverCard(activePopup, entityId);
           }
+        } else if (entityId.startsWith('light.')) {
+          const activePopup = shadow.querySelector('.popup.active');
+          if (activePopup) {
+            this.updateLightsCard(activePopup, entityId);
+          }
+        } else if (entityId.startsWith('media_player.')) {
+          this.updateMediaPlayerInPopups(shadow, entityId);
+        } else if (this._isRoomHeaderEntity(entityId)) {
+          this.updateRoomHeaderIcons(shadow);
+          this.updateRoomHeaderEntitiesInPopups(shadow, entityId);
+        } else {
+          // This log is commented out to reduce console noise for unhandled entities
+          // console.log(`[DashView] No specific handler for entity: ${entityId}`);
+        }
+        break; // Add break at the end of the default case
       }
     } catch (error) {
       console.error(`[DashView] Error updating component for ${entityId}:`, error);
@@ -2918,29 +2912,37 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
       }
   }
   // Load configuration from centralized API - Principle 1 & 2
+// Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
     try {
-      // Try to load new house configuration first
-      const houseConfig = await this._loadConfigFromAPI(['house']);
-      if (houseConfig.house && Object.keys(houseConfig.house).length > 0) {
-        this._houseConfig = houseConfig.house;
+      // Fetch all necessary configurations in parallel for efficiency
+      const [houseConfig, integrationsConfig] = await Promise.all([
+        this._hass.callApi('GET', 'dashview/config?type=house').catch(e => ({})),
+        this._hass.callApi('GET', 'dashview/config?type=integrations').catch(e => ({}))
+      ]);
+
+      if (houseConfig && Object.keys(houseConfig).length > 0) {
+        this._houseConfig = houseConfig;
         console.log('[DashView] House configuration loaded successfully');
-        return;
+      } else {
+        console.warn('[DashView] House configuration is empty or failed to load.');
+        this._houseConfig = {}; // Ensure it's an object to prevent errors
       }
-      
-      // Fallback to old configuration for backward compatibility
-      const config = await this._loadConfigFromAPI(['floors', 'rooms']);
-      this._floorsConfig = config.floors;
-      this._roomsConfig = config.rooms;
-      console.log('[DashView] Legacy configuration loaded successfully');
+
+      if (integrationsConfig && Object.keys(integrationsConfig).length > 0) {
+        this._integrationsConfig = integrationsConfig;
+        console.log('[DashView] Integrations configuration loaded successfully');
+      } else {
+        // This is normal if no integrations are configured yet
+        this._integrationsConfig = {}; // Ensure it's an object
+      }
+
     } catch (error) {
-      console.error('[DashView] Error loading configuration:', error);
-      this._floorsConfig = {};
-      this._roomsConfig = {};
+      console.error('[DashView] Error loading primary configurations:', error);
       this._houseConfig = {};
+      this._integrationsConfig = {};
     }
   }
-
   // Update header buttons based on sensor states
   async updateHeaderButtons(shadow) {
     if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
