@@ -22,8 +22,7 @@ from .services import async_setup_services, async_unload_services
 
 _LOGGER = logging.getLogger(__name__)
 
-
- def _setup(hass: HomeAssistant, config: dict) -> bool:
+def _setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the DashView component."""
     hass.data.setdefault(DOMAIN, {})
     return True
@@ -38,9 +37,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     config_data = entry.options or entry.data
 
     hass.http.register_view(DashViewConfigView(hass, entry))
-    
+
     await async_setup_services(hass)
-    
+
     panel_name = "dashview"
     www_path = os.path.join(os.path.dirname(__file__), "www")
     await hass.http.async_register_static_paths([
@@ -80,17 +79,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntry):
     """Create and sync house_config from HA floor and area registries."""
     _LOGGER.debug("Syncing DashView configuration with HA registries.")
-    
+
     current_data = entry.options or entry.data
     if not current_data.get("house_config"):
         _LOGGER.debug("No house_config found, attempting migration from legacy files first.")
         await _migrate_config_files(hass, entry)
-    
+
     floor_registry = fr.async_get(hass)
     area_registry = ar.async_get(hass)
-    
+
     existing_house_config = (entry.options or entry.data).get("house_config", {})
-    
+
     new_house_config = {
         "weather_entity": existing_house_config.get("weather_entity", "weather.forecast_home"),
         "floors": {},
@@ -106,7 +105,7 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
 
     for area in area_registry.areas.values():
         existing_room_config = existing_house_config.get("rooms", {}).get(area.id, {})
-        
+
         new_house_config["rooms"][area.id] = {
             "friendly_name": area.name,
             "icon": area.icon or "mdi:home-outline",
@@ -126,21 +125,21 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
 
 class DashViewConfigView(HomeAssistantView):
     """DashView configuration API endpoint."""
-    
+
     url = "/api/dashview/config"
     name = "api:dashview:config"
     requires_auth = True
-    
+
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
         """Initialize the config view."""
         self._hass = hass
         self._entry = entry
-    
+
     async def get(self, request):
         """Get configuration data from the ConfigEntry."""
         config_data = self._entry.options or self._entry.data
         config_type = request.query.get("type")
-        
+
         house_config = config_data.get("house_config", {})
 
         if config_type == "house":
@@ -185,12 +184,12 @@ class DashViewConfigView(HomeAssistantView):
             entity_id = request.query.get("entity_id")
             if not entity_id:
                 return self.json_message("entity_id is required for history", status_code=400)
-            
+
             start_time = dt_util.utcnow() - timedelta(hours=24)
             history_data = await history.get_significant_states(
                 self._hass, start_time, None, [entity_id], include_start_time_state=True
             )
-            
+
             data = []
             if entity_id in history_data:
                 for state in history_data[entity_id]:
@@ -202,7 +201,7 @@ class DashViewConfigView(HomeAssistantView):
                             })
                         except (ValueError, TypeError):
                             continue
-            
+
             return self.json(data)
         elif config_type == "entities_by_room":
             # FIX: Use modern, direct registry getters
@@ -210,20 +209,20 @@ class DashViewConfigView(HomeAssistantView):
             entity_registry = er.async_get(self._hass)
             device_registry = dr.async_get(self._hass)
             label_registry = lr.async_get(self._hass)
-            
+
             label_filter = request.query.get("label")
             domain_filter = request.query.get("domain")
 
             if not label_filter and not domain_filter:
                 return web.Response(status=400, text="Either 'label' or 'domain' query parameter is required.")
-            
+
             label_id = None
             if label_filter:
                 for label in label_registry.labels.values():
                     if label.name.lower() == label_filter.lower():
                         label_id = label.label_id
                         break
-            
+
             entities_by_area = {}
             for entity in entity_registry.entities.values():
                 area_id = entity.area_id
@@ -251,10 +250,10 @@ class DashViewConfigView(HomeAssistantView):
             data = entities_by_area
         else:
             data = house_config
-        
+
         return self.json(data)
 
-async def post(self, request):
+    async def post(self, request):
         """Save configuration data by updating the ConfigEntry."""
         try:
             data = await request.json()
@@ -305,15 +304,15 @@ async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
             return
 
         house_file = hass.config.path("custom_components", "dashview", "www", "config", "house_setup.json")
-        
+
         house_config = await hass.async_add_executor_job(_load_json_from_file_sync, house_file)
-        
+
         if house_config:
             hass.config_entries.async_update_entry(
                 entry, options={"house_config": house_config}
             )
             _LOGGER.info("[DashView] Migrated house_setup.json to ConfigEntry")
-            
+
     except Exception as e:
         _LOGGER.warning("[DashView] Could not migrate config files: %s", e)
 
