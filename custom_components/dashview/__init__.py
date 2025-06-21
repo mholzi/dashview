@@ -9,7 +9,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.view import HomeAssistantView
 from aiohttp import web
 from homeassistant.helpers import area_registry as ar, floor_registry as fr, entity_registry as er
-from homeassistant.components.history import get_significant_states
+from homeassistant.components.history.util import get_significant_states
 from homeassistant.util import dt as dt_util
 from datetime import timedelta
 from .const import DOMAIN
@@ -166,11 +166,13 @@ class DashViewConfigView(HomeAssistantView):
                 return self.json_message("entity_id is required for history", status_code=400)
             
             start_time = dt_util.utcnow() - timedelta(hours=24)
-            history_states = await get_significant_states(self._hass, start_time, None, [entity_id], include_start_time_state=True)
+            history = await get_significant_states(
+                self._hass, start_time, None, [entity_id], include_start_time_state=True
+            )
             
             data = []
-            if entity_id in history_states:
-                for state in history_states[entity_id]:
+            if entity_id in history:
+                for state in history[entity_id]:
                     if state.state not in ['unknown', 'unavailable']:
                         try:
                             data.append({
@@ -254,7 +256,7 @@ def _load_json_from_file_sync(file_path):
         return None
 
 async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
-    """Migrate existing config files to ConfigEntry asynchronously."""
+    """Migrate legacy house_setup.json file to ConfigEntry asynchronously."""
     try:
         current_data = entry.options or entry.data
         if current_data.get("house_config"):
@@ -269,75 +271,9 @@ async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
                 entry, options={"house_config": house_config}
             )
             _LOGGER.info("[DashView] Migrated house_setup.json to ConfigEntry")
-            return
-            
-        floors_file = hass.config.path("custom_components", "dashview", "www", "config", "floors.json")
-        rooms_file = hass.config.path("custom_components", "dashview", "www", "config", "rooms.json")
-
-        floors_config = await hass.async_add_executor_job(_load_json_from_file_sync, floors_file)
-        rooms_config = await hass.async_add_executor_job(_load_json_from_file_sync, rooms_file)
-        
-        if floors_config and rooms_config:
-            house_config = _convert_legacy_to_house_config(floors_config, rooms_config)
-            hass.config_entries.async_update_entry(
-                entry, options={"house_config": house_config}
-            )
-            _LOGGER.info("[DashView] Converted legacy configs to new house configuration in ConfigEntry")
             
     except Exception as e:
         _LOGGER.warning("[DashView] Could not migrate config files: %s", e)
-
-def _convert_legacy_to_house_config(floors_config, rooms_config):
-    """Convert legacy floors and rooms configuration to new house structure."""
-    house_config = {
-        "rooms": {},
-        "floors": {},
-    }
-    
-    floor_icons = floors_config.get("floor_icons", {})
-    floor_sensors = floors_config.get("floor_sensors", {})
-    
-    for floor_key, icon in floor_icons.items():
-        house_config["floors"][floor_key] = {
-            "friendly_name": floor_key,
-            "icon": icon,
-            "floor_sensor": floor_sensors.get(floor_key)
-        }
-    
-    room_icon_map = {
-        'wohnzimmer': 'mdi:sofa', 'buero': 'mdi:desk', 'kueche': 'mdi:chef-hat',
-        'eingangsflur': 'mdi:door-open', 'gaesteklo': 'mdi:toilet', 'treppe_erdgeschoss': 'mdi:stairs',
-        'kids': 'mdi:teddy-bear', 'kinderbad': 'mdi:shower', 'flur': 'mdi:floor-plan',
-        'aupair': 'mdi:bed', 'schlafzimmer': 'mdi:bed-double', 'partykeller': 'mdi:party-popper',
-        'heizungskeller': 'mdi:heating-coil', 'kellerflur': 'mdi:floor-plan',
-        'waschkeller': 'mdi:washing-machine', 'serverraum': 'mdi:server-network',
-        'buero_keller': 'mdi:desk', 'sauna': 'mdi:sauna', 'aussen': 'mdi:tree'
-    }
-    
-    room_name_map = {
-        'wohnzimmer': 'Wohnzimmer', 'buero': 'Büro', 'kueche': 'Küche', 'eingangsflur': 'Eingangsflur',
-        'gaesteklo': 'Gäste-WC', 'treppe_erdgeschoss': 'Treppe Erdgeschoss', 'kids': 'Kinderzimmer',
-        'kinderbad': 'Kinderbad', 'flur': 'Flur OG', 'aupair': 'Au-pair Zimmer', 'schlafzimmer': 'Schlafzimmer',
-        'partykeller': 'Partykeller', 'heizungskeller': 'Heizungskeller', 'kellerflur': 'Kellerflur',
-        'waschkeller': 'Waschkeller', 'serverraum': 'Serverraum', 'buero_keller': 'Büro Keller',
-        'sauna': 'Sauna', 'aussen': 'Außenbereich'
-    }
-    
-    floors = rooms_config.get("floors", {})
-    for floor_key, sensors in floors.items():
-        for sensor in sensors:
-            room_key = sensor.replace('binary_sensor.combined_sensor_', '')
-            
-            house_config["rooms"][room_key] = {
-                "friendly_name": room_name_map.get(room_key, room_key.replace('_', ' ').title()),
-                "icon": room_icon_map.get(room_key, "mdi:home-outline"),
-                "floor": floor_key,
-                "combined_sensor": sensor,
-                "lights": [], "covers": [], "media_players": [], "header_entities": []
-            }
-    
-    return house_config
-
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
