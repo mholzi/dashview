@@ -218,7 +218,8 @@ class DashViewConfigView(HomeAssistantView):
             for entity in entity_registry.entities.values():
                 area_id = entity.area_id
                 if not area_id and entity.device_id:
-                    device = device_registry.async_get(entity.device_id)
+                    # FIX: Use the correct method to get a device from the registry
+                    device = device_registry.devices.get(entity.device_id)
                     if device:
                         area_id = device.area_id
 
@@ -227,7 +228,7 @@ class DashViewConfigView(HomeAssistantView):
                                      (domain_filter and entity.domain == domain_filter)
                     if matches_filter:
                         if area_id not in entities_by_area:
-                            area = area_registry.areas.get(area_id) # FIX: Changed from async_get_area
+                            area = area_registry.areas.get(area_id)
                             entities_by_area[area_id] = {
                                 "name": area.name if area else "Unknown Area",
                                 "entities": []
