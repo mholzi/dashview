@@ -1548,9 +1548,11 @@ async loadTemperaturSensorSetup() {
         this._setStatusMessage(statusElement, '✓ Temperatur sensors loaded successfully', 'success');
     } catch (error) {
         console.error('[DashView] Error loading temperatur sensor setup:', error);
-        this._setStatusMessage(statusElement, `✗ Error loading temperatur sensors: ${error.message}`, 'error');
+        const errorMessage = error?.error || JSON.stringify(error);
+        this._setStatusMessage(statusElement, `✗ Error loading temperatur sensors: ${errorMessage}`, 'error');
     }
 }
+
 
 _renderTemperaturSensorSetup(entitiesByRoom, houseConfig) {
     const shadow = this.shadowRoot;
@@ -1677,9 +1679,12 @@ async loadHumiditySensorSetup() {
         this._renderHumiditySensorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
         this._setStatusMessage(statusElement, '✓ Humidity sensors loaded successfully', 'success');
     } catch (error) {
-        this._setStatusMessage(statusElement, `✗ Error loading humidity sensors: ${error.message}`, 'error');
+        console.error('[DashView] Error loading humidity sensor setup:', error);
+        const errorMessage = error?.error || JSON.stringify(error);
+        this._setStatusMessage(statusElement, `✗ Error loading humidity sensors: ${errorMessage}`, 'error');
     }
 }
+
 
 _renderHumiditySensorSetup(entitiesByRoom, houseConfig) {
     const shadow = this.shadowRoot;
@@ -3349,24 +3354,24 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
 
   // Motion Setup Functions - Motion admin functionality
   async loadMotionSensorSetup() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('motion-setup-status');
-    this._setStatusMessage(statusElement, 'Loading motion sensors from Home Assistant...', 'loading');
-
-    try {
-      // The API call uses the new label-based endpoint
-      const [entitiesByRoom, houseConfig] = await Promise.all([
-        this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.MOTION}`),
-        this._hass.callApi('GET', 'dashview/config?type=house')
-      ]);
-
-      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
-      this._renderMotionSensorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
-      this._setStatusMessage(statusElement, '✓ Motion sensors loaded successfully', 'success');
-    } catch (error) {
-      console.error('[DashView] Error loading motion sensor setup:', error);
-      this._setStatusMessage(statusElement, `✗ Error loading motion sensors: ${error.message}`, 'error');
-    }
+      const shadow = this.shadowRoot;
+      const statusElement = shadow.getElementById('motion-setup-status');
+      this._setStatusMessage(statusElement, 'Loading motion sensors from Home Assistant...', 'loading');
+  
+      try {
+          const [entitiesByRoom, houseConfig] = await Promise.all([
+              this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.MOTION}`),
+              this._hass.callApi('GET', 'dashview/config?type=house')
+          ]);
+  
+          this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+          this._renderMotionSensorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+          this._setStatusMessage(statusElement, '✓ Motion sensors loaded successfully', 'success');
+      } catch (error) {
+          console.error('[DashView] Error loading motion sensor setup:', error);
+          const errorMessage = error?.error || JSON.stringify(error);
+          this._setStatusMessage(statusElement, `✗ Error loading motion sensors: ${errorMessage}`, 'error');
+      }
   }
 
   _renderMotionSensorSetup(entitiesByRoom, houseConfig) {
@@ -3931,23 +3936,24 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
 
   // Smoke Detector Setup Functions - Following same pattern as motion sensors
   async loadSmokeDetectorSetup() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('smoke-detector-setup-status');
-    this._setStatusMessage(statusElement, 'Loading smoke detectors from Home Assistant...', 'loading');
-
-    try {
-      const [entitiesByRoom, houseConfig] = await Promise.all([
-        this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.SMOKE}`),
-        this._hass.callApi('GET', 'dashview/config?type=house')
-      ]);
-
-      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
-      this._renderSmokeDetectorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
-      this._setStatusMessage(statusElement, '✓ Smoke detectors loaded successfully', 'success');
-    } catch (error) {
-      console.error('[DashView] Error loading smoke detector setup:', error);
-      this._setStatusMessage(statusElement, `✗ Error loading smoke detectors: ${error.message}`, 'error');
-    }
+      const shadow = this.shadowRoot;
+      const statusElement = shadow.getElementById('smoke-detector-setup-status');
+      this._setStatusMessage(statusElement, 'Loading smoke detectors from Home Assistant...', 'loading');
+  
+      try {
+          const [entitiesByRoom, houseConfig] = await Promise.all([
+              this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.SMOKE}`),
+              this._hass.callApi('GET', 'dashview/config?type=house')
+          ]);
+  
+          this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+          this._renderSmokeDetectorSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+          this._setStatusMessage(statusElement, '✓ Smoke detectors loaded successfully', 'success');
+      } catch (error) {
+          console.error('[DashView] Error loading smoke detector setup:', error);
+          const errorMessage = error?.error || JSON.stringify(error);
+          this._setStatusMessage(statusElement, `✗ Error loading smoke detectors: ${errorMessage}`, 'error');
+      }
   }
 
   _renderSmokeDetectorSetup(entitiesByRoom, houseConfig) {
@@ -4077,23 +4083,24 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
 
   // Vibration Setup Functions - Following same pattern as motion sensors
   async loadVibrationSetup() {
-    const shadow = this.shadowRoot;
-    const statusElement = shadow.getElementById('vibration-setup-status');
-    this._setStatusMessage(statusElement, 'Loading vibration sensors from Home Assistant...', 'loading');
-
-    try {
-      const [entitiesByRoom, houseConfig] = await Promise.all([
-        this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.VIBRATION}`),
-        this._hass.callApi('GET', 'dashview/config?type=house')
-      ]);
-
-      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
-      this._renderVibrationSetup(entitiesByRoom, this._adminLocalState.houseConfig);
-      this._setStatusMessage(statusElement, '✓ Vibration sensors loaded successfully', 'success');
-    } catch (error) {
-      console.error('[DashView] Error loading vibration sensor setup:', error);
-      this._setStatusMessage(statusElement, `✗ Error loading vibration sensors: ${error.message}`, 'error');
-    }
+      const shadow = this.shadowRoot;
+      const statusElement = shadow.getElementById('vibration-setup-status');
+      this._setStatusMessage(statusElement, 'Loading vibration sensors from Home Assistant...', 'loading');
+  
+      try {
+          const [entitiesByRoom, houseConfig] = await Promise.all([
+              this._hass.callApi('GET', `dashview/config?type=entities_by_room&label=${this._entityLabels.VIBRATION}`),
+              this._hass.callApi('GET', 'dashview/config?type=house')
+          ]);
+  
+          this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+          this._renderVibrationSetup(entitiesByRoom, this._adminLocalState.houseConfig);
+          this._setStatusMessage(statusElement, '✓ Vibration sensors loaded successfully', 'success');
+      } catch (error) {
+          console.error('[DashView] Error loading vibration sensor setup:', error);
+          const errorMessage = error?.error || JSON.stringify(error);
+          this._setStatusMessage(statusElement, `✗ Error loading vibration sensors: ${errorMessage}`, 'error');
+      }
   }
 
   _renderVibrationSetup(entitiesByRoom, houseConfig) {
