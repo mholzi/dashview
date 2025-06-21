@@ -1614,55 +1614,121 @@ async saveTemperaturSensorConfig() {
         this._setStatusMessage(statusElement, `✗ Error saving configuration: ${error.message}`, 'error');
     }
 }
+// In custom_components/dashview/www/dashview-panel.js
+
 _renderTemperatureGraph(graphContainer, historyData) {
-    if (!graphContainer || !historyData || historyData.length < 2) {
-        graphContainer.innerHTML = ''; // Clear if no data
-        return;
-    }
+  if (!graphContainer || !historyData || !Array.isArray(historyData) || historyData.length < 2) {
+      graphContainer.innerHTML = ''; // Clear if no data or invalid data
+      return;
+  }
 
-    const temperatures = historyData.map(d => d.state);
-    const minTemp = Math.min(...temperatures);
-    const maxTemp = Math.max(...temperatures);
-    const tempRange = maxTemp - minTemp || 1;
+  const temperatures = historyData.map(d => d.state).filter(t => !isNaN(t));
+  if (temperatures.length < 2) {
+      graphContainer.innerHTML = ''; // Not enough valid data points to draw a line
+      return;
+  }
 
-    const svgWidth = graphContainer.clientWidth || 300;
-    const svgHeight = 85; // Fixed height from CSS
-    const padding = 5;
+  const minTemp = Math.min(...temperatures);
+  const maxTemp = Math.max(...temperatures);
+  const tempRange = maxTemp - minTemp || 1;
 
-    const points = historyData.map((d, i) => {
-        const x = (i / (historyData.length - 1)) * (svgWidth - padding * 2) + padding;
-        const y = svgHeight - ((d.state - minTemp) / tempRange) * (svgHeight - padding * 2) - padding;
-        return { x, y };
-    });
+  // Use a relative coordinate system (e.g., 0-100) instead of measuring pixel width.
+  const svgWidth = 100; 
+  const svgHeight = 85; 
 
-    let pathD = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 0; i < points.length - 1; i++) {
-        const x_mid = (points[i].x + points[i+1].x) / 2;
-        const y_mid = (points[i].y + points[i+1].y) / 2;
-        const cp_x1 = (x_mid + points[i].x) / 2;
-        const cp_y1 = (y_mid + points[i].y) / 2;
-        const cp_x2 = (x_mid + points[i+1].x) / 2;
-        const cp_y2 = (y_mid + points[i+1].y) / 2;
-        pathD += ` Q ${points[i].x} ${points[i].y}, ${x_mid} ${y_mid}`;
-    }
-    pathD += ` L ${points[points.length-1].x} ${points[points.length-1].y}`;
-    
-    const filledPathD = `${pathD} V ${svgHeight} H ${points[0].x} Z`;
+  const points = historyData.map((d, i) => {
+      const x = (i / (historyData.length - 1)) * svgWidth;
+      const y = svgHeight - ((d.state - minTemp) / tempRange) * svgHeight;
+      return { x, y };
+  });
 
-    graphContainer.innerHTML = `
-        <svg viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="none">
-            <defs>
-                <linearGradient id="graph-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" style="stop-color:var(--blue); stop-opacity:0.4" />
-                    <stop offset="100%" style="stop-color:var(--blue); stop-opacity:0.05" />
-                </linearGradient>
-            </defs>
-            <path d="${filledPathD}" class="graph-fill" />
-            <path d="${pathD}" class="graph-path" />
-        </svg>
-    `;
+  // Generate the path for the smoothed line
+  let pathD = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+      const x_mid = (points[i].x + points[i+1].x) / 2;
+      const y_mid = (points[i].y + points[i+1].y) / 2;
+      const cp_x1 = (x_mid + points[i].x) / 2;
+      const cp_x2 = (x_mid + points[i+1].x) / 2;
+      pathD += ` C ${cp_x1} ${points[i].y}, ${cp_x2} ${points[i+1].y}, ${points[i+1].x} ${points[i+1].y}`;
+  }
+  
+  // Create a path for the gradient fill underneath the line
+  const filledPathD = `${pathD} V ${svgHeight} H ${points[0].x} Z`;
+
+  // Set the SVG content
+  graphContainer.innerHTML = `
+      <svg viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+          <defs>
+              <linearGradient id="graph-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:var(--blue); stop-opacity:0.4" />
+                  <stop offset="100%" style="stop-color:var(--blue); stop-opacity:0.05" />
+              </linearGradient>
+          </defs>
+          <path d="${filledPathD}" class="graph-fill" />
+          <path d="${pathD}" class="graph-path" />
+      </svg>
+  `;
 }
+// Add this new method to the DashviewPanel class
+async updateThermostatCard(popup, roomKey) {
+  if (!this._hass || !this._houseConfig.rooms || !roomKey) return;
 
+  const roomConfig = this._houseConfig.rooms[roomKey];
+  const card = popup.querySelector('.thermostat-card');
+  if (!roomConfig || !card) return;
+
+  // Find temperature and humidity sensors configured for the room
+  const tempSensorConfig = roomConfig.header_entities?.find(e => e.entity_type === 'temperatur');
+  const humSensorConfig = roomConfig.header_entities?.find(e => e.entity_type === 'humidity');
+  const tempEntityId = tempSensorConfig?.entity;
+  const humEntityId = humSensorConfig?.entity;
+
+  const tempElement = card.querySelector('.temperature');
+  const humElement = card.querySelector('.humidity');
+  const nameElement = card.querySelector('.thermostat-name');
+
+  // Set the room name on the card
+  nameElement.textContent = roomConfig.friendly_name || roomKey;
+
+  // Update the temperature value
+  if (tempEntityId && this._hass.states[tempEntityId]) {
+      const tempState = this._hass.states[tempEntityId];
+      const tempValue = parseFloat(tempState.state);
+
+      if (!isNaN(tempValue)) {
+          tempElement.textContent = `${tempValue.toFixed(1)}°`;
+      } else {
+          tempElement.textContent = '--°';
+      }
+
+      // Fetch history for the graph using the backend endpoint
+      try {
+          const history = await this._hass.callApi('GET', `dashview/config?type=history&entity_id=${tempEntityId}`);
+          const graphContainer = card.querySelector('.thermostat-graph');
+          if (history && graphContainer) {
+              this._renderTemperatureGraph(graphContainer, history);
+          }
+      } catch (e) {
+          console.error("Error fetching history for thermostat graph:", e);
+      }
+
+  } else {
+      tempElement.textContent = '--°';
+  }
+
+  // Update the humidity value
+  if (humEntityId && this._hass.states[humEntityId]) {
+      const humState = this._hass.states[humEntityId];
+      const humValue = parseFloat(humState.state);
+      if (!isNaN(humValue)) {
+          humElement.textContent = `${Math.round(humValue)}%`;
+      } else {
+          humElement.textContent = '--%';
+      }
+  } else {
+      humElement.textContent = '--%';
+  }
+}
 // END: Add Temperatur Sensor Functions
 
 // START: Add Humidity Sensor Functions
@@ -4633,44 +4699,47 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
 
   // --- REPLACE THE EXISTING updateLightsCard FUNCTION WITH THIS --
 // Add this new method to the DashviewPanel class
-async updateThermostatCard(popup, roomKey)
+//...
+  // --- REPLACE THE EXISTING updateLightsCard FUNCTION WITH THIS --
+// Add this new method to the DashviewPanel class
   updateLightsCard(popup, changedEntityId) {
-      if (!this._hass || !changedEntityId) return;
-  
-      const roomKey = Object.keys(this._houseConfig.rooms).find(key => 
-          this._houseConfig.rooms[key].lights?.includes(changedEntityId)
-      );
-  
-      if (!roomKey) return;
-  
-      const card = popup.querySelector('.lights-card');
-      if (!card) return;
-  
-      // Update the individual light row
-      const lightRow = card.querySelector(`.light-row[data-entity-id="${changedEntityId}"]`);
-      if (lightRow) {
-          const entityState = this._hass.states[changedEntityId];
-          const isOn = entityState && entityState.state === 'on';
+    if (!this._hass || !changedEntityId) return;
 
-          // Update icon
-          const iconEl = lightRow.querySelector('.mdi');
-          if (iconEl) {
-              iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-off';
-          }
-          
-          // Update card state for styling
-          lightRow.setAttribute('state', isOn ? 'on' : 'off');
-      }
-  
-      // Update the total count in the header
-      const countEl = card.querySelector('.lights-count');
-      const lightEntities = this._houseConfig.rooms[roomKey].lights;
-      if (countEl && lightEntities) {
-          const onCount = lightEntities.filter(id => this._hass.states[id]?.state === 'on').length;
-          const totalCount = lightEntities.length;
-          countEl.textContent = `${onCount} / ${totalCount}`;
-      }
+    const roomKey = Object.keys(this._houseConfig.rooms).find(key => 
+        this._houseConfig.rooms[key].lights?.includes(changedEntityId)
+    );
+
+    if (!roomKey) return;
+
+    const card = popup.querySelector('.lights-card');
+    if (!card) return;
+
+    // Update the individual light row
+    const lightRow = card.querySelector(`.light-row[data-entity-id="${changedEntityId}"]`);
+    if (lightRow) {
+        const entityState = this._hass.states[changedEntityId];
+        const isOn = entityState && entityState.state === 'on';
+
+        // Update icon
+        const iconEl = lightRow.querySelector('.mdi');
+        if (iconEl) {
+            iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-off';
+        }
+        
+        // Update card state for styling
+        lightRow.setAttribute('state', isOn ? 'on' : 'off');
+    }
+
+    // Update the total count in the header
+    const countEl = card.querySelector('.lights-count');
+    const lightEntities = this._houseConfig.rooms[roomKey].lights;
+    if (countEl && lightEntities) {
+        const onCount = lightEntities.filter(id => this._hass.states[id]?.state === 'on').length;
+        const totalCount = lightEntities.length;
+        countEl.textContent = `${onCount} / ${totalCount}`;
+    }
   }
+
   // Initialize the covers card with entities and event listeners
   _initializeCoversCard(popup, roomKey, coverEntities) {
     const card = popup.querySelector('.covers-card');
