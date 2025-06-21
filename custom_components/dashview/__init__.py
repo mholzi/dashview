@@ -4,12 +4,11 @@ import logging
 import json
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components import panel_custom
+from homeassistant.components import panel_custom, history
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.view import HomeAssistantView
 from aiohttp import web
 from homeassistant.helpers import area_registry as ar, floor_registry as fr, entity_registry as er
-from homeassistant.components.history.util import get_significant_states
 from homeassistant.util import dt as dt_util
 from datetime import timedelta
 from .const import DOMAIN
@@ -166,13 +165,13 @@ class DashViewConfigView(HomeAssistantView):
                 return self.json_message("entity_id is required for history", status_code=400)
             
             start_time = dt_util.utcnow() - timedelta(hours=24)
-            history = await get_significant_states(
+            history_data = await history.get_significant_states(
                 self._hass, start_time, None, [entity_id], include_start_time_state=True
             )
             
             data = []
-            if entity_id in history:
-                for state in history[entity_id]:
+            if entity_id in history_data:
+                for state in history_data[entity_id]:
                     if state.state not in ['unknown', 'unavailable']:
                         try:
                             data.append({
@@ -274,6 +273,7 @@ async def _migrate_config_files(hass: HomeAssistant, entry: ConfigEntry):
             
     except Exception as e:
         _LOGGER.warning("[DashView] Could not migrate config files: %s", e)
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
