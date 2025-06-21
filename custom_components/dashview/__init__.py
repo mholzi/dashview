@@ -252,12 +252,32 @@ class DashViewConfigView(HomeAssistantView):
         
         return self.json(data)
 
-    async def post(self, request):
+async def post(self, request):
         """Save configuration data by updating the ConfigEntry."""
         try:
             data = await request.json()
+            config_type = data.get("type")
+            config_payload = data.get("config")
+
+            if not config_type or config_payload is None:
+                return self.json_message("'type' and 'config' are required", status_code=400)
+
+            # Get the current options, update it, then save it back
+            current_options = dict(self._entry.options)
+
+            if config_type == "house":
+                current_options["house_config"] = config_payload
+            elif config_type == "integrations":
+                # Ensure integrations_config exists
+                if "integrations_config" not in current_options:
+                    current_options["integrations_config"] = {}
+                # Update the integrations config
+                current_options["integrations_config"].update(config_payload)
+            else:
+                return self.json_message(f"Invalid config type: {config_type}", status_code=400)
+
             self._hass.config_entries.async_update_entry(
-                self._entry, options={"house_config": data}
+                self._entry, options=current_options
             )
             return self.json({"status": "success"})
         except Exception as e:
