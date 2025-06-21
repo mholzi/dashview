@@ -136,11 +136,35 @@ class DashViewConfigView(HomeAssistantView):
         config_type = request.query.get("type")
         
         house_config = config_data.get("house_config", {})
+        area_registry = ar.async_get(self._hass)
 
         if config_type == "house":
             data = house_config
         elif config_type == "weather_entity":
             data = {"weather_entity": house_config.get("weather_entity", "weather.forecast_home")}
+        elif config_type == "ha_rooms":  # FIX: Added explicit handler
+            areas = area_registry.areas.values()
+            data = sorted(
+                [
+                    {
+                        "area_id": area.id,
+                        "name": area.name,
+                        "icon": area.icon or "mdi:home-outline"
+                    }
+                    for area in areas
+                ],
+                key=lambda r: r["name"],
+            )
+        elif config_type == "combined_sensors":  # FIX: Added explicit handler
+            combined_sensors = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.name or entity.entity_id,
+                }
+                for entity in self._hass.states.async_all("binary_sensor")
+                if entity.entity_id.startswith("binary_sensor.combined")
+            ]
+            data = sorted(combined_sensors, key=lambda s: s["friendly_name"])
         elif config_type == "available_media_players":
             media_players = []
             for entity in self._hass.states.async_all('media_player'):
@@ -149,16 +173,6 @@ class DashViewConfigView(HomeAssistantView):
                     "friendly_name": entity.name or entity.entity_id
                 })
             data = sorted(media_players, key=lambda p: p["friendly_name"])
-        elif config_type == "combined_sensors":
-            combined_sensors = [
-                {
-                    "entity_id": entity.entity_id,
-                    "friendly_name": entity.name or entity.entity_id
-                }
-                for entity in self._hass.states.async_all('binary_sensor')
-                if entity.entity_id.startswith("binary_sensor.combined")
-            ]
-            data = sorted(combined_sensors, key=lambda s: s["friendly_name"])
         elif config_type == "history":
             entity_id = request.query.get("entity_id")
             if not entity_id:
@@ -184,7 +198,6 @@ class DashViewConfigView(HomeAssistantView):
             return self.json(data)
         elif config_type == "entities_by_room":
             entity_registry = er.async_get(self._hass)
-            area_registry = ar.async_get(self._hass)
             device_registry = self._hass.helpers.device_registry.async_get(self._hass)
             label_registry = self._hass.helpers.label_registry.async_get(self._hass)
             
@@ -214,7 +227,7 @@ class DashViewConfigView(HomeAssistantView):
                                      (domain_filter and entity.domain == domain_filter)
                     if matches_filter:
                         if area_id not in entities_by_area:
-                            area = area_registry.async_get_area(area_id)
+                            area = area_registry.areas.get(area_id) # FIX: Changed from async_get_area
                             entities_by_area[area_id] = {
                                 "name": area.name if area else "Unknown Area",
                                 "entities": []
@@ -230,7 +243,7 @@ class DashViewConfigView(HomeAssistantView):
             data = house_config
         
         return self.json(data)
-    
+
     async def post(self, request):
         """Save configuration data by updating the ConfigEntry."""
         try:
