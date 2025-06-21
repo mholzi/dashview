@@ -1823,10 +1823,12 @@ async saveHumiditySensorConfig() {
   }
 
   // This function now correctly sets up the click events
+// This function now correctly sets up the click events
   initializeDailyForecast(shadow, dailyData) {
     const tabs = shadow.querySelectorAll('.forecast-tab');
     const content = shadow.querySelector('#daily-forecast-content');
     
+    // FIX: Add a check to ensure elements exist before proceeding
     if (!tabs.length || !content) {
       console.error('[DashView] Daily forecast tabs or content container not found.');
       return;
@@ -2697,37 +2699,37 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
   }
 
   // Add this new method to the DashviewPanel class
-async _fetchWeatherForecasts() {
-    if (!this._hass) return;
-
-    const entityId = this._getCurrentWeatherEntityId();
-    if (!entityId) return;
-
-    try {
-        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callService`);
-
-        // Use hass.callService to get the daily forecast, with return_response as the 4th argument
-        const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
-            target: { entity_id: entityId },
-            type: 'daily'
-        }, true);
-
-        // Use hass.callService to get the hourly forecast, with return_response as the 4th argument
-        const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
-            target: { entity_id: entityId },
-            type: 'hourly'
-        }, true);
-
-        // The response is structured like { "weather.forecast_home": { "forecast": [...] } }
-        this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
-        this._weatherForecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
-
-        console.log('[DashView] Forecasts updated successfully via callService');
-    } catch (error) {
-        console.error(`[DashView] Error fetching weather forecasts for ${entityId} via callService:`, error);
-        this._weatherForecasts.daily = [];
-        this._weatherForecasts.hourly = [];
-    }
+  async _fetchWeatherForecasts() {
+      if (!this._hass) return;
+  
+      const entityId = this._getCurrentWeatherEntityId();
+      if (!entityId) return;
+  
+      try {
+          console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callService`);
+  
+          // Use hass.callService to get the daily forecast, with return_response as the 4th argument
+          const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
+              entity_id: entityId, // Corrected: Use entity_id directly
+              type: 'daily'
+          }, true); // The 'true' for return_response is correct for some modern HA versions.
+  
+          // Use hass.callService to get the hourly forecast, with return_response as the 4th argument
+          const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
+              entity_id: entityId, // Corrected: Use entity_id directly
+              type: 'hourly'
+          }, true);
+  
+          // The response is structured like { "weather.forecast_home": { "forecast": [...] } }
+          this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
+          this._weatherForecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
+  
+          console.log('[DashView] Forecasts updated successfully via callService');
+      } catch (error) {
+          console.error(`[DashView] Error fetching weather forecasts for ${entityId} via callService:`, error);
+          this._weatherForecasts.daily = [];
+          this._weatherForecasts.hourly = [];
+      }
   }
   // Load configuration from centralized API - Principle 1 & 2
   async loadConfiguration() {
