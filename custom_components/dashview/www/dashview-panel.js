@@ -4633,49 +4633,7 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
 
   // --- REPLACE THE EXISTING updateLightsCard FUNCTION WITH THIS --
 // Add this new method to the DashviewPanel class
-async updateThermostatCard(popup, roomKey) {
-    if (!this._hass || !roomKey) return;
-
-    const roomConfig = this._houseConfig.rooms[roomKey];
-    if (!roomConfig) return;
-
-    const card = popup.querySelector('.thermostat-card');
-    if (!card) return;
-
-    // ... (existing logic to update temp/humidity text) ...
-    if (nameEl) {
-        nameEl.textContent = roomConfig.friendly_name || roomKey;
-    }
-
-    if (tempEl) {
-        if (tempEntity && !isNaN(tempEntity.state)) {
-            tempEl.textContent = `${Number(tempEntity.state).toFixed(1)}°`;
-        } else {
-            tempEl.textContent = '--°';
-        }
-    }
-
-    if (humEl) {
-        if (humEntity && !isNaN(humEntity.state)) {
-            humEl.style.display = '';
-            humEl.textContent = `${Number(humEntity.state).toFixed(0)}%`;
-        } else {
-            humEl.style.display = 'none'; // Hide if no humidity sensor
-        }
-    }
-    // *** END of existing logic ***
-    
-    // *** ADD THIS NEW LOGIC to fetch and render the graph ***
-    const graphContainer = card.querySelector('.thermostat-graph');
-    if (graphContainer && tempSensorId) {
-        try {
-            const historyData = await this._hass.callApi('GET', `dashview/config?type=history&entity_id=${tempSensorId}`);
-            this._renderTemperatureGraph(graphContainer, historyData);
-        } catch (error) {
-            console.error(`[DashView] Error fetching history for ${tempSensorId}:`, error);
-        }
-    }
-}
+async updateThermostatCard(popup, roomKey)
   updateLightsCard(popup, changedEntityId) {
       if (!this._hass || !changedEntityId) return;
   
