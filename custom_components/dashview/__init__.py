@@ -9,7 +9,9 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.view import HomeAssistantView
 from aiohttp import web
 from homeassistant.helpers import area_registry as ar, floor_registry as fr, entity_registry as er
-
+from homeassistant.components.history import get_significant_states
+from homeassistant.util import dt as dt_util
+from datetime import timedelta
 from .const import DOMAIN
 from .services import async_setup_services, async_unload_services
 
@@ -177,6 +179,30 @@ class DashViewConfigView(HomeAssistantView):
                 if entity.entity_id.startswith("binary_sensor.combined")
             ]
             data = sorted(combined_sensors, key=lambda s: s["friendly_name"])
+        elif config_type == "history":
+            entity_id = request.query.get("entity_id")
+            if not entity_id:
+                return self.json_message("entity_id is required for history", status_code=400)
+            
+            start_time = dt_util.utcnow() - timedelta(hours=24)
+            history = await self.hass.async_add_executor_job(
+                get_significant_states, self.hass, start_time, None, [entity_id]
+            )
+            
+            data = []
+            if entity_id in history:
+                for state in history[entity_id]:
+                    if state.state not in ['unknown', 'unavailable']:
+                        try:
+                            data.append({
+                                "state": float(state.state),
+                                "last_changed": state.last_changed.isoformat()
+                            })
+                        except (ValueError, TypeError):
+                            continue # Skip non-numeric states
+            
+            return self.json(data)
+
         elif config_type == "entities_by_room":
             # This is also still useful for assigning entities
             from homeassistant.helpers import device_registry as dr
