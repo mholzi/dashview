@@ -23,7 +23,7 @@ from .services import async_setup_services, async_unload_services
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+ def _setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the DashView component."""
     hass.data.setdefault(DOMAIN, {})
     return True
@@ -147,6 +147,8 @@ class DashViewConfigView(HomeAssistantView):
             data = house_config
         elif config_type == "weather_entity":
             data = {"weather_entity": house_config.get("weather_entity", "weather.forecast_home")}
+        elif config_type == "integrations":
+            data = config_data.get("integrations_config", {})
         elif config_type == "ha_rooms":
             area_registry = ar.async_get(self._hass)
             areas = area_registry.areas.values()
