@@ -178,7 +178,125 @@ class DashviewPanel extends HTMLElement {
       }
     }
   }
+// Add these two new functions to the DashviewPanel class
+// Add this new function inside the DashviewPanel class
+// In custom_components/dashview/www/dashview-panel.js
+// Replace the previous version of this function with this one.
 
+  _updateMediaHeaderButtons() {
+    const shadow = this.shadowRoot;
+    if (!shadow || !this._hass || !this._houseConfig) return;
+
+    const container = shadow.getElementById('media-header-buttons-container');
+    if (!container) return;
+
+    // --- Step 1: Get all media players and filter for those that are 'playing' ---
+    const allMediaPlayers = [];
+    for (const [roomKey, roomConfig] of Object.entries(this._houseConfig.rooms || {})) {
+        if (roomConfig.media_players) {
+            for (const player of roomConfig.media_players) {
+                allMediaPlayers.push({
+                    entity_id: player.entity,
+                    room_key: roomKey
+                });
+            }
+        }
+    }
+
+    const playingPlayers = allMediaPlayers.filter(player => {
+        const state = this._hass.states[player.entity_id];
+        return state && state.state === 'playing';
+    });
+
+    // --- Step 2: Clear the container and build the new buttons ---
+    container.innerHTML = ''; // Clear previous buttons
+
+    if (playingPlayers.length === 0) {
+        return; // Exit if nothing is playing
+    }
+
+    const scrollContainer = document.createElement('div');
+    scrollContainer.className = 'media-header-scroll';
+
+    // --- Step 3: Create a button for each playing media player ---
+    playingPlayers.forEach(player => {
+        const button = document.createElement('button');
+        button.className = 'media-header-button';
+        
+        // This sets the navigation path. Clicking it will open the correct room popup.
+        const navPath = `#${player.room_key}`;
+        button.setAttribute('data-hash', navPath);
+        button.title = player.entity_id;
+
+        const iconElement = document.createElement('i');
+        const iconClass = player.entity_id.includes('tv') ? 'mdi-television' : 'mdi-music';
+        iconElement.className = `mdi ${iconClass}`;
+        
+        button.appendChild(iconElement);
+        scrollContainer.appendChild(button);
+    });
+
+    container.appendChild(scrollContainer);
+  }
+  async loadThresholdsConfig() {
+    const shadow = this.shadowRoot;
+    const statusEl = shadow.getElementById('thresholds-config-status');
+    const tempInput = shadow.getElementById('global-temp-threshold');
+    const humidityInput = shadow.getElementById('global-humidity-threshold');
+    if (!statusEl || !tempInput || !humidityInput) return;
+
+    this._setStatusMessage(statusEl, 'Loading thresholds...', 'loading');
+    try {
+        // Use the house_config object already loaded when the panel initialized.
+        if (!this._houseConfig) {
+            this._houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+        }
+        const houseConfig = this._houseConfig || {};
+        tempInput.value = houseConfig.temperature_threshold || '';
+        humidityInput.value = houseConfig.humidity_threshold || '';
+        this._setStatusMessage(statusEl, '✓ Thresholds loaded', 'success');
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error loading thresholds: ${e.message}`, 'error');
+    }
+  }
+
+  async saveThresholdsConfig() {
+    const shadow = this.shadowRoot;
+    const statusEl = shadow.getElementById('thresholds-config-status');
+    const tempInput = shadow.getElementById('global-temp-threshold');
+    const humidityInput = shadow.getElementById('global-humidity-threshold');
+    if (!statusEl || !tempInput || !humidityInput) return;
+
+    const tempThreshold = parseFloat(tempInput.value);
+    const humidityThreshold = parseFloat(humidityInput.value);
+
+    if (isNaN(tempThreshold) || isNaN(humidityThreshold)) {
+        this._setStatusMessage(statusEl, '✗ Please enter valid numbers.', 'error');
+        return;
+    }
+
+    this._setStatusMessage(statusEl, 'Saving thresholds...', 'loading');
+    try {
+        // Fetch the latest full config to avoid overwriting other settings
+        const configToSave = await this._hass.callApi('GET', 'dashview/config?type=house') || {};
+
+        configToSave.temperature_threshold = tempThreshold;
+        configToSave.humidity_threshold = humidityThreshold;
+
+        // Save the entire house config object back to the backend
+        await this._hass.callApi('POST', 'dashview/config', {
+            type: 'house',
+            config: configToSave
+        });
+
+        // Update the panel's active config object
+        this._houseConfig = configToSave;
+        
+        this._setStatusMessage(statusEl, '✓ Thresholds saved!', 'success');
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error saving thresholds: ${e.message}`, 'error');
+    }
+  }
   // Add room header entities from house configuration
   async _addRoomHeaderEntities() {
     // Load house configuration if not already loaded
@@ -231,6 +349,63 @@ class DashviewPanel extends HTMLElement {
       }
     });
   }
+// Add this new function inside the DashviewPanel class
+// In custom_components/dashview/www/dashview-panel.js
+// Replace the existing function with this one.
+
+_updateTemperatureNotifications() {
+  const shadow = this.shadowRoot;
+  if (!shadow || !this._hass || !this._houseConfig) return;
+
+  const container = shadow.getElementById('notifications-container');
+  const tempThreshold = this._houseConfig.temperature_threshold;
+
+  if (!container || !tempThreshold) {
+      if (container) container.innerHTML = ''; // Clear old notifications if threshold is removed
+      return;
+  }
+
+  const tempEntities = this._getAllEntitiesByType('temperatur');
+  
+  const highTempRooms = tempEntities.map(entityId => {
+      const state = this._hass.states[entityId];
+      if (state && !isNaN(state.state) && parseFloat(state.state) > tempThreshold) {
+          // Find the room this entity belongs to
+          const room = Object.values(this._houseConfig.rooms || {}).find(r => 
+              r.header_entities?.some(he => he.entity === entityId && he.entity_type === 'temperatur')
+          );
+          return {
+              roomName: room?.friendly_name || 'Unknown Room',
+              temperature: parseFloat(state.state).toFixed(1)
+          };
+      }
+      return null;
+  }).filter(Boolean);
+
+  if (highTempRooms.length > 0) {
+      // Create a single string with all high-temp rooms
+      const detailsString = highTempRooms.map(room => 
+          `${room.roomName} (${room.temperature}°C)`
+      ).join(', ');
+
+      // Generate a single notification card
+      const notificationHTML = `
+          <div class="notification-card">
+              <i class="mdi mdi-thermometer-alert notification-icon"></i>
+              <div class="notification-info">
+                  <div class="notification-title">High Temperature Alert</div>
+                  <div class="notification-details">
+                      <span>${detailsString}</span>
+                  </div>
+              </div>
+          </div>
+      `;
+      container.innerHTML = notificationHTML;
+  } else {
+      // No high-temperature rooms, so clear the container
+      container.innerHTML = '';
+  }
+}
 async _addLightEntities() {
     if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
       await this.loadConfiguration();
@@ -370,6 +545,9 @@ async _addLightEntities() {
             const roomKey = activePopup.id.replace('-popup', '');
             this.updateThermostatCard(activePopup, roomKey);
           }
+          if (this._isEntityOfType(entityId, 'temperatur')) {
+            this._updateTemperatureNotifications();
+          }
         } else if (entityId.startsWith('cover.')) {
           const activePopup = shadow.querySelector('.popup.active');
           if (activePopup) {
@@ -382,6 +560,7 @@ async _addLightEntities() {
           }
         } else if (entityId.startsWith('media_player.')) {
           this.updateMediaPlayerInPopups(shadow, entityId);
+          this._updateMediaHeaderButtons(); 
         } else if (this._isRoomHeaderEntity(entityId)) {
           this.updateRoomHeaderIcons(shadow);
           this.updateRoomHeaderEntitiesInPopups(shadow, entityId);
@@ -437,7 +616,88 @@ async _addLightEntities() {
       console.error('[DashView] Error updating weather button:', error);
     }
   }
+// Add this new function inside the DashviewPanel class
 
+  _initializeFloorTabs() {
+    const shadow = this.shadowRoot;
+    if (!shadow || !this._houseConfig || !this._houseConfig.floors) return;
+
+    const container = shadow.getElementById('floor-tabs-container');
+    if (!container) return;
+
+    const floors = Object.entries(this._houseConfig.floors).sort(([, a], [, b]) => (a.level || 0) - (b.level || 0));
+
+    if (floors.length === 0) {
+        container.innerHTML = '<div class="placeholder">No floors configured.</div>';
+        return;
+    }
+
+    // Create the main header with title and buttons
+    const header = document.createElement('div');
+    header.className = 'floor-tabs-header';
+
+    const title = document.createElement('div');
+    title.className = 'floor-tabs-title';
+    title.textContent = 'Räume';
+    header.appendChild(title);
+
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'floor-tab-buttons-container';
+
+    floors.forEach(([floorKey, floorConfig], index) => {
+        const button = document.createElement('button');
+        button.className = 'floor-tab-button';
+        // Set the first floor as active by default
+        if (index === 0) {
+            button.classList.add('active');
+        }
+        button.dataset.targetFloor = floorKey;
+
+        const icon = document.createElement('i');
+        icon.className = `mdi ${this._processIconName(floorConfig.icon)}`;
+        button.appendChild(icon);
+        buttonsContainer.appendChild(button);
+    });
+
+    header.appendChild(buttonsContainer);
+    container.appendChild(header);
+
+    // Create content containers for each floor
+    const contentArea = document.createElement('div');
+    contentArea.className = 'floor-content-area';
+    floors.forEach(([floorKey, floorConfig], index) => {
+        const floorContent = document.createElement('div');
+        floorContent.className = 'floor-content';
+        floorContent.id = `floor-content-${floorKey}`;
+        // Show the first floor's content by default
+        if (index !== 0) {
+            floorContent.style.display = 'none';
+        }
+        // This is where you would include the room cards for the floor.
+        // For now, we'll use a placeholder.
+        floorContent.innerHTML = `<div class="placeholder">Room cards for ${floorConfig.friendly_name} will go here.</div>`;
+        contentArea.appendChild(floorContent);
+    });
+    container.appendChild(contentArea);
+
+    // Add event listeners for tab switching
+    buttonsContainer.addEventListener('click', (e) => {
+        const clickedButton = e.target.closest('.floor-tab-button');
+        if (!clickedButton) return;
+
+        const targetFloor = clickedButton.dataset.targetFloor;
+
+        // Update button active states
+        container.querySelectorAll('.floor-tab-button').forEach(btn => {
+            btn.classList.toggle('active', btn === clickedButton);
+        });
+
+        // Show the corresponding floor content
+        container.querySelectorAll('.floor-content').forEach(content => {
+            content.style.display = content.id === `floor-content-${targetFloor}` ? 'block' : 'none';
+        });
+    });
+  }
   // Update person button component - Principle 3
   _updatePersonButton(shadow) {
     const personState = this._hass.states['person.markus'];
@@ -478,6 +738,7 @@ async _addLightEntities() {
 
   connectedCallback() {
     this.loadContent();
+    this._initializeFloorTabs(); // Add this line
   }
 
   // Inject CSS variables into Shadow DOM for proper theming support
@@ -707,6 +968,9 @@ async _addLightEntities() {
   }
 
   // Method to get next train departure
+// In custom_components/dashview/www/dashview-panel.js
+// Replace the entire getNextTrainDeparture function with this one.
+
   getNextTrainDeparture(departureEntity, delayMin = 0) {
     if (!departureEntity || !departureEntity.attributes.next_departures) {
       return { time: '--:--', isDelayed: false };
@@ -716,7 +980,10 @@ async _addLightEntities() {
     const now = new Date();
 
     for (const train of departures) {
-      if (train.isCancelled) continue;
+      // This line is changed for a more robust check
+      if (train.isCancelled == true || train.isCancelled == 1) {
+          continue;
+      }
 
       const [hours, minutes] = train.scheduledDeparture.split(':').map(Number);
       const departureTime = new Date();
@@ -740,6 +1007,8 @@ async _addLightEntities() {
   }
 
   // Method to update train departure cards
+// In custom_components/dashview/www/dashview-panel.js
+
   updateTrainDepartureCards(shadow) {
     const trainCards = shadow.querySelectorAll('.train-departure-card');
     
@@ -748,7 +1017,8 @@ async _addLightEntities() {
       const departureSensor = card.dataset.departureSensor;
       const delayMin = parseInt(card.dataset.delayMin) || 0;
 
-      // If HASS is not available yet, keep cards visible with placeholder
+      // This block is removed as it was causing the bug.
+      /*
       if (!this._hass) {
         card.classList.remove('hidden');
         const timeElement = card.querySelector('.train-time');
@@ -756,6 +1026,12 @@ async _addLightEntities() {
           timeElement.textContent = '--:--';
         }
         return;
+      }
+      */
+
+      // The function will now only proceed if this._hass is available.
+      if (!this._hass) {
+          return;
       }
 
       // Check if conditions are met
@@ -783,7 +1059,6 @@ async _addLightEntities() {
       }
     });
   }
-
   // Method to update info card sections
   updateInfoCard(shadow) {
     const infoCard = shadow.querySelector('.info-card');
@@ -1371,7 +1646,12 @@ _initializeSecurityChip(chip) {
                window.location.hash = newHash;
             }
         }
+        // In the initializeCard function, within the e.target.closest logic:
 
+        const saveThresholdsBtn = e.target.closest('#save-thresholds-config');
+        if (saveThresholdsBtn) {
+            this.saveThresholdsConfig();
+        }
         const kioskButton = e.target.closest('.kiosk-button');
         if (kioskButton) {
             this.dispatchEvent(new Event('hass-toggle-menu', { bubbles: true, composed: true }));
@@ -1540,21 +1820,19 @@ _initializeSecurityChip(chip) {
         }
     });
   }
-async loadDwdConfig() {
-    const shadow = this.shadowRoot;
-    const statusEl = shadow.getElementById('dwd-config-status');
-    const inputEl = shadow.getElementById('dwd-sensor-entity');
-    if (!statusEl || !inputEl) return;
+// Replace the old loadDwdConfig function with this one
 
-    this._setStatusMessage(statusEl, 'Loading DWD configuration...', 'loading');
-    try {
-        const integrationsConfig = await this._hass.callApi('GET', 'dashview/config?type=integrations');
-        const dwdSensor = integrationsConfig?.dwd_sensor || '';
-        inputEl.value = dwdSensor;
-        this._setStatusMessage(statusEl, '✓ DWD configuration loaded', 'success');
-    } catch (e) {
-        this._setStatusMessage(statusEl, `✗ Error loading DWD config: ${e.message}`, 'error');
-    }
+async loadDwdConfig() {
+  const shadow = this.shadowRoot;
+  const statusEl = shadow.getElementById('dwd-config-status');
+  const inputEl = shadow.getElementById('dwd-sensor-entity');
+  if (!statusEl || !inputEl) return;
+
+  // Use the config object already loaded by loadConfiguration()
+  // This is more efficient and avoids potential race conditions.
+  const dwdSensor = this._integrationsConfig?.dwd_sensor || '';
+  inputEl.value = dwdSensor;
+  this._setStatusMessage(statusEl, '✓ Configuration loaded', 'success');
 }
 
 async saveDwdConfig() {
@@ -1729,13 +2007,15 @@ async saveTemperaturSensorConfig() {
 }
 // In custom_components/dashview/www/dashview-panel.js
 
+// In custom_components/dashview/www/dashview-panel.js
+
 _renderTemperatureGraph(graphContainer, historyData) {
   if (!graphContainer || !historyData || !Array.isArray(historyData) || historyData.length < 2) {
       graphContainer.innerHTML = ''; // Clear if no data or invalid data
       return;
   }
 
-  const temperatures = historyData.map(d => d.state).filter(t => !isNaN(t));
+  const temperatures = historyData.map(d => parseFloat(d.state)).filter(t => !isNaN(t));
   if (temperatures.length < 2) {
       graphContainer.innerHTML = ''; // Not enough valid data points to draw a line
       return;
@@ -1745,13 +2025,15 @@ _renderTemperatureGraph(graphContainer, historyData) {
   const maxTemp = Math.max(...temperatures);
   const tempRange = maxTemp - minTemp || 1;
 
-  // Use a relative coordinate system (e.g., 0-100) instead of measuring pixel width.
-  const svgWidth = 100; 
-  const svgHeight = 85; 
+  const minIndex = temperatures.indexOf(minTemp);
+  const maxIndex = temperatures.indexOf(maxTemp);
+
+  const svgWidth = 100;
+  const svgHeight = 85;
 
   const points = historyData.map((d, i) => {
       const x = (i / (historyData.length - 1)) * svgWidth;
-      const y = svgHeight - ((d.state - minTemp) / tempRange) * svgHeight;
+      const y = svgHeight - ((parseFloat(d.state) - minTemp) / tempRange) * svgHeight;
       return { x, y };
   });
 
@@ -1764,13 +2046,24 @@ _renderTemperatureGraph(graphContainer, historyData) {
       const cp_x2 = (x_mid + points[i+1].x) / 2;
       pathD += ` C ${cp_x1} ${points[i].y}, ${cp_x2} ${points[i+1].y}, ${points[i+1].x} ${points[i+1].y}`;
   }
-  
-  // Create a path for the gradient fill underneath the line
   const filledPathD = `${pathD} V ${svgHeight} H ${points[0].x} Z`;
 
-  // Set the SVG content
+  // Create SVG circle elements for each data point
+  const pointsSVG = points.map(p =>
+    `<circle cx="${p.x}" cy="${p.y}" r="1.5" class="graph-point" />`
+  ).join('');
+
+  // Create text labels for the min and max values
+  const minLabelY = points[minIndex].y + 6; // Position below the point
+  const maxLabelY = points[maxIndex].y - 3; // Position above the point
+  const extremaLabelsSVG = `
+    <text x="${points[minIndex].x}" y="${minLabelY}" class="graph-label-extrema" text-anchor="middle">${minTemp.toFixed(1)}°</text>
+    <text x="${points[maxIndex].x}" y="${maxLabelY}" class="graph-label-extrema" text-anchor="middle">${maxTemp.toFixed(1)}°</text>
+  `;
+
+  // Set the new SVG content
   graphContainer.innerHTML = `
-      <svg viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+      <svg viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="none" style="width: 100%; height: 100%; overflow: visible;">
           <defs>
               <linearGradient id="graph-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" style="stop-color:var(--blue); stop-opacity:0.4" />
@@ -1779,10 +2072,11 @@ _renderTemperatureGraph(graphContainer, historyData) {
           </defs>
           <path d="${filledPathD}" class="graph-fill" />
           <path d="${pathD}" class="graph-path" />
+          ${pointsSVG}
+          ${extremaLabelsSVG}
       </svg>
   `;
-}
-// Add this new method to the DashviewPanel class
+}// Add this new method to the DashviewPanel class
 async updateThermostatCard(popup, roomKey) {
   if (!this._hass || !this._houseConfig.rooms || !roomKey) return;
 
@@ -2762,7 +3056,9 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }
           if (targetId === 'temperatur-setup-tab') {
-              setTimeout(() => this.loadTemperaturSensorSetup(), 100);
+            setTimeout(() => this.loadTemperaturSensorSetup(), 100);
+            // Add this line to load the threshold values
+            setTimeout(() => this.loadThresholdsConfig(), 100);
           }
           if (targetId === 'humidity-setup-tab') {
               setTimeout(() => this.loadHumiditySensorSetup(), 100);
@@ -4830,7 +5126,7 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
   updateLightsCard(popup, changedEntityId) {
     if (!this._hass || !changedEntityId) return;
 
-    const roomKey = Object.keys(this._houseConfig.rooms).find(key => 
+    const roomKey = Object.keys(this._houseConfig.rooms).find(key =>
         this._houseConfig.rooms[key].lights?.includes(changedEntityId)
     );
 
@@ -4851,6 +5147,21 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
             iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-off';
         }
         
+        // Update state label
+        const stateLabelEl = lightRow.querySelector('.light-state-label');
+        if (stateLabelEl) {
+            if (isOn) {
+                let label = 'An';
+                if (entityState.attributes && typeof entityState.attributes.brightness === 'number') {
+                    const brightnessPercent = Math.round((entityState.attributes.brightness / 255) * 100);
+                    label += ` - ${brightnessPercent}%`;
+                }
+                stateLabelEl.textContent = label;
+            } else {
+                stateLabelEl.textContent = 'Aus';
+            }
+        }
+
         // Update card state for styling
         lightRow.setAttribute('state', isOn ? 'on' : 'off');
     }
