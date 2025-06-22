@@ -22,15 +22,13 @@ from .services import async_setup_services, async_unload_services
 
 _LOGGER = logging.getLogger(__name__)
 
-def _setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the DashView component."""
-    hass.data.setdefault(DOMAIN, {})
-    return True
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DashView from a config entry."""
     _LOGGER.info("Setting up DashView panel from config entry.")
+
+    # Initialize the domain data
+    hass.data.setdefault(DOMAIN, {})
 
     await _sync_config_from_ha_registries(hass, entry)
 
