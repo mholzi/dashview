@@ -1592,18 +1592,18 @@ async updateDwdWarningCard() {
     const shadow = this.shadowRoot;
     if (!shadow || !this._hass) return;
 
-    const container = shadow.getElementById('dwd-warning-card-container');
-    if (!container) return;
+    const containers = shadow.querySelectorAll('.dwd-warning-card-container');
+    if (containers.length === 0) return;
 
     const sensorEntity = this._integrationsConfig?.dwd_sensor;
     if (!sensorEntity) {
-        container.innerHTML = '';
+        containers.forEach(container => container.innerHTML = '');
         return;
     }
 
     const dwdState = this._hass.states[sensorEntity];
     if (!dwdState || dwdState.state === '0' || dwdState.state === 'unavailable') {
-        container.innerHTML = ''; // Hide card if no warning
+        containers.forEach(container => container.innerHTML = ''); // Hide card if no warning
         return;
     }
 
@@ -1631,13 +1631,20 @@ async updateDwdWarningCard() {
 
     try {
         const renderedHtml = await this._hass.callApi('POST', 'template', { template });
-        const cardModStyle = "margin: 8px; border: none; border-radius: 25px;";
-        container.innerHTML = `<div style="${cardModStyle}">${renderedHtml}</div>`;
+        const cardModStyle = "margin: 8px; border: none; border-radius: 12px;";
+        const content = `<div style="${cardModStyle}">${renderedHtml}</div>`;
+        containers.forEach(container => {
+            container.innerHTML = content;
+        });
     } catch (e) {
         console.error("Error rendering DWD template:", e);
-        container.innerHTML = \`<div class="placeholder error">Error rendering DWD warning.</div>\`;
+        const errorContent = `<div class="placeholder error">Error rendering DWD warning.</div>`;
+        containers.forEach(container => {
+            container.innerHTML = errorContent;
+        });
     }
 }
+
 async loadTemperaturSensorSetup() {
     const shadow = this.shadowRoot;
     const statusElement = shadow.getElementById('temperatur-setup-status');
@@ -1934,6 +1941,7 @@ async saveHumiditySensorConfig() {
     this.updateCurrentWeather(shadow, weatherState);
     this.updateHourlyForecast(shadow, this._weatherForecasts.hourly);
     this.initializeDailyForecast(shadow, this._weatherForecasts.daily);
+    this.updateDwdWarningCard();
   }
 
   // Method to update current weather display
