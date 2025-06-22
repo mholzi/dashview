@@ -90,6 +90,8 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
 
     new_house_config = {
         "weather_entity": existing_house_config.get("weather_entity", "weather.forecast_home"),
+        "temperature_threshold": existing_house_config.get("temperature_threshold", 30),
+        "humidity_threshold": existing_house_config.get("humidity_threshold", 70),
         "floors": {},
         "rooms": {}
     }
@@ -259,7 +261,12 @@ class DashViewConfigView(HomeAssistantView):
             config_payload = data.get("config")
 
             if not config_type or config_payload is None:
-                return self.json_message("'type' and 'config' are required", status_code=400)
+                # If type and config are not present, assume it's the direct house_config save
+                if 'rooms' in data and 'floors' in data:
+                    config_type = "house"
+                    config_payload = data
+                else:
+                    return self.json_message("'type' and 'config' are required, or a full house_config object", status_code=400)
 
             # Get the current options, update it, then save it back
             current_options = dict(self._entry.options)
