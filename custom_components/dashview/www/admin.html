@@ -58,8 +58,7 @@
         <div class="config-section">
             <h5>Available Motion Sensors by Room</h5>
             <div id="motion-sensors-by-room" class="floors-container">
-                <!-- Motion sensors will be populated here -->
-            </div>
+                </div>
             <button id="save-motion-sensor-config" class="save-button" style="margin-top: 12px;">Save Motion Sensor Configuration</button>
         </div>
     </div>
@@ -77,8 +76,7 @@
         <div class="config-section">
             <h5>Available Covers by Room</h5>
             <div id="covers-by-room" class="floors-container">
-                <!-- Covers will be populated here -->
-            </div>
+                </div>
             <button id="save-cover-config" class="save-button" style="margin-top: 12px;">Save Cover Configuration</button>
         </div>
     </div>
@@ -96,8 +94,7 @@
         <div class="config-section">
             <h5>Available Lights by Room</h5>
             <div id="lights-by-room" class="floors-container">
-                <!-- Lights will be populated here -->
-            </div>
+                </div>
             <button id="save-light-config" class="save-button" style="margin-top: 12px;">Save Light Configuration</button>
         </div>
     </div>
@@ -115,8 +112,7 @@
         <div class="config-section">
             <h5>Available Window Sensors by Room</h5>
             <div id="window-sensors-by-room" class="floors-container">
-                <!-- Window sensors will be populated here -->
-            </div>
+                </div>
             <button id="save-window-sensor-config" class="save-button" style="margin-top: 12px;">Save Window Sensor Configuration</button>
         </div>
     </div>
@@ -134,8 +130,7 @@
         <div class="config-section">
             <h5>Available Smoke Detectors by Room</h5>
             <div id="smoke-detector-sensors-by-room" class="floors-container">
-                <!-- Smoke detector sensors will be populated here -->
-            </div>
+                </div>
             <button id="save-smoke-detector-sensor-config" class="save-button" style="margin-top: 12px;">Save Smoke Detector Configuration</button>
         </div>
     </div>
@@ -153,8 +148,7 @@
         <div class="config-section">
             <h5>Available Vibration Sensors by Room</h5>
             <div id="vibration-sensors-by-room" class="floors-container">
-                <!-- Vibration sensors will be populated here -->
-            </div>
+                </div>
             <button id="save-vibration-sensor-config" class="save-button" style="margin-top: 12px;">Save Vibration Sensor Configuration</button>
         </div>
     </div>
@@ -172,13 +166,27 @@
         <div class="config-section">
             <h5>Configured Rooms</h5>
             <div id="rooms-list" class="floors-container">
-                <!-- Rooms will be populated here -->
-            </div>
+                </div>
         </div>
     </div>
     <div id="temperatur-setup-tab" class="tab-content">
         <h4>Temperatur Setup</h4>
         <p>Configure temperature sensors based on Home Assistant labels. Select sensors labeled "Temperatur" to assign to rooms.</p>
+
+        <div class="config-section">
+            <h5>Global Thresholds</h5>
+            <p>Set global thresholds for temperature and humidity notifications.</p>
+            <div id="thresholds-config-status" class="status-display">Ready</div>
+            <div class="setting-row">
+                <label for="global-temp-threshold" style="width: 100px;">Temperature:</label>
+                <input type="number" id="global-temp-threshold" class="form-input" placeholder="e.g., 30">
+            </div>
+            <div class="setting-row" style="margin-top: 8px;">
+                <label for="global-humidity-threshold" style="width: 100px;">Humidity:</label>
+                <input type="number" id="global-humidity-threshold" class="form-input" placeholder="e.g., 70">
+            </div>
+            <button id="save-thresholds-config" class="save-button" style="margin-top: 12px;">Save Thresholds</button>
+        </div>
         
         <div class="config-section">
             <h5>Temperatur Sensor Status</h5>
@@ -271,4 +279,3 @@
         </div>
     </div>
 </div>
-
