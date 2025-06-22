@@ -434,80 +434,6 @@ body.popup-open, :host(.popup-open) {
     opacity: 0.8;
 }
 
-/* --- Train Departure Cards --- */
-.train-departures-section {
-    margin: 16px 0;
-}
-
-.train-departures-section h4 {
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--primary-text-color);
-    margin: 0 0 12px 0;
-    padding: 0 4px;
-}
-
-.train-departures-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.train-departure-card {
-    display: flex;
-    align-items: center;
-    background-color: var(--card-background-color);
-    border-radius: 20px;
-    padding: 16px;
-    gap: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    border: 1px solid var(--gray200);
-}
-
-.train-departure-card:hover {
-    background-color: var(--highlight);
-}
-
-.train-departure-card.hidden {
-    display: none;
-}
-
-.train-departure-card .train-icon {
-    font-size: 60px;
-    font-weight: 800;
-    line-height: 1;
-    padding-left: 80px;
-    padding-right: 8px;
-    text-align: right;
-    min-width: 80px;
-}
-
-.train-departure-card .train-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.train-departure-card .train-time {
-    font-size: 30px;
-    font-weight: 500;
-    color: var(--primary-text-color);
-    line-height: 1.1;
-}
-
-.train-departure-card .train-time.delayed {
-    color: red;
-}
-
-.train-departure-card .train-destination {
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--secondary-text-color);
-    opacity: 0.7;
-}
-
 /* --- Info Card --- */
 .info-card {
     border-radius: 20px;
@@ -1660,4 +1586,47 @@ body.popup-open, :host(.popup-open) {
     fill: url(#graph-gradient);
     stroke: none;
 }
+/* --- Notification Cards --- */
+.notifications-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+}
 
+.notification-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 16px;
+    gap: 16px;
+    border: 1px solid var(--red); /* Highlight notifications */
+}
+
+.notification-card .notification-icon {
+    font-size: 28px;
+    color: var(--red);
+    line-height: 1;
+}
+
+.notification-card .notification-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notification-card .notification-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.notification-card .notification-details {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    display: flex;
+    gap: 12px;
+}
