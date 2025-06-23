@@ -288,7 +288,7 @@ body.popup-open, :host(.popup-open) {
     justify-content: space-around;
     align-items: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 5;
+    z-index: 15;
 
     /* Add a margin-top to prevent it from overlapping the last element */
     margin-top: 12px;
@@ -298,9 +298,9 @@ body.popup-open, :host(.popup-open) {
     border: none;
     color: var(--gray000);
     cursor: pointer;
-    height: 32px;
-    width: 32px;
-    font-size: 40px; /* MDI icons are font-based - matched to kiosk header button size */
+    height: 50px;
+    width: 50px;
+    font-size: 50px; /* MDI icons are font-based - matched to kiosk header button size */
 }
 .nav-button.active {
     color: var(--blue-dark);
@@ -1849,7 +1849,7 @@ z-index: 1;
     justify-self: start;
     align-self: start;
     text-align: left;
-    font-size: 1em;
+    font-size: 1.3em;
     font-weight: 500;
     color: var(--gray800);
     /* Blueprint padding */
@@ -1861,7 +1861,7 @@ z-index: 1;
 /* ---- REPLACE/ADD THESE RULES IN style.css ---- */
 
 /* Applies the active gradient to the ENTIRE card */
-.room-card.is-on {
+.room-card-icon-cell.is-on {
     background: var(--active-big);
 }
 
@@ -1923,7 +1923,7 @@ z-index: 1;
     line-height: 1em;
     font-weight: 300;
     color: var(--gray800);
-    padding: 0 0 6px 14px; /* Matches blueprint padding */
+    padding: 0 0 6px 24px; /* Matches blueprint padding */
 }
 /* --- Sensor Small Card --- */
 .sensor-small-card {
@@ -1983,18 +1983,25 @@ z-index: 1;
 
 /* --- State-based Modifier Classes (for future use) --- */
 /* Example for an "active" state */
-.sensor-small-card.is-active {
-    background: var(--active-big);
-}
-
-.sensor-small-card.is-active .sensor-small-icon-cell {
+.sensor-small-card.is-on .sensor-small-icon-cell {
     background: var(--white);
 }
 
-.sensor-small-card.is-active .sensor-small-icon-cell i,
-.sensor-small-card.is-active .sensor-small-label,
-.sensor-small-card.is-active .sensor-small-name {
+.sensor-small-card.is-on .sensor-small-icon-cell i,
+.sensor-small-card.is-on .sensor-small-label,
+.sensor-small-card.is-on .sensor-small-name {
     color: var(--gray000);
+}
+
+/* Specific background gradients for different active sensor types */
+.sensor-small-card[data-type="light"].is-on {
+    background: var(--active-light);
+}
+
+.sensor-small-card[data-type="motion"].is-on,
+.sensor-small-card[data-type="vibration"].is-on,
+.sensor-small-card[data-type="smoke"].is-on {
+    background: var(--active-big);
 }
 
 /* --- Train Departure Card Styles (Based on YAML) --- */
