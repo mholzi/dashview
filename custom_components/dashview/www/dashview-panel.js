@@ -480,7 +480,7 @@ class DashviewPanel extends HTMLElement {
     const iconEl = card.querySelector('.sensor-small-icon-cell i');
 
     if (labelEl) labelEl.textContent = label;
-    if (iconEl) iconEl.className = `mdi ${icon}`;
+    if (iconEl) iconEl.className = `mdi ${this._processIconName(icon)}`;
     
     // Reset classes and apply the new state-specific class
     card.className = 'sensor-small-card';
@@ -705,36 +705,28 @@ async _addLightEntities() {
     }
 
     this._setStatusMessage(statusEl, 'Loading layouts...', 'loading');
-    console.log('[DashView Diagnostics] Starting loadFloorLayoutEditor...');
 
     try {
-      if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
-        console.log('[DashView Diagnostics] houseConfig is empty, attempting to reload it.');
-        await this.loadConfiguration();
-      }
-
-      // Log the configuration object to inspect its structure
-      console.log('[DashView Diagnostics] Current houseConfig:', JSON.parse(JSON.stringify(this._houseConfig)));
+      const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+      this._houseConfig = houseConfig || {};
 
       const floors = this._houseConfig.floors || {};
       const layouts = this._houseConfig.floor_layouts || {};
 
       if (Object.keys(floors).length === 0) {
-          console.warn('[DashView Diagnostics] No floors found in the configuration. Cannot build editor.');
           container.innerHTML = '<div class="placeholder">No floors are configured. Please check your Home Assistant floor registry and restart.</div>';
           this._setStatusMessage(statusEl, '⚠ No floors found', 'error');
           return;
       }
 
       let editorHTML = '';
-      console.log('[DashView Diagnostics] Starting to loop through floors to build editor...');
       for (const [floorId, floorConfig] of Object.entries(floors)) {
         try {
             const floorLayout = layouts[floorId] || [];
             const smallSlots = floorLayout.filter(slot => slot.grid_area && slot.grid_area.includes('small'));
             const allEntitiesOnFloor = this._getEntitiesForFloor(floorId);
 
-            editorHTML += `<div class="config-section"><h5>${floorConfig.friendly_name || floorId}</h5><div class="floor-layout-grid" data-floor-id="${floorId}">`;
+            editorHTML += `<div class="config-section"><h5>${floorConfig.friendly_name || floorId}</h5><div class="room-grid" data-floor-id="${floorId}">`;
             for (const slot of smallSlots) {
                 editorHTML += this._renderLayoutSlotEditor(slot, allEntitiesOnFloor);
             }
@@ -745,7 +737,6 @@ async _addLightEntities() {
         }
       }
       
-      console.log('[DashView Diagnostics] Finished building editor HTML. Rendering now.');
       container.innerHTML = editorHTML;
       this._setStatusMessage(statusEl, '✓ Layouts loaded', 'success');
       
@@ -766,12 +757,12 @@ async _addLightEntities() {
 
     const entityOptions = entities.map(entity => 
       `<option value="${entity.entity_id}" ${entity.entity_id === entity_id ? 'selected' : ''}>
-        ${entity.name || entity.entity_id}
+        ${entity.name} (${entity.entity_id})
       </option>`
     ).join('');
 
     return `
-      <div class="layout-slot" data-grid-area="${grid_area}">
+      <div class="layout-slot" data-grid-area="${grid_area}" style="grid-area: ${grid_area};">
         <div class="slot-name">${grid_area.replace('r1-', '').replace('r2-', '')}</div>
         <div class="slot-config">
           <select class="layout-type-selector">
@@ -1094,7 +1085,20 @@ async _addLightEntities() {
       this._renderFloorLayout(floors[0][0]);
     }
   }
+  _initializeSmallSensorCard(cardElement) {
+    if (!cardElement) return;
 
+    cardElement.addEventListener('click', () => {
+      const entityId = cardElement.dataset.entity;
+      const cardType = cardElement.dataset.type;
+
+      // If the card is a light, toggle it on click
+      if (cardType === 'light' && entityId && this._hass) {
+        this._hass.callService('light', 'toggle', { entity_id: entityId });
+      }
+      // You can add more actions for other card types here in the future
+    });
+  }
   /**
    * Renders the entire layout for a specific floor based on its configuration.
    * This is the main rendering engine for the dashboard.
@@ -1154,6 +1158,12 @@ async _addLightEntities() {
     }
 
     gridContainer.innerHTML = gridHTML;
+    
+    // After rendering, initialize the cards with event listeners
+    gridContainer.querySelectorAll('.sensor-small-card').forEach(card => {
+        this._initializeSmallSensorCard(card);
+    });
+    
     // After rendering, initialize any components that need it (like swipers)
     gridContainer.querySelectorAll('.room-swipe-card-container').forEach(container => {
         this._initializeSwiper(container.querySelector('.swiper-container'));
@@ -1178,7 +1188,7 @@ async _addLightEntities() {
       <div class="sensor-small-card ${cardState.stateClass}" style="grid-area: ${gridArea};" data-entity="${entityId}" data-type="${type}">
           <div class="sensor-small-grid">
               <div class="sensor-small-icon-cell">
-                  <i class="mdi ${cardState.icon}"></i>
+                  <i class="mdi ${this._processIconName(cardState.icon)}"></i>
               </div>
               <div class="sensor-small-label">${cardState.label}</div>
               <div class="sensor-small-name">${name}</div>
@@ -1202,7 +1212,7 @@ async _addLightEntities() {
     const cardsHTML = roomsOnFloor.map(room => {
         const tempSensor = room.header_entities?.find(e => e.entity_type === 'temperatur')?.entity;
         const humSensor = room.header_entities?.find(e => e.entity_type === 'humidity')?.entity;
-        return this._generateRoomCardHTML(room, room.combined_sensor, tempSensor, humSensor);
+        return this._generateRoomCardHTML(room, room.key, room.combined_sensor, tempSensor, humSensor);
     }).join('');
 
     return `
@@ -1214,28 +1224,6 @@ async _addLightEntities() {
         </div>
     `;
   }
-  _updatePersonButton(shadow) {
-    const personState = this._hass.states['person.markus'];
-    if (!personState) {
-      console.warn('[DashView] Person entity person.markus not found in HASS states');
-      return;
-    }
-
-    try {
-      const img_src = personState.attributes.entity_picture || (personState.state === 'home' ? '/local/weather_icons/IMG_0421.jpeg' : '/local/weather_icons/IMG_0422.jpeg');
-      const imageElement = shadow.querySelector('.person-button .image-container');
-      
-      if (imageElement) {
-        imageElement.innerHTML = `<img src="${img_src}" width="45" height="45">`;
-        console.debug(`[DashView] Person button updated: ${personState.state}`);
-      } else {
-        console.debug('[DashView] Person button image element not found in DOM');
-      }
-    } catch (error) {
-      console.error('[DashView] Error updating person button:', error);
-    }
-  }
-
   // Update header buttons only when needed - Principle 3
   _updateHeaderButtonsIfNeeded() {
     const shadow = this.shadowRoot;
@@ -1343,7 +1331,28 @@ async _addLightEntities() {
     `;
     shadow.appendChild(cssVariables);
   }
+  async loadHouseSetupTab() {
+    const shadow = this.shadowRoot;
+    const statusElement = shadow.getElementById('house-config-status');
+    const textarea = shadow.getElementById('house-config');
 
+    if (!statusElement || !textarea) {
+        console.error('[DashView] House Setup tab elements not found.');
+        return;
+    }
+
+    this._setStatusMessage(statusElement, 'Loading house configuration...', 'loading');
+
+    try {
+        const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+        this._adminLocalState.houseConfig = houseConfig || { rooms: {}, floors: {} };
+        textarea.value = JSON.stringify(this._adminLocalState.houseConfig, null, 2);
+        this._setStatusMessage(statusElement, '✓ House configuration loaded', 'success');
+        this._updateAdminSummary();
+    } catch (e) {
+        this._setStatusMessage(statusElement, `✗ Error loading house configuration: ${e.message}`, 'error');
+    }
+  }
   async loadContent() {
     const shadow = this.shadowRoot;
     if (!shadow) return;
@@ -3527,8 +3536,11 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           button.classList.add('active');
           tabContents.forEach(content => content.classList.toggle('active', content.id === targetId));
           
-          // Keep existing tab logic for admin panel
+          // Logic for which function to call based on the tab's ID
           if (targetId === 'house-setup-tab') {
+            setTimeout(() => this.loadHouseSetupTab(), 100);
+          }
+          if (targetId === 'header-buttons-tab') { // This is the legacy tab
             setTimeout(() => this.loadAdminConfiguration(), 100);
           }
           if (targetId === 'integrations-tab') {
@@ -3552,12 +3564,8 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           if (targetId === 'vibration-setup-tab') {
             setTimeout(() => this.loadVibrationSetup(), 100);
           }
-          if (targetId === 'header-buttons-tab') {
-            setTimeout(() => this.loadAdminConfiguration(), 100);
-          }
           if (targetId === 'temperatur-setup-tab') {
             setTimeout(() => this.loadTemperaturSensorSetup(), 100);
-            // Add this line to load the threshold values
             setTimeout(() => this.loadThresholdsConfig(), 100);
           }
           if (targetId === 'humidity-setup-tab') {
@@ -3571,6 +3579,9 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           }
           if (targetId === 'weather-tab') {
             setTimeout(() => this.loadWeatherEntityConfiguration(), 100);
+          }
+          if (targetId === 'floor-layouts-tab') {
+            setTimeout(() => this.loadFloorLayoutEditor(), 100);
           }
         });
       });
@@ -3706,38 +3717,38 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
     `;
   }
 
-  _generateRoomCardHTML(room, entity, temp, hum) {
-      const roomName = room.friendly_name || 'Raum';
-      const roomIcon = this._processIconName(room.icon || 'mdi:home-city');
-      const navPath = '#' + (Object.keys(this._houseConfig.rooms).find(key => this._houseConfig.rooms[key] === room) || '');
+  _generateRoomCardHTML(room, roomKey, entity, temp, hum) {
+    const roomName = room.friendly_name || 'Raum';
+    const roomIcon = this._processIconName(room.icon || 'mdi:home-city');
+    const navPath = `#${roomKey}`;
 
-      const tempState = temp && this._hass.states[temp];
-      const humState = hum && this._hass.states[hum];
-      const entityState = entity && this._hass.states[entity];
+    const tempState = temp && this._hass.states[temp];
+    const humState = hum && this._hass.states[hum];
+    const entityState = entity && this._hass.states[entity];
 
-      let tempHumHTML = '';
-      if (tempState && tempState.state !== 'unavailable') {
-          tempHumHTML += `${parseFloat(tempState.state).toFixed(0)}°`;
-      }
-      if (humState && humState.state !== 'unavailable') {
-          if (tempHumHTML) tempHumHTML += ' ';
-          tempHumHTML += `<span style="font-size:0.3em;opacity:0.7">${parseFloat(humState.state).toFixed(0)}%</span>`;
-      }
-      const isActive = this._isRoomActive(room);
-      const cardStateClass = isActive ? 'is-on' : 'is-off';
-      return `
-          <div class="swiper-slide">
-              <div class="room-card ${cardStateClass}" data-entity="${entity}" data-navigation-path="${navPath}">
-                  <div class="room-card-grid">
-                      <div class="room-card-name">${roomName}</div>
-                      <div class="room-card-icon-cell">
-                          <i class="mdi ${roomIcon}"></i>
-                      </div>
-                      <div class="room-card-temp">${tempHumHTML}</div>
-                  </div>
-              </div>
-          </div>
-      `;
+    let tempHumHTML = '';
+    if (tempState && tempState.state !== 'unavailable' && !isNaN(tempState.state)) {
+        tempHumHTML += `<i class="mdi mdi-thermometer"></i> ${parseFloat(tempState.state).toFixed(0)}°`;
+    }
+    if (humState && humState.state !== 'unavailable' && !isNaN(humState.state)) {
+        if (tempHumHTML) tempHumHTML += ' ';
+        tempHumHTML += `<span style="font-size:0.3em;opacity:0.7">${parseFloat(humState.state).toFixed(0)}%</span>`;
+    }
+    const isActive = this._isRoomActive(room);
+    const cardStateClass = isActive ? 'is-on' : 'is-off';
+    return `
+        <div class="swiper-slide">
+            <div class="room-card ${cardStateClass}" data-entity="${entity}" data-navigation-path="${navPath}">
+                <div class="room-card-grid">
+                    <div class="room-card-name">${roomName}</div>
+                    <div class="room-card-icon-cell">
+                        <i class="mdi ${roomIcon}"></i>
+                    </div>
+                    <div class="room-card-temp">${tempHumHTML}</div>
+                </div>
+            </div>
+        </div>
+    `;
   }
 
   _initializeSwiper(container) {
