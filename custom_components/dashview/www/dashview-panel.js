@@ -129,7 +129,9 @@ class DashviewPanel extends HTMLElement {
       this._watchedEntities.add('input_boolean.trockner_an');
       this._watchedEntities.add('sensor.foxess_solar');
       this._watchedEntities.add('sensor.foxess_bat_soc');
-      
+      this._watchedEntities.add('lock.door_aqara_smart_lock_u200_lock');
+      // Ensure this entity ID for your door's contact sensor is correct
+      this._watchedEntities.add('binary_sensor.haustur_contact_sensor');
       // Add pollen card entities
       this._watchedEntities.add('sensor.pollenflug_birke_92');
       this._watchedEntities.add('sensor.pollenflug_erle_92');
@@ -150,7 +152,9 @@ class DashviewPanel extends HTMLElement {
       await this._addMediaPlayerEntities();
     }
 
-    // Force initial load of entity states if they're not already tracked
+    // Force initial load of entity states if they're not 
+    // 
+    //  already tracked
     let initializedCount = 0;
     for (const entityId of this._watchedEntities) {
       if (!this._lastEntityStates.has(entityId)) {
@@ -322,7 +326,36 @@ class DashviewPanel extends HTMLElement {
       }
     });
   }
+// Add this new method inside the DashviewPanel class
+  _isRoomActive(roomConfig) {
+    if (!roomConfig || !this._hass || !this._hass.states) return false;
 
+    // 1. Check for active lights
+    if (roomConfig.lights && roomConfig.lights.some(entityId => this._hass.states[entityId]?.state === 'on')) {
+      return true;
+    }
+
+    // 2. Check for playing media players
+    if (roomConfig.media_players && roomConfig.media_players.some(playerConfig => this._hass.states[playerConfig.entity]?.state === 'playing')) {
+      return true;
+    }
+
+    // 3. Check for active header entities (motion, smoke, vibration)
+    if (roomConfig.header_entities && roomConfig.header_entities.some(entityConfig => {
+      const entityState = this._hass.states[entityConfig.entity];
+      return entityState?.state === 'on' && ['motion', 'smoke', 'vibration'].includes(entityConfig.entity_type);
+    })) {
+      return true;
+    }
+
+    // 4. Fallback to the combined_sensor for general activity
+    const combinedSensorState = this._hass.states[roomConfig.combined_sensor];
+    if (combinedSensorState && combinedSensorState.state === 'on') {
+      return true;
+    }
+
+    return false;
+  }
   // Add cover entities from house configuration
   async _addCoverEntities() {
     // Load house configuration if not already loaded
@@ -352,7 +385,118 @@ class DashviewPanel extends HTMLElement {
 // Add this new function inside the DashviewPanel class
 // In custom_components/dashview/www/dashview-panel.js
 // Replace the existing function with this one.
+// --- START: NEW GENERIC SENSOR CARD LOGIC ---
 
+  // This single function determines the label, icon, and style for any small sensor card
+  // based on its 'data-type' and the state of its associated entities.
+  _getSmallSensorCardState(cardElement) {
+    if (!cardElement || !this._hass) {
+      return { label: 'Error', icon: 'mdi:alert-circle', stateClass: 'is-unavailable' };
+    }
+
+    const type = cardElement.dataset.type;
+    const entityId = cardElement.dataset.entity;
+    const entity = this._hass.states[entityId];
+
+    // Default values
+    let label = entity?.state || 'Unknown';
+    let icon = 'mdi:help-circle';
+    let stateClass = 'is-off'; // Default state class
+
+    switch (type) {
+      case 'door': {
+        const closedEntityId = cardElement.dataset.closedEntity;
+        const isOpen = this._hass.states[closedEntityId]?.state === 'on';
+        const isLocked = entity?.state === 'locked';
+
+        if (isOpen) {
+          label = 'Auf';
+          icon = 'mdi:door-open';
+          stateClass = 'is-open';
+        } else if (isLocked) {
+          label = 'Abgeschlossen';
+          icon = 'mdi:door-closed-lock';
+          stateClass = 'is-locked';
+        } else {
+          label = 'Zu';
+          icon = 'mdi:door-closed';
+          stateClass = 'is-unlocked';
+        }
+        break;
+      }
+
+      case 'window':
+      case 'sliding_door': {
+        const isOpen = entity?.state === 'on';
+        label = isOpen ? 'Auf' : 'Zu';
+        icon = isOpen ? (type === 'window' ? 'mdi:window-open' : 'mdi:door-sliding-open') : (type === 'window' ? 'mdi:window-closed' : 'mdi:door-sliding');
+        stateClass = isOpen ? 'is-on' : 'is-off';
+        break;
+      }
+      
+      case 'motion': {
+        const isDetected = entity?.state === 'on';
+        label = isDetected ? 'Bewegung' : 'Keine Bewegung';
+        icon = isDetected ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
+        stateClass = isDetected ? 'is-on' : 'is-off';
+        break;
+      }
+
+      case 'light': {
+        const isOn = entity?.state === 'on';
+        label = isOn ? 'An' : 'Aus';
+        icon = entity?.attributes?.icon || 'mdi:lightbulb';
+        stateClass = isOn ? 'is-on' : 'is-off';
+        break;
+      }
+
+      case 'temp': {
+          const temp = parseFloat(entity?.state);
+          label = isNaN(temp) ? '' : temp.toFixed(1) + '°C';
+          icon = 'mdi:thermometer';
+          stateClass = (temp > (this._houseConfig.temperature_threshold || 30)) ? 'is-on' : 'is-off';
+          break;
+      }
+
+      // Add other cases from your template logic here...
+      // e.g., case 'hoover':, case 'printer':, etc.
+    }
+    
+    // Last changed logic (can be applied to any type)
+    if (cardElement.dataset.labelLast === 'true' && entity?.last_changed) {
+        const lastChanged = new Date(entity.last_changed);
+        const now = new Date();
+        const diff = Math.floor((now - lastChanged) / 1000); // in seconds
+
+        if (diff < 60) { label = 'vor wenigen Sekunden'; }
+        else if (diff < 3600) { label = 'vor ' + Math.floor(diff / 60) + 'm'; }
+        else if (diff < 86400) { label = 'vor ' + Math.floor(diff / 3600) + 'h'; }
+        else { label = 'vor ' + Math.floor(diff / 86400) + 'd'; }
+    }
+
+
+    return { label, icon, stateClass };
+  }
+
+  // This is the new generic updater function
+  _updateSmallSensorCard(shadow, entityId) {
+    const card = shadow.querySelector(`.sensor-small-card[data-entity="${entityId}"]`);
+    if (!card) return;
+
+    const { label, icon, stateClass } = this._getSmallSensorCardState(card);
+    
+    const labelEl = card.querySelector('.sensor-small-label');
+    const iconEl = card.querySelector('.sensor-small-icon-cell i');
+
+    if (labelEl) labelEl.textContent = label;
+    if (iconEl) iconEl.className = `mdi ${icon}`;
+    
+    // Reset classes and apply the new state-specific class
+    card.className = 'sensor-small-card';
+    if(stateClass) card.classList.add(stateClass);
+  }
+
+  // --- END: GENERIC SENSOR CARD LOGIC ---
 _updateTemperatureNotifications() {
   const shadow = this.shadowRoot;
   if (!shadow || !this._hass || !this._houseConfig) return;
@@ -361,49 +505,50 @@ _updateTemperatureNotifications() {
   const tempThreshold = this._houseConfig.temperature_threshold;
 
   if (!container || !tempThreshold) {
-      if (container) container.innerHTML = ''; // Clear old notifications if threshold is removed
-      return;
+    if (container) {
+      container.style.display = 'none'; // Hide if no threshold
+      container.innerHTML = '';
+    }
+    return;
   }
 
   const tempEntities = this._getAllEntitiesByType('temperatur');
   
   const highTempRooms = tempEntities.map(entityId => {
-      const state = this._hass.states[entityId];
-      if (state && !isNaN(state.state) && parseFloat(state.state) > tempThreshold) {
-          // Find the room this entity belongs to
-          const room = Object.values(this._houseConfig.rooms || {}).find(r => 
-              r.header_entities?.some(he => he.entity === entityId && he.entity_type === 'temperatur')
-          );
-          return {
-              roomName: room?.friendly_name || 'Unknown Room',
-              temperature: parseFloat(state.state).toFixed(1)
-          };
-      }
-      return null;
+    const state = this._hass.states[entityId];
+    if (state && !isNaN(state.state) && parseFloat(state.state) > tempThreshold) {
+      const room = Object.values(this._houseConfig.rooms || {}).find(r => 
+        r.header_entities?.some(he => he.entity === entityId && he.entity_type === 'temperatur')
+      );
+      return {
+        roomName: room?.friendly_name || 'Unknown Room',
+        temperature: parseFloat(state.state).toFixed(1)
+      };
+    }
+    return null;
   }).filter(Boolean);
 
   if (highTempRooms.length > 0) {
-      // Create a single string with all high-temp rooms
-      const detailsString = highTempRooms.map(room => 
-          `${room.roomName} (${room.temperature}°C)`
-      ).join(', ');
+    const detailsString = highTempRooms.map(room => 
+      `${room.roomName} (${room.temperature}°C)`
+    ).join(', ');
 
-      // Generate a single notification card
-      const notificationHTML = `
-          <div class="notification-card">
-              <i class="mdi mdi-thermometer-alert notification-icon"></i>
-              <div class="notification-info">
-                  <div class="notification-title">High Temperature Alert</div>
-                  <div class="notification-details">
-                      <span>${detailsString}</span>
-                  </div>
+    const notificationHTML = `
+      <div class="notification-card">
+          <i class="mdi mdi-thermometer-alert notification-icon"></i>
+          <div class="notification-info">
+              <div class="notification-title">High Temperature Alert</div>
+              <div class="notification-details">
+                  <span>${detailsString}</span>
               </div>
           </div>
-      `;
-      container.innerHTML = notificationHTML;
+      </div>
+    `;
+    container.innerHTML = notificationHTML;
+    container.style.display = 'flex'; // **Show the container**
   } else {
-      // No high-temperature rooms, so clear the container
-      container.innerHTML = '';
+    container.innerHTML = '';
+    container.style.display = 'none'; // **Hide the container**
   }
 }
 async _addLightEntities() {
@@ -476,8 +621,57 @@ async _addLightEntities() {
       this._updateHeaderButtonsIfNeeded();
     }
   }
+// Replace the sensorDefinitions array inside _renderSmallSensorCards
+  _renderSmallSensorCards(containerElement) {
+    const sensorDefinitions = [
+      {
+        gridArea: 'r1-small-1',
+        type: 'door',
+        entity: 'lock.door_aqara_smart_lock_u200_lock',
+        closed_entity: 'binary_sensor.haustur_contact_sensor', // Add the contact sensor here
+        name: 'Haustür',
+      },
+      // You can add more sensor definitions here.
+      // For example, a motion sensor:
+      // {
+      //   gridArea: 'r1-small-2',
+      //   type: 'motion',
+      //   entity: 'binary_sensor.motion_living_room',
+      //   name: 'Wohnzimmer',
+      //   label_last: 'true' // To show "vor 5m" etc.
+      // },
+    ];
 
+    // ... (rest of the function remains the same, but we need to add the new data attribute)
+    
+    sensorDefinitions.forEach(def => {
+        const placeholder = containerElement.querySelector(`.placeholder-card[style*="grid-area: ${def.gridArea};"]`);
+        if (placeholder) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'sensor-small-card';
+            cardEl.style.gridArea = def.gridArea;
+            cardEl.dataset.type = def.type;
+            cardEl.dataset.entity = def.entity;
+            // Add any extra data attributes needed by the logic
+            if(def.closed_entity) cardEl.dataset.closedEntity = def.closed_entity;
+            if(def.label_last) cardEl.dataset.labelLast = def.label_last;
+
+            cardEl.innerHTML = `
+              <div class="sensor-small-grid">
+                  <div class="sensor-small-icon-cell">
+                      <i class="mdi mdi-help-circle"></i>
+                  </div>
+                  <div class="sensor-small-label">--</div>
+                  <div class="sensor-small-name">${def.name}</div>
+              </div>
+            `;
+            placeholder.replaceWith(cardEl);
+            this._initializeSmallSensorCard(cardEl);
+        }
+    });
+  }
   // Update specific component for entity - Principle 3
+// Update specific component for entity - Principle 3
   _updateComponentForEntity(entityId) {
     const shadow = this.shadowRoot;
     if (!shadow) {
@@ -533,49 +727,49 @@ async _addLightEntities() {
         case 'sensor.pollenflug_ambrosia_92':
           this.updatePollenCard(shadow);
           break;
-      default:
-        // Use an if/else-if chain for clarity and to prevent multiple updates for one entity
-        if (this._integrationsConfig?.dwd_sensor && entityId === this._integrationsConfig.dwd_sensor) {
-          this.updateDwdWarningCard();
-        } else if (this._isEntityOfType(entityId, 'window')) {
-          this.updateWindowsSection(shadow);
-        } else if (this._isEntityOfType(entityId, 'temperatur') || this._isEntityOfType(entityId, 'humidity')) {
-          const activePopup = shadow.querySelector('.popup.active');
-          if (activePopup) {
-            const roomKey = activePopup.id.replace('-popup', '');
-            this.updateThermostatCard(activePopup, roomKey);
+        default:
+          // ** CORRECTED LOGIC CHAIN **
+          // Check if it's a generic sensor card first.
+          if (shadow.querySelector(`.sensor-small-card[data-entity="${entityId}"]`)) {
+            this._updateSmallSensorCard(shadow, entityId);
+          } 
+          // If not, check for other component types.
+          else if (this._integrationsConfig?.dwd_sensor && entityId === this._integrationsConfig.dwd_sensor) {
+            this.updateDwdWarningCard();
+          } else if (this._isEntityOfType(entityId, 'window')) {
+            this.updateWindowsSection(shadow);
+          } else if (this._isEntityOfType(entityId, 'temperatur') || this._isEntityOfType(entityId, 'humidity')) {
+            const activePopup = shadow.querySelector('.popup.active');
+            if (activePopup) {
+              const roomKey = activePopup.id.replace('-popup', '');
+              this.updateThermostatCard(activePopup, roomKey);
+            }
+            if (this._isEntityOfType(entityId, 'temperatur')) {
+              this._updateTemperatureNotifications();
+            }
+          } else if (entityId.startsWith('cover.')) {
+            const activePopup = shadow.querySelector('.popup.active');
+            if (activePopup) {
+              this.updateCoverCard(activePopup, entityId);
+            }
+          } else if (entityId.startsWith('light.')) {
+            const activePopup = shadow.querySelector('.popup.active');
+            if (activePopup) {
+              this.updateLightsCard(activePopup, entityId);
+            }
+          } else if (entityId.startsWith('media_player.')) {
+            this.updateMediaPlayerInPopups(shadow, entityId);
+            this._updateMediaHeaderButtons(); 
+          } else if (this._isRoomHeaderEntity(entityId)) {
+            this.updateRoomHeaderIcons(shadow);
+            this.updateRoomHeaderEntitiesInPopups(shadow, entityId);
           }
-          if (this._isEntityOfType(entityId, 'temperatur')) {
-            this._updateTemperatureNotifications();
-          }
-        } else if (entityId.startsWith('cover.')) {
-          const activePopup = shadow.querySelector('.popup.active');
-          if (activePopup) {
-            this.updateCoverCard(activePopup, entityId);
-          }
-        } else if (entityId.startsWith('light.')) {
-          const activePopup = shadow.querySelector('.popup.active');
-          if (activePopup) {
-            this.updateLightsCard(activePopup, entityId);
-          }
-        } else if (entityId.startsWith('media_player.')) {
-          this.updateMediaPlayerInPopups(shadow, entityId);
-          this._updateMediaHeaderButtons(); 
-        } else if (this._isRoomHeaderEntity(entityId)) {
-          this.updateRoomHeaderIcons(shadow);
-          this.updateRoomHeaderEntitiesInPopups(shadow, entityId);
-        } else {
-          // This log is commented out to reduce console noise for unhandled entities
-          // console.log(`[DashView] No specific handler for entity: ${entityId}`);
-        }
-        break; // Add break at the end of the default case
+          break;
       }
     } catch (error) {
       console.error(`[DashView] Error updating component for ${entityId}:`, error);
-      // Don't rethrow the error to prevent breaking the entire update cycle
     }
   }
-
   // Update weather button component - Principle 3  
   _updateWeatherButton(shadow) {
     const weatherEntityId = this._getCurrentWeatherEntityId();
@@ -3243,9 +3437,8 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           if (tempHumHTML) tempHumHTML += ' ';
           tempHumHTML += `<span style="font-size:0.3em;opacity:0.7">${parseFloat(humState.state).toFixed(0)}%</span>`;
       }
-
-      const cardStateClass = (entityState && entityState.state === 'on') ? 'is-on' : 'is-off';
-
+      const isActive = this._isRoomActive(room);
+      const cardStateClass = isActive ? 'is-on' : 'is-off';
       return `
           <div class="swiper-slide">
               <div class="room-card ${cardStateClass}" data-entity="${entity}" data-navigation-path="${navPath}">
@@ -3502,36 +3695,7 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
       }
 
       // 3. Find all rooms on this floor that have an active entity
-      const activeRooms = floorRooms.filter(room => {
-        const config = room.config;
-        if (!this._hass || !this._hass.states) return false;
-
-        // Check Lights
-        if (config.lights && config.lights.some(entityId => this._hass.states[entityId]?.state === 'on')) {
-            console.log(`[DashView Debug] Active light found in room: ${room.key}`);
-            return true;
-        }
-
-        // Check Media Players
-        if (config.media_players && config.media_players.some(playerConfig => this._hass.states[playerConfig.entity]?.state === 'playing')) {
-            console.log(`[DashView Debug] Active media player found in room: ${room.key}`);
-            return true;
-        }
-
-        // Check Header Entities (motion, smoke, vibration)
-        if (config.header_entities && config.header_entities.some(entityConfig => {
-            const entityState = this._hass.states[entityConfig.entity];
-            if (entityState && entityState.state === 'on' && ['motion', 'smoke', 'vibration'].includes(entityConfig.entity_type)) {
-                console.log(`[DashView Debug] Active header entity (${entityConfig.entity_type}) found in room: ${room.key}`);
-                return true;
-            }
-            return false;
-        })) {
-            return true;
-        }
-
-        return false;
-      });
+      const activeRooms = floorRooms.filter(room => this._isRoomActive(room.config));
       console.log(`[DashView Debug] Active rooms for floor ${floorKey}:`, activeRooms.map(r => r.key));
 
       // 4. If at least one room is active, display the floor and room icons
