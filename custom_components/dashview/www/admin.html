@@ -15,6 +15,7 @@
         <button class="tab-button" data-target="room-maintenance-tab">Room Maintenance</button>
         <button class="tab-button" data-target="media-player-maintenance-tab">Media Players</button>
         <button class="tab-button" data-target="integrations-tab">Integrations</button>
+        <button class="tab-button" data-target="floor-layouts-tab">Floor Layouts</button>
     </div>
 
     <div id="weather-tab" class="tab-content active">
@@ -27,7 +28,16 @@
             <button id="reload-weather-config" class="action-button">Reload</button>
         </div>
     </div>
-
+    <div id="floor-layouts-tab" class="tab-content">
+        <h4>Floor Layout Editor</h4>
+        <p>Configure the small sensor card slots for each floor. Choose between "Automatic" (smart ranking based on usage), "Pinned" (always show a specific sensor), or "Empty".</p>
+        <div id="floor-layout-editor-container">
+            <!-- The editor will be dynamically generated here -->
+            <div class="placeholder">Loading layout editor...</div>
+        </div>
+        <button id="save-floor-layouts" class="save-button" style="margin-top: 20px;">Save Layouts</button>
+        <div id="floor-layouts-status" class="status-display" style="margin-top: 10px;">Ready</div>
+    </div>
     <div id="house-setup-tab" class="tab-content">
         <h4>House Setup Configuration</h4>
         <p>Configure your house with unified room and floor settings. This is the modern way to configure DashView.</p>
