@@ -1768,3 +1768,224 @@ z-index: 1;
 .placeholder-big {
     min-height: 162px; /* (75px * 2) + 12px gap */
 }
+
+/* --- Floor Tabs & Swipeable Room Cards --- */
+.floor-content-area {
+    position: relative;
+    min-height: 162px; /* Corresponds to placeholder-big height */
+}
+
+.floor-content {
+    width: 100%;
+    height: 100%;
+}
+
+.room-swipe-card-container {
+    height: 162px; /* Fixed height to match the placeholder */
+    width: 100%;   /* Take up 100% width of the parent column */
+    overflow: hidden;
+    position: relative;
+    border-radius: 20px;
+    background-color: transparent;
+}
+
+.swiper-container {
+    width: 100%;
+    height: 100%;
+}
+
+.swiper-wrapper {
+    display: flex;
+    transition: transform 0.3s ease;
+    height: 100%;
+}
+
+.swiper-slide {
+    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 2px; /* Add slight padding for card border visibility */
+}
+
+.swiper-pagination {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.swiper-pagination-bullet {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--gray200);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.swiper-pagination-bullet-active {
+    background-color: var(--gray400);
+}
+/* --- Individual Room Card --- */
+.room-card-grid {
+    display: grid;
+    height: 100%;
+    background-color: var(--gray000);
+    /* This defines the layout: name and icon on top, temp on bottom */
+    grid-template-areas:
+        "name icon"
+        "temp temp";
+    grid-template-rows: 1fr auto;
+    /* This is the corrected column definition.
+      The first column (name) gets all the flexible space.
+      The second column (icon) is sized to fit its 50px-wide content.
+    */
+    grid-template-columns: 1fr 50px;
+}
+
+.room-card-name {
+    grid-area: name;
+    /* Blueprint alignment */
+    justify-self: start;
+    align-self: start;
+    text-align: left;
+    font-size: 1em;
+    font-weight: 500;
+    color: var(--gray800);
+    /* Blueprint padding */
+    padding: 14px;
+    /* Prevent text from overflowing */
+    word-break: break-word;
+}
+.room-card.is-on .room-card-icon-cell {
+    background: var(--active-big);
+}
+
+/* This rule changes the icon color itself to be visible on the new background */
+.room-card.is-on .room-card-icon-cell i {
+    color: var(--black);
+}
+.room-card-icon-cell {
+    grid-area: icon;
+    /* Blueprint alignment */
+    justify-self: end;
+    align-self: start;
+    /* Blueprint styling */
+    background: var(--highlight);
+    border-radius: 100%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.room-card-icon-cell i {
+    font-size: 30px;
+    color: var(--white); /* Default color from blueprint */
+}
+
+.room-card.is-on .room-card-icon-cell {
+    background: var(--active-big);
+}
+
+.room-card.is-on .room-card-icon-cell i {
+    color: var(--black); /* Color when active */
+}
+/* --- Individual Room Card --- */
+.room-card {
+    padding: 8px;
+    height: 100%;
+    border-radius: 18px;
+    background: var(--gray000); /* This line sets the background color */
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
+}
+.room-card-temp {
+    grid-area: temp;
+    /* Blueprint alignment and styling */
+    justify-self: start;
+    align-self: end; /* Align to the bottom of the grid area */
+    font-size: 1.5em;
+    line-height: 1em;
+    font-weight: 300;
+    color: var(--gray800);
+    padding: 0 0 6px 14px; /* Matches blueprint padding */
+}
+/* --- Sensor Small Card --- */
+.sensor-small-card {
+    height: 75px; /* Matches placeholder-small height */
+    border-radius: 12px;
+    padding: 4px 20px 4px 4px;
+    background: var(--gray000); /* Default background from blueprint */
+    box-sizing: border-box;
+}
+
+.sensor-small-grid {
+    display: grid;
+    height: 100%;
+    /* Defines the layout: Icon on left, Label and Name on right */
+    grid-template-areas:
+        "icon label"
+        "icon name";
+    /* Icon column is 56px wide, text column takes the rest */
+    grid-template-columns: 56px 1fr;
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+}
+
+.sensor-small-icon-cell {
+    grid-area: icon;
+    width: 44px; /* (22px padding * 2) from blueprint's img_cell */
+    height: 44px; /* (22px padding * 2) from blueprint's img_cell */
+    border-radius: 50%;
+    background: var(--highlight); /* Default background from blueprint */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sensor-small-icon-cell i {
+    font-size: 22px; /* Matches blueprint icon width */
+    color: var(--gray800); /* Default color */
+}
+
+.sensor-small-label {
+    grid-area: label;
+    justify-self: start;
+    align-self: end; /* Aligns to the bottom of its grid cell */
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gray800);
+}
+
+.sensor-small-name {
+    grid-area: name;
+    justify-self: start;
+    align-self: start; /* Aligns to the top of its grid cell */
+    font-size: 14px;
+    color: var(--gray800);
+    opacity: 0.7;
+}
+
+/* --- State-based Modifier Classes (for future use) --- */
+/* Example for an "active" state */
+.sensor-small-card.is-active {
+    background: var(--active-big);
+}
+
+.sensor-small-card.is-active .sensor-small-icon-cell {
+    background: var(--white);
+}
+
+.sensor-small-card.is-active .sensor-small-icon-cell i,
+.sensor-small-card.is-active .sensor-small-label,
+.sensor-small-card.is-active .sensor-small-name {
+    color: var(--gray000);
+}
