@@ -133,10 +133,9 @@ h3 {
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
     box-sizing: border-box;
-    /* --- Changes to position content from the top with a gap --- */
     display: flex;
-    align-items: flex-start; /* Aligns the content box to the top */
-    padding-top: 40px;      /* Creates the 40px gap you requested */
+    justify-content: center; /* Horizontally center the content box */
+    padding-top: 40px;      /* Creates the 40px gap from the top */
 }
 
 /* Prevent body scrolling when popup is active */
@@ -151,19 +150,17 @@ body.popup-open, :host(.popup-open) {
 
 .popup-content {
     background-color: var(--background);
-    margin: 0 auto; /* Center like main view */
+    /* margin: 0 auto;  <-- We remove this */
     padding: 20px;
     border-radius: 30px 30px 0 0;
     max-width: 500px; /* Match main view max-width */
-    width: calc(100% - 16px); /* Responsive width within max-width constraint */
+    width: 100%; /* Take up full width within the constraints */
+    box-sizing: border-box; /* Ensure padding is included in width calculation */
     position: relative;
     transform: translateY(100vh);
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     max-height: calc(100vh - 40px); /* Leave some space from edges */
-    
-    /* ADD THIS LINE 👇 */
-    min-height: 40vh; /* Sets a minimum height (e.g., 40% of the viewport height) */
-
+    min-height: 40vh; 
     overflow-y: auto;
     /* Hide scrollbar while allowing scrolling */
     scrollbar-width: none; /* Firefox */
@@ -184,16 +181,16 @@ body.popup-open, :host(.popup-open) {
     margin: 0 0 20px 0;
     font-weight: 700;
     color: var(--primary-text-color);
-    background: var(--popupBG) !important; /* To explicitly mirror bubble-card header background */
+    background: var(--popupBG) !important;
 }
 
 .popup-icon {
-    background-color: var(--green) !important; /* For the icon container background */
-    color: var(--gray800) !important; /* To mirror ha-icon color */
-    opacity: 1 !important; /* To mirror ha-icon opacity */
-    font-size: 24px !important; /* To mirror bubble-icon size */
-    border-radius: 50%; /* Often icons in bubble cards are circular */
-    padding: 8px; /* Add some padding around the icon within its background */
+    background-color: var(--green) !important;
+    color: var(--gray800) !important;
+    opacity: 1 !important;
+    font-size: 24px !important;
+    border-radius: 50%;
+    padding: 8px;
 }
 
 .popup-title {
@@ -209,9 +206,8 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray400);
     cursor: pointer;
     line-height: 1;
-    background: none; /* To mirror bubble-card header button background */
+    background: none;
 }
-
 /* --- Ensure no margin-bottom inside popup content for card-like elements --- */
 /* This section aims to emulate the 'ha-card { margin-bottom: 0px !important; }'
    and '--vertical-stack-card-gap: 0px!important;' within the popup. */
@@ -279,7 +275,7 @@ body.popup-open, :host(.popup-open) {
 .bottom-nav {
     position: sticky;
     bottom: 10px;
-    height: 50px;
+    height: 60px;
     width: 100%; /* Now it's 100% of the parent .dashboard-container */
     
     /* No need for max-width or horizontal centering, it's inherited */
@@ -287,7 +283,7 @@ body.popup-open, :host(.popup-open) {
     box-sizing: border-box;
     background-color: var(--gray800);
     border-radius: 100px;
-    padding: 10px;
+    padding: 5px;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -1861,14 +1857,32 @@ z-index: 1;
     /* Prevent text from overflowing */
     word-break: break-word;
 }
-.room-card.is-on .room-card-icon-cell {
+
+/* ---- REPLACE/ADD THESE RULES IN style.css ---- */
+
+/* Applies the active gradient to the ENTIRE card */
+.room-card.is-on {
     background: var(--active-big);
 }
 
-/* This rule changes the icon color itself to be visible on the new background */
-.room-card.is-on .room-card-icon-cell i {
-    color: var(--black);
+/* Makes the text and temperature readable on the gradient */
+.room-card.is-on .room-card-name,
+.room-card.is-on .room-card-temp {
+    color: var(--gray800);
+    opacity: 0.9;
 }
+
+/* Makes the icon cell a semi-transparent highlight on the gradient */
+.room-card.is-on .room-card-icon-cell {
+    background: rgba(255, 255, 255, 0.2); /* Use a translucent white */
+}
+
+/* Ensures the icon itself is readable */
+.room-card.is-on .room-card-icon-cell i {
+    color: var(--gray800); /* Use the primary text color */
+}
+
+
 .room-card-icon-cell {
     grid-area: icon;
     /* Blueprint alignment */
@@ -1890,13 +1904,6 @@ z-index: 1;
     color: var(--white); /* Default color from blueprint */
 }
 
-.room-card.is-on .room-card-icon-cell {
-    background: var(--active-big);
-}
-
-.room-card.is-on .room-card-icon-cell i {
-    color: var(--black); /* Color when active */
-}
 /* --- Individual Room Card --- */
 .room-card {
     padding: 8px;
@@ -1988,4 +1995,90 @@ z-index: 1;
 .sensor-small-card.is-active .sensor-small-label,
 .sensor-small-card.is-active .sensor-small-name {
     color: var(--gray000);
+}
+
+/* --- Train Departure Card Styles (Based on YAML) --- */
+/* --- Train Departure Card Styles (Based on YAML) --- */
+
+/* This is the main section wrapper from index.html */
+.train-departures-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* This line centers the cards */
+    gap: 8px; /* Spacing between cards */
+    margin: 16px 0; /* Vertical spacing from other dashboard elements */
+}
+
+/* This container holds all the train cards */
+.train-departures-container {
+    display: contents; /* This allows the cards to be direct children of the flexbox for styling purposes */
+}
+
+/* Individual train card styling */
+.train-departure-card {
+    background: none;
+    box-shadow: none;
+    border: none;
+    padding: 10px 0; /* Vertical padding, horizontal will be handled by grid */
+    margin: 0;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: min-content 1fr; /* Icon column fits content, text column takes rest */
+    grid-template-areas: "icon info";
+    align-items: center; /* Vertically center the icon and the info block */
+    gap: 8px;
+    transition: background-color 0.2s ease;
+    width: 100%; /* Ensure cards can be centered properly */
+    max-width: 350px; /* Prevent cards from becoming too wide on large screens */
+}
+
+/* Hide cards that don't meet conditions */
+.train-departure-card.hidden {
+    display: none;
+}
+
+/* Add a subtle hover effect */
+.train-departure-card:hover {
+    background-color: var(--highlight);
+    border-radius: 12px;
+}
+
+/* Icon styling (Column 1) */
+.train-icon {
+    grid-area: icon;
+    font-size: 48px; /* Slightly adjusted from 60px for better mobile fit */
+    font-weight: 800; /* Note: Not all systems render emoji weights */
+    padding-left: 12px; /* Adjusted padding */
+}
+
+/* Container for time and destination text (Column 2) */
+.train-info {
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* This helps separate the two text lines */
+    text-align: left;
+    padding-left: 8px;
+}
+
+/* Departure time styling (Column 2, Top) */
+.train-time {
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    line-height: 1.1;
+}
+
+/* Style for delayed trains */
+.train-time.delayed {
+    color: var(--red);
+}
+
+/* Destination text styling (Column 2, Bottom) */
+.train-destination {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    opacity: 0.7;
+    line-height: 1.2;
 }
