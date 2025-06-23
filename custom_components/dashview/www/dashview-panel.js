@@ -9,6 +9,7 @@ class DashviewPanel extends HTMLElement {
     this._roomsConfig = {};
     this._houseConfig = {};
     this._integrationsConfig = {};
+    this._usageStatsSaveTimer = null; // For debouncing the save operation
     
     // Label constants for case-insensitive entity queries - ensures consistent lowercase usage
     this._entityLabels = {
@@ -401,80 +402,70 @@ class DashviewPanel extends HTMLElement {
     // Default values
     let label = entity?.state || 'Unknown';
     let icon = 'mdi:help-circle';
-    let stateClass = 'is-off'; // Default state class
+    let stateClass = 'is-off';
+
+    if (!entity) {
+        return { label: 'Not Found', icon: 'mdi:alert-circle', stateClass: 'is-unavailable' };
+    }
 
     switch (type) {
-      case 'door': {
-        const closedEntityId = cardElement.dataset.closedEntity;
-        const isOpen = this._hass.states[closedEntityId]?.state === 'on';
-        const isLocked = entity?.state === 'locked';
-
-        if (isOpen) {
-          label = 'Auf';
-          icon = 'mdi:door-open';
-          stateClass = 'is-open';
-        } else if (isLocked) {
-          label = 'Abgeschlossen';
-          icon = 'mdi:door-closed-lock';
-          stateClass = 'is-locked';
-        } else {
-          label = 'Zu';
-          icon = 'mdi:door-closed';
-          stateClass = 'is-unlocked';
-        }
+      case 'light': {
+        const isOn = entity.state === 'on';
+        label = isOn ? 'An' : 'Aus';
+        // Get the icon from HA, or use a default.
+        icon = entity.attributes.icon || 'mdi:lightbulb';
+        stateClass = isOn ? 'is-on' : 'is-off';
         break;
       }
-
-      case 'window':
-      case 'sliding_door': {
-        const isOpen = entity?.state === 'on';
-        label = isOpen ? 'Auf' : 'Zu';
-        icon = isOpen ? (type === 'window' ? 'mdi:window-open' : 'mdi:door-sliding-open') : (type === 'window' ? 'mdi:window-closed' : 'mdi:door-sliding');
-        stateClass = isOpen ? 'is-on' : 'is-off';
-        break;
-      }
-      
       case 'motion': {
-        const isDetected = entity?.state === 'on';
-        label = isDetected ? 'Bewegung' : 'Keine Bewegung';
+        const isDetected = entity.state === 'on';
+        label = isDetected ? 'Bewegung' : 'Keine';
         icon = isDetected ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
         stateClass = isDetected ? 'is-on' : 'is-off';
         break;
       }
-
-      case 'light': {
-        const isOn = entity?.state === 'on';
-        label = isOn ? 'An' : 'Aus';
-        icon = entity?.attributes?.icon || 'mdi:lightbulb';
-        stateClass = isOn ? 'is-on' : 'is-off';
+      case 'smoke': {
+        const isDetected = entity.state === 'on';
+        label = isDetected ? 'Rauch' : 'OK';
+        icon = isDetected ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector';
+        stateClass = isDetected ? 'is-on' : 'is-off';
         break;
       }
-
-      case 'temp': {
-          const temp = parseFloat(entity?.state);
-          label = isNaN(temp) ? '' : temp.toFixed(1) + '°C';
-          icon = 'mdi:thermometer';
-          stateClass = (temp > (this._houseConfig.temperature_threshold || 30)) ? 'is-on' : 'is-off';
-          break;
+      case 'window':
+      case 'door': {
+        const isOpen = entity.state === 'on';
+        label = isOpen ? 'Auf' : 'Zu';
+        icon = isOpen ? 'mdi:window-open' : 'mdi:window-closed';
+        if (type === 'door') {
+          icon = isOpen ? 'mdi:door-open' : 'mdi:door-closed';
+        }
+        stateClass = isOpen ? 'is-on' : 'is-off';
+        break;
       }
-
-      // Add other cases from your template logic here...
-      // e.g., case 'hoover':, case 'printer':, etc.
+      case 'cover': {
+        const isOpen = entity.state === 'open';
+        label = isOpen ? 'Offen' : 'Geschlossen';
+        // You might want to also check for 'opening'/'closing' states
+        icon = isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter';
+        stateClass = isOpen ? 'is-on' : 'is-off';
+        break;
+      }
+      case 'temp': // Kept for compatibility from previous code
+      case 'temperatur': {
+        const temp = parseFloat(entity.state);
+        label = isNaN(temp) ? '' : temp.toFixed(1) + '°C';
+        icon = 'mdi:thermometer';
+        stateClass = (temp > (this._houseConfig.temperature_threshold || 30)) ? 'is-on' : 'is-off';
+        break;
+      }
+      default: {
+        // Fallback for any other sensor type
+        label = entity.state;
+        icon = entity.attributes.icon || 'mdi:eye';
+        stateClass = (entity.state === 'on' || entity.state === 'open') ? 'is-on' : 'is-off';
+        break;
+      }
     }
-    
-    // Last changed logic (can be applied to any type)
-    if (cardElement.dataset.labelLast === 'true' && entity?.last_changed) {
-        const lastChanged = new Date(entity.last_changed);
-        const now = new Date();
-        const diff = Math.floor((now - lastChanged) / 1000); // in seconds
-
-        if (diff < 60) { label = 'vor wenigen Sekunden'; }
-        else if (diff < 3600) { label = 'vor ' + Math.floor(diff / 60) + 'm'; }
-        else if (diff < 86400) { label = 'vor ' + Math.floor(diff / 3600) + 'h'; }
-        else { label = 'vor ' + Math.floor(diff / 86400) + 'd'; }
-    }
-
-
     return { label, icon, stateClass };
   }
 
@@ -550,6 +541,40 @@ _updateTemperatureNotifications() {
     container.innerHTML = '';
     container.style.display = 'none'; // **Hide the container**
   }
+}
+_getEntityTypeFromId(entityId) {
+  if (!entityId || !this._hass.states[entityId]) {
+    return 'sensor'; // Return a generic default
+  }
+  const entity = this._hass.states[entityId];
+  const domain = entityId.split('.')[0];
+
+  if (domain === 'binary_sensor') {
+    // For binary sensors, the device_class tells us what it really is.
+    return entity.attributes.device_class || 'binary_sensor';
+  }
+  // For others, the domain is usually sufficient.
+  return domain;
+}
+_incrementUsageCount(entityId) {
+  if (!this._houseConfig) this._houseConfig = {};
+  if (!this._houseConfig.entity_usage_stats) this._houseConfig.entity_usage_stats = {};
+
+  // Increment the count for the entity
+  this._houseConfig.entity_usage_stats[entityId] = (this._houseConfig.entity_usage_stats[entityId] || 0) + 1;
+  
+  if (this._usageStatsSaveTimer) {
+    clearTimeout(this._usageStatsSaveTimer);
+  }
+
+  this._usageStatsSaveTimer = setTimeout(() => {
+    console.log('[DashView] Debounced save triggered for entity usage stats.');
+    
+    // This now ONLY saves the stats using the new specific and safe type
+    this._saveConfigViaAPI('entity_usage_stats', this._houseConfig.entity_usage_stats)
+      .then(() => console.log('[DashView] Entity usage stats saved successfully.'))
+      .catch(err => console.error('[DashView] Failed to save entity usage stats:', err));
+  }, 10000);
 }
 async _addLightEntities() {
     if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
@@ -670,6 +695,194 @@ async _addLightEntities() {
         }
     });
   }
+  async loadFloorLayoutEditor() {
+    const shadow = this.shadowRoot;
+    const container = shadow.getElementById('floor-layout-editor-container');
+    const statusEl = shadow.getElementById('floor-layouts-status');
+    if (!container || !statusEl) {
+        console.error('[DashView Diagnostics] Could not find layout editor container or status element.');
+        return;
+    }
+
+    this._setStatusMessage(statusEl, 'Loading layouts...', 'loading');
+    console.log('[DashView Diagnostics] Starting loadFloorLayoutEditor...');
+
+    try {
+      if (!this._houseConfig || Object.keys(this._houseConfig).length === 0) {
+        console.log('[DashView Diagnostics] houseConfig is empty, attempting to reload it.');
+        await this.loadConfiguration();
+      }
+
+      // Log the configuration object to inspect its structure
+      console.log('[DashView Diagnostics] Current houseConfig:', JSON.parse(JSON.stringify(this._houseConfig)));
+
+      const floors = this._houseConfig.floors || {};
+      const layouts = this._houseConfig.floor_layouts || {};
+
+      if (Object.keys(floors).length === 0) {
+          console.warn('[DashView Diagnostics] No floors found in the configuration. Cannot build editor.');
+          container.innerHTML = '<div class="placeholder">No floors are configured. Please check your Home Assistant floor registry and restart.</div>';
+          this._setStatusMessage(statusEl, '⚠ No floors found', 'error');
+          return;
+      }
+
+      let editorHTML = '';
+      console.log('[DashView Diagnostics] Starting to loop through floors to build editor...');
+      for (const [floorId, floorConfig] of Object.entries(floors)) {
+        try {
+            const floorLayout = layouts[floorId] || [];
+            const smallSlots = floorLayout.filter(slot => slot.grid_area && slot.grid_area.includes('small'));
+            const allEntitiesOnFloor = this._getEntitiesForFloor(floorId);
+
+            editorHTML += `<div class="config-section"><h5>${floorConfig.friendly_name || floorId}</h5><div class="floor-layout-grid" data-floor-id="${floorId}">`;
+            for (const slot of smallSlots) {
+                editorHTML += this._renderLayoutSlotEditor(slot, allEntitiesOnFloor);
+            }
+            editorHTML += `</div></div>`;
+        } catch (innerError) {
+            console.error(`[DashView Diagnostics] Failed to process floor: ${floorId}`, innerError);
+            editorHTML += `<div class="config-section error">Could not render editor for floor '${floorId}'. Check console for details.</div>`;
+        }
+      }
+      
+      console.log('[DashView Diagnostics] Finished building editor HTML. Rendering now.');
+      container.innerHTML = editorHTML;
+      this._setStatusMessage(statusEl, '✓ Layouts loaded', 'success');
+      
+      this._setupLayoutEditorEventListeners(container);
+
+    } catch (e) {
+      console.error('[DashView Diagnostics] A critical error occurred in loadFloorLayoutEditor:', e);
+      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
+  }
+
+  /**
+   * Renders the HTML for a single slot in the layout editor.
+   */
+  _renderLayoutSlotEditor(slot, entities) {
+    const { grid_area, type, entity_id } = slot;
+    const isPinned = type === 'pinned';
+
+    const entityOptions = entities.map(entity => 
+      `<option value="${entity.entity_id}" ${entity.entity_id === entity_id ? 'selected' : ''}>
+        ${entity.name || entity.entity_id}
+      </option>`
+    ).join('');
+
+    return `
+      <div class="layout-slot" data-grid-area="${grid_area}">
+        <div class="slot-name">${grid_area.replace('r1-', '').replace('r2-', '')}</div>
+        <div class="slot-config">
+          <select class="layout-type-selector">
+            <option value="auto" ${type === 'auto' ? 'selected' : ''}>🤖 Automatic</option>
+            <option value="pinned" ${type === 'pinned' ? 'selected' : ''}>📌 Pinned</option>
+            <option value="empty" ${type === 'empty' ? 'selected' : ''}>⚫ Empty</option>
+          </select>
+          <select class="entity-selector" style="display: ${isPinned ? 'block' : 'none'};">
+            <option value="">-- Select Entity --</option>
+            ${entityOptions}
+          </select>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Sets up event listeners for the layout editor UI.
+   */
+  _setupLayoutEditorEventListeners(container) {
+    container.querySelectorAll('.layout-type-selector').forEach(selector => {
+      selector.addEventListener('change', (e) => {
+        const entitySelector = e.target.closest('.slot-config').querySelector('.entity-selector');
+        entitySelector.style.display = e.target.value === 'pinned' ? 'block' : 'none';
+      });
+    });
+    
+    // Add listener for the main save button
+    const saveButton = this.shadowRoot.getElementById('save-floor-layouts');
+    if(saveButton) {
+        // Remove old listener to prevent duplicates, then add new one
+        saveButton.removeEventListener('click', this.saveFloorLayouts.bind(this));
+        saveButton.addEventListener('click', this.saveFloorLayouts.bind(this));
+    }
+  }
+
+  /**
+   * Gathers all entities associated with a specific floor.
+   */
+  _getEntitiesForFloor(floorId) {
+    const entities = new Set();
+    const roomsOnFloor = Object.values(this._houseConfig.rooms || {}).filter(r => r.floor === floorId);
+
+    for(const room of roomsOnFloor) {
+        if (room.header_entities) {
+            room.header_entities.forEach(e => entities.add(e.entity));
+        }
+        if(room.lights) room.lights.forEach(e => entities.add(e));
+        if(room.covers) room.covers.forEach(e => entities.add(e));
+        if(room.media_players) room.media_players.forEach(mp => entities.add(mp.entity));
+    }
+
+    return Array.from(entities).map(id => ({
+      entity_id: id,
+      name: this._hass.states[id]?.attributes.friendly_name || id
+    })).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /**
+   * Reads the state of the layout editor UI and saves it to the backend.
+   */
+  async saveFloorLayouts() {
+    const shadow = this.shadowRoot;
+    const statusEl = shadow.getElementById('floor-layouts-status');
+    this._setStatusMessage(statusEl, 'Saving layouts...', 'loading');
+
+    const newLayouts = {};
+    shadow.querySelectorAll('.floor-layout-grid').forEach(grid => {
+      const floorId = grid.dataset.floorId;
+      newLayouts[floorId] = [];
+      grid.querySelectorAll('.layout-slot').forEach(slot => {
+        const gridArea = slot.dataset.gridArea;
+        const type = slot.querySelector('.layout-type-selector').value;
+        const entityId = slot.querySelector('.entity-selector').value;
+
+        newLayouts[floorId].push({
+          grid_area: gridArea,
+          type: type,
+          entity_id: type === 'pinned' ? entityId : null
+        });
+      });
+      // Add back the locked room swiper cards with the correct structure
+      newLayouts[floorId].push({ "grid_area": "r1-big", "type": "room_swipe_card", "entity_id": null });
+      newLayouts[floorId].push({ "grid_area": "r2-big", "type": "room_swipe_card", "entity_id": null });
+    });
+    
+    // Update the houseConfig object and save
+    this._houseConfig.floor_layouts = newLayouts;
+    try {
+      await this._saveConfigViaAPI('house', this._houseConfig);
+      this._setStatusMessage(statusEl, '✓ Layouts saved successfully!', 'success');
+    } catch (e) {
+      this._setStatusMessage(statusEl, `✗ Error saving layouts: ${e.message}`, 'error');
+    }
+  }
+
+// --- Hook up the new tab in initializeCard ---
+  initializeCard(context) {
+    //... inside the big event listener
+    popup.querySelectorAll('.tabs-container').forEach(container => {
+        // ... existing tab logic
+        button.addEventListener('click', () => {
+            // ...
+            // ADD THIS NEW CASE
+            if (targetId === 'floor-layouts-tab') {
+                setTimeout(() => this.loadFloorLayoutEditor(), 100);
+            }
+            // ...
+        });
+    });
+  }
   // Update specific component for entity - Principle 3
 // Update specific component for entity - Principle 3
   _updateComponentForEntity(entityId) {
@@ -678,8 +891,9 @@ async _addLightEntities() {
       console.warn(`[DashView] Shadow DOM not ready for ${entityId} update`);
       return;
     }
-
     try {
+      // NEW: Increment the usage count for this entity
+      this._incrementUsageCount(entityId);
       const weatherEntityId = this._getCurrentWeatherEntityId();
       
       switch (entityId) {
@@ -819,105 +1033,186 @@ async _addLightEntities() {
     const container = shadow.getElementById('floor-tabs-container');
     if (!container) return;
 
-    // Clear existing content to prevent duplication on re-renders
+    // Clear existing content to prevent duplication
     container.innerHTML = '';
 
     const floors = Object.entries(this._houseConfig.floors).sort(([, a], [, b]) => (a.level || 0) - (b.level || 0));
 
     if (floors.length === 0) {
-        container.innerHTML = '<div class="placeholder">No floors configured.</div>';
-        return;
+      container.innerHTML = '<div class="placeholder">No floors configured.</div>';
+      return;
     }
 
-    // Create the main header with title and buttons
+    // --- Create UI ---
     const header = document.createElement('div');
     header.className = 'floor-tabs-header';
-
-    const title = document.createElement('div');
-    title.className = 'floor-tabs-title';
-    title.textContent = 'Räume';
-    header.appendChild(title);
-
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.className = 'floor-tab-buttons-container';
-    header.appendChild(buttonsContainer);
-
-    // Create content area
+    header.innerHTML = `
+      <div class="floor-tabs-title">Räume</div>
+      <div class="floor-tab-buttons-container"></div>
+    `;
     const contentArea = document.createElement('div');
     contentArea.className = 'floor-content-area';
+    container.append(header, contentArea);
+    
+    const buttonsContainer = header.querySelector('.floor-tab-buttons-container');
 
-    container.appendChild(header);
-    container.appendChild(contentArea);
-
-    floors.forEach(([floorKey, floorConfig], index) => {
-        // Create Tab Button
-        const button = document.createElement('button');
-        button.className = 'floor-tab-button';
-        if (index === 0) {
-            button.classList.add('active');
-        }
-        button.dataset.targetFloor = floorKey;
-        const icon = document.createElement('i');
-        icon.className = `mdi ${this._processIconName(floorConfig.icon)}`;
-        button.appendChild(icon);
-        buttonsContainer.appendChild(button);
-
-        // Create Content Container for the floor
-        const floorContent = document.createElement('div');
-        floorContent.className = 'floor-content';
-        floorContent.id = `floor-content-${floorKey}`;
-        if (index !== 0) {
-            floorContent.style.display = 'none';
-        }
-        
-        // **RE-INTRODUCE THE GRID LAYOUT HERE**
-        floorContent.innerHTML = `
-            <div class="room-grid">
-              <div class="placeholder-card placeholder-small" style="grid-area: r1-small-1;"></div>
-              <div class="placeholder-card placeholder-small" style="grid-area: r1-small-2;"></div>
-              <div class="room-swipe-card-container" style="grid-area: r1-big;"></div>
-
-              <div class="placeholder-card placeholder-big" style="grid-area: r2-big;"></div>
-              <div class="placeholder-card placeholder-small" style="grid-area: r2-small-1;"></div>
-              <div class="placeholder-card placeholder-small" style="grid-area: r2-small-2;"></div>
-              
-              <div class="placeholder-card placeholder-small" style="grid-area: r3-small-1;"></div>
-              <div class="placeholder-card placeholder-small" style="grid-area: r3-small-2;"></div>
-              <div class="placeholder-card placeholder-big" style="grid-area: r3-big;"></div>
-            </div>
-        `;
-        contentArea.appendChild(floorContent);
-    });
-
-    // Add event listeners for tab switching
-    buttonsContainer.addEventListener('click', (e) => {
-        const clickedButton = e.target.closest('.floor-tab-button');
-        if (!clickedButton) return;
-
-        const targetFloor = clickedButton.dataset.targetFloor;
-
-        container.querySelectorAll('.floor-tab-button').forEach(btn => {
-            btn.classList.toggle('active', btn === clickedButton);
+    // --- Tab Switching Logic ---
+    const switchTab = (floorId) => {
+        // Update button active state
+        buttonsContainer.querySelectorAll('.floor-tab-button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.targetFloor === floorId);
         });
-
-        container.querySelectorAll('.floor-content').forEach(content => {
-            content.style.display = content.id === `floor-content-${targetFloor}` ? 'block' : 'none';
+        // Show/hide content areas
+        contentArea.querySelectorAll('.floor-content').forEach(content => {
+            content.style.display = content.id === `floor-content-${floorId}` ? 'block' : 'none';
         });
+        // Render the content for the now-active floor
+        this._renderFloorLayout(floorId);
+    };
 
-        const swipeContainer = container.querySelector(`#floor-content-${targetFloor} .room-swipe-card-container`);
-        if (swipeContainer) {
-            this._renderRoomSwipeCard(targetFloor, swipeContainer);
-        }
+    // --- Generate Tabs and Content Placeholders ---
+    floors.forEach(([floorId, floorConfig], index) => {
+      // Create Tab Button
+      const button = document.createElement('button');
+      button.className = `floor-tab-button ${index === 0 ? 'active' : ''}`;
+      button.dataset.targetFloor = floorId;
+      button.innerHTML = `<i class="mdi ${this._processIconName(floorConfig.icon)}"></i>`;
+      button.addEventListener('click', () => switchTab(floorId));
+      buttonsContainer.appendChild(button);
+
+      // Create Content Container for the floor
+      const floorContent = document.createElement('div');
+      floorContent.className = 'floor-content';
+      floorContent.id = `floor-content-${floorId}`;
+      floorContent.style.display = index === 0 ? 'block' : 'none';
+      floorContent.innerHTML = `<div class="room-grid" id="room-grid-${floorId}"></div>`; // The grid container
+      contentArea.appendChild(floorContent);
     });
 
     // Initial render for the first floor
-    const firstFloorKey = floors[0] ? floors[0][0] : null;
-    if (firstFloorKey) {
-        const initialSwipeContainer = contentArea.querySelector(`#floor-content-${firstFloorKey} .room-swipe-card-container`);
-        if (initialSwipeContainer) {
-            this._renderRoomSwipeCard(firstFloorKey, initialSwipeContainer);
-        }
+    if (floors.length > 0) {
+      this._renderFloorLayout(floors[0][0]);
     }
+  }
+
+  /**
+   * Renders the entire layout for a specific floor based on its configuration.
+   * This is the main rendering engine for the dashboard.
+   */
+  _renderFloorLayout(floorId) {
+    const gridContainer = this.shadowRoot.getElementById(`room-grid-${floorId}`);
+    if (!gridContainer) return;
+
+    const layoutConfig = this._houseConfig.floor_layouts?.[floorId] || [];
+    if (layoutConfig.length === 0) {
+      gridContainer.innerHTML = '<div class="placeholder">No layout defined for this floor.</div>';
+      return;
+    }
+
+    const allEntitiesOnFloor = this._getEntitiesForFloor(floorId);
+    const usageStats = this._houseConfig.entity_usage_stats || {};
+    
+    // Create a ranked list of entities on this floor based on usage
+    const rankedEntities = allEntitiesOnFloor
+      .map(e => ({ ...e, count: usageStats[e.entity_id] || 0 }))
+      .sort((a, b) => b.count - a.count);
+
+    const pinnedEntities = new Set(
+        layoutConfig.filter(s => s.type === 'pinned').map(s => s.entity_id)
+    );
+    
+    // Filter out already pinned entities from the ranked list for auto-placement
+    let autoPlacementQueue = rankedEntities.filter(e => !pinnedEntities.has(e.entity_id));
+
+    let gridHTML = '';
+    for (const slot of layoutConfig) {
+      let cardHTML = `<div class="placeholder-card" style="grid-area: ${slot.grid_area};"></div>`;
+      
+      switch (slot.type) {
+        case 'room_swipe_card':
+          cardHTML = this._renderRoomSwipeCard(floorId, slot.grid_area);
+          break;
+        
+        case 'pinned':
+          if (slot.entity_id) {
+            cardHTML = this._generateSensorCardHTML(slot.entity_id, slot.grid_area);
+          }
+          break;
+
+        case 'auto':
+          if (autoPlacementQueue.length > 0) {
+            const nextEntity = autoPlacementQueue.shift(); // Get the top-ranked available entity
+            cardHTML = this._generateSensorCardHTML(nextEntity.entity_id, slot.grid_area);
+          }
+          break;
+
+        case 'empty':
+          cardHTML = ''; // Render nothing for this slot
+          break;
+      }
+      gridHTML += cardHTML;
+    }
+
+    gridContainer.innerHTML = gridHTML;
+    // After rendering, initialize any components that need it (like swipers)
+    gridContainer.querySelectorAll('.room-swipe-card-container').forEach(container => {
+        this._initializeSwiper(container.querySelector('.swiper-container'));
+    });
+  }
+
+  /**
+   * Generates the HTML for a single small sensor card.
+   */
+  _generateSensorCardHTML(entityId, gridArea) {
+    const entityState = this._hass.states[entityId];
+    if (!entityState) return `<div class="placeholder-card placeholder-small" style="grid-area: ${gridArea};">Entity not found: ${entityId}</div>`;
+
+    // Use our new helper to get the correct type dynamically.
+    const type = this._getEntityTypeFromId(entityId);
+    
+    // Pass the correct type to the state function.
+    const cardState = this._getSmallSensorCardState({ dataset: { entity: entityId, type: type } });
+    const name = entityState.attributes.friendly_name || entityId.split('.')[1].replace(/_/g, ' ');
+
+    return `
+      <div class="sensor-small-card ${cardState.stateClass}" style="grid-area: ${gridArea};" data-entity="${entityId}" data-type="${type}">
+          <div class="sensor-small-grid">
+              <div class="sensor-small-icon-cell">
+                  <i class="mdi ${cardState.icon}"></i>
+              </div>
+              <div class="sensor-small-label">${cardState.label}</div>
+              <div class="sensor-small-name">${name}</div>
+          </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renders the room swiper card for a given floor and grid area.
+   */
+  _renderRoomSwipeCard(floorId, gridArea) {
+    const roomsOnFloor = Object.entries(this._houseConfig.rooms || {})
+        .filter(([, roomConfig]) => roomConfig.floor === floorId)
+        .map(([roomKey, roomConfig]) => ({ key: roomKey, ...roomConfig }));
+
+    if (roomsOnFloor.length === 0) {
+        return `<div class="placeholder-card placeholder-big" style="grid-area: ${gridArea};">No rooms on this floor.</div>`;
+    }
+
+    const cardsHTML = roomsOnFloor.map(room => {
+        const tempSensor = room.header_entities?.find(e => e.entity_type === 'temperatur')?.entity;
+        const humSensor = room.header_entities?.find(e => e.entity_type === 'humidity')?.entity;
+        return this._generateRoomCardHTML(room, room.combined_sensor, tempSensor, humSensor);
+    }).join('');
+
+    return `
+        <div class="room-swipe-card-container" style="grid-area: ${gridArea};">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">${cardsHTML}</div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+    `;
   }
   _updatePersonButton(shadow) {
     const personState = this._hass.states['person.markus'];
@@ -3386,38 +3681,29 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           this._weatherEntityId = 'weather.forecast_home';
       }
   }
-  _renderRoomSwipeCard(floorKey, containerElement) {
-    if (!this._houseConfig.rooms || !containerElement) return;
-
-    const roomsOnFloor = Object.values(this._houseConfig.rooms).filter(
-        room => room.floor === floorKey
-    );
+  _renderRoomSwipeCard(floorId, gridArea) {
+    const roomsOnFloor = Object.entries(this._houseConfig.rooms || {})
+        .filter(([, roomConfig]) => roomConfig.floor === floorId)
+        .map(([roomKey, roomConfig]) => ({ key: roomKey, ...roomConfig }));
 
     if (roomsOnFloor.length === 0) {
-        containerElement.innerHTML = '<div class="placeholder">No rooms configured for this floor.</div>';
-        return;
+        return `<div class="placeholder-card placeholder-big" style="grid-area: ${gridArea};">No rooms on this floor.</div>`;
     }
 
     const cardsHTML = roomsOnFloor.map(room => {
-        const tempSensor = room.header_entities?.find(e => e.entity_type === 'temperatur')?.entity || '';
-        const humSensor = room.header_entities?.find(e => e.entity_type === 'humidity')?.entity || '';
-        const combinedSensor = room.combined_sensor || '';
-
-        // This is where I translate the decluttering-card template
-        return this._generateRoomCardHTML(room, combinedSensor, tempSensor, humSensor);
+        const tempSensor = room.header_entities?.find(e => e.entity_type === 'temperatur')?.entity;
+        const humSensor = room.header_entities?.find(e => e.entity_type === 'humidity')?.entity;
+        return this._generateRoomCardHTML(room, room.combined_sensor, tempSensor, humSensor);
     }).join('');
 
-    containerElement.innerHTML = `
-        <div class="swiper-container">
-            <div class="swiper-wrapper">
-                ${cardsHTML}
+    return `
+        <div class="room-swipe-card-container" style="grid-area: ${gridArea};">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">${cardsHTML}</div>
+                <div class="swiper-pagination"></div>
             </div>
-            <div class="swiper-pagination"></div>
         </div>
     `;
-
-    // Initialize the swiper
-    this._initializeSwiper(containerElement.querySelector('.swiper-container'));
   }
 
   _generateRoomCardHTML(room, entity, temp, hum) {
