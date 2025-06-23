@@ -625,6 +625,9 @@ async _addLightEntities() {
     const container = shadow.getElementById('floor-tabs-container');
     if (!container) return;
 
+    // Clear existing content to prevent duplication on re-renders
+    container.innerHTML = '';
+
     const floors = Object.entries(this._houseConfig.floors).sort(([, a], [, b]) => (a.level || 0) - (b.level || 0));
 
     if (floors.length === 0) {
@@ -643,54 +646,54 @@ async _addLightEntities() {
 
     const buttonsContainer = document.createElement('div');
     buttonsContainer.className = 'floor-tab-buttons-container';
+    header.appendChild(buttonsContainer);
+
+    // Create content area
+    const contentArea = document.createElement('div');
+    contentArea.className = 'floor-content-area';
+
+    container.appendChild(header);
+    container.appendChild(contentArea);
 
     floors.forEach(([floorKey, floorConfig], index) => {
+        // Create Tab Button
         const button = document.createElement('button');
         button.className = 'floor-tab-button';
-        // Set the first floor as active by default
         if (index === 0) {
             button.classList.add('active');
         }
         button.dataset.targetFloor = floorKey;
-
         const icon = document.createElement('i');
         icon.className = `mdi ${this._processIconName(floorConfig.icon)}`;
         button.appendChild(icon);
         buttonsContainer.appendChild(button);
-    });
 
-    header.appendChild(buttonsContainer);
-    container.appendChild(header);
-
-    // Create content containers for each floor
-    const contentArea = document.createElement('div');
-    contentArea.className = 'floor-content-area';
-    floors.forEach(([floorKey, floorConfig], index) => {
+        // Create Content Container for the floor
         const floorContent = document.createElement('div');
         floorContent.className = 'floor-content';
         floorContent.id = `floor-content-${floorKey}`;
-        // Show the first floor's content by default
         if (index !== 0) {
             floorContent.style.display = 'none';
         }
-        // This is where you would include the room cards for the floor.
-        // For now, we'll use a placeholder.
-        floorContent.innerHTML = `<div class="room-grid">
-  <div class="placeholder-card placeholder-small" style="grid-area: r1-small-1;"></div>
-  <div class="placeholder-card placeholder-small" style="grid-area: r1-small-2;"></div>
-  <div class="placeholder-card placeholder-big" style="grid-area: r1-big;"></div>
+        
+        // **RE-INTRODUCE THE GRID LAYOUT HERE**
+        floorContent.innerHTML = `
+            <div class="room-grid">
+              <div class="placeholder-card placeholder-small" style="grid-area: r1-small-1;"></div>
+              <div class="placeholder-card placeholder-small" style="grid-area: r1-small-2;"></div>
+              <div class="room-swipe-card-container" style="grid-area: r1-big;"></div>
 
-  <div class="placeholder-card placeholder-big" style="grid-area: r2-big;"></div>
-  <div class="placeholder-card placeholder-small" style="grid-area: r2-small-1;"></div>
-  <div class="placeholder-card placeholder-small" style="grid-area: r2-small-2;"></div>
-  
-  <div class="placeholder-card placeholder-small" style="grid-area: r3-small-1;"></div>
-  <div class="placeholder-card placeholder-small" style="grid-area: r3-small-2;"></div>
-  <div class="placeholder-card placeholder-big" style="grid-area: r3-big;"></div>
-</div>`;
+              <div class="placeholder-card placeholder-big" style="grid-area: r2-big;"></div>
+              <div class="placeholder-card placeholder-small" style="grid-area: r2-small-1;"></div>
+              <div class="placeholder-card placeholder-small" style="grid-area: r2-small-2;"></div>
+              
+              <div class="placeholder-card placeholder-small" style="grid-area: r3-small-1;"></div>
+              <div class="placeholder-card placeholder-small" style="grid-area: r3-small-2;"></div>
+              <div class="placeholder-card placeholder-big" style="grid-area: r3-big;"></div>
+            </div>
+        `;
         contentArea.appendChild(floorContent);
     });
-    container.appendChild(contentArea);
 
     // Add event listeners for tab switching
     buttonsContainer.addEventListener('click', (e) => {
@@ -699,18 +702,29 @@ async _addLightEntities() {
 
         const targetFloor = clickedButton.dataset.targetFloor;
 
-        // Update button active states
         container.querySelectorAll('.floor-tab-button').forEach(btn => {
             btn.classList.toggle('active', btn === clickedButton);
         });
 
-        // Show the corresponding floor content
         container.querySelectorAll('.floor-content').forEach(content => {
             content.style.display = content.id === `floor-content-${targetFloor}` ? 'block' : 'none';
         });
+
+        const swipeContainer = container.querySelector(`#floor-content-${targetFloor} .room-swipe-card-container`);
+        if (swipeContainer) {
+            this._renderRoomSwipeCard(targetFloor, swipeContainer);
+        }
     });
+
+    // Initial render for the first floor
+    const firstFloorKey = floors[0] ? floors[0][0] : null;
+    if (firstFloorKey) {
+        const initialSwipeContainer = contentArea.querySelector(`#floor-content-${firstFloorKey} .room-swipe-card-container`);
+        if (initialSwipeContainer) {
+            this._renderRoomSwipeCard(firstFloorKey, initialSwipeContainer);
+        }
+    }
   }
-  // Update person button component - Principle 3
   _updatePersonButton(shadow) {
     const personState = this._hass.states['person.markus'];
     if (!personState) {
@@ -3178,7 +3192,142 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
           this._weatherEntityId = 'weather.forecast_home';
       }
   }
+  _renderRoomSwipeCard(floorKey, containerElement) {
+    if (!this._houseConfig.rooms || !containerElement) return;
 
+    const roomsOnFloor = Object.values(this._houseConfig.rooms).filter(
+        room => room.floor === floorKey
+    );
+
+    if (roomsOnFloor.length === 0) {
+        containerElement.innerHTML = '<div class="placeholder">No rooms configured for this floor.</div>';
+        return;
+    }
+
+    const cardsHTML = roomsOnFloor.map(room => {
+        const tempSensor = room.header_entities?.find(e => e.entity_type === 'temperatur')?.entity || '';
+        const humSensor = room.header_entities?.find(e => e.entity_type === 'humidity')?.entity || '';
+        const combinedSensor = room.combined_sensor || '';
+
+        // This is where I translate the decluttering-card template
+        return this._generateRoomCardHTML(room, combinedSensor, tempSensor, humSensor);
+    }).join('');
+
+    containerElement.innerHTML = `
+        <div class="swiper-container">
+            <div class="swiper-wrapper">
+                ${cardsHTML}
+            </div>
+            <div class="swiper-pagination"></div>
+        </div>
+    `;
+
+    // Initialize the swiper
+    this._initializeSwiper(containerElement.querySelector('.swiper-container'));
+  }
+
+  _generateRoomCardHTML(room, entity, temp, hum) {
+      const roomName = room.friendly_name || 'Raum';
+      const roomIcon = this._processIconName(room.icon || 'mdi:home-city');
+      const navPath = '#' + (Object.keys(this._houseConfig.rooms).find(key => this._houseConfig.rooms[key] === room) || '');
+
+      const tempState = temp && this._hass.states[temp];
+      const humState = hum && this._hass.states[hum];
+      const entityState = entity && this._hass.states[entity];
+
+      let tempHumHTML = '';
+      if (tempState && tempState.state !== 'unavailable') {
+          tempHumHTML += `${parseFloat(tempState.state).toFixed(0)}°`;
+      }
+      if (humState && humState.state !== 'unavailable') {
+          if (tempHumHTML) tempHumHTML += ' ';
+          tempHumHTML += `<span style="font-size:0.3em;opacity:0.7">${parseFloat(humState.state).toFixed(0)}%</span>`;
+      }
+
+      const cardStateClass = (entityState && entityState.state === 'on') ? 'is-on' : 'is-off';
+
+      return `
+          <div class="swiper-slide">
+              <div class="room-card ${cardStateClass}" data-entity="${entity}" data-navigation-path="${navPath}">
+                  <div class="room-card-grid">
+                      <div class="room-card-name">${roomName}</div>
+                      <div class="room-card-icon-cell">
+                          <i class="mdi ${roomIcon}"></i>
+                      </div>
+                      <div class="room-card-temp">${tempHumHTML}</div>
+                  </div>
+              </div>
+          </div>
+      `;
+  }
+
+  _initializeSwiper(container) {
+      if (!container) return;
+      // Basic Swiper logic here.
+      const wrapper = container.querySelector('.swiper-wrapper');
+      const slides = container.querySelectorAll('.swiper-slide');
+      const pagination = container.querySelector('.swiper-pagination');
+      let currentIndex = 0;
+
+      if (slides.length <= 1) {
+        pagination.style.display = 'none';
+        return;
+      }
+
+      // Create pagination bullets
+      pagination.innerHTML = '';
+      slides.forEach((slide, index) => {
+          const bullet = document.createElement('span');
+          bullet.className = 'swiper-pagination-bullet';
+          if (index === 0) bullet.classList.add('swiper-pagination-bullet-active');
+          bullet.addEventListener('click', () => {
+              currentIndex = index;
+              updateSlider();
+          });
+          pagination.appendChild(bullet);
+      });
+      const bullets = pagination.querySelectorAll('.swiper-pagination-bullet');
+
+      function updateSlider() {
+          wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+          bullets.forEach((bullet, index) => {
+              bullet.classList.toggle('swiper-pagination-bullet-active', index === currentIndex);
+          });
+      }
+
+      let touchstartX = 0;
+      let touchendX = 0;
+
+      wrapper.addEventListener('touchstart', function(event) {
+          touchstartX = event.changedTouches[0].screenX;
+      }, false);
+
+      wrapper.addEventListener('touchend', function(event) {
+          touchendX = event.changedTouches[0].screenX;
+          handleSwipe();
+      }, false);
+
+      function handleSwipe() {
+          if (touchendX < touchstartX) { // Swiped left
+              if(currentIndex < slides.length - 1) currentIndex++;
+          }
+          if (touchendX > touchstartX) { // Swiped right
+              if(currentIndex > 0) currentIndex--;
+          }
+          updateSlider();
+      }
+
+      // Add navigation
+      const roomCards = container.querySelectorAll('.room-card');
+      roomCards.forEach(card => {
+          card.addEventListener('click', (e) => {
+              const navPath = e.currentTarget.dataset.navigationPath;
+              if (navPath && navPath !== '#') {
+                  window.location.hash = navPath;
+              }
+          });
+      });
+  }
   // Add this new method to the DashviewPanel class
 // in custom_components/dashview/www/dashview-panel.js
 
