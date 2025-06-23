@@ -304,7 +304,7 @@ class DashViewConfigView(HomeAssistantView):
                 current_options["house_config"]["entity_usage_stats"] = config_payload
             
             elif config_type == "integrations":
-                # ...
+                current_options["integrations_config"] = config_payload
             else:
                 return self.json_message(f"Invalid config type: {config_type}", status_code=400)
 
