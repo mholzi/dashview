@@ -75,7 +75,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 @callback
 async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntry):
-    """Create and sync house_config from HA floor and area registries."""
+    """Create and sync house_config from HA floor and area registries without overwriting user settings."""
     _LOGGER.debug("Syncing DashView configuration with HA registries.")
 
     current_data = entry.options or entry.data
@@ -86,39 +86,59 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
     floor_registry = fr.async_get(hass)
     area_registry = ar.async_get(hass)
 
-    existing_house_config = (entry.options or entry.data).get("house_config", {})
+    # Start with the user's existing, detailed configuration
+    house_config = (entry.options or entry.data).get("house_config", {})
 
-    new_house_config = {
-        "weather_entity": existing_house_config.get("weather_entity", "weather.forecast_home"),
-        "temperature_threshold": existing_house_config.get("temperature_threshold", 30),
-        "humidity_threshold": existing_house_config.get("humidity_threshold", 70),
-        "floors": {},
-        "rooms": {}
-    }
+    # Ensure top-level keys exist
+    house_config.setdefault("floors", {})
+    house_config.setdefault("rooms", {})
+    house_config.setdefault("floor_layouts", {})
+    house_config.setdefault("entity_usage_stats", {})
 
+    # Sync floors: Add new floors from HA and update names/icons, but don't delete existing data
     for floor in floor_registry.floors.values():
-        new_house_config["floors"][floor.floor_id] = {
-            "friendly_name": floor.name,
-            "icon": floor.icon or "mdi:home",
-            "level": floor.level
-        }
+        if floor.floor_id not in house_config["floors"]:
+            _LOGGER.info(f"New floor '{floor.name}' found in HA, adding to DashView config.")
+            house_config["floors"][floor.floor_id] = {} # Add as new
+        
+        # Update with latest info from HA, preserving other keys
+        house_config["floors"][floor.floor_id]["friendly_name"] = floor.name
+        house_config["floors"][floor.floor_id]["icon"] = floor.icon or "mdi:home"
+        house_config["floors"][floor.floor_id]["level"] = floor.level
+        
+        # Create a default layout for the new floor if one doesn't exist
+        if floor.floor_id not in house_config["floor_layouts"]:
+            house_config["floor_layouts"][floor.floor_id] = [
+                {"grid_area": "r1-small-1", "type": "auto", "entity_id": None},
+                {"grid_area": "r1-small-2", "type": "auto", "entity_id": None},
+                {"grid_area": "r1-big", "type": "room_swipe_card", "entity_id": None},
+                {"grid_area": "r2-big", "type": "room_swipe_card", "entity_id": None},
+                {"grid_area": "r2-small-1", "type": "auto", "entity_id": None},
+                {"grid_area": "r2-small-2", "type": "auto", "entity_id": None},
+            ]
 
+    # Sync rooms: Add new areas from HA and update basic info, preserving detailed lists
     for area in area_registry.areas.values():
-        existing_room_config = existing_house_config.get("rooms", {}).get(area.id, {})
+        if area.id not in house_config["rooms"]:
+            _LOGGER.info(f"New area '{area.name}' found in HA, adding to DashView config.")
+            house_config["rooms"][area.id] = { # Add as a new, empty room
+                "lights": [], "covers": [], "media_players": [], "header_entities": []
+            }
 
-        new_house_config["rooms"][area.id] = {
-            "friendly_name": area.name,
-            "icon": area.icon or "mdi:home-outline",
-            "floor": area.floor_id,
-            "combined_sensor": existing_room_config.get("combined_sensor", ""),
-            "lights": existing_room_config.get("lights", []),
-            "covers": existing_room_config.get("covers", []),
-            "media_players": existing_room_config.get("media_players", []),
-            "header_entities": existing_room_config.get("header_entities", [])
-        }
+        # Update with latest info from HA, preserving the important user-configured lists
+        house_config["rooms"][area.id]["friendly_name"] = area.name
+        house_config["rooms"][area.id]["icon"] = area.icon or "mdi:home-outline"
+        house_config["rooms"][area.id]["floor"] = area.floor_id
+        # Ensure lists exist if they were somehow deleted
+        house_config["rooms"][area.id].setdefault("lights", [])
+        house_config["rooms"][area.id].setdefault("covers", [])
+        house_config["rooms"][area.id].setdefault("media_players", [])
+        house_config["rooms"][area.id].setdefault("header_entities", [])
 
+
+    # Save the merged and updated configuration back to the options
     hass.config_entries.async_update_entry(
-        entry, options={"house_config": new_house_config}
+        entry, options={"house_config": house_config}
     )
     _LOGGER.info("DashView configuration synchronized with Home Assistant floors and areas.")
 
@@ -261,24 +281,30 @@ class DashViewConfigView(HomeAssistantView):
             config_payload = data.get("config")
 
             if not config_type or config_payload is None:
-                # If type and config are not present, assume it's the direct house_config save
                 if 'rooms' in data and 'floors' in data:
                     config_type = "house"
                     config_payload = data
                 else:
                     return self.json_message("'type' and 'config' are required, or a full house_config object", status_code=400)
 
-            # Get the current options, update it, then save it back
             current_options = dict(self._entry.options)
+            
+            # Ensure house_config exists in options
+            if "house_config" not in current_options:
+                current_options["house_config"] = {}
 
             if config_type == "house":
                 current_options["house_config"] = config_payload
+            
+            # ADD THIS NEW, SAFE-HANDLING BLOCK
+            elif config_type == "entity_usage_stats":
+                # This safely merges the stats without overwriting anything else
+                if "house_config" not in current_options:
+                    current_options["house_config"] = {}
+                current_options["house_config"]["entity_usage_stats"] = config_payload
+            
             elif config_type == "integrations":
-                # Ensure integrations_config exists
-                if "integrations_config" not in current_options:
-                    current_options["integrations_config"] = {}
-                # Update the integrations config
-                current_options["integrations_config"].update(config_payload)
+                # ...
             else:
                 return self.json_message(f"Invalid config type: {config_type}", status_code=400)
 
@@ -289,6 +315,7 @@ class DashViewConfigView(HomeAssistantView):
         except Exception as e:
             _LOGGER.error("[DashView] Error saving config to entry: %s", e)
             return self.json({"status": "error", "message": str(e)}, status_code=500)
+
 
 def _load_json_from_file_sync(file_path):
     """Load a JSON file synchronously (for use in executor)."""
