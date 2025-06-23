@@ -675,7 +675,19 @@ async _addLightEntities() {
         }
         // This is where you would include the room cards for the floor.
         // For now, we'll use a placeholder.
-        floorContent.innerHTML = `<div class="placeholder">Room cards for ${floorConfig.friendly_name} will go here.</div>`;
+        floorContent.innerHTML = `<div class="room-grid">
+  <div class="placeholder-card placeholder-small" style="grid-area: r1-small-1;"></div>
+  <div class="placeholder-card placeholder-small" style="grid-area: r1-small-2;"></div>
+  <div class="placeholder-card placeholder-big" style="grid-area: r1-big;"></div>
+
+  <div class="placeholder-card placeholder-big" style="grid-area: r2-big;"></div>
+  <div class="placeholder-card placeholder-small" style="grid-area: r2-small-1;"></div>
+  <div class="placeholder-card placeholder-small" style="grid-area: r2-small-2;"></div>
+  
+  <div class="placeholder-card placeholder-small" style="grid-area: r3-small-1;"></div>
+  <div class="placeholder-card placeholder-small" style="grid-area: r3-small-2;"></div>
+  <div class="placeholder-card placeholder-big" style="grid-area: r3-big;"></div>
+</div>`;
         contentArea.appendChild(floorContent);
     });
     container.appendChild(contentArea);
@@ -738,7 +750,6 @@ async _addLightEntities() {
 
   connectedCallback() {
     this.loadContent();
-    this._initializeFloorTabs(); // Add this line
   }
 
   // Inject CSS variables into Shadow DOM for proper theming support
@@ -980,17 +991,17 @@ async _addLightEntities() {
     const now = new Date();
 
     for (const train of departures) {
-      // This line is changed for a more robust check
+      // This check correctly handles if a train is cancelled
       if (train.isCancelled == true || train.isCancelled == 1) {
           continue;
       }
 
       const [hours, minutes] = train.scheduledDeparture.split(':').map(Number);
+      // ... rest of the function is the same ...
       const departureTime = new Date();
       departureTime.setHours(hours, minutes + (train.delayDeparture || 0), 0, 0);
 
-      // Check if departure is far enough in the future
-      const timeDiff = (departureTime - now) / (1000 * 60); // difference in minutes
+      const timeDiff = (departureTime - now) / (1000 * 60);
       if (timeDiff >= delayMin) {
         const totalMinutes = hours * 60 + minutes + (train.delayDeparture || 0);
         const displayHours = Math.floor(totalMinutes / 60) % 24;
@@ -1006,9 +1017,6 @@ async _addLightEntities() {
     return { time: '--:--', isDelayed: false };
   }
 
-  // Method to update train departure cards
-// In custom_components/dashview/www/dashview-panel.js
-
   updateTrainDepartureCards(shadow) {
     const trainCards = shadow.querySelectorAll('.train-departure-card');
     
@@ -1017,25 +1025,14 @@ async _addLightEntities() {
       const departureSensor = card.dataset.departureSensor;
       const delayMin = parseInt(card.dataset.delayMin) || 0;
 
-      // This block is removed as it was causing the bug.
-      /*
+
       if (!this._hass) {
-        card.classList.remove('hidden');
-        const timeElement = card.querySelector('.train-time');
-        if (timeElement) {
-          timeElement.textContent = '--:--';
-        }
         return;
       }
-      */
 
-      // The function will now only proceed if this._hass is available.
-      if (!this._hass) {
-          return;
-      }
-
-      // Check if conditions are met
+    // Check if conditions are met
       const shouldShow = this.evaluateConditions(conditions);
+
       
       if (shouldShow) {
         card.classList.remove('hidden');
@@ -3183,37 +3180,37 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
   }
 
   // Add this new method to the DashviewPanel class
+// in custom_components/dashview/www/dashview-panel.js
+
   async _fetchWeatherForecasts() {
-      if (!this._hass) return;
-  
-      const entityId = this._getCurrentWeatherEntityId();
-      if (!entityId) return;
-  
-      try {
-          console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callService`);
-  
-          // Use hass.callService to get the daily forecast, with return_response as the 4th argument
-          const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
-              entity_id: entityId, // Corrected: Use entity_id directly
-              type: 'daily'
-          }, true); // The 'true' for return_response is correct for some modern HA versions.
-  
-          // Use hass.callService to get the hourly forecast, with return_response as the 4th argument
-          const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
-              entity_id: entityId, // Corrected: Use entity_id directly
-              type: 'hourly'
-          }, true);
-  
-          // The response is structured like { "weather.forecast_home": { "forecast": [...] } }
-          this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
-          this._weatherForecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
-  
-          console.log('[DashView] Forecasts updated successfully via callService');
-      } catch (error) {
-          console.error(`[DashView] Error fetching weather forecasts for ${entityId} via callService:`, error);
-          this._weatherForecasts.daily = [];
-          this._weatherForecasts.hourly = [];
-      }
+    if (!this._hass) return;
+
+    const entityId = this._getCurrentWeatherEntityId();
+    if (!entityId) return;
+
+    try {
+        console.log(`[DashView] Fetching daily and hourly forecasts for ${entityId} using callService`);
+
+        // Use hass.callService with the correct modern format
+        const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
+            entity_id: entityId,
+            type: 'daily'
+        }, true);
+
+        const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
+            entity_id: entityId,
+            type: 'hourly'
+        }, true);
+
+        this._weatherForecasts.daily = dailyResponse?.[entityId]?.forecast || [];
+        this._weatherForecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
+
+        console.log('[DashView] Forecasts updated successfully via callService');
+    } catch (error) {
+        console.error(`[DashView] Error fetching weather forecasts for ${entityId} via callService:`, error);
+        this._weatherForecasts.daily = [];
+        this._weatherForecasts.hourly = [];
+    }
   }
   // Load configuration from centralized API - Principle 1 & 2
 // Load configuration from centralized API - Principle 1 & 2
@@ -3240,7 +3237,7 @@ const roomConfig = this._houseConfig && this._houseConfig.rooms ? this._houseCon
         // This is normal if no integrations are configured yet
         this._integrationsConfig = {}; // Ensure it's an object
       }
-
+      this._initializeFloorTabs(); 
     } catch (error) {
       console.error('[DashView] Error loading primary configurations:', error);
       this._houseConfig = {};
