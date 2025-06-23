@@ -1735,3 +1735,36 @@ z-index: 1;
 .floor-content-area {
     margin-top: 8px;
 }
+
+/* --- Room Card Grid Layout --- */
+.room-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "r1-small-1 r1-big"
+        "r1-small-2 r1-big"
+        "r2-big     r2-small-1"
+        "r2-big     r2-small-2"
+        "r3-small-1 r3-big"
+        "r3-small-2 r3-big";
+}
+
+.placeholder-card {
+    background-color: var(--gray000);
+    border: 2px dashed var(--gray200);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+}
+
+.placeholder-small {
+    min-height: 75px;
+}
+
+.placeholder-big {
+    min-height: 162px; /* (75px * 2) + 12px gap */
+}
