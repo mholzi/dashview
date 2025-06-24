@@ -731,12 +731,12 @@ async _addLightEntities() {
       let editorHTML = '';
       for (const [floorId, floorConfig] of Object.entries(floors)) {
         try {
+            // Process ALL slots, not just small ones
             const floorLayout = layouts[floorId] || [];
-            const smallSlots = floorLayout.filter(slot => slot.grid_area && slot.grid_area.includes('small'));
             const allEntitiesOnFloor = this._getEntitiesForFloor(floorId);
 
-            editorHTML += `<div class="config-section"><h5>${floorConfig.friendly_name || floorId}</h5><div class="room-grid" data-floor-id="${floorId}">`;
-            for (const slot of smallSlots) {
+            editorHTML += `<div class="config-section"><h5>${floorConfig.friendly_name || floorId}</h5><div class="floor-layout-grid" data-floor-id="${floorId}">`;
+            for (const slot of floorLayout) {
                 editorHTML += this._renderLayoutSlotEditor(slot, allEntitiesOnFloor);
             }
             editorHTML += `</div></div>`;
@@ -757,11 +757,9 @@ async _addLightEntities() {
     }
   }
 
-  /**
-   * Renders the HTML for a single slot in the layout editor.
-   */
   _renderLayoutSlotEditor(slot, entities) {
     const { grid_area, type, entity_id } = slot;
+    const isBigSlot = grid_area.includes('-big');
     const isPinned = type === 'pinned';
 
     const entityOptions = entities.map(entity => 
@@ -770,15 +768,24 @@ async _addLightEntities() {
       </option>`
     ).join('');
 
+    // Add "Room Swiper" option for big slots
+    let typeOptions = `
+      <option value="auto" ${type === 'auto' ? 'selected' : ''}>🤖 Automatic</option>
+      <option value="pinned" ${type === 'pinned' ? 'selected' : ''}>📌 Pinned</option>
+      <option value="empty" ${type === 'empty' ? 'selected' : ''}>⚫ Empty</option>
+    `;
+    if (isBigSlot) {
+        typeOptions = `
+            <option value="room_swipe_card" ${type === 'room_swipe_card' ? 'selected' : ''}>🚪 Room Swiper</option>
+            ${typeOptions}
+        `;
+    }
+
     return `
       <div class="layout-slot" data-grid-area="${grid_area}" style="grid-area: ${grid_area};">
         <div class="slot-name">${grid_area.replace('r1-', '').replace('r2-', '')}</div>
         <div class="slot-config">
-          <select class="layout-type-selector">
-            <option value="auto" ${type === 'auto' ? 'selected' : ''}>🤖 Automatic</option>
-            <option value="pinned" ${type === 'pinned' ? 'selected' : ''}>📌 Pinned</option>
-            <option value="empty" ${type === 'empty' ? 'selected' : ''}>⚫ Empty</option>
-          </select>
+          <select class="layout-type-selector">${typeOptions}</select>
           <select class="entity-selector" style="display: ${isPinned ? 'block' : 'none'};">
             <option value="">-- Select Entity --</option>
             ${entityOptions}
@@ -787,6 +794,12 @@ async _addLightEntities() {
       </div>
     `;
   }
+  
+  /**
+   * Reads the state of the layout editor UI and saves it to the backend.
+   */
+
+
   _getEntityTypeFromConfig(entityId) {
     if (!this._houseConfig || !this._houseConfig.rooms) {
         return null;
@@ -885,9 +898,6 @@ async _addLightEntities() {
           entity_id: type === 'pinned' ? entityId : null
         });
       });
-      // Add back the locked room swiper cards with the correct structure
-      newLayouts[floorId].push({ "grid_area": "r1-big", "type": "room_swipe_card", "entity_id": null });
-      newLayouts[floorId].push({ "grid_area": "r2-big", "type": "room_swipe_card", "entity_id": null });
     });
     
     // Update the houseConfig object and save
@@ -899,7 +909,66 @@ async _addLightEntities() {
       this._setStatusMessage(statusEl, `✗ Error saving layouts: ${e.message}`, 'error');
     }
   }
+  // --- Add this new helper function to centralize all card display logic ---
+  _getCardDisplayData(entityId, type, isBigCard = false) {
+    const entity = this._hass.states[entityId];
+    if (!entity) return { name: 'Not Found', label: '', icon: 'mdi:alert-circle', cardStyle: 'background: var(--red);' };
+    
+    const state = entity.state;
+    const attributes = entity.attributes || {};
+    let name = attributes.friendly_name || entityId.split('.')[1].replace(/_/g, ' ');
+    let label = '';
+    let icon = attributes.icon || 'mdi:help-circle';
+    let cardStyle = 'background: var(--gray300);';
+    let iconStyle = 'color: var(--gray800);';
+    let imgCellStyle = 'background: rgba(var(--highlight));';
+    let labelStyle = 'color: var(--gray800);';
+    let nameStyle = `color: var(--gray800); opacity: ${isBigCard ? '0.7' : '1'};`;
+    
+    // --- INSERT THE FULL LOGIC FROM YOUR YAML HERE FOR ALL TYPES ---
+    // This is a condensed example:
+    if (type === 'light') {
+        label = state === 'on' ? 'An' : 'Aus';
+        icon = attributes.icon || 'mdi:lightbulb';
+        if (state === 'on') {
+            cardStyle = 'background: var(--active-light);';
+            labelStyle = 'color: var(--gray000);';
+            nameStyle = 'color: var(--gray000); opacity: 0.7;';
+            iconStyle = 'color: var(--gray000);';
+            imgCellStyle = 'background: var(--gray800);';
+        }
+    } else {
+        label = state; // Fallback
+    }
+    
+    return { name, label, icon, cardStyle, iconStyle, imgCellStyle, labelStyle, nameStyle };
+  }
 
+  // --- New function to generate big sensor cards ---
+  _generateBigSensorCardHTML(entityId, gridArea) {
+    const entityState = this._hass.states[entityId];
+    if (!entityState) return `<div class="placeholder-card placeholder-big" style="grid-area: ${gridArea};">Entity not found: ${entityId}</div>`;
+
+    const type = this._getEntityTypeFromConfig(entityId);
+    if (!type) return `<div class="placeholder-card placeholder-big" style="grid-area: ${gridArea};">Unknown type for ${entityId}</div>`;
+
+    const cardData = this._getCardDisplayData(entityId, type, true);
+
+    return `
+        <div class="sensor-big-card" style="grid-area: ${gridArea}; ${cardData.cardStyle}" data-entity-id="${entityId}" data-type="${type}"
+             onclick="this._hass.callService('homeassistant', 'toggle', { entity_id: '${entityId}' })">
+            <div class="sensor-big-grid">
+                <div class="sensor-big-name" style="${cardData.nameStyle}">${cardData.name}</div>
+                <div class="sensor-big-icon-cell" style="${cardData.imgCellStyle}">
+                    <i class="mdi ${this._processIconName(cardData.icon)}" style="${cardData.iconStyle}"></i>
+                </div>
+                <div class="sensor-big-label-wrapper">
+                    <div class="sensor-big-label" style="${cardData.labelStyle}">${cardData.label}</div>
+                </div>
+            </div>
+        </div>
+    `;
+  }
 // --- Hook up the new tab in initializeCard ---
   initializeCard(context) {
     //... inside the big event listener
@@ -1142,71 +1211,73 @@ async _addLightEntities() {
    * Renders the entire layout for a specific floor based on its configuration.
    * This is the main rendering engine for the dashboard.
    */
+  // --- Replace _renderFloorLayout with this updated version ---
   _renderFloorLayout(floorId) {
     const gridContainer = this.shadowRoot.getElementById(`room-grid-${floorId}`);
     if (!gridContainer) return;
 
     const layoutConfig = this._houseConfig.floor_layouts?.[floorId] || [];
     if (layoutConfig.length === 0) {
-      gridContainer.innerHTML = '<div class="placeholder">No layout defined for this floor.</div>';
-      return;
+        gridContainer.innerHTML = '<div class="placeholder">No layout defined for this floor.</div>';
+        return;
     }
 
     const allEntitiesOnFloor = this._getEntitiesForFloor(floorId);
     const usageStats = this._houseConfig.entity_usage_stats || {};
     
-    // Create a ranked list of entities on this floor based on usage
     const rankedEntities = allEntitiesOnFloor
-      .map(e => ({ ...e, count: usageStats[e.entity_id] || 0 }))
-      .sort((a, b) => b.count - a.count);
+        .map(e => ({ ...e, count: usageStats[e.entity_id] || 0 }))
+        .sort((a, b) => b.count - a.count);
 
-    const pinnedEntities = new Set(
-        layoutConfig.filter(s => s.type === 'pinned').map(s => s.entity_id)
-    );
-    
-    // Filter out already pinned entities from the ranked list for auto-placement
+    const pinnedEntities = new Set(layoutConfig.filter(s => s.type === 'pinned').map(s => s.entity_id));
     let autoPlacementQueue = rankedEntities.filter(e => !pinnedEntities.has(e.entity_id));
 
     let gridHTML = '';
     for (const slot of layoutConfig) {
-      let cardHTML = `<div class="placeholder-card" style="grid-area: ${slot.grid_area};"></div>`;
-      
-      switch (slot.type) {
-        case 'room_swipe_card':
-          cardHTML = this._renderRoomSwipeCard(floorId, slot.grid_area);
-          break;
+        let cardHTML = `<div class="placeholder-card" style="grid-area: ${slot.grid_area};"></div>`;
         
-        case 'pinned':
-          if (slot.entity_id) {
-            cardHTML = this._generateSensorCardHTML(slot.entity_id, slot.grid_area);
-          }
-          break;
-
-        case 'auto':
-          if (autoPlacementQueue.length > 0) {
-            const nextEntity = autoPlacementQueue.shift(); // Get the top-ranked available entity
-            cardHTML = this._generateSensorCardHTML(nextEntity.entity_id, slot.grid_area);
-          }
-          break;
-
-        case 'empty':
-          cardHTML = ''; // Render nothing for this slot
-          break;
-      }
-      gridHTML += cardHTML;
+        if (slot.grid_area.includes('-big')) {
+            switch (slot.type) {
+                case 'room_swipe_card':
+                    cardHTML = this._renderRoomSwipeCard(floorId, slot.grid_area);
+                    break;
+                case 'pinned':
+                    if (slot.entity_id) cardHTML = this._generateBigSensorCardHTML(slot.entity_id, slot.grid_area);
+                    break;
+                case 'auto':
+                    if (autoPlacementQueue.length > 0) {
+                        const nextEntity = autoPlacementQueue.shift();
+                        cardHTML = this._generateBigSensorCardHTML(nextEntity.entity_id, slot.grid_area);
+                    }
+                    break;
+                case 'empty':
+                    cardHTML = ''; break;
+            }
+        } else { // Handle small slots
+            switch (slot.type) {
+                case 'pinned':
+                    if (slot.entity_id) {
+                        cardHTML = this._generateSensorCardHTML(slot.entity_id, slot.grid_area);
+                    }
+                    break;
+                case 'auto':
+                    if (autoPlacementQueue.length > 0) {
+                        const nextEntity = autoPlacementQueue.shift();
+                        cardHTML = this._generateSensorCardHTML(nextEntity.entity_id, slot.grid_area);
+                    }
+                    break;
+                case 'empty':
+                    cardHTML = '';
+                    break;
+            }
+        }
+        gridHTML += cardHTML;
     }
 
     gridContainer.innerHTML = gridHTML;
     
-    // After rendering, initialize the cards with event listeners
-    gridContainer.querySelectorAll('.sensor-small-card').forEach(card => {
-        this._initializeSmallSensorCard(card);
-    });
-    
-    // After rendering, initialize any components that need it (like swipers)
-    gridContainer.querySelectorAll('.room-swipe-card-container').forEach(container => {
-        this._initializeSwiper(container.querySelector('.swiper-container'));
-    });
+    gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card').forEach(card => this._initializeSmallSensorCard(card));
+    gridContainer.querySelectorAll('.room-swipe-card-container').forEach(container => this._initializeSwiper(container.querySelector('.swiper-container')));
   }
 
   /**
