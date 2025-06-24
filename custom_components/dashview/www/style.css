@@ -83,7 +83,7 @@ body, :host {
     background-color: var(--background);
     color: var(--primary-text-color);
     margin: 0;
-    padding: 12px 8px; /* Changed from 12px to 12px top/bottom and 8px left/right */
+    padding: 12px 8px;
     padding-bottom: 90px; /* Space for fixed nav bar */
 }
 
@@ -118,7 +118,6 @@ h3 {
 }
 
 /* --- Pop-up styles --- */
-/* --- Pop-up styles --- */
 .popup {
     position: fixed;
     top: 0;
@@ -134,8 +133,8 @@ h3 {
     transition: opacity 0.3s ease, visibility 0.3s ease;
     box-sizing: border-box;
     display: flex;
-    justify-content: center; /* Horizontally center the content box */
-    padding-top: 40px;      /* Creates the 40px gap from the top */
+    justify-content: center;
+    padding-top: 40px;
 }
 
 /* Prevent body scrolling when popup is active */
@@ -150,16 +149,15 @@ body.popup-open, :host(.popup-open) {
 
 .popup-content {
     background-color: var(--background);
-    /* margin: 0 auto;  <-- We remove this */
     padding: 20px;
     border-radius: 30px 30px 0 0;
-    max-width: 500px; /* Match main view max-width */
-    width: 100%; /* Take up full width within the constraints */
-    box-sizing: border-box; /* Ensure padding is included in width calculation */
+    max-width: 500px;
+    width: 100%;
+    box-sizing: border-box;
     position: relative;
     transform: translateY(100vh);
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    max-height: calc(100vh - 40px); /* Leave some space from edges */
+    max-height: calc(100vh - 40px);
     min-height: 40vh; 
     overflow-y: auto;
     /* Hide scrollbar while allowing scrolling */
@@ -208,39 +206,30 @@ body.popup-open, :host(.popup-open) {
     line-height: 1;
     background: none;
 }
-/* --- Ensure no margin-bottom inside popup content for card-like elements --- */
-/* This section aims to emulate the 'ha-card { margin-bottom: 0px !important; }'
-   and '--vertical-stack-card-gap: 0px!important;' within the popup. */
+/* --- Pop-up Content Stacking --- */
 .popup-body > .weather-forecast-card,
 .popup-body > .hourly-forecast-container,
 .popup-body > .daily-forecast-container,
-.popup-body > .pollen-card {
-    margin-bottom: 0px !important; /* Remove bottom margin for cards directly inside popup body */
-    margin-top: 0px !important; /* Also remove top margin if present, for continuous stacking */
+.popup-body > .pollen-card,
+.popup-body .info-section,
+.popup-body .train-departures-container .train-departure-card {
+    margin-bottom: 0px !important;
+    margin-top: 0px !important;
 }
 
 .popup-body > .hourly-forecast-container h4,
 .popup-body > .daily-forecast-container h4 {
-    margin-top: 12px; /* Re-add some top margin for section headers if they are now flush */
+    margin-top: 12px;
 }
 
-/* Any section within .popup-body that acts like a stacked item should have its internal margin adjusted */
-.popup-body .info-section,
-.popup-body .train-departures-container .train-departure-card {
-    margin-bottom: 0px !important; /* Remove any default bottom margins */
-    margin-top: 0px !important;
-}
-
-/* Adjust general spacing within popup-body if it now looks too cramped */
 .popup-body > div {
-    padding-bottom: 12px; /* Add internal padding to sections instead of relying on margin-bottom */
+    padding-bottom: 12px;
 }
 
-/* Ensure no excessive gap if elements are using flex/grid with gap property inside popup-body */
 .popup-body {
     display: flex;
     flex-direction: column;
-    gap: 0px !important; /* Emulate --vertical-stack-card-gap: 0px!important; */
+    gap: 0px !important;
 }
 
 /* --- Tab styles --- */
@@ -276,10 +265,7 @@ body.popup-open, :host(.popup-open) {
     position: sticky;
     bottom: 10px;
     height: 60px;
-    width: 100%; /* Now it's 100% of the parent .dashboard-container */
-    
-    /* No need for max-width or horizontal centering, it's inherited */
-    
+    width: 100%;
     box-sizing: border-box;
     background-color: var(--gray800);
     border-radius: 100px;
@@ -288,9 +274,7 @@ body.popup-open, :host(.popup-open) {
     justify-content: space-around;
     align-items: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 15;
-
-    /* Add a margin-top to prevent it from overlapping the last element */
+    z-index: 5;
     margin-top: 12px;
 }
 .nav-button {
@@ -298,19 +282,17 @@ body.popup-open, :host(.popup-open) {
     border: none;
     color: var(--gray000);
     cursor: pointer;
-    height: 50px;
-    width: 50px;
-    font-size: 50px; /* MDI icons are font-based - matched to kiosk header button size */
+    height: 32px;
+    width: 32px;
+    font-size: 40px;
 }
 .nav-button.active {
     color: var(--blue-dark);
 }
 
 /* --- MDI Icon Support --- */
-/* Add or ensure the following .mdi class definition is present.
-   The 'Material Design Icons' font-family is provided by Home Assistant. */
 .mdi {
-    font-family: 'Material Design Icons', sans-serif !important; /* Ensure this is set and has a generic fallback */
+    font-family: 'Material Design Icons', sans-serif !important;
     font-weight: normal;
     font-style: normal;
     font-size: inherit;
@@ -355,7 +337,7 @@ body.popup-open, :host(.popup-open) {
 
 .weather-person-stack {
     display: flex;
-    justify-content: flex-end; /* Aligns items to the right */
+    justify-content: flex-end;
     align-items: center;
     gap: 12px;
 }
@@ -436,21 +418,19 @@ body.popup-open, :host(.popup-open) {
     padding: 16px;
     border: 1px solid var(--gray200);
     font-size: 1.2em;
-    line-height: 1.4em; /* Increased for better readability on wrap */
+    line-height: 1.4em;
     margin: 2px 0;
-    word-spacing: normal; /* Improve word spacing for better flow */
+    word-spacing: normal;
 }
 
 .info-section {
-    display: inline-flex; /* This is the key change to make sections sit side-by-side */
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-    margin-right: 4px; /* Reduced margin for tighter text flow */
-    margin-bottom: 4px; /* Adds a little space if a line wraps */
+    margin-right: 4px;
+    margin-bottom: 4px;
 }
-
-/* Remove section-level hover effects - only badges should be clickable */
 
 .info-section.hidden {
     display: none;
@@ -645,7 +625,7 @@ body.popup-open, :host(.popup-open) {
 .forecast-tab.active {
     background: var(--active-big);
     color: var(--gray000);
-    font-weight: 500; /* Added for better visibility */
+    font-weight: 500;
 }
 
 .forecast-content {
@@ -748,7 +728,7 @@ body.popup-open, :host(.popup-open) {
     text-align: center;
 }
 
-/* Header Buttons Styles */
+/* --- Header Buttons Styles --- */
 .header-buttons-container {
     display: flex;
     width: 100%;
@@ -822,7 +802,7 @@ body.popup-open, :host(.popup-open) {
     text-align: center;
 }
 
-/* Admin Configuration Styles */
+/* --- Admin Configuration Styles --- */
 .config-section {
     margin-bottom: 20px;
     padding: 16px;
@@ -889,7 +869,7 @@ body.popup-open, :host(.popup-open) {
     color: var(--primary-text-color);
 }
 
-/* Floor Maintenance Styles */
+/* --- Floor Maintenance Styles --- */
 .floor-form {
     display: flex;
     flex-direction: column;
@@ -975,7 +955,7 @@ body.popup-open, :host(.popup-open) {
     opacity: 0.8;
 }
 
-/* Entity list styles for media player management */
+/* --- Entity List Styles --- */
 .entity-list {
     display: flex;
     flex-direction: column;
@@ -990,7 +970,7 @@ body.popup-open, :host(.popup-open) {
 
 .entity-list-item {
     padding: 8px 12px;
-    background: var(--card-background);
+    background: var(--card-background-color);
     border: 1px solid var(--gray200);
     border-radius: 6px;
     display: flex;
@@ -1018,7 +998,7 @@ body.popup-open, :host(.popup-open) {
     opacity: 0.8;
 }
 
-/* Room Header Icons Styles */
+/* --- Room Header Icons Styles --- */
 .room-header-icons {
     margin-bottom: 8px;
 }
@@ -1092,7 +1072,7 @@ body.popup-open, :host(.popup-open) {
     transform: scale(1.1);
 }
 
-/* Entity type specific colors */
+/* Entity type specific colors for header icons */
 .room-header-icon.motion.active {
     background: var(--yellow);
 }
@@ -1134,8 +1114,7 @@ body.popup-open, :host(.popup-open) {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 8px; /* Changed from 0px to 8px */
-    /* Removed padding-left and padding-right */
+    gap: 8px;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -1169,7 +1148,7 @@ body.popup-open, :host(.popup-open) {
 .chip-icon-container i {
     width: 22px;
     font-size: 22px;
-    color: var(--gray000); /* Added this line */
+    color: var(--gray000);
 }
 
 .chip-name {
@@ -1191,12 +1170,12 @@ body.popup-open, :host(.popup-open) {
 }
 
 .covers-summary {
-    list-style: none; /* Hide the default expander arrow */
+    list-style: none;
     cursor: pointer;
     padding: 0 12px;
 }
 .covers-summary::-webkit-details-marker {
-    display: none; /* Hide arrow in Chrome/Safari */
+    display: none;
 }
 
 .covers-header {
@@ -1207,7 +1186,6 @@ body.popup-open, :host(.popup-open) {
     height: 46px;
 }
 
-/* Add this new rule for the covers icon */
 .covers-header .mdi {
     color: var(--gray1000);
     width: 22px;
@@ -1321,7 +1299,7 @@ body.popup-open, :host(.popup-open) {
     border: none;
 }
 
-/* Configuration Summary Styles */
+/* --- Configuration Summary Styles --- */
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1354,7 +1332,7 @@ body.popup-open, :host(.popup-open) {
     border-radius: 12px;
 }
 
-/* Floor-Room Consistency Warning Styles */
+/* --- Floor-Room Consistency Warning Styles --- */
 .consistency-warning {
     background-color: rgba(240, 169, 148, 0.1);
     border: 1px solid var(--red);
@@ -1453,11 +1431,10 @@ body.popup-open, :host(.popup-open) {
     padding-top: 12px;
 }
 
-/* === Consolidated Light Row Styles Start === */
-
+/* --- Consolidated Light Row Styles --- */
 .light-row {
-    display: flex; /* As requested */
-    height: 60px; /* As requested */
+    display: flex;
+    height: 60px;
     align-items: center;
     gap: 16px;
     border-radius: 12px;
@@ -1490,13 +1467,10 @@ body.popup-open, :host(.popup-open) {
     transition: color 0.2s ease-in-out;
 }
 
-/* "ON" state styles for icon and name */
 .light-row[state="on"] .mdi,
-.light-row[state="on"] .light-name {
-    color: var(--gray000); /* As requested */
-}
+.light-row[state="on"] .light-name,
 .light-row[state="on"] .light-info {
-    color: var(--gray000); /* As requested */
+    color: var(--gray000);
 }
 
 .light-info {
@@ -1508,10 +1482,7 @@ body.popup-open, :host(.popup-open) {
     text-overflow: ellipsis;
 }
 
-/* === Consolidated Light Row Styles End === */
 /* --- Thermostat Card Styles --- */
-/* Add to style.css, replacing existing .thermostat-card styles if necessary */
-
 .thermostat-card {
     position: relative;
     display: flex;
@@ -1533,38 +1504,37 @@ body.popup-open, :host(.popup-open) {
 }
 
 .thermostat-name {
-font-size: 16px;
-font-weight: 500;
-color: var(--primary-text-color);
-grid-area: name; /* remove grid code*/
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    grid-area: name;
 }
 
 .thermostat-values {
-font-size: 2.2em; /* Adjusted size */
-font-weight: 500;
-color: var(--primary-text-color);
-z-index: 2;
-line-height: 1;
-text-align: right;
+    font-size: 2.2em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    z-index: 2;
+    line-height: 1;
+    text-align: right;
 }
 
 .thermostat-values .humidity {
-font-size: 0.5em;
-font-weight: 400;
-color: var(--secondary-text-color);
-margin-left: 8px;
+    font-size: 0.5em;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    margin-left: 8px;
 }
 
 .thermostat-graph {
-position: absolute;
-left: 0;
-bottom: 0;
-width: 100%;
-height: 100px;
-z-index: 1;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100px;
+    z-index: 1;
 }
 
-/* ADD THESE NEW RULES for the SVG graph */
 .thermostat-graph svg {
     width: 100%;
     height: 100%;
@@ -1583,8 +1553,6 @@ z-index: 1;
     fill: url(#graph-gradient);
     stroke: none;
 }
-
-/* Add to the end of style.css */
 
 .thermostat-graph .graph-point {
     fill: var(--blue);
@@ -1613,7 +1581,7 @@ z-index: 1;
     border-radius: 20px;
     padding: 16px;
     gap: 16px;
-    border: 1px solid var(--red); /* Highlight notifications */
+    border: 1px solid var(--red);
 }
 
 .notification-card .notification-icon {
@@ -1642,19 +1610,19 @@ z-index: 1;
     display: flex;
     gap: 12px;
 }
-/* Media Header Buttons */
+/* --- Media Header Buttons --- */
 .media-header-scroll {
     display: flex;
     gap: 8px;
     overflow-x: auto;
     margin: 16px 0 4px 0;
     padding: 0 8px;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .media-header-scroll::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
 }
 
 .media-header-button {
@@ -1664,11 +1632,11 @@ z-index: 1;
     width: 34px;
     border: none;
     cursor: pointer;
-    color: var(--gray800); /* Icon color */
+    color: var(--gray800);
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-shrink: 0; /* Prevents buttons from shrinking */
+    flex-shrink: 0;
     transition: transform 0.2s ease;
 }
 
@@ -1679,7 +1647,7 @@ z-index: 1;
 .media-header-button i.mdi {
     font-size: 22px;
 }
-/* Floor Tabs Section Styles */
+/* --- Floor Tabs & Room Card Styles --- */
 #floor-tabs-container {
     margin-top: 16px;
 }
@@ -1730,9 +1698,15 @@ z-index: 1;
 
 .floor-content-area {
     margin-top: 8px;
+    position: relative;
+    min-height: 162px;
 }
 
-/* --- Room Card Grid Layout --- */
+.floor-content {
+    width: 100%;
+    height: 100%;
+}
+
 .room-grid {
     display: grid;
     gap: 12px;
@@ -1740,10 +1714,8 @@ z-index: 1;
     grid-template-areas:
         "r1-small-1 r1-big"
         "r1-small-2 r1-big"
-        "r2-big     r2-small-1"
-        "r2-big     r2-small-2"
-        "r3-small-1 r3-big"
-        "r3-small-2 r3-big";
+        "r2-big     r2-small-3"
+        "r2-big     r2-small-4"
 }
 
 .placeholder-card {
@@ -1762,23 +1734,12 @@ z-index: 1;
 }
 
 .placeholder-big {
-    min-height: 162px; /* (75px * 2) + 12px gap */
-}
-
-/* --- Floor Tabs & Swipeable Room Cards --- */
-.floor-content-area {
-    position: relative;
-    min-height: 162px; /* Corresponds to placeholder-big height */
-}
-
-.floor-content {
-    width: 100%;
-    height: 100%;
+    min-height: 162px;
 }
 
 .room-swipe-card-container {
-    height: 162px; /* Fixed height to match the placeholder */
-    width: 100%;   /* Take up 100% width of the parent column */
+    height: 162px;
+    width: 100%;
     overflow: hidden;
     position: relative;
     border-radius: 20px;
@@ -1801,7 +1762,7 @@ z-index: 1;
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    padding: 2px; /* Add slight padding for card border visibility */
+    padding: 2px;
 }
 
 .swiper-pagination {
@@ -1826,69 +1787,63 @@ z-index: 1;
 .swiper-pagination-bullet-active {
     background-color: var(--gray400);
 }
-/* --- Individual Room Card --- */
+
+.room-card {
+    padding: 8px;
+    height: 100%;
+    border-radius: 18px;
+    background: var(--gray000);
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
+}
+
 .room-card-grid {
     display: grid;
     height: 100%;
     background-color: var(--gray000);
-    /* This defines the layout: name and icon on top, temp on bottom */
     grid-template-areas:
         "name icon"
         "temp temp";
     grid-template-rows: 1fr auto;
-    /* This is the corrected column definition.
-      The first column (name) gets all the flexible space.
-      The second column (icon) is sized to fit its 50px-wide content.
-    */
     grid-template-columns: 1fr 50px;
 }
 
 .room-card-name {
     grid-area: name;
-    /* Blueprint alignment */
     justify-self: start;
     align-self: start;
     text-align: left;
-    font-size: 1.3em;
+    font-size: 1em;
     font-weight: 500;
     color: var(--gray800);
-    /* Blueprint padding */
     padding: 14px;
-    /* Prevent text from overflowing */
     word-break: break-word;
 }
 
-/* ---- REPLACE/ADD THESE RULES IN style.css ---- */
-
-/* Applies the active gradient to the ENTIRE card */
 .room-card-icon-cell.is-on {
     background: var(--active-big);
 }
 
-/* Makes the text and temperature readable on the gradient */
 .room-card.is-on .room-card-name,
 .room-card.is-on .room-card-temp {
     color: var(--gray800);
     opacity: 0.9;
 }
 
-/* Makes the icon cell a semi-transparent highlight on the gradient */
 .room-card.is-on .room-card-icon-cell {
-    background: rgba(255, 255, 255, 0.2); /* Use a translucent white */
+    background: rgba(255, 255, 255, 0.2);
 }
 
-/* Ensures the icon itself is readable */
 .room-card.is-on .room-card-icon-cell i {
-    color: var(--gray800); /* Use the primary text color */
+    color: var(--gray800);
 }
 
 
 .room-card-icon-cell {
     grid-area: icon;
-    /* Blueprint alignment */
     justify-self: end;
     align-self: start;
-    /* Blueprint styling */
     background: var(--highlight);
     border-radius: 100%;
     width: 50px;
@@ -1901,47 +1856,34 @@ z-index: 1;
 
 .room-card-icon-cell i {
     font-size: 30px;
-    color: var(--white); /* Default color from blueprint */
+    color: var(--white);
 }
 
-/* --- Individual Room Card --- */
-.room-card {
-    padding: 8px;
-    height: 100%;
-    border-radius: 18px;
-    background: var(--gray000); /* This line sets the background color */
-    cursor: pointer;
-    box-sizing: border-box;
-    width: 100%;
-}
 .room-card-temp {
     grid-area: temp;
-    /* Blueprint alignment and styling */
     justify-self: start;
-    align-self: end; /* Align to the bottom of the grid area */
+    align-self: end;
     font-size: 1.5em;
     line-height: 1em;
     font-weight: 300;
     color: var(--gray800);
-    padding: 0 0 6px 24px; /* Matches blueprint padding */
+    padding: 0 0 6px 14px;
 }
 /* --- Sensor Small Card --- */
 .sensor-small-card {
-    height: 75px; /* Matches placeholder-small height */
+    height: 75px;
     border-radius: 12px;
     padding: 4px 20px 4px 4px;
-    background: var(--gray000); /* Default background from blueprint */
+    background: var(--gray000);
     box-sizing: border-box;
 }
 
 .sensor-small-grid {
     display: grid;
     height: 100%;
-    /* Defines the layout: Icon on left, Label and Name on right */
     grid-template-areas:
         "icon label"
         "icon name";
-    /* Icon column is 56px wide, text column takes the rest */
     grid-template-columns: 56px 1fr;
     grid-template-rows: 1fr 1fr;
     align-items: center;
@@ -1949,24 +1891,24 @@ z-index: 1;
 
 .sensor-small-icon-cell {
     grid-area: icon;
-    width: 44px; /* (22px padding * 2) from blueprint's img_cell */
-    height: 44px; /* (22px padding * 2) from blueprint's img_cell */
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: var(--highlight); /* Default background from blueprint */
+    background: var(--highlight);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .sensor-small-icon-cell i {
-    font-size: 22px; /* Matches blueprint icon width */
-    color: var(--gray800); /* Default color */
+    font-size: 22px;
+    color: var(--gray800);
 }
 
 .sensor-small-label {
     grid-area: label;
     justify-self: start;
-    align-self: end; /* Aligns to the bottom of its grid cell */
+    align-self: end;
     font-size: 16px;
     font-weight: 500;
     color: var(--gray800);
@@ -1975,14 +1917,13 @@ z-index: 1;
 .sensor-small-name {
     grid-area: name;
     justify-self: start;
-    align-self: start; /* Aligns to the top of its grid cell */
+    align-self: start;
     font-size: 14px;
     color: var(--gray800);
     opacity: 0.7;
 }
 
-/* --- State-based Modifier Classes (for future use) --- */
-/* Example for an "active" state */
+/* --- State-based & Big Card Modifier Classes --- */
 .sensor-small-card.is-on .sensor-small-icon-cell {
     background: var(--white);
 }
@@ -1993,7 +1934,6 @@ z-index: 1;
     color: var(--gray000);
 }
 
-/* Specific background gradients for different active sensor types */
 .sensor-small-card[data-type="light"].is-on {
     background: var(--active-light);
 }
@@ -2004,71 +1944,90 @@ z-index: 1;
     background: var(--active-big);
 }
 
-/* --- Train Departure Card Styles (Based on YAML) --- */
-/* --- Train Departure Card Styles (Based on YAML) --- */
+.sensor-small-card.is-big {
+    height: 162px;
+}
 
-/* This is the main section wrapper from index.html */
+.sensor-small-card.is-big .sensor-small-grid {
+    grid-template-columns: 70px 1fr;
+    align-content: center;
+    gap: 0 8px;
+}
+
+.sensor-small-card.is-big .sensor-small-icon-cell {
+    width: 60px;
+    height: 60px;
+}
+
+.sensor-small-card.is-big .sensor-small-icon-cell i {
+    font-size: 32px;
+}
+
+.sensor-small-card.is-big .sensor-small-label {
+    font-size: 22px;
+    align-self: end;
+}
+
+.sensor-small-card.is-big .sensor-small-name {
+    font-size: 16px;
+    align-self: start;
+}
+
+/* --- Train Departure Card Styles --- */
 .train-departures-section {
     display: flex;
     flex-direction: column;
-    align-items: center; /* This line centers the cards */
-    gap: 8px; /* Spacing between cards */
-    margin: 16px 0; /* Vertical spacing from other dashboard elements */
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
 }
 
-/* This container holds all the train cards */
 .train-departures-container {
-    display: contents; /* This allows the cards to be direct children of the flexbox for styling purposes */
+    display: contents;
 }
 
-/* Individual train card styling */
 .train-departure-card {
     background: none;
     box-shadow: none;
     border: none;
-    padding: 10px 0; /* Vertical padding, horizontal will be handled by grid */
+    padding: 10px 0;
     margin: 0;
     cursor: pointer;
     display: grid;
-    grid-template-columns: min-content 1fr; /* Icon column fits content, text column takes rest */
+    grid-template-columns: min-content 1fr;
     grid-template-areas: "icon info";
-    align-items: center; /* Vertically center the icon and the info block */
+    align-items: center;
     gap: 8px;
     transition: background-color 0.2s ease;
-    width: 100%; /* Ensure cards can be centered properly */
-    max-width: 350px; /* Prevent cards from becoming too wide on large screens */
+    width: 100%;
+    max-width: 350px;
 }
 
-/* Hide cards that don't meet conditions */
 .train-departure-card.hidden {
     display: none;
 }
 
-/* Add a subtle hover effect */
 .train-departure-card:hover {
     background-color: var(--highlight);
     border-radius: 12px;
 }
 
-/* Icon styling (Column 1) */
 .train-icon {
     grid-area: icon;
-    font-size: 48px; /* Slightly adjusted from 60px for better mobile fit */
-    font-weight: 800; /* Note: Not all systems render emoji weights */
-    padding-left: 12px; /* Adjusted padding */
+    font-size: 48px;
+    font-weight: 800;
+    padding-left: 12px;
 }
 
-/* Container for time and destination text (Column 2) */
 .train-info {
     grid-area: info;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* This helps separate the two text lines */
+    justify-content: center;
     text-align: left;
     padding-left: 8px;
 }
 
-/* Departure time styling (Column 2, Top) */
 .train-time {
     font-size: 30px;
     font-weight: 500;
@@ -2076,16 +2035,84 @@ z-index: 1;
     line-height: 1.1;
 }
 
-/* Style for delayed trains */
 .train-time.delayed {
     color: var(--red);
 }
 
-/* Destination text styling (Column 2, Bottom) */
 .train-destination {
     font-size: 14px;
     font-weight: 400;
     color: var(--secondary-text-color);
     opacity: 0.7;
     line-height: 1.2;
+}
+/* --- Sensor Big Card --- */
+.sensor-big-card {
+    height: 162px;
+    border-radius: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+}
+
+.sensor-big-grid {
+    display: grid;
+    height: 100%;
+    grid-template-areas:
+        "name icon"
+        "label label";
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+.sensor-big-icon-cell {
+    grid-area: icon;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: -16px -16px 0 0;
+    transition: background-color 0.3s ease;
+}
+
+.sensor-big-icon-cell i {
+    font-size: 30px;
+    transition: color 0.3s ease;
+}
+
+.sensor-big-name {
+    grid-area: name;
+    justify-self: start;
+    align-self: start;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.sensor-big-label-wrapper {
+    grid-area: label;
+    justify-self: start;
+    align-self: start;
+    font-size: 1.5em;
+    font-weight: 300;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.sensor-big-label {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 10s linear infinite;
+}
+
+@keyframes marquee {
+    0%   { transform: translateX(0%); }
+    100% { transform: translateX(-200%); }
 }
