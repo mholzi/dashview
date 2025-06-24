@@ -125,10 +125,6 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
                 # Default small slots to auto
                 {"grid_area": "r1-small-1", "type": "auto", "entity_id": None},
                 {"grid_area": "r1-small-2", "type": "auto", "entity_id": None},
-                {"grid_area": "r1-small-3", "type": "auto", "entity_id": None},
-                {"grid_area": "r1-small-4", "type": "auto", "entity_id": None},
-                {"grid_area": "r2-small-1", "type": "auto", "entity_id": None},
-                {"grid_area": "r2-small-2", "type": "auto", "entity_id": None},
                 {"grid_area": "r2-small-3", "type": "auto", "entity_id": None},
                 {"grid_area": "r2-small-4", "type": "auto", "entity_id": None},
             ]
@@ -172,6 +168,8 @@ class DashViewConfigView(HomeAssistantView):
         self._hass = hass
         self._entry = entry
 
+# In custom_components/dashview/__init__.py
+
     async def get(self, request: web.Request) -> web.Response:
         """Handle GET requests to fetch configuration or entities."""
         config_type = request.query.get('type')
@@ -184,34 +182,65 @@ class DashViewConfigView(HomeAssistantView):
             config = self._entry.options.get('integrations_config', {})
             return web.json_response(config)
 
+        if config_type == 'available_media_players':
+            entity_reg = er.async_get(self._hass)
+            all_media_players = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.name or entity.original_name or entity.entity_id,
+                }
+                for entity in entity_reg.entities.values() if entity.domain == "media_player"
+            ]
+            return web.json_response(all_media_players)
+
         if config_type == 'entities_by_room':
             label = request.query.get('label')
             domain = request.query.get('domain')
             entity_reg = er.async_get(self._hass)
             area_reg = ar.async_get(self._hass)
-            source_entities = []
-
+            
+            source_entity_ids = set()
             if label:
                 label_reg = lr.async_get(self._hass)
-                if label_entry := label_reg.async_get_label(label):
+                label_entry = next((entry for entry in label_reg.labels.values() if entry.name.lower() == label.lower()), None)
+                if label_entry:
                     source_entities = entity_reg.entities.get_entries_for_label(label_entry.label_id)
+                    source_entity_ids = {entity.entity_id for entity in source_entities if entity.domain != "automation"}
             elif domain:
-                source_entities = [entity for entity in entity_reg.entities.values() if entity.domain == domain]
+                source_entity_ids = {entity.entity_id for entity in entity_reg.entities.values() if entity.domain == domain}
+
+            if not source_entity_ids:
+                return web.json_response({})
 
             entities_by_area = {}
-            for entity in source_entities:
-                if not entity.area_id:
-                    continue
-                if entity.area_id not in entities_by_area:
-                    area = area_reg.async_get_area(entity.area_id)
-                    entities_by_area[entity.area_id] = {
-                        "name": area.name if area else "Unknown Area",
-                        "entities": []
-                    }
-                entities_by_area[entity.area_id]["entities"].append({
-                    "entity_id": entity.entity_id,
-                    "name": entity.name or entity.original_name,
-                })
+            processed_entity_ids = set()
+
+            for area in area_reg.areas.values():
+                area_entity_ids = set(entity_reg.entities_by_area_id.get(area.id, []))
+                matching_entities_in_area = source_entity_ids.intersection(area_entity_ids)
+                
+                if matching_entities_in_area:
+                    entities_by_area[area.id] = {"name": area.name, "entities": []}
+                    for entity_id in matching_entities_in_area:
+                        entity = await entity_reg.async_get(entity_id)
+                        if entity:
+                            entities_by_area[area.id]["entities"].append({
+                                "entity_id": entity.entity_id,
+                                "name": entity.name or entity.original_name,
+                            })
+                            processed_entity_ids.add(entity.entity_id)
+
+            unassigned_entity_ids = source_entity_ids - processed_entity_ids
+            if unassigned_entity_ids:
+                entities_by_area["unassigned"] = {"name": "Unassigned Entities", "entities": []}
+                for entity_id in unassigned_entity_ids:
+                    entity = await entity_reg.async_get(entity_id)
+                    if entity:
+                         entities_by_area["unassigned"]["entities"].append({
+                            "entity_id": entity.entity_id,
+                            "name": entity.name or entity.original_name,
+                        })
+
             return web.json_response(entities_by_area)
 
         return web.json_response({"error": "Invalid config type"}, status=400)
@@ -243,4 +272,5 @@ class DashViewConfigView(HomeAssistantView):
             return web.json_response({"status": "success"})
         except Exception as e:
             _LOGGER.error("[DashView] Error saving configuration: %s", e)
-            return web.json_response({"status": "error", "message": str(e)}, status_code=500)
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
+            
