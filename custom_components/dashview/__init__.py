@@ -210,7 +210,7 @@ class DashViewConfigView(HomeAssistantView):
 
         return web.json_response(entities_by_area)
 
-    async def post(self, request: web.Request) -> web.Response:
+async def post(self, request: web.Request) -> web.Response:
         """Handle POST requests to save configuration."""
         try:
             data = await request.json()
@@ -228,6 +228,11 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["entity_usage_stats"] = config_payload
             elif config_type == "integrations":
                 current_options["integrations_config"] = config_payload
+            # Add this new case for media presets
+            elif config_type == "media_presets":
+                current_options.setdefault("house_config", {})["media_presets"] = config_payload
+            elif config_type == "scenes":
+                current_options.setdefault("house_config", {})["scenes"] = config_payload
             else:
                 return web.json_response({"error": f"Invalid config type: {config_type}"}, status=400)
 
