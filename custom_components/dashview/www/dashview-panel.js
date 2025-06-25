@@ -105,7 +105,8 @@ class DashviewPanel extends HTMLElement {
       ]);
       this.shadowRoot.innerHTML = `<style>${styleText}</style>${htmlText}`;
       
-      await this._loadTemplates();
+      // *** FIX: Pass this.shadowRoot to the _loadTemplates method ***
+      await this._loadTemplates(this.shadowRoot);
       
       this._configManager = new ConfigManager();
       this._configManager.setHass(this._hass);
