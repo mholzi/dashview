@@ -6,8 +6,6 @@ export class InfoCardManager {
     this._hass = panel._hass;
     this._shadowRoot = panel.shadowRoot;
 
-    // A configuration array defines each section of the info card.
-    // To add a new section, you only need to add an object here.
     this._sections = [
       { selector: '.motion-section', handler: this._updateMotionSection },
       { selector: '.windows-section', handler: this._updateWindowsSection },
@@ -16,6 +14,8 @@ export class InfoCardManager {
       { selector: '.vacuum-section', handler: this._updateVacuumSection },
       { selector: '.dryer-section', handler: this._updateDryerSection },
       { selector: '.solar-section', handler: this._updateSolarSection },
+      // FIX: Add handler for train cards
+      { selector: '.train-departures-container', handler: this._updateTrainDepartureCards }
     ];
   }
 
@@ -23,9 +23,6 @@ export class InfoCardManager {
     this._hass = hass;
   }
 
-  /**
-   * Main update function. Loops through the defined sections and updates them.
-   */
   update() {
     const infoCard = this._shadowRoot.querySelector('.info-card');
     if (!infoCard || !this._hass) return;
@@ -33,10 +30,80 @@ export class InfoCardManager {
     for (const sectionConfig of this._sections) {
       const sectionElement = this._shadowRoot.querySelector(sectionConfig.selector);
       if (sectionElement) {
-        // Call the specific handler function for the section, binding the context.
         sectionConfig.handler.call(this, sectionElement);
       }
     }
+  }
+
+  // --- FIX: Add Train Card Logic ---
+
+  _isWeekday() {
+    const day = new Date().getDay();
+    return day >= 1 && day <= 5;
+  }
+
+  _evaluateConditions(conditions) {
+    if (!conditions || !this._hass) return false;
+    const conditionList = conditions.split(',');
+    
+    for (const condition of conditionList) {
+        const trimmed = condition.trim();
+        if (trimmed === 'weekday') {
+            if (!this._isWeekday()) return false;
+            continue;
+        }
+        if (trimmed.includes('!=')) {
+            const [entityId, value] = trimmed.split('!=').map(s => s.trim());
+            if (this._hass.states[entityId]?.state == value) return false;
+        } else if (trimmed.includes('>')) {
+            const [entityId, value] = trimmed.split('>').map(s => s.trim());
+            if (parseFloat(this._hass.states[entityId]?.state) <= parseFloat(value)) return false;
+        } else if (trimmed.includes('<')) {
+            const [entityId, value] = trimmed.split('<').map(s => s.trim());
+            if (parseFloat(this._hass.states[entityId]?.state) >= parseFloat(value)) return false;
+        } else if (trimmed.includes('=')) {
+            const [entityId, value] = trimmed.split('=').map(s => s.trim());
+            if (this._hass.states[entityId]?.state != value) return false;
+        }
+    }
+    return true;
+  }
+
+  _getNextTrainDeparture(departureEntity, delayMin = 0) {
+    if (!departureEntity?.attributes?.next_departures) return { time: '--:--', isDelayed: false };
+    const now = new Date();
+    for (const train of departureEntity.attributes.next_departures) {
+        if (train.isCancelled) continue;
+        const [hours, minutes] = train.scheduledDeparture.split(':').map(Number);
+        const departureTime = new Date();
+        departureTime.setHours(hours, minutes + (train.delayDeparture || 0), 0, 0);
+        if ((departureTime - now) / 60000 >= delayMin) {
+            const displayHours = String(departureTime.getHours()).padStart(2, '0');
+            const displayMinutes = String(departureTime.getMinutes()).padStart(2, '0');
+            return {
+                time: `${displayHours}:${displayMinutes}`,
+                isDelayed: (train.delayDeparture || 0) > 0
+            };
+        }
+    }
+    return { time: '--:--', isDelayed: false };
+  }
+
+  _updateTrainDepartureCards() {
+    this._shadowRoot.querySelectorAll('.train-departure-card').forEach(card => {
+        const shouldShow = this._evaluateConditions(card.dataset.conditions);
+        card.classList.toggle('hidden', !shouldShow);
+
+        if (shouldShow) {
+            const departureEntity = this._hass.states[card.dataset.departureSensor];
+            const departure = this._getNextTrainDeparture(departureEntity, parseInt(card.dataset.delayMin, 10));
+            const timeEl = card.querySelector('.train-time');
+            if (timeEl) {
+                timeEl.textContent = departure.time;
+                timeEl.classList.toggle('delayed', departure.isDelayed);
+            }
+        }
+    });
   }
 
   // --- Private Update Handlers for each section ---
