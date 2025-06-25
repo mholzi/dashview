@@ -103,34 +103,39 @@ export class PopupManager {
       window.location.hash = '#home';
     }
   
-    reinitializePopupContent(popup) {
-      const closeBtn = popup.querySelector('.popup-close');
-      if (closeBtn) {
-          closeBtn.onclick = () => this.closePopup();
-      }
-      
-      // Re-initialize tabs
-      popup.querySelectorAll('.tabs-container').forEach(container => {
-          const tabButtons = container.querySelectorAll('.tab-button');
-          tabButtons.forEach(button => {
-              if (!button.listenerAttached) {
-                  button.addEventListener('click', () => {
-                      const targetId = button.getAttribute('data-target');
-                      container.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                      button.classList.add('active');
-                      container.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.id === targetId));
-                      this._panel._loadTabContent(targetId);
-                  });
-                  button.listenerAttached = true;
-              }
-          });
-          if (tabButtons.length > 0 && !container.querySelector('.tab-button.active')) {
-              tabButtons[0].click();
+reinitializePopupContent(popup) {
+  const closeBtn = popup.querySelector('.popup-close');
+  if (closeBtn) {
+      closeBtn.onclick = () => this.closePopup();
+  }
+
+  popup.querySelectorAll('.tabs-container').forEach(container => {
+      const tabButtons = container.querySelectorAll('.tab-button');
+      tabButtons.forEach(button => {
+          if (!button.listenerAttached) {
+              button.addEventListener('click', () => {
+                  const targetId = button.getAttribute('data-target');
+                  container.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                  button.classList.add('active');
+                  container.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.id === targetId));
+
+                  // ***DELEGATION TO ADMIN MANAGER***
+                  // If the admin manager exists on the panel, tell it to load the tab content.
+                  if (this._panel._adminManager) {
+                      this._panel._adminManager.loadTabContent(targetId);
+                  }
+              });
+              button.listenerAttached = true;
           }
       });
-  
-      this._initializeDynamicContent(popup);
-    }
+      // Automatically click the first tab if none are active
+      if (tabButtons.length > 0 && !container.querySelector('.tab-button.active')) {
+          tabButtons[0].click();
+      }
+  });
+
+  this._initializeDynamicContent(popup);
+}
   
     _initializeDynamicContent(container) {
       if (!container) return;
