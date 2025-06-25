@@ -16,8 +16,36 @@
         <button class="tab-button" data-target="media-player-maintenance-tab">Media Players</button>
         <button class="tab-button" data-target="integrations-tab">Integrations</button>
         <button class="tab-button" data-target="floor-layouts-tab">Floor Layouts</button>
+        <button class="tab-button" data-target="scenes-tab">Scenes</button>
+        <button class="tab-button" data-target="media-presets-tab">Media Presets</button>
     </div>
-
+    <div id="scenes-tab" class="tab-content">
+        <h4>Scene Button Management</h4>
+        <p>Create and manage your custom scene buttons here.</p>
+        <div class="config-section">
+            <h5>Scene Buttons</h5>
+            <div id="scenes-status" class="status-display">Ready</div>
+            <div id="scenes-list" class="floors-container">
+                </div>
+            <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <input type="text" id="new-scene-name" class="form-input" placeholder="Scene Name (e.g., Ambiente)">
+                <input type="text" id="new-scene-id" class="form-input" placeholder="Unique ID (e.g., wohnzimmer_ambiente)">
+                <input type="text" id="new-scene-icon" class="form-input" placeholder="Icon (e.g., mdi:sofa)">
+                <select id="new-scene-type" class="dropdown-selector">
+                    <option value="default">Default</option>
+                    <option value="cover">Cover</option>
+                    <option value="all_covers">All Covers</option>
+                    <option value="roof_window">Roof Window</option>
+                    <option value="dimm_desk">Dimmable Desk</option>
+                    <option value="computer">Computer</option>
+                    <option value="all_lights_out">All Lights Out</option>
+                </select>
+                <textarea id="new-scene-entities" class="config-textarea" placeholder="Entities (one per line)" style="grid-column: 1 / -1;"></textarea>
+            </div>
+            <button id="add-scene" class="action-button">Add Scene</button>
+            <button id="save-scenes" class="save-button" style="margin-top: 20px;">Save All Scenes</button>
+        </div>
+    </div>
     <div id="weather-tab" class="tab-content active">
         <h4>Weather Entity</h4>
         <p>Select the primary weather entity to be used across the dashboard.</p>
@@ -55,7 +83,22 @@
             <button id="save-house-config" class="save-button">Save House Config</button>
         </div>
     </div>
-
+    <div id="media-presets-tab" class="tab-content">
+        <h4>Media Player Presets</h4>
+        <p>Manage the playlist presets that appear in your media player cards.</p>
+        <div class="config-section">
+            <h5>Preset Management</h5>
+            <div id="media-presets-status" class="status-display">Ready</div>
+            <div id="media-presets-list" class="floors-container">
+                </div>
+            <div class="form-row" style="margin-top: 20px;">
+                <input type="text" id="new-preset-name" class="form-input" placeholder="Preset Name (e.g., Dinner Jazz)">
+                <input type="text" id="new-preset-id" class="form-input" placeholder="Content ID (e.g., spotify:playlist:...)">
+                <button id="add-media-preset" class="action-button">Add Preset</button>
+            </div>
+            <button id="save-media-presets" class="save-button" style="margin-top: 20px;">Save All Presets</button>
+        </div>
+    </div>
     <div id="motion-setup-tab" class="tab-content">
         <h4>Motion Setup</h4>
         <p>Configure motion sensors based on Home Assistant labels. Select motion sensors labeled "Motion" to assign to rooms.</p>
