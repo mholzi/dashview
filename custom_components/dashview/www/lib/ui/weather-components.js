@@ -32,15 +32,16 @@ export class WeatherComponents {
         if (!entityId) return;
 
         try {
+            // FIX: The 'true' parameter for returning response is not needed for hass.callService
             const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
                 target: { entity_id: entityId },
                 type: 'daily'
-            }, true);
+            });
 
             const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
                 target: { entity_id: entityId },
                 type: 'hourly'
-            }, true);
+            });
 
             this._forecasts.daily = dailyResponse?.[entityId]?.forecast || [];
             this._forecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
@@ -49,6 +50,39 @@ export class WeatherComponents {
             this._forecasts.daily = [];
             this._forecasts.hourly = [];
         }
+    }
+
+    // FIX: Add missing method
+    updatePollenCard(popup) {
+        if (!popup || !this._hass) return;
+        const pollenButtons = popup.querySelectorAll('.pollen-button');
+        pollenButtons.forEach(button => {
+            const sensorId = button.dataset.sensor;
+            const sensorEntity = this._hass.states[sensorId];
+            const stateElement = button.querySelector('.pollen-state');
+            
+            if (sensorEntity && sensorEntity.state !== 'unavailable') {
+                const value = parseFloat(sensorEntity.state);
+                if (value === 0) {
+                    button.style.display = 'none'; // Hide if no pollen
+                    return;
+                }
+                button.style.display = 'flex';
+                
+                let stateText = 'n/a';
+                let bgColor = '#dddddd';
+                
+                if (value < 2) { stateText = 'Niedrig'; bgColor = '#d6f5d6'; }
+                else if (value < 3) { stateText = 'Moderat'; bgColor = '#fff4cc'; }
+                else { stateText = 'Hoch'; bgColor = '#f8d0d0'; }
+                
+                if (stateElement) stateElement.textContent = stateText;
+                button.style.backgroundColor = bgColor;
+    
+            } else {
+                button.style.display = 'none';
+            }
+        });
     }
 
     _updateCurrentWeather(weatherState) {
