@@ -1,11 +1,22 @@
-// custom_components/dashview/lib/ui/info-card-manager.js
+// custom_components/dashview/www/lib/ui/info-card-manager.js
 
 export class InfoCardManager {
   constructor(panel) {
     this._panel = panel;
     this._hass = panel._hass;
-    this._config = panel._houseConfig;
     this._shadowRoot = panel.shadowRoot;
+
+    // A configuration array defines each section of the info card.
+    // To add a new section, you only need to add an object here.
+    this._sections = [
+      { selector: '.motion-section', handler: this._updateMotionSection },
+      { selector: '.windows-section', handler: this._updateWindowsSection },
+      { selector: '.dishwasher-section', handler: this._updateDishwasherSection },
+      { selector: '.washing-section', handler: this._updateWashingSection },
+      { selector: '.vacuum-section', handler: this._updateVacuumSection },
+      { selector: '.dryer-section', handler: this._updateDryerSection },
+      { selector: '.solar-section', handler: this._updateSolarSection },
+    ];
   }
 
   setHass(hass) {
@@ -13,91 +24,77 @@ export class InfoCardManager {
   }
 
   /**
-   * Main update function for the entire info card.
+   * Main update function. Loops through the defined sections and updates them.
    */
   update() {
     const infoCard = this._shadowRoot.querySelector('.info-card');
     if (!infoCard || !this._hass) return;
 
-    this._updateMotionSection();
-    this._updateWindowsSection();
-    this._updateDishwasherSection();
-    this._updateWashingSection();
-    this._updateVacuumSection();
-    this._updateDryerSection();
-    this._updateSolarSection();
+    for (const sectionConfig of this._sections) {
+      const sectionElement = this._shadowRoot.querySelector(sectionConfig.selector);
+      if (sectionElement) {
+        // Call the specific handler function for the section, binding the context.
+        sectionConfig.handler.call(this, sectionElement);
+      }
+    }
   }
 
-  // --- Private Helper Methods (moved directly from dashview-panel.js) ---
+  // --- Private Update Handlers for each section ---
 
-  _calculateTimeDifference(lastChanged) {
-    const now = new Date();
-    const diffSeconds = Math.floor((now - new Date(lastChanged)) / 1000);
-    if (diffSeconds < 60) return 'Jetzt';
-    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)} Minuten`;
-    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)} Stunden`;
-    return `${Math.floor(diffSeconds / 86400)} Tagen`;
-  }
-
-  _updateMotionSection() {
-    const section = this._shadowRoot.querySelector('.motion-section');
-    if (!section) return;
+  _updateMotionSection(section) {
     const motionEntity = this._hass.states['binary_sensor.motion_presence_home'];
     if (!motionEntity) {
-        section.classList.add('hidden');
-        return;
+      section.classList.add('hidden');
+      return;
     }
+
     const prefix = section.querySelector('[data-type="motion-prefix"]');
     const badge = section.querySelector('[data-type="motion-time"]');
     const suffix = section.querySelector('[data-type="motion-suffix"]');
     const badgeContainer = section.querySelector('.info-badge');
-
     const timeText = this._calculateTimeDifference(motionEntity.last_changed);
+
     if (motionEntity.state === 'on') {
-        prefix.textContent = 'Im Haus ist seit';
-        suffix.textContent = 'Bewegung.';
-        badgeContainer.classList.add('green');
-        badgeContainer.classList.remove('red');
+      prefix.textContent = 'Im Haus ist seit';
+      suffix.textContent = 'Bewegung.';
+      badgeContainer.classList.add('green');
+      badgeContainer.classList.remove('red');
     } else {
-        prefix.textContent = 'Die letzte Bewegung im Haus war vor';
-        suffix.textContent = '.';
-        badgeContainer.classList.remove('green');
-        badgeContainer.classList.add('red');
+      prefix.textContent = 'Die letzte Bewegung im Haus war vor';
+      suffix.textContent = '.';
+      badgeContainer.classList.remove('green');
+      badgeContainer.classList.add('red');
     }
     badge.textContent = `${timeText}🏡`;
     section.classList.remove('hidden');
   }
 
-  _updateWindowsSection() {
-    const section = this._shadowRoot.querySelector('.windows-section');
-    if (!section) return;
-    const allWindows = this._panel._getAllEntitiesByType('window');
-    const openWindows = allWindows.filter(id => this._hass.states[id]?.state === 'on').length;
+  _updateWindowsSection(section) {
+    const openWindows = this._panel._getAllEntitiesByType('window')
+      .filter(id => this._hass.states[id]?.state === 'on').length;
 
     if (openWindows > 0) {
-        section.classList.remove('hidden');
-        section.querySelector('[data-type="window-count"]').textContent = `${openWindows} 🪟`;
+      section.querySelector('[data-type="window-count"]').textContent = `${openWindows} 🪟`;
+      section.classList.remove('hidden');
     } else {
-        section.classList.add('hidden');
+      section.classList.add('hidden');
     }
   }
 
-  _updateDishwasherSection() {
-    const section = this._shadowRoot.querySelector('.dishwasher-section');
-    if (!section) return;
+  _updateDishwasherSection(section) {
     const dishwasherEntity = this._hass.states['sensor.geschirrspuler_operation_state'];
-    if (!dishwasherEntity || dishwasherEntity.state !== 'run') {
+    if (dishwasherEntity?.state !== 'run') {
       section.classList.add('hidden');
       return;
     }
-    section.classList.remove('hidden');
+
     const timeElement = section.querySelector('[data-type="time-remaining"]');
     const endTimeEntity = this._hass.states['sensor.geschirrspuler_remaining_program_time'];
-    if (endTimeEntity && endTimeEntity.state) {
+    if (endTimeEntity?.state) {
       const endTime = new Date(endTimeEntity.state);
       const now = new Date();
       if (endTime > now) {
-        const diffMinutes = Math.floor((endTime - now) / (1000 * 60));
+        const diffMinutes = Math.floor((endTime - now) / 60000);
         const hours = Math.floor(diffMinutes / 60);
         const remainingMinutes = diffMinutes % 60;
         let timeText = '';
@@ -110,23 +107,23 @@ export class InfoCardManager {
     } else {
       timeElement.textContent = 'Unknown';
     }
+    section.classList.remove('hidden');
   }
 
-  _updateWashingSection() {
-    const section = this._shadowRoot.querySelector('.washing-section');
-    if (!section) return;
+  _updateWashingSection(section) {
     const washingEntity = this._hass.states['sensor.waschmaschine_operation_state'];
-    if (!washingEntity) {
+    if (!washingEntity || !['run', 'finished'].includes(washingEntity.state)) {
       section.classList.add('hidden');
       return;
     }
+
     const prefixElement = section.querySelector('[data-type="washing-prefix"]');
     const timeElement = section.querySelector('[data-type="washing-time"]');
+
     if (washingEntity.state === 'run') {
       prefixElement.textContent = 'Die Waschmaschine läuft noch';
-      section.classList.remove('hidden');
       const endTimeEntity = this._hass.states['sensor.waschmaschine_remaining_program_time'];
-      if (endTimeEntity && endTimeEntity.state) {
+      if (endTimeEntity?.state) {
         const endTime = new Date(endTimeEntity.state);
         const now = new Date();
         if (endTime > now) {
@@ -143,24 +140,19 @@ export class InfoCardManager {
       } else {
         timeElement.textContent = 'Unknown👕';
       }
-    } else if (washingEntity.state === 'finished') {
+    } else { // 'finished'
       prefixElement.textContent = 'Die Waschmaschine ist fertig';
       timeElement.textContent = '👕';
-      section.classList.remove('hidden');
-    } else {
-      section.classList.add('hidden');
     }
+    section.classList.remove('hidden');
   }
 
-  _updateVacuumSection() {
-    const section = this._shadowRoot.querySelector('.vacuum-section');
-    if (!section) return;
+  _updateVacuumSection(section) {
     const vacuumEntity = this._hass.states['vacuum.mova_e30_ultra'];
-    if (!vacuumEntity || vacuumEntity.state !== 'cleaning') {
+    if (vacuumEntity?.state !== 'cleaning') {
       section.classList.add('hidden');
       return;
     }
-    section.classList.remove('hidden');
     const roomElement = section.querySelector('[data-type="room-name"]');
     const roomDict={'Erdgeschoss':{1:'Arbeitszimmer',2:'Gästeklo',3:'Küche',4:'Wohnzimmer',5:'Esszimmer',6:'Flur'},'Keller':{1:'Partykeller',2:'Kellerflur',3:'Raum 3',5:'Waschkeller'},'Dachgeschoss':{1:'Elternschlafzimmer',2:'Klo',3:'Ankleide',4:'Badezimmer'},'Map 4':{1:'Raum 1',2:'Raum 2',3:'Raum 3',4:'Raum 4',5:'Raum 5'}};
     const currentSegment = vacuumEntity.attributes.current_segment;
@@ -170,35 +162,33 @@ export class InfoCardManager {
       roomName = roomDict[selectedMap][currentSegment];
     }
     roomElement.textContent = roomName;
+    section.classList.remove('hidden');
   }
 
-  _updateDryerSection() {
-    const section = this._shadowRoot.querySelector('.dryer-section');
-    if (!section) return;
+  _updateDryerSection(section) {
     const dryerEntity = this._hass.states['input_boolean.trockner_an'];
-    if (!dryerEntity || dryerEntity.state !== 'on') {
+    if (dryerEntity?.state !== 'on') {
       section.classList.add('hidden');
       return;
     }
     section.classList.remove('hidden');
   }
 
-  _updateSolarSection() {
-    const section = this._shadowRoot.querySelector('.solar-section');
-    if (!section) return;
+  _updateSolarSection(section) {
     const solarEntity = this._hass.states['sensor.foxess_solar'];
     const batteryEntity = this._hass.states['sensor.foxess_bat_soc'];
     if (!solarEntity || !this._panel.isNumber(solarEntity.state)) {
         section.classList.add('hidden');
         return;
     }
-    section.classList.remove('hidden');
+    
     const productionElement = section.querySelector('[data-type="solar-production"]');
     const batteryPrefixElement = section.querySelector('[data-type="battery-prefix"]');
     const batteryLevelElement = section.querySelector('[data-type="battery-level"]');
     const batterySuffixElement = section.querySelector('[data-type="battery-suffix"]');
-    const solarValue = parseFloat(solarEntity.state);
-    productionElement.textContent = `${solarValue.toFixed(1)} kWh ☀️`;
+    
+    productionElement.textContent = `${parseFloat(solarEntity.state).toFixed(1)} kWh ☀️`;
+    
     if (batteryEntity && this._panel.isNumber(batteryEntity.state)) {
         const batteryLevel = parseFloat(batteryEntity.state);
         if (batteryLevel < 50) {
@@ -220,5 +210,17 @@ export class InfoCardManager {
         batteryLevelElement.style.display = 'none';
         batterySuffixElement.style.display = 'none';
     }
+    section.classList.remove('hidden');
+  }
+
+  // --- Helper Methods ---
+
+  _calculateTimeDifference(lastChanged) {
+    const now = new Date();
+    const diffSeconds = Math.floor((now - new Date(lastChanged)) / 1000);
+    if (diffSeconds < 60) return 'Jetzt';
+    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)} Minuten`;
+    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)} Stunden`;
+    return `${Math.floor(diffSeconds / 86400)} Tagen`;
   }
 }
