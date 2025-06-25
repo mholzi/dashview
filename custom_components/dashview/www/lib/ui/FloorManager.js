@@ -96,6 +96,11 @@ export class FloorManager {
 
     let gridHTML = '';
     for (const slot of layoutConfig) {
+        if (slot.type === 'empty') { // This is the new check
+            gridHTML += `<div style="grid-area: ${slot.grid_area};"></div>`;
+            continue;
+        }
+        
         let cardHTML = `<div class="placeholder-card ${slot.grid_area.includes('-big') ? 'placeholder-big' : 'placeholder-small'}" style="grid-area: ${slot.grid_area};"></div>`;
         
         const isBigSlot = slot.grid_area.includes('-big');
