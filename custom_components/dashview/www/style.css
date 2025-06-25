@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
 
-:root {
+:host {
     /* Base Font */
     --primary-font-family: 'Space Grotesk', sans-serif;
 
@@ -53,7 +53,7 @@
 
 /* Dark Mode Overrides */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :host {
         --background: #28282A;
         --popupBG: rgba(40, 40, 42, 0.3);
         --highlight: rgba(250, 251, 252, 0.05);
