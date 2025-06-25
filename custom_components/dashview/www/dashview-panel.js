@@ -1,16 +1,16 @@
 // custom_components/dashview/www/dashview-panel.js
 
-import { StateManager } from '../lib/state-manager.js';
-import { ConfigManager } from '../lib/config-manager.js';
-import { HeaderManager } from '../lib/ui/header-manager.js';
-import { PopupManager } from '../lib/ui/popup-manager.js';
-import { InfoCardManager } from '../lib/ui/info-card-manager.js';
-import { WeatherComponents } from '../lib/ui/weather-components.js';
-import { SecurityComponents } from '../lib/ui/security-components.js';
-import { CoversCard } from '../lib/ui/covers-card.js';
-import { LightsCard } from '../lib/ui/lights-card.js';
-import { ThermostatCard } from '../lib/ui/thermostat-card.js';
-import { MediaPlayerCard } from '../lib/ui/media-player-card.js';
+import { StateManager } from './lib/state-manager.js';
+import { ConfigManager } from './lib/config-manager.js';
+import { HeaderManager } from './lib/ui/header-manager.js';
+import { PopupManager } from './lib/ui/popup-manager.js';
+import { InfoCardManager } from './lib/ui/info-card-manager.js';
+import { WeatherComponents } from './lib/ui/weather-components.js';
+import { SecurityComponents } from './lib/ui/security-components.js';
+import { CoversCard } from './lib/ui/covers-card.js';
+import { LightsCard } from './lib/ui/lights-card.js';
+import { ThermostatCard } from './lib/ui/thermostat-card.js';
+import { MediaPlayerCard } from './lib/ui/media-player-card.js';
 
 class DashviewPanel extends HTMLElement {
   constructor() {
