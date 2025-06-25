@@ -258,7 +258,22 @@ export class AdminManager {
         container.innerHTML = `<div class="placeholder"><p>Failed to load entities. Check console.</p></div>`;
     }
   }
+  _initializeLayoutEditorEventListeners() {
+    const container = this._shadowRoot.getElementById('floor-layout-editor-container');
+    if (!container) return;
 
+    container.addEventListener('change', (e) => {
+      if (e.target.classList.contains('layout-type-selector')) {
+        const slot = e.target.closest('.layout-slot');
+        const entitySelector = slot.querySelector('.entity-selector');
+        if (e.target.value === 'pinned') {
+          entitySelector.style.display = 'block';
+        } else {
+          entitySelector.style.display = 'none';
+        }
+      }
+    });
+  }
   _renderGenericSensorSetup(container, entitiesByRoom, houseConfig, entityType) {
     if (!container) return;
     if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
@@ -391,6 +406,8 @@ export class AdminManager {
   async loadFloorLayoutEditor() {
     const container = this._shadowRoot.getElementById('floor-layout-editor-container');
     const statusEl = this._shadowRoot.getElementById('floor-layouts-status');
+    if (!container || !statusEl) return;
+
     this._setStatusMessage(statusEl, 'Loading...', 'loading');
     try {
         const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
@@ -410,6 +427,7 @@ export class AdminManager {
         }
         container.innerHTML = editorHTML;
         this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+        this._initializeLayoutEditorEventListeners(); // Add this line
     } catch (e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
     }
@@ -448,134 +466,6 @@ export class AdminManager {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
     }
   }
-// --- DWD Integration ---
-async loadDwdConfig() {
-  const inputEl = this._shadowRoot.getElementById('dwd-sensor-entity');
-  const statusEl = this._shadowRoot.getElementById('dwd-config-status');
-  if (!inputEl || !statusEl) return;
-  this._setStatusMessage(statusEl, 'Loading...', 'loading');
-  try {
-      const integrationsConfig = await this._hass.callApi('GET', 'dashview/config?type=integrations');
-      inputEl.value = integrationsConfig?.dwd_sensor || '';
-      this._setStatusMessage(statusEl, '✓ Loaded', 'success');
-  } catch(e) {
-      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
-  }
-}
-
-async saveDwdConfig() {
-  const inputEl = this._shadowRoot.getElementById('dwd-sensor-entity');
-  const statusEl = this._shadowRoot.getElementById('dwd-config-status');
-  this._setStatusMessage(statusEl, 'Saving...', 'loading');
-  try {
-      await this._saveConfigViaAPI('integrations', { dwd_sensor: inputEl.value });
-      this._setStatusMessage(statusEl, '✓ Saved!', 'success');
-  } catch(e) {
-      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
-  }
-}
-
-// --- Thresholds Config ---
-async loadThresholdsConfig() {
-  const tempInput = this._shadowRoot.getElementById('global-temp-threshold');
-  const humidityInput = this._shadowRoot.getElementById('global-humidity-threshold');
-  const statusEl = this._shadowRoot.getElementById('thresholds-config-status');
-  if (!tempInput || !humidityInput || !statusEl) return;
-
-  this._setStatusMessage(statusEl, 'Loading...', 'loading');
-  try {
-      const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
-      tempInput.value = houseConfig.temperature_threshold || '';
-      humidityInput.value = houseConfig.humidity_threshold || '';
-      this._setStatusMessage(statusEl, '✓ Loaded', 'success');
-  } catch (e) {
-      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
-  }
-}
-
-async saveThresholdsConfig() {
-  const tempInput = this._shadowRoot.getElementById('global-temp-threshold');
-  const humidityInput = this._shadowRoot.getElementById('global-humidity-threshold');
-  const statusEl = this._shadowRoot.getElementById('thresholds-config-status');
-  if (!tempInput || !humidityInput || !statusEl) return;
-
-  this._setStatusMessage(statusEl, 'Saving...', 'loading');
-  try {
-      const configToSave = await this._hass.callApi('GET', 'dashview/config?type=house') || {};
-      configToSave.temperature_threshold = parseFloat(tempInput.value);
-      configToSave.humidity_threshold = parseFloat(humidityInput.value);
-      await this._saveConfigViaAPI('house', configToSave);
-      this._adminLocalState.houseConfig = configToSave;
-      this._setStatusMessage(statusEl, '✓ Saved!', 'success');
-  } catch (e) {
-      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
-  }
-}
-
-// --- Floor Layout Editor ---
-async loadFloorLayoutEditor() {
-  const container = this._shadowRoot.getElementById('floor-layout-editor-container');
-  const statusEl = this._shadowRoot.getElementById('floor-layouts-status');
-  if (!container || !statusEl) return;
-
-  this._setStatusMessage(statusEl, 'Loading...', 'loading');
-  try {
-      const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
-      this._adminLocalState.houseConfig = houseConfig;
-      const floors = houseConfig.floors || {};
-      const layouts = houseConfig.floor_layouts || {};
-      
-      let editorHTML = '';
-      for (const [floorId, floorConfig] of Object.entries(floors)) {
-          const floorLayout = layouts[floorId] || [];
-          const allEntities = this._getEntitiesForFloor(floorId);
-          editorHTML += `<div class="config-section"><h5>${floorConfig.friendly_name || floorId}</h5><div class="floor-layout-grid" data-floor-id="${floorId}">`;
-          for (const slot of floorLayout) {
-              editorHTML += this._renderLayoutSlotEditor(slot, allEntities);
-          }
-          editorHTML += `</div></div>`;
-      }
-      container.innerHTML = editorHTML;
-      this._setStatusMessage(statusEl, '✓ Loaded', 'success');
-  } catch (e) {
-      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
-  }
-}
-
-_renderLayoutSlotEditor(slot, entities) {
-  const { grid_area, type, entity_id } = slot;
-  const isBigSlot = grid_area.includes('-big');
-  const isPinned = type === 'pinned';
-  const entityOptions = entities.map(entity => `<option value="${entity.entity_id}" ${entity.entity_id === entity_id ? 'selected' : ''}>${entity.name} (${entity.entity_id})</option>`).join('');
-  let typeOptions = `<option value="auto" ${type === 'auto' ? 'selected' : ''}>Automatic</option><option value="pinned" ${type === 'pinned' ? 'selected' : ''}>Pinned</option><option value="empty" ${type === 'empty' ? 'selected' : ''}>Empty</option>`;
-  if (isBigSlot) typeOptions = `<option value="room_swipe_card" ${type === 'room_swipe_card' ? 'selected' : ''}>Room Swiper</option>${typeOptions}`;
-
-  return `<div class="layout-slot" data-grid-area="${grid_area}" style="grid-area: ${grid_area};"><div class="slot-name">${grid_area}</div><div class="slot-config"><select class="layout-type-selector">${typeOptions}</select><select class="entity-selector" style="display: ${isPinned ? 'block' : 'none'};"><option value="">-- Select --</option>${entityOptions}</select></div></div>`;
-}
-
-async saveFloorLayouts() {
-  const statusEl = this._shadowRoot.getElementById('floor-layouts-status');
-  this._setStatusMessage(statusEl, 'Saving...', 'loading');
-  const newLayouts = {};
-  this._shadowRoot.querySelectorAll('.floor-layout-grid').forEach(grid => {
-      const floorId = grid.dataset.floorId;
-      newLayouts[floorId] = [];
-      grid.querySelectorAll('.layout-slot').forEach(slot => {
-          const gridArea = slot.dataset.gridArea;
-          const type = slot.querySelector('.layout-type-selector').value;
-          const entityId = slot.querySelector('.entity-selector').value;
-          newLayouts[floorId].push({ grid_area: gridArea, type: type, entity_id: type === 'pinned' ? entityId : null });
-      });
-  });
-  this._adminLocalState.houseConfig.floor_layouts = newLayouts;
-  try {
-      await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig);
-      this._setStatusMessage(statusEl, '✓ Saved!', 'success');
-  } catch (e) {
-      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
-  }
-}
-
 // --- Room Maintenance ---
 async loadRoomMaintenance() {
   const statusElement = this._shadowRoot.getElementById('room-maintenance-status');
@@ -726,4 +616,6 @@ _updateAdminSummary() {
       summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
   });
   container.innerHTML = summaryHTML;
+}
+
 }
