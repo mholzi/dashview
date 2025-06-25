@@ -32,23 +32,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Setting up DashView panel.")
     hass.data.setdefault(DOMAIN, {})
 
-    # Sync HA's floor/area registries with the DashView config upon startup.
     await _sync_config_from_ha_registries(hass, entry)
-
-    # Register the API endpoint.
     hass.http.register_view(DashViewConfigView(hass, entry))
-
-    # Register the services (e.g., set_weather_entity).
     await async_setup_services(hass)
 
-    # Register the /local/dashview path to serve the frontend files.
     panel_name = "dashview"
     www_path = os.path.join(os.path.dirname(__file__), "www")
     await hass.http.async_register_static_paths([
         StaticPathConfig(f"/local/{panel_name}", www_path, cache_headers=False)
     ])
 
-    # Register the custom panel in the Home Assistant sidebar.
     try:
         await panel_custom.async_register_panel(
             hass,
@@ -87,68 +80,52 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 @callback
 async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntry):
-    """
-    Creates and syncs the house_config from HA's floor and area registries.
-    This ensures that new floors and rooms created in HA automatically appear in
-    the DashView admin panel without overwriting existing user configurations.
-    """
+    """Syncs the house_config from HA's floor and area registries."""
     _LOGGER.debug("Syncing DashView configuration with HA registries.")
     floor_registry = fr.async_get(hass)
     area_registry = ar.async_get(hass)
-
-    # Start with the user's existing configuration from the options flow.
     house_config = entry.options.get("house_config", {})
 
-    # Ensure top-level keys exist to prevent errors.
     house_config.setdefault("floors", {})
     house_config.setdefault("rooms", {})
     house_config.setdefault("floor_layouts", {})
 
-    # Sync floors: Add new floors from HA, preserving existing DashView settings.
     for floor in floor_registry.floors.values():
         if floor.floor_id not in house_config["floors"]:
             _LOGGER.info(f"New floor '{floor.name}' found, adding to DashView config.")
             house_config["floors"][floor.floor_id] = {}
         
-        # Update with latest info from HA, but keep other user-set keys.
-        house_config["floors"][floor.floor_id]["friendly_name"] = floor.name
-        house_config["floors"][floor.floor_id]["icon"] = floor.icon or "mdi:home"
-        house_config["floors"][floor.floor_id]["level"] = floor.level
+        house_config["floors"][floor.floor_id].update({
+            "friendly_name": floor.name,
+            "icon": floor.icon or "mdi:home",
+            "level": floor.level,
+        })
         
-        # **Crucial Fix**: Create a default layout for any new floor.
         if floor.floor_id not in house_config["floor_layouts"]:
             _LOGGER.info(f"Generating default layout for new floor '{floor.name}'.")
             house_config["floor_layouts"][floor.floor_id] = [
-                # Default big slots to the room swiper
                 {"grid_area": "r1-big", "type": "room_swipe_card", "entity_id": None},
                 {"grid_area": "r2-big", "type": "room_swipe_card", "entity_id": None},
-                # Default small slots to auto
                 {"grid_area": "r1-small-1", "type": "auto", "entity_id": None},
                 {"grid_area": "r1-small-2", "type": "auto", "entity_id": None},
                 {"grid_area": "r2-small-3", "type": "auto", "entity_id": None},
                 {"grid_area": "r2-small-4", "type": "auto", "entity_id": None},
             ]
 
-    # Sync rooms: Add new areas from HA, preserving user-configured entity lists.
     for area in area_registry.areas.values():
         if area.id not in house_config["rooms"]:
             _LOGGER.info(f"New area '{area.name}' found, adding to DashView config.")
             house_config["rooms"][area.id] = {}
 
-        # Update basic info, but preserve the important user-configured lists.
-        house_config["rooms"][area.id]["friendly_name"] = area.name
-        house_config["rooms"][area.id]["icon"] = area.icon or "mdi:home-outline"
-        house_config["rooms"][area.id]["floor"] = area.floor_id
-        # Ensure entity lists exist.
-        house_config["rooms"][area.id].setdefault("lights", [])
-        house_config["rooms"][area.id].setdefault("covers", [])
-        house_config["rooms"][area.id].setdefault("media_players", [])
-        house_config["rooms"][area.id].setdefault("header_entities", [])
+        house_config["rooms"][area.id].update({
+            "friendly_name": area.name,
+            "icon": area.icon or "mdi:home-outline",
+            "floor": area.floor_id,
+        })
+        for key in ["lights", "covers", "media_players", "header_entities"]:
+            house_config["rooms"][area.id].setdefault(key, [])
 
-    # Save the updated configuration back to the options flow.
-    hass.config_entries.async_update_entry(
-        entry, options={"house_config": house_config}
-    )
+    hass.config_entries.async_update_entry(entry, options={"house_config": house_config})
     _LOGGER.info("DashView configuration synchronized.")
 
 
@@ -158,20 +135,18 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
 
 class DashViewConfigView(HomeAssistantView):
     """Provides the /api/dashview/config endpoint for the frontend."""
-
     url = "/api/dashview/config"
     name = "api:dashview:config"
     requires_auth = True
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
-        """Initialize the config view."""
         self._hass = hass
         self._entry = entry
 
     async def get(self, request: web.Request) -> web.Response:
         """Handle GET requests to fetch configuration or entities."""
         config_type = request.query.get('type')
-
+        
         if config_type == 'house':
             config = self._entry.options.get('house_config', {})
             return web.json_response(config)
@@ -185,72 +160,55 @@ class DashViewConfigView(HomeAssistantView):
             config = self._entry.options.get('integrations_config', {})
             return web.json_response(config)
 
-        if config_type == 'available_media_players':
-            entity_reg = er.async_get(self._hass)
-            all_media_players = [
-                {
-                    "entity_id": entity.entity_id,
-                    "friendly_name": entity.name or entity.original_name or entity.entity_id,
-                }
-                for entity in entity_reg.entities.values() if entity.domain == "media_player"
-            ]
-            return web.json_response(all_media_players)
-
         if config_type == 'entities_by_room':
-            label = request.query.get('label')
-            domain = request.query.get('domain')
+            return await self._get_entities_by_room(request)
 
-            if not label and not domain:
-                return web.json_response({"error": "Label or domain parameter is required"}, status=400)
+        return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
-            entity_reg = er.async_get(self._hass)
-            area_reg = ar.async_get(self._hass)
-            
-            source_entity_ids = set()
-            if label and isinstance(label, str):
-                label_reg = lr.async_get(self._hass)
-                label_entry = next((entry for entry in label_reg.labels.values() if entry.name.lower() == label.lower()), None)
-                if label_entry:
-                    source_entities = entity_reg.entities.get_entries_for_label(label_entry.label_id)
-                    source_entity_ids = {entity.entity_id for entity in source_entities if entity.domain != "automation"}
-            elif domain and isinstance(domain, str):
-                source_entity_ids = {entity.entity_id for entity in entity_reg.entities.values() if entity.domain == domain}
+    async def _get_entities_by_room(self, request: web.Request) -> web.Response:
+        """A robust method to get entities filtered by domain or label, grouped by room."""
+        label_param = request.query.get('label')
+        domain_param = request.query.get('domain')
 
-            if not source_entity_ids:
+        if not label_param and not domain_param:
+            return web.json_response({"error": "A 'label' or 'domain' parameter is required."}, status=400)
+
+        entity_reg = er.async_get(self._hass)
+        area_reg = ar.async_get(self._hass)
+        label_reg = lr.async_get(self._hass)
+        
+        target_label_id = None
+        if label_param:
+            label_entry = label_reg.get_label_by_name(label_param)
+            if label_entry:
+                target_label_id = label_entry.label_id
+            else:
+                _LOGGER.warning(f"Label '{label_param}' not found in registry.")
                 return web.json_response({})
 
-            entities_by_area = {}
-            processed_entity_ids = set()
+        entities_by_area = {}
 
-            for area in area_reg.areas.values():
-                area_entity_ids = set(entity_reg.entities_by_area_id.get(area.id, []))
-                matching_entities_in_area = source_entity_ids.intersection(area_entity_ids)
+        for entity_id, entity_entry in entity_reg.entities.items():
+            if not entity_entry.area_id:
+                continue
+
+            domain_matches = domain_param and entity_entry.domain == domain_param
+            label_matches = target_label_id and target_label_id in entity_entry.labels
+            
+            if domain_matches or label_matches:
+                area = area_reg.async_get_area(entity_entry.area_id)
+                if not area:
+                    continue
                 
-                if matching_entities_in_area:
+                if area.id not in entities_by_area:
                     entities_by_area[area.id] = {"name": area.name, "entities": []}
-                    for entity_id in matching_entities_in_area:
-                        entity = await entity_reg.async_get(entity_id)
-                        if entity:
-                            entities_by_area[area.id]["entities"].append({
-                                "entity_id": entity.entity_id,
-                                "name": entity.name or entity.original_name,
-                            })
-                            processed_entity_ids.add(entity.entity_id)
+                
+                entities_by_area[area.id]["entities"].append({
+                    "entity_id": entity_entry.entity_id,
+                    "name": entity_entry.name or entity_entry.original_name or entity_entry.entity_id,
+                })
 
-            unassigned_entity_ids = source_entity_ids - processed_entity_ids
-            if unassigned_entity_ids:
-                entities_by_area["unassigned"] = {"name": "Unassigned Entities", "entities": []}
-                for entity_id in unassigned_entity_ids:
-                    entity = await entity_reg.async_get(entity_id)
-                    if entity:
-                         entities_by_area["unassigned"]["entities"].append({
-                            "entity_id": entity.entity_id,
-                            "name": entity.name or entity.original_name,
-                        })
-
-            return web.json_response(entities_by_area)
-
-        return web.json_response({"error": "Invalid config type"}, status=400)
+        return web.json_response(entities_by_area)
 
     async def post(self, request: web.Request) -> web.Response:
         """Handle POST requests to save configuration."""
