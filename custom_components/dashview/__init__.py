@@ -168,8 +168,6 @@ class DashViewConfigView(HomeAssistantView):
         self._hass = hass
         self._entry = entry
 
-# In custom_components/dashview/__init__.py
-
     async def get(self, request: web.Request) -> web.Response:
         """Handle GET requests to fetch configuration or entities."""
         config_type = request.query.get('type')
@@ -177,6 +175,11 @@ class DashViewConfigView(HomeAssistantView):
         if config_type == 'house':
             config = self._entry.options.get('house_config', {})
             return web.json_response(config)
+
+        if config_type == 'weather_entity':
+            house_config = self._entry.options.get('house_config', {})
+            weather_entity = house_config.get('weather_entity', 'weather.forecast_home')
+            return web.json_response({'weather_entity': weather_entity})
 
         if config_type == 'integrations':
             config = self._entry.options.get('integrations_config', {})
@@ -196,17 +199,21 @@ class DashViewConfigView(HomeAssistantView):
         if config_type == 'entities_by_room':
             label = request.query.get('label')
             domain = request.query.get('domain')
+
+            if not label and not domain:
+                return web.json_response({"error": "Label or domain parameter is required"}, status=400)
+
             entity_reg = er.async_get(self._hass)
             area_reg = ar.async_get(self._hass)
             
             source_entity_ids = set()
-            if label:
+            if label and isinstance(label, str):
                 label_reg = lr.async_get(self._hass)
                 label_entry = next((entry for entry in label_reg.labels.values() if entry.name.lower() == label.lower()), None)
                 if label_entry:
                     source_entities = entity_reg.entities.get_entries_for_label(label_entry.label_id)
                     source_entity_ids = {entity.entity_id for entity in source_entities if entity.domain != "automation"}
-            elif domain:
+            elif domain and isinstance(domain, str):
                 source_entity_ids = {entity.entity_id for entity in entity_reg.entities.values() if entity.domain == domain}
 
             if not source_entity_ids:
@@ -273,4 +280,3 @@ class DashViewConfigView(HomeAssistantView):
         except Exception as e:
             _LOGGER.error("[DashView] Error saving configuration: %s", e)
             return web.json_response({"status": "error", "message": str(e)}, status=500)
-            
