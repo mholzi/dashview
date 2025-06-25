@@ -27,6 +27,8 @@ export class AdminManager {
       'media-player-maintenance-tab': () => this.loadRoomMediaPlayerMaintenance(),
       'weather-tab': () => this.loadWeatherEntityConfiguration(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
+      'scenes-tab': () => this.loadScenes(),
+      'media-presets-tab': () => this.loadMediaPlayerPresets(),
       'motion-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.MOTION, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
       'window-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.WINDOW, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors'),
       'smoke-detector-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.SMOKE, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room', 'Smoke Detectors'),
@@ -75,6 +77,39 @@ export class AdminManager {
             '#reload-dwd-config': () => this.loadDwdConfig(),
             '#save-thresholds-config': () => this.saveThresholdsConfig(),
             '#save-floor-layouts': () => this.saveFloorLayouts(),
+            '#add-scene': () => {
+              const name = this._shadowRoot.getElementById('new-scene-name').value;
+              const id = this._shadowRoot.getElementById('new-scene-id').value;
+              const icon = this._shadowRoot.getElementById('new-scene-icon').value;
+              const type = this._shadowRoot.getElementById('new-scene-type').value;
+              const entities = this._shadowRoot.getElementById('new-scene-entities').value.split('\n').map(e => e.trim()).filter(e => e);
+          
+              if (name && id && icon && type) {
+                  if (!this._adminLocalState.houseConfig.scenes) {
+                      this._adminLocalState.houseConfig.scenes = [];
+                  }
+                  this._adminLocalState.houseConfig.scenes.push({ name, id, icon, type, entities });
+                  this._renderScenes();
+              }
+            },
+            '#save-scenes': () => this.saveScenes(),
+            '#add-media-preset': () => {
+              const nameInput = this._shadowRoot.getElementById('new-preset-name');
+              const idInput = this._shadowRoot.getElementById('new-preset-id');
+              if (nameInput.value && idInput.value) {
+                  if (!this._adminLocalState.houseConfig.media_presets) {
+                      this._adminLocalState.houseConfig.media_presets = [];
+                  }
+                  this._adminLocalState.houseConfig.media_presets.push({
+                      name: nameInput.value,
+                      content_id: idInput.value
+                  });
+                  nameInput.value = '';
+                  idInput.value = '';
+                  this._renderMediaPlayerPresets();
+              }
+            },
+            '#save-media-presets': () => this.saveMediaPlayerPresets(),
         };
 
         for (const selector in buttonActions) {
@@ -466,6 +501,52 @@ export class AdminManager {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
     }
   }
+
+  async loadScenes() {
+    const statusEl = this._shadowRoot.getElementById('scenes-status');
+    this._setStatusMessage(statusEl, 'Loading...', 'loading');
+    try {
+        const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+        this._adminLocalState.houseConfig = houseConfig;
+        this._renderScenes();
+        this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
+  }
+
+  _renderScenes() {
+    const container = this._shadowRoot.getElementById('scenes-list');
+    if (!container) return;
+    const scenes = this._adminLocalState.houseConfig?.scenes || [];
+    container.innerHTML = '';
+    scenes.forEach((scene, index) => {
+        const item = document.createElement('div');
+        item.className = 'floor-item';
+        item.innerHTML = `
+            <div class="floor-info">
+                <div class="floor-name">${scene.name}</div>
+                <div class="floor-details">${scene.id} (${scene.type})</div>
+            </div>
+            <div class="floor-actions">
+                <button class="delete-button" data-index="${index}">Delete</button>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+  }
+
+  async saveScenes() {
+    const statusEl = this._shadowRoot.getElementById('scenes-status');
+    this._setStatusMessage(statusEl, 'Saving...', 'loading');
+    const scenes = this._adminLocalState.houseConfig?.scenes || [];
+    try {
+        await this._saveConfigViaAPI('scenes', scenes);
+        this._setStatusMessage(statusEl, '✓ Saved!', 'success');
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
+  }
 // --- Room Maintenance ---
 async loadRoomMaintenance() {
   const statusElement = this._shadowRoot.getElementById('room-maintenance-status');
@@ -589,7 +670,51 @@ async saveAllMediaPlayerAssignments() {
       this._setStatusMessage(statusElement, `✗ Error: ${e.message}`, 'error');
   }
 }
+async loadMediaPlayerPresets() {
+  const statusEl = this._shadowRoot.getElementById('media-presets-status');
+  this._setStatusMessage(statusEl, 'Loading...', 'loading');
+  try {
+      const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+      this._adminLocalState.houseConfig = houseConfig;
+      this._renderMediaPlayerPresets();
+      this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+  } catch (e) {
+      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+  }
+}
 
+_renderMediaPlayerPresets() {
+  const container = this._shadowRoot.getElementById('media-presets-list');
+  if (!container) return;
+  const presets = this._adminLocalState.houseConfig?.media_presets || [];
+  container.innerHTML = '';
+  presets.forEach((preset, index) => {
+      const item = document.createElement('div');
+      item.className = 'floor-item';
+      item.innerHTML = `
+          <div class="floor-info">
+              <div class="floor-name">${preset.name}</div>
+              <div class="floor-details">${preset.content_id}</div>
+          </div>
+          <div class="floor-actions">
+              <button class="delete-button" data-index="${index}">Delete</button>
+          </div>
+      `;
+      container.appendChild(item);
+  });
+}
+
+async saveMediaPlayerPresets() {
+  const statusEl = this._shadowRoot.getElementById('media-presets-status');
+  this._setStatusMessage(statusEl, 'Saving...', 'loading');
+  const presets = this._adminLocalState.houseConfig?.media_presets || [];
+  try {
+      await this._saveConfigViaAPI('media_presets', presets);
+      this._setStatusMessage(statusEl, '✓ Saved!', 'success');
+  } catch (e) {
+      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+  }
+}
 // --- Admin Summary ---
 _updateAdminSummary() {
   const container = this._shadowRoot.getElementById('config-summary-container');
