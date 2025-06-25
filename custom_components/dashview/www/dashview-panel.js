@@ -13,6 +13,7 @@ import { CoversCard } from './lib/ui/covers-card.js';
 import { LightsCard } from './lib/ui/light-card.js';
 import { ThermostatCard } from './lib/ui/thermostat-card.js';
 import { MediaPlayerCard } from './lib/ui/media-player-card.js';
+import { SceneManager } from './lib/ui/SceneManager.js'; // Ensure this import is present
 
 class DashviewPanel extends HTMLElement {
   constructor() {
@@ -51,7 +52,7 @@ class DashviewPanel extends HTMLElement {
         if (this._stateManager) this._stateManager.setHass(hass);
         if (this._infoCardManager) this._infoCardManager.setHass(hass);
         if (this._weatherManager) this._weatherManager.setHass(hass);
-        // ... and so on for any other manager that needs live state updates
+        if (this._sceneManager) this._sceneManager.setHass(hass); // Also for SceneManager
         
         // Let the StateManager drive all subsequent updates.
         this._stateManager.handleHassUpdate();
@@ -68,11 +69,9 @@ class DashviewPanel extends HTMLElement {
         this.shadowRoot.innerHTML = `<style>${styleText}</style>${htmlText}`;
         
         // --- 2. Load HTML Templates ---
-        // This ensures all placeholder divs are ready before JS tries to access them.
         await this._loadTemplates(this.shadowRoot);
 
         // --- 3. Initialize Configuration ---
-        // The ConfigManager needs hass to make API calls.
         this._configManager = new ConfigManager();
         this._configManager.setHass(this._hass);
         const configs = await this._configManager.loadAll();
@@ -81,17 +80,17 @@ class DashviewPanel extends HTMLElement {
         this._weatherEntityId = configs.weatherEntityId;
 
         // --- 4. Instantiate All UI & Data Managers ---
-        // Now that config is loaded and the DOM is ready, we can safely create these.
         this.initializeManagers();
         
-        // --- 5. Initialize Core UI Interactivity ---
-        // This restores the essential event listeners for popups and navigation.
-        this.initializeCard();
+        // --- 5. Render Initial State ---
+        this._sceneManager.renderSceneButtons(); // Render scenes after managers are initialized
         this._floorManager.initializeFloorTabs();
+
+        // --- 6. Initialize Core UI Interactivity ---
+        this.initializeCard();
         
-        // --- 6. Set Content Ready Flag & Finalize ---
+        // --- 7. Set Content Ready Flag & Finalize ---
         this._contentReady = true;
-        // If hass was already set while we were loading, trigger the first update.
         if (this._hass) {
             this.hass = this._hass; 
         }
@@ -106,8 +105,7 @@ class DashviewPanel extends HTMLElement {
    * Instantiates all manager classes and passes them the main panel reference.
    */
   initializeManagers() {
-    // Pass `this` (the panel instance) to all managers so they can access
-    // shared resources like _hass, _shadowRoot, and config.
+    // Pass `this` (the panel instance) to all managers
     this._stateManager = new StateManager(this);
     this._adminManager = new AdminManager(this);
     this._headerManager = new HeaderManager(this);
@@ -120,6 +118,7 @@ class DashviewPanel extends HTMLElement {
     this._thermostatManager = new ThermostatCard(this);
     this._mediaPlayerManager = new MediaPlayerCard(this);
     this._floorManager = new FloorManager(this);
+    this._sceneManager = new SceneManager(this); // Ensure SceneManager is instantiated here
 
     // Pass the initial configuration to the state manager
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
@@ -134,22 +133,26 @@ class DashviewPanel extends HTMLElement {
     // Delegate updates to the appropriate managers
     this._headerManager.updateAll();
     this._infoCardManager.update();
-    
+    this._sceneManager.renderSceneButtons(); // Update scenes on any relevant entity change
+
     const activePopup = this._shadowRoot.querySelector('.popup.active');
-    if (activePopup) { // This check is the fix
+    if (activePopup) {
         this._popupManager.updatePopupContent(activePopup, entityId);
     }
   }
 
   /**
-   * Restored from the original working code. Sets up global event listeners for navigation.
+   * Sets up global event listeners for navigation.
    */
   initializeCard() {
-    this._popupManager.initializeEventListeners();
     this._adminManager.initializeAdminEventListeners();
   }
 
   // --- Helper Methods ---
+  _getCurrentWeatherEntityId() {
+    return this._weatherEntityId || 'weather.forecast_home';
+  }
+
   getPopupIconForType(popupType) {
     if (this._houseConfig?.rooms?.[popupType]) {
         return this._processIconName(this._houseConfig.rooms[popupType].icon);
