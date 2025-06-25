@@ -134,10 +134,9 @@ class DashviewPanel extends HTMLElement {
     // Delegate updates to the appropriate managers
     this._headerManager.updateAll();
     this._infoCardManager.update();
-    this._floorManager.renderFloorLayout(this._floorManager.getActiveFloor());
-
+    
     const activePopup = this._shadowRoot.querySelector('.popup.active');
-    if (activePopup) {
+    if (activePopup) { // This check is the fix
         this._popupManager.updatePopupContent(activePopup, entityId);
     }
   }
