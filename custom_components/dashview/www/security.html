@@ -18,7 +18,6 @@
         <div class="chip-name">0 aktiv</div>
     </div>
 </div>
-<div class="placeholder">Alarm Panel Card</div>
 
 <div class="tabs-container" style="margin-top: 20px;">
     <div class="tab-buttons">
@@ -30,124 +29,51 @@
     </div>
     <div id="fenster-tab" class="tab-content active">
         <h4><i class="mdi mdi-window-open"></i> Offene Fenster</h4>
-        <div id="open-windows-list" class="entity-list">
-        </div>
+        <div id="open-windows-list" class="entity-list"></div>
         <h4 style="margin-top: 20px;"><i class="mdi mdi-window-closed"></i> Geschlossene Fenster</h4>
-        <div id="closed-windows-list" class="entity-list">
-        </div>
+        <div id="closed-windows-list" class="entity-list"></div>
     </div>
     <div id="bewegung-tab" class="tab-content">
         <h4><i class="mdi mdi-run-fast"></i> Aktive Bewegungsmelder</h4>
-        <div id="active-motion-list" class="entity-list">
-        </div>
+        <div id="active-motion-list" class="entity-list"></div>
         <h4 style="margin-top: 20px;"><i class="mdi mdi-motion-sensor-off"></i> Inaktive Bewegungsmelder</h4>
-        <div id="inactive-motion-list" class="entity-list">
-        </div>
+        <div id="inactive-motion-list" class="entity-list"></div>
     </div>
     <div id="rauchmelder-tab" class="tab-content">
         <h4><i class="mdi mdi-smoke-detector"></i> Aktive Rauchmelder</h4>
-        <div id="active-smoke-detector-list" class="entity-list">
-        </div>
+        <div id="active-smoke-detector-list" class="entity-list"></div>
         <h4 style="margin-top: 20px;"><i class="mdi mdi-smoke-detector-off"></i> Inaktive Rauchmelder</h4>
-        <div id="inactive-smoke-detector-list" class="entity-list">
-        </div>
+        <div id="inactive-smoke-detector-list" class="entity-list"></div>
     </div>
     <div id="vibration-tab" class="tab-content">
         <h4><i class="mdi mdi-vibrate"></i> Aktive Vibrationssensoren</h4>
-        <div id="active-vibration-list" class="entity-list">
-        </div>
+        <div id="active-vibration-list" class="entity-list"></div>
         <h4 style="margin-top: 20px;"><i class="mdi mdi-vibrate-off"></i> Inaktive Vibrationssensoren</h4>
-        <div id="inactive-vibration-list" class="entity-list">
-        </div>
+        <div id="inactive-vibration-list" class="entity-list"></div>
     </div>
      <div id="temperatur-tab" class="tab-content">
         <h4>Temperaturen</h4>
-        <div class="placeholder">List of temperatures...</div>
+        <div id="temperature-list" class="entity-list"></div>
     </div>
 </div>
 
+<template id="sensor-small-card-template">
+    <div class="sensor-small-card">
+        <div class="sensor-small-grid">
+            <div class="sensor-small-icon-cell">
+                <i class="mdi"></i>
+            </div>
+            <div class="sensor-small-label"></div>
+            <div class="sensor-small-name"></div>
+        </div>
+    </div>
+</template>
+
 <style>
-    /* Security header buttons styling */
-    .security-header-buttons {
-        margin: 24px 8px 0 8px;
-    }
-    
-    .security-buttons-row {
-        display: flex;
-        gap: 8px;
-        overflow-x: scroll;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-        justify-content: flex-start;
-    }
-    
-    .security-buttons-row::-webkit-scrollbar {
-        display: none;
-    }
-    
-    .security-button {
-        display: flex;
-        flex-basis: 1;
-        flex-shrink: 0;
-        background: var(--gray800);
-        border: none;
-        border-radius: 24px;
-        color: var(--black);
-        height: 34px;
-        padding: 0;
-        cursor: pointer;
-        align-items: center;
-        transition: all 0.2s ease;
-    }
-    
-    .security-button.active {
-        background: var(--active-big);
-    }
-    
-    .security-button.active .security-button-name {
-        color: var(--black);
-    }
-    
-    .security-button.active .security-button-icon {
-        background-color: var(--white);
-        color: var(--black);
-    }
-    
-    .security-button-icon {
-        width: 36px;
-        height: 36px;
-        display: flex;
-        margin-left: -2px;
-        justify-content: center;
-        align-items: center;
-        background: var(--gray000);
-        border-radius: 50%;
-        color: var(--gray800);
-    }
-    
-    .security-button-icon .mdi {
-        font-size: 26px;
-    }
-    
-    .security-button-name {
-        padding: 0 10px;
-        color: var(--black);
-        font-size: 0.9em;
-    }
-    
-    /* Entity list styling */
+    /* Add some specific styling for the list to look good */
     .entity-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .entity-list-item {
-        padding: 12px;
-        background-color: var(--gray000);
-        border-radius: 12px;
-        font-weight: 500;
-    }
-    .entity-list-none {
-        color: var(--secondary-text-color);
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
     }
 </style>
