@@ -13,6 +13,14 @@ export class AdminManager {
       haRooms: [],
       isLoaded: false
     };
+
+    // Make AdminManager self-sufficient
+    this._entityLabels = {
+        MOTION: 'motion', WINDOW: 'fenster', SMOKE: 'rauchmelder', VIBRATION: 'vibration',
+        TEMPERATUR: 'temperatur', HUMIDITY: 'humidity', PRINTER: 'printer', DOOR: 'door',
+        HOOVER: 'hoover', DISHWASHER: 'dishwasher', DRYER: 'dryer', CARTRIDGE: 'cartridge',
+        LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer'
+    };
   }
 
   setHass(hass) {
@@ -29,17 +37,17 @@ export class AdminManager {
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
       'scenes-tab': () => this.loadScenes(),
       'media-presets-tab': () => this.loadMediaPlayerPresets(),
-      'motion-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.MOTION, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
-      'window-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.WINDOW, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors'),
-      'smoke-detector-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.SMOKE, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room', 'Smoke Detectors'),
-      'vibration-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.VIBRATION, 'vibration-setup-status', 'vibration-sensors-by-room', 'Vibration Sensors'),
-      'cover-setup-tab': () => this.loadGenericSensorSetup('cover', 'cover-setup-status', 'covers-by-room', 'Covers', true),
-      'light-setup-tab': () => this.loadGenericSensorSetup('light', 'light-setup-status', 'lights-by-room', 'Lights', true),
+      'motion-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.MOTION}, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
+      'window-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.WINDOW}, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors'),
+      'smoke-detector-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.SMOKE}, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room', 'Smoke Detectors'),
+      'vibration-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.VIBRATION}, 'vibration-setup-status', 'vibration-sensors-by-room', 'Vibration Sensors'),
+      'cover-setup-tab': () => this.loadGenericSensorSetup({domain: 'cover'}, 'cover-setup-status', 'covers-by-room', 'Covers'),
+      'light-setup-tab': () => this.loadGenericSensorSetup({domain: 'light'}, 'light-setup-status', 'lights-by-room', 'Lights'),
       'temperatur-setup-tab': () => {
-        this.loadGenericSensorSetup(this._panel._entityLabels.TEMPERATUR, 'temperatur-setup-status', 'temperatur-sensors-by-room', 'Temperature Sensors');
+        this.loadGenericSensorSetup({label: this._entityLabels.TEMPERATUR}, 'temperatur-setup-status', 'temperatur-sensors-by-room', 'Temperature Sensors');
         this.loadThresholdsConfig();
       },
-      'humidity-setup-tab': () => this.loadGenericSensorSetup(this._panel._entityLabels.HUMIDITY, 'humidity-setup-status', 'humidity-sensors-by-room', 'Humidity Sensors'),
+      'humidity-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.HUMIDITY}, 'humidity-setup-status', 'humidity-sensors-by-room', 'Humidity Sensors'),
     };
 
     if (loadActionMap[targetId]) {
@@ -54,21 +62,21 @@ export class AdminManager {
             '#save-house-config': () => this.saveHouseConfiguration(),
             '#save-weather-entity': () => this.saveWeatherEntityConfiguration(),
             '#reload-weather-config': () => this.loadWeatherEntityConfiguration(),
-            '#save-motion-sensor-config': () => this.saveGenericSensorConfig(this._panel._entityLabels.MOTION, 'motion-setup-status', 'motion-sensors-by-room'),
+            '#save-motion-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.MOTION, 'motion-setup-status', 'motion-sensors-by-room'),
             '#reload-motion-sensors': () => this.loadTabContent('motion-setup-tab'),
             '#save-cover-config': () => this.saveGenericSensorConfig('cover', 'cover-setup-status', 'covers-by-room', true),
             '#reload-cover-entities': () => this.loadTabContent('cover-setup-tab'),
             '#save-light-config': () => this.saveGenericSensorConfig('light', 'light-setup-status', 'lights-by-room', true),
             '#reload-light-entities': () => this.loadTabContent('light-setup-tab'),
-            '#save-window-sensor-config': () => this.saveGenericSensorConfig(this._panel._entityLabels.WINDOW, 'window-setup-status', 'window-sensors-by-room'),
+            '#save-window-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.WINDOW, 'window-setup-status', 'window-sensors-by-room'),
             '#reload-window-sensors': () => this.loadTabContent('window-setup-tab'),
-            '#save-smoke-detector-sensor-config': () => this.saveGenericSensorConfig(this._panel._entityLabels.SMOKE, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room'),
+            '#save-smoke-detector-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.SMOKE, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room'),
             '#reload-smoke-detector-sensors': () => this.loadTabContent('smoke-detector-setup-tab'),
-            '#save-vibration-sensor-config': () => this.saveGenericSensorConfig(this._panel._entityLabels.VIBRATION, 'vibration-setup-status', 'vibration-sensors-by-room'),
+            '#save-vibration-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.VIBRATION, 'vibration-setup-status', 'vibration-sensors-by-room'),
             '#reload-vibration-sensors': () => this.loadTabContent('vibration-setup-tab'),
-            '#save-temperatur-sensor-config': () => this.saveGenericSensorConfig(this._panel._entityLabels.TEMPERATUR, 'temperatur-setup-status', 'temperatur-sensors-by-room'),
+            '#save-temperatur-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.TEMPERATUR, 'temperatur-setup-status', 'temperatur-sensors-by-room'),
             '#reload-temperatur-sensors': () => this.loadTabContent('temperatur-setup-tab'),
-            '#save-humidity-sensor-config': () => this.saveGenericSensorConfig(this._panel._entityLabels.HUMIDITY, 'humidity-setup-status', 'humidity-sensors-by-room'),
+            '#save-humidity-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.HUMIDITY, 'humidity-setup-status', 'humidity-sensors-by-room'),
             '#reload-humidity-sensors': () => this.loadTabContent('humidity-setup-tab'),
             '#reload-room-maintenance': () => this.loadRoomMaintenance(),
             '#reload-media-players': () => this.loadRoomMediaPlayerMaintenance(),
@@ -273,21 +281,22 @@ export class AdminManager {
     }
   }
 
-  async loadGenericSensorSetup(entityIdentifier, statusElementId, containerElementId, headerText, useDomain = false) {
+  async loadGenericSensorSetup(queryParams, statusElementId, containerElementId, headerText) {
     const statusElement = this._shadowRoot.getElementById(statusElementId);
     const container = this._shadowRoot.getElementById(containerElementId);
     this._setStatusMessage(statusElement, `Loading ${headerText}...`, 'loading');
 
     try {
-        const queryType = useDomain ? 'domain' : 'label';
+        const queryString = Object.entries(queryParams).map(([key, value]) => `${key}=${value}`).join('&');
         const [entitiesByRoom, houseConfig] = await Promise.all([
-            this._hass.callApi('GET', `dashview/config?type=entities_by_room&${queryType}=${entityIdentifier}`),
+            this._hass.callApi('GET', `dashview/config?type=entities_by_room&${queryString}`),
             this._hass.callApi('GET', 'dashview/config?type=house')
         ]);
         
         this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
-        this._renderGenericSensorSetup(container, entitiesByRoom, houseConfig, entityIdentifier);
-        this._setStatusMessage(statusElement, '✓ Loaded', 'success');
+        const entityType = queryParams.label || queryParams.domain;
+        this._renderGenericSensorSetup(container, entitiesByRoom, houseConfig, entityType);
+        this._setStatusMessage(statusEl, '✓ Loaded', 'success');
     } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
         container.innerHTML = `<div class="placeholder"><p>Failed to load entities. Check console.</p></div>`;
