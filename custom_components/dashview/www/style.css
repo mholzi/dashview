@@ -1754,9 +1754,9 @@ body.popup-open, :host(.popup-open) {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
         "r1-small-1 r1-big"
-        "r1-small-2 r1-big"
-        "r2-big     r2-small-3"
-        "r2-big     r2-small-4"
+        "r2-big r1-big"
+        "r2-big r2-small-3"
+        "r1-small-2 r2-small-4"
 }
 
 .placeholder-card {
@@ -2132,6 +2132,7 @@ body.popup-open, :host(.popup-open) {
     grid-area: name;
     justify-self: start;
     align-self: start;
+    font-weight: 500;
     font-size: 16px;
     opacity: 0.7;
 }
