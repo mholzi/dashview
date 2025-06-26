@@ -35,63 +35,72 @@ export class SecurityComponents {
             const openEntities = allEntities.filter(id => this._hass.states[id]?.state === 'on');
             const closedEntities = allEntities.filter(id => this._hass.states[id]?.state === 'off');
 
-            this._renderEntityList(popup.querySelector(selectors.open), openEntities);
-            this._renderEntityList(popup.querySelector(selectors.closed), closedEntities);
+            this._renderEntityList(popup, popup.querySelector(selectors.open), openEntities);
+            this._renderEntityList(popup, popup.querySelector(selectors.closed), closedEntities);
         }
     }
-    
-    _renderEntityList(container, entityIds, noneMessage = "None") {
+
+    _renderEntityList(popup, container, entityIds) {
         if (!container) return;
-        container.innerHTML = '';
-        if (entityIds.length === 0) {
-            container.innerHTML = `<div class="entity-list-none">${noneMessage}</div>`;
+        
+        const template = popup.querySelector('#sensor-small-card-template');
+        if (!template) {
+            container.innerHTML = '<div class="placeholder">Template not found.</div>';
             return;
         }
+
+        container.innerHTML = ''; // Clear previous content
+        if (entityIds.length === 0) {
+            container.innerHTML = `<div class="entity-list-none">None</div>`;
+            return;
+        }
+        
         entityIds.forEach(entityId => {
             const entityState = this._hass.states[entityId];
-            const friendlyName = entityState?.attributes.friendly_name || entityId;
-            const item = document.createElement('div');
-            item.className = 'entity-list-item';
-            item.textContent = friendlyName;
-            container.appendChild(item);
+            if (!entityState) return;
+            
+            const card = template.content.cloneNode(true);
+            const cardElement = card.querySelector('.sensor-small-card');
+            
+            const type = this._panel._getEntityTypeFromConfig(entityId);
+            const { name, label, icon, cardClass } = this._panel._floorManager._getCardDisplayData(entityId, type, false);
+
+            cardElement.className = `sensor-small-card ${cardClass}`;
+            cardElement.querySelector('.sensor-small-name').textContent = name;
+            cardElement.querySelector('.sensor-small-label').textContent = label;
+            cardElement.querySelector('.sensor-small-icon-cell .mdi').className = `mdi ${this._panel._processIconName(icon)}`;
+            
+            container.appendChild(card);
         });
     }
 
     _updateSecurityHeaderButtons(popup) {
         if (!this._hass || !popup) return;
 
-        // Update Motion Chip
         const motionChip = popup.querySelector('.header-info-chip[data-type="motion"]');
         if (motionChip) {
             const activeMotionSensors = this._panel._getAllEntitiesByType('motion').filter(id => this._hass.states[id]?.state === 'on');
-            if (activeMotionSensors.length > 0) {
-                motionChip.style.display = 'flex';
-                // Additional logic for text/time can be added here if needed
-            } else {
-                motionChip.style.display = 'none';
-            }
+            motionChip.style.display = activeMotionSensors.length > 0 ? 'flex' : 'none';
         }
 
-        // Update Windows Chip
         const windowsChip = popup.querySelector('.header-info-chip[data-type="windows"]');
         if (windowsChip) {
             const openWindows = this._panel._getAllEntitiesByType('window').filter(id => this._hass.states[id]?.state === 'on');
             if (openWindows.length > 0) {
                 windowsChip.style.display = 'flex';
-                windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} offen`;
+                windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} open`;
             } else {
                 windowsChip.style.display = 'none';
             }
         }
 
-        // Update Smoke Chip
         const smokeChip = popup.querySelector('.header-info-chip[data-type="smoke"]');
         if (smokeChip) {
             const activeSmoke = this._panel._getAllEntitiesByType('smoke').filter(id => this._hass.states[id]?.state === 'on');
             if (activeSmoke.length > 0) {
                 smokeChip.style.display = 'flex';
                 smokeChip.style.background = 'var(--red)';
-                smokeChip.querySelector('.chip-name').textContent = `${activeSmoke.length} aktiv`;
+                smokeChip.querySelector('.chip-name').textContent = `${activeSmoke.length} active`;
             } else {
                 smokeChip.style.display = 'none';
             }
