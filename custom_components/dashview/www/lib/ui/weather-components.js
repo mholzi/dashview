@@ -36,7 +36,6 @@ export class WeatherComponents {
         if (!entityId) return;
 
         try {
-            // FIX: Use hass.callWS to get forecast data back from Home Assistant
             const dailyResponse = await this._hass.callWS({
                 type: 'weather/subscribe_forecast',
                 entity_id: entityId,
@@ -49,7 +48,6 @@ export class WeatherComponents {
                 forecast_type: 'hourly'
             });
 
-            // The response from subscribe_forecast is directly the forecast object
             this._forecasts.daily = dailyResponse?.forecast || [];
             this._forecasts.hourly = hourlyResponse?.forecast || [];
 
@@ -62,9 +60,13 @@ export class WeatherComponents {
 
     updatePollenCard(popup) {
         if (!popup || !this._hass) return;
-        const pollenButtons = popup.querySelectorAll('.pollen-button');
-        pollenButtons.forEach(button => {
-            const sensorId = button.dataset.sensor;
+
+        const weatherEntityId = this._panel._getCurrentWeatherEntityId();
+        const weatherEntityBase = weatherEntityId.replace('weather.', '');
+
+        popup.querySelectorAll('.pollen-button').forEach(button => {
+            const pollenType = button.dataset.pollen;
+            const sensorId = `sensor.${weatherEntityBase}_${pollenType}`;
             const sensorEntity = this._hass.states[sensorId];
             const stateElement = button.querySelector('.pollen-state');
             
