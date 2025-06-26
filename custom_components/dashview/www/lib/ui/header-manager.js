@@ -103,7 +103,8 @@ export class HeaderManager {
         const motionEntityConfig = room.config.header_entities?.find(e => e.entity_type === this._panel._entityLabels.MOTION);
         const hasActiveMotion = motionEntityConfig && this._hass.states[motionEntityConfig.entity]?.state === 'on';
         const hasActiveLights = (room.config.lights || []).some(lightId => this._hass.states[lightId]?.state === 'on');
-        return hasActiveMotion || hasActiveLights;
+        const hasPlayingMedia = (room.config.media_players || []).some(player => this._hass.states[player.entity]?.state === 'playing');
+        return hasActiveMotion || hasActiveLights || hasPlayingMedia;
       });
 
       if (activeRooms.length > 0) {
