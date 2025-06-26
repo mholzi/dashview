@@ -23,11 +23,12 @@ export class SecurityComponents {
     }
 
     _updateSecurityLists(popup) {
+        const { WINDOW, MOTION, SMOKE, VIBRATION } = this._panel._entityLabels;
         const lists = {
-            'window': { open: '#open-windows-list', closed: '#closed-windows-list' },
-            'motion': { open: '#active-motion-list', closed: '#inactive-motion-list' },
-            'smoke': { open: '#active-smoke-detector-list', closed: '#inactive-smoke-detector-list' },
-            'vibration': { open: '#active-vibration-list', closed: '#inactive-vibration-list' }
+            [WINDOW]: { open: '#open-windows-list', closed: '#closed-windows-list' },
+            [MOTION]: { open: '#active-motion-list', closed: '#inactive-motion-list' },
+            [SMOKE]: { open: '#active-smoke-detector-list', closed: '#inactive-smoke-detector-list' },
+            [VIBRATION]: { open: '#active-vibration-list', closed: '#inactive-vibration-list' }
         };
 
         for (const [type, selectors] of Object.entries(lists)) {
@@ -54,8 +55,9 @@ export class SecurityComponents {
             cardClass = 'is-on';
         }
 
+        const { WINDOW, MOTION, SMOKE, VIBRATION } = this._panel._entityLabels;
         switch (type) {
-            case 'window':
+            case WINDOW:
                 icon = 'mdi:window-closed';
                 if (entityState?.state === 'on') {
                     icon = 'mdi:window-open';
@@ -64,7 +66,7 @@ export class SecurityComponents {
                     label = 'Closed';
                 }
                 break;
-            case 'motion':
+            case MOTION:
                 icon = 'mdi:motion-sensor-off';
                 if (entityState?.state === 'on') {
                     icon = 'mdi:motion-sensor';
@@ -73,7 +75,7 @@ export class SecurityComponents {
                     label = 'Clear';
                 }
                 break;
-            case 'smoke':
+            case SMOKE:
                 icon = 'mdi:smoke-detector-variant';
                  if (entityState?.state === 'on') {
                     icon = 'mdi:smoke-detector-variant-alert';
@@ -82,7 +84,7 @@ export class SecurityComponents {
                     label = 'Clear';
                 }
                 break;
-            case 'vibration':
+            case VIBRATION:
                 icon = 'mdi:vibrate-off';
                 if (entityState?.state === 'on') {
                     icon = 'mdi:vibrate';
@@ -139,13 +141,13 @@ export class SecurityComponents {
 
         const motionChip = popup.querySelector('.header-info-chip[data-type="motion"]');
         if (motionChip) {
-            const activeMotionSensors = this._panel._getAllEntitiesByType('motion').filter(id => this._hass.states[id]?.state === 'on');
+            const activeMotionSensors = this._panel._getAllEntitiesByType(this._panel._entityLabels.MOTION).filter(id => this._hass.states[id]?.state === 'on');
             motionChip.style.display = activeMotionSensors.length > 0 ? 'flex' : 'none';
         }
 
         const windowsChip = popup.querySelector('.header-info-chip[data-type="windows"]');
         if (windowsChip) {
-            const openWindows = this._panel._getAllEntitiesByType('window').filter(id => this._hass.states[id]?.state === 'on');
+            const openWindows = this._panel._getAllEntitiesByType(this._panel._entityLabels.WINDOW).filter(id => this._hass.states[id]?.state === 'on');
             if (openWindows.length > 0) {
                 windowsChip.style.display = 'flex';
                 windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} open`;
@@ -156,7 +158,7 @@ export class SecurityComponents {
 
         const smokeChip = popup.querySelector('.header-info-chip[data-type="smoke"]');
         if (smokeChip) {
-            const activeSmoke = this._panel._getAllEntitiesByType('smoke').filter(id => this._hass.states[id]?.state === 'on');
+            const activeSmoke = this._panel._getAllEntitiesByType(this._panel._entityLabels.SMOKE).filter(id => this._hass.states[id]?.state === 'on');
             if (activeSmoke.length > 0) {
                 smokeChip.style.display = 'flex';
                 smokeChip.style.background = 'var(--red)';
