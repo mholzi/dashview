@@ -40,6 +40,66 @@ export class SecurityComponents {
         }
     }
 
+    _getSecurityCardDisplayData(entityId, type) {
+        const entityState = this._hass.states[entityId];
+        let name = entityState?.attributes.friendly_name || entityId;
+        let label = entityState?.state || 'N/A';
+        let icon = 'mdi:help-circle';
+        let cardClass = '';
+
+        if (!entityState || entityState.state === 'unavailable') {
+            cardClass = 'is-unavailable';
+            label = 'Unavailable';
+        } else if (entityState.state === 'on') {
+            cardClass = 'is-on';
+        }
+
+        switch (type) {
+            case 'window':
+                icon = 'mdi:window-closed';
+                if (entityState?.state === 'on') {
+                    icon = 'mdi:window-open';
+                    label = 'Open';
+                } else {
+                    label = 'Closed';
+                }
+                break;
+            case 'motion':
+                icon = 'mdi:motion-sensor-off';
+                if (entityState?.state === 'on') {
+                    icon = 'mdi:motion-sensor';
+                    label = 'Detected';
+                } else {
+                    label = 'Clear';
+                }
+                break;
+            case 'smoke':
+                icon = 'mdi:smoke-detector-variant';
+                 if (entityState?.state === 'on') {
+                    icon = 'mdi:smoke-detector-variant-alert';
+                    label = 'Detected';
+                } else {
+                    label = 'Clear';
+                }
+                break;
+            case 'vibration':
+                icon = 'mdi:vibrate-off';
+                if (entityState?.state === 'on') {
+                    icon = 'mdi:vibrate';
+                    label = 'Detected';
+                } else {
+                    label = 'Clear';
+                }
+                break;
+            default:
+                if (entityState?.state === 'on' || entityState?.state === 'off') {
+                    label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
+                }
+                break;
+        }
+        return { name, label, icon, cardClass };
+    }
+
     _renderEntityList(popup, container, entityIds) {
         if (!container) return;
         
@@ -63,7 +123,7 @@ export class SecurityComponents {
             const cardElement = card.querySelector('.sensor-small-card');
             
             const type = this._panel._getEntityTypeFromConfig(entityId);
-            const { name, label, icon, cardClass } = this._panel._floorManager._getCardDisplayData(entityId, type, false);
+            const { name, label, icon, cardClass } = this._getSecurityCardDisplayData(entityId, type);
 
             cardElement.className = `sensor-small-card ${cardClass}`;
             cardElement.querySelector('.sensor-small-name').textContent = name;
