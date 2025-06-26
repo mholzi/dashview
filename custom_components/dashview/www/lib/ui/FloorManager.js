@@ -278,34 +278,35 @@ export class FloorManager {
         case HUMIDITY:
             const humValue = parseFloat(entityState?.state);
             label = isNaN(humValue) ? '--%' : `${Math.round(humValue)}%`;
-            name = 'Humidity';
+            name = 'Luftfeuchtigkeit';
             icon = 'mdi:water-percent';
             break;
         case LIGHT:
-            icon = entityState?.attributes.icon || 'mdi:lightbulb';
-            label = entityState?.state === 'on' ? `${entityState.attributes.brightness ? Math.round(entityState.attributes.brightness / 2.55) + '%' : 'On'}` : 'Off';
+            icon = entityState?.state === 'on' ? (entityState?.attributes.icon || 'mdi:lightbulb') : (entityState?.attributes.icon || 'mdi:lightbulb-outline');
+            label = entityState?.state === 'on' ? `${entityState.attributes.brightness ? Math.round(entityState.attributes.brightness / 2.55) + '%' : 'An'}` : 'Aus';
             if(entityState?.state === 'on') cardClass += ' active-light';
             break;
         case MOTION:
-             icon = 'mdi:motion-sensor';
-             label = entityState.state === 'on' ? 'Detected' : 'Clear';
+             icon = entityState.state === 'on' ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
+             label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
              break;
         case WINDOW:
-             icon = 'mdi:window-open-variant';
-             label = entityState.state === 'on' ? 'Open' : 'Closed';
+             icon = entityState.state === 'on' ? 'mdi:window-open-variant' : 'mdi:window-closed';
+             label = entityState.state === 'on' ? 'Offen' : 'Geschlossen';
              break;
         case COVER:
             icon = 'mdi:window-shutter';
-            label = entityState?.state === 'closed' ? 'Closed' : `${entityState?.attributes.current_position || 0}%`;
+            label = entityState?.state === 'closed' ? 'Geschlossen' : `${entityState?.attributes.current_position || 0}%`;
             break;
         case SMOKE:
-            icon = 'mdi:smoke-detector-variant';
-            label = entityState.state === 'on' ? 'Detected' : 'Clear';
+            icon = entityState.state === 'on' ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector-variant';
+            label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
             break;
         case VIBRATION:
-            icon = 'mdi:vibrate';
-            label = entityState.state === 'on' ? 'Detected' : 'Clear';
+            icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
+            label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
             break;
+        
         default:
             if (entityState?.state === 'on' || entityState?.state === 'off') {
                 label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
@@ -326,16 +327,28 @@ export class FloorManager {
       return false;
    }
    
-  _initializeSwiper(container) {
+  _initializeSwiper(container, retries = 10) {
+    // 1. Check if the Swiper library is loaded.
     if (typeof Swiper === 'undefined') {
-      console.error('[FloorManager] Swiper library is not loaded.');
+      // If not, retry after a short delay.
+      if (retries > 0) {
+        console.warn(`[FloorManager] Swiper not loaded. Retrying... (${retries} attempts left)`);
+        setTimeout(() => this._initializeSwiper(container, retries - 1), 200);
+      } else {
+        console.error('[FloorManager] Swiper library failed to load after multiple attempts.');
+      }
       return;
     }
+
     container.querySelectorAll('.swiper-container').forEach(swiperEl => {
+      // Prevent re-initialization
+      if (swiperEl.swiper) return;
+
       new Swiper(swiperEl, {
         loop: false,
         pagination: {
-          el: '.swiper-pagination',
+          // 2. Scope the pagination to the current swiper element for reliability.
+          el: swiperEl.querySelector('.swiper-pagination'),
           clickable: true,
         },
       });
