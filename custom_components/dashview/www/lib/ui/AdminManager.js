@@ -787,31 +787,30 @@ async saveMediaPlayerPresets() {
   }
 }
 
-_updateAdminSummary() {
-  const container = this._shadowRoot.getElementById('config-summary-container');
-  if (!container) return;
-  const houseConfig = this._adminLocalState.houseConfig || {};
-  const floors = houseConfig.floors || {};
-  const rooms = houseConfig.rooms || {};
-  const stats = { Floors: Object.keys(floors).length, Rooms: Object.keys(rooms).length };
+  _updateAdminSummary() {
+    const container = this._shadowRoot.getElementById('config-summary-container');
+    if (!container) return;
+    const houseConfig = this._adminLocalState.houseConfig || {};
+    const floors = houseConfig.floors || {};
+    const rooms = houseConfig.rooms || {}; // This line is correct in your file
+    const stats = { Floors: Object.keys(floors).length, Rooms: Object.keys(rooms).length };
+    
+    let lightCount = 0, coverCount = 0, mediaPlayerCount = 0, headerEntityCount = 0;
+    Object.values(rooms).forEach(room => {
+        lightCount += room.lights?.length || 0;
+        coverCount += room.covers?.length || 0;
+        mediaPlayerCount += room.media_players?.length || 0;
+        headerEntityCount += room.header_entities?.length || 0;
+    });
+    stats['Lights'] = lightCount;
+    stats['Covers'] = coverCount;
+    stats['Media Players'] = mediaPlayerCount;
+    stats['Header Entities'] = headerEntityCount;
   
-  let lightCount = 0, coverCount = 0, mediaPlayerCount = 0, headerEntityCount = 0;
-  Object.values(rooms).forEach(room => {
-      lightCount += room.lights?.length || 0;
-      coverCount += room.covers?.length || 0;
-      mediaPlayerCount += room.media_players?.length || 0;
-      headerEntityCount += room.header_entities?.length || 0;
-  });
-  stats['Lights'] = lightCount;
-  stats['Covers'] = coverCount;
-  stats['Media Players'] = mediaPlayerCount;
-  stats['Header Entities'] = headerEntityCount;
-
-  let summaryHTML = '';
-  Object.entries(stats).forEach(([name, count]) => {
-      summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
-  });
-  container.innerHTML = summaryHTML;
-}
-
+    let summaryHTML = '';
+    Object.entries(stats).forEach(([name, count]) => {
+        summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
+    });
+    container.innerHTML = summaryHTML;
+  }
 }
