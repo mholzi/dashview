@@ -181,7 +181,8 @@ class DashViewConfigView(HomeAssistantView):
         
         target_label_id = None
         if label_param:
-            label_entry = label_reg.get_label_by_name(label_param)
+            all_labels = label_reg.async_list_labels()
+            label_entry = next((l for l in all_labels if l.name.lower() == label_param.lower()), None)
             if label_entry:
                 target_label_id = label_entry.label_id
             else:
@@ -193,11 +194,13 @@ class DashViewConfigView(HomeAssistantView):
         for entity_id, entity_entry in entity_reg.entities.items():
             area_id = entity_entry.area_id
 
-            if label_param == "Motion" and entity_entry.device_id:
+            # If the entity itself has no area, check its device.
+            # This handles cases where area is assigned to the device, not the entity.
+            if not area_id and entity_entry.device_id:
                 device = device_reg.async_get(entity_entry.device_id)
-                if device:
+                if device and device.area_id:
                     area_id = device.area_id
-
+            
             if not area_id:
                 continue
 
@@ -212,10 +215,14 @@ class DashViewConfigView(HomeAssistantView):
                 if area.id not in entities_by_area:
                     entities_by_area[area.id] = {"name": area.name, "entities": []}
                 
-                entities_by_area[area.id]["entities"].append({
-                    "entity_id": entity_entry.entity_id,
-                    "name": entity_entry.name or entity_entry.original_name or entity_entry.entity_id,
-                })
+                if entity_entry.domain != 'automation':
+                    entities_by_area[area.id]["entities"].append({
+                        "entity_id": entity_entry.entity_id,
+                        "name": entity_entry.name or entity_entry.original_name or entity_entry.entity_id,
+                    })
+
+        for area_data in entities_by_area.values():
+            area_data["entities"].sort(key=lambda x: x["name"])
 
         return web.json_response(entities_by_area)
 
