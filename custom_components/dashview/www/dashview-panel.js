@@ -13,7 +13,7 @@ import { CoversCard } from './lib/ui/covers-card.js';
 import { LightsCard } from './lib/ui/light-card.js';
 import { ThermostatCard } from './lib/ui/thermostat-card.js';
 import { MediaPlayerCard } from './lib/ui/media-player-card.js';
-import { SceneManager } from './lib/ui/SceneManager.js'; // Ensure this import is present
+import { SceneManager } from './lib/ui/SceneManager.js';
 
 class DashviewPanel extends HTMLElement {
   constructor() {
@@ -26,12 +26,45 @@ class DashviewPanel extends HTMLElement {
     this._integrationsConfig = {};
     this._weatherEntityId = 'weather.forecast_home';
 
-    // Entity labels remain as they are fundamental to the component's logic
     this._entityLabels = {
         MOTION: 'motion', WINDOW: 'fenster', SMOKE: 'rauchmelder', VIBRATION: 'vibration',
         TEMPERATUR: 'temperatur', HUMIDITY: 'humidity', PRINTER: 'printer', DOOR: 'door',
         HOOVER: 'hoover', DISHWASHER: 'dishwasher', DRYER: 'dryer', CARTRIDGE: 'cartridge',
         LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer'
+    };
+
+    // Define component initializers in the constructor
+    this._componentInitializers = {
+      '.media-container': (el) => {
+          const popup = el.closest('.popup');
+          if (popup && popup.id === 'music-popup') {
+              this._generateMusicPopupContent(popup);
+          }
+      },
+      '.covers-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig?.covers?.length > 0) {
+          this._coversManager.initialize(popup, roomConfig.covers);
+        }
+      },
+      '.lights-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig?.lights?.length > 0) {
+          this._lightsManager.initialize(popup, roomKey, roomConfig.lights);
+        }
+      },
+       '.media-player-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig?.media_players?.length > 0) {
+          this._mediaPlayerManager.initialize(popup, roomKey, roomConfig.media_players);
+        }
+      }
     };
   }
   
@@ -45,33 +78,28 @@ class DashviewPanel extends HTMLElement {
         return;
     }
     
-    // Only update if the hass object is new
     if (this._hass !== hass) {
         this._hass = hass;
-        // Propagate the hass object to all managers that need it
         if (this._stateManager) this._stateManager.setHass(hass);
         if (this._infoCardManager) this._infoCardManager.setHass(hass);
         if (this._weatherManager) this._weatherManager.setHass(hass);
-        if (this._sceneManager) this._sceneManager.setHass(hass); // Also for SceneManager
+        if (this._sceneManager) this._sceneManager.setHass(hass);
+        if (this._floorManager) this._floorManager.setHass(hass);
         
-        // Let the StateManager drive all subsequent updates.
         this._stateManager.handleHassUpdate();
     }
   }
 
   async loadContent() {
     try {
-        // --- 1. Load Core Assets (CSS & HTML) ---
         const [styleText, htmlText] = await Promise.all([
             fetch('/local/dashview/style.css').then(res => res.text()),
             fetch('/local/dashview/index.html').then(res => res.text())
         ]);
         this.shadowRoot.innerHTML = `<style>${styleText}</style>${htmlText}`;
         
-        // --- 2. Load HTML Templates ---
         await this._loadTemplates(this.shadowRoot);
 
-        // --- 3. Initialize Configuration ---
         this._configManager = new ConfigManager();
         this._configManager.setHass(this._hass);
         const configs = await this._configManager.loadAll();
@@ -79,17 +107,13 @@ class DashviewPanel extends HTMLElement {
         this._integrationsConfig = configs.integrationsConfig;
         this._weatherEntityId = configs.weatherEntityId;
 
-        // --- 4. Instantiate All UI & Data Managers ---
         this.initializeManagers();
         
-        // --- 5. Render Initial State ---
-        this._sceneManager.renderSceneButtons(); // Render scenes after managers are initialized
+        this._sceneManager.renderSceneButtons();
         this._floorManager.initializeFloorTabs();
 
-        // --- 6. Initialize Core UI Interactivity ---
         this.initializeCard();
         
-        // --- 7. Set Content Ready Flag & Finalize ---
         this._contentReady = true;
         if (this._hass) {
             this.hass = this._hass; 
@@ -101,11 +125,7 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
-  /**
-   * Instantiates all manager classes and passes them the main panel reference.
-   */
   initializeManagers() {
-    // Pass `this` (the panel instance) to all managers
     this._stateManager = new StateManager(this);
     this._adminManager = new AdminManager(this);
     this._headerManager = new HeaderManager(this);
@@ -118,9 +138,8 @@ class DashviewPanel extends HTMLElement {
     this._thermostatManager = new ThermostatCard(this);
     this._mediaPlayerManager = new MediaPlayerCard(this);
     this._floorManager = new FloorManager(this);
-    this._sceneManager = new SceneManager(this); // Ensure SceneManager is instantiated here
+    this._sceneManager = new SceneManager(this);
 
-    // Pass the initial configuration to the state manager
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
   }
 
@@ -141,25 +160,21 @@ class DashviewPanel extends HTMLElement {
     return null;
   }
 
-  /**
-   * Main callback for the StateManager. This is the central point for all UI updates.
-   */
   updateComponentForEntity(entityId, entityState) {
     if (!this._contentReady) return;
 
-    // These are global and should always update
     this._headerManager.updateAll();
     this._infoCardManager.update();
     this._sceneManager.renderSceneButtons();
+    this._floorManager.initializeFloorTabs(); // Re-render floors to update sensor cards
 
-    const activePopup = this._shadowRoot.querySelector('.popup.active');
+    const activePopup = this.shadowRoot.querySelector('.popup.active');
     if (!activePopup) return;
 
     const popupId = activePopup.id;
     const entityDomain = entityId.split('.')[0];
     const roomKeyForEntity = this._getRoomKeyForEntity(entityId);
 
-    // Update for a room popup
     if (roomKeyForEntity && popupId === `${roomKeyForEntity}-popup`) {
       switch (entityDomain) {
         case 'light':
@@ -183,14 +198,60 @@ class DashviewPanel extends HTMLElement {
     }
   }
 
-  /**
-   * Sets up global event listeners for navigation.
-   */
   initializeCard() {
     this._adminManager.initializeAdminEventListeners();
   }
+  
+  _generateMusicPopupContent(popup) {
+    const tabContainer = popup.querySelector('#music-room-tabs');
+    const contentContainer = popup.querySelector('#music-tab-content');
+    if (!tabContainer || !contentContainer) return;
 
-  // --- Helper Methods ---
+    const roomsWithPlayers = Object.entries(this._houseConfig.rooms || {})
+        .filter(([, roomConfig]) => roomConfig.media_players?.length > 0);
+
+    if (roomsWithPlayers.length === 0) {
+        contentContainer.innerHTML = '<div class="placeholder">No media players configured in any room.</div>';
+        return;
+    }
+
+    tabContainer.innerHTML = roomsWithPlayers.map(([key, config], index) => 
+        `<button class="music-tab-button ${index === 0 ? 'active' : ''}" data-room-id="${key}">${config.friendly_name}</button>`
+    ).join('');
+
+    contentContainer.innerHTML = roomsWithPlayers.map(([key, config], index) => 
+        `<div class="music-room-content ${index === 0 ? 'active' : ''}" data-room-id="${key}">
+            ${this._generateMusicRoomHTML(config)}
+        </div>`
+    ).join('');
+
+    this._setupMusicTabSwitching(popup);
+  }
+
+  _generateMusicRoomHTML(roomConfig) {
+    return roomConfig.media_players.map(player => `
+        <div class="media-room-card" data-entity="${player.entity}">
+            <div class="media-title">${this._hass.states[player.entity]?.attributes.friendly_name || player.entity}</div>
+            <div class="media-state">${this._hass.states[player.entity]?.state || 'unknown'}</div>
+        </div>
+    `).join('');
+  }
+
+  _setupMusicTabSwitching(popup) {
+    const tabButtons = popup.querySelectorAll('.music-tab-button');
+    const contentAreas = popup.querySelectorAll('.music-room-content');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const roomId = button.dataset.roomId;
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            contentAreas.forEach(area => {
+                area.classList.toggle('active', area.dataset.roomId === roomId);
+            });
+        });
+    });
+  }
+
   _getCurrentWeatherEntityId() {
     return this._weatherEntityId || 'weather.forecast_home';
   }
