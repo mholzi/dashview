@@ -12,6 +12,7 @@ from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig, HomeAssistantView
 from homeassistant.helpers import (
     area_registry as ar,
+    device_registry as dr,
     entity_registry as er,
     floor_registry as fr,
     label_registry as lr,
@@ -176,6 +177,7 @@ class DashViewConfigView(HomeAssistantView):
         entity_reg = er.async_get(self._hass)
         area_reg = ar.async_get(self._hass)
         label_reg = lr.async_get(self._hass)
+        device_reg = dr.async_get(self._hass)
         
         target_label_id = None
         if label_param:
@@ -189,14 +191,21 @@ class DashViewConfigView(HomeAssistantView):
         entities_by_area = {}
 
         for entity_id, entity_entry in entity_reg.entities.items():
-            if not entity_entry.area_id:
+            area_id = entity_entry.area_id
+
+            if label_param == "Motion" and entity_entry.device_id:
+                device = device_reg.async_get(entity_entry.device_id)
+                if device:
+                    area_id = device.area_id
+
+            if not area_id:
                 continue
 
             domain_matches = domain_param and entity_entry.domain == domain_param
             label_matches = target_label_id and target_label_id in entity_entry.labels
             
             if domain_matches or label_matches:
-                area = area_reg.async_get_area(entity_entry.area_id)
+                area = area_reg.async_get_area(area_id)
                 if not area:
                     continue
                 
@@ -210,7 +219,7 @@ class DashViewConfigView(HomeAssistantView):
 
         return web.json_response(entities_by_area)
 
-async def post(self, request: web.Request) -> web.Response:
+    async def post(self, request: web.Request) -> web.Response:
         """Handle POST requests to save configuration."""
         try:
             data = await request.json()
