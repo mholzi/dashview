@@ -34,26 +34,15 @@ export class LightsCard {
             const nameEl = row.querySelector('.light-name');
             nameEl.textContent = entity.attributes.friendly_name || entityId;
 
-            // Add click listener to the toggle area
-            const toggleArea = row.querySelector('.light-toggle-area');
-            toggleArea.addEventListener('click', () => {
-                this._hass.callService('light', 'toggle', { entity_id: entityId });
-            });
-
-            const sliderArea = row.querySelector('.light-slider-area');
-            const slider = row.querySelector('.light-slider');
             const isDimmable = entity.attributes.supported_color_modes?.some(mode => ['brightness', 'color_temp', 'hs'].includes(mode));
 
             if (isDimmable) {
-                slider.addEventListener('change', (e) => {
-                    const brightness_pct = parseInt(e.target.value, 10);
-                    this._hass.callService('light', 'turn_on', {
-                        entity_id: entityId,
-                        brightness_pct: brightness_pct
-                    });
-                });
+                row.classList.add('is-dimmable');
+                this._initDraggableSlider(row, entityId);
             } else {
-                sliderArea.style.display = 'none';
+                row.addEventListener('click', () => {
+                    this._hass.callService('light', 'toggle', { entity_id: entityId });
+                });
             }
 
             individualContainer.appendChild(row);
@@ -63,47 +52,101 @@ export class LightsCard {
         this._updateCount(card, lightEntities);
     }
 
+    _initDraggableSlider(row, entityId) {
+        let isDragging = false;
+
+        const updateBrightness = (clientX) => {
+            const rect = row.getBoundingClientRect();
+            let percent = (clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent)); // Clamp between 0 and 1
+            const brightness_pct = Math.round(percent * 100);
+
+            if (brightness_pct === 0) {
+                this._hass.callService('light', 'turn_off', { entity_id: entityId });
+            } else {
+                this._hass.callService('light', 'turn_on', {
+                    entity_id: entityId,
+                    brightness_pct: brightness_pct
+                });
+            }
+        };
+
+        const onMouseMove = (e) => {
+            if (isDragging) updateBrightness(e.clientX);
+        };
+
+        const onMouseUp = () => {
+            isDragging = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        const onTouchMove = (e) => {
+            if (isDragging) updateBrightness(e.touches[0].clientX);
+        };
+
+        const onTouchEnd = () => {
+            isDragging = false;
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+        };
+
+        row.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            updateBrightness(e.clientX);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            e.preventDefault();
+        });
+
+        row.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            updateBrightness(e.touches[0].clientX);
+            document.addEventListener('touchmove', onTouchMove);
+            document.addEventListener('touchend', onTouchEnd);
+            e.preventDefault();
+        }, { passive: false });
+    }
+
     update(popup, entityId) {
         if (!this._hass) return;
 
-        const lightRow = popup.querySelector(`.light-control-row[data-entity-id="${entityId}"]`);
-        if (!lightRow) return;
+        const row = popup.querySelector(`.light-control-row[data-entity-id="${entityId}"]`);
+        if (!row) return;
 
         const entityState = this._hass.states[entityId];
         const isOn = entityState && entityState.state === 'on';
 
-        lightRow.setAttribute('state', isOn ? 'on' : 'off');
+        row.setAttribute('state', isOn ? 'on' : 'off');
         
-        const iconEl = lightRow.querySelector('.light-icon .mdi');
+        const iconEl = row.querySelector('.light-icon .mdi');
         if (iconEl) {
             iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-outline';
         }
 
-        const stateEl = lightRow.querySelector('.light-state');
-        const slider = lightRow.querySelector('.light-slider');
-        const sliderArea = lightRow.querySelector('.light-slider-area');
+        const stateEl = row.querySelector('.light-state');
+        const bar = row.querySelector('.light-brightness-bar');
+        const handle = row.querySelector('.light-brightness-handle');
+        const isDimmable = row.classList.contains('is-dimmable');
 
         if (isOn) {
-            const brightness = entityState.attributes.brightness;
-            if (typeof brightness === 'number') {
-                const brightnessPercent = Math.round((brightness / 255) * 100);
+            if (isDimmable) {
+                const brightness = entityState.attributes.brightness;
+                const brightnessPercent = (typeof brightness === 'number') ? Math.round((brightness / 255) * 100) : 100;
+                
                 stateEl.textContent = `On - ${brightnessPercent}%`;
-                if (slider) {
-                    slider.value = brightnessPercent;
-                    slider.style.background = `linear-gradient(to right, #fca103 ${brightnessPercent}%, var(--gray500) ${brightnessPercent}%)`;
-                }
+                bar.style.width = `${brightnessPercent}%`;
+                handle.style.left = `${brightnessPercent}%`;
             } else {
-                stateEl.textContent = 'On';
-                if (slider) {
-                    slider.value = 100;
-                    slider.style.background = `linear-gradient(to right, #fca103 100%, var(--gray500) 100%)`;
-                }
+                 stateEl.textContent = 'On';
+                 bar.style.width = '100%';
             }
         } else {
             stateEl.textContent = 'Off';
-             if (slider) {
-                slider.style.background = 'var(--gray500)';
-             }
+            bar.style.width = '0%';
+            if (handle) {
+                handle.style.left = '0%';
+            }
         }
 
         const lightEntities = this._config.rooms[popup.id.replace('-popup', '')]?.lights || [];
