@@ -22,6 +22,7 @@ export class PopupManager {
           return;
       }
 
+      // This is the corrected, more robust event handler
       const hashTarget = e.target.closest('[data-hash]');
       if (hashTarget) {
           e.preventDefault();
@@ -32,7 +33,6 @@ export class PopupManager {
           return;
       }
       
-      // FIX: Add Kiosk button handler
       const kioskButton = e.target.closest('.kiosk-button');
       if (kioskButton) {
           this._panel.dispatchEvent(new Event('hass-toggle-menu', { bubbles: true, composed: true }));
@@ -149,7 +149,7 @@ export class PopupManager {
   }
 
   _initializeDynamicContent(container) {
-    if (!container || !this._componentInitializers) return; // This check is the fix
+    if (!container || !this._componentInitializers) return; 
     for (const [selector, initializer] of Object.entries(this._componentInitializers)) {
       container.querySelectorAll(selector).forEach(element => {
         try {
