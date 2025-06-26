@@ -544,11 +544,21 @@ export class AdminManager {
     });
     
     this._renderFloorLayoutEditor();
+    this._saveHouseConfig();
+  }
+
+  async _saveHouseConfig() {
+    const statusEl = this._shadowRoot.getElementById('house-config-status') || this._shadowRoot.getElementById('floor-layouts-status');
+    this._setStatusMessage(statusEl, 'Saving...', 'loading');
+    try {
+        await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig);
+        this._setStatusMessage(statusEl, '✓ Saved!', 'success');
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
   }
 
   async saveFloorLayouts() {
-    const statusEl = this._shadowRoot.getElementById('floor-layouts-status');
-    this._setStatusMessage(statusEl, 'Saving...', 'loading');
     const newLayouts = {};
     this._shadowRoot.querySelectorAll('.floor-layout-grid').forEach(grid => {
         const floorId = grid.dataset.floorId;
@@ -561,12 +571,7 @@ export class AdminManager {
         });
     });
     this._adminLocalState.houseConfig.floor_layouts = newLayouts;
-    try {
-        await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig);
-        this._setStatusMessage(statusEl, '✓ Saved!', 'success');
-    } catch (e) {
-        this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
-    }
+    await this._saveHouseConfig();
   }
 
   async loadScenes() {
