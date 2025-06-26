@@ -19,11 +19,15 @@ export class WeatherComponents {
         const weatherState = this._hass.states[weatherEntityId];
         if (!weatherState) return;
 
+        const popup = this._shadowRoot.querySelector('#weather-popup.active');
+        if (!popup) return;
+
         await this._fetchWeatherForecasts();
 
         this._updateCurrentWeather(weatherState);
         this._updateHourlyForecast(this._forecasts.hourly);
         this._initializeDailyForecast(this._forecasts.daily);
+        this.updatePollenCard(popup);
     }
     
     async _fetchWeatherForecasts() {
@@ -32,19 +36,23 @@ export class WeatherComponents {
         if (!entityId) return;
 
         try {
-            // FIX: The 'true' parameter for returning response is not needed for hass.callService
-            const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
-                target: { entity_id: entityId },
-                type: 'daily'
+            // FIX: Use hass.callWS to get forecast data back from Home Assistant
+            const dailyResponse = await this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                entity_id: entityId,
+                forecast_type: 'daily'
             });
 
-            const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
-                target: { entity_id: entityId },
-                type: 'hourly'
+            const hourlyResponse = await this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                entity_id: entityId,
+                forecast_type: 'hourly'
             });
 
-            this._forecasts.daily = dailyResponse?.[entityId]?.forecast || [];
-            this._forecasts.hourly = hourlyResponse?.[entityId]?.forecast || [];
+            // The response from subscribe_forecast is directly the forecast object
+            this._forecasts.daily = dailyResponse?.forecast || [];
+            this._forecasts.hourly = hourlyResponse?.forecast || [];
+
         } catch (error) {
             console.error(`[WeatherManager] Error fetching forecasts for ${entityId}:`, error);
             this._forecasts.daily = [];
@@ -52,7 +60,6 @@ export class WeatherComponents {
         }
     }
 
-    // FIX: Add missing method
     updatePollenCard(popup) {
         if (!popup || !this._hass) return;
         const pollenButtons = popup.querySelectorAll('.pollen-button');
@@ -64,7 +71,7 @@ export class WeatherComponents {
             if (sensorEntity && sensorEntity.state !== 'unavailable') {
                 const value = parseFloat(sensorEntity.state);
                 if (value === 0) {
-                    button.style.display = 'none'; // Hide if no pollen
+                    button.style.display = 'none';
                     return;
                 }
                 button.style.display = 'flex';
