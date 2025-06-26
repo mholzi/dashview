@@ -254,10 +254,9 @@ class DashViewConfigView(HomeAssistantView):
             if config_type == "house":
                 current_options["house_config"] = config_payload
             elif config_type == "entity_usage_stats":
-                current_options.setdefault("house_config", {})["entity_usage_stats"] = config_payload
+                current_options.setdefault("house_config", {}).setdefault("entity_usage_stats", {}).update(config_payload)
             elif config_type == "integrations":
-                current_options["integrations_config"] = config_payload
-            # Add this new case for media presets
+                current_options.setdefault("integrations_config", {}).update(config_payload)
             elif config_type == "media_presets":
                 current_options.setdefault("house_config", {})["media_presets"] = config_payload
             elif config_type == "scenes":
@@ -268,7 +267,7 @@ class DashViewConfigView(HomeAssistantView):
             self._hass.config_entries.async_update_entry(
                 self._entry, options=current_options
             )
-            return web.json_response({"statusFa": "success"})
+            return web.json_response({"status": "success"})
         except Exception as e:
             _LOGGER.error("[DashView] Error saving configuration: %s", e)
             return web.json_response({"status": "error", "message": str(e)}, status=500)
