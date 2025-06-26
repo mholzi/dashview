@@ -5,6 +5,8 @@ export class InfoCardManager {
     this._panel = panel;
     this._hass = panel._hass;
     this._shadowRoot = panel.shadowRoot;
+    this._config = panel._houseConfig;
+    this._integrationsConfig = panel._integrationsConfig;
 
     this._sections = [
       { selector: '.motion-section', handler: this._updateMotionSection },
@@ -14,8 +16,9 @@ export class InfoCardManager {
       { selector: '.vacuum-section', handler: this._updateVacuumSection },
       { selector: '.dryer-section', handler: this._updateDryerSection },
       { selector: '.solar-section', handler: this._updateSolarSection },
-      // FIX: Add handler for train cards
-      { selector: '.train-departures-container', handler: this._updateTrainDepartureCards }
+      { selector: '.train-departures-container', handler: this._updateTrainDepartureCards },
+      { selector: '#notifications-container', handler: this._updateTemperatureNotifications },
+      { selector: '.dwd-warning-card-container', handler: this._updateDwdWarningCard }
     ];
   }
 
@@ -24,8 +27,7 @@ export class InfoCardManager {
   }
 
   update() {
-    const infoCard = this._shadowRoot.querySelector('.info-card');
-    if (!infoCard || !this._hass) return;
+    if (!this._hass) return;
 
     for (const sectionConfig of this._sections) {
       const sectionElement = this._shadowRoot.querySelector(sectionConfig.selector);
@@ -35,7 +37,64 @@ export class InfoCardManager {
     }
   }
 
-  // --- FIX: Add Train Card Logic ---
+  _updateDwdWarningCard(container) {
+    const dwdSensorId = this._integrationsConfig?.dwd_sensor;
+    if (!dwdSensorId) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const dwdEntity = this._hass.states[dwdSensorId];
+    if (!dwdEntity || dwdEntity.state === '0' || dwdEntity.state === 'unavailable') {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+        <div class="notification-card" style="border-color: var(--yellow);">
+            <div class="notification-icon" style="color: var(--yellow);"><i class="mdi mdi-weather-hurricane"></i></div>
+            <div class="notification-info">
+                <div class="notification-title">${dwdEntity.attributes.warning_headline || 'Weather Warning'}</div>
+                <div class="notification-details">
+                    <span>${dwdEntity.attributes.warning_description || 'Check weather alerts.'}</span>
+                </div>
+            </div>
+        </div>
+    `;
+  }
+  
+  _updateTemperatureNotifications(container) {
+    container.innerHTML = ''; 
+    const threshold = this._config?.temperature_threshold;
+    if (!threshold) return;
+
+    const tempSensors = this._panel._getAllEntitiesByType('temperatur');
+    
+    const highTempRooms = [];
+    tempSensors.forEach(entityId => {
+        const entity = this._hass.states[entityId];
+        if (entity && parseFloat(entity.state) > threshold) {
+            const roomKey = this._panel._getRoomKeyForEntity(entityId);
+            const roomName = this._config.rooms[roomKey]?.friendly_name || roomKey || 'Unknown';
+            highTempRooms.push(`${roomName} (${parseFloat(entity.state).toFixed(1)}°C)`);
+        }
+    });
+
+    if (highTempRooms.length > 0) {
+        const card = document.createElement('div');
+        card.className = 'notification-card';
+        card.innerHTML = `
+            <div class="notification-icon"><i class="mdi mdi-thermometer-alert"></i></div>
+            <div class="notification-info">
+                <div class="notification-title">High Temperature Alert</div>
+                <div class="notification-details">
+                    <span>${highTempRooms.join(', ')}</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    }
+  }
 
   _isWeekday() {
     const day = new Date().getDay();
@@ -89,8 +148,8 @@ export class InfoCardManager {
     return { time: '--:--', isDelayed: false };
   }
 
-  _updateTrainDepartureCards() {
-    this._shadowRoot.querySelectorAll('.train-departure-card').forEach(card => {
+  _updateTrainDepartureCards(container) {
+    container.querySelectorAll('.train-departure-card').forEach(card => {
         const shouldShow = this._evaluateConditions(card.dataset.conditions);
         card.classList.toggle('hidden', !shouldShow);
 
@@ -105,8 +164,6 @@ export class InfoCardManager {
         }
     });
   }
-
-  // --- Private Update Handlers for each section ---
 
   _updateMotionSection(section) {
     const motionEntity = this._hass.states['binary_sensor.motion_presence_home'];
@@ -150,7 +207,7 @@ export class InfoCardManager {
 
   _updateDishwasherSection(section) {
     const dishwasherEntity = this._hass.states['sensor.geschirrspuler_operation_state'];
-    if (dishwasherEntity?.state !== 'run') {
+    if (dishwasherEntity?.state !== 'Run') {
       section.classList.add('hidden');
       return;
     }
@@ -179,7 +236,7 @@ export class InfoCardManager {
 
   _updateWashingSection(section) {
     const washingEntity = this._hass.states['sensor.waschmaschine_operation_state'];
-    if (!washingEntity || !['run', 'finished'].includes(washingEntity.state)) {
+    if (!washingEntity || !['Run', 'finished'].includes(washingEntity.state)) {
       section.classList.add('hidden');
       return;
     }
@@ -187,7 +244,7 @@ export class InfoCardManager {
     const prefixElement = section.querySelector('[data-type="washing-prefix"]');
     const timeElement = section.querySelector('[data-type="washing-time"]');
 
-    if (washingEntity.state === 'run') {
+    if (washingEntity.state === 'Run') {
       prefixElement.textContent = 'Die Waschmaschine läuft noch';
       const endTimeEntity = this._hass.states['sensor.waschmaschine_remaining_program_time'];
       if (endTimeEntity?.state) {
@@ -207,7 +264,7 @@ export class InfoCardManager {
       } else {
         timeElement.textContent = 'Unknown👕';
       }
-    } else { // 'finished'
+    } else { 
       prefixElement.textContent = 'Die Waschmaschine ist fertig';
       timeElement.textContent = '👕';
     }
@@ -279,8 +336,6 @@ export class InfoCardManager {
     }
     section.classList.remove('hidden');
   }
-
-  // --- Helper Methods ---
 
   _calculateTimeDifference(lastChanged) {
     const now = new Date();
