@@ -36,28 +36,46 @@ export class StateManager {
   /**
    * The main update loop. Called by the panel's hass setter.
    * It checks for changes in all watched entities and triggers their callbacks.
+   * This version is more robust, using deep copies and improved error handling.
    */
   handleHassUpdate() {
     if (!this._hass) return;
 
     for (const [entityId, callback] of this._entityCallbacks.entries()) {
-      const currentState = this._hass.states[entityId];
-      const lastState = this._lastEntityStates.get(entityId);
+      try {
+        const currentState = this._hass.states[entityId];
+        const lastState = this._lastEntityStates.get(entityId);
 
-      // Check if the entity is being seen for the first time, or if its state/attributes changed.
-      if (!lastState || !currentState || currentState.state !== lastState.state ||
-          JSON.stringify(currentState.attributes) !== JSON.stringify(lastState.attributes)) 
-      {
-        this._lastEntityStates.set(entityId, currentState ? { ...currentState } : null);
-        
-        // Execute the specific callback for this entity.
-        if (typeof callback === 'function') {
-          try {
+        let hasChanged = false;
+
+        // An entity might be removed from Home Assistant
+        if (!currentState) {
+            if (lastState) { // It existed before, but not now
+                hasChanged = true;
+            }
+        } else if (!lastState) { // It's a new entity we haven't seen
+            hasChanged = true;
+        } else {
+            // Compare state and attributes for existing entities
+            if (currentState.state !== lastState.state ||
+                JSON.stringify(currentState.attributes) !== JSON.stringify(lastState.attributes)) {
+                hasChanged = true;
+            }
+        }
+
+        if (hasChanged) {
+          // Use a deep copy to prevent reference issues.
+          // This ensures that we are comparing against a true snapshot of the last state.
+          const newStateSnapshot = currentState ? JSON.parse(JSON.stringify(currentState)) : null;
+          this._lastEntityStates.set(entityId, newStateSnapshot);
+          
+          if (typeof callback === 'function') {
             callback(entityId, currentState);
-          } catch (e) {
-            console.error(`[StateManager] Error in callback for ${entityId}:`, e);
           }
         }
+      } catch (e) {
+        console.error(`[StateManager] Error processing entity ${entityId}. This can happen if an entity has non-serializable attributes.`, e);
+        // We catch the error here so that one faulty entity doesn't stop the entire update loop.
       }
     }
   }
