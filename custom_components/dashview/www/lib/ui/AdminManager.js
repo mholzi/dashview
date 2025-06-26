@@ -57,6 +57,18 @@ export class AdminManager {
 
   initializeAdminEventListeners() {
     this._shadowRoot.addEventListener('click', (e) => {
+        const moveUpBtn = e.target.closest('.floor-move-up-button');
+        if (moveUpBtn) {
+            this._moveFloor(moveUpBtn.dataset.floorId, -1);
+            return;
+        }
+
+        const moveDownBtn = e.target.closest('.floor-move-down-button');
+        if (moveDownBtn) {
+            this._moveFloor(moveDownBtn.dataset.floorId, 1);
+            return;
+        }
+
         const buttonActions = {
             '#reload-house-config': () => this.loadHouseSetupTab(),
             '#save-house-config': () => this.saveHouseConfiguration(),
@@ -135,7 +147,6 @@ export class AdminManager {
     });
   }
 
-  // --- HELPER METHODS ---
   _setStatusMessage(element, message, type) {
     if (!element) return;
     element.textContent = message;
@@ -180,7 +191,6 @@ export class AdminManager {
     })).sort((a, b) => a.name.localeCompare(b.name));
   }
   
-  // --- FULLY IMPLEMENTED METHODS ---
   async loadWeatherEntityConfiguration() {
     const selector = this._shadowRoot.getElementById('weather-entity-selector');
     const statusEl = this._shadowRoot.getElementById('weather-status');
@@ -296,28 +306,13 @@ export class AdminManager {
         this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
         const entityType = queryParams.label || queryParams.domain;
         this._renderGenericSensorSetup(container, entitiesByRoom, houseConfig, entityType);
-        this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+        this._setStatusMessage(statusElement, '✓ Loaded', 'success');
     } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
         container.innerHTML = `<div class="placeholder"><p>Failed to load entities. Check console.</p></div>`;
     }
   }
-  _initializeLayoutEditorEventListeners() {
-    const container = this._shadowRoot.getElementById('floor-layout-editor-container');
-    if (!container) return;
 
-    container.addEventListener('change', (e) => {
-      if (e.target.classList.contains('layout-type-selector')) {
-        const slot = e.target.closest('.layout-slot');
-        const entitySelector = slot.querySelector('.entity-selector');
-        if (e.target.value === 'pinned') {
-          entitySelector.style.display = 'block';
-        } else {
-          entitySelector.style.display = 'none';
-        }
-      }
-    });
-  }
   _renderGenericSensorSetup(container, entitiesByRoom, houseConfig, entityType) {
     if (!container) return;
     if (!entitiesByRoom || Object.keys(entitiesByRoom).length === 0) {
@@ -456,25 +451,68 @@ export class AdminManager {
     try {
         const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
         this._adminLocalState.houseConfig = houseConfig;
-        const floors = houseConfig.floors || {};
-        const layouts = houseConfig.floor_layouts || {};
         
-        let editorHTML = '';
-        for (const [floorId, floorConfig] of Object.entries(floors)) {
-            const floorLayout = layouts[floorId] || [];
-            const allEntities = this._getEntitiesForFloor(floorId);
-            editorHTML += `<div class="config-section"><h5>${floorConfig.friendly_name || floorId}</h5><div class="floor-layout-grid" data-floor-id="${floorId}">`;
-            for (const slot of floorLayout) {
-                editorHTML += this._renderLayoutSlotEditor(slot, allEntities);
-            }
-            editorHTML += `</div></div>`;
-        }
-        container.innerHTML = editorHTML;
+        this._renderFloorLayoutEditor();
         this._setStatusMessage(statusEl, '✓ Loaded', 'success');
-        this._initializeLayoutEditorEventListeners(); // Add this line
+        this._initializeLayoutEditorEventListeners();
     } catch (e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
     }
+  }
+
+  _renderFloorLayoutEditor() {
+    const container = this._shadowRoot.getElementById('floor-layout-editor-container');
+    if (!container) return;
+
+    const floors = this._adminLocalState.houseConfig.floors || {};
+    const layouts = this._adminLocalState.houseConfig.floor_layouts || {};
+
+    const sortedFloors = Object.entries(floors).sort(([, a], [, b]) => (a.level || 0) - (b.level || 0));
+
+    let editorHTML = '';
+    sortedFloors.forEach(([floorId, floorConfig]) => {
+        const floorLayout = layouts[floorId] || [];
+        const allEntities = this._getEntitiesForFloor(floorId);
+        
+        editorHTML += `
+            <div class="config-section">
+                <div class="floor-item">
+                    <div class="floor-info">
+                        <div class="floor-name">${floorConfig.friendly_name || floorId}</div>
+                        <div class="floor-details">Order Level: ${floorConfig.level || 0}</div>
+                    </div>
+                    <div class="floor-actions">
+                        <button class="action-button floor-move-up-button" data-floor-id="${floorId}">▲</button>
+                        <button class="action-button floor-move-down-button" data-floor-id="${floorId}">▼</button>
+                    </div>
+                </div>
+                <details>
+                    <summary>Edit Card Layout</summary>
+                    <div class="floor-layout-grid" data-floor-id="${floorId}">
+        `;
+        for (const slot of floorLayout) {
+            editorHTML += this._renderLayoutSlotEditor(slot, allEntities);
+        }
+        editorHTML += `</div></details></div>`;
+    });
+    container.innerHTML = editorHTML;
+  }
+
+  _initializeLayoutEditorEventListeners() {
+    const container = this._shadowRoot.getElementById('floor-layout-editor-container');
+    if (!container) return;
+
+    container.addEventListener('change', (e) => {
+      if (e.target.classList.contains('layout-type-selector')) {
+        const slot = e.target.closest('.layout-slot');
+        const entitySelector = slot.querySelector('.entity-selector');
+        if (e.target.value === 'pinned') {
+          entitySelector.style.display = 'block';
+        } else {
+          entitySelector.style.display = 'none';
+        }
+      }
+    });
   }
 
   _renderLayoutSlotEditor(slot, entities) {
@@ -486,6 +524,26 @@ export class AdminManager {
     if (isBigSlot) typeOptions = `<option value="room_swipe_card" ${type === 'room_swipe_card' ? 'selected' : ''}>Room Swiper</option>${typeOptions}`;
 
     return `<div class="layout-slot" data-grid-area="${grid_area}" style="grid-area: ${grid_area};"><div class="slot-name">${grid_area}</div><div class="slot-config"><select class="layout-type-selector">${typeOptions}</select><select class="entity-selector" style="display: ${isPinned ? 'block' : 'none'};"><option value="">-- Select --</option>${entityOptions}</select></div></div>`;
+  }
+  
+  _moveFloor(floorId, direction) {
+    const floors = this._adminLocalState.houseConfig.floors;
+    const sortedFloors = Object.keys(floors).sort((a, b) => (floors[a].level || 0) - (floors[b].level || 0));
+    
+    const currentIndex = sortedFloors.indexOf(floorId);
+    const newIndex = currentIndex + direction;
+
+    if (newIndex >= 0 && newIndex < sortedFloors.length) {
+        [sortedFloors[currentIndex], sortedFloors[newIndex]] = [sortedFloors[newIndex], sortedFloors[currentIndex]];
+    }
+    
+    sortedFloors.forEach((id, index) => {
+        if (floors[id]) {
+            floors[id].level = index;
+        }
+    });
+    
+    this._renderFloorLayoutEditor();
   }
 
   async saveFloorLayouts() {
@@ -556,7 +614,7 @@ export class AdminManager {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
     }
   }
-// --- Room Maintenance ---
+
 async loadRoomMaintenance() {
   const statusElement = this._shadowRoot.getElementById('room-maintenance-status');
   this._setStatusMessage(statusElement, 'Loading...', 'loading');
@@ -613,7 +671,6 @@ async saveRoomCombinedSensor(roomKey) {
   }
 }
 
-// --- Media Player Maintenance ---
 async loadRoomMediaPlayerMaintenance() {
   const statusElement = this._shadowRoot.getElementById('media-player-status');
   this._setStatusMessage(statusElement, 'Loading...', 'loading');
@@ -724,7 +781,7 @@ async saveMediaPlayerPresets() {
       this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
   }
 }
-// --- Admin Summary ---
+
 _updateAdminSummary() {
   const container = this._shadowRoot.getElementById('config-summary-container');
   if (!container) return;
