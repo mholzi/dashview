@@ -1,16 +1,11 @@
-<!-- Tabbed Media Player Control Panel -->
 <div class="music-tab-container media-container">
-    <!-- Tab Header with Room Tabs -->
     <div class="music-tab-header">
         <div class="music-room-tabs" id="music-room-tabs">
-            <!-- Room tab buttons will be dynamically generated -->
-        </div>
+            </div>
     </div>
     
-    <!-- Tab Content Area -->
     <div class="music-tab-content" id="music-tab-content">
-        <!-- Room content will be dynamically generated -->
-    </div>
+        </div>
 </div>
 
 <style>
@@ -62,221 +57,6 @@
 .music-room-content.active {
     display: block;
 }
-
-/* Media Player Room Card Styles */
-.media-room-card {
-    background: var(--popupBG);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.media-room-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.media-room-header i {
-    font-size: 22px;
-    color: var(--gray1000);
-}
-
-.media-room-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--gray1000);
-}
-
-.media-presets {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.media-presets::-webkit-scrollbar {
-    display: none;
-}
-
-.media-preset-button {
-    flex-shrink: 0;
-    width: 76px;
-    height: 76px;
-    background-color: var(--popupBG);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    color: var(--gray800);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.media-preset-button:hover {
-    background-color: var(--highlight);
-    transform: scale(1.05);
-}
-
-.preset-name {
-    font-size: 12px;
-    text-align: center;
-    line-height: 1.2;
-}
-
-.media-display {
-    margin-bottom: 16px;
-}
-
-.media-image {
-    width: 100%;
-    height: 200px;
-    background: var(--gray200);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.media-cover {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.media-info {
-    text-align: center;
-    padding: 0 16px;
-}
-
-.media-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--gray1000);
-    margin-bottom: 4px;
-}
-
-.media-artist {
-    font-size: 14px;
-    color: var(--gray800);
-}
-
-.media-controls {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-.media-control-button {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--popupBG);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--gray1000);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.media-control-button:hover {
-    background: var(--highlight);
-    transform: scale(1.1);
-}
-
-.media-control-button.play-pause {
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(145deg, rgba(255,200,138,1) 0%, rgba(238,149,255,1) 100%);
-    color: white;
-}
-
-.media-control-button i {
-    font-size: 20px;
-}
-
-.media-volume-control {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.volume-row {
-    display: grid;
-    grid-template-columns: 100px 1fr 70px;
-    align-items: center;
-    gap: 12px;
-}
-
-.volume-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--gray1000);
-}
-
-.volume-slider-container {
-    position: relative;
-}
-
-.volume-slider {
-    width: 100%;
-    height: 8px;
-    background: #494949;
-    border-radius: 4px;
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-.volume-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    background: white;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.volume-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    background: white;
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.volume-value {
-    font-size: 14px;
-    font-weight: 500;
-    text-align: center;
-    color: var(--gray1000);
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-    .media-room-card {
-        background: var(--popupBG);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .media-image {
-        background: rgba(255, 255, 255, 0.05);
-    }
-}
 </style>
 
 <script>
@@ -288,84 +68,62 @@
     let activeTabId = null;
     
     function loadMusicRoomsFromConfig() {
-        // Try to get configuration from parent DashView panel
-        try {
-            const dashviewPanel = document.querySelector('dashview-panel');
-            if (dashviewPanel && dashviewPanel._houseConfig && dashviewPanel._houseConfig.rooms) {
-                const rooms = dashviewPanel._houseConfig.rooms;
-                musicRooms = [];
-                
-                Object.entries(rooms).forEach(([roomId, roomConfig]) => {
-                    if (roomConfig.media_players && Array.isArray(roomConfig.media_players) && roomConfig.media_players.length > 0) {
-                        musicRooms.push({
-                            id: roomId,
-                            name: roomConfig.friendly_name || roomConfig.name || roomId, // Use friendly_name
-                            mediaPlayers: roomConfig.media_players
-                        });
-                    }
-                });
-                
-                // If after checking all rooms, none have media players, show a message.
-                if (musicRooms.length === 0) {
-                    const musicContainer = document.querySelector('.music-tab-container');
-                    if (musicContainer) {
-                        musicContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--gray800);"><p>No music players are defined yet. Please configure them in the admin panel.</p></div>';
-                    }
-                    return false; // Stop further processing
+        const dashviewPanel = document.querySelector('dashview-panel');
+        if (dashviewPanel && dashviewPanel._houseConfig && dashviewPanel._houseConfig.rooms) {
+            const rooms = dashviewPanel._houseConfig.rooms;
+            musicRooms = Object.entries(rooms)
+                .filter(([roomId, roomConfig]) => roomConfig.media_players && roomConfig.media_players.length > 0)
+                .map(([roomId, roomConfig]) => ({
+                    id: roomId,
+                    name: roomConfig.friendly_name || roomId,
+                    mediaPlayers: roomConfig.media_players
+                }));
+
+            if (musicRooms.length === 0) {
+                const musicContainer = document.querySelector('.music-tab-container');
+                if (musicContainer) {
+                    musicContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--gray800);"><p>No music players are defined yet. Please configure them in the admin panel.</p></div>';
                 }
-                
-                console.log('[DashView] Loaded music rooms from config:', musicRooms);
-                return true;
+                return false;
             }
-        } catch (error) {
-            console.warn('[DashView] Could not load music rooms from config:', error);
+            return true;
         }
-        
-        // If config is not available at all yet, do nothing and wait.
         return false;
     }
     
-    function updateTabsForConfiguration() {
+    async function updateTabsForConfiguration() {
         const tabContainer = document.getElementById('music-room-tabs');
         const contentContainer = document.getElementById('music-tab-content');
+        const dashviewPanel = document.querySelector('dashview-panel');
         
-        if (!tabContainer || !contentContainer) {
-            console.warn('[DashView] Music tab containers not found');
+        if (!tabContainer || !contentContainer || !dashviewPanel) {
             return;
         }
         
-        // Only update if we have different rooms than currently displayed
-        const currentTabs = Array.from(tabContainer.querySelectorAll('.music-tab-button')).map(t => t.dataset.roomId);
-        const newRoomIds = musicRooms.map(r => r.id);
-        
-        if (JSON.stringify(currentTabs.sort()) === JSON.stringify(newRoomIds.sort())) {
-            // No changes needed, just set up tab switching
-            setupTabSwitching();
-            return;
-        }
-        
-        // Clear existing content
         tabContainer.innerHTML = '';
         contentContainer.innerHTML = '';
         
-        // Generate new tabs and content
+        const cardTemplate = await fetch('/local/dashview/templates/room-media-player-card.html').then(res => res.text());
+
         musicRooms.forEach((room, index) => {
-            // MODIFIED: Create a text-based tab button
             const tabButton = document.createElement('button');
             tabButton.className = `music-tab-button ${index === 0 ? 'active' : ''}`;
             tabButton.dataset.roomId = room.id;
-            tabButton.textContent = room.name; // Set text to friendly name
+            tabButton.textContent = room.name;
             tabContainer.appendChild(tabButton);
             
-            // Create room content
             const roomContent = document.createElement('div');
             roomContent.className = `music-room-content ${index === 0 ? 'active' : ''}`;
             roomContent.dataset.roomId = room.id;
-            roomContent.innerHTML = generateRoomHTML(room);
+            roomContent.innerHTML = cardTemplate;
             contentContainer.appendChild(roomContent);
+            
+            // Initialize the card
+            if (dashviewPanel._mediaPlayerManager) {
+                dashviewPanel._mediaPlayerManager.initialize(roomContent, room.id, room.mediaPlayers);
+            }
         });
         
-        // Set first room as active
         if (musicRooms.length > 0) {
             activeTabId = musicRooms[0].id;
         }
@@ -373,105 +131,18 @@
         setupTabSwitching();
     }
     
-    function generateRoomHTML(room) {
-        // Generate preset buttons (same for all rooms for now)
-        const presetButtons = room.mediaPlayers.map(player => `
-            <button class="media-preset-button" 
-                    data-entity="${player.entity}"
-                    data-content-id="spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
-                    data-content-type="custom">
-                <span class="preset-name">Dinner Jazz</span>
-            </button>
-            <button class="media-preset-button" 
-                    data-entity="${player.entity}"
-                    data-content-id="spotify:playlist:37i9dQZF1DXdPec7aLTmlC"
-                    data-content-type="custom">
-                <span class="preset-name">Happy Hits</span>
-            </button>
-            <button class="media-preset-button" 
-                    data-entity="${player.entity}"
-                    data-content-id="spotify:album:5ht7ItJgpBH7W6vJ5BqpPr"
-                    data-content-type="custom">
-                <span class="preset-name">Karneval</span>
-            </button>
-        `).join('');
-        
-        // Generate media displays and controls for each player
-        const mediaPlayerContent = room.mediaPlayers.map((player, index) => `
-            <!-- Media Display -->
-            <div class="media-display" data-entity="${player.entity}">
-                <div class="media-image">
-                    <img src="" alt="Media Cover" class="media-cover">
-                </div>
-                <div class="media-info">
-                    <div class="media-title">Kein Titel</div>
-                    <div class="media-artist">Unbekannt</div>
-                </div>
-            </div>
-            
-            <!-- Media Controls -->
-            <div class="media-controls" data-entity="${player.entity}">
-                <button class="media-control-button" data-action="media_previous_track">
-                    <i class="mdi mdi-skip-previous"></i>
-                </button>
-                <button class="media-control-button play-pause" data-action="media_play_pause">
-                    <i class="mdi mdi-play"></i>
-                </button>
-                <button class="media-control-button" data-action="media_next_track">
-                    <i class="mdi mdi-skip-next"></i>
-                </button>
-            </div>
-            
-            ${index < room.mediaPlayers.length - 1 ? '' : `
-            <!-- Volume Control Section -->
-            <div class="media-volume-control">
-                ${room.mediaPlayers.map(p => `
-                <div class="volume-row">
-                    <span class="volume-label">${room.name}</span>
-                    <div class="volume-slider-container">
-                        <input type="range" class="volume-slider" 
-                               data-entity="${p.entity}"
-                               min="0" max="100" value="50">
-                    </div>
-                    <span class="volume-value">50%</span>
-                </div>
-                `).join('')}
-            </div>
-            `}
-        `).join('');
-        
-        return `
-            <div class="media-room-card" data-room="${room.id}">
-                <div class="media-room-header">
-                    <i class="mdi mdi-music"></i>
-                    <span class="media-room-title">${room.name}</span>
-                </div>
-                
-                <!-- Preset Buttons -->
-                <div class="media-presets">
-                    ${presetButtons}
-                </div>
-                
-                ${mediaPlayerContent}
-            </div>
-        `;
-    }
-    
     function setupTabSwitching() {
         const tabButtons = document.querySelectorAll('.music-tab-button');
         const roomContents = document.querySelectorAll('.music-room-content');
         
-        // Add click handlers to tab buttons
         tabButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const roomId = this.dataset.roomId;
                 activeTabId = roomId;
                 
-                // Update active tab
                 tabButtons.forEach(c => c.classList.remove('active'));
                 this.classList.add('active');
                 
-                // Update active content
                 roomContents.forEach(content => {
                     content.classList.toggle('active', content.dataset.roomId === roomId);
                 });
@@ -480,21 +151,13 @@
     }
     
     function initMusicTabs() {
-        console.log('[DashView] Initializing music tabs');
-        
-        // Load configuration and update UI
-        loadMusicRoomsFromConfig();
-        updateTabsForConfiguration();
-        
-        // Try to reload configuration periodically in case it becomes available later
-        setTimeout(() => {
-            if (loadMusicRoomsFromConfig()) {
-                updateTabsForConfiguration();
-            }
-        }, 1000);
+        if (loadMusicRoomsFromConfig()) {
+            updateTabsForConfiguration();
+        } else {
+            setTimeout(initMusicTabs, 500); // Retry if config not ready
+        }
     }
     
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initMusicTabs);
     } else {
