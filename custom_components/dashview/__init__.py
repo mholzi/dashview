@@ -133,7 +133,11 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
         for key in ["lights", "covers", "media_players", "header_entities"]:
             house_config["rooms"][area.id].setdefault(key, [])
 
-    hass.config_entries.async_update_entry(entry, options={"house_config": house_config})
+    # custom_components/dashview/__init__.py
+
+    current_options = dict(entry.options)
+    current_options["house_config"] = house_config
+    hass.config_entries.async_update_entry(entry, options=current_options)
     _LOGGER.info("DashView configuration synchronized.")
 
 
