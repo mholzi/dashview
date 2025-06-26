@@ -43,6 +43,7 @@ export class SecurityComponents {
 
     _getSecurityCardDisplayData(entityId, type) {
         const entityState = this._hass.states[entityId];
+        
         let name = entityState?.attributes.friendly_name || entityId;
         let label = entityState?.state || 'N/A';
         let icon = 'mdi:help-circle';
@@ -50,48 +51,28 @@ export class SecurityComponents {
 
         if (!entityState || entityState.state === 'unavailable') {
             cardClass = 'is-unavailable';
-            label = 'Unavailable';
-        } else if (entityState.state === 'on') {
+            label = 'Nicht verfügbar';
+        } else if (entityState.state === 'on' || entityState.state === 'Run' || entityState.state === 'playing') {
             cardClass = 'is-on';
         }
 
         const { WINDOW, MOTION, SMOKE, VIBRATION } = this._panel._entityLabels;
         switch (type) {
             case WINDOW:
-                icon = 'mdi:window-closed';
-                if (entityState?.state === 'on') {
-                    icon = 'mdi:window-open';
-                    label = 'Open';
-                } else {
-                    label = 'Closed';
-                }
-                break;
+                 icon = entityState.state === 'on' ? 'mdi:window-open-variant' : 'mdi:window-closed';
+                 label = entityState.state === 'on' ? 'Offen' : 'Geschlossen';
+                 break;
             case MOTION:
-                icon = 'mdi:motion-sensor-off';
-                if (entityState?.state === 'on') {
-                    icon = 'mdi:motion-sensor';
-                    label = 'Detected';
-                } else {
-                    label = 'Clear';
-                }
-                break;
+                 icon = entityState.state === 'on' ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
+                 label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
+                 break;
             case SMOKE:
-                icon = 'mdi:smoke-detector-variant';
-                 if (entityState?.state === 'on') {
-                    icon = 'mdi:smoke-detector-variant-alert';
-                    label = 'Detected';
-                } else {
-                    label = 'Clear';
-                }
+                icon = entityState.state === 'on' ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector-variant';
+                label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
                 break;
             case VIBRATION:
-                icon = 'mdi:vibrate-off';
-                if (entityState?.state === 'on') {
-                    icon = 'mdi:vibrate';
-                    label = 'Detected';
-                } else {
-                    label = 'Clear';
-                }
+                icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
+                label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
                 break;
             default:
                 if (entityState?.state === 'on' || entityState?.state === 'off') {
