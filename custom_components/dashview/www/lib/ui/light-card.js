@@ -11,12 +11,6 @@ export class LightsCard {
         this._hass = hass;
     }
 
-    /**
-     * Initializes the lights card, creating a row for each light entity.
-     * @param {HTMLElement} popup The popup element containing the card.
-     * @param {string} roomKey The key for the current room.
-     * @param {Array<string>} lightEntities A list of light entity IDs for the room.
-     */
     initialize(popup, roomKey, lightEntities) {
         const card = popup.querySelector('.lights-card');
         if (!card) return;
@@ -31,73 +25,91 @@ export class LightsCard {
 
         individualContainer.innerHTML = ''; // Clear previous content
         lightEntities.forEach(entityId => {
-            const row = rowTemplate.content.cloneNode(true).querySelector('.light-row');
+            const entity = this._hass.states[entityId];
+            if (!entity) return;
+
+            const row = rowTemplate.content.cloneNode(true).querySelector('.light-control-row');
             row.dataset.entityId = entityId;
 
             const nameEl = row.querySelector('.light-name');
-            nameEl.textContent = this._hass.states[entityId]?.attributes.friendly_name || entityId;
-            
-            // Add click listener to the entire row to toggle the light
-            row.addEventListener('click', () => {
+            nameEl.textContent = entity.attributes.friendly_name || entityId;
+
+            // Add click listener to the toggle area
+            const toggleArea = row.querySelector('.light-toggle-area');
+            toggleArea.addEventListener('click', () => {
                 this._hass.callService('light', 'toggle', { entity_id: entityId });
             });
-            
+
+            const sliderArea = row.querySelector('.light-slider-area');
+            const slider = row.querySelector('.light-slider');
+            const isDimmable = entity.attributes.supported_color_modes?.some(mode => ['brightness', 'color_temp', 'hs'].includes(mode));
+
+            if (isDimmable) {
+                slider.addEventListener('change', (e) => {
+                    const brightness_pct = parseInt(e.target.value, 10);
+                    this._hass.callService('light', 'turn_on', {
+                        entity_id: entityId,
+                        brightness_pct: brightness_pct
+                    });
+                });
+            } else {
+                sliderArea.style.display = 'none';
+            }
+
             individualContainer.appendChild(row);
-            this.update(popup, entityId); // Perform initial update for this row
+            this.update(popup, entityId); // Perform initial update
         });
 
-        // Initial update for the main "X / Y" count
         this._updateCount(card, lightEntities);
     }
 
-    /**
-     * Updates a single light row's appearance based on its state.
-     * @param {HTMLElement} popup The popup element containing the card.
-     * @param {string} entityId The specific light entity that changed.
-     */
     update(popup, entityId) {
         if (!this._hass) return;
 
-        const lightRow = popup.querySelector(`.light-row[data-entity-id="${entityId}"]`);
+        const lightRow = popup.querySelector(`.light-control-row[data-entity-id="${entityId}"]`);
         if (!lightRow) return;
 
         const entityState = this._hass.states[entityId];
         const isOn = entityState && entityState.state === 'on';
 
-        // Update icon
-        const iconEl = lightRow.querySelector('.mdi');
-        if (iconEl) {
-            iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-off';
-        }
-        
-        // Update state label with brightness
-        const stateLabelEl = lightRow.querySelector('.light-state-label');
-        if (stateLabelEl) {
-            if (isOn) {
-                let label = 'An';
-                if (entityState.attributes && typeof entityState.attributes.brightness === 'number') {
-                    const brightnessPercent = Math.round((entityState.attributes.brightness / 255) * 100);
-                    label += ` - ${brightnessPercent}%`;
-                }
-                stateLabelEl.textContent = label;
-            } else {
-                stateLabelEl.textContent = 'Aus';
-            }
-        }
-        
-        // Update the row's state attribute for CSS styling
         lightRow.setAttribute('state', isOn ? 'on' : 'off');
         
-        // Update the main "X / Y" count
+        const iconEl = lightRow.querySelector('.light-icon .mdi');
+        if (iconEl) {
+            iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-outline';
+        }
+
+        const stateEl = lightRow.querySelector('.light-state');
+        const slider = lightRow.querySelector('.light-slider');
+        const sliderArea = lightRow.querySelector('.light-slider-area');
+
+        if (isOn) {
+            const brightness = entityState.attributes.brightness;
+            if (typeof brightness === 'number') {
+                const brightnessPercent = Math.round((brightness / 255) * 100);
+                stateEl.textContent = `On - ${brightnessPercent}%`;
+                if (slider) {
+                    slider.value = brightnessPercent;
+                    slider.style.background = `linear-gradient(to right, #fca103 ${brightnessPercent}%, var(--gray500) ${brightnessPercent}%)`;
+                }
+            } else {
+                stateEl.textContent = 'On';
+                if (slider) {
+                    slider.value = 100;
+                    slider.style.background = `linear-gradient(to right, #fca103 100%, var(--gray500) 100%)`;
+                }
+            }
+        } else {
+            stateEl.textContent = 'Off';
+             if (slider) {
+                slider.style.background = 'var(--gray500)';
+             }
+        }
+
         const lightEntities = this._config.rooms[popup.id.replace('-popup', '')]?.lights || [];
         this._updateCount(popup.querySelector('.lights-card'), lightEntities);
     }
     
-    /**
-     * Updates the "X / Y" counter in the card's header.
-     * @param {HTMLElement} card The .lights-card element.
-     * @param {Array<string>} lightEntities A list of all light entities for the room.
-     */
     _updateCount(card, lightEntities) {
         if (!card || !lightEntities) return;
         const countEl = card.querySelector('.lights-count');
