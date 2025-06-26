@@ -87,7 +87,6 @@ export class HeaderManager {
       roomsByFloor[floorKey].push({ key: roomKey, config: roomConfig });
     });
 
-    // --- FIX: Sort the floors based on their 'level' attribute ---
     const sortedFloorKeys = Object.keys(roomsByFloor)
         .sort((a, b) => {
             const floorALevel = floors[a]?.level ?? 0;
@@ -95,20 +94,21 @@ export class HeaderManager {
             return floorALevel - floorBLevel;
         });
 
-    // --- FIX: Iterate over the newly sorted floor keys ---
     sortedFloorKeys.forEach(floorKey => {
       const floorRooms = roomsByFloor[floorKey];
       const floorConfig = floors[floorKey];
       if (!floorConfig) return;
 
-      const activeMotionRooms = floorRooms.filter(room => {
-        const motionEntityConfig = room.config.header_entities?.find(e => e.entity_type === 'motion');
-        return motionEntityConfig && this._hass.states[motionEntityConfig.entity]?.state === 'on';
+      const activeRooms = floorRooms.filter(room => {
+        const motionEntityConfig = room.config.header_entities?.find(e => e.entity_type === this._panel._entityLabels.MOTION);
+        const hasActiveMotion = motionEntityConfig && this._hass.states[motionEntityConfig.entity]?.state === 'on';
+        const hasActiveLights = (room.config.lights || []).some(lightId => this._hass.states[lightId]?.state === 'on');
+        return hasActiveMotion || hasActiveLights;
       });
 
-      if (activeMotionRooms.length > 0) {
+      if (activeRooms.length > 0) {
         buttonsHTML += `<button class="header-floor-button" data-floor="${floorKey}"><i class="mdi ${this._panel._processIconName(floorConfig.icon)}"></i></button>`;
-        activeMotionRooms.forEach(room => {
+        activeRooms.forEach(room => {
           buttonsHTML += `<button class="header-room-button" data-room="${room.key}" data-floor="${floorKey}" data-hash="#${room.key}" title="${room.config.friendly_name}"><i class="mdi ${this._panel._processIconName(room.config.icon)}"></i></button>`;
         });
       }
