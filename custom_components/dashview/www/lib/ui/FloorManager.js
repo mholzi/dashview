@@ -253,9 +253,8 @@ export class FloorManager {
   _getCardDisplayData(entityId, type) {
     const entityState = this._hass.states[entityId];
     
-    // --- FIX: Robust defaults for all variables ---
     let name = entityState?.attributes.friendly_name || entityId;
-    let label = entityState?.state || 'N/A'; // Default to the entity's state
+    let label = entityState?.state || 'N/A';
     let icon = 'mdi:help-circle';
     let cardClass = '';
 
@@ -266,35 +265,46 @@ export class FloorManager {
         cardClass = 'is-on';
     }
 
+    const { TEMPERATUR, HUMIDITY, LIGHT, MOTION, WINDOW, COVER, SMOKE, VIBRATION } = this._panel._entityLabels;
     switch (type) {
-        case 'temperatur':
+        case TEMPERATUR:
             const tempValue = parseFloat(entityState?.state);
             label = isNaN(tempValue) ? '--°' : `${tempValue.toFixed(1)}°`;
             name = 'Temperatur';
             icon = 'mdi:thermometer';
             break;
-        case 'humidity':
+        case HUMIDITY:
             const humValue = parseFloat(entityState?.state);
             label = isNaN(humValue) ? '--%' : `${Math.round(humValue)}%`;
             name = 'Humidity';
             icon = 'mdi:water-percent';
             break;
-        case 'light':
+        case LIGHT:
             icon = entityState?.attributes.icon || 'mdi:lightbulb';
             label = entityState?.state === 'on' ? `${entityState.attributes.brightness ? Math.round(entityState.attributes.brightness / 2.55) + '%' : 'On'}` : 'Off';
             if(entityState?.state === 'on') cardClass += ' active-light';
             break;
-        case 'motion':
+        case MOTION:
              icon = 'mdi:motion-sensor';
              label = entityState.state === 'on' ? 'Detected' : 'Clear';
              break;
-        case 'cover':
+        case WINDOW:
+             icon = 'mdi:window-open-variant';
+             label = entityState.state === 'on' ? 'Open' : 'Closed';
+             break;
+        case COVER:
             icon = 'mdi:window-shutter';
             label = entityState?.state === 'closed' ? 'Closed' : `${entityState?.attributes.current_position || 0}%`;
             break;
-        // --- This default case is the critical fix ---
+        case SMOKE:
+            icon = 'mdi:smoke-detector-variant';
+            label = entityState.state === 'on' ? 'Detected' : 'Clear';
+            break;
+        case VIBRATION:
+            icon = 'mdi:vibrate';
+            label = entityState.state === 'on' ? 'Detected' : 'Clear';
+            break;
         default:
-            // For any other binary sensor, just show its state
             if (entityState?.state === 'on' || entityState?.state === 'off') {
                 label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
             }
@@ -307,7 +317,7 @@ export class FloorManager {
   
   _isRoomActive(roomConfig) {
       if (!roomConfig || !this._hass) return false;
-      const motionSensor = roomConfig.header_entities?.find(e => e.entity_type === 'motion')?.entity;
+      const motionSensor = roomConfig.header_entities?.find(e => e.entity_type === this._panel._entityLabels.MOTION)?.entity;
       if (motionSensor && this._hass.states[motionSensor]?.state === 'on') {
           return true;
       }
