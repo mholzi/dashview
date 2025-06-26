@@ -15,10 +15,16 @@
 </div>
 
 <template id="light-row-template">
-  <div class="light-row" state="off">
-    <div class="light-info">
-        <span class="light-name">Light Name</span>
-        <span class="light-state-label">Aus</span>
+  <div class="light-control-row" state="off">
+    <div class="light-toggle-area">
+      <div class="light-icon"><i class="mdi mdi-lightbulb-outline"></i></div>
+      <div class="light-info">
+        <div class="light-name">Light Name</div>
+        <div class="light-state">Off</div>
+      </div>
+    </div>
+    <div class="light-slider-area">
+      <input type="range" class="light-slider" min="1" max="100" value="50">
     </div>
   </div>
 </template>
