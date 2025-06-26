@@ -11,15 +11,12 @@ export class FloorManager {
   setHass(hass) {
     this._hass = hass;
   }
-  
-  /**
-   * Initializes the floor tabs and renders the initial layout for the default floor.
-   */
+
   initializeFloorTabs() {
     const container = this._shadowRoot.getElementById('floor-tabs-container');
     if (!container) return;
 
-    container.innerHTML = ''; // Clear existing content
+    container.innerHTML = ''; 
 
     const floors = Object.entries(this._houseConfig.floors || {}).sort(([, a], [, b]) => (a.level || 0) - (b.level || 0));
     if (floors.length === 0) {
@@ -70,10 +67,6 @@ export class FloorManager {
     }
   }
 
-  /**
-   * Renders the entire layout for a specific floor based on its configuration.
-   * This is the main rendering engine for the dashboard.
-   */
   renderFloorLayout(floorId) {
     const gridContainer = this._shadowRoot.getElementById(`room-grid-${floorId}`);
     if (!gridContainer) return;
@@ -96,7 +89,7 @@ export class FloorManager {
 
     let gridHTML = '';
     for (const slot of layoutConfig) {
-        if (slot.type === 'empty') { // This is the new check
+        if (slot.type === 'empty') {
             gridHTML += `<div style="grid-area: ${slot.grid_area};"></div>`;
             continue;
         }
@@ -117,7 +110,7 @@ export class FloorManager {
                 const entityId = entityProvider(slot.type);
                 if (entityId) cardHTML = this._generateBigSensorCardHTML(entityId, slot.grid_area);
             }
-        } else { // Small slot
+        } else {
             const entityId = entityProvider(slot.type);
             if (entityId) cardHTML = this._generateSmallSensorCardHTML(entityId, slot.grid_area);
         }
@@ -126,14 +119,9 @@ export class FloorManager {
 
     gridContainer.innerHTML = gridHTML;
     
-    // Re-initialize event listeners for the newly created cards
     gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card').forEach(card => this._initializeCardListeners(card));
-    gridContainer.querySelectorAll('.swiper-container').forEach(container => this._initializeSwiper(container));
   }
   
-  /**
-   * Gathers all entities associated with a specific floor from the house configuration.
-   */
   _getEntitiesForFloor(floorId) {
     const entities = new Set();
     const roomsOnFloor = Object.values(this._houseConfig.rooms || {}).filter(r => r.floor === floorId);
@@ -154,10 +142,10 @@ export class FloorManager {
   }
 
   _getEntityTypeFromConfig(entityId) {
+    if (!entityId) return 'unknown';
     for (const room of Object.values(this._houseConfig.rooms || {})) {
-        if (room.header_entities?.some(e => e.entity === entityId)) {
-            return room.header_entities.find(e => e.entity === entityId).entity_type;
-        }
+        const headerEntity = room.header_entities?.find(e => e.entity === entityId);
+        if (headerEntity) return headerEntity.entity_type;
         if (room.lights?.includes(entityId)) return 'light';
         if (room.covers?.includes(entityId)) return 'cover';
         if (room.media_players?.some(mp => mp.entity === entityId)) return 'media_player';
@@ -165,20 +153,19 @@ export class FloorManager {
     return entityId.split('.')[0];
   }
 
-  // --- CARD GENERATION AND INITIALIZATION ---
-
   _generateSmallSensorCardHTML(entityId, gridArea) {
     const type = this._getEntityTypeFromConfig(entityId);
-    const { name, label, icon, cardStyle, iconStyle, imgCellStyle, labelStyle, nameStyle } = this._getCardDisplayData(entityId, type, false);
+    // Use the corrected return object from _getCardDisplayData
+    const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, type, false);
 
     return `
-      <div class="sensor-small-card" style="grid-area: ${gridArea}; ${cardStyle}" data-entity-id="${entityId}" data-type="${type}">
+      <div class="sensor-small-card ${cardClass}" style="grid-area: ${gridArea};" data-entity-id="${entityId}" data-type="${type}">
           <div class="sensor-small-grid">
-              <div class="sensor-small-icon-cell" style="${imgCellStyle}">
-                  <i class="mdi ${this._panel._processIconName(icon)}" style="${iconStyle}"></i>
+              <div class="sensor-small-icon-cell">
+                  <i class="mdi ${this._panel._processIconName(icon)}"></i>
               </div>
-              <div class="sensor-small-label" style="${labelStyle}">${label}</div>
-              <div class="sensor-small-name" style="${nameStyle}">${name}</div>
+              <div class="sensor-small-label">${label}</div>
+              <div class="sensor-small-name">${name}</div>
           </div>
       </div>
     `;
@@ -186,17 +173,17 @@ export class FloorManager {
 
   _generateBigSensorCardHTML(entityId, gridArea) {
     const type = this._getEntityTypeFromConfig(entityId);
-    const { name, label, icon, cardStyle, iconStyle, imgCellStyle, labelStyle, nameStyle } = this._getCardDisplayData(entityId, type, true);
+    const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, type, true);
 
     return `
-      <div class="sensor-big-card" style="grid-area: ${gridArea}; ${cardStyle}" data-entity-id="${entityId}" data-type="${type}">
+      <div class="sensor-big-card ${cardClass}" style="grid-area: ${gridArea};" data-entity-id="${entityId}" data-type="${type}">
           <div class="sensor-big-grid">
-              <div class="sensor-big-name" style="${nameStyle}">${name}</div>
-              <div class="sensor-big-icon-cell" style="${imgCellStyle}">
-                  <i class="mdi ${this._panel._processIconName(icon)}" style="${iconStyle}"></i>
+              <div class="sensor-big-name">${name}</div>
+              <div class="sensor-big-icon-cell">
+                  <i class="mdi ${this._panel._processIconName(icon)}"></i>
               </div>
               <div class="sensor-big-label-wrapper">
-                  <div class="sensor-big-label" style="${labelStyle}">${label}</div>
+                  <div class="sensor-big-label">${label}</div>
               </div>
           </div>
       </div>
@@ -263,7 +250,67 @@ export class FloorManager {
     });
   }
 
-  _initializeSwiper(container) { /* ... same swiper logic from original file ... */ }
-  _getCardDisplayData(entityId, type, isBigCard) { /* ... same logic from original file ... */ return { name, label, icon, cardStyle, iconStyle, imgCellStyle, labelStyle, nameStyle }; }
-  _isRoomActive(roomConfig) { /* ... same logic from original file ... */ return false; }
+  _getCardDisplayData(entityId, type) {
+    const entityState = this._hass.states[entityId];
+    
+    // --- FIX: Robust defaults for all variables ---
+    let name = entityState?.attributes.friendly_name || entityId;
+    let label = entityState?.state || 'N/A'; // Default to the entity's state
+    let icon = 'mdi:help-circle';
+    let cardClass = '';
+
+    if (!entityState || entityState.state === 'unavailable') {
+        cardClass = 'is-unavailable';
+        label = 'Unavailable';
+    } else if (entityState.state === 'on' || entityState.state === 'Run' || entityState.state === 'playing') {
+        cardClass = 'is-on';
+    }
+
+    switch (type) {
+        case 'temperatur':
+            const tempValue = parseFloat(entityState?.state);
+            label = isNaN(tempValue) ? '--°' : `${tempValue.toFixed(1)}°`;
+            name = 'Temperatur';
+            icon = 'mdi:thermometer';
+            break;
+        case 'humidity':
+            const humValue = parseFloat(entityState?.state);
+            label = isNaN(humValue) ? '--%' : `${Math.round(humValue)}%`;
+            name = 'Humidity';
+            icon = 'mdi:water-percent';
+            break;
+        case 'light':
+            icon = entityState?.attributes.icon || 'mdi:lightbulb';
+            label = entityState?.state === 'on' ? `${entityState.attributes.brightness ? Math.round(entityState.attributes.brightness / 2.55) + '%' : 'On'}` : 'Off';
+            if(entityState?.state === 'on') cardClass += ' active-light';
+            break;
+        case 'motion':
+             icon = 'mdi:motion-sensor';
+             label = entityState.state === 'on' ? 'Detected' : 'Clear';
+             break;
+        case 'cover':
+            icon = 'mdi:window-shutter';
+            label = entityState?.state === 'closed' ? 'Closed' : `${entityState?.attributes.current_position || 0}%`;
+            break;
+        // --- This default case is the critical fix ---
+        default:
+            // For any other binary sensor, just show its state
+            if (entityState?.state === 'on' || entityState?.state === 'off') {
+                label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
+            }
+            console.warn(`[FloorManager] Using default card for unknown type: ${type}`);
+            break;
+    }
+
+    return { name, label, icon, cardClass };
+  }
+  
+  _isRoomActive(roomConfig) {
+      if (!roomConfig || !this._hass) return false;
+      const motionSensor = roomConfig.header_entities?.find(e => e.entity_type === 'motion')?.entity;
+      if (motionSensor && this._hass.states[motionSensor]?.state === 'on') {
+          return true;
+      }
+      return false;
+   }
 }
