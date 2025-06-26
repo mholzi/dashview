@@ -221,20 +221,22 @@ class DashviewPanel extends HTMLElement {
 
     contentContainer.innerHTML = roomsWithPlayers.map(([key, config], index) => 
         `<div class="music-room-content ${index === 0 ? 'active' : ''}" data-room-id="${key}">
-            ${this._generateMusicRoomHTML(config)}
+             <div class="media-player-card">
+                <div class="media-player-container"></div>
+             </div>
         </div>`
     ).join('');
+    
+    // Now initialize the content for each room
+    contentContainer.querySelectorAll('.music-room-content').forEach(roomContent => {
+        const roomId = roomContent.dataset.roomId;
+        const roomConfig = this._houseConfig.rooms[roomId];
+        if(roomConfig && this._mediaPlayerManager) {
+            this._mediaPlayerManager.initialize(roomContent, roomId, roomConfig.media_players);
+        }
+    });
 
     this._setupMusicTabSwitching(popup);
-  }
-
-  _generateMusicRoomHTML(roomConfig) {
-    return roomConfig.media_players.map(player => `
-        <div class="media-room-card" data-entity="${player.entity}">
-            <div class="media-title">${this._hass.states[player.entity]?.attributes.friendly_name || player.entity}</div>
-            <div class="media-state">${this._hass.states[player.entity]?.state || 'unknown'}</div>
-        </div>
-    `).join('');
   }
 
   _setupMusicTabSwitching(popup) {
