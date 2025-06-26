@@ -146,6 +146,14 @@ export class PopupManager {
     });
   
     this._initializeDynamicContent(popup);
+
+    // Force update for specific popups that need it on open.
+    if (popup.id === 'security-popup') {
+        this._panel._securityManager.update();
+    }
+    if (popup.id === 'weather-popup') {
+        this._panel._weatherManager.update();
+    }
   }
 
   _initializeDynamicContent(container) {
