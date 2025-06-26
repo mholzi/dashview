@@ -119,6 +119,8 @@ export class FloorManager {
 
     gridContainer.innerHTML = gridHTML;
     
+    this._initializeSwiper(gridContainer);
+    
     gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card').forEach(card => this._initializeCardListeners(card));
   }
   
@@ -323,4 +325,20 @@ export class FloorManager {
       }
       return false;
    }
+   
+  _initializeSwiper(container) {
+    if (typeof Swiper === 'undefined') {
+      console.error('[FloorManager] Swiper library is not loaded.');
+      return;
+    }
+    container.querySelectorAll('.swiper-container').forEach(swiperEl => {
+      new Swiper(swiperEl, {
+        loop: false,
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+        },
+      });
+    });
+  }
 }
