@@ -28,7 +28,7 @@ export class MediaPlayerCard {
         const primaryPlayer = mediaPlayerEntities[0];
         if (!primaryPlayer) return;
         
-        // This can be further simplified in the future by using templates.
+        // Generate the player HTML, now including dynamic presets
         container.innerHTML = this._generateRoomPlayerHTML(mediaPlayerEntities);
         
         this._initializeMediaPlayerControls(popup);
@@ -51,7 +51,16 @@ export class MediaPlayerCard {
 
     _generateRoomPlayerHTML(mediaPlayerEntities) {
         const primaryEntityId = mediaPlayerEntities[0].entity;
+        const presets = this._config?.media_presets || [];
+        
         return `
+            <div class="media-presets">
+              ${presets.map(preset => `
+                <button class="media-preset-button" data-content-id="${preset.content_id}">
+                  <span class="preset-name">${preset.name}</span>
+                </button>
+              `).join('')}
+            </div>
             <div class="media-display" data-entity="${primaryEntityId}">
                 <div class="media-image"><img src="" alt="Media Cover" class="media-cover"></div>
                 <div class="media-info">
@@ -106,6 +115,21 @@ export class MediaPlayerCard {
                 const volume = parseFloat(e.target.value) / 100;
                 if (entityId) {
                     this._hass.callService('media_player', 'volume_set', { entity_id: entityId, volume_level: volume });
+                }
+            });
+        });
+        
+        // Preset buttons
+        popup.querySelectorAll('.media-preset-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const contentId = button.dataset.contentId;
+                const primaryPlayer = popup.querySelector('.media-display').dataset.entity;
+                if (contentId && primaryPlayer) {
+                    this._hass.callService('media_player', 'play_media', {
+                        entity_id: primaryPlayer,
+                        media_content_id: contentId,
+                        media_content_type: 'music'
+                    });
                 }
             });
         });
