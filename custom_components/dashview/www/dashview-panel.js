@@ -72,24 +72,26 @@ class DashviewPanel extends HTMLElement {
     this.loadContent();
   }
 
-  set hass(hass) {
+set hass(hass) {
     if (!this._contentReady) {
         this._hass = hass;
         return;
     }
-    
-    if (this._hass !== hass) {
-        this._hass = hass;
-        if (this._stateManager) this._stateManager.setHass(hass);
-        if (this._infoCardManager) this._infoCardManager.setHass(hass);
-        if (this._weatherManager) this._weatherManager.setHass(hass);
-        if (this._sceneManager) this._sceneManager.setHass(hass);
-        if (this._floorManager) this._floorManager.setHass(hass);
-        
+
+    // Always update the hass object in the managers
+    this._hass = hass;
+    if (this._stateManager) this._stateManager.setHass(hass);
+    if (this._infoCardManager) this._infoCardManager.setHass(hass);
+    if (this._weatherManager) this._weatherManager.setHass(hass);
+    if (this._sceneManager) this._sceneManager.setHass(hass);
+    if (this._floorManager) this._floorManager.setHass(hass);
+
+    // And always run the update handler.
+    // The state manager will handle checking for actual entity changes.
+    if (this._stateManager) {
         this._stateManager.handleHassUpdate();
     }
   }
-
   async loadContent() {
     try {
         const [styleText, htmlText] = await Promise.all([
