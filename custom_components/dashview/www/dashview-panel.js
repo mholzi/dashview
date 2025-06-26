@@ -124,20 +124,62 @@ class DashviewPanel extends HTMLElement {
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
   }
 
+  _getRoomKeyForEntity(entityId) {
+    if (!this._houseConfig || !this._houseConfig.rooms) {
+      return null;
+    }
+    for (const [roomKey, roomConfig] of Object.entries(this._houseConfig.rooms)) {
+      if (
+        (roomConfig.lights && roomConfig.lights.includes(entityId)) ||
+        (roomConfig.covers && roomConfig.covers.includes(entityId)) ||
+        (roomConfig.media_players && roomConfig.media_players.some(p => p.entity === entityId)) ||
+        (roomConfig.header_entities && roomConfig.header_entities.some(e => e.entity === entityId))
+      ) {
+        return roomKey;
+      }
+    }
+    return null;
+  }
+
   /**
    * Main callback for the StateManager. This is the central point for all UI updates.
    */
   updateComponentForEntity(entityId, entityState) {
     if (!this._contentReady) return;
 
-    // Delegate updates to the appropriate managers
+    // These are global and should always update
     this._headerManager.updateAll();
     this._infoCardManager.update();
-    this._sceneManager.renderSceneButtons(); // Update scenes on any relevant entity change
+    this._sceneManager.renderSceneButtons();
 
     const activePopup = this._shadowRoot.querySelector('.popup.active');
-    if (activePopup) {
-        this._popupManager.updatePopupContent(activePopup, entityId);
+    if (!activePopup) return;
+
+    const popupId = activePopup.id;
+    const entityDomain = entityId.split('.')[0];
+    const roomKeyForEntity = this._getRoomKeyForEntity(entityId);
+
+    // Update for a room popup
+    if (roomKeyForEntity && popupId === `${roomKeyForEntity}-popup`) {
+      switch (entityDomain) {
+        case 'light':
+          this._lightsManager.update(activePopup, entityId);
+          break;
+        case 'cover':
+          this._coversManager.update(activePopup, entityId);
+          break;
+        case 'media_player':
+          this._mediaPlayerManager.update(entityId);
+          break;
+        case 'sensor':
+        case 'binary_sensor':
+          this._thermostatManager.update(activePopup, roomKeyForEntity);
+          break;
+      }
+    } else if (popupId === 'weather-popup' && (entityDomain === 'weather' || entityId.includes('pollen'))) {
+      this._weatherManager.update();
+    } else if (popupId === 'security-popup' && (entityDomain === 'binary_sensor' || entityDomain === 'alarm_control_panel')) {
+      this._securityManager.update();
     }
   }
 
