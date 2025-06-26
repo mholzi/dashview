@@ -151,7 +151,20 @@ class DashViewConfigView(HomeAssistantView):
         if config_type == 'house':
             config = self._entry.options.get('house_config', {})
             return web.json_response(config)
+        elif config_type == 'available_media_players':
+            all_media_players = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.attributes.get("friendly_name", entity.entity_id),
+                }
+                for entity in self._hass.states.async_all()
+                if entity.entity_id.startswith("media_player.")
+            ]
+            all_media_players.sort(key=lambda x: x["friendly_name"])
+            return web.json_response(all_media_players)
 
+        elif config_type == 'entities_by_room':
+            return await self._get_entities_by_room(request)
         if config_type == 'weather_entity':
             house_config = self._entry.options.get('house_config', {})
             weather_entity = house_config.get('weather_entity', 'weather.forecast_home')
@@ -255,7 +268,7 @@ class DashViewConfigView(HomeAssistantView):
             self._hass.config_entries.async_update_entry(
                 self._entry, options=current_options
             )
-            return web.json_response({"status": "success"})
+            return web.json_response({"statusFa": "success"})
         except Exception as e:
             _LOGGER.error("[DashView] Error saving configuration: %s", e)
             return web.json_response({"status": "error", "message": str(e)}, status=500)
