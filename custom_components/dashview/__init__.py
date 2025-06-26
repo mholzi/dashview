@@ -96,11 +96,18 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
             _LOGGER.info(f"New floor '{floor.name}' found, adding to DashView config.")
             house_config["floors"][floor.floor_id] = {}
         
-        house_config["floors"][floor.floor_id].update({
+        floor_data = house_config["floors"][floor.floor_id]
+        
+        # Update the name and icon from HA's registry
+        floor_data.update({
             "friendly_name": floor.name,
             "icon": floor.icon or "mdi:home",
-            "level": floor.level,
         })
+        
+        # Only set the level from HA if it's not already set by the user in DashView.
+        # This preserves the custom order.
+        if "level" not in floor_data:
+            floor_data["level"] = floor.level
         
         if floor.floor_id not in house_config["floor_layouts"]:
             _LOGGER.info(f"Generating default layout for new floor '{floor.name}'.")
