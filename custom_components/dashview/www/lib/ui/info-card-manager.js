@@ -74,7 +74,7 @@ export class InfoCardManager {
         timeString = ` ${end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} um `;
       }
 
-      content += `${levelToText[level] || ''} ${name} bis${timeString}${end.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}&nbsp;Uhr. `;
+      content += `${levelToText[level] || ''} ${name} bis ${timeString}${end.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}&nbsp;Uhr. `;
     }
 
     return content + '<a href="https://www.dwd.de/DE/wetter/warnungen_gemeinden/warnWetter_node.html?ort=dreieich" target="_blank">Weitere Informationen</a>';
@@ -113,13 +113,17 @@ export class InfoCardManager {
   }
   
   _updateTemperatureNotifications(container) {
-    container.innerHTML = ''; 
+    container.innerHTML = '';
     const threshold = this._config?.temperature_threshold;
-    if (!threshold) return;
+
+    if (!threshold) {
+        container.style.display = 'none';
+        return;
+    }
 
     const tempSensors = this._panel._getAllEntitiesByType('temperatur');
-    
     const highTempRooms = [];
+
     tempSensors.forEach(entityId => {
         const entity = this._hass.states[entityId];
         if (entity && parseFloat(entity.state) > threshold) {
@@ -142,6 +146,9 @@ export class InfoCardManager {
             </div>
         `;
         container.appendChild(card);
+        container.style.display = 'flex';
+    } else {
+        container.style.display = 'none';
     }
   }
 
@@ -243,7 +250,7 @@ export class InfoCardManager {
   }
 
   _updateWindowsSection(section) {
-    const openWindows = this._panel._getAllEntitiesByType('window')
+    const openWindows = this._panel._getAllEntitiesByType(this._panel._entityLabels.WINDOW)
       .filter(id => this._hass.states[id]?.state === 'on').length;
 
     if (openWindows > 0) {
