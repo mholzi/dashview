@@ -1371,6 +1371,7 @@ body.popup-open, :host(.popup-open) {
     font-weight: 500;
 }
 /* --- Lights Card --- */
+/* --- Lights Card --- */
 .lights-card {
     margin: 8px 0;
     background-color: var(--gray200);
@@ -1431,58 +1432,98 @@ body.popup-open, :host(.popup-open) {
     padding-top: 12px;
 }
 
-/* --- Consolidated Light Row Styles --- */
-.light-row {
-    display: flex;
+/* --- New Integrated Light Row Styles --- */
+.light-control-row {
+    position: relative;
     height: 60px;
-    align-items: center;
-    gap: 16px;
-    border-radius: 12px;
-    padding: 0 16px;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-}
-
-.light-row[state="off"] {
-    background: var(--gray000);
-}
-
-.light-row[state="on"] {
-    background: var(--active-light);
-}
-
-.light-row .mdi {
-    font-size: 24px;
-    color: var(--secondary-text-color);
-    transition: color 0.2s ease-in-out;
-}
-
-.light-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--secondary-text-color);
-    white-space: nowrap;
+    border-radius: 15px;
+    background-color: var(--gray000);
+    color: var(--primary-text-color);
     overflow: hidden;
-    text-overflow: ellipsis;
-    transition: color 0.2s ease-in-out;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    -webkit-tap-highlight-color: transparent; /* Disable highlight on touch */
 }
 
-.light-row[state="on"] .mdi,
-.light-row[state="on"] .light-name,
-.light-row[state="on"] .light-info {
+.light-control-row.is-dimmable {
+    cursor: ew-resize;
+}
+
+.light-control-row[state="off"] {
+    background-color: var(--gray000);
+    color: var(--primary-text-color);
+}
+
+.light-control-row[state="on"] {
     color: var(--gray800);
 }
 
-.light-info {
+.light-brightness-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: var(--active-light);
+    border-radius: 15px 0 0 15px;
+    transition: width 0.2s ease-out;
+}
+
+.light-control-row[state="on"]:not(.is-dimmable) .light-brightness-bar,
+.light-control-row[state="on"].is-dimmable .light-brightness-bar[style*="width: 100%"] {
+    border-radius: 15px;
+}
+
+.light-brightness-handle {
+    position: absolute;
+    top: 10%;
+    left: 0%;
+    width: 3px;
+    height: 80%;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 2px;
+    transform: translateX(-1.5px);
+    display: none;
+    pointer-events: none;
+    transition: left 0.2s ease-out;
+}
+
+.light-control-row.is-dimmable[state="on"] .light-brightness-handle {
+    display: block;
+}
+
+.light-content {
+    position: relative;
+    z-index: 2;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    align-items: center;
+    padding: 0 16px;
+    height: 100%;
+}
+
+.light-icon {
+    margin-right: 12px;
+}
+
+.light-icon .mdi {
+    font-size: 24px;
+}
+
+.light-info {
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* --- Thermostat Card Styles --- */
+.light-name {
+    font-weight: 500;
+}
+
+.light-state {
+    font-size: 0.85em;
+    opacity: 0.7;
+}/* --- Thermostat Card Styles --- */
 .thermostat-card {
     position: relative;
     display: flex;
