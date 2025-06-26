@@ -37,6 +37,49 @@ export class InfoCardManager {
     }
   }
 
+  _formatDwdWarning(dwdEntity) {
+    if (!dwdEntity || dwdEntity.state === '0' || dwdEntity.state === 'unavailable') {
+      return '';
+    }
+
+    const warningCount = parseInt(dwdEntity.attributes.warning_count, 10);
+    if (warningCount === 0) {
+      return '';
+    }
+
+    let content = '';
+    const levelToText = {
+      0: 'Information vor',
+      1: 'Warnung vor',
+      2: 'Warnung vor markantem',
+      3: 'Unwetterwarnung vor',
+      4: 'Achtung! Extremem Unwetter -'
+    };
+
+    for (let i = 1; i <= warningCount; i++) {
+      const level = dwdEntity.attributes[`warning_${i}_level`];
+      const name = dwdEntity.attributes[`warning_${i}_name`];
+      const end = new Date(dwdEntity.attributes[`warning_${i}_end`]);
+      const now = new Date();
+      const endDay = new Date(end).setHours(0, 0, 0, 0);
+      const today = new Date().setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today).setDate(new Date(today).getDate() + 1);
+
+      let timeString = '';
+      if (endDay === today) {
+        timeString = '';
+      } else if (endDay === tomorrow) {
+        timeString = ' morgen um ';
+      } else {
+        timeString = ` ${end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} um `;
+      }
+
+      content += `${levelToText[level] || ''} ${name} bis${timeString}${end.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}&nbsp;Uhr. `;
+    }
+
+    return content + '<a href="https://www.dwd.de/DE/wetter/warnungen_gemeinden/warnWetter_node.html?ort=dreieich" target="_blank">Weitere Informationen</a>';
+  }
+
   _updateDwdWarningCard(container) {
     const dwdSensorId = this._integrationsConfig?.dwd_sensor;
     if (!dwdSensorId) {
@@ -50,13 +93,19 @@ export class InfoCardManager {
       return;
     }
 
+    const warningText = this._formatDwdWarning(dwdEntity);
+    if (!warningText) {
+        container.innerHTML = '';
+        return;
+    }
+
     container.innerHTML = `
         <div class="notification-card" style="border-color: var(--yellow);">
             <div class="notification-icon" style="color: var(--yellow);"><i class="mdi mdi-weather-hurricane"></i></div>
             <div class="notification-info">
-                <div class="notification-title">${dwdEntity.attributes.warning_headline || 'Weather Warning'}</div>
+                <div class="notification-title">${dwdEntity.attributes.warning_headline || 'Wetterwarnung'}</div>
                 <div class="notification-details">
-                    <span>${dwdEntity.attributes.warning_description || 'Check weather alerts.'}</span>
+                    <span>${warningText}</span>
                 </div>
             </div>
         </div>
