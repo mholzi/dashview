@@ -2,7 +2,7 @@
 
 :host {
     /* Base Font */
-    --primary-font-family: 'Space Grotesk', sans-serif;
+    --primary-font-family: 'Space+Grotesk', sans-serif;
 
     /* Default to light mode variables */
     --background: #f5f7fa;
@@ -1371,7 +1371,6 @@ body.popup-open, :host(.popup-open) {
     font-weight: 500;
 }
 /* --- Lights Card --- */
-/* --- Lights Card --- */
 .lights-card {
     margin: 8px 0;
     background-color: var(--gray200);
@@ -1432,32 +1431,29 @@ body.popup-open, :host(.popup-open) {
     padding-top: 12px;
 }
 
-/* --- New Integrated Light Row Styles --- */
+/* --- MODIFIED Light Row Styles --- */
 .light-control-row {
     position: relative;
     height: 60px;
     border-radius: 15px;
+    /* Set a consistent background color */
     background-color: var(--gray000);
     color: var(--primary-text-color);
     overflow: hidden;
-    cursor: pointer;
     transition: color 0.3s ease;
-    -webkit-tap-highlight-color: transparent; /* Disable highlight on touch */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .light-control-row.is-dimmable {
-    cursor: ew-resize;
+    cursor: ew-resize; /* Indicate that the row is draggable */
 }
 
-.light-control-row[state="off"] {
-    background-color: var(--gray000);
-    color: var(--primary-text-color);
-}
-
+/* Change font color when light is on */
 .light-control-row[state="on"] {
-    color: var(--gray800);
+    color: var(--gray000);
 }
 
+/* The colored bar representing brightness */
 .light-brightness-bar {
     position: absolute;
     top: 0;
@@ -1467,8 +1463,10 @@ body.popup-open, :host(.popup-open) {
     background: var(--active-light);
     border-radius: 15px 0 0 15px;
     transition: width 0.2s ease-out;
+    pointer-events: none; /* Allow clicks to pass through */
 }
 
+/* Ensure full radius when at 100% */
 .light-control-row[state="on"]:not(.is-dimmable) .light-brightness-bar,
 .light-control-row[state="on"].is-dimmable .light-brightness-bar[style*="width: 100%"] {
     border-radius: 15px;
@@ -1492,13 +1490,15 @@ body.popup-open, :host(.popup-open) {
     display: block;
 }
 
+/* Content (icon/text) is layered on top */
 .light-content {
     position: relative;
-    z-index: 2;
+    z-index: 2; /* Ensure content is above the brightness bar */
     display: flex;
     align-items: center;
     padding: 0 16px;
     height: 100%;
+    cursor: pointer; /* Clickable area for toggle */
 }
 
 .light-icon {
@@ -1523,7 +1523,8 @@ body.popup-open, :host(.popup-open) {
 .light-state {
     font-size: 0.85em;
     opacity: 0.7;
-}/* --- Thermostat Card Styles --- */
+}
+/* --- Thermostat Card Styles --- */
 .thermostat-card {
     position: relative;
     display: flex;
@@ -1651,43 +1652,263 @@ body.popup-open, :host(.popup-open) {
     display: flex;
     gap: 12px;
 }
-/* --- Media Header Buttons --- */
-.media-header-scroll {
+/* --- ADDED: Media Player Card Styles --- */
+.media-player-card {
+    margin: 8px 0;
+    border-radius: 12px;
+    background: var(--gray200);
+  }
+  
+  .media-player-expander {
+    border: none;
+    background: var(--gray200);
+    border-radius: 12px;
+    margin: 0;
+  }
+  
+  .media-player-expander[open] {
+    border-radius: 12px;
+  }
+  
+  .media-player-summary {
+    background: transparent;
+    padding: 3px 3px;
+    border-radius: 12px;
+    cursor: pointer;
+    list-style: none;
+    overflow: visible;
+  }
+  
+  .media-player-summary::-webkit-details-marker {
+    display: none;
+  }
+  
+  .media-player-header {
+    display: grid;
+    grid-template-areas: "i n";
+    grid-template-columns: min-content 1fr;
+    align-items: center;
+    height: 46px;
+  }
+  
+  .media-player-icon {
+    grid-area: i;
+    width: 22px;
+    padding-left: 12px;
+    padding-right: 12px;
+    color: var(--gray1000);
+  }
+  
+  .media-player-title {
+    grid-area: n;
+    color: var(--gray1000);
+    font-size: 16px;
+    font-weight: 500;
+    justify-self: start;
+    align-self: center;
+  }
+  
+  .media-player-content {
+    padding: 10px 0;
+    margin: 0;
+  }
+  
+  .media-player-container {
+    background: var(--popupBG);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Compact styles for room cards */
+  .media-player-card .media-presets {
     display: flex;
     gap: 8px;
+    margin-bottom: 12px;
     overflow-x: auto;
-    margin: 16px 0 4px 0;
-    padding: 0 8px;
-    -ms-overflow-style: none;
     scrollbar-width: none;
-}
-
-.media-header-scroll::-webkit-scrollbar {
+  }
+  
+  .media-player-card .media-presets::-webkit-scrollbar {
     display: none;
-}
-
-.media-header-button {
-    background: var(--active-big);
-    border-radius: 50%;
-    height: 34px;
-    width: 34px;
-    border: none;
-    cursor: pointer;
+  }
+  
+  .media-player-card .media-preset-button {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    background-color: var(--popupBG);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
     color: var(--gray800);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .media-player-card .media-preset-button:hover {
+    background-color: var(--highlight);
+    transform: scale(1.05);
+  }
+  
+  .media-player-card .preset-name {
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.2;
+  }
+  
+  .media-player-card .media-display {
+    margin-bottom: 12px;
+  }
+  
+  .media-player-card .media-image {
+    width: 100%;
+    height: 150px;
+    background: var(--gray200);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .media-player-card .media-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .media-player-card .media-info {
+    text-align: center;
+    padding: 0 12px;
+  }
+  
+  .media-player-card .media-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray1000);
+    margin-bottom: 4px;
+  }
+  
+  .media-player-card .media-artist {
+    font-size: 12px;
+    color: var(--gray800);
+  }
+  
+  .media-player-card .media-controls {
     display: flex;
     justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .media-player-card .media-control-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--popupBG);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--gray1000);
+    cursor: pointer;
+    display: flex;
     align-items: center;
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-}
-
-.media-header-button:hover {
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .media-player-card .media-control-button:hover {
+    background: var(--highlight);
     transform: scale(1.1);
-}
-
-.media-header-button i.mdi {
-    font-size: 22px;
-}
+  }
+  
+  .media-player-card .media-control-button.play-pause {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(145deg, rgba(255,200,138,1) 0%, rgba(238,149,255,1) 100%);
+    color: white;
+  }
+  
+  .media-player-card .media-control-button i {
+    font-size: 18px;
+  }
+  
+  .media-player-card .media-volume-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .media-player-card .volume-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 60px;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .media-player-card .volume-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray1000);
+  }
+  
+  .media-player-card .volume-slider-container {
+    position: relative;
+  }
+  
+  .media-player-card .volume-slider {
+    width: 100%;
+    height: 6px;
+    background: #494949;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  .media-player-card .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .media-player-card .volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .media-player-card .volume-value {
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--gray1000);
+  }
+  
+  /* Dark mode adjustments */
+  @media (prefers-color-scheme: dark) {
+    .media-player-card .media-player-container {
+      background: var(--popupBG);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .media-player-card .media-image {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+  
 /* --- Floor Tabs & Room Card Styles --- */
 #floor-tabs-container {
     margin-top: 16px;
@@ -1808,12 +2029,16 @@ body.popup-open, :host(.popup-open) {
 
 .swiper-pagination {
     position: absolute;
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 8px; /* Position from the bottom of the container */
+    left: 50%;   /* Start from the horizontal center */
+    transform: translateX(-50%); /* Shift left by half its own width to truly center */
     display: flex;
+    justify-content: center; /* Center the dots within the flex container */
+    align-items: center;
     gap: 6px;
-    z-index: 10;
+    z-index: 10; /* Ensure it's on top of the cards */
+    width: 100%; /* Ensure the element has a width for transform to work correctly */
+    pointer-events: all; /* Make sure the dots are clickable */
 }
 
 .swiper-pagination-bullet {
