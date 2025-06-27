@@ -46,13 +46,13 @@ export class LightsCard {
                 if (contentArea) {
                     contentArea.addEventListener('click', (e) => {
                         e.stopPropagation(); // Prevent the drag handler from firing.
-                        this._hass.callService('light', 'toggle', { entity_id: entityId });
+                        this._toggleLight(entityId, row, card, lightEntities);
                     });
                 }
             } else {
                 // Non-dimmable lights are simple toggles.
                 row.addEventListener('click', () => {
-                    this._hass.callService('light', 'toggle', { entity_id: entityId });
+                    this._toggleLight(entityId, row, card, lightEntities);
                 });
             }
 
@@ -62,6 +62,51 @@ export class LightsCard {
 
         this._updateCount(card, lightEntities);
     }
+    
+    _toggleLight(entityId, row, card, lightEntities) {
+        const currentState = row.getAttribute('state');
+        const newState = currentState === 'on' ? 'off' : 'on';
+
+        // Optimistic UI update
+        this._updateRowState(row, newState);
+        this._updateCount(card, lightEntities, newState, entityId);
+
+        this._hass.callService('light', 'toggle', { entity_id: entityId });
+    }
+    
+    _updateRowState(row, state, brightnessPercent = null) {
+        const isOn = state === 'on';
+        row.setAttribute('state', isOn ? 'on' : 'off');
+        
+        const iconEl = row.querySelector('.light-icon .mdi');
+        if (iconEl) {
+            iconEl.className = isOn ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-outline';
+        }
+
+        const stateEl = row.querySelector('.light-state');
+        const bar = row.querySelector('.light-brightness-bar');
+        const handle = row.querySelector('.light-brightness-handle');
+        const isDimmable = row.classList.contains('is-dimmable');
+
+        if (isOn) {
+            if (isDimmable) {
+                const displayPercent = brightnessPercent !== null ? brightnessPercent : (this._hass.states[row.dataset.entityId]?.attributes.brightness ? Math.round((this._hass.states[row.dataset.entityId].attributes.brightness / 255) * 100) : 100);
+                stateEl.textContent = `On - ${displayPercent}%`;
+                bar.style.width = `${displayPercent}%`;
+                handle.style.left = `${displayPercent}%`;
+            } else {
+                 stateEl.textContent = 'On';
+                 bar.style.width = '100%';
+            }
+        } else {
+            stateEl.textContent = 'Off';
+            bar.style.width = '0%';
+            if (handle) {
+                handle.style.left = '0%';
+            }
+        }
+    }
+
 
     _initDraggableSlider(row, entityId) {
         let isDragging = false;
@@ -191,12 +236,18 @@ export class LightsCard {
         this._updateCount(popup.querySelector('.lights-card'), lightEntities);
     }
     
-    _updateCount(card, lightEntities) {
+    _updateCount(card, lightEntities, optimisticState = null, changedEntityId = null) {
         if (!card) return;
         const countElement = card.querySelector('.lights-count');
         if (!countElement) return;
 
-        const onLights = lightEntities.filter(id => this._hass.states[id]?.state === 'on').length;
+        let onLights = lightEntities.filter(id => {
+            if (id === changedEntityId && optimisticState !== null) {
+                return optimisticState === 'on';
+            }
+            return this._hass.states[id]?.state === 'on';
+        }).length;
+        
         countElement.textContent = `${onLights}/${lightEntities.length}`;
     }
 }
