@@ -327,31 +327,87 @@ export class FloorManager {
       return false;
    }
    
-_initializeSwiper(container, retries = 10) {
-    // 1. Check if the Swiper library is loaded.
-    if (typeof Swiper === 'undefined') {
-      // If not, retry after a short delay.
-      if (retries > 0) {
-        console.warn(`[FloorManager] Swiper not loaded. Retrying... (${retries} attempts left)`);
-        setTimeout(() => this._initializeSwiper(container, retries - 1), 200);
-      } else {
-        console.error('[FloorManager] Swiper library failed to load after multiple attempts.');
-      }
-      return;
-    }
-
+  _initializeSwiper(container) {
     container.querySelectorAll('.swiper-container').forEach(swiperEl => {
-      // Prevent re-initialization
-      if (swiperEl.swiper) return;
+      if (swiperEl.dataset.swiperInitialized) return;
+      swiperEl.dataset.swiperInitialized = 'true';
 
-      new Swiper(swiperEl, {
-        loop: false,
-        pagination: {
-          // 2. Scope the pagination to the current swiper element for reliability.
-          el: swiperEl.querySelector('.swiper-pagination'),
-          clickable: true,
-        },
-      });
+      const wrapper = swiperEl.querySelector('.swiper-wrapper');
+      const pagination = swiperEl.querySelector('.swiper-pagination');
+      const slides = Array.from(wrapper.children);
+      let currentIndex = 0;
+      let startX = 0;
+      let currentX = 0;
+      let isDragging = false;
+
+      if (slides.length <= 1) {
+        if(pagination) pagination.style.display = 'none';
+        return;
+      }
+
+      // Create pagination bullets
+      if (pagination) {
+        pagination.innerHTML = '';
+        slides.forEach((_, i) => {
+          const bullet = document.createElement('span');
+          bullet.className = `swiper-pagination-bullet ${i === 0 ? 'swiper-pagination-bullet-active' : ''}`;
+          bullet.addEventListener('click', () => {
+            currentIndex = i;
+            this._updateSwipePosition(wrapper, slides, currentIndex);
+            this._updatePagination(pagination, slides, currentIndex);
+          });
+          pagination.appendChild(bullet);
+        });
+      }
+
+      const onTouchStart = (e) => {
+        isDragging = true;
+        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        wrapper.style.transition = 'none';
+      };
+
+      const onTouchMove = (e) => {
+        if (!isDragging) return;
+        currentX = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX) - startX;
+        const baseTranslate = -currentIndex * swiperEl.offsetWidth;
+        wrapper.style.transform = `translateX(${baseTranslate + currentX}px)`;
+      };
+
+      const onTouchEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        wrapper.style.transition = 'transform 0.3s ease';
+
+        if (Math.abs(currentX) > swiperEl.offsetWidth / 4) {
+          currentIndex = currentX < 0 ? Math.min(currentIndex + 1, slides.length - 1) : Math.max(currentIndex - 1, 0);
+        }
+        
+        this._updateSwipePosition(wrapper, slides, currentIndex);
+        this._updatePagination(pagination, slides, currentIndex);
+        currentX = 0;
+      };
+
+      swiperEl.addEventListener('touchstart', onTouchStart, { passive: true });
+      swiperEl.addEventListener('touchmove', onTouchMove, { passive: true });
+      swiperEl.addEventListener('touchend', onTouchEnd);
+      swiperEl.addEventListener('mousedown', onTouchStart);
+      swiperEl.addEventListener('mousemove', onTouchMove);
+      swiperEl.addEventListener('mouseup', onTouchEnd);
+      swiperEl.addEventListener('mouseleave', onTouchEnd);
     });
   }
-}
+
+  _updateSwipePosition(wrapper, slides, index) {
+    const newTranslate = -index * wrapper.offsetWidth;
+    wrapper.style.transform = `translateX(${newTranslate}px)`;
+    slides.forEach((slide, i) => {
+        slide.classList.toggle('swiper-slide-active', i === index);
+    });
+  }
+
+  _updatePagination(pagination, slides, index) {
+    if (!pagination) return;
+    Array.from(pagination.children).forEach((bullet, i) => {
+      bullet.classList.toggle('swiper-pagination-bullet-active', i === index);
+    });
+  }
