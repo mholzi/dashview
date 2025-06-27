@@ -1,4 +1,4 @@
-// custom_components/dashview/lib/ui/media-player-card.js
+// custom_components/dashview/www/lib/ui/media-player-card.js
 
 export class MediaPlayerCard {
     constructor(panel) {
@@ -6,18 +6,14 @@ export class MediaPlayerCard {
         this._hass = panel._hass;
         this._config = panel._houseConfig;
         this._shadowRoot = panel.shadowRoot;
+        // Map to hold debounce timers for each entity to prevent UI snapping back.
+        this._updateDebounceTimers = new Map();
     }
 
     setHass(hass) {
         this._hass = hass;
     }
 
-    /**
-     * Initializes a media player card within a room popup.
-     * @param {HTMLElement} popup The popup element.
-     * @param {string} roomKey The key for the current room.
-     * @param {Array<object>} mediaPlayerEntities The list of media player configurations for the room.
-     */
     initialize(popup, roomKey, mediaPlayerEntities) {
         const card = popup.querySelector('.media-player-card');
         if (!card) return;
@@ -28,22 +24,22 @@ export class MediaPlayerCard {
         const primaryPlayer = mediaPlayerEntities[0];
         if (!primaryPlayer) return;
         
-        // Generate the player HTML, now including dynamic presets
         container.innerHTML = this._generateRoomPlayerHTML(mediaPlayerEntities);
         
         this._initializeMediaPlayerControls(popup);
     }
     
-    /**
-     * Updates all media player components when an entity changes.
-     * @param {string} entityId The ID of the media_player entity that changed.
-     */
     update(entityId) {
         const popups = this._shadowRoot.querySelectorAll('.popup.active');
         popups.forEach(popup => {
-            const hasPlayer = popup.querySelector(`.media-display[data-entity="${entityId}"]`);
-            if (hasPlayer) {
+            // Find all elements related to this entity in the active popup
+            const display = popup.querySelector(`.media-display[data-entity="${entityId}"]`);
+            const slider = popup.querySelector(`.volume-slider[data-entity="${entityId}"]`);
+            
+            if (display) {
                 this._updateMediaPlayerDisplay(popup, entityId);
+            }
+            if (slider) {
                 this._updateMediaPlayerVolume(popup, entityId);
             }
         });
@@ -88,6 +84,22 @@ export class MediaPlayerCard {
                 }).join('')}
             </div>`;
     }
+    
+    /**
+     * Helper to ignore state updates for a brief period after a user interaction.
+     * @param {string} entityId The entity ID to ignore updates for.
+     * @param {HTMLElement} element The element to apply the ignore flag to.
+     */
+    _ignoreUpdatesFor(entityId, element) {
+        element.dataset.ignoreUpdate = 'true';
+        if (this._updateDebounceTimers.has(entityId)) {
+            clearTimeout(this._updateDebounceTimers.get(entityId));
+        }
+        this._updateDebounceTimers.set(entityId, setTimeout(() => {
+            delete element.dataset.ignoreUpdate;
+            this._updateDebounceTimers.delete(entityId);
+        }, 1500)); // Ignore updates for 1.5 seconds to allow state to propagate
+    }
 
     _initializeMediaPlayerControls(popup) {
         if (!this._hass) return;
@@ -99,6 +111,7 @@ export class MediaPlayerCard {
                 const entityId = controls.dataset.entity;
                 const action = button.dataset.action;
                 if (entityId && action) {
+                    this._ignoreUpdatesFor(entityId, controls.closest('.media-display'));
                     this._hass.callService('media_player', action, { entity_id: entityId });
                 }
             });
@@ -114,6 +127,7 @@ export class MediaPlayerCard {
                 const entityId = e.target.dataset.entity;
                 const volume = parseFloat(e.target.value) / 100;
                 if (entityId) {
+                    this._ignoreUpdatesFor(entityId, e.target);
                     this._hass.callService('media_player', 'volume_set', { entity_id: entityId, volume_level: volume });
                 }
             });
@@ -123,10 +137,11 @@ export class MediaPlayerCard {
         popup.querySelectorAll('.media-preset-button').forEach(button => {
             button.addEventListener('click', () => {
                 const contentId = button.dataset.contentId;
-                const primaryPlayer = popup.querySelector('.media-display').dataset.entity;
-                if (contentId && primaryPlayer) {
+                const primaryPlayerEntityId = popup.querySelector('.media-display').dataset.entity;
+                if (contentId && primaryPlayerEntityId) {
+                    this._ignoreUpdatesFor(primaryPlayerEntityId, popup.querySelector('.media-display'));
                     this._hass.callService('media_player', 'play_media', {
-                        entity_id: primaryPlayer,
+                        entity_id: primaryPlayerEntityId,
                         media_content_id: contentId,
                         media_content_type: 'music'
                     });
@@ -136,11 +151,13 @@ export class MediaPlayerCard {
     }
 
     _updateMediaPlayerDisplay(popup, entityId) {
+        const display = popup.querySelector(`.media-display[data-entity="${entityId}"]`);
+        if (!display || display.dataset.ignoreUpdate === 'true') {
+            return; // Skip update if element is not found or is ignoring updates
+        }
+
         const entityState = this._hass.states[entityId];
         if (!entityState) return;
-
-        const display = popup.querySelector(`.media-display[data-entity="${entityId}"]`);
-        if (!display) return;
 
         const img = display.querySelector('.media-cover');
         const title = display.querySelector('.media-title');
@@ -157,16 +174,21 @@ export class MediaPlayerCard {
     }
 
     _updateMediaPlayerVolume(popup, entityId) {
+        const slider = popup.querySelector(`.volume-slider[data-entity="${entityId}"]`);
+        if (!slider || slider.dataset.ignoreUpdate === 'true') {
+            return; // Skip update if element is not found or is ignoring updates
+        }
+        
         const entityState = this._hass.states[entityId];
         if (!entityState) return;
 
-        const slider = popup.querySelector(`.volume-slider[data-entity="${entityId}"]`);
         const label = slider?.closest('.volume-row')?.querySelector('.volume-value');
-        if (!slider || !label) return;
+        if (!label) return;
 
         const volumeLevel = entityState.attributes.volume_level || 0;
         const volumePercent = Math.round(volumeLevel * 100);
 
+        // Only update if the value is different to avoid interrupting user input
         if (slider.value != volumePercent) {
             slider.value = volumePercent;
         }
