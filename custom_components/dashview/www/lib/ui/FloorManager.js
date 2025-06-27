@@ -14,10 +14,56 @@ export class FloorManager {
   update() {
     if (!this._shadowRoot) return;
     const activeTab = this._shadowRoot.querySelector('.floor-tab-button.active');
-    if (activeTab) {
-      const floorId = activeTab.dataset.targetFloor;
-      this.renderFloorLayout(floorId);
-    }
+    if (!activeTab) return;
+
+    const floorId = activeTab.dataset.targetFloor;
+    const gridContainer = this._shadowRoot.getElementById(`room-grid-${floorId}`);
+    if (!gridContainer) return;
+
+    // --- NEW, MORE TARGETED LOGIC ---
+    // Instead of re-rendering, find existing cards and update them individually.
+    
+    // Update small sensor cards
+    gridContainer.querySelectorAll('.sensor-small-card').forEach(card => {
+        const entityId = card.dataset.entityId;
+        if (entityId) {
+            const cardType = card.dataset.type;
+            const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, cardType);
+            card.className = `sensor-small-card ${cardClass}`; // Update class for styling
+            card.querySelector('.sensor-small-label').textContent = label; // Update only the text
+            card.querySelector('.sensor-small-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
+        }
+    });
+
+    // Update big sensor cards
+    gridContainer.querySelectorAll('.sensor-big-card').forEach(card => {
+        const entityId = card.dataset.entityId;
+        if (entityId) {
+            const cardType = card.dataset.type;
+            const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, cardType);
+            card.className = `sensor-big-card ${cardClass}`; // Update class for styling
+            card.querySelector('.sensor-big-label').textContent = label; // Update only the text
+            card.querySelector('.sensor-big-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
+        }
+    });
+
+    // Update room cards within the swiper
+    gridContainer.querySelectorAll('.room-card').forEach(card => {
+        const navPath = card.dataset.navigationPath;
+        if (!navPath) return;
+
+        const roomKey = navPath.substring(1);
+        const roomConfig = this._houseConfig.rooms[roomKey];
+        if (roomConfig) {
+            const cardStateClass = this._isRoomActive(roomConfig) ? 'is-on' : 'is-off';
+            // Only update the class, not the whole card.
+            if (!card.classList.contains(cardStateClass)) {
+                 card.classList.remove('is-on', 'is-off');
+                 card.classList.add(cardStateClass);
+            }
+        }
+    });
+    // By not calling renderFloorLayout(), the swiper is NOT re-initialized, preserving its state.
   }
   
   initializeFloorTabs() {
