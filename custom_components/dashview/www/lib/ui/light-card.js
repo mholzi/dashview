@@ -108,7 +108,7 @@ export class LightsCard {
         }, { passive: false });
     }
 
-    update(popup, entityId) {
+update(popup, entityId) {
         if (!this._hass) return;
 
         const row = popup.querySelector(`.light-control-row[data-entity-id="${entityId}"]`);
@@ -152,13 +152,3 @@ export class LightsCard {
         const lightEntities = this._config.rooms[popup.id.replace('-popup', '')]?.lights || [];
         this._updateCount(popup.querySelector('.lights-card'), lightEntities);
     }
-    
-    _updateCount(card, lightEntities) {
-        if (!card || !lightEntities) return;
-        const countEl = card.querySelector('.lights-count');
-        if (countEl) {
-            const onCount = lightEntities.filter(id => this._hass.states[id]?.state === 'on').length;
-            countEl.textContent = `${onCount} / ${lightEntities.length}`;
-        }
-    }
-}
