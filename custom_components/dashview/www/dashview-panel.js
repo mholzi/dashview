@@ -30,10 +30,9 @@ class DashviewPanel extends HTMLElement {
         MOTION: 'motion', WINDOW: 'fenster', SMOKE: 'rauchmelder', VIBRATION: 'vibration',
         TEMPERATUR: 'temperatur', HUMIDITY: 'humidity', PRINTER: 'printer', DOOR: 'door',
         HOOVER: 'hoover', DISHWASHER: 'dishwasher', DRYER: 'dryer', CARTRIDGE: 'cartridge',
-        LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer'
+        LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer', TV: 'tv', MUSIC: 'music', MOWER: 'mower'
     };
 
-    // Define component initializers in the constructor
     this._componentInitializers = {
       '.media-container': (el) => {
           const popup = el.closest('.popup');
@@ -160,13 +159,13 @@ class DashviewPanel extends HTMLElement {
     return null;
   }
 
-updateComponentForEntity(entityId, entityState) {
+  updateComponentForEntity(entityId, entityState) {
     if (!this._contentReady) return;
 
     this._headerManager.updateAll();
     this._infoCardManager.update();
     this._sceneManager.renderSceneButtons();
-    this._floorManager.initializeFloorTabs(); // Re-render floors to update sensor cards
+    this._floorManager.update();
 
     const activePopup = this.shadowRoot.querySelector('.popup.active');
     if (!activePopup) return;
@@ -280,6 +279,132 @@ updateComponentForEntity(entityId, entityState) {
     };
     return titleMap[popupType] || popupType.charAt(0).toUpperCase() + popupType.slice(1);
   }
+
+  // START: NEW FUNCTIONS FOR ROOM POPUP HEADER ICONS
+  _generateRoomHeaderEntitiesForPopup(roomConfig) {
+      if (!roomConfig.header_entities || !Array.isArray(roomConfig.header_entities)) {
+          return '';
+      }
+
+      const activeEntities = roomConfig.header_entities.filter(entityConfig => {
+          const entity = this._hass.states[entityConfig.entity];
+          return this._shouldDisplayHeaderEntity(entity, entityConfig.entity_type);
+      });
+
+      if (activeEntities.length === 0) {
+          return '';
+      }
+
+      const entityCards = activeEntities.map(entityConfig => {
+          const entity = this._hass.states[entityConfig.entity];
+          const name = this._getHeaderEntityName(entity, entityConfig.entity_type);
+          const icon = this._getHeaderEntityIcon(entity, entityConfig.entity_type);
+          const backgroundColor = this._getHeaderEntityBackground(entity, entityConfig.entity_type);
+          const textColor = this._getHeaderEntityTextColor(entity, entityConfig.entity_type);
+
+          return `
+              <div class="header-info-chip" 
+                   data-entity="${entityConfig.entity}" 
+                   data-type="${entityConfig.entity_type}"
+                   style="background: ${backgroundColor};">
+                <div class="chip-icon-container">
+                  <i class="mdi ${icon}" style="color: var(--gray000);"></i>
+                </div>
+                <div class="chip-name" style="color: ${textColor};">${name}</div>
+              </div>
+          `;
+      }).join('');
+
+      return `
+        <div class="room-header-entities">
+          <div class="header-entities-container">
+            ${entityCards}
+          </div>
+        </div>
+      `;
+  }
+
+  _shouldDisplayHeaderEntity(entity, entityType) {
+      if (!entity) return false;
+      const state = entity.state;
+      
+      switch (entityType) {
+          case this._entityLabels.MOTION:
+              return true; // Always show motion sensors
+          case this._entityLabels.MUSIC:
+          case this._entityLabels.TV:
+              return state === 'playing';
+          case this._entityLabels.DISHWASHER:
+          case this._entityLabels.WASHING:
+              return ['Run', 'run', 'running'].includes(state);
+          case this._entityLabels.FREEZER:
+              const doorAlarm = this._hass.states['sensor.gefrierschrank_door_alarm_freezer']?.state;
+              const tempAlarm = this._hass.states['sensor.gefrierschrank_temperature_alarm_freezer']?.state;
+              return (doorAlarm === 'present' || tempAlarm === 'present');
+          case this._entityLabels.MOWER:
+              const error = entity.attributes?.error;
+              return ['cleaning', 'error'].includes(state) && error !== 'OFF_DISABLED';
+          default:
+              return state === 'on';
+      }
+  }
+
+  _getHeaderEntityName(entity, entityType) {
+      if (!entity) return '–';
+
+      switch (entityType) {
+          case this._entityLabels.DISHWASHER:
+              const remaining = this._hass.states['sensor.geschirrspuler_remaining_program_time'];
+              if (!remaining || !remaining.state || ['unknown', 'unavailable'].includes(remaining.state)) {
+                  return 'Unknown';
+              }
+              const end = new Date(remaining.state).getTime();
+              const now = new Date().getTime();
+              const diffMin = Math.round((end - now) / 60000);
+              return diffMin > 0 ? `in ${diffMin}m` : 'Ready';
+
+          case this._entityLabels.MOTION:
+              const lastChanged = new Date(entity.last_changed);
+              const currentTime = new Date();
+              const diffSec = Math.floor((currentTime - lastChanged) / 1000);
+              if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+              if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+              return `${Math.floor(diffSec / 86400)}d ago`;
+
+          default:
+              return entity.attributes?.friendly_name || '–';
+      }
+  }
+
+  _getHeaderEntityIcon(entity, entityType) {
+      const state = entity?.state;
+      switch (entityType) {
+          case this._entityLabels.MOTION: return state === 'off' ? 'mdi-motion-sensor-off' : 'mdi-motion-sensor';
+          case this._entityLabels.WINDOW: return 'mdi-window-open-variant';
+          case this._entityLabels.SMOKE: return 'mdi-smoke-detector-variant-alert';
+          case this._entityLabels.MUSIC: return 'mdi-music-note';
+          case this._entityLabels.TV: return 'mdi-television-play';
+          case this._entityLabels.DISHWASHER: return 'mdi-dishwasher';
+          case this._entityLabels.MOWER: return 'mdi-robot-mower';
+          default: return 'mdi-help-circle-outline';
+      }
+  }
+
+  _getHeaderEntityBackground(entity, entityType) {
+      if (entityType === this._entityLabels.SMOKE) return 'var(--red)';
+      if (entityType === this._entityLabels.MOTION) {
+          return entity.state === 'off' ? 'var(--gray000)' : 'var(--active-big)';
+      }
+      return 'var(--active-big)';
+  }
+
+  _getHeaderEntityTextColor(entity, entityType) {
+      if (entityType === this._entityLabels.MOTION && entity.state === 'off') {
+          return 'var(--gray800)';
+      }
+      return 'var(--gray000)';
+  }
+  // END: NEW FUNCTIONS
   
   isNumber(value) { return !isNaN(parseFloat(value)) && isFinite(value); }
   _processIconName(name) { if (!name) return "mdi-help-circle"; let p = name.replace("mdi:", "").replace("mdi-", ""); return p.startsWith("mdi-") || (p = "mdi-" + p), p; }
