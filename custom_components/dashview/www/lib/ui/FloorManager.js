@@ -327,7 +327,7 @@ export class FloorManager {
       return false;
    }
    
-  _initializeSwiper(container, retries = 10) {
+_initializeSwiper(container, retries = 10) {
     // 1. Check if the Swiper library is loaded.
     if (typeof Swiper === 'undefined') {
       // If not, retry after a short delay.
