@@ -1370,159 +1370,7 @@ body.popup-open, :host(.popup-open) {
     color: #00b894;
     font-weight: 500;
 }
-/* --- Lights Card --- */
-.lights-card {
-    margin: 8px 0;
-    background-color: var(--gray200);
-    border-radius: 12px;
-}
 
-.lights-expander {
-    padding: 6px 0;
-}
-
-.lights-summary {
-    list-style: none;
-    cursor: pointer;
-    padding: 0 12px;
-}
-
-.lights-summary::-webkit-details-marker {
-    display: none;
-}
-
-.lights-header {
-    display: grid;
-    grid-template-columns: min-content 1fr 60px;
-    align-items: center;
-    gap: 12px;
-    height: 46px;
-}
-
-.lights-header .mdi {
-    color: var(--gray1000);
-    width: 22px;
-}
-
-.lights-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--primary-text-color);
-    justify-self: start;
-}
-
-.lights-count {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--secondary-text-color);
-    text-align: right;
-}
-
-.lights-content {
-    padding: 0 12px 12px 12px;
-    border-top: 1px solid var(--gray100);
-    margin-top: 6px;
-}
-
-.individual-lights-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 12px;
-}
-
-/* --- MODIFIED Light Row Styles --- */
-.light-control-row {
-    position: relative;
-    height: 60px;
-    border-radius: 15px;
-    /* Set a consistent background color */
-    background-color: var(--gray000);
-    overflow: hidden;
-    transition: color 0.3s ease;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.light-control-row.is-dimmable {
-    cursor: ew-resize; /* Indicate that the row is draggable */
-}
-
-/* Change font color when light is on */
-.light-control-row[state="on"] {
-    color: var(--gray000);
-}
-
-/* The colored bar representing brightness */
-.light-brightness-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 0%;
-    background: var(--active-light);
-    border-radius: 15px 0 0 15px;
-    transition: width 0.2s ease-out;
-    pointer-events: none; /* Allow clicks to pass through */
-}
-
-/* Ensure full radius when at 100% */
-.light-control-row[state="on"]:not(.is-dimmable) .light-brightness-bar,
-.light-control-row[state="on"].is-dimmable .light-brightness-bar[style*="width: 100%"] {
-    border-radius: 15px;
-}
-
-.light-brightness-handle {
-    position: absolute;
-    top: 10%;
-    left: 0%;
-    width: 3px;
-    height: 80%;
-    background-color: rgba(100, 255, 100, 0.7);
-    border-radius: 2px;
-    transform: translateX(-1.5px);
-    display: none;
-    pointer-events: none;
-    transition: left 0.2s ease-out;
-}
-
-.light-control-row.is-dimmable[state="on"] .light-brightness-handle {
-    display: block;
-}
-
-/* Content (icon/text) is layered on top */
-.light-content {
-    position: relative;
-    z-index: 2; /* Ensure content is above the brightness bar */
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    height: 100%;
-    cursor: pointer; /* Clickable area for toggle */
-}
-
-.light-icon {
-    margin-right: 12px;
-}
-
-.light-icon .mdi {
-    font-size: 24px;
-}
-
-.light-info {
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.light-name {
-    font-weight: 500;
-}
-
-.light-state {
-    font-size: 0.85em;
-    opacity: 0.7;
-}
 /* --- Thermostat Card Styles --- */
 .thermostat-card {
     position: relative;
@@ -2399,7 +2247,60 @@ body.popup-open, :host(.popup-open) {
     0%   { transform: translateX(0%); }
     100% { transform: translateX(-200%); }
 }
-/* --- New Light Card Styles --- */
+/* --- Consolidated Light Card Styles --- */
+.lights-card {
+    margin: 8px 0;
+    background-color: var(--gray200);
+    border-radius: 12px;
+}
+
+.lights-expander {
+    padding: 6px 0;
+}
+
+.lights-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0 12px;
+}
+
+.lights-summary::-webkit-details-marker {
+    display: none;
+}
+
+.lights-header {
+    display: grid;
+    grid-template-columns: min-content 1fr 60px;
+    align-items: center;
+    gap: 12px;
+    height: 46px;
+}
+
+.lights-header .mdi {
+    color: var(--primary-text-color);
+    width: 22px;
+}
+
+.lights-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    justify-self: start;
+}
+
+.lights-count {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+    text-align: right;
+}
+
+.lights-content {
+    padding: 0 12px 12px 12px;
+    border-top: 1px solid var(--divider-color);
+    margin-top: 6px;
+}
+
 .individual-lights-container {
     display: flex;
     flex-direction: column;
@@ -2408,68 +2309,88 @@ body.popup-open, :host(.popup-open) {
 }
 
 .light-control-row {
-    display: flex;
+    position: relative;
     height: 60px;
-    background-color: var(--gray800);
     border-radius: 15px;
+    background-color: var(--gray000);
     overflow: hidden;
-    align-items: center;
-    transition: background-color 0.3s ease;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.light-toggle-area {
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    height: 100%;
-    cursor: pointer;
-    background-color: var(--gray200);
-    transition: background-color 0.3s ease;
-    flex-shrink: 0;
-    min-width: 160px;
+.light-control-row.is-dimmable {
+    cursor: ew-resize;
 }
 
-.light-control-row[state="on"] .light-toggle-area {
-    background: linear-gradient(145deg, rgba(255,245,200,1) 0%, rgba(255,225,130,1) 60%, rgba(255,200,90,1) 150%);
-}
-
-.light-toggle-area .light-icon {
-    background-color: rgba(0,0,0,0.08);
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 12px;
-    flex-shrink: 0;
-}
-
-.light-toggle-area .light-icon .mdi {
-    font-size: 20px;
+.light-control-row[state="on"] {
     color: var(--primary-text-color);
 }
 
-.light-control-row[state="on"] .light-toggle-area .light-icon .mdi {
-    color: var(--gray800);
+.light-brightness-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: var(--active-light);
+    border-radius: 15px 0 0 15px;
+    transition: width 0.2s ease-out;
+    pointer-events: none;
+}
+
+.light-control-row[state="on"]:not(.is-dimmable) .light-brightness-bar,
+.light-control-row[state="on"].is-dimmable .light-brightness-bar[style*="width: 100%"] {
+    border-radius: 15px;
+}
+
+.light-brightness-handle {
+    position: absolute;
+    top: 10%;
+    left: 0%;
+    width: 4px;
+    height: 80%;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 2px;
+    transform: translateX(-2px);
+    display: none;
+    pointer-events: none;
+    transition: left 0.2s ease-out;
+}
+
+.light-control-row.is-dimmable[state="on"] .light-brightness-handle {
+    display: block;
+}
+
+.light-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 100%;
+    cursor: pointer;
+}
+
+.light-icon {
+    margin-right: 12px;
+}
+
+.light-icon .mdi {
+    font-size: 24px;
 }
 
 .light-info {
-    display: flex;
-    flex-direction: column;
     text-align: left;
-    color: var(--primary-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.light-control-row[state="on"] .light-info {
-    color: var(--gray000);
-}
-
-.light-info .light-name {
+.light-name {
     font-weight: 500;
 }
 
-.light-info .light-state {
+.light-state {
     font-size: 0.85em;
     opacity: 0.7;
 }
