@@ -38,47 +38,58 @@ export class StateManager {
    * It checks for changes in all watched entities and triggers their callbacks.
    * This version is more robust, using deep copies and improved error handling.
    */
-  handleHassUpdate() {
-    if (!this._hass) return;
+handleHassUpdate() {
+  if (!this._hass) return;
 
-    for (const [entityId, callback] of this._entityCallbacks.entries()) {
-      try {
-        const currentState = this._hass.states[entityId];
-        const lastState = this._lastEntityStates.get(entityId);
+  for (const [entityId, callback] of this._entityCallbacks.entries()) {
+    try {
+      const currentState = this._hass.states[entityId];
+      const lastState = this._lastEntityStates.get(entityId);
 
-        let hasChanged = false;
+      let hasChanged = false;
 
-        // An entity might be removed from Home Assistant
-        if (!currentState) {
-            if (lastState) { // It existed before, but not now
-                hasChanged = true;
-            }
-        } else if (!lastState) { // It's a new entity we haven't seen
-            hasChanged = true;
-        } else {
-            // Compare state and attributes for existing entities
-            if (currentState.state !== lastState.state ||
-                JSON.stringify(currentState.attributes) !== JSON.stringify(lastState.attributes)) {
-                hasChanged = true;
-            }
-        }
-
-        if (hasChanged) {
-          // Use a deep copy to prevent reference issues.
-          // This ensures that we are comparing against a true snapshot of the last state.
-          const newStateSnapshot = currentState ? JSON.parse(JSON.stringify(currentState)) : null;
-          this._lastEntityStates.set(entityId, newStateSnapshot);
-          
-          if (typeof callback === 'function') {
-            callback(entityId, currentState);
+      if (!currentState && lastState) { // Entity has been removed
+          hasChanged = true;
+      } else if (currentState && !lastState) { // Entity is new
+          hasChanged = true;
+      } else if (currentState && lastState) {
+          // Compare state and relevant attributes without JSON.stringify
+          if (currentState.state !== lastState.state || this._areAttributesChanged(currentState.attributes, lastState.attributes)) {
+              hasChanged = true;
           }
-        }
-      } catch (e) {
-        console.error(`[StateManager] Error processing entity ${entityId}. This can happen if an entity has non-serializable attributes.`, e);
-        // We catch the error here so that one faulty entity doesn't stop the entire update loop.
       }
+
+      if (hasChanged) {
+        const newStateSnapshot = currentState ? JSON.parse(JSON.stringify(currentState)) : null;
+        this._lastEntityStates.set(entityId, newStateSnapshot);
+        if (typeof callback === 'function') {
+          callback(entityId, currentState);
+        }
+      }
+    } catch (e) {
+      console.error(`[StateManager] Error processing entity ${entityId}.`, e);
     }
   }
+}
+
+// Add this helper method to the StateManager class
+_areAttributesChanged(newAttrs, oldAttrs) {
+    const oldKeys = Object.keys(oldAttrs);
+    const newKeys = Object.keys(newAttrs);
+
+    if (oldKeys.length !== newKeys.length) {
+        return true;
+    }
+
+    for (const key of newKeys) {
+        // This is a shallow comparison. For nested objects, a deep comparison might be needed,
+        // but this is already a huge improvement.
+        if (oldAttrs[key] !== newAttrs[key]) {
+            return true;
+        }
+    }
+    return false;
+}
   
   /**
    * Automatically find and register all entities from the house configuration.
