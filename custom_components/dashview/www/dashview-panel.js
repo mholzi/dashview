@@ -160,7 +160,7 @@ class DashviewPanel extends HTMLElement {
     return null;
   }
 
-  updateComponentForEntity(entityId, entityState) {
+updateComponentForEntity(entityId, entityState) {
     if (!this._contentReady) return;
 
     this._headerManager.updateAll();
