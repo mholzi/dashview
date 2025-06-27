@@ -16,7 +16,7 @@ export class FloorManager {
     const container = this._shadowRoot.getElementById('floor-tabs-container');
     if (!container) return;
 
-    container.innerHTML = ''; 
+    container.innerHTML = '';
 
     const floors = Object.entries(this._houseConfig.floors || {}).sort(([, a], [, b]) => (a.level || 0) - (b.level || 0));
     if (floors.length === 0) {
@@ -33,7 +33,7 @@ export class FloorManager {
     const contentArea = document.createElement('div');
     contentArea.className = 'floor-content-area';
     container.append(header, contentArea);
-    
+
     const buttonsContainer = header.querySelector('.floor-tab-buttons-container');
 
     const switchTab = (floorId) => {
@@ -79,7 +79,7 @@ export class FloorManager {
 
     const allEntitiesOnFloor = this._getEntitiesForFloor(floorId);
     const usageStats = this._houseConfig.entity_usage_stats || {};
-    
+
     const rankedEntities = allEntitiesOnFloor
         .map(e => ({ ...e, count: usageStats[e.entity_id] || 0 }))
         .sort((a, b) => b.count - a.count);
@@ -93,9 +93,9 @@ export class FloorManager {
             gridHTML += `<div style="grid-area: ${slot.grid_area};"></div>`;
             continue;
         }
-        
+
         let cardHTML = `<div class="placeholder-card ${slot.grid_area.includes('-big') ? 'placeholder-big' : 'placeholder-small'}" style="grid-area: ${slot.grid_area};"></div>`;
-        
+
         const isBigSlot = slot.grid_area.includes('-big');
         const entityProvider = (type) => {
             if (type === 'pinned' && slot.entity_id) return slot.entity_id;
@@ -118,12 +118,12 @@ export class FloorManager {
     }
 
     gridContainer.innerHTML = gridHTML;
-    
+
     this._initializeSwiper(gridContainer);
-    
+
     gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card').forEach(card => this._initializeCardListeners(card));
   }
-  
+
   _getEntitiesForFloor(floorId) {
     const entities = new Set();
     const roomsOnFloor = Object.values(this._houseConfig.rooms || {}).filter(r => r.floor === floorId);
@@ -157,7 +157,6 @@ export class FloorManager {
 
   _generateSmallSensorCardHTML(entityId, gridArea) {
     const type = this._getEntityTypeFromConfig(entityId);
-    // Use the corrected return object from _getCardDisplayData
     const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, type, false);
 
     return `
@@ -238,7 +237,7 @@ export class FloorManager {
         </div>
       </div>`;
   }
-  
+
   _initializeCardListeners(cardElement) {
     if (!cardElement) return;
     cardElement.addEventListener('click', () => {
@@ -254,7 +253,7 @@ export class FloorManager {
 
   _getCardDisplayData(entityId, type) {
     const entityState = this._hass.states[entityId];
-    
+
     let name = entityState?.attributes.friendly_name || entityId;
     let label = entityState?.state || 'N/A';
     let icon = 'mdi:help-circle';
@@ -306,7 +305,7 @@ export class FloorManager {
             icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
             label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
             break;
-        
+
         default:
             if (entityState?.state === 'on' || entityState?.state === 'off') {
                 label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
@@ -316,9 +315,8 @@ export class FloorManager {
     }
 
     return { name, label, icon, cardClass };
-  } // <--- THIS is the missing closing brace.
+  }
 
-  
   _isRoomActive(roomConfig) {
       if (!roomConfig || !this._hass) return false;
       const motionSensor = roomConfig.header_entities?.find(e => e.entity_type === this._panel._entityLabels.MOTION)?.entity;
@@ -327,7 +325,7 @@ export class FloorManager {
       }
       return false;
    }
-   
+
   _initializeSwiper(container) {
     container.querySelectorAll('.swiper-container').forEach(swiperEl => {
       if (swiperEl.dataset.swiperInitialized) return;
@@ -382,7 +380,7 @@ export class FloorManager {
         if (Math.abs(currentX) > swiperEl.offsetWidth / 4) {
           currentIndex = currentX < 0 ? Math.min(currentIndex + 1, slides.length - 1) : Math.max(currentIndex - 1, 0);
         }
-        
+
         this._updateSwipePosition(wrapper, slides, currentIndex);
         this._updatePagination(pagination, slides, currentIndex);
         currentX = 0;
@@ -412,3 +410,4 @@ export class FloorManager {
       bullet.classList.toggle('swiper-pagination-bullet-active', i === index);
     });
   }
+}
