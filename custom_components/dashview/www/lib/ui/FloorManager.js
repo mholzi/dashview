@@ -11,7 +11,15 @@ export class FloorManager {
   setHass(hass) {
     this._hass = hass;
   }
-
+  update() {
+    if (!this._shadowRoot) return;
+    const activeTab = this._shadowRoot.querySelector('.floor-tab-button.active');
+    if (activeTab) {
+      const floorId = activeTab.dataset.targetFloor;
+      this.renderFloorLayout(floorId);
+    }
+  }
+  
   initializeFloorTabs() {
     const container = this._shadowRoot.getElementById('floor-tabs-container');
     if (!container) return;
