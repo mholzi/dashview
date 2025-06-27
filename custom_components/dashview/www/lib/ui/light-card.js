@@ -1,10 +1,11 @@
-// custom_components/dashview/lib/ui/lights-card.js
+// custom_components/dashview/www/lib/ui/light-card.js
 
 export class LightsCard {
     constructor(panel) {
         this._panel = panel;
         this._hass = panel._hass;
         this._config = panel._houseConfig;
+        this._updateDebounceTimers = new Map();
     }
 
     setHass(hass) {
@@ -35,18 +36,28 @@ export class LightsCard {
             nameEl.textContent = entity.attributes.friendly_name || entityId;
 
             const isDimmable = entity.attributes.supported_color_modes?.some(mode => ['brightness', 'color_temp', 'hs'].includes(mode));
-
+            
             if (isDimmable) {
                 row.classList.add('is-dimmable');
                 this._initDraggableSlider(row, entityId);
+                
+                // Clicking on the content area (icon/text) will toggle the light.
+                const contentArea = row.querySelector('.light-content');
+                if (contentArea) {
+                    contentArea.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent the drag handler from firing.
+                        this._hass.callService('light', 'toggle', { entity_id: entityId });
+                    });
+                }
             } else {
+                // Non-dimmable lights are simple toggles.
                 row.addEventListener('click', () => {
                     this._hass.callService('light', 'toggle', { entity_id: entityId });
                 });
             }
 
             individualContainer.appendChild(row);
-            this.update(popup, entityId); // Perform initial update
+            this.update(popup, entityId); // Initial update.
         });
 
         this._updateCount(card, lightEntities);
@@ -54,12 +65,37 @@ export class LightsCard {
 
     _initDraggableSlider(row, entityId) {
         let isDragging = false;
+        let startX = 0;
 
-        const updateBrightness = (clientX) => {
+        const updateVisuals = (clientX) => {
             const rect = row.getBoundingClientRect();
             let percent = (clientX - rect.left) / rect.width;
-            percent = Math.max(0, Math.min(1, percent)); // Clamp between 0 and 1
+            percent = Math.max(0, Math.min(1, percent));
             const brightness_pct = Math.round(percent * 100);
+
+            const bar = row.querySelector('.light-brightness-bar');
+            const handle = row.querySelector('.light-brightness-handle');
+            const stateEl = row.querySelector('.light-state');
+            if (bar) bar.style.width = `${brightness_pct}%`;
+            if (handle) handle.style.left = `${brightness_pct}%`;
+            if (stateEl) stateEl.textContent = brightness_pct > 0 ? `On - ${brightness_pct}%` : 'Off';
+        };
+
+        const callLightService = (clientX) => {
+            const rect = row.getBoundingClientRect();
+            let percent = (clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent));
+            const brightness_pct = Math.round(percent * 100);
+
+            // Temporarily ignore state updates for this entity to prevent slider jumping.
+            row.dataset.ignoreUpdate = 'true';
+            if (this._updateDebounceTimers.has(entityId)) {
+                clearTimeout(this._updateDebounceTimers.get(entityId));
+            }
+            this._updateDebounceTimers.set(entityId, setTimeout(() => {
+                delete row.dataset.ignoreUpdate;
+                this._updateDebounceTimers.delete(entityId);
+            }, 1000)); // Ignore updates for 1 second.
 
             if (brightness_pct === 0) {
                 this._hass.callService('light', 'turn_off', { entity_id: entityId });
@@ -71,48 +107,49 @@ export class LightsCard {
             }
         };
 
-        const onMouseMove = (e) => {
-            if (isDragging) updateBrightness(e.clientX);
-        };
-
-        const onMouseUp = () => {
-            isDragging = false;
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        };
-
-        const onTouchMove = (e) => {
-            if (isDragging) updateBrightness(e.touches[0].clientX);
-        };
-
-        const onTouchEnd = () => {
-            isDragging = false;
-            document.removeEventListener('touchmove', onTouchMove);
-            document.removeEventListener('touchend', onTouchEnd);
-        };
-
-        row.addEventListener('mousedown', (e) => {
+        const onDragStart = (e) => {
             isDragging = true;
-            updateBrightness(e.clientX);
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-            e.preventDefault();
-        });
+            startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            row.style.cursor = 'ew-resize';
+            document.body.style.cursor = 'ew-resize';
+        };
 
-        row.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            updateBrightness(e.touches[0].clientX);
-            document.addEventListener('touchmove', onTouchMove);
-            document.addEventListener('touchend', onTouchEnd);
-            e.preventDefault();
-        }, { passive: false });
+        const onDragMove = (e) => {
+            if (isDragging) {
+                updateVisuals(e.type === 'touchmove' ? e.touches[0].clientX : e.clientX);
+            }
+        };
+
+        const onDragEnd = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            row.style.cursor = 'pointer';
+            document.body.style.cursor = '';
+            
+            const endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+            
+            // Only call service if it was a real drag, not a click on the slider area.
+            if (Math.abs(endX - startX) > 5) {
+                callLightService(endX);
+            }
+        };
+
+        row.addEventListener('mousedown', onDragStart);
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+
+        row.addEventListener('touchstart', onDragStart, { passive: true });
+        document.addEventListener('touchmove', onDragMove);
+        document.addEventListener('touchend', onDragEnd);
     }
 
-update(popup, entityId) {
+    update(popup, entityId) {
         if (!this._hass) return;
 
         const row = popup.querySelector(`.light-control-row[data-entity-id="${entityId}"]`);
-        if (!row) return;
+        if (!row || row.dataset.ignoreUpdate === 'true') {
+            return; // Skip update if row not found or if we are ignoring updates for it
+        }
 
         const entityState = this._hass.states[entityId];
         const isOn = entityState && entityState.state === 'on';
@@ -149,6 +186,17 @@ update(popup, entityId) {
             }
         }
 
-        const lightEntities = this._config.rooms[popup.id.replace('-popup', '')]?.lights || [];
+        const roomKey = popup.id.replace('-popup', '');
+        const lightEntities = this._config?.rooms[roomKey]?.lights || [];
         this._updateCount(popup.querySelector('.lights-card'), lightEntities);
     }
+    
+    _updateCount(card, lightEntities) {
+        if (!card) return;
+        const countElement = card.querySelector('.lights-count');
+        if (!countElement) return;
+
+        const onLights = lightEntities.filter(id => this._hass.states[id]?.state === 'on').length;
+        countElement.textContent = `${onLights}/${lightEntities.length}`;
+    }
+}
