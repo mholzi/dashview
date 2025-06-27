@@ -412,10 +412,13 @@ class DashviewPanel extends HTMLElement {
     for (const room of Object.values(this._houseConfig.rooms)) {
         const headerEntity = room.header_entities?.find(e => e.entity === entityId);
         if (headerEntity) return headerEntity.entity_type;
+        if (room.lights?.includes(entityId)) return 'light';
+        if (room.covers?.includes(entityId)) return 'cover';
+        if (room.media_players?.some(mp => mp.entity === entityId)) return 'media_player';
     }
     // Fallback for entities not in header_entities
     return entityId.split('.')[0];
-  }  
+  }
   isNumber(value) { return !isNaN(parseFloat(value)) && isFinite(value); }
   _processIconName(name) { if (!name) return "mdi-help-circle"; let p = name.replace("mdi:", "").replace("mdi-", ""); return p.startsWith("mdi-") || (p = "mdi-" + p), p; }
   _getAllEntitiesByType(type) { const s = new Set; for (const o of Object.values(this._houseConfig?.rooms || {})) o.header_entities?.forEach(e => { e.entity_type === type && s.add(e.entity) }); return Array.from(s); }
