@@ -17,18 +17,22 @@ export class MediaPlayerCard {
     initialize(popup, roomKey, mediaPlayerEntities) {
         const card = popup.querySelector('.media-player-card');
         if (!card) return;
-
+    
         const container = card.querySelector('.media-player-container');
         if (!container) return;
-
+    
         const primaryPlayer = mediaPlayerEntities[0];
         if (!primaryPlayer) return;
         
         container.innerHTML = this._generateRoomPlayerHTML(mediaPlayerEntities);
         
         this._initializeMediaPlayerControls(popup);
-    }
     
+        // Initial update for all players in this card
+        mediaPlayerEntities.forEach(player => {
+            this.update(player.entity);
+        });
+    }    
     update(entityId) {
         const popups = this._shadowRoot.querySelectorAll('.popup.active');
         popups.forEach(popup => {
