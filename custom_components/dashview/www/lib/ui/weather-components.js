@@ -98,19 +98,33 @@ export class WeatherComponents {
         const popup = this._shadowRoot.querySelector('#weather-popup');
         if (!popup) return;
 
-        const iconElement = popup.querySelector('#current-weather-icon');
-        const tempElement = popup.querySelector('#current-temperature');
-        const conditionElement = popup.querySelector('#current-condition');
-        const feelsLikeElement = popup.querySelector('#feels-like-temp');
-        const humidityElement = popup.querySelector('#humidity');
-        const windElement = popup.querySelector('#wind-speed');
-
-        if (iconElement) iconElement.src = `/local/weather_icons/${weatherState.state}.svg`;
-        if (tempElement) tempElement.textContent = `${Math.round(weatherState.attributes.temperature)}°C`;
-        if (conditionElement) conditionElement.textContent = this._translateWeatherCondition(weatherState.state);
-        if (feelsLikeElement) feelsLikeElement.textContent = `${Math.round(weatherState.attributes.apparent_temperature)}°C`;
-        if (humidityElement) humidityElement.textContent = `${weatherState.attributes.humidity}%`;
-        if (windElement) windElement.textContent = `${Math.round(weatherState.attributes.wind_speed)} km/h`;
+        const container = popup.querySelector('.current-weather');
+        if (!container) return;
+    
+        const { temperature, apparent_temperature, humidity, wind_speed } = weatherState.attributes;
+    
+        container.innerHTML = `
+            <div class="daily-forecast">
+                <div class="daily-icon"><img src="/local/weather_icons/${weatherState.state}.svg" width="50" height="50"></div>
+                <div class="daily-info">
+                    <div class="daily-condition">${this._translateWeatherCondition(weatherState.state)}</div>
+                    <div class="daily-temps">
+                        <span class="daily-high">${Math.round(temperature)}°C</span>
+                        <span class="daily-low">Gefühlt ${Math.round(apparent_temperature)}°C</span>
+                    </div>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Luftfeuchtigkeit</span>
+                        <span class="detail-value">${humidity}%</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Wind</span>
+                        <span class="detail-value">${Math.round(wind_speed)} km/h</span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     _updateHourlyForecast(hourlyData) {
@@ -134,22 +148,27 @@ export class WeatherComponents {
     _initializeDailyForecast(dailyData) {
         const popup = this._shadowRoot.querySelector('#weather-popup');
         if (!popup) return;
-
+    
         const tabs = popup.querySelectorAll('.forecast-tab');
         const content = popup.querySelector('#daily-forecast-content');
         if (!tabs.length || !content) return;
-
+    
         const updateForecastDisplay = (dayIndex) => {
             tabs.forEach(t => t.classList.toggle('active', parseInt(t.dataset.day, 10) === dayIndex));
             this._showDailyForecast(content, dailyData, dayIndex);
         };
-
+    
         tabs.forEach(tab => {
             if (!tab.listenerAttached) {
-                tab.addEventListener('click', () => updateForecastDisplay(parseInt(tab.dataset.day, 10)));
+                tab.addEventListener('click', () => {
+                    const dayIndex = parseInt(tab.dataset.day, 10);
+                    updateForecastDisplay(dayIndex);
+                });
                 tab.listenerAttached = true;
             }
         });
+    
+        // Ensure initial render for day 0
         updateForecastDisplay(0);
     }
 
