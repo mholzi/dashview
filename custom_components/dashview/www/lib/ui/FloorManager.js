@@ -316,7 +316,8 @@ export class FloorManager {
     }
 
     return { name, label, icon, cardClass };
-  }
+  } // <--- THIS is the missing closing brace.
+
   
   _isRoomActive(roomConfig) {
       if (!roomConfig || !this._hass) return false;
