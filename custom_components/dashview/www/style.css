@@ -2017,7 +2017,14 @@ body.popup-open, :host(.popup-open) {
     font-size: 22px;
     color: var(--gray800);
 }
+.sensor-small-card .sensor-small-grid {
+    pointer-events: none;
+}
 
+/* This makes the inner grid of the big card ignore clicks */
+.sensor-big-card .sensor-big-grid {
+    pointer-events: none;
+}
 .sensor-small-label {
     grid-area: label;
     justify-self: start;
