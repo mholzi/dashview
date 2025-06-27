@@ -405,7 +405,17 @@ class DashviewPanel extends HTMLElement {
       return 'var(--gray000)';
   }
   // END: NEW FUNCTIONS
-  
+  _getEntityTypeFromConfig(entityId) {
+    if (!entityId || !this._houseConfig || !this._houseConfig.rooms) {
+      return 'unknown';
+    }
+    for (const room of Object.values(this._houseConfig.rooms)) {
+        const headerEntity = room.header_entities?.find(e => e.entity === entityId);
+        if (headerEntity) return headerEntity.entity_type;
+    }
+    // Fallback for entities not in header_entities
+    return entityId.split('.')[0];
+  }  
   isNumber(value) { return !isNaN(parseFloat(value)) && isFinite(value); }
   _processIconName(name) { if (!name) return "mdi-help-circle"; let p = name.replace("mdi:", "").replace("mdi-", ""); return p.startsWith("mdi-") || (p = "mdi-" + p), p; }
   _getAllEntitiesByType(type) { const s = new Set; for (const o of Object.values(this._houseConfig?.rooms || {})) o.header_entities?.forEach(e => { e.entity_type === type && s.add(e.entity) }); return Array.from(s); }
