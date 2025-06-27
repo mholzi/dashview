@@ -1438,7 +1438,6 @@ body.popup-open, :host(.popup-open) {
     border-radius: 15px;
     /* Set a consistent background color */
     background-color: var(--gray000);
-    color: var(--primary-text-color);
     overflow: hidden;
     transition: color 0.3s ease;
     -webkit-tap-highlight-color: transparent;
