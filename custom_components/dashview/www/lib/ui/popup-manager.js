@@ -1,4 +1,4 @@
-// custom_components/dashview/lib/ui/popup-manager.js
+// custom_components/dashview/www/lib/ui/popup-manager.js
 
 export class PopupManager {
   constructor(panel) {
@@ -6,9 +6,7 @@ export class PopupManager {
     this._hass = panel._hass;
     this._config = panel._houseConfig;
     this._shadowRoot = panel.shadowRoot;
-    
     this._componentInitializers = panel._componentInitializers;
-
     this._setupEventListeners();
   }
 
@@ -16,13 +14,10 @@ export class PopupManager {
     window.addEventListener('hashchange', () => this.handleHashChange(), true);
 
     this._shadowRoot.addEventListener('click', (e) => {
-      
       if (e.target.classList.contains('popup')) {
           this.closePopup();
           return;
       }
-
-      // This is the corrected, more robust event handler
       const hashTarget = e.target.closest('[data-hash]');
       if (hashTarget) {
           e.preventDefault();
@@ -32,7 +27,6 @@ export class PopupManager {
           }
           return;
       }
-      
       const kioskButton = e.target.closest('.kiosk-button');
       if (kioskButton) {
           this._panel.dispatchEvent(new Event('hass-toggle-menu', { bubbles: true, composed: true }));
@@ -43,7 +37,7 @@ export class PopupManager {
   async handleHashChange() {
     const hash = window.location.hash || '#home';
     this._shadowRoot.querySelectorAll('.popup').forEach(p => {
-        p.classList.remove('visible', 'ready');
+        p.classList.remove('active', 'visible', 'ready');
     });
     this._shadowRoot.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
     document.body.classList.remove('popup-open');
@@ -58,15 +52,12 @@ export class PopupManager {
       }
       
       if (targetPopup) {
-        // Step 1: Make the overlay visible immediately
+        targetPopup.classList.add('active'); 
         targetPopup.classList.add('visible');
         document.body.classList.add('popup-open');
 
-        // Step 2: Wait for all async content to be initialized
-        await this.reinitializePopupContent(targetPopup);
+        this.reinitializePopupContent(targetPopup);
         
-        // Step 3: Trigger the content slide-up animation *after* content is ready
-        // We use a minimal timeout to ensure the browser has time to render the injected content
         setTimeout(() => {
             targetPopup.classList.add('ready');
         }, 50);
@@ -82,21 +73,23 @@ export class PopupManager {
   async createPopup(popupType) {
     const popupId = `${popupType}-popup`;
     let content = '';
-    const isRoom = this._config && this._config.rooms && this._config.rooms[popupType];
+    const isRoom = this._config?.rooms?.[popupType];
 
     if (!isRoom) {
         try {
             const response = await fetch(`/local/dashview/${popupType}.html`);
-            if (response.ok) content = await response.text();
+            if (response.ok) {
+              content = await response.text();
+            }
         } catch (err) {
             console.error(`[PopupManager] Could not fetch HTML for ${popupType}:`, err);
         }
     }
     
-    return this.createPopupFromTemplate(popupId, popupType, content);
+    return await this.createPopupFromTemplate(popupId, popupType, content);
   }
 
-  createPopupFromTemplate(popupId, popupType, content) {
+  async createPopupFromTemplate(popupId, popupType, content) {
     const template = this._shadowRoot.querySelector('#popup-template');
     if (!template) {
       console.error('[PopupManager] Popup template not found');
@@ -112,11 +105,15 @@ export class PopupManager {
     
     templateContent.querySelector('.popup-icon').className = `popup-icon mdi ${this._panel.getPopupIconForType(popupType)}`;
     templateContent.querySelector('.popup-title').textContent = this._panel.getPopupTitleForType(popupType);
-    bodyElement.innerHTML = content;
     
     const roomConfig = this._config?.rooms?.[popupType];
     if (roomConfig) {
-        this._injectRoomCards(bodyElement, roomConfig);
+        // Generate and prepend the header icons HTML
+        const headerIconsHTML = this._panel._generateRoomHeaderEntitiesForPopup(roomConfig);
+        bodyElement.innerHTML = headerIconsHTML + content; // Prepend icons
+        await this._injectRoomCards(bodyElement, roomConfig);
+    } else {
+        bodyElement.innerHTML = content;
     }
     
     popup.appendChild(templateContent);
@@ -130,8 +127,9 @@ export class PopupManager {
 
   reinitializePopupContent(popup) {
     const closeBtn = popup.querySelector('.popup-close');
-    if (closeBtn) {
-        closeBtn.onclick = () => this.closePopup();
+    if (closeBtn && !closeBtn.listenerAttached) {
+        closeBtn.addEventListener('click', () => this.closePopup());
+        closeBtn.listenerAttached = true;
     }
   
     popup.querySelectorAll('.tabs-container').forEach(container => {
@@ -158,7 +156,6 @@ export class PopupManager {
   
     this._initializeDynamicContent(popup);
 
-    // Force update for specific popups that need it on open.
     if (popup.id === 'security-popup') {
         this._panel._securityManager.update();
     }
@@ -172,7 +169,10 @@ export class PopupManager {
     for (const [selector, initializer] of Object.entries(this._componentInitializers)) {
       container.querySelectorAll(selector).forEach(element => {
         try {
-          initializer(element);
+          if(!element.dataset.initialized) {
+            initializer(element);
+            element.dataset.initialized = 'true';
+          }
         } catch (error) {
           console.error(`[PopupManager] Error initializing component for selector "${selector}":`, error);
         }
@@ -180,38 +180,52 @@ export class PopupManager {
     }
   }
 
-  _injectRoomCards(popupBody, roomConfig) {
+  async _injectRoomCards(popupBody, roomConfig) {
     const cardTemplates = {
         thermostat: {
             condition: roomConfig.header_entities?.some(e => e.entity_type === 'temperatur' || e.entity_type === 'humidity'),
             path: '/local/dashview/templates/room-thermostat-card.html'
         },
         covers: {
-            condition: roomConfig.covers && roomConfig.covers.length > 0,
+            condition: roomConfig.covers?.length > 0,
             path: '/local/dashview/templates/room-covers-card.html'
         },
         lights: {
-            condition: roomConfig.lights && roomConfig.lights.length > 0,
+            condition: roomConfig.lights?.length > 0,
             path: '/local/dashview/templates/room-lights-card.html'
         },
         media: {
-            condition: roomConfig.media_players && roomConfig.media_players.length > 0,
+            condition: roomConfig.media_players?.length > 0,
             path: '/local/dashview/templates/room-media-player-card.html'
         }
     };
 
-    for (const [cardType, cardInfo] of Object.entries(cardTemplates)) {
+    const fetchPromises = [];
+
+    for (const cardInfo of Object.values(cardTemplates)) {
         if (cardInfo.condition) {
-            fetch(cardInfo.path)
-                .then(response => response.text())
-                .then(html => {
-                    const container = document.createElement('div');
-                    container.innerHTML = html;
-                    popupBody.appendChild(container);
-                    this._initializeDynamicContent(container);
-                })
-                .catch(err => console.error(`[PopupManager] Error loading ${cardType} card template:`, err));
+            fetchPromises.push(
+                fetch(cardInfo.path)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Failed to fetch ${cardInfo.path}`);
+                        return response.text();
+                    })
+                    .catch(err => {
+                        console.error(`[PopupManager] Error loading card template:`, err);
+                        return '';
+                    })
+            );
         }
     }
+
+    const htmlContents = await Promise.all(fetchPromises);
+    
+    htmlContents.forEach(html => {
+        if (html) {
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            popupBody.appendChild(container);
+        }
+    });
   }
 }
