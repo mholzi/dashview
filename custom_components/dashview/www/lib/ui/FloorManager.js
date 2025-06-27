@@ -316,7 +316,8 @@ export class FloorManager {
     if (!entityState || entityState.state === 'unavailable') {
         cardClass = 'is-unavailable';
         label = 'Unavailable';
-    } else if (entityState.state === 'on' || entityState.state === 'Run' || entityState.state === 'playing') {
+    } else if (entityState.state === 'on' || entityState.state === 'Run' || entityState.state === 'playing' || (type === 'cover' && entityState.state === 'open')) {
+        // This is the fix: added a check for covers being open
         cardClass = 'is-on';
     }
 
