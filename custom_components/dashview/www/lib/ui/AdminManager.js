@@ -36,7 +36,6 @@ export class AdminManager {
       'weather-tab': () => this.loadWeatherEntityConfiguration(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
       'scenes-tab': () => this.loadScenes(),
-      'other-entities-tab': () => this.loadOtherEntitiesSetup(),
       'media-presets-tab': () => this.loadMediaPlayerPresets(),
       'motion-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.MOTION}, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
       'window-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.WINDOW}, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors'),
@@ -98,9 +97,6 @@ export class AdminManager {
             '#reload-dwd-config': () => this.loadDwdConfig(),
             '#save-thresholds-config': () => this.saveThresholdsConfig(),
             '#save-floor-layouts': () => this.saveFloorLayouts(),
-
-            '#reload-other-entities': () => this.loadOtherEntitiesSetup(),
-            '#save-other-entities-config': () => this.saveOtherEntitiesConfig(),
             '#add-scene': () => {
               const name = this._shadowRoot.getElementById('new-scene-name').value;
               const id = this._shadowRoot.getElementById('new-scene-id').value;
@@ -194,105 +190,6 @@ export class AdminManager {
       name: this._hass.states[id]?.attributes.friendly_name || id
     })).sort((a, b) => a.name.localeCompare(b.name));
   }
-
-
-  async loadOtherEntitiesSetup() {
-    const statusElement = this._shadowRoot.getElementById('other-entities-status');
-    const container = this._shadowRoot.getElementById('other-entities-by-label');
-    this._setStatusMessage(statusElement, 'Loading all labeled entities...', 'loading');
-
-    try {
-        const [entitiesByLabel, houseConfig] = await Promise.all([
-            this._hass.callApi('GET', 'dashview/config?type=all_labels_with_entities'),
-            this._hass.callApi('GET', 'dashview/config?type=house')
-        ]);
-        
-        this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
-        this._renderOtherEntitiesSetup(container, entitiesByLabel, houseConfig);
-        this._setStatusMessage(statusElement, '✓ Loaded', 'success');
-    } catch (error) {
-        this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
-        container.innerHTML = `<div class="placeholder"><p>Failed to load entities. Check console.</p></div>`;
-    }
-  }
-
-  _renderOtherEntitiesSetup(container, entitiesByLabel, houseConfig) {
-      if (!container) return;
-      if (!entitiesByLabel || Object.keys(entitiesByLabel).length === 0) {
-          container.innerHTML = `<div class="placeholder"><p>No labels found in your Home Assistant configuration.</p></div>`;
-          return;
-      }
-
-      let html = '';
-      for (const [label, entities] of Object.entries(entitiesByLabel)) {
-          if (entities.length === 0) continue;
-
-          html += `<div class="room-config"><h6>Label: ${label}</h6><div class="entity-list">`;
-          entities.forEach(entity => {
-              const isConfigured = this._isEntityInRoom(entity.entity_id, label, houseConfig);
-              html += `
-                  <div class="entity-list-item">
-                      <label class="checkbox-label">
-                          <input type="checkbox" data-entity-id="${entity.entity_id}" data-room-name="${entity.area_name}" data-entity-type="${label}" ${isConfigured ? 'checked' : ''}>
-                          <span class="checkmark"></span>${entity.name}
-                      </label>
-                      <span class="entity-id">${entity.entity_id} (${entity.area_name})</span>
-                  </div>`;
-          });
-          html += `</div></div>`;
-      }
-      container.innerHTML = html || '<div class="placeholder"><p>No entities with labels found.</p></div>';
-  }
-
-  async saveOtherEntitiesConfig() {
-      const statusElement = this._shadowRoot.getElementById('other-entities-status');
-      const checkboxes = this._shadowRoot.querySelectorAll('#other-entities-by-label input[type="checkbox"]');
-      this._setStatusMessage(statusElement, 'Saving...', 'loading');
-
-      try {
-          const houseConfig = this._adminLocalState.houseConfig || { rooms: {} };
-
-          // Create a map of entity types to clear from the config
-          const labelsToClear = new Set();
-          checkboxes.forEach(cb => labelsToClear.add(cb.dataset.entityType));
-
-          // Clear out previous assignments for these labels to prevent duplicates
-          Object.values(houseConfig.rooms).forEach(room => {
-              if (room.header_entities) {
-                  room.header_entities = room.header_entities.filter(he => !labelsToClear.has(he.entity_type));
-              }
-          });
-
-          // Add the new assignments
-          checkboxes.forEach(checkbox => {
-              if (checkbox.checked) {
-                  const entityId = checkbox.dataset.entityId;
-                  const roomName = checkbox.dataset.roomName;
-                  const entityType = checkbox.dataset.entityType;
-                  const roomKey = this._findRoomKeyByName(roomName) || this._createRoomKeyFromName(roomName);
-
-                  if (!houseConfig.rooms[roomKey]) {
-                    houseConfig.rooms[roomKey] = { friendly_name: roomName, icon: "mdi:home-outline", floor: null, lights: [], covers: [], media_players: [], header_entities: [] };
-                  }
-                  
-                  if (!houseConfig.rooms[roomKey].header_entities) {
-                      houseConfig.rooms[roomKey].header_entities = [];
-                  }
-                  // Prevent duplicates
-                  if (!houseConfig.rooms[roomKey].header_entities.some(e => e.entity === entityId)) {
-                      houseConfig.rooms[roomKey].header_entities.push({ entity: entityId, entity_type: entityType });
-                  }
-              }
-          });
-
-          await this._saveConfigViaAPI('house', houseConfig);
-          this._adminLocalState.houseConfig = houseConfig;
-          this._setStatusMessage(statusElement, '✓ Saved!', 'success');
-      } catch (error) {
-          this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
-      }
-  }
-
   
   async loadWeatherEntityConfiguration() {
     const selector = this._shadowRoot.getElementById('weather-entity-selector');
