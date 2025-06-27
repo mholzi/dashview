@@ -109,6 +109,9 @@ export class SecurityComponents {
             const type = this._panel._getEntityTypeFromConfig(entityId);
             const { name, label, icon, cardClass } = this._getSecurityCardDisplayData(entityId, type);
 
+            // *** FIX: Add the data-type attribute to the card ***
+            cardElement.dataset.type = type;
+
             cardElement.className = `sensor-small-card ${cardClass}`;
             cardElement.querySelector('.sensor-small-name').textContent = name;
             cardElement.querySelector('.sensor-small-label').textContent = label;
