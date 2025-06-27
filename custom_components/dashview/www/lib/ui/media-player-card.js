@@ -116,7 +116,7 @@ export class MediaPlayerCard {
                 const action = button.dataset.action;
                 if (entityId && action) {
                     this._ignoreUpdatesFor(entityId, controls.closest('.media-display'));
-                    this._hass.callService('media_player', action, { entity_id: entityId });
+                    this._hass.callService('media_player', action, { target: { entity_id: entityId } });
                 }
             });
         });
@@ -132,7 +132,7 @@ export class MediaPlayerCard {
                 const volume = parseFloat(e.target.value) / 100;
                 if (entityId) {
                     this._ignoreUpdatesFor(entityId, e.target);
-                    this._hass.callService('media_player', 'volume_set', { entity_id: entityId, volume_level: volume });
+                    this._hass.callService('media_player', 'volume_set', { target: { entity_id: entityId }, volume_level: volume });
                 }
             });
         });
@@ -145,9 +145,9 @@ export class MediaPlayerCard {
                 if (contentId && primaryPlayerEntityId) {
                     this._ignoreUpdatesFor(primaryPlayerEntityId, popup.querySelector('.media-display'));
                     this._hass.callService('media_player', 'play_media', {
-                        entity_id: primaryPlayerEntityId,
+                        target: { entity_id: primaryPlayerEntityId },
                         media_content_id: contentId,
-                        media_content_type: 'music'
+                        media_content_type: 'playlist'
                     });
                 }
             });
