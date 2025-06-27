@@ -105,6 +105,7 @@ export class SecurityComponents {
             const card = template.content.cloneNode(true);
             const cardElement = card.querySelector('.sensor-small-card');
             
+            // This is the critical change to get the entity type
             const type = this._panel._getEntityTypeFromConfig(entityId);
             const { name, label, icon, cardClass } = this._getSecurityCardDisplayData(entityId, type);
 
@@ -117,6 +118,50 @@ export class SecurityComponents {
         });
     }
 
+    _getSecurityCardDisplayData(entityId, type) {
+        const entityState = this._hass.states[entityId];
+        
+        let name = entityState?.attributes.friendly_name || entityId;
+        let label = entityState?.state || 'N/A';
+        let icon = 'mdi:help-circle';
+        let cardClass = '';
+
+        if (!entityState || entityState.state === 'unavailable') {
+            cardClass = 'is-unavailable';
+            label = 'Nicht verfügbar';
+        } else if (entityState.state === 'on') {
+            cardClass = 'is-on';
+        }
+
+        const { WINDOW, MOTION, SMOKE, VIBRATION } = this._panel._entityLabels;
+        switch (type) {
+            case WINDOW:
+                 icon = entityState.state === 'on' ? 'mdi:window-open-variant' : 'mdi:window-closed';
+                 label = entityState.state === 'on' ? 'Offen' : 'Geschlossen';
+                 break;
+            case MOTION:
+                 icon = entityState.state === 'on' ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
+                 label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
+                 if(entityState.state === 'on') cardClass += ' active-motion'; // Add a specific class for active motion
+                 break;
+            case SMOKE:
+                icon = entityState.state === 'on' ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector-variant';
+                label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
+                if(entityState.state === 'on') cardClass += ' active-smoke'; // Add a specific class for active smoke
+                break;
+            case VIBRATION:
+                icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
+                label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
+                if(entityState.state === 'on') cardClass += ' active-vibration'; // Add a specific class for active vibration
+                break;
+            default:
+                if (entityState?.state === 'on' || entityState?.state === 'off') {
+                    label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
+                }
+                break;
+        }
+        return { name, label, icon, cardClass };
+    }
     _updateSecurityHeaderButtons(popup) {
         if (!this._hass || !popup) return;
 
