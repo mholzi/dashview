@@ -258,6 +258,10 @@ body.popup-open, :host(.popup-open) {
 }
 .tab-content.active {
     display: block;
+    background-color: var(--gray200); /* Added */
+    padding: 12px; /* Added */
+    border-radius: 12px; /* Added */
+
 }
 
 /* --- Fixed Navigation Bar --- */
@@ -960,12 +964,8 @@ body.popup-open, :host(.popup-open) {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid var(--gray200);
-    border-radius: 8px;
-    padding: 8px;
-    background: var(--background);
+    /* max-height and overflow-y properties removed */
+    background: transparent;
 }
 
 .entity-list-item {
