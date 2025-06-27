@@ -176,6 +176,10 @@ class DashViewConfigView(HomeAssistantView):
 
         elif config_type == 'entities_by_room':
             return await self._get_entities_by_room(request)
+        
+        if config_type == 'all_labels_with_entities':
+            return await self._get_all_labels_with_entities()
+            
         if config_type == 'weather_entity':
             house_config = self._entry.options.get('house_config', {})
             weather_entity = house_config.get('weather_entity', 'weather.forecast_home')
@@ -189,6 +193,43 @@ class DashViewConfigView(HomeAssistantView):
             return await self._get_entities_by_room(request)
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
+
+    async def _get_all_labels_with_entities(self) -> web.Response:
+        """Fetch all labels and their associated entities."""
+        label_reg = lr.async_get(self._hass)
+        entity_reg = er.async_get(self._hass)
+        device_reg = dr.async_get(self._hass)
+        area_reg = ar.async_get(self._hass)
+
+        all_labels = label_reg.async_list_labels()
+        entities_by_label = {}
+
+        for label in all_labels:
+            entities_by_label[label.name] = []
+
+        for entity_id, entity_entry in entity_reg.entities.items():
+            for label_id in entity_entry.labels:
+                label = label_reg.async_get_label(label_id)
+                if label and label.name in entities_by_label:
+                    area_id = entity_entry.area_id
+                    if not area_id and entity_entry.device_id:
+                        device = device_reg.async_get(entity_entry.device_id)
+                        if device:
+                            area_id = device.area_id
+
+                    area = area_reg.async_get_area(area_id) if area_id else None
+
+                    entities_by_label[label.name].append({
+                        "entity_id": entity_entry.entity_id,
+                        "name": entity_entry.name or entity_entry.original_name or entity_entry.entity_id,
+                        "area_name": area.name if area else "No Area"
+                    })
+
+        # Sort entities within each label group
+        for label_name in entities_by_label:
+            entities_by_label[label_name].sort(key=lambda x: x["name"])
+
+        return web.json_response(entities_by_label)
 
     async def _get_entities_by_room(self, request: web.Request) -> web.Response:
         """A robust method to get entities filtered by domain or label, grouped by room."""
