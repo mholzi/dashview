@@ -2054,7 +2054,19 @@ body.popup-open, :host(.popup-open) {
 .sensor-small-card[data-type="motion"].is-on,
 .sensor-small-card[data-type="vibration"].is-on,
 .sensor-small-card[data-type="smoke"].is-on {
-    color: var(--gray800); /* Use the light text color for these cards */
+    background: var(--active-big); /* Or any color you want, e.g., #ffddcc */
+}
+
+/* Add this new rule to specifically style the icon cell for an active motion sensor */
+.sensor-small-card[data-type="motion"].is-on .sensor-small-icon-cell {
+    background: rgba(255, 255, 255, 0.2); /* Example: a semi-transparent white */
+}
+
+/* This existing rule will now apply to the text inside your newly colored motion card */
+.sensor-small-card[data-type="motion"].is-on,
+.sensor-small-card[data-type="vibration"].is-on,
+.sensor-small-card[data-type="smoke"].is-on {
+    color: var(--gray000); 
 }
 
 .sensor-small-card[data-type="motion"].is-on .sensor-small-icon-cell i,
