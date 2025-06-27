@@ -42,7 +42,9 @@ export class PopupManager {
 
   async handleHashChange() {
     const hash = window.location.hash || '#home';
-    this._shadowRoot.querySelectorAll('.popup').forEach(p => p.classList.remove('active'));
+    this._shadowRoot.querySelectorAll('.popup').forEach(p => {
+        p.classList.remove('visible', 'ready');
+    });
     this._shadowRoot.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
     document.body.classList.remove('popup-open');
 
@@ -56,9 +58,18 @@ export class PopupManager {
       }
       
       if (targetPopup) {
-        targetPopup.classList.add('active');
+        // Step 1: Make the overlay visible immediately
+        targetPopup.classList.add('visible');
         document.body.classList.add('popup-open');
-        this.reinitializePopupContent(targetPopup);
+
+        // Step 2: Wait for all async content to be initialized
+        await this.reinitializePopupContent(targetPopup);
+        
+        // Step 3: Trigger the content slide-up animation *after* content is ready
+        // We use a minimal timeout to ensure the browser has time to render the injected content
+        setTimeout(() => {
+            targetPopup.classList.add('ready');
+        }, 50);
       }
     }
 
