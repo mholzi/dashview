@@ -2054,7 +2054,19 @@ body.popup-open, :host(.popup-open) {
 .sensor-small-card[data-type="motion"].is-on,
 .sensor-small-card[data-type="vibration"].is-on,
 .sensor-small-card[data-type="smoke"].is-on {
-    background: var(--active-big);
+    color: var(--gray800); /* Use the light text color for these cards */
+}
+
+.sensor-small-card[data-type="motion"].is-on .sensor-small-icon-cell i,
+.sensor-small-card[data-type="vibration"].is-on .sensor-small-icon-cell i,
+.sensor-small-card[data-type="smoke"].is-on .sensor-small-icon-cell i,
+.sensor-small-card[data-type="motion"].is-on .sensor-small-label,
+.sensor-small-card[data-type="vibration"].is-on .sensor-small-label,
+.sensor-small-card[data-type="smoke"].is-on .sensor-small-label,
+.sensor-small-card[data-type="motion"].is-on .sensor-small-name,
+.sensor-small-card[data-type="vibration"].is-on .sensor-small-name,
+.sensor-small-card[data-type="smoke"].is-on .sensor-small-name {
+    color: inherit; /* Ensure text inherits the new light color */
 }
 
 .sensor-small-card.is-big {
