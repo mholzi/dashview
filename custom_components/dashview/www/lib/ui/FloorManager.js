@@ -360,6 +360,17 @@ export class FloorManager {
             icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
             label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
             break;
+        case 'media_player':
+            icon = 'mdi:play-network';
+            const state = entityState?.state;
+            if (state === 'playing') {
+                label = 'Playing';
+            } else if (['idle', 'standby', 'off'].includes(state)) {
+                label = 'Aus';
+            } else {
+                label = state ? state.charAt(0).toUpperCase() + state.slice(1) : 'N/A';
+            }
+            break;
 
         default:
             if (entityState?.state === 'on' || entityState?.state === 'off') {

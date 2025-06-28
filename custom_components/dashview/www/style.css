@@ -1029,7 +1029,7 @@ body.popup-open, :host(.popup-open) {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -1042,15 +1042,15 @@ body.popup-open, :host(.popup-open) {
 
 .room-header-icon {
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 22px;
 }
 
 .room-header-icon.active {
@@ -2060,8 +2060,13 @@ body.popup-open, :host(.popup-open) {
 
 .sensor-small-card[data-type="motion"].is-on,
 .sensor-small-card[data-type="vibration"].is-on,
+.sensor-small-card[data-type="fenster"].is-on,
 .sensor-small-card[data-type="smoke"].is-on {
     background: var(--active-big); /* Or any color you want, e.g., #ffddcc */
+}
+
+.sensor-small-card[data-type="media_player"].is-on {
+    background: var(--purple);
 }
 
 /* Add this new rule to specifically style the icon cell for an active motion sensor */
@@ -2201,6 +2206,7 @@ body.popup-open, :host(.popup-open) {
     overflow: hidden;
     position: relative;
     cursor: pointer;
+    background-color: var(--gray000);
 }
 
 .sensor-big-grid {
@@ -2257,6 +2263,10 @@ body.popup-open, :host(.popup-open) {
 .sensor-big-card[data-type="cover"].is-on,
 .sensor-big-card[data-type="motion"].is-on {
     background: var(--active-big);
+}
+
+.sensor-big-card[data-type="media_player"].is-on {
+    background: var(--purple);
 }
 
 .sensor-big-card.is-on .sensor-big-icon-cell {
@@ -2343,7 +2353,7 @@ body.popup-open, :host(.popup-open) {
     position: relative;
     height: 60px;
     border-radius: 15px;
-    background-color: var(--red);
+    background-color: var(--gray000);
     overflow: hidden;
     transition: color 0.3s ease, background-color 0.3s ease;
     -webkit-tap-highlight-color: transparent;
@@ -2377,7 +2387,8 @@ body.popup-open, :host(.popup-open) {
 .light-brightness-handle {
     position: absolute;
     top: 10%;
-    left: -10px;
+    left: 0px;
+    margin-left: -10px;
     width: 8px;
     height: 80%;
     background-color: rgba(255, 255, 255, 0.5);
