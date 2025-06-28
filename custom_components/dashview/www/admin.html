@@ -294,10 +294,10 @@
         <p>Configure entities from third-party integrations.</p>
         <div class="config-section">
             <h5>DWD Weather Warning</h5>
-            <p>Enter the entity ID for your DWD (Deutscher Wetterdienst) warning level sensor.</p>
+            <p>Select your DWD (Deutscher Wetterdienst) warning level sensor from the list of available entities.</p>
             <div id="dwd-config-status" class="status-display">Ready</div>
             <div class="setting-row">
-                <input type="text" id="dwd-sensor-entity" class="form-input" placeholder="e.g., sensor.stadt_dreieich_current_warning_level">
+                <select id="dwd-weather-warnings-selector" class="dropdown-selector"></select>
                 <button id="save-dwd-config" class="save-button">Save</button>
                 <button id="reload-dwd-config" class="action-button">Reload</button>
             </div>

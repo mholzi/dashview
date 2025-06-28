@@ -2343,7 +2343,7 @@ body.popup-open, :host(.popup-open) {
     position: relative;
     height: 60px;
     border-radius: 15px;
-    background-color: var(--gray000);
+    background-color: var(--red);
     overflow: hidden;
     transition: color 0.3s ease, background-color 0.3s ease;
     -webkit-tap-highlight-color: transparent;
@@ -2377,8 +2377,8 @@ body.popup-open, :host(.popup-open) {
 .light-brightness-handle {
     position: absolute;
     top: 10%;
-    left: 0%;
-    width: 4px;
+    left: -10px;
+    width: 8px;
     height: 80%;
     background-color: rgba(255, 255, 255, 0.5);
     border-radius: 2px;
@@ -2386,6 +2386,7 @@ body.popup-open, :host(.popup-open) {
     display: none;
     pointer-events: none;
     transition: left 0.2s ease-out;
+  
 }
 
 .light-control-row.is-dimmable[state="on"] .light-brightness-handle {

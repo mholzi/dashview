@@ -90,6 +90,7 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
     house_config.setdefault("floors", {})
     house_config.setdefault("rooms", {})
     house_config.setdefault("floor_layouts", {})
+    house_config.setdefault("other_entities", [])
 
     for floor in floor_registry.floors.values():
         if floor.floor_id not in house_config["floors"]:
@@ -173,20 +174,27 @@ class DashViewConfigView(HomeAssistantView):
             ]
             all_media_players.sort(key=lambda x: x["friendly_name"])
             return web.json_response(all_media_players)
-
+        elif config_type == 'dwd_entities':
+            entity_reg = er.async_get(self._hass)
+            dwd_entities = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.name or entity.original_name or entity.entity_id,
+                }
+                for entity in entity_reg.entities.values()
+                if entity.platform == "dwd_weather_warnings"
+            ]
+            dwd_entities.sort(key=lambda x: x["friendly_name"])
+            return web.json_response(dwd_entities)
         elif config_type == 'entities_by_room':
             return await self._get_entities_by_room(request)
-        if config_type == 'weather_entity':
+        elif config_type == 'weather_entity':
             house_config = self._entry.options.get('house_config', {})
             weather_entity = house_config.get('weather_entity', 'weather.forecast_home')
             return web.json_response({'weather_entity': weather_entity})
-
-        if config_type == 'integrations':
+        elif config_type == 'integrations':
             config = self._entry.options.get('integrations_config', {})
             return web.json_response(config)
-
-        if config_type == 'entities_by_room':
-            return await self._get_entities_by_room(request)
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 

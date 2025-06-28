@@ -395,19 +395,58 @@ export class AdminManager {
   }
 
   async loadDwdConfig() {
-    const inputEl = this._shadowRoot.getElementById('dwd-sensor-entity');
+    const selector = this._shadowRoot.getElementById('dwd-weather-warnings-selector');
     const statusEl = this._shadowRoot.getElementById('dwd-config-status');
-    const integrationsConfig = await this._hass.callApi('GET', 'dashview/config?type=integrations');
-    inputEl.value = integrationsConfig?.dwd_sensor || '';
-    this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+    if (!selector || !statusEl) return;
+
+    this._setStatusMessage(statusEl, 'Loading...', 'loading');
+    try {
+        const [dwdEntities, integrationsConfig] = await Promise.all([
+            this._hass.callApi('GET', 'dashview/config?type=dwd_entities'),
+            this._hass.callApi('GET', 'dashview/config?type=integrations')
+        ]);
+
+        const currentEntity = integrationsConfig?.dwd_weather_warnings_entity || '';
+
+        selector.innerHTML = '';
+
+        if (!dwdEntities || dwdEntities.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No DWD Weather Warnings entities found';
+            option.disabled = true;
+            selector.appendChild(option);
+            this._setStatusMessage(statusEl, 'No entities found.', 'warning');
+            return;
+        }
+
+        const noneOption = document.createElement('option');
+        noneOption.value = '';
+        noneOption.textContent = '-- None --';
+        selector.appendChild(noneOption);
+
+        dwdEntities.forEach(entity => {
+            const option = document.createElement('option');
+            option.value = entity.entity_id;
+            option.textContent = entity.friendly_name;
+            option.selected = entity.entity_id === currentEntity;
+            selector.appendChild(option);
+        });
+
+        this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+    } catch (e) {
+        this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+        console.error("[AdminManager] Error loading DWD config:", e);
+    }
   }
 
   async saveDwdConfig() {
-    const inputEl = this._shadowRoot.getElementById('dwd-sensor-entity');
+    const selector = this._shadowRoot.getElementById('dwd-weather-warnings-selector');
     const statusEl = this._shadowRoot.getElementById('dwd-config-status');
+    if (!selector || !statusEl) return;
     this._setStatusMessage(statusEl, 'Saving...', 'loading');
     try {
-        await this._saveConfigViaAPI('integrations', { dwd_sensor: inputEl.value });
+        await this._saveConfigViaAPI('integrations', { dwd_weather_warnings_entity: selector.value });
         this._setStatusMessage(statusEl, '✓ Saved!', 'success');
     } catch(e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
