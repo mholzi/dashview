@@ -41,6 +41,7 @@ export class AdminManager {
       'window-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.WINDOW}, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors'),
       'smoke-detector-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.SMOKE}, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room', 'Smoke Detectors'),
       'vibration-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.VIBRATION}, 'vibration-setup-status', 'vibration-sensors-by-room', 'Vibration Sensors'),
+      'door-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.DOOR}, 'door-setup-status', 'door-sensors-by-room', 'Door Sensors'),
       'cover-setup-tab': () => this.loadGenericSensorSetup({domain: 'cover'}, 'cover-setup-status', 'covers-by-room', 'Covers'),
       'light-setup-tab': () => this.loadGenericSensorSetup({domain: 'light'}, 'light-setup-status', 'lights-by-room', 'Lights'),
       'temperatur-setup-tab': () => {
@@ -86,6 +87,8 @@ export class AdminManager {
             '#reload-smoke-detector-sensors': () => this.loadTabContent('smoke-detector-setup-tab'),
             '#save-vibration-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.VIBRATION, 'vibration-setup-status', 'vibration-sensors-by-room'),
             '#reload-vibration-sensors': () => this.loadTabContent('vibration-setup-tab'),
+            '#save-door-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.DOOR, 'door-setup-status', 'door-sensors-by-room'),
+            '#reload-door-sensors': () => this.loadTabContent('door-setup-tab'),
             '#save-temperatur-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.TEMPERATUR, 'temperatur-setup-status', 'temperatur-sensors-by-room'),
             '#reload-temperatur-sensors': () => this.loadTabContent('temperatur-setup-tab'),
             '#save-humidity-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.HUMIDITY, 'humidity-setup-status', 'humidity-sensors-by-room'),
