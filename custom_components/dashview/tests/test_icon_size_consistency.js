@@ -25,15 +25,15 @@ class IconSizeConsistencyTests {
         const cssPath = path.join(__dirname, '../www/style.css');
         const cssContent = fs.readFileSync(cssPath, 'utf8');
         
-        // Check that navigation buttons use 24px icons
-        const navButtonRule = /\.nav-button\s*\{[^}]*font-size:\s*24px[^}]*\}/s.test(cssContent);
+        // Check that navigation buttons use 40px icons
+        const navButtonRule = /\.nav-button\s*\{[^}]*font-size:\s*40px[^}]*\}/s.test(cssContent);
         
         if (navButtonRule) {
-            this.testResults.push({ name: 'Navigation buttons use 24px icons', passed: true });
-            console.log('✓ Navigation buttons correctly use 24px icons');
+            this.testResults.push({ name: 'Navigation buttons use 40px icons', passed: true });
+            console.log('✓ Navigation buttons correctly use 40px icons');
         } else {
-            this.testResults.push({ name: 'Navigation buttons use 24px icons', passed: false });
-            console.log('❌ Navigation buttons do not use 24px icons');
+            this.testResults.push({ name: 'Navigation buttons use 40px icons', passed: false });
+            console.log('❌ Navigation buttons do not use 40px icons');
         }
     }
 

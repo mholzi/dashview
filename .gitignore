@@ -31,3 +31,9 @@ Thumbs.db
 
 # Log files
 *.log
+
+# Python virtual environment
+.venv/
+
+# VS Code settings
+.vscode/
