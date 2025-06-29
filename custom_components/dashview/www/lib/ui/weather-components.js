@@ -38,28 +38,180 @@ export class WeatherComponents {
         try {
             console.log(`[WeatherManager] Fetching forecasts for ${entityId}`);
             
-            // Fetch daily forecasts
-            const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
-                entity_id: entityId,
-                type: 'daily'
-            });
+            // Strategy 1: Try the modern Home Assistant WebSocket API (recommended approach)
+            const forecastData = await this._tryWebSocketAPI(entityId);
+            if (forecastData) {
+                this._forecasts.daily = forecastData.daily || [];
+                this._forecasts.hourly = forecastData.hourly || [];
+                console.log(`[WeatherManager] WebSocket API: Fetched ${this._forecasts.daily.length} daily and ${this._forecasts.hourly.length} hourly forecasts`);
+                return;
+            }
 
-            // Fetch hourly forecasts  
-            const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
-                entity_id: entityId,
-                type: 'hourly'
-            });
+            // Strategy 2: Try the legacy service call approach with return_response
+            const serviceData = await this._tryServiceAPI(entityId);
+            if (serviceData) {
+                this._forecasts.daily = serviceData.daily || [];
+                this._forecasts.hourly = serviceData.hourly || [];
+                console.log(`[WeatherManager] Service API: Fetched ${this._forecasts.daily.length} daily and ${this._forecasts.hourly.length} hourly forecasts`);
+                return;
+            }
 
-            // Extract forecast data from service response
-            this._forecasts.daily = dailyResponse?.response?.[entityId]?.forecast || [];
-            this._forecasts.hourly = hourlyResponse?.response?.[entityId]?.forecast || [];
-            
-            console.log(`[WeatherManager] Fetched ${this._forecasts.daily.length} daily and ${this._forecasts.hourly.length} hourly forecasts`);
+            // Strategy 3: Try to get data from template sensor attributes (user's approach)
+            const templateData = await this._tryTemplateSensorData(entityId);
+            if (templateData) {
+                this._forecasts.daily = templateData.daily || [];
+                this._forecasts.hourly = templateData.hourly || [];
+                console.log(`[WeatherManager] Template sensors: Fetched ${this._forecasts.daily.length} daily and ${this._forecasts.hourly.length} hourly forecasts`);
+                return;
+            }
+
+            console.warn(`[WeatherManager] No forecast data available from any source for ${entityId}`);
+            this._forecasts.daily = [];
+            this._forecasts.hourly = [];
 
         } catch (error) {
             console.error(`[WeatherManager] Error fetching forecasts for ${entityId}:`, error);
             this._forecasts.daily = [];
             this._forecasts.hourly = [];
+        }
+    }
+
+    async _tryWebSocketAPI(entityId) {
+        try {
+            if (!this._hass.callWS) {
+                console.log(`[WeatherManager] WebSocket API not available`);
+                return null;
+            }
+
+            console.log(`[WeatherManager] Trying WebSocket API for ${entityId}`);
+            
+            // Fetch using WebSocket API (modern approach)
+            const dailyPromise = this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                forecast_type: 'daily',
+                entity_id: entityId
+            });
+
+            const hourlyPromise = this._hass.callWS({
+                type: 'weather/subscribe_forecast',
+                forecast_type: 'hourly',
+                entity_id: entityId
+            });
+
+            const [dailyResult, hourlyResult] = await Promise.all([dailyPromise, hourlyPromise]);
+
+            return {
+                daily: dailyResult?.forecast || [],
+                hourly: hourlyResult?.forecast || []
+            };
+        } catch (error) {
+            console.log(`[WeatherManager] WebSocket API failed:`, error.message);
+            return null;
+        }
+    }
+
+    async _tryServiceAPI(entityId) {
+        try {
+            console.log(`[WeatherManager] Trying service API for ${entityId}`);
+            
+            // Try modern approach with return_response: true
+            const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
+                entity_id: entityId,
+                type: 'daily'
+            }, true);
+
+            const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
+                entity_id: entityId,
+                type: 'hourly'
+            }, true);
+
+            // Extract forecast data from service response
+            const dailyForecasts = dailyResponse?.response?.[entityId]?.forecast || dailyResponse?.[entityId]?.forecast || [];
+            const hourlyForecasts = hourlyResponse?.response?.[entityId]?.forecast || hourlyResponse?.[entityId]?.forecast || [];
+
+            if (dailyForecasts.length > 0 || hourlyForecasts.length > 0) {
+                return {
+                    daily: dailyForecasts,
+                    hourly: hourlyForecasts
+                };
+            }
+
+            return null;
+        } catch (error) {
+            console.log(`[WeatherManager] Service API failed:`, error.message);
+            return null;
+        }
+    }
+
+    async _tryTemplateSensorData(entityId) {
+        try {
+            console.log(`[WeatherManager] Trying template sensor data approach for ${entityId}`);
+            
+            const entityBase = entityId.replace('weather.', '');
+            
+            // Look for template sensors that might contain forecast data
+            const possibleHourlySensors = [
+                'sensor.hourly_forecast',
+                `sensor.weather_forecast_hourly_${entityBase}`,
+                'sensor.weather_forecast_hourly'
+            ];
+            
+            let hourlyEntity = null;
+            let hourlyForecastSensor = null;
+            for (const sensorName of possibleHourlySensors) {
+                if (this._hass.states[sensorName]) {
+                    hourlyEntity = this._hass.states[sensorName];
+                    hourlyForecastSensor = sensorName;
+                    break;
+                }
+            }
+            
+            let hourlyForecasts = [];
+            let dailyForecasts = [];
+
+            // Extract hourly data from template sensor attributes (user's approach)
+            if (hourlyEntity && hourlyEntity.attributes && hourlyEntity.attributes.forecast) {
+                hourlyForecasts = hourlyEntity.attributes.forecast;
+                console.log(`[WeatherManager] Found hourly forecast data in ${hourlyForecastSensor}: ${hourlyForecasts.length} items`);
+            }
+
+            // Try to construct daily forecasts from individual template sensors
+            const dailyTemplateSensors = [
+                { temp: `sensor.temperature_forecast_today`, condition: `sensor.state_forecast_today` },
+                { temp: `sensor.temperature_forecast_tomorrow`, condition: `sensor.state_forecast_tomorrow` },
+                { temp: `sensor.temperature_forecast_day2`, condition: `sensor.state_forecast_day2` }
+            ];
+
+            for (let i = 0; i < dailyTemplateSensors.length; i++) {
+                const { temp, condition } = dailyTemplateSensors[i];
+                const tempEntity = this._hass.states[temp];
+                const conditionEntity = this._hass.states[condition];
+                
+                if (tempEntity && conditionEntity && tempEntity.state !== 'unavailable') {
+                    const forecastDate = new Date();
+                    forecastDate.setDate(forecastDate.getDate() + i);
+                    
+                    dailyForecasts.push({
+                        datetime: forecastDate.toISOString(),
+                        temperature: parseFloat(tempEntity.state) || 20,
+                        condition: conditionEntity.state || 'unknown',
+                        templow: parseFloat(tempEntity.state) - 5 // Estimate, could be improved
+                    });
+                }
+            }
+
+            if (hourlyForecasts.length > 0 || dailyForecasts.length > 0) {
+                console.log(`[WeatherManager] Template sensors: ${dailyForecasts.length} daily, ${hourlyForecasts.length} hourly forecasts`);
+                return {
+                    daily: dailyForecasts,
+                    hourly: hourlyForecasts
+                };
+            }
+
+            return null;
+        } catch (error) {
+            console.log(`[WeatherManager] Template sensor approach failed:`, error.message);
+            return null;
         }
     }
 
@@ -153,11 +305,34 @@ export class WeatherComponents {
             try {
                 const item = document.createElement('div');
                 item.className = 'hourly-item';
-                const time = new Date(forecast.datetime).getHours().toString().padStart(2, '0') + ':00';
+                
+                // Handle different datetime formats
+                let timeString = 'N/A';
+                try {
+                    const dateTime = new Date(forecast.datetime);
+                    if (!isNaN(dateTime.getTime())) {
+                        timeString = dateTime.getHours().toString().padStart(2, '0') + ':00';
+                    }
+                } catch (timeError) {
+                    console.warn(`[WeatherManager] Invalid datetime for forecast ${index}:`, forecast.datetime);
+                    timeString = `${index}h`;
+                }
+                
+                // Handle missing or invalid temperature
+                let tempString = 'N/A';
+                if (typeof forecast.temperature === 'number') {
+                    tempString = `${Math.round(forecast.temperature)}°`;
+                } else if (forecast.temperature && !isNaN(parseFloat(forecast.temperature))) {
+                    tempString = `${Math.round(parseFloat(forecast.temperature))}°`;
+                }
+                
+                // Handle missing condition
+                const condition = forecast.condition || 'unknown';
+                
                 item.innerHTML = `
-                    <div class="hourly-time">${time}</div>
-                    <div class="hourly-icon"><img src="/local/weather_icons/${forecast.condition}.svg" alt="${forecast.condition}" width="32" height="32"></div>
-                    <div class="hourly-temp">${Math.round(forecast.temperature)}°</div>
+                    <div class="hourly-time">${timeString}</div>
+                    <div class="hourly-icon"><img src="/local/weather_icons/${condition}.svg" alt="${condition}" width="32" height="32" onerror="this.src='/local/weather_icons/unknown.svg'"></div>
+                    <div class="hourly-temp">${tempString}</div>
                 `;
                 container.appendChild(item);
             } catch (error) {
@@ -209,14 +384,36 @@ export class WeatherComponents {
         console.log(`[WeatherManager] Rendering daily forecast for day ${dayIndex}:`, forecast);
         
         try {
+            // Handle missing or invalid temperature
+            let highTemp = 'N/A';
+            if (typeof forecast.temperature === 'number') {
+                highTemp = `${Math.round(forecast.temperature)}°C`;
+            } else if (forecast.temperature && !isNaN(parseFloat(forecast.temperature))) {
+                highTemp = `${Math.round(parseFloat(forecast.temperature))}°C`;
+            }
+            
+            // Handle missing or invalid low temperature
+            let lowTemp = '';
+            if (forecast.templow) {
+                if (typeof forecast.templow === 'number') {
+                    lowTemp = `${Math.round(forecast.templow)}°C`;
+                } else if (!isNaN(parseFloat(forecast.templow))) {
+                    lowTemp = `${Math.round(parseFloat(forecast.templow))}°C`;
+                }
+            }
+            
+            // Handle missing condition
+            const condition = forecast.condition || 'unknown';
+            const translatedCondition = this._translateWeatherCondition(condition);
+            
             container.innerHTML = `
                 <div class="daily-forecast">
-                  <div class="daily-icon"><img src="/local/weather_icons/${forecast.condition}.svg" width="50" height="50"></div>
+                  <div class="daily-icon"><img src="/local/weather_icons/${condition}.svg" width="50" height="50" onerror="this.src='/local/weather_icons/unknown.svg'"></div>
                   <div class="daily-info">
-                    <div class="daily-condition">${this._translateWeatherCondition(forecast.condition)}</div>
+                    <div class="daily-condition">${translatedCondition}</div>
                     <div class="daily-temps">
-                      <span class="daily-high">${Math.round(forecast.temperature)}°C</span>
-                      <span class="daily-low">${forecast.templow ? Math.round(forecast.templow) + '°C' : ''}</span>
+                      <span class="daily-high">${highTemp}</span>
+                      ${lowTemp ? `<span class="daily-low">${lowTemp}</span>` : ''}
                     </div>
                   </div>
                 </div>`;
