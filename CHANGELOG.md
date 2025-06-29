@@ -5,6 +5,26 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.100] - 2024-12-29
+
+### Fixed
+
+- **Weather API Compliance**: Removed undocumented WebSocket API usage and updated to use official `weather.get_forecasts` service for better Home Assistant compatibility
+- **Navigation Interface**: Removed unnecessary Home icon from navigation bar for cleaner interface
+- **Icon Sizing**: Fixed navigation button icons appearing smaller than intended (60px) with CSS `!important` override
+- **Door Sensors**: Updated door sensor handling to treat 'unlocked' state same as 'closed' for consistent behavior
+- **Mower Sensors**: Improved mower sensor error handling to properly exclude "none" values and display correct states
+- **Debug Logging**: Added comprehensive debug logging for scene detection in room popups to aid troubleshooting
+- **Card Styling**: Updated card styling for consistent 12px border radius across components
+- **Code Cleanup**: Improved layout formatting and removed old release notes files
+
+### Technical Improvements
+
+- Enhanced weather forecast fetching to use only documented Home Assistant APIs
+- Improved sensor state management and error handling
+- Better CSS specificity handling for icon sizing
+- More consistent UI styling and layout formatting
+
 ## [0.1.99] - 2025-01-01
 
 ### Added
@@ -77,4 +97,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See [GitHub Releases](https://github.com/mholzi/dashview/releases) for older release notes.
 
+[0.1.100]: https://github.com/mholzi/dashview/compare/v0.1.99...v0.1.100
 [0.1.99]: https://github.com/mholzi/dashview/compare/v0.1.98...v0.1.99
