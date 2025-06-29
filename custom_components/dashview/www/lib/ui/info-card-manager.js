@@ -18,7 +18,9 @@ export class InfoCardManager {
       { selector: '.solar-section', handler: this._updateSolarSection },
       { selector: '.train-departures-container', handler: this._updateTrainDepartureCards },
       { selector: '#notifications-container', handler: this._updateTemperatureNotifications },
-      { selector: '.dwd-warning-card-container', handler: this._updateDwdWarningCard }
+      { selector: '.dwd-warning-card-container', handler: this._updateDwdWarningCard },
+      { selector: '.hoover-section', handler: this._updateHooverSection },
+      { selector: '.mower-section', handler: this._updateMowerSection }
     ];
   }
 
@@ -390,6 +392,88 @@ export class InfoCardManager {
         batteryLevelElement.style.display = 'none';
         batterySuffixElement.style.display = 'none';
     }
+    section.classList.remove('hidden');
+  }
+
+  _updateHooverSection(section) {
+    const hooverEntities = this._panel._getAllEntitiesByType('hoover');
+    if (hooverEntities.length === 0) {
+      section.classList.add('hidden');
+      return;
+    }
+
+    // Find any active hoover
+    const activeHoover = hooverEntities.find(entityId => {
+      const entity = this._hass.states[entityId];
+      return entity && ['cleaning', 'returning', 'error'].includes(entity.state?.toLowerCase());
+    });
+
+    if (!activeHoover) {
+      section.classList.add('hidden');
+      return;
+    }
+
+    const entity = this._hass.states[activeHoover];
+    const statusElement = section.querySelector('[data-type="hoover-status"]');
+    
+    if (statusElement) {
+      const state = entity.state?.toLowerCase();
+      let statusText = '';
+      
+      if (state === 'cleaning') {
+        statusText = 'saugt 🤖';
+      } else if (state === 'returning') {
+        statusText = 'kehrt zurück 🤖';
+      } else if (state === 'error') {
+        statusText = 'hat einen Fehler 🤖';
+      } else {
+        statusText = `ist ${entity.state} 🤖`;
+      }
+      
+      statusElement.textContent = statusText;
+    }
+    
+    section.classList.remove('hidden');
+  }
+
+  _updateMowerSection(section) {
+    const mowerEntities = this._panel._getAllEntitiesByType('mower');
+    if (mowerEntities.length === 0) {
+      section.classList.add('hidden');
+      return;
+    }
+
+    // Find any active mower
+    const activeMower = mowerEntities.find(entityId => {
+      const entity = this._hass.states[entityId];
+      return entity && ['mowing', 'returning', 'error', 'going_home'].includes(entity.state?.toLowerCase());
+    });
+
+    if (!activeMower) {
+      section.classList.add('hidden');
+      return;
+    }
+
+    const entity = this._hass.states[activeMower];
+    const statusElement = section.querySelector('[data-type="mower-status"]');
+    
+    if (statusElement) {
+      const state = entity.state?.toLowerCase();
+      let statusText = '';
+      
+      if (state === 'mowing') {
+        statusText = 'mäht 🚜';
+      } else if (state === 'returning' || state === 'going_home') {
+        statusText = 'kehrt zurück 🚜';
+      } else if (state === 'error') {
+        statusText = 'hat einen Fehler 🚜';
+      } else {
+        statusText = `ist ${entity.state} 🚜`;
+      }
+      
+      statusElement.textContent = statusText;
+    }
+    
     section.classList.remove('hidden');
   }
 

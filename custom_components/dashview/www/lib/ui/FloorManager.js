@@ -148,14 +148,14 @@ export class FloorManager {
             continue;
         }
 
-        let cardHTML = `<div class="placeholder-card ${slot.grid_area.includes('-big') ? 'placeholder-big' : 'placeholder-small'}" style="grid-area: ${slot.grid_area};"></div>`;
-
         const isBigSlot = slot.grid_area.includes('-big');
         const entityProvider = (type) => {
             if (type === 'pinned' && slot.entity_id) return slot.entity_id;
             if (type === 'auto' && autoPlacementQueue.length > 0) return autoPlacementQueue.shift().entity_id;
             return null;
         };
+
+        let cardHTML = '';
 
         if (isBigSlot) {
             if (slot.type === 'room_swipe_card') {
@@ -164,11 +164,21 @@ export class FloorManager {
                 cardHTML = this._renderGarbageSwipeCard(slot.grid_area);
             } else {
                 const entityId = entityProvider(slot.type);
-                if (entityId) cardHTML = this._generateBigSensorCardHTML(entityId, slot.grid_area);
+                if (entityId) {
+                    cardHTML = this._generateBigSensorCardHTML(entityId, slot.grid_area);
+                } else {
+                    // No entity available - keep slot empty
+                    cardHTML = `<div style="grid-area: ${slot.grid_area};"></div>`;
+                }
             }
         } else {
             const entityId = entityProvider(slot.type);
-            if (entityId) cardHTML = this._generateSmallSensorCardHTML(entityId, slot.grid_area);
+            if (entityId) {
+                cardHTML = this._generateSmallSensorCardHTML(entityId, slot.grid_area);
+            } else {
+                // No entity available - keep slot empty
+                cardHTML = `<div style="grid-area: ${slot.grid_area};"></div>`;
+            }
         }
         gridHTML += cardHTML;
     }
@@ -753,8 +763,9 @@ export class FloorManager {
     const activity = entityState.attributes?.activity;
     const batteryLevel = entityState.attributes?.battery_level;
 
-    // Handle error states
-    if (state === 'error' || error || (state !== 'ok' && state !== 'none' && state === lastError)) {
+    // Handle error states - only if error is not none/null/undefined
+    if ((error && error !== 'none' && error !== 'None' && error.toLowerCase() !== 'no error') || 
+        (lastError && lastError !== 'none' && lastError !== 'None' && lastError.toLowerCase() !== 'no error')) {
       let errorMessage = 'Fehler';
       const currentError = error || lastError || state;
       

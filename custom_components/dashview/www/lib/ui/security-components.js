@@ -179,10 +179,12 @@ export class SecurityComponents {
                 const iconContainer = motionChip.querySelector('.chip-icon-container');
                 
                 if (activeMotionSensors.length > 0) {
-                    // Motion detected - show active state
+                    // Motion detected - show active state using same CSS as room popup header buttons
                     iconElement.className = 'mdi mdi-motion-sensor';
                     motionChip.style.background = 'var(--active-big)';
-                    iconContainer.style.background = 'var(--active-big)';
+                    iconContainer.style.background = 'rgba(255, 255, 255, 0.2)';
+                    iconElement.style.color = 'var(--gray000)';
+                    nameElement.style.color = 'var(--gray000)';
                     
                     // Find the most recently triggered motion sensor
                     let mostRecentChange = null;
@@ -199,10 +201,12 @@ export class SecurityComponents {
                     const timeText = this._formatTimeAgo(mostRecentChange?.toISOString());
                     nameElement.textContent = timeText;
                 } else {
-                    // No motion detected - show inactive state
+                    // No motion detected - show inactive state using same CSS as room popup header buttons
                     iconElement.className = 'mdi mdi-motion-sensor-off';
                     motionChip.style.background = 'var(--gray000)';
-                    iconContainer.style.background = 'var(--gray000)';
+                    iconContainer.style.background = 'var(--gray800)';
+                    iconElement.style.color = 'var(--gray000)';
+                    nameElement.style.color = 'var(--gray800)';
                     
                     // Find the most recently inactive motion sensor
                     let mostRecentChange = null;
@@ -229,13 +233,16 @@ export class SecurityComponents {
             const openWindows = this._panel._getAllEntitiesByType(this._panel._entityLabels.WINDOW).filter(id => this._hass.states[id]?.state === 'on');
             const iconContainer = windowsChip.querySelector('.chip-icon-container');
             const iconElement = windowsChip.querySelector('.chip-icon-container i');
+            const nameElement = windowsChip.querySelector('.chip-name');
             
             if (openWindows.length > 0) {
                 windowsChip.style.display = 'flex';
-                windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} offen`;
+                nameElement.textContent = `${openWindows.length} offen`;
                 windowsChip.style.background = 'var(--orange)';
-                iconContainer.style.background = 'var(--orange)';
+                iconContainer.style.background = 'rgba(255, 255, 255, 0.2)';
                 iconElement.className = 'mdi mdi-window-open';
+                iconElement.style.color = 'var(--gray000)';
+                nameElement.style.color = 'var(--gray000)';
             } else {
                 windowsChip.style.display = 'none';
             }

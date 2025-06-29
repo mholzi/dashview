@@ -227,18 +227,23 @@ export class LightsCard {
                 const brightnessPercent = (typeof brightness === 'number') ? Math.round((brightness / 255) * 100) : 100;
                 
                 stateEl.textContent = `On - ${brightnessPercent}%`;
-                bar.style.width = `${brightnessPercent}%`;
-                handle.style.left = `${brightnessPercent}%`;
+                // Use requestAnimationFrame to ensure immediate visual update
+                requestAnimationFrame(() => {
+                    bar.style.width = `${brightnessPercent}%`;
+                    if (handle) handle.style.left = `${brightnessPercent}%`;
+                });
             } else {
                  stateEl.textContent = 'On';
-                 bar.style.width = '100%';
+                 requestAnimationFrame(() => {
+                     bar.style.width = '100%';
+                 });
             }
         } else {
             stateEl.textContent = 'Off';
-            bar.style.width = '0%';
-            if (handle) {
-                handle.style.left = '0%';
-            }
+            requestAnimationFrame(() => {
+                bar.style.width = '0%';
+                if (handle) handle.style.left = '0%';
+            });
         }
 
         const roomKey = popup.id.replace('-popup', '');
