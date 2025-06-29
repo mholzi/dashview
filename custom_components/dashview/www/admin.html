@@ -28,15 +28,17 @@
         
         <!-- Auto-Generated Scenes Section -->
         <div class="config-section">
-            <h5>Auto-Generated Room Scenes</h5>
-            <p>Automatically create "All Lights Off" scenes for each room with lights.</p>
+            <h5>Auto-Generated Scenes</h5>
+            <p>Automatically create scene buttons that appear in rooms with the relevant entities.</p>
+            
             <div class="setting-row">
                 <label class="toggle-container">
-                    <input type="checkbox" id="auto-scenes-enabled" checked>
+                    <input type="checkbox" id="auto-light-scenes-enabled" checked>
                     <span class="toggle-slider"></span>
-                    <span class="toggle-label">Enable Auto-Generated Room Scenes</span>
+                    <span class="toggle-label">Enable "Lights Off" scenes in all rooms with lights</span>
                 </label>
             </div>
+            
             <div class="setting-row">
                 <label class="toggle-container">
                     <input type="checkbox" id="global-cover-scene-enabled" checked>
@@ -44,13 +46,11 @@
                     <span class="toggle-label">Enable Global Cover Scene</span>
                 </label>
             </div>
+            
             <div id="auto-scenes-status" class="status-display">Ready</div>
-            <div id="auto-scenes-overview" class="auto-scenes-container">
-                <!-- Auto-scene room overview will be populated here -->
-            </div>
+            
             <div class="form-row" style="margin-top: 12px;">
-                <button id="generate-auto-scenes" class="action-button">Generate Auto-Scenes</button>
-                <button id="remove-auto-scenes" class="action-button secondary">Remove All Auto-Scenes</button>
+                <button id="save-auto-scenes" class="action-button">Save Settings</button>
             </div>
         </div>
 
