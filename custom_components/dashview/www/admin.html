@@ -25,8 +25,30 @@
     <div id="scenes-tab" class="tab-content">
         <h4>Scene Button Management</h4>
         <p>Create and manage your custom scene buttons here.</p>
+        
+        <!-- Auto-Generated Scenes Section -->
         <div class="config-section">
-            <h5>Scene Buttons</h5>
+            <h5>Auto-Generated Room Scenes</h5>
+            <p>Automatically create "All Lights Off" scenes for each room with lights.</p>
+            <div class="setting-row">
+                <label class="toggle-container">
+                    <input type="checkbox" id="auto-scenes-enabled" checked>
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-label">Enable Auto-Generated Room Scenes</span>
+                </label>
+            </div>
+            <div id="auto-scenes-status" class="status-display">Ready</div>
+            <div id="auto-scenes-overview" class="auto-scenes-container">
+                <!-- Auto-scene room overview will be populated here -->
+            </div>
+            <div class="form-row" style="margin-top: 12px;">
+                <button id="generate-auto-scenes" class="action-button">Generate Auto-Scenes</button>
+                <button id="remove-auto-scenes" class="action-button secondary">Remove All Auto-Scenes</button>
+            </div>
+        </div>
+
+        <div class="config-section">
+            <h5>Manual Scene Buttons</h5>
             <div id="scenes-status" class="status-display">Ready</div>
             <div id="scenes-list" class="floors-container">
                 </div>

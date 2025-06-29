@@ -93,6 +93,8 @@ export class SceneManager {
         return (scene.entities || []).some(e => this._hass.states[e]?.state === 'on')
           ? 'Ambiente aus'
           : 'Ambiente';
+      case 'auto_room_lights_off':
+        return scene.name || 'Lichter aus';
       default:
         return scene.name;
     }
@@ -110,6 +112,7 @@ export class SceneManager {
       case 'computer':
         return 'mdi:desktop-tower';
       case 'all_lights_out':
+      case 'auto_room_lights_off':
         return 'mdi:lightbulb-off';
       case 'wohnzimmer_ambiente':
         return 'mdi:sofa';
@@ -166,6 +169,7 @@ export class SceneManager {
         break;
       case 'computer':
       case 'all_lights_out':
+      case 'auto_room_lights_off':
       case 'wohnzimmer_ambiente':
         if ((scene.entities || []).some(e => this._hass.states[e]?.state === 'on')) {
           cardColor = 'var(--gray800)';
@@ -213,6 +217,7 @@ export class SceneManager {
         service = 'homeassistant.toggle';
         break;
       case 'all_lights_out':
+      case 'auto_room_lights_off':
         service = 'light.turn_off';
         break;
       case 'wohnzimmer_ambiente':

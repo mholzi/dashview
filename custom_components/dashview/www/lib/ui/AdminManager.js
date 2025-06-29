@@ -1,4 +1,5 @@
 // custom_components/dashview/www/lib/ui/AdminManager.js
+import { AutoSceneGenerator } from './AutoSceneGenerator.js';
 
 export class AdminManager {
   constructor(panel) {
@@ -14,6 +15,9 @@ export class AdminManager {
       isLoaded: false
     };
 
+    // Initialize AutoSceneGenerator
+    this._autoSceneGenerator = new AutoSceneGenerator(panel);
+
     // Make AdminManager self-sufficient
     this._entityLabels = {
         MOTION: 'motion', WINDOW: 'fenster', SMOKE: 'rauchmelder', VIBRATION: 'vibration',
@@ -25,6 +29,9 @@ export class AdminManager {
 
   setHass(hass) {
     this._hass = hass;
+    if (this._autoSceneGenerator) {
+      this._autoSceneGenerator.setHass(hass);
+    }
   }
 
   loadTabContent(targetId) {
@@ -643,7 +650,13 @@ export class AdminManager {
     try {
         const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
         this._adminLocalState.houseConfig = houseConfig;
+        
+        // Update AutoSceneGenerator with latest config
+        this._autoSceneGenerator._config = houseConfig;
+        
         this._renderScenes();
+        this._renderAutoScenes();
+        this._initializeAutoSceneListeners();
         this._setStatusMessage(statusEl, '✓ Loaded', 'success');
     } catch (e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
@@ -680,6 +693,115 @@ export class AdminManager {
         this._setStatusMessage(statusEl, '✓ Saved!', 'success');
     } catch (e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
+  }
+
+  // Auto-Scene Management Methods
+  _renderAutoScenes() {
+    const autoScenesEnabled = this._autoSceneGenerator._getAutoSceneEnabled();
+    const autoScenesToggle = this._shadowRoot.getElementById('auto-scenes-enabled');
+    if (autoScenesToggle) {
+      autoScenesToggle.checked = autoScenesEnabled;
+    }
+
+    this._renderAutoSceneOverview();
+  }
+
+  _renderAutoSceneOverview() {
+    const container = this._shadowRoot.getElementById('auto-scenes-overview');
+    if (!container) return;
+
+    const status = this._autoSceneGenerator.getAutoSceneStatus();
+    const rooms = Object.entries(status.rooms || {});
+
+    if (rooms.length === 0) {
+      container.innerHTML = '<div class="placeholder">No rooms with lights found.</div>';
+      return;
+    }
+
+    const roomsHTML = rooms.map(([roomKey, roomInfo]) => {
+      const statusIcon = roomInfo.auto_scene_exists ? '✅' : '❌';
+      const statusText = roomInfo.auto_scene_exists ? 'Auto-scene exists' : 'No auto-scene';
+      const lightText = roomInfo.has_lights ? `${roomInfo.valid_entities}/${roomInfo.light_count} lights` : 'No lights';
+      
+      return `
+        <div class="auto-scene-room-item ${roomInfo.has_lights ? '' : 'disabled'}">
+          <div class="room-info">
+            <div class="room-name">${roomInfo.friendly_name}</div>
+            <div class="room-details">${lightText}</div>
+          </div>
+          <div class="room-status">
+            <span class="status-indicator">${statusIcon}</span>
+            <span class="status-text">${statusText}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = roomsHTML;
+  }
+
+  _initializeAutoSceneListeners() {
+    // Auto-scenes toggle
+    const autoScenesToggle = this._shadowRoot.getElementById('auto-scenes-enabled');
+    if (autoScenesToggle) {
+      autoScenesToggle.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const success = await this._autoSceneGenerator.setAutoSceneEnabled(enabled);
+        if (success) {
+          this._renderAutoSceneOverview();
+          this._renderScenes(); // Refresh scene list
+          this._setStatusMessage(this._shadowRoot.getElementById('auto-scenes-status'), 
+            enabled ? '✓ Auto-scenes enabled' : '✓ Auto-scenes disabled', 'success');
+        } else {
+          // Revert toggle on failure
+          e.target.checked = !enabled;
+          this._setStatusMessage(this._shadowRoot.getElementById('auto-scenes-status'), 
+            '✗ Failed to toggle auto-scenes', 'error');
+        }
+      });
+    }
+
+    // Generate auto-scenes button
+    const generateBtn = this._shadowRoot.getElementById('generate-auto-scenes');
+    if (generateBtn) {
+      generateBtn.addEventListener('click', async () => {
+        const statusEl = this._shadowRoot.getElementById('auto-scenes-status');
+        this._setStatusMessage(statusEl, 'Generating auto-scenes...', 'loading');
+        
+        const success = await this._autoSceneGenerator.updateConfiguration(true);
+        if (success) {
+          this._adminLocalState.houseConfig = this._autoSceneGenerator._config;
+          this._renderAutoSceneOverview();
+          this._renderScenes(); // Refresh scene list
+          this._setStatusMessage(statusEl, '✓ Auto-scenes generated successfully', 'success');
+        } else {
+          this._setStatusMessage(statusEl, '✗ Failed to generate auto-scenes', 'error');
+        }
+      });
+    }
+
+    // Remove auto-scenes button
+    const removeBtn = this._shadowRoot.getElementById('remove-auto-scenes');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to remove all auto-generated scenes?')) {
+          return;
+        }
+
+        const statusEl = this._shadowRoot.getElementById('auto-scenes-status');
+        this._setStatusMessage(statusEl, 'Removing auto-scenes...', 'loading');
+        
+        const success = await this._autoSceneGenerator.updateConfiguration(false);
+        if (success) {
+          this._adminLocalState.houseConfig = this._autoSceneGenerator._config;
+          this._renderAutoSceneOverview();
+          this._renderScenes(); // Refresh scene list
+          this._setStatusMessage(statusEl, '✓ Auto-scenes removed successfully', 'success');
+        } else {
+          this._setStatusMessage(statusEl, '✗ Failed to remove auto-scenes', 'error');
+        }
+      });
     }
   }
 

@@ -14,6 +14,7 @@ import { LightsCard } from './lib/ui/light-card.js';
 import { ThermostatCard } from './lib/ui/thermostat-card.js';
 import { MediaPlayerCard } from './lib/ui/media-player-card.js';
 import { SceneManager } from './lib/ui/SceneManager.js';
+import { AutoSceneGenerator } from './lib/ui/AutoSceneGenerator.js';
 
 class DashviewPanel extends HTMLElement {
   constructor() {
@@ -97,6 +98,7 @@ class DashviewPanel extends HTMLElement {
     if (this._coversManager) this._coversManager.setHass(hass);
     if (this._lightsManager) this._lightsManager.setHass(hass);
     if (this._thermostatManager) this._thermostatManager.setHass(hass);
+    if (this._autoSceneGenerator) this._autoSceneGenerator.setHass(hass);
 
     if (this._stateManager) {
         this._stateManager.handleHassUpdate();
@@ -152,6 +154,7 @@ class DashviewPanel extends HTMLElement {
     this._mediaPlayerManager = new MediaPlayerCard(this);
     this._floorManager = new FloorManager(this);
     this._sceneManager = new SceneManager(this);
+    this._autoSceneGenerator = new AutoSceneGenerator(this);
 
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
   }
