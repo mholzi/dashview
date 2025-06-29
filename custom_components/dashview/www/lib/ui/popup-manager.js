@@ -321,10 +321,10 @@ export class PopupManager {
     });
 
     // Force update thermostat cards
-    const thermostatCards = popup.querySelectorAll('.room-thermostat-card');
+    const thermostatCards = popup.querySelectorAll('.thermostat-card');
     thermostatCards.forEach(card => {
         if (this._panel._thermostatCard) {
-            this._panel._thermostatCard.update();
+            this._panel._thermostatCard.update(popup, roomKey);
         }
     });
   }
