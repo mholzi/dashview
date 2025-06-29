@@ -23,8 +23,8 @@ export class AutoSceneGenerator {
         const autoScenes = [];
         
         Object.entries(this._config.rooms).forEach(([roomKey, roomConfig]) => {
-            // Generate lights off scenes for rooms with lights
-            if (roomConfig.lights && roomConfig.lights.length > 0) {
+            // Generate lights off scenes for rooms with lights (only if light scenes are enabled)
+            if (this._getLightScenesEnabled() && roomConfig.lights && roomConfig.lights.length > 0) {
                 const lightScene = this._createRoomLightsOffScene(roomKey, roomConfig);
                 if (lightScene) {
                     autoScenes.push(lightScene);
@@ -319,6 +319,14 @@ export class AutoSceneGenerator {
     }
 
     /**
+     * Get the light scenes enabled status from configuration
+     * @returns {boolean}
+     */
+    _getLightScenesEnabled() {
+        return this._config?.auto_scenes?.light_scenes_enabled !== false; // Default to true
+    }
+
+    /**
      * Set the auto-scene enabled status
      * @param {boolean} enabled - Whether to enable auto-scenes
      * @returns {Promise<boolean>} Success status
@@ -337,6 +345,29 @@ export class AutoSceneGenerator {
             return true;
         } catch (error) {
             console.error('[AutoSceneGenerator] Error setting auto-scene enabled status:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Set the light scenes enabled status
+     * @param {boolean} enabled - Whether to enable light scenes
+     * @returns {Promise<boolean>} Success status
+     */
+    async setLightScenesEnabled(enabled) {
+        try {
+            if (!this._config.auto_scenes) {
+                this._config.auto_scenes = {};
+            }
+            
+            this._config.auto_scenes.light_scenes_enabled = enabled;
+            
+            // Update scenes - generate all auto scenes but filter based on individual settings
+            await this.updateConfiguration(this._getAutoSceneEnabled());
+            
+            return true;
+        } catch (error) {
+            console.error('[AutoSceneGenerator] Error setting light scenes enabled status:', error);
             return false;
         }
     }
