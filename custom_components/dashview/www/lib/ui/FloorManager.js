@@ -6,6 +6,8 @@ export class FloorManager {
     this._hass = panel._hass;
     this._houseConfig = panel._houseConfig;
     this._shadowRoot = panel.shadowRoot;
+    // Track swipe state for motion sensor cards (entityId -> showTime boolean)
+    this._motionCardSwipeStates = new Map();
   }
 
   setHass(hass) {
@@ -30,8 +32,16 @@ export class FloorManager {
             const cardType = card.dataset.type;
             const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, cardType);
             card.className = `sensor-small-card ${cardClass}`; // Update class for styling
-            card.querySelector('.sensor-small-label').textContent = label; // Update only the text
+            
+            // Use motion-specific label for motion sensors, otherwise use regular label
+            const displayLabel = cardType === 'motion' ? this._getMotionCardLabel(entityId, cardType) : label;
+            card.querySelector('.sensor-small-label').textContent = displayLabel;
             card.querySelector('.sensor-small-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
+            
+            // Initialize swipe handlers for motion cards if not already done
+            if (cardType === 'motion' && !card.dataset.swipeInitialized) {
+                this._initializeMotionCardSwipeHandlers(card);
+            }
         }
     });
 
@@ -187,7 +197,13 @@ export class FloorManager {
 
     this._initializeSwiper(gridContainer);
 
-    gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card, .garbage-card').forEach(card => this._initializeCardListeners(card));
+    gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card, .garbage-card').forEach(card => {
+        this._initializeCardListeners(card);
+        // Initialize swipe handlers for motion sensor cards
+        if (card.classList.contains('sensor-small-card') && card.dataset.type === 'motion') {
+            this._initializeMotionCardSwipeHandlers(card);
+        }
+    });
   }
 
   _getEntitiesForFloor(floorId) {
@@ -224,6 +240,9 @@ export class FloorManager {
   _generateSmallSensorCardHTML(entityId, gridArea) {
     const type = this._getEntityTypeFromConfig(entityId);
     const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, type, false);
+    
+    // Use motion-specific label for motion sensors
+    const displayLabel = type === 'motion' ? this._getMotionCardLabel(entityId, type) : label;
 
     return `
       <div class="sensor-small-card ${cardClass}" style="grid-area: ${gridArea};" data-entity-id="${entityId}" data-type="${type}">
@@ -231,7 +250,7 @@ export class FloorManager {
               <div class="sensor-small-icon-cell">
                   <i class="mdi ${this._panel._processIconName(icon)}"></i>
               </div>
-              <div class="sensor-small-label">${label}</div>
+              <div class="sensor-small-label">${displayLabel}</div>
               <div class="sensor-small-name">${name}</div>
           </div>
       </div>
@@ -846,5 +865,74 @@ export class FloorManager {
       label: state ? state.charAt(0).toUpperCase() + state.slice(1) : 'Unbekannt', 
       cardClass: '' 
     };
+  }
+
+  _calculateTimeDifference(lastChanged) {
+    const now = new Date();
+    const diffSeconds = Math.floor((now - new Date(lastChanged)) / 1000);
+    if (diffSeconds < 60) return 'Jetzt';
+    if (diffSeconds < 3600) return `vor ${Math.floor(diffSeconds / 60)}m`;
+    if (diffSeconds < 86400) return `vor ${Math.floor(diffSeconds / 3600)}h`;
+    return `vor ${Math.floor(diffSeconds / 86400)} Tagen`;
+  }
+
+  _getMotionCardLabel(entityId, type) {
+    const entityState = this._hass.states[entityId];
+    if (!entityState || type !== 'motion') {
+      return this._getCardDisplayData(entityId, type).label;
+    }
+
+    const showTime = this._motionCardSwipeStates.get(entityId) || false;
+    if (showTime) {
+      return this._calculateTimeDifference(entityState.last_changed);
+    } else {
+      return entityState.state === 'on' ? 'Erkannt' : 'Klar';
+    }
+  }
+
+  _initializeMotionCardSwipeHandlers(card) {
+    const entityId = card.dataset.entityId;
+    const type = card.dataset.type;
+    
+    if (type !== 'motion') return;
+
+    let startX = 0;
+    let startTime = 0;
+    const SWIPE_THRESHOLD = 50;
+    const TIME_THRESHOLD = 300;
+
+    const handleTouchStart = (e) => {
+      startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+      startTime = Date.now();
+    };
+
+    const handleTouchEnd = (e) => {
+      const endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+      const endTime = Date.now();
+      const deltaX = endX - startX;
+      const deltaTime = endTime - startTime;
+
+      // Check if it's a valid swipe (sufficient distance and speed)
+      if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaTime < TIME_THRESHOLD) {
+        // Toggle swipe state
+        const currentState = this._motionCardSwipeStates.get(entityId) || false;
+        this._motionCardSwipeStates.set(entityId, !currentState);
+        
+        // Update the label
+        const labelElement = card.querySelector('.sensor-small-label');
+        if (labelElement) {
+          labelElement.textContent = this._getMotionCardLabel(entityId, type);
+        }
+      }
+    };
+
+    // Add both touch and mouse events for broader compatibility
+    card.addEventListener('touchstart', handleTouchStart, { passive: true });
+    card.addEventListener('touchend', handleTouchEnd, { passive: true });
+    card.addEventListener('mousedown', handleTouchStart);
+    card.addEventListener('mouseup', handleTouchEnd);
+    
+    // Mark as initialized to avoid duplicate handlers
+    card.dataset.swipeInitialized = 'true';
   }
 }
