@@ -63,6 +63,14 @@ class DashviewPanel extends HTMLElement {
         if (roomConfig?.media_players?.length > 0) {
           this._mediaPlayerManager.initialize(popup, roomKey, roomConfig.media_players);
         }
+      },
+      '.other-entities-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig?.header_entities?.some(e => ['hoover', 'mower', 'other_door'].includes(e.entity_type))) {
+          this._initializeOtherEntitiesCard(popup, roomKey, roomConfig);
+        }
       }
     };
   }
@@ -189,6 +197,17 @@ class DashviewPanel extends HTMLElement {
         case 'sensor':
         case 'binary_sensor':
           this._thermostatManager.update(activePopup, roomKeyForEntity);
+          // Also check if this is an "other entity" (hoover, mower, door)
+          if (this._isOtherEntity(entityId, roomKeyForEntity)) {
+            this._updateOtherEntitiesCard(activePopup, roomKeyForEntity);
+          }
+          break;
+        case 'vacuum':
+        case 'lawn_mower':
+          // Handle other entity types
+          if (this._isOtherEntity(entityId, roomKeyForEntity)) {
+            this._updateOtherEntitiesCard(activePopup, roomKeyForEntity);
+          }
           break;
       }
     } else if (popupId === 'weather-popup' && (entityDomain === 'weather' || entityId.includes('pollen'))) {
@@ -251,6 +270,112 @@ class DashviewPanel extends HTMLElement {
                 area.classList.toggle('active', area.dataset.roomId === roomId);
             });
         });
+    });
+  }
+
+  _initializeOtherEntitiesCard(popup, roomKey, roomConfig) {
+    const otherEntitiesCard = popup.querySelector('.other-entities-card');
+    if (!otherEntitiesCard) return;
+
+    // Filter other entities (hoover, mower, other_door)
+    const otherEntities = roomConfig.header_entities?.filter(e => 
+      ['hoover', 'mower', 'other_door'].includes(e.entity_type)
+    ) || [];
+
+    if (otherEntities.length === 0) {
+      otherEntitiesCard.style.display = 'none';
+      return;
+    }
+
+    // Update the count in the header
+    const countElement = otherEntitiesCard.querySelector('.other-entities-count');
+    if (countElement) {
+      countElement.textContent = otherEntities.length;
+    }
+
+    // Generate the grid content
+    const gridContainer = otherEntitiesCard.querySelector('.other-entities-grid');
+    if (!gridContainer) return;
+
+    gridContainer.innerHTML = '';
+    gridContainer.style.display = 'grid';
+    gridContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    gridContainer.style.gap = '12px';
+
+    // Create sensor-big cards for each entity
+    otherEntities.forEach(entityInfo => {
+      const entityId = entityInfo.entity;
+      const entityType = entityInfo.entity_type;
+      
+      // Create sensor-big card element
+      const card = document.createElement('div');
+      card.className = 'sensor-big-card';
+      card.dataset.entityId = entityId;
+      card.dataset.type = entityType;
+
+      // Get display data for this entity
+      const { name, label, icon, cardClass } = this._floorManager._getCardDisplayData(entityId, entityType);
+      
+      card.innerHTML = `
+        <div class="sensor-big-grid">
+          <div class="sensor-big-icon-cell">
+            <i class="mdi ${this._processIconName(icon)}"></i>
+          </div>
+          <div class="sensor-big-name">${name}</div>
+          <div class="sensor-big-label-wrapper">
+            <div class="sensor-big-label">${label}</div>
+          </div>
+        </div>
+      `;
+
+      // Apply the card class for styling
+      if (cardClass) {
+        card.className = `sensor-big-card ${cardClass}`;
+      }
+
+      gridContainer.appendChild(card);
+    });
+
+    console.log(`[DashView] Initialized other entities card for room ${roomKey} with ${otherEntities.length} entities`);
+  }
+
+  _isOtherEntity(entityId, roomKey) {
+    const roomConfig = this._houseConfig?.rooms?.[roomKey];
+    if (!roomConfig?.header_entities) return false;
+    
+    return roomConfig.header_entities.some(e => 
+      e.entity === entityId && ['hoover', 'mower', 'other_door'].includes(e.entity_type)
+    );
+  }
+
+  _updateOtherEntitiesCard(popup, roomKey) {
+    const otherEntitiesCard = popup.querySelector('.other-entities-card');
+    if (!otherEntitiesCard) return;
+
+    const roomConfig = this._houseConfig?.rooms?.[roomKey];
+    if (!roomConfig) return;
+
+    // Filter other entities
+    const otherEntities = roomConfig.header_entities?.filter(e => 
+      ['hoover', 'mower', 'other_door'].includes(e.entity_type)
+    ) || [];
+
+    // Update all sensor-big cards in the other entities grid
+    otherEntities.forEach(entityInfo => {
+      const entityId = entityInfo.entity;
+      const entityType = entityInfo.entity_type;
+      const card = otherEntitiesCard.querySelector(`.sensor-big-card[data-entity-id="${entityId}"]`);
+      
+      if (card) {
+        // Get updated display data
+        const { name, label, icon, cardClass } = this._floorManager._getCardDisplayData(entityId, entityType);
+        
+        // Update card content
+        card.className = cardClass ? `sensor-big-card ${cardClass}` : 'sensor-big-card';
+        card.querySelector('.sensor-big-name').textContent = name;
+        card.querySelector('.sensor-big-label').textContent = label;
+        card.querySelector('.sensor-big-icon-cell i').className = `mdi ${this._processIconName(icon)}`;
+      }
     });
   }
 

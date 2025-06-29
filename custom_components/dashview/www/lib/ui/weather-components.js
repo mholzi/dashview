@@ -36,20 +36,25 @@ export class WeatherComponents {
         if (!entityId) return;
 
         try {
-            const dailyResponse = await this._hass.callWS({
-                type: 'weather/subscribe_forecast',
+            console.log(`[WeatherManager] Fetching forecasts for ${entityId}`);
+            
+            // Fetch daily forecasts
+            const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
                 entity_id: entityId,
-                forecast_type: 'daily'
+                type: 'daily'
             });
 
-            const hourlyResponse = await this._hass.callWS({
-                type: 'weather/subscribe_forecast',
+            // Fetch hourly forecasts  
+            const hourlyResponse = await this._hass.callService('weather', 'get_forecasts', {
                 entity_id: entityId,
-                forecast_type: 'hourly'
+                type: 'hourly'
             });
 
-            this._forecasts.daily = dailyResponse?.forecast || [];
-            this._forecasts.hourly = hourlyResponse?.forecast || [];
+            // Extract forecast data from service response
+            this._forecasts.daily = dailyResponse?.response?.[entityId]?.forecast || [];
+            this._forecasts.hourly = hourlyResponse?.response?.[entityId]?.forecast || [];
+            
+            console.log(`[WeatherManager] Fetched ${this._forecasts.daily.length} daily and ${this._forecasts.hourly.length} hourly forecasts`);
 
         } catch (error) {
             console.error(`[WeatherManager] Error fetching forecasts for ${entityId}:`, error);
@@ -129,19 +134,35 @@ export class WeatherComponents {
 
     _updateHourlyForecast(hourlyData) {
         const container = this._shadowRoot.querySelector('#hourly-forecast');
-        if (!container || !hourlyData) return;
+        if (!container) {
+            console.warn('[WeatherManager] Hourly forecast container not found');
+            return;
+        }
+        
+        if (!hourlyData || !Array.isArray(hourlyData) || hourlyData.length === 0) {
+            console.warn('[WeatherManager] No hourly forecast data available:', hourlyData);
+            container.innerHTML = '<div class="hourly-item">Keine stündlichen Daten verfügbar</div>';
+            return;
+        }
+        
+        console.log(`[WeatherManager] Rendering ${hourlyData.length} hourly forecasts`);
         container.innerHTML = '';
         const next8Hours = hourlyData.slice(0, 8);
-        next8Hours.forEach(forecast => {
-            const item = document.createElement('div');
-            item.className = 'hourly-item';
-            const time = new Date(forecast.datetime).getHours().toString().padStart(2, '0') + ':00';
-            item.innerHTML = `
-                <div class="hourly-time">${time}</div>
-                <div class="hourly-icon"><img src="/local/weather_icons/${forecast.condition}.svg" alt="${forecast.condition}" width="32" height="32"></div>
-                <div class="hourly-temp">${Math.round(forecast.temperature)}°</div>
-            `;
-            container.appendChild(item);
+        
+        next8Hours.forEach((forecast, index) => {
+            try {
+                const item = document.createElement('div');
+                item.className = 'hourly-item';
+                const time = new Date(forecast.datetime).getHours().toString().padStart(2, '0') + ':00';
+                item.innerHTML = `
+                    <div class="hourly-time">${time}</div>
+                    <div class="hourly-icon"><img src="/local/weather_icons/${forecast.condition}.svg" alt="${forecast.condition}" width="32" height="32"></div>
+                    <div class="hourly-temp">${Math.round(forecast.temperature)}°</div>
+                `;
+                container.appendChild(item);
+            } catch (error) {
+                console.error(`[WeatherManager] Error rendering hourly forecast ${index}:`, error, forecast);
+            }
         });
     }
 
@@ -173,22 +194,36 @@ export class WeatherComponents {
     }
 
     _showDailyForecast(container, dailyData, dayIndex) {
-        if (!dailyData || !Array.isArray(dailyData) || dailyData.length <= dayIndex) {
-            container.innerHTML = '<div class="daily-forecast">No data</div>';
+        if (!container) {
+            console.warn('[WeatherManager] Daily forecast container not found');
             return;
         }
+        
+        if (!dailyData || !Array.isArray(dailyData) || dailyData.length <= dayIndex) {
+            console.warn(`[WeatherManager] No daily forecast data for day ${dayIndex}:`, dailyData);
+            container.innerHTML = '<div class="daily-forecast">Keine Tagesdaten verfügbar</div>';
+            return;
+        }
+        
         const forecast = dailyData[dayIndex];
-        container.innerHTML = `
-            <div class="daily-forecast">
-              <div class="daily-icon"><img src="/local/weather_icons/${forecast.condition}.svg" width="50" height="50"></div>
-              <div class="daily-info">
-                <div class="daily-condition">${this._translateWeatherCondition(forecast.condition)}</div>
-                <div class="daily-temps">
-                  <span class="daily-high">${Math.round(forecast.temperature)}°C</span>
-                  <span class="daily-low">${forecast.templow ? Math.round(forecast.templow) + '°C' : ''}</span>
-                </div>
-              </div>
-            </div>`;
+        console.log(`[WeatherManager] Rendering daily forecast for day ${dayIndex}:`, forecast);
+        
+        try {
+            container.innerHTML = `
+                <div class="daily-forecast">
+                  <div class="daily-icon"><img src="/local/weather_icons/${forecast.condition}.svg" width="50" height="50"></div>
+                  <div class="daily-info">
+                    <div class="daily-condition">${this._translateWeatherCondition(forecast.condition)}</div>
+                    <div class="daily-temps">
+                      <span class="daily-high">${Math.round(forecast.temperature)}°C</span>
+                      <span class="daily-low">${forecast.templow ? Math.round(forecast.templow) + '°C' : ''}</span>
+                    </div>
+                  </div>
+                </div>`;
+        } catch (error) {
+            console.error(`[WeatherManager] Error rendering daily forecast for day ${dayIndex}:`, error, forecast);
+            container.innerHTML = '<div class="daily-forecast">Fehler beim Laden der Tagesdaten</div>';
+        }
     }
 
     _translateWeatherCondition(condition) {

@@ -355,10 +355,11 @@ export class FloorManager {
             if (isOpen) {
                 icon = 'mdi:window-shutter-open';
                 label = `Offen - ${position}%`;
-                cardClass = 'is-on';
+                if (!cardClass.includes('is-on')) cardClass += ' is-on';
             } else {
                 icon = 'mdi:window-shutter';
                 label = `Geschlossen - ${position}%`;
+                cardClass = cardClass.replace('is-on', '').trim();
             }
             break;
         case SMOKE:

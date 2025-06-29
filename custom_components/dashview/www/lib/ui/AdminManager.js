@@ -882,7 +882,6 @@ async saveMediaPlayerPresets() {
         this._adminLocalState.allEntities = allEntities;
         
         this._populateRoomSelectors();
-        this._populateEntitySelectors();
         this._renderOtherEntities();
         
         this._setStatusMessage(this._shadowRoot.getElementById('hoover-setup-status'), '✓ Ready', 'success');
@@ -919,6 +918,8 @@ async saveMediaPlayerPresets() {
 
   _populateRoomSelectors() {
     const rooms = this._adminLocalState.houseConfig.rooms || {};
+    console.log('[DashView] Populating room selectors with rooms:', Object.keys(rooms));
+    
     const roomOptions = Object.entries(rooms).map(([roomKey, roomConfig]) => 
         `<option value="${roomKey}">${roomConfig.friendly_name || roomKey}</option>`
     ).join('');
@@ -927,23 +928,13 @@ async saveMediaPlayerPresets() {
         const selector = this._shadowRoot.getElementById(`new-${type}-room`);
         if (selector) {
             selector.innerHTML = '<option value="">Select Room</option>' + roomOptions;
+            console.log(`[DashView] Populated ${type} room selector with ${Object.keys(rooms).length} rooms`);
+        } else {
+            console.warn(`[DashView] Could not find room selector for type: ${type}`);
         }
     });
   }
 
-  _populateEntitySelectors() {
-    const entities = this._adminLocalState.allEntities || [];
-    const entityOptions = entities.map(entity => 
-        `<option value="${entity.entity_id}">${entity.friendly_name} (${entity.entity_id})</option>`
-    ).join('');
-    
-    ['hoover', 'mower', 'other-door'].forEach(type => {
-        const selector = this._shadowRoot.getElementById(`new-${type}-entity`);
-        if (selector) {
-            selector.innerHTML = '<option value="">Select Entity</option>' + entityOptions;
-        }
-    });
-  }
 
   _renderOtherEntities() {
     const entityTypes = [
@@ -1007,12 +998,19 @@ async saveMediaPlayerPresets() {
     const roomSelector = this._shadowRoot.getElementById(`new-${entityType.replace('_', '-')}-room`);
     const entitySelector = this._shadowRoot.getElementById(`new-${entityType.replace('_', '-')}-entity`);
     
-    const roomKey = roomSelector?.value;
-    const entityId = entitySelector?.value;
+    const roomKey = roomSelector?.value?.trim();
+    const entityId = entitySelector?.value?.trim();
     
     if (!roomKey || !entityId) {
         const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
-        this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✗ Please select both room and entity', 'error');
+        this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✗ Please select room and enter entity ID', 'error');
+        return;
+    }
+    
+    // Basic entity ID validation
+    if (!entityId.includes('.')) {
+        const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
+        this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✗ Entity ID must contain a domain (e.g., vacuum.roomba)', 'error');
         return;
     }
     

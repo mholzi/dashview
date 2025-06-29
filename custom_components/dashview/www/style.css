@@ -2474,3 +2474,89 @@ body.popup-open, :host(.popup-open) {
     border-radius: 50%;
     border: 1px solid var(--gray400);
 }
+
+/* Other Entities Card Styles */
+.other-entities-card {
+    margin: 8px 0;
+    background-color: var(--gray200);
+    border-radius: 12px;
+}
+
+.other-entities-expander {
+    padding: 6px 0;
+    border: none;
+}
+
+.other-entities-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0 12px;
+}
+
+.other-entities-summary::-webkit-details-marker {
+    display: none;
+}
+
+.other-entities-header {
+    display: grid;
+    grid-template-columns: min-content 1fr 60px;
+    align-items: center;
+    gap: 12px;
+    height: 46px;
+}
+
+.other-entities-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.other-entities-count {
+    font-size: 14px;
+    color: var(--secondary-text-color);
+    text-align: right;
+}
+
+.other-entities-content {
+    padding: 0 12px 12px 12px;
+    border-top: 1px solid var(--divider-color);
+    margin-top: 6px;
+}
+
+.other-entities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+/* Ensure sensor-big cards work well in the other entities grid */
+.other-entities-grid .sensor-big-card {
+    background-color: var(--gray000);
+    border-radius: 8px;
+    padding: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.other-entities-grid .sensor-big-card:hover {
+    background-color: var(--gray100);
+}
+
+.other-entities-grid .sensor-big-card.is-on {
+    background: var(--active-big);
+    color: white;
+}
+
+.other-entities-grid .sensor-big-card.is-on .sensor-big-name,
+.other-entities-grid .sensor-big-card.is-on .sensor-big-label {
+    color: white;
+}
+
+.other-entities-grid .sensor-big-card.is-unavailable {
+    background-color: var(--gray100);
+    opacity: 0.6;
+}
+
+.other-entities-grid .sensor-big-card.is-unavailable .sensor-big-name,
+.other-entities-grid .sensor-big-card.is-unavailable .sensor-big-label {
+    color: var(--secondary-text-color);
+}

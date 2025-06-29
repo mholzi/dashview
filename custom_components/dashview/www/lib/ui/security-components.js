@@ -11,6 +11,28 @@ export class SecurityComponents {
         this._hass = hass;
     }
 
+    _formatTimeAgo(lastChanged) {
+        if (!lastChanged) return 'Unbekannt';
+        
+        const now = new Date();
+        const changed = new Date(lastChanged);
+        const diffMs = now - changed;
+        const diffSeconds = Math.floor(diffMs / 1000);
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSeconds < 60) {
+            return 'Jetzt';
+        } else if (diffMinutes < 60) {
+            return `vor ${diffMinutes} min`;
+        } else if (diffHours < 24) {
+            return `vor ${diffHours} h`;
+        } else {
+            return `vor ${diffDays} Tagen`;
+        }
+    }
+
     /**
      * Main update function for the security popup.
      */
@@ -170,16 +192,71 @@ export class SecurityComponents {
 
         const motionChip = popup.querySelector('.header-info-chip[data-type="motion"]');
         if (motionChip) {
-            const activeMotionSensors = this._panel._getAllEntitiesByType(this._panel._entityLabels.MOTION).filter(id => this._hass.states[id]?.state === 'on');
-            motionChip.style.display = activeMotionSensors.length > 0 ? 'flex' : 'none';
+            const allMotionSensors = this._panel._getAllEntitiesByType(this._panel._entityLabels.MOTION);
+            const activeMotionSensors = allMotionSensors.filter(id => this._hass.states[id]?.state === 'on');
+            
+            if (allMotionSensors.length > 0) {
+                motionChip.style.display = 'flex';
+                
+                const iconElement = motionChip.querySelector('.chip-icon-container i');
+                const nameElement = motionChip.querySelector('.chip-name');
+                const iconContainer = motionChip.querySelector('.chip-icon-container');
+                
+                if (activeMotionSensors.length > 0) {
+                    // Motion detected - show active state
+                    iconElement.className = 'mdi mdi-motion-sensor';
+                    iconContainer.style.background = 'var(--active-big)';
+                    
+                    // Find the most recently triggered motion sensor
+                    let mostRecentChange = null;
+                    activeMotionSensors.forEach(entityId => {
+                        const state = this._hass.states[entityId];
+                        if (state?.last_changed) {
+                            const changed = new Date(state.last_changed);
+                            if (!mostRecentChange || changed > mostRecentChange) {
+                                mostRecentChange = changed;
+                            }
+                        }
+                    });
+                    
+                    const timeText = this._formatTimeAgo(mostRecentChange?.toISOString());
+                    nameElement.textContent = timeText;
+                } else {
+                    // No motion detected - show inactive state
+                    iconElement.className = 'mdi mdi-motion-sensor-off';
+                    iconContainer.style.background = 'var(--gray000)';
+                    
+                    // Find the most recently inactive motion sensor
+                    let mostRecentChange = null;
+                    allMotionSensors.forEach(entityId => {
+                        const state = this._hass.states[entityId];
+                        if (state?.last_changed) {
+                            const changed = new Date(state.last_changed);
+                            if (!mostRecentChange || changed > mostRecentChange) {
+                                mostRecentChange = changed;
+                            }
+                        }
+                    });
+                    
+                    const timeText = this._formatTimeAgo(mostRecentChange?.toISOString());
+                    nameElement.textContent = timeText;
+                }
+            } else {
+                motionChip.style.display = 'none';
+            }
         }
 
         const windowsChip = popup.querySelector('.header-info-chip[data-type="windows"]');
         if (windowsChip) {
             const openWindows = this._panel._getAllEntitiesByType(this._panel._entityLabels.WINDOW).filter(id => this._hass.states[id]?.state === 'on');
+            const iconContainer = windowsChip.querySelector('.chip-icon-container');
+            const iconElement = windowsChip.querySelector('.chip-icon-container i');
+            
             if (openWindows.length > 0) {
                 windowsChip.style.display = 'flex';
-                windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} open`;
+                windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} offen`;
+                iconContainer.style.background = 'var(--orange)';
+                iconElement.className = 'mdi mdi-window-open';
             } else {
                 windowsChip.style.display = 'none';
             }
@@ -188,10 +265,14 @@ export class SecurityComponents {
         const smokeChip = popup.querySelector('.header-info-chip[data-type="smoke"]');
         if (smokeChip) {
             const activeSmoke = this._panel._getAllEntitiesByType(this._panel._entityLabels.SMOKE).filter(id => this._hass.states[id]?.state === 'on');
+            const iconContainer = smokeChip.querySelector('.chip-icon-container');
+            const iconElement = smokeChip.querySelector('.chip-icon-container i');
+            
             if (activeSmoke.length > 0) {
                 smokeChip.style.display = 'flex';
-                smokeChip.style.background = 'var(--red)';
-                smokeChip.querySelector('.chip-name').textContent = `${activeSmoke.length} active`;
+                iconContainer.style.background = 'var(--red)';
+                iconElement.className = 'mdi mdi-smoke-detector-variant-alert';
+                smokeChip.querySelector('.chip-name').textContent = `${activeSmoke.length} aktiv`;
             } else {
                 smokeChip.style.display = 'none';
             }

@@ -207,6 +207,10 @@ export class PopupManager {
         media: {
             condition: roomConfig.media_players?.length > 0,
             path: '/local/dashview/templates/room-media-player-card.html'
+        },
+        otherEntities: {
+            condition: roomConfig.header_entities?.some(e => ['hoover', 'mower', 'other_door'].includes(e.entity_type)),
+            path: '/local/dashview/templates/room-other-entities-card.html'
         }
     };
 
