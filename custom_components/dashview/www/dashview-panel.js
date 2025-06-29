@@ -41,6 +41,17 @@ class DashviewPanel extends HTMLElement {
               this._generateMusicPopupContent(popup);
           }
       },
+      '.room-scenes-card': (el) => {
+        const popup = el.closest('.popup');
+        const roomKey = popup.id.replace('-popup', '');
+        const roomConfig = this._houseConfig?.rooms?.[roomKey];
+        if (roomConfig) {
+          const container = el.querySelector('.room-scenes-container');
+          if (container && this._sceneManager) {
+            this._sceneManager.renderRoomSceneButtons(container, roomKey, roomConfig);
+          }
+        }
+      },
       '.covers-card': (el) => {
         const popup = el.closest('.popup');
         const roomKey = popup.id.replace('-popup', '');

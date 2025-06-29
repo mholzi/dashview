@@ -704,6 +704,12 @@ export class AdminManager {
       autoScenesToggle.checked = autoScenesEnabled;
     }
 
+    const globalCoverSceneEnabled = this._autoSceneGenerator._getGlobalCoverSceneEnabled();
+    const globalCoverToggle = this._shadowRoot.getElementById('global-cover-scene-enabled');
+    if (globalCoverToggle) {
+      globalCoverToggle.checked = globalCoverSceneEnabled;
+    }
+
     this._renderAutoSceneOverview();
   }
 
@@ -758,6 +764,25 @@ export class AdminManager {
           e.target.checked = !enabled;
           this._setStatusMessage(this._shadowRoot.getElementById('auto-scenes-status'), 
             '✗ Failed to toggle auto-scenes', 'error');
+        }
+      });
+    }
+
+    // Global cover scene toggle
+    const globalCoverToggle = this._shadowRoot.getElementById('global-cover-scene-enabled');
+    if (globalCoverToggle) {
+      globalCoverToggle.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const success = await this._autoSceneGenerator.setGlobalCoverSceneEnabled(enabled);
+        if (success) {
+          this._renderScenes(); // Refresh scene list
+          this._setStatusMessage(this._shadowRoot.getElementById('auto-scenes-status'), 
+            enabled ? '✓ Global cover scene enabled' : '✓ Global cover scene disabled', 'success');
+        } else {
+          // Revert toggle on failure
+          e.target.checked = !enabled;
+          this._setStatusMessage(this._shadowRoot.getElementById('auto-scenes-status'), 
+            '✗ Failed to toggle global cover scene', 'error');
         }
       });
     }

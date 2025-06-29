@@ -115,7 +115,7 @@ export class PopupManager {
         // Generate and prepend the header icons HTML
         const headerIconsHTML = this._panel._generateRoomHeaderEntitiesForPopup(roomConfig);
         bodyElement.innerHTML = headerIconsHTML + content; // Prepend icons
-        await this._injectRoomCards(bodyElement, roomConfig);
+        await this._injectRoomCards(bodyElement, roomConfig, popupType);
     } else {
         bodyElement.innerHTML = content;
     }
@@ -190,8 +190,12 @@ export class PopupManager {
     }
   }
 
-  async _injectRoomCards(popupBody, roomConfig) {
+  async _injectRoomCards(popupBody, roomConfig, roomKey) {
     const cardTemplates = {
+        scenes: {
+            condition: this._hasRoomScenes(roomConfig, roomKey),
+            path: '/local/dashview/templates/room-scenes-card.html'
+        },
         thermostat: {
             condition: roomConfig.header_entities?.some(e => e.entity_type === 'temperatur' || e.entity_type === 'humidity'),
             path: '/local/dashview/templates/room-thermostat-card.html'
@@ -319,6 +323,32 @@ export class PopupManager {
         if (this._panel._thermostatCard) {
             this._panel._thermostatCard.update();
         }
+    });
+  }
+
+  /**
+   * Check if room has scenes (auto-generated or manual)
+   * @param {Object} roomConfig - Room configuration 
+   * @param {string} roomKey - Room key
+   * @returns {boolean} Whether the room has scenes
+   */
+  _hasRoomScenes(roomConfig, roomKey) {
+    const scenes = this._config?.scenes || [];
+    return scenes.some(scene => {
+        // Check if it's an auto-generated scene for this room
+        if (scene.auto_generated && scene.room_key === roomKey) {
+            return true;
+        }
+        // Check if it's a manual scene that includes entities from this room
+        if (scene.entities) {
+            const roomEntities = [
+                ...(roomConfig.lights || []),
+                ...(roomConfig.covers || []),
+                ...(roomConfig.media_players?.map(mp => mp.entity) || [])
+            ];
+            return scene.entities.some(entity => roomEntities.includes(entity));
+        }
+        return false;
     });
   }
 }
