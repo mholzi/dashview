@@ -38,16 +38,7 @@ export class WeatherComponents {
         try {
             console.log(`[WeatherManager] Fetching forecasts for ${entityId}`);
             
-            // Strategy 1: Try the modern Home Assistant WebSocket API (recommended approach)
-            const forecastData = await this._tryWebSocketAPI(entityId);
-            if (forecastData) {
-                this._forecasts.daily = forecastData.daily || [];
-                this._forecasts.hourly = forecastData.hourly || [];
-                console.log(`[WeatherManager] WebSocket API: Fetched ${this._forecasts.daily.length} daily and ${this._forecasts.hourly.length} hourly forecasts`);
-                return;
-            }
-
-            // Strategy 2: Try the legacy service call approach with return_response
+            // Strategy 1: Try the official Home Assistant weather.get_forecasts service (recommended approach)
             const serviceData = await this._tryServiceAPI(entityId);
             if (serviceData) {
                 this._forecasts.daily = serviceData.daily || [];
@@ -56,7 +47,7 @@ export class WeatherComponents {
                 return;
             }
 
-            // Strategy 3: Try to get data from template sensor attributes (user's approach)
+            // Strategy 2: Try to get data from template sensor attributes (fallback for custom setups)
             const templateData = await this._tryTemplateSensorData(entityId);
             if (templateData) {
                 this._forecasts.daily = templateData.daily || [];
@@ -76,45 +67,12 @@ export class WeatherComponents {
         }
     }
 
-    async _tryWebSocketAPI(entityId) {
-        try {
-            if (!this._hass.callWS) {
-                console.log(`[WeatherManager] WebSocket API not available`);
-                return null;
-            }
-
-            console.log(`[WeatherManager] Trying WebSocket API for ${entityId}`);
-            
-            // Fetch using WebSocket API (modern approach)
-            const dailyPromise = this._hass.callWS({
-                type: 'weather/subscribe_forecast',
-                forecast_type: 'daily',
-                entity_id: entityId
-            });
-
-            const hourlyPromise = this._hass.callWS({
-                type: 'weather/subscribe_forecast',
-                forecast_type: 'hourly',
-                entity_id: entityId
-            });
-
-            const [dailyResult, hourlyResult] = await Promise.all([dailyPromise, hourlyPromise]);
-
-            return {
-                daily: dailyResult?.forecast || [],
-                hourly: hourlyResult?.forecast || []
-            };
-        } catch (error) {
-            console.log(`[WeatherManager] WebSocket API failed:`, error.message);
-            return null;
-        }
-    }
 
     async _tryServiceAPI(entityId) {
         try {
             console.log(`[WeatherManager] Trying service API for ${entityId}`);
             
-            // Try modern approach with return_response: true
+            // Use official Home Assistant weather.get_forecasts service
             const dailyResponse = await this._hass.callService('weather', 'get_forecasts', {
                 entity_id: entityId,
                 type: 'daily'
