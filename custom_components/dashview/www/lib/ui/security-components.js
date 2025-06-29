@@ -179,6 +179,18 @@ export class SecurityComponents {
                 label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
                 if(entityState.state === 'on') cardClass += ' active-vibration'; // Add a specific class for active vibration
                 break;
+            case 'hoover':
+                const { icon: vacuumIcon, label: vacuumLabel, cardClass: vacuumCardClass } = this._panel._floorManager._getVacuumDisplayData(entityState);
+                icon = vacuumIcon;
+                label = vacuumLabel;
+                cardClass = vacuumCardClass;
+                break;
+            case 'mower':
+                const { icon: mowerIcon, label: mowerLabel, cardClass: mowerCardClass } = this._panel._floorManager._getMowerDisplayData(entityState);
+                icon = mowerIcon;
+                label = mowerLabel;
+                cardClass = mowerCardClass;
+                break;
             default:
                 if (entityState?.state === 'on' || entityState?.state === 'off') {
                     label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
@@ -205,6 +217,7 @@ export class SecurityComponents {
                 if (activeMotionSensors.length > 0) {
                     // Motion detected - show active state
                     iconElement.className = 'mdi mdi-motion-sensor';
+                    motionChip.style.background = 'var(--active-big)';
                     iconContainer.style.background = 'var(--active-big)';
                     
                     // Find the most recently triggered motion sensor
@@ -224,6 +237,7 @@ export class SecurityComponents {
                 } else {
                     // No motion detected - show inactive state
                     iconElement.className = 'mdi mdi-motion-sensor-off';
+                    motionChip.style.background = 'var(--gray000)';
                     iconContainer.style.background = 'var(--gray000)';
                     
                     // Find the most recently inactive motion sensor
@@ -255,6 +269,7 @@ export class SecurityComponents {
             if (openWindows.length > 0) {
                 windowsChip.style.display = 'flex';
                 windowsChip.querySelector('.chip-name').textContent = `${openWindows.length} offen`;
+                windowsChip.style.background = 'var(--orange)';
                 iconContainer.style.background = 'var(--orange)';
                 iconElement.className = 'mdi mdi-window-open';
             } else {
@@ -270,6 +285,7 @@ export class SecurityComponents {
             
             if (activeSmoke.length > 0) {
                 smokeChip.style.display = 'flex';
+                smokeChip.style.background = 'var(--red)';
                 iconContainer.style.background = 'var(--red)';
                 iconElement.className = 'mdi mdi-smoke-detector-variant-alert';
                 smokeChip.querySelector('.chip-name').textContent = `${activeSmoke.length} aktiv`;

@@ -50,6 +50,7 @@ export class AdminManager {
       },
       'humidity-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.HUMIDITY}, 'humidity-setup-status', 'humidity-sensors-by-room', 'Humidity Sensors'),
       'other-entities-tab': () => this.loadOtherEntitiesTab(),
+      'garbage-tab': () => this.loadGarbageTab(),
     };
 
     if (loadActionMap[targetId]) {
@@ -140,6 +141,9 @@ export class AdminManager {
             '#save-mower-entities': () => this.saveOtherEntities('mower'),
             '#add-other-door-entity': () => this.addOtherEntity('other_door'),
             '#save-other-door-entities': () => this.saveOtherEntities('other_door'),
+            '#add-garbage-sensor': () => this.addGarbageSensor(),
+            '#save-garbage-sensors': () => this.saveGarbageSensors(),
+            '#reload-garbage-sensors': () => this.loadGarbageTab(),
         };
 
         for (const selector in buttonActions) {
@@ -215,8 +219,10 @@ export class AdminManager {
     if (!selector) return;
 
     if (!this._hass || !this._hass.states) {
-        this._setStatusMessage(statusEl, 'Home Assistant data not yet available. Please wait a moment and click Reload.', 'loading');
+        this._setStatusMessage(statusEl, 'Loading weather entities...', 'loading');
         selector.innerHTML = '<option>Loading...</option>';
+        // Retry after a short delay when hass becomes available
+        setTimeout(() => this.loadWeatherEntityConfiguration(), 500);
         return;
     }
 
@@ -578,7 +584,7 @@ export class AdminManager {
     const isPinned = type === 'pinned';
     const entityOptions = entities.map(entity => `<option value="${entity.entity_id}" ${entity.entity_id === entity_id ? 'selected' : ''}>${entity.name} (${entity.entity_id})</option>`).join('');
     let typeOptions = `<option value="auto" ${type === 'auto' ? 'selected' : ''}>Automatic</option><option value="pinned" ${type === 'pinned' ? 'selected' : ''}>Pinned</option><option value="empty" ${type === 'empty' ? 'selected' : ''}>Empty</option>`;
-    if (isBigSlot) typeOptions = `<option value="room_swipe_card" ${type === 'room_swipe_card' ? 'selected' : ''}>Room Swiper</option>${typeOptions}`;
+    if (isBigSlot) typeOptions = `<option value="room_swipe_card" ${type === 'room_swipe_card' ? 'selected' : ''}>Room Swiper</option><option value="garbage" ${type === 'garbage' ? 'selected' : ''}>Garbage</option>${typeOptions}`;
 
     return `<div class="layout-slot" data-grid-area="${grid_area}" style="grid-area: ${grid_area};"><div class="slot-name">${grid_area}</div><div class="slot-config"><select class="layout-type-selector">${typeOptions}</select><select class="entity-selector" style="display: ${isPinned ? 'block' : 'none'};"><option value="">-- Select --</option>${entityOptions}</select></div></div>`;
   }
@@ -882,6 +888,7 @@ async saveMediaPlayerPresets() {
         this._adminLocalState.allEntities = allEntities;
         
         this._populateRoomSelectors();
+        this._populateVacuumSelectors();
         this._renderOtherEntities();
         
         this._setStatusMessage(this._shadowRoot.getElementById('hoover-setup-status'), '✓ Ready', 'success');
@@ -935,6 +942,26 @@ async saveMediaPlayerPresets() {
     });
   }
 
+  _populateVacuumSelectors() {
+    const allEntities = this._adminLocalState.allEntities || [];
+    const vacuumEntities = allEntities.filter(entity => entity.domain === 'vacuum');
+    
+    console.log('[DashView] Populating vacuum selectors with', vacuumEntities.length, 'vacuum entities');
+    
+    const vacuumOptions = vacuumEntities.map(entity => 
+        `<option value="${entity.entity_id}">${entity.friendly_name}</option>`
+    ).join('');
+    
+    ['hoover', 'mower'].forEach(type => {
+        const selector = this._shadowRoot.getElementById(`new-${type}-entity`);
+        if (selector) {
+            selector.innerHTML = '<option value="">Select Vacuum Entity</option>' + vacuumOptions;
+            console.log(`[DashView] Populated ${type} entity selector with ${vacuumEntities.length} vacuum entities`);
+        } else {
+            console.warn(`[DashView] Could not find entity selector for type: ${type}`);
+        }
+    });
+  }
 
   _renderOtherEntities() {
     const entityTypes = [
@@ -1075,5 +1102,142 @@ async saveMediaPlayerPresets() {
     
     const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
     this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✓ Entity removed (remember to save)', 'success');
+  }
+
+  _getGarbageTypeIcon(type) {
+    const garbageTypes = {
+      'biomuell': 'mdi:leaf',
+      'hausmuell': 'mdi:trash-can',
+      'gelber_sack': 'mdi:recycle',
+      'altpapier': 'mdi:newspaper',
+      'restmuell': 'mdi:delete',
+      'wertstoff': 'mdi:bottle-wine',
+      'sondermuell': 'mdi:radioactive'
+    };
+    return garbageTypes[type] || 'mdi:trash-can';
+  }
+
+  async loadGarbageTab() {
+    const statusElement = this._shadowRoot.getElementById('garbage-setup-status');
+    this._setStatusMessage(statusElement, 'Loading...', 'loading');
+    
+    try {
+      const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+      this._renderGarbageSensors();
+      this._setStatusMessage(statusElement, '✓ Ready', 'success');
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
+      console.error('[DashView] Error loading garbage sensors:', error);
+    }
+  }
+
+  _renderGarbageSensors() {
+    const container = this._shadowRoot.getElementById('garbage-sensors-list');
+    if (!container) return;
+
+    const garbageSensors = this._adminLocalState.houseConfig.garbage_sensors || [];
+    
+    if (garbageSensors.length === 0) {
+      container.innerHTML = '<div class="placeholder"><p>No garbage sensors configured yet.</p></div>';
+      return;
+    }
+
+    let html = '';
+    garbageSensors.forEach((sensor, index) => {
+      const icon = this._getGarbageTypeIcon(sensor.type);
+      const entityState = this._hass?.states?.[sensor.entity];
+      const entityName = entityState?.attributes?.friendly_name || sensor.entity;
+      
+      html += `
+        <div class="entity-list-item">
+          <div class="entity-info">
+            <i class="mdi ${icon}" style="margin-right: 8px; color: var(--primary-text-color);"></i>
+            <div>
+              <span class="entity-name">${entityName}</span>
+              <span class="entity-id">${sensor.entity}</span>
+              <span class="entity-room">Type: ${sensor.type}</span>
+            </div>
+          </div>
+          <button class="delete-button" data-index="${index}">Remove</button>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+
+    // Add delete button event listeners
+    container.querySelectorAll('.delete-button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        this.removeGarbageSensor(index);
+      });
+    });
+  }
+
+  addGarbageSensor() {
+    const entityInput = this._shadowRoot.getElementById('new-garbage-sensor');
+    const typeSelect = this._shadowRoot.getElementById('new-garbage-type');
+    const statusElement = this._shadowRoot.getElementById('garbage-setup-status');
+
+    const entityId = entityInput?.value?.trim();
+    const type = typeSelect?.value;
+
+    if (!entityId || !type) {
+      this._setStatusMessage(statusElement, '✗ Please enter entity ID and select type', 'error');
+      return;
+    }
+
+    // Basic entity ID validation
+    if (!entityId.includes('.')) {
+      this._setStatusMessage(statusElement, '✗ Entity ID must contain a domain (e.g., sensor.biomuell)', 'error');
+      return;
+    }
+
+    const houseConfig = this._adminLocalState.houseConfig;
+    if (!houseConfig.garbage_sensors) {
+      houseConfig.garbage_sensors = [];
+    }
+
+    // Check if sensor already exists
+    const exists = houseConfig.garbage_sensors.some(s => s.entity === entityId);
+    if (exists) {
+      this._setStatusMessage(statusElement, '✗ Sensor already exists', 'error');
+      return;
+    }
+
+    houseConfig.garbage_sensors.push({
+      entity: entityId,
+      type: type
+    });
+
+    entityInput.value = '';
+    typeSelect.value = '';
+
+    this._renderGarbageSensors();
+    this._setStatusMessage(statusElement, '✓ Sensor added (remember to save)', 'success');
+  }
+
+  removeGarbageSensor(index) {
+    const houseConfig = this._adminLocalState.houseConfig;
+    if (!houseConfig.garbage_sensors || index < 0 || index >= houseConfig.garbage_sensors.length) return;
+
+    houseConfig.garbage_sensors.splice(index, 1);
+    this._renderGarbageSensors();
+    
+    const statusElement = this._shadowRoot.getElementById('garbage-setup-status');
+    this._setStatusMessage(statusElement, '✓ Sensor removed (remember to save)', 'success');
+  }
+
+  async saveGarbageSensors() {
+    const statusElement = this._shadowRoot.getElementById('garbage-setup-status');
+    this._setStatusMessage(statusElement, 'Saving...', 'loading');
+
+    try {
+      await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig);
+      this._setStatusMessage(statusElement, '✓ Saved!', 'success');
+    } catch (error) {
+      this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
+    }
   }
 }

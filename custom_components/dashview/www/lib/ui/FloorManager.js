@@ -160,6 +160,8 @@ export class FloorManager {
         if (isBigSlot) {
             if (slot.type === 'room_swipe_card') {
                 cardHTML = this._renderRoomSwipeCard(floorId, slot.grid_area);
+            } else if (slot.type === 'garbage') {
+                cardHTML = this._renderGarbageSwipeCard(slot.grid_area);
             } else {
                 const entityId = entityProvider(slot.type);
                 if (entityId) cardHTML = this._generateBigSensorCardHTML(entityId, slot.grid_area);
@@ -175,7 +177,10 @@ export class FloorManager {
 
     this._initializeSwiper(gridContainer);
 
-    gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card').forEach(card => this._initializeCardListeners(card));
+    gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card, .garbage-card').forEach(card => this._initializeCardListeners(card));
+    
+    // Add overflow detection for sensor-big-card labels
+    this._checkTextOverflow(gridContainer);
   }
 
   _getEntitiesForFloor(floorId) {
@@ -275,7 +280,7 @@ export class FloorManager {
     const tempState = tempSensor && this._hass.states[tempSensor];
     const humState = humSensor && this._hass.states[humSensor];
     let tempHumHTML = '';
-    if (tempState && tempState.state !== 'unavailable') tempHumHTML += `<i class="mdi mdi-thermometer"></i> ${parseFloat(tempState.state).toFixed(0)}°`;
+    if (tempState && tempState.state !== 'unavailable') tempHumHTML += `<i class="mdi mdi-thermometer"></i> ${parseFloat(tempState.state).toFixed(1)}°`;
     if (humState && humState.state !== 'unavailable') tempHumHTML += ` <span style="font-size:0.8em;opacity:0.7">${parseFloat(humState.state).toFixed(0)}%</span>`;
 
     const cardStateClass = this._isRoomActive(room) ? 'is-on' : 'is-off';
@@ -383,49 +388,33 @@ export class FloorManager {
             break;
 
         case 'hoover':
-            if (entityState?.state === 'cleaning' || entityState?.state === 'on') {
-                icon = 'mdi:robot-vacuum';
-                label = 'Saugt';
-                cardClass = 'is-on';
-            } else if (entityState?.state === 'docked' || entityState?.state === 'idle') {
-                icon = 'mdi:robot-vacuum-variant';
-                label = 'Bereit';
-            } else if (entityState?.state === 'error') {
-                icon = 'mdi:robot-vacuum-alert';
-                label = 'Fehler';
-                cardClass = 'is-error';
-            } else {
-                icon = 'mdi:robot-vacuum-variant';
-                label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
-            }
+            const { icon: vacuumIcon, label: vacuumLabel, cardClass: vacuumCardClass } = this._getVacuumDisplayData(entityState);
+            icon = vacuumIcon;
+            label = vacuumLabel;
+            cardClass = vacuumCardClass;
             break;
 
         case 'mower':
-            if (entityState?.state === 'mowing' || entityState?.state === 'on') {
-                icon = 'mdi:robot-mower';
-                label = 'Mäht';
-                cardClass = 'is-on';
-            } else if (entityState?.state === 'docked' || entityState?.state === 'idle') {
-                icon = 'mdi:robot-mower-outline';
-                label = 'Geparkt';
-            } else if (entityState?.state === 'error') {
-                icon = 'mdi:robot-mower-outline';
-                label = 'Fehler';
-                cardClass = 'is-error';
-            } else {
-                icon = 'mdi:robot-mower-outline';
-                label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
-            }
+            const { icon: mowerIcon, label: mowerLabel, cardClass: mowerCardClass } = this._getMowerDisplayData(entityState);
+            icon = mowerIcon;
+            label = mowerLabel;
+            cardClass = mowerCardClass;
             break;
 
         case 'other_door':
-            if (entityState?.state === 'on' || entityState?.state === 'open') {
+            const doorState = entityState?.state?.toLowerCase();
+            if (doorState === 'on' || doorState === 'open') {
                 icon = 'mdi:door-open';
                 label = 'Offen';
-                cardClass = 'is-on';
-            } else if (entityState?.state === 'off' || entityState?.state === 'closed') {
+                cardClass = 'door-open';
+            } else if (doorState === 'unlocked') {
                 icon = 'mdi:door-closed';
-                label = 'Geschlossen';
+                label = 'Entriegelt';
+                cardClass = 'door-unlocked';
+            } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
+                icon = 'mdi:door-closed-lock';
+                label = 'Verriegelt';
+                cardClass = 'door-locked';
             } else {
                 icon = 'mdi:door';
                 label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
@@ -535,5 +524,340 @@ export class FloorManager {
     Array.from(pagination.children).forEach((bullet, i) => {
       bullet.classList.toggle('swiper-pagination-bullet-active', i === index);
     });
+  }
+
+  _renderGarbageSwipeCard(gridArea) {
+    const garbageSensors = this._houseConfig.garbage_sensors || [];
+    
+    if (garbageSensors.length === 0) {
+        return `<div class="placeholder-card placeholder-big" style="grid-area: ${gridArea};">No garbage sensors configured.</div>`;
+    }
+
+    // Sort sensors by next collection date
+    const sortedSensors = this._getSortedGarbageSensors(garbageSensors);
+    const cardsHTML = sortedSensors.map(sensor => this._generateGarbageCardHTML(sensor)).join('');
+
+    return `
+      <div class="garbage-swipe-card-container" style="grid-area: ${gridArea};">
+          <div class="swiper-container">
+              <div class="swiper-wrapper">${cardsHTML}</div>
+              <div class="swiper-pagination"></div>
+          </div>
+      </div>
+    `;
+  }
+
+  _getSortedGarbageSensors(garbageSensors) {
+    const now = new Date();
+    
+    return garbageSensors
+      .map(sensor => {
+        const entityState = this._hass.states[sensor.entity_id];
+        const nextDate = entityState ? new Date(entityState.state) : null;
+        const daysUntil = nextDate ? Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24)) : 999;
+        
+        return {
+          ...sensor,
+          nextDate,
+          daysUntil: isNaN(daysUntil) ? 999 : daysUntil,
+          entityState
+        };
+      })
+      .sort((a, b) => a.daysUntil - b.daysUntil);
+  }
+
+  _generateGarbageCardHTML(sensor) {
+    const { entity_id, type, nextDate, daysUntil, entityState } = sensor;
+    const icon = this._getGarbageTypeIcon(type);
+    const typeName = this._getGarbageTypeName(type);
+    
+    // Determine card styling based on urgency
+    let cardClass = 'garbage-card';
+    let daysSuffix = 'Tage';
+    let dateText = 'Datum unbekannt';
+    
+    if (nextDate && !isNaN(daysUntil)) {
+      const now = new Date();
+      const isToday = daysUntil === 0;
+      const isTomorrow = daysUntil === 1;
+      const isMorning = now.getHours() < 9;
+      
+      if (isToday && isMorning) {
+        cardClass += ' garbage-urgent'; // Red styling
+      } else if (isTomorrow) {
+        cardClass += ' garbage-tomorrow'; // Green styling
+      }
+      
+      if (isToday) {
+        dateText = 'Heute';
+        daysSuffix = '';
+      } else if (isTomorrow) {
+        dateText = 'Morgen';
+        daysSuffix = '';
+      } else {
+        dateText = nextDate.toLocaleDateString('de-DE', { 
+          weekday: 'short', 
+          day: '2-digit', 
+          month: '2-digit' 
+        });
+        daysSuffix = daysUntil === 1 ? 'Tag' : 'Tage';
+      }
+    }
+
+    return `
+      <div class="swiper-slide">
+        <div class="${cardClass}" data-entity-id="${entity_id}">
+          <div class="garbage-card-header">
+            <div class="garbage-icon-container">
+              <i class="mdi ${this._panel._processIconName(icon)}"></i>
+            </div>
+            <div class="garbage-info">
+              <div class="garbage-type">${typeName}</div>
+              <div class="garbage-date">${dateText}</div>
+            </div>
+            <div class="garbage-days-until">
+              <span class="days-number">${isNaN(daysUntil) || daysUntil > 30 ? '-' : daysUntil}</span>
+              <span class="days-label">${daysSuffix}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  _getGarbageTypeIcon(type) {
+    const garbageTypes = {
+      'biomuell': 'mdi:leaf',
+      'hausmuell': 'mdi:trash-can',
+      'gelber_sack': 'mdi:recycle',
+      'altpapier': 'mdi:newspaper',
+      'restmuell': 'mdi:delete',
+      'wertstoff': 'mdi:bottle-wine',
+      'sondermuell': 'mdi:radioactive'
+    };
+    return garbageTypes[type] || 'mdi:trash-can';
+  }
+
+  _getGarbageTypeName(type) {
+    const garbageNames = {
+      'biomuell': 'Biomüll',
+      'hausmuell': 'Hausmüll',
+      'gelber_sack': 'Gelber Sack',
+      'altpapier': 'Altpapier',
+      'restmuell': 'Restmüll',
+      'wertstoff': 'Wertstoff',
+      'sondermuell': 'Sondermüll'
+    };
+    return garbageNames[type] || 'Müll';
+  }
+
+  _checkTextOverflow(container) {
+    container.querySelectorAll('.sensor-big-label').forEach(label => {
+      // Remove any existing overflow class first
+      label.classList.remove('overflow');
+      
+      // Check if text overflows the container
+      requestAnimationFrame(() => {
+        const wrapper = label.parentElement;
+        if (wrapper && label.scrollWidth > wrapper.clientWidth) {
+          label.classList.add('overflow');
+        }
+      });
+    });
+  }
+
+  _getVacuumDisplayData(entityState) {
+    if (!entityState) {
+      return { icon: 'mdi:robot-vacuum-variant', label: 'Nicht verfügbar', cardClass: 'is-unavailable' };
+    }
+
+    const state = entityState.state?.toLowerCase();
+    const status = entityState.attributes?.status?.toLowerCase();
+    const error = entityState.attributes?.error;
+    const batteryLevel = entityState.attributes?.battery_level;
+
+    // Handle error states first
+    if (state === 'error' || (error && error !== 'No error')) {
+      let errorMessage = 'Fehler';
+      if (error && error !== 'No error') {
+        // Common Dreame vacuum error translations
+        const errorTranslations = {
+          'low_battery': 'Akku schwach',
+          'stuck': 'Festgefahren',
+          'dust_box_open': 'Staubbehälter offen',
+          'no_dust_box': 'Staubbehälter fehlt',
+          'water_box_empty': 'Wassertank leer',
+          'mop_removed': 'Wischmopp entfernt',
+          'cliff_sensor': 'Absturzsensor',
+          'bumper_stuck': 'Stoßstange blockiert',
+          'charge_found': 'Ladestation nicht gefunden',
+          'low_water': 'Wenig Wasser',
+          'dirty_mop': 'Schmutziger Mopp',
+          'ai_detection': 'KI-Hindernis erkannt',
+          'unknown_error': 'Unbekannter Fehler'
+        };
+        errorMessage = errorTranslations[error.toLowerCase()] || error;
+      }
+      return { icon: 'mdi:robot-vacuum-alert', label: errorMessage, cardClass: 'vacuum-error' };
+    }
+
+    // Handle specific vacuum states based on Dreame vacuum statuses
+    switch (state) {
+      case 'cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Saugt', cardClass: 'is-on' };
+      case 'returning':
+        return { icon: 'mdi:robot-vacuum-variant', label: 'Kehrt zurück', cardClass: 'is-on' };
+      case 'charging':
+        if (batteryLevel === 100) {
+          return { icon: 'mdi:robot-vacuum-variant', label: 'Bereit', cardClass: '' };
+        }
+        return { icon: 'mdi:robot-vacuum-variant', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };
+      case 'docked':
+        return { icon: 'mdi:robot-vacuum-variant', label: 'Bereit', cardClass: '' };
+      case 'idle':
+        return { icon: 'mdi:robot-vacuum-variant', label: 'Bereit', cardClass: '' };
+      case 'paused':
+        return { icon: 'mdi:robot-vacuum-variant', label: 'Pausiert', cardClass: 'is-on' };
+      case 'zone_cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Zonenreinigung', cardClass: 'is-on' };
+      case 'spot_cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Punktreinigung', cardClass: 'is-on' };
+      case 'mopping':
+        return { icon: 'mdi:robot-vacuum', label: 'Wischt', cardClass: 'is-on' };
+      case 'washing':
+        return { icon: 'mdi:robot-vacuum-variant', label: 'Mopp wird gewaschen', cardClass: 'is-on' };
+      case 'drying':
+        return { icon: 'mdi:robot-vacuum-variant', label: 'Trocknet', cardClass: 'is-on' };
+      case 'sleeping':
+        return { icon: 'mdi:sleep', label: 'Ruhemodus', cardClass: '' };
+    }
+
+    // Handle detailed status attribute if available
+    if (status) {
+      const statusTranslations = {
+        'sleeping': 'Ruhemodus',
+        'sweeping': 'Saugt',
+        'mopping': 'Wischt',
+        'sweeping_and_mopping': 'Saugt und wischt',
+        'charging_completed': 'Vollgeladen',
+        'charging': `Lädt ${batteryLevel || 0}%`,
+        'docked': 'Bereit',
+        'idle': 'Bereit',
+        'returning': 'Kehrt zurück',
+        'paused': 'Pausiert'
+      };
+      
+      const translatedStatus = statusTranslations[status] || status;
+      const activeStates = ['sweeping', 'mopping', 'sweeping_and_mopping', 'returning', 'paused'];
+      
+      return {
+        icon: activeStates.includes(status) ? 'mdi:robot-vacuum' : 
+              status === 'sleeping' ? 'mdi:sleep' : 'mdi:robot-vacuum-variant',
+        label: translatedStatus,
+        cardClass: activeStates.includes(status) ? 'is-on' : ''
+      };
+    }
+
+    // Fallback
+    return { 
+      icon: 'mdi:robot-vacuum-variant', 
+      label: state ? state.charAt(0).toUpperCase() + state.slice(1) : 'Unbekannt', 
+      cardClass: '' 
+    };
+  }
+
+  _getMowerDisplayData(entityState) {
+    if (!entityState) {
+      return { icon: 'mdi:robot-mower-outline', label: 'Nicht verfügbar', cardClass: 'is-unavailable' };
+    }
+
+    const state = entityState.state?.toLowerCase();
+    const error = entityState.attributes?.error;
+    const lastError = entityState.attributes?.last_error;
+    const activity = entityState.attributes?.activity;
+    const batteryLevel = entityState.attributes?.battery_level;
+
+    // Handle error states
+    if (state === 'error' || error || (state !== 'ok' && state !== 'none' && state === lastError)) {
+      let errorMessage = 'Fehler';
+      const currentError = error || lastError || state;
+      
+      if (currentError && currentError !== 'OK') {
+        // Common lawn mower error translations
+        const errorTranslations = {
+          'outside_working_area': 'Außerhalb Arbeitsbereich',
+          'no_loop_signal': 'Kein Schleifensignal',
+          'wrong_loop_signal': 'Falsches Schleifensignal',
+          'loop_sensor_problem_front': 'Schleifensensor vorne defekt',
+          'loop_sensor_problem_rear': 'Schleifensensor hinten defekt',
+          'trapped': 'Eingeklemmt',
+          'upside_down': 'Umgedreht',
+          'low_battery': 'Akku schwach',
+          'empty_battery': 'Akku leer',
+          'no_drive': 'Antrieb defekt',
+          'temporarily_lifted': 'Angehoben',
+          'lifted': 'Angehoben',
+          'blocked': 'Blockiert',
+          'needs_service': 'Service erforderlich',
+          'memory_circuit_problem': 'Speicherproblem',
+          'charging_system_problem': 'Ladefehler',
+          'stop_button_problem': 'Stop-Taste defekt',
+          'tilt_sensor_problem': 'Neigungssensor defekt',
+          'collision_sensor_problem': 'Kollisionssensor defekt',
+          'charging_current_too_high': 'Ladestrom zu hoch',
+          'electronic_problem': 'Elektronikfehler',
+          'cutting_system_blocked': 'Mähwerk blockiert',
+          'cutting_system_problem': 'Mähwerk defekt',
+          'invalid_sub_device': 'Ungültiges Untergerät',
+          'settings_restored': 'Einstellungen zurückgesetzt',
+          'electronic_problem_2': 'Elektronikfehler 2',
+          'unknown_error': 'Unbekannter Fehler'
+        };
+        errorMessage = errorTranslations[currentError.toLowerCase()] || currentError;
+      }
+      return { icon: 'mdi:robot-mower-alert', label: errorMessage, cardClass: 'mower-error' };
+    }
+
+    // Handle normal states
+    switch (state) {
+      case 'mowing':
+        return { icon: 'mdi:robot-mower', label: 'Mäht', cardClass: 'is-on' };
+      case 'charging':
+        return { icon: 'mdi:robot-mower-outline', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };
+      case 'docked':
+      case 'parked':
+        return { icon: 'mdi:robot-mower-outline', label: 'Geparkt', cardClass: '' };
+      case 'going_home':
+      case 'returning':
+        return { icon: 'mdi:robot-mower-outline', label: 'Kehrt zurück', cardClass: 'is-on' };
+      case 'paused':
+        return { icon: 'mdi:robot-mower-outline', label: 'Pausiert', cardClass: 'is-on' };
+      case 'idle':
+        return { icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
+      case 'ok':
+        // Use activity if available
+        if (activity) {
+          switch (activity.toLowerCase()) {
+            case 'mowing':
+              return { icon: 'mdi:robot-mower', label: 'Mäht', cardClass: 'is-on' };
+            case 'charging':
+              return { icon: 'mdi:robot-mower-outline', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };
+            case 'parked':
+              return { icon: 'mdi:robot-mower-outline', label: 'Geparkt', cardClass: '' };
+            case 'going_home':
+              return { icon: 'mdi:robot-mower-outline', label: 'Kehrt zurück', cardClass: 'is-on' };
+            case 'none':
+              return { icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
+          }
+        }
+        return { icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
+    }
+
+    // Fallback
+    return { 
+      icon: 'mdi:robot-mower-outline', 
+      label: state ? state.charAt(0).toUpperCase() + state.slice(1) : 'Unbekannt', 
+      cardClass: '' 
+    };
   }
 }

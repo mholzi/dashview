@@ -20,6 +20,7 @@
         <button class="tab-button" data-target="scenes-tab">Scenes</button>
         <button class="tab-button" data-target="media-presets-tab">Media Presets</button>
         <button class="tab-button" data-target="other-entities-tab">Other Entities</button>
+        <button class="tab-button" data-target="garbage-tab">Garbage</button>
     </div>
     <div id="scenes-tab" class="tab-content">
         <h4>Scene Button Management</h4>
@@ -361,7 +362,9 @@
                 <select id="new-hoover-room" class="dropdown-selector">
                     <option value="">Select Room</option>
                 </select>
-                <input type="text" id="new-hoover-entity" class="form-input" placeholder="Entity ID (e.g., vacuum.roomba)">
+                <select id="new-hoover-entity" class="dropdown-selector">
+                    <option value="">Select Vacuum Entity</option>
+                </select>
                 <button id="add-hoover-entity" class="action-button">Add</button>
             </div>
             <button id="save-hoover-entities" class="save-button" style="margin-top: 12px;">Save Hoover Configuration</button>
@@ -378,7 +381,9 @@
                 <select id="new-mower-room" class="dropdown-selector">
                     <option value="">Select Room</option>
                 </select>
-                <input type="text" id="new-mower-entity" class="form-input" placeholder="Entity ID (e.g., lawn_mower.automower)">
+                <select id="new-mower-entity" class="dropdown-selector">
+                    <option value="">Select Vacuum Entity</option>
+                </select>
                 <button id="add-mower-entity" class="action-button">Add</button>
             </div>
             <button id="save-mower-entities" class="save-button" style="margin-top: 12px;">Save Mower Configuration</button>
@@ -399,6 +404,35 @@
                 <button id="add-other-door-entity" class="action-button">Add</button>
             </div>
             <button id="save-other-door-entities" class="save-button" style="margin-top: 12px;">Save Door Configuration</button>
+        </div>
+    </div>
+
+    <div id="garbage-tab" class="tab-content">
+        <h4>Garbage Collection Management</h4>
+        <p>Configure your garbage collection sensors for display in the floor area. Each sensor will show the next collection date.</p>
+        
+        <div class="config-section">
+            <h5>Garbage Sensors</h5>
+            <div id="garbage-setup-status" class="status-display">Ready</div>
+            <div id="garbage-sensors-list" class="floors-container">
+                <!-- Garbage sensors will be rendered here -->
+            </div>
+            <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 12px;">
+                <input type="text" id="new-garbage-sensor" class="form-input" placeholder="Entity ID (e.g., sensor.biomuell)">
+                <select id="new-garbage-type" class="dropdown-selector">
+                    <option value="">Select Type</option>
+                    <option value="biomuell">Biomüll</option>
+                    <option value="hausmuell">Hausmüll</option>
+                    <option value="gelber_sack">Gelber Sack</option>
+                    <option value="altpapier">Altpapier</option>
+                    <option value="restmuell">Restmüll</option>
+                    <option value="wertstoff">Wertstoff</option>
+                    <option value="sondermuell">Sondermüll</option>
+                </select>
+                <button id="add-garbage-sensor" class="action-button">Add</button>
+                <button id="reload-garbage-sensors" class="action-button">Reload</button>
+            </div>
+            <button id="save-garbage-sensors" class="save-button" style="margin-top: 12px;">Save Garbage Configuration</button>
         </div>
     </div>
 

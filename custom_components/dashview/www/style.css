@@ -1927,7 +1927,7 @@ body.popup-open, :host(.popup-open) {
     justify-self: start;
     align-self: start;
     text-align: left;
-    font-size: 1em;
+    font-size: 16px;
     font-weight: 500;
     color: var(--gray800);
     padding: 14px;
@@ -1982,6 +1982,171 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray800);
     padding: 0 0 6px 14px;
 }
+
+/* --- Garbage Collection Cards --- */
+.garbage-swipe-card-container {
+    background: var(--gray000);
+    border-radius: 30px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.garbage-card {
+    background: var(--gray000);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 0;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.garbage-card.garbage-urgent {
+    background: var(--red);
+    border-color: #e74c3c;
+}
+
+.garbage-card.garbage-tomorrow {
+    background: var(--green);
+    border-color: #27ae60;
+}
+
+.garbage-card-header {
+    display: grid;
+    grid-template-areas: "icon info days";
+    grid-template-columns: 60px 1fr 80px;
+    gap: 15px;
+    align-items: center;
+}
+
+.garbage-icon-container {
+    grid-area: icon;
+    background: var(--highlight);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.garbage-urgent .garbage-icon-container {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.garbage-tomorrow .garbage-icon-container {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.garbage-icon-container i {
+    font-size: 32px;
+    color: var(--gray800);
+}
+
+.garbage-urgent .garbage-icon-container i,
+.garbage-tomorrow .garbage-icon-container i {
+    color: var(--gray800);
+}
+
+.garbage-info {
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.garbage-type {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--gray800);
+    margin-bottom: 4px;
+}
+
+.garbage-date {
+    font-size: 0.95em;
+    color: var(--gray500);
+    font-weight: 400;
+}
+
+.garbage-days-until {
+    grid-area: days;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.days-number {
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--gray800);
+    line-height: 1;
+}
+
+.days-label {
+    font-size: 0.8em;
+    color: var(--gray500);
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.garbage-urgent .garbage-type,
+.garbage-urgent .days-number {
+    color: #c0392b;
+}
+
+.garbage-urgent .garbage-date,
+.garbage-urgent .days-label {
+    color: #a93226;
+}
+
+.garbage-tomorrow .garbage-type,
+.garbage-tomorrow .days-number {
+    color: #1e8449;
+}
+
+.garbage-tomorrow .garbage-date,
+.garbage-tomorrow .days-label {
+    color: #239b56;
+}
+
+/* --- Door Entity Styles --- */
+.sensor-small-card.door-open,
+.sensor-big-card.door-open {
+    background: var(--active-big);
+}
+
+.sensor-small-card.door-unlocked,
+.sensor-big-card.door-unlocked {
+    background: var(--gray100);
+}
+
+.sensor-small-card.door-locked,
+.sensor-big-card.door-locked {
+    background: var(--gray000);
+}
+
+/* --- Vacuum and Mower Error Styles --- */
+.sensor-small-card.vacuum-error,
+.sensor-big-card.vacuum-error,
+.sensor-small-card.mower-error,
+.sensor-big-card.mower-error {
+    background: var(--red);
+}
+
+.sensor-small-card.vacuum-error .sensor-small-name,
+.sensor-small-card.vacuum-error .sensor-small-label,
+.sensor-big-card.vacuum-error .sensor-big-name,
+.sensor-big-card.vacuum-error .sensor-big-label,
+.sensor-small-card.mower-error .sensor-small-name,
+.sensor-small-card.mower-error .sensor-small-label,
+.sensor-big-card.mower-error .sensor-big-name,
+.sensor-big-card.mower-error .sensor-big-label {
+    color: var(--gray800);
+}
+
 /* --- Sensor Small Card --- */
 .sensor-small-card {
     height: 75px;
@@ -2281,6 +2446,10 @@ body.popup-open, :host(.popup-open) {
 .sensor-big-label {
     display: inline-block;
     padding-left: 100%;
+    white-space: nowrap;
+}
+
+.sensor-big-label.overflow {
     animation: marquee 10s linear infinite;
 }
 
@@ -2364,7 +2533,11 @@ body.popup-open, :host(.popup-open) {
 }
 
 .light-control-row[state="on"] {
-    color: var(--primary-text-color);
+    color: var(--gray000);
+}
+
+.light-control-row[state="on"] .light-icon .mdi {
+    color: var(--gray000);
 }
 
 .light-brightness-bar {
@@ -2388,7 +2561,7 @@ body.popup-open, :host(.popup-open) {
     position: absolute;
     top: 10%;
     left: 0px;
-    margin-left: -10px;
+    margin-left: -20px;
     width: 8px;
     height: 80%;
     background-color: rgba(255, 255, 255, 0.5);
@@ -2398,6 +2571,10 @@ body.popup-open, :host(.popup-open) {
     pointer-events: none;
     transition: left 0.2s ease-out;
   
+}
+
+.light-control-row[state="on"] .light-brightness-handle {
+    background-color: var(--gray200);
 }
 
 .light-control-row.is-dimmable[state="on"] .light-brightness-handle {
@@ -2520,7 +2697,7 @@ body.popup-open, :host(.popup-open) {
 .other-entities-content {
     padding: 0 12px 12px 12px;
     border-top: 1px solid var(--divider-color);
-    margin-top: 6px;
+    margin-top: 12px;
 }
 
 .other-entities-grid {
