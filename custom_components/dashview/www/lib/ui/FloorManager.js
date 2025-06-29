@@ -553,72 +553,64 @@ export class FloorManager {
     return garbageSensors
       .map(sensor => {
         const entityState = this._hass.states[sensor.entity_id];
-        const nextDate = entityState ? new Date(entityState.state) : null;
-        const daysUntil = nextDate ? Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24)) : 999;
+        
+        // The entity state contains the calculated text like "Heute", "Morgen", "X Tage"
+        // Instead of trying to parse it as a date, use it directly
+        const stateText = entityState?.state || 'Datum unbekannt';
+        
+        // Extract numeric days for sorting (if available)
+        let daysUntil = 999; // Default for unknown/far future
+        if (stateText === 'Heute') {
+          daysUntil = 0;
+        } else if (stateText === 'Morgen') {
+          daysUntil = 1;
+        } else {
+          // Try to extract number from "X Tage" format
+          const match = stateText.match(/^(\d+)\s+Tage?$/);
+          if (match) {
+            daysUntil = parseInt(match[1], 10);
+          }
+        }
         
         return {
           ...sensor,
-          nextDate,
-          daysUntil: isNaN(daysUntil) ? 999 : daysUntil,
-          entityState
+          nextDate: null, // Not used anymore since we use entity state directly
+          daysUntil,
+          entityState,
+          stateText
         };
       })
       .sort((a, b) => a.daysUntil - b.daysUntil);
   }
 
   _generateGarbageCardHTML(sensor) {
-    const { entity_id, type, nextDate, daysUntil, entityState } = sensor;
+    const { entity_id, type, daysUntil, entityState, stateText } = sensor;
     const icon = this._getGarbageTypeIcon(type);
     const typeName = this._getGarbageTypeName(type);
     
     // Determine card styling based on urgency
     let cardClass = 'garbage-card';
-    let daysSuffix = 'Tage';
-    let dateText = 'Datum unbekannt';
+    const now = new Date();
+    const isToday = daysUntil === 0;
+    const isTomorrow = daysUntil === 1;
+    const isMorning = now.getHours() < 9;
     
-    if (nextDate && !isNaN(daysUntil)) {
-      const now = new Date();
-      const isToday = daysUntil === 0;
-      const isTomorrow = daysUntil === 1;
-      const isMorning = now.getHours() < 9;
-      
-      if (isToday && isMorning) {
-        cardClass += ' garbage-urgent'; // Red styling
-      } else if (isTomorrow) {
-        cardClass += ' garbage-tomorrow'; // Green styling
-      }
-      
-      if (isToday) {
-        dateText = 'Heute';
-        daysSuffix = '';
-      } else if (isTomorrow) {
-        dateText = 'Morgen';
-        daysSuffix = '';
-      } else {
-        dateText = nextDate.toLocaleDateString('de-DE', { 
-          weekday: 'short', 
-          day: '2-digit', 
-          month: '2-digit' 
-        });
-        daysSuffix = daysUntil === 1 ? 'Tag' : 'Tage';
-      }
+    if (isToday && isMorning) {
+      cardClass += ' garbage-urgent'; // Red styling
+    } else if (isTomorrow) {
+      cardClass += ' garbage-tomorrow'; // Green styling
     }
+
+    // Use the entity state text directly (already contains "Heute", "Morgen", "X Tage")
+    const dateText = stateText;
 
     return `
       <div class="swiper-slide">
         <div class="${cardClass}" data-entity-id="${entity_id}">
-          <div class="garbage-card-header">
-            <div class="garbage-icon-container">
-              <i class="mdi ${this._panel._processIconName(icon)}"></i>
-            </div>
-            <div class="garbage-info">
-              <div class="garbage-type">${typeName}</div>
-              <div class="garbage-date">${dateText}</div>
-            </div>
-            <div class="garbage-days-until">
-              <span class="days-number">${isNaN(daysUntil) || daysUntil > 30 ? '-' : daysUntil}</span>
-              <span class="days-label">${daysSuffix}</span>
-            </div>
+          <div class="garbage-card-grid">
+            <div class="garbage-card-name">${typeName}</div>
+            <div class="garbage-card-icon-cell"><i class="mdi ${this._panel._processIconName(icon)}"></i></div>
+            <div class="garbage-card-date">${dateText}</div>
           </div>
         </div>
       </div>
