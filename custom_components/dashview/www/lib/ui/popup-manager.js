@@ -10,6 +10,10 @@ export class PopupManager {
     this._setupEventListeners();
   }
 
+  setHass(hass) {
+    this._hass = hass;
+  }
+
   _setupEventListeners() {
     window.addEventListener('hashchange', () => this.handleHashChange(), true);
 
@@ -162,6 +166,12 @@ export class PopupManager {
     if (popup.id === 'weather-popup') {
         this._panel._weatherManager.update();
     }
+    
+    // Handle room popup entity refresh
+    const roomKey = popup.id.replace('-popup', '');
+    if (this._config?.rooms?.[roomKey]) {
+        this._refreshRoomEntities(roomKey, popup);
+    }
   }
 
   _initializeDynamicContent(container) {
@@ -225,6 +235,85 @@ export class PopupManager {
             const container = document.createElement('div');
             container.innerHTML = html;
             popupBody.appendChild(container);
+        }
+    });
+  }
+
+  _refreshRoomEntities(roomKey, popup) {
+    const roomConfig = this._config.rooms[roomKey];
+    if (!roomConfig || !this._hass) return;
+
+    console.log(`[PopupManager] Refreshing entities for room: ${roomKey}`);
+
+    // Collect all entities in this room that need updates
+    const entitiesToUpdate = [];
+
+    // Add light entities
+    if (roomConfig.lights?.length > 0) {
+        entitiesToUpdate.push(...roomConfig.lights);
+    }
+
+    // Add cover entities  
+    if (roomConfig.covers?.length > 0) {
+        entitiesToUpdate.push(...roomConfig.covers);
+    }
+
+    // Add media player entities
+    if (roomConfig.media_players?.length > 0) {
+        roomConfig.media_players.forEach(mp => {
+            entitiesToUpdate.push(mp.entity);
+        });
+    }
+
+    // Add header entities (temperature, humidity, etc.)
+    if (roomConfig.header_entities?.length > 0) {
+        roomConfig.header_entities.forEach(he => {
+            entitiesToUpdate.push(he.entity);
+        });
+    }
+
+    // Force update all components for these entities
+    entitiesToUpdate.forEach(entityId => {
+        if (this._hass.states[entityId]) {
+            // Use the main panel's update mechanism to refresh components
+            this._panel.updateComponentForEntity(entityId);
+        }
+    });
+
+    // Additional specific component updates
+    this._updateRoomSpecificComponents(popup, roomConfig);
+  }
+
+  _updateRoomSpecificComponents(popup, roomConfig) {
+    // Force update light cards
+    const lightCards = popup.querySelectorAll('.room-lights-card');
+    lightCards.forEach(card => {
+        if (this._panel._lightsCard) {
+            this._panel._lightsCard.update();
+        }
+    });
+
+    // Force update cover cards
+    const coverCards = popup.querySelectorAll('.room-covers-card');
+    coverCards.forEach(card => {
+        if (this._panel._coversCard) {
+            this._panel._coversCard.update();
+        }
+    });
+
+    // Force update media player cards  
+    const mediaCards = popup.querySelectorAll('.room-media-player-card');
+    mediaCards.forEach(card => {
+        if (this._panel._mediaPlayerCard) {
+            this._panel._mediaPlayerCard.update();
+        }
+    });
+
+    // Force update thermostat cards
+    const thermostatCards = popup.querySelectorAll('.room-thermostat-card');
+    thermostatCards.forEach(card => {
+        if (this._panel._thermostatCard) {
+            this._panel._thermostatCard.update();
         }
     });
   }

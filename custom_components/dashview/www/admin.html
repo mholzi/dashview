@@ -19,6 +19,7 @@
         <button class="tab-button" data-target="floor-layouts-tab">Floor Layouts</button>
         <button class="tab-button" data-target="scenes-tab">Scenes</button>
         <button class="tab-button" data-target="media-presets-tab">Media Presets</button>
+        <button class="tab-button" data-target="other-entities-tab">Other Entities</button>
     </div>
     <div id="scenes-tab" class="tab-content">
         <h4>Scene Button Management</h4>
@@ -342,6 +343,68 @@
             <h5>Room Configuration</h5>
             <textarea id="rooms-config" class="config-textarea" placeholder="Room configuration will be loaded here..."></textarea>
             <button id="save-rooms-config" class="save-button">Save Rooms Config</button>
+        </div>
+    </div>
+
+    <div id="other-entities-tab" class="tab-content">
+        <h4>Other Entities Management</h4>
+        <p>Configure and manage additional entity types for your dashboard. These entities will be saved to your house configuration and can be used in sensor cards.</p>
+        
+        <div class="config-section">
+            <h5>Hoover Entities</h5>
+            <p>Add vacuum cleaner and robotic hoover entities to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
+            <div id="hoover-setup-status" class="status-display">Ready</div>
+            <div id="hoover-entities-list" class="floors-container">
+                <!-- Hoover entities will be rendered here -->
+            </div>
+            <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 2fr 3fr 1fr; gap: 12px;">
+                <select id="new-hoover-room" class="dropdown-selector">
+                    <option value="">Select Room</option>
+                </select>
+                <select id="new-hoover-entity" class="dropdown-selector">
+                    <option value="">Select Entity</option>
+                </select>
+                <button id="add-hoover-entity" class="action-button">Add</button>
+            </div>
+            <button id="save-hoover-entities" class="save-button" style="margin-top: 12px;">Save Hoover Configuration</button>
+        </div>
+
+        <div class="config-section">
+            <h5>Mower Entities</h5>
+            <p>Add lawn mower and robotic mower entities to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
+            <div id="mower-setup-status" class="status-display">Ready</div>
+            <div id="mower-entities-list" class="floors-container">
+                <!-- Mower entities will be rendered here -->
+            </div>
+            <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 2fr 3fr 1fr; gap: 12px;">
+                <select id="new-mower-room" class="dropdown-selector">
+                    <option value="">Select Room</option>
+                </select>
+                <select id="new-mower-entity" class="dropdown-selector">
+                    <option value="">Select Entity</option>
+                </select>
+                <button id="add-mower-entity" class="action-button">Add</button>
+            </div>
+            <button id="save-mower-entities" class="save-button" style="margin-top: 12px;">Save Mower Configuration</button>
+        </div>
+
+        <div class="config-section">
+            <h5>Door Entities</h5>
+            <p>Add additional door entities manually to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
+            <div id="other-door-setup-status" class="status-display">Ready</div>
+            <div id="other-door-entities-list" class="floors-container">
+                <!-- Door entities will be rendered here -->
+            </div>
+            <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 2fr 3fr 1fr; gap: 12px;">
+                <select id="new-other-door-room" class="dropdown-selector">
+                    <option value="">Select Room</option>
+                </select>
+                <select id="new-other-door-entity" class="dropdown-selector">
+                    <option value="">Select Entity</option>
+                </select>
+                <button id="add-other-door-entity" class="action-button">Add</button>
+            </div>
+            <button id="save-other-door-entities" class="save-button" style="margin-top: 12px;">Save Door Configuration</button>
         </div>
     </div>
 

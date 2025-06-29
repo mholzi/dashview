@@ -349,8 +349,17 @@ export class FloorManager {
              label = entityState.state === 'on' ? 'Offen' : 'Geschlossen';
              break;
         case COVER:
-            icon = 'mdi:window-shutter';
-            label = entityState?.state === 'closed' ? 'Geschlossen' : `${entityState?.attributes.current_position || 0}%`;
+            const position = entityState?.attributes.current_position || 0;
+            const isOpen = position > 20;
+            
+            if (isOpen) {
+                icon = 'mdi:window-shutter-open';
+                label = `Offen - ${position}%`;
+                cardClass = 'is-on';
+            } else {
+                icon = 'mdi:window-shutter';
+                label = `Geschlossen - ${position}%`;
+            }
             break;
         case SMOKE:
             icon = entityState.state === 'on' ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector-variant';
@@ -369,6 +378,56 @@ export class FloorManager {
                 label = 'Aus';
             } else {
                 label = state ? state.charAt(0).toUpperCase() + state.slice(1) : 'N/A';
+            }
+            break;
+
+        case 'hoover':
+            if (entityState?.state === 'cleaning' || entityState?.state === 'on') {
+                icon = 'mdi:robot-vacuum';
+                label = 'Saugt';
+                cardClass = 'is-on';
+            } else if (entityState?.state === 'docked' || entityState?.state === 'idle') {
+                icon = 'mdi:robot-vacuum-variant';
+                label = 'Bereit';
+            } else if (entityState?.state === 'error') {
+                icon = 'mdi:robot-vacuum-alert';
+                label = 'Fehler';
+                cardClass = 'is-error';
+            } else {
+                icon = 'mdi:robot-vacuum-variant';
+                label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
+            }
+            break;
+
+        case 'mower':
+            if (entityState?.state === 'mowing' || entityState?.state === 'on') {
+                icon = 'mdi:robot-mower';
+                label = 'Mäht';
+                cardClass = 'is-on';
+            } else if (entityState?.state === 'docked' || entityState?.state === 'idle') {
+                icon = 'mdi:robot-mower-outline';
+                label = 'Geparkt';
+            } else if (entityState?.state === 'error') {
+                icon = 'mdi:robot-mower-outline';
+                label = 'Fehler';
+                cardClass = 'is-error';
+            } else {
+                icon = 'mdi:robot-mower-outline';
+                label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
+            }
+            break;
+
+        case 'other_door':
+            if (entityState?.state === 'on' || entityState?.state === 'open') {
+                icon = 'mdi:door-open';
+                label = 'Offen';
+                cardClass = 'is-on';
+            } else if (entityState?.state === 'off' || entityState?.state === 'closed') {
+                icon = 'mdi:door-closed';
+                label = 'Geschlossen';
+            } else {
+                icon = 'mdi:door';
+                label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
             }
             break;
 

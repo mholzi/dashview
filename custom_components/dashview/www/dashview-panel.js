@@ -30,7 +30,7 @@ class DashviewPanel extends HTMLElement {
         MOTION: 'motion', WINDOW: 'fenster', SMOKE: 'rauchmelder', VIBRATION: 'vibration',
         TEMPERATUR: 'temperatur', HUMIDITY: 'humidity', PRINTER: 'printer', DOOR: 'door',
         HOOVER: 'hoover', DISHWASHER: 'dishwasher', DRYER: 'dryer', CARTRIDGE: 'cartridge',
-        LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer', TV: 'tv', MUSIC: 'music', MOWER: 'mower'
+        LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer', TV: 'tv', MUSIC: 'music', MOWER: 'mower', COVER: 'cover'
     };
 
     this._componentInitializers = {
@@ -83,6 +83,7 @@ class DashviewPanel extends HTMLElement {
     if (this._weatherManager) this._weatherManager.setHass(hass);
     if (this._sceneManager) this._sceneManager.setHass(hass);
     if (this._floorManager) this._floorManager.setHass(hass);
+    if (this._popupManager) this._popupManager.setHass(hass);
 
     if (this._stateManager) {
         this._stateManager.handleHassUpdate();

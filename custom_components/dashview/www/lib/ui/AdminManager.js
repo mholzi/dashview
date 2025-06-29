@@ -19,7 +19,7 @@ export class AdminManager {
         MOTION: 'motion', WINDOW: 'fenster', SMOKE: 'rauchmelder', VIBRATION: 'vibration',
         TEMPERATUR: 'temperatur', HUMIDITY: 'humidity', PRINTER: 'printer', DOOR: 'door',
         HOOVER: 'hoover', DISHWASHER: 'dishwasher', DRYER: 'dryer', CARTRIDGE: 'cartridge',
-        LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer'
+        LIGHT: 'light', SLIDING_DOOR: 'sliding_door', FREEZER: 'freezer', MOWER: 'mower'
     };
   }
 
@@ -49,6 +49,7 @@ export class AdminManager {
         this.loadThresholdsConfig();
       },
       'humidity-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.HUMIDITY}, 'humidity-setup-status', 'humidity-sensors-by-room', 'Humidity Sensors'),
+      'other-entities-tab': () => this.loadOtherEntitiesTab(),
     };
 
     if (loadActionMap[targetId]) {
@@ -133,6 +134,12 @@ export class AdminManager {
               }
             },
             '#save-media-presets': () => this.saveMediaPlayerPresets(),
+            '#add-hoover-entity': () => this.addOtherEntity('hoover'),
+            '#save-hoover-entities': () => this.saveOtherEntities('hoover'),
+            '#add-mower-entity': () => this.addOtherEntity('mower'),
+            '#save-mower-entities': () => this.saveOtherEntities('mower'),
+            '#add-other-door-entity': () => this.addOtherEntity('other_door'),
+            '#save-other-door-entities': () => this.saveOtherEntities('other_door'),
         };
 
         for (const selector in buttonActions) {
@@ -146,6 +153,14 @@ export class AdminManager {
         if (saveRoomSensorBtn) {
             const roomKey = saveRoomSensorBtn.dataset.roomId;
             this.saveRoomCombinedSensor(roomKey);
+        }
+
+        const removeEntityBtn = e.target.closest('.delete-button[data-entity-type]');
+        if (removeEntityBtn) {
+            const entityType = removeEntityBtn.dataset.entityType;
+            const roomKey = removeEntityBtn.dataset.roomKey;
+            const entityId = removeEntityBtn.dataset.entityId;
+            this.removeOtherEntity(entityType, roomKey, entityId);
         }
     });
   }
@@ -854,5 +869,213 @@ async saveMediaPlayerPresets() {
         summaryHTML += `<div class="summary-item"><strong>${name}:</strong><span>${count}</span></div>`;
     });
     container.innerHTML = summaryHTML;
+  }
+
+  async loadOtherEntitiesTab() {
+    try {
+        const [houseConfig, allEntities] = await Promise.all([
+            this._hass.callApi('GET', 'dashview/config?type=house'),
+            this._getAvailableEntities()
+        ]);
+        
+        this._adminLocalState.houseConfig = houseConfig || { rooms: {} };
+        this._adminLocalState.allEntities = allEntities;
+        
+        this._populateRoomSelectors();
+        this._populateEntitySelectors();
+        this._renderOtherEntities();
+        
+        this._setStatusMessage(this._shadowRoot.getElementById('hoover-setup-status'), '✓ Ready', 'success');
+        this._setStatusMessage(this._shadowRoot.getElementById('mower-setup-status'), '✓ Ready', 'success');
+        this._setStatusMessage(this._shadowRoot.getElementById('other-door-setup-status'), '✓ Ready', 'success');
+    } catch (error) {
+        console.error('[DashView] Error loading other entities:', error);
+        this._setStatusMessage(this._shadowRoot.getElementById('hoover-setup-status'), `✗ Error: ${error.message}`, 'error');
+        this._setStatusMessage(this._shadowRoot.getElementById('mower-setup-status'), `✗ Error: ${error.message}`, 'error');
+        this._setStatusMessage(this._shadowRoot.getElementById('other-door-setup-status'), `✗ Error: ${error.message}`, 'error');
+    }
+  }
+
+  async _getAvailableEntities() {
+    if (!this._hass?.states) return [];
+    
+    const relevantDomains = ['vacuum', 'lawn_mower', 'binary_sensor', 'sensor', 'switch', 'device_tracker'];
+    const entities = [];
+    
+    for (const entityId in this._hass.states) {
+        const domain = entityId.split('.')[0];
+        if (relevantDomains.includes(domain)) {
+            const state = this._hass.states[entityId];
+            entities.push({
+                entity_id: entityId,
+                friendly_name: state.attributes.friendly_name || entityId,
+                domain: domain
+            });
+        }
+    }
+    
+    return entities.sort((a, b) => a.friendly_name.localeCompare(b.friendly_name));
+  }
+
+  _populateRoomSelectors() {
+    const rooms = this._adminLocalState.houseConfig.rooms || {};
+    const roomOptions = Object.entries(rooms).map(([roomKey, roomConfig]) => 
+        `<option value="${roomKey}">${roomConfig.friendly_name || roomKey}</option>`
+    ).join('');
+    
+    ['hoover', 'mower', 'other-door'].forEach(type => {
+        const selector = this._shadowRoot.getElementById(`new-${type}-room`);
+        if (selector) {
+            selector.innerHTML = '<option value="">Select Room</option>' + roomOptions;
+        }
+    });
+  }
+
+  _populateEntitySelectors() {
+    const entities = this._adminLocalState.allEntities || [];
+    const entityOptions = entities.map(entity => 
+        `<option value="${entity.entity_id}">${entity.friendly_name} (${entity.entity_id})</option>`
+    ).join('');
+    
+    ['hoover', 'mower', 'other-door'].forEach(type => {
+        const selector = this._shadowRoot.getElementById(`new-${type}-entity`);
+        if (selector) {
+            selector.innerHTML = '<option value="">Select Entity</option>' + entityOptions;
+        }
+    });
+  }
+
+  _renderOtherEntities() {
+    const entityTypes = [
+        { type: 'hoover', label: 'Hoover', containerId: 'hoover-entities-list' },
+        { type: 'mower', label: 'Mower', containerId: 'mower-entities-list' },
+        { type: 'other_door', label: 'Door', containerId: 'other-door-entities-list' }
+    ];
+    
+    entityTypes.forEach(({ type, label, containerId }) => {
+        const container = this._shadowRoot.getElementById(containerId);
+        if (!container) return;
+        
+        const configuredEntities = this._getConfiguredEntitiesOfType(type);
+        
+        if (configuredEntities.length === 0) {
+            container.innerHTML = `<div class="placeholder"><p>No ${label.toLowerCase()} entities configured yet.</p></div>`;
+            return;
+        }
+        
+        let html = '';
+        configuredEntities.forEach(({ roomKey, roomName, entityId, entityName }) => {
+            html += `
+                <div class="entity-list-item">
+                    <div class="entity-info">
+                        <span class="entity-name">${entityName}</span>
+                        <span class="entity-id">${entityId}</span>
+                        <span class="entity-room">Room: ${roomName}</span>
+                    </div>
+                    <button class="delete-button" data-entity-type="${type}" data-room-key="${roomKey}" data-entity-id="${entityId}">Remove</button>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    });
+  }
+
+  _getConfiguredEntitiesOfType(entityType) {
+    const rooms = this._adminLocalState.houseConfig.rooms || {};
+    const configuredEntities = [];
+    
+    Object.entries(rooms).forEach(([roomKey, roomConfig]) => {
+        const headerEntities = roomConfig.header_entities || [];
+        headerEntities.forEach(entity => {
+            if (entity.entity_type === entityType) {
+                const entityState = this._hass.states[entity.entity];
+                configuredEntities.push({
+                    roomKey,
+                    roomName: roomConfig.friendly_name || roomKey,
+                    entityId: entity.entity,
+                    entityName: entityState?.attributes.friendly_name || entity.entity
+                });
+            }
+        });
+    });
+    
+    return configuredEntities;
+  }
+
+  addOtherEntity(entityType) {
+    const roomSelector = this._shadowRoot.getElementById(`new-${entityType.replace('_', '-')}-room`);
+    const entitySelector = this._shadowRoot.getElementById(`new-${entityType.replace('_', '-')}-entity`);
+    
+    const roomKey = roomSelector?.value;
+    const entityId = entitySelector?.value;
+    
+    if (!roomKey || !entityId) {
+        const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
+        this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✗ Please select both room and entity', 'error');
+        return;
+    }
+    
+    const houseConfig = this._adminLocalState.houseConfig;
+    if (!houseConfig.rooms[roomKey]) {
+        const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
+        this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✗ Room not found', 'error');
+        return;
+    }
+    
+    if (!houseConfig.rooms[roomKey].header_entities) {
+        houseConfig.rooms[roomKey].header_entities = [];
+    }
+    
+    const alreadyExists = houseConfig.rooms[roomKey].header_entities.some(
+        entity => entity.entity === entityId && entity.entity_type === entityType
+    );
+    
+    if (alreadyExists) {
+        const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
+        this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✗ Entity already added to this room', 'error');
+        return;
+    }
+    
+    houseConfig.rooms[roomKey].header_entities.push({
+        entity: entityId,
+        entity_type: entityType
+    });
+    
+    roomSelector.value = '';
+    entitySelector.value = '';
+    
+    this._renderOtherEntities();
+    
+    const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
+    this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✓ Entity added (remember to save)', 'success');
+  }
+
+  async saveOtherEntities(entityType) {
+    const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
+    const statusElement = this._shadowRoot.getElementById(statusId);
+    
+    this._setStatusMessage(statusElement, 'Saving...', 'loading');
+    
+    try {
+        await this._saveConfigViaAPI('house', this._adminLocalState.houseConfig);
+        this._setStatusMessage(statusElement, '✓ Saved!', 'success');
+    } catch (error) {
+        this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
+    }
+  }
+
+  removeOtherEntity(entityType, roomKey, entityId) {
+    const houseConfig = this._adminLocalState.houseConfig;
+    if (!houseConfig.rooms[roomKey]?.header_entities) return;
+    
+    houseConfig.rooms[roomKey].header_entities = houseConfig.rooms[roomKey].header_entities.filter(
+        entity => !(entity.entity === entityId && entity.entity_type === entityType)
+    );
+    
+    this._renderOtherEntities();
+    
+    const statusId = entityType === 'other_door' ? 'other-door-setup-status' : `${entityType}-setup-status`;
+    this._setStatusMessage(this._shadowRoot.getElementById(statusId), '✓ Entity removed (remember to save)', 'success');
   }
 }

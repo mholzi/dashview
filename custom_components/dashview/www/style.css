@@ -286,9 +286,9 @@ body.popup-open, :host(.popup-open) {
     border: none;
     color: var(--gray000);
     cursor: pointer;
-    height: 40px;
-    width: 40px;
-    font-size: 40px;
+    height: 60px;
+    width: 60px;
+    font-size: 60px;
 }
 .nav-button.active {
     color: var(--blue-dark);
