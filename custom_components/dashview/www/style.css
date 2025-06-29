@@ -1053,7 +1053,7 @@ body.popup-open, :host(.popup-open) {
     justify-content: center;
     transition: all 0.2s ease;
     cursor: pointer;
-    font-size: 22px;
+    font-size: 28px !important;
 }
 
 .room-header-icon.active {
@@ -1768,7 +1768,7 @@ body.popup-open, :host(.popup-open) {
 }
 
 .floor-tab-button i.mdi {
-    font-size: 24px;
+    font-size: 28px !important;
     color: var(--secondary-text-color);
 }
 
