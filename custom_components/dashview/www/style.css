@@ -2095,11 +2095,14 @@ body.popup-open, :host(.popup-open) {
 
 .garbage-card-name {
     grid-area: name;
+    justify-self: start;
+    align-self: start;
+    text-align: left;
     font-size: 1.2em;
     font-weight: 500;
     color: var(--gray800);
-    align-self: start;
-    padding-top: 5px;
+    padding: 14px;
+    word-break: break-word;
 }
 
 .garbage-card-icon-cell {
@@ -2461,22 +2464,14 @@ body.popup-open, :host(.popup-open) {
     grid-area: name;
     justify-self: start;
     align-self: start;
-    font-weight: 500;
+    text-align: left;
     font-size: 16px;
-    opacity: 0.7;
+    font-weight: 500;
+    color: var(--gray800);
+    padding: 14px;
+    word-break: break-word;
 }
 
-.sensor-big-label-wrapper {
-    grid-area: label;
-    justify-self: start;
-    align-self: end;
-    font-size: 1.5em;
-    font-weight: 300;
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    margin-bottom: 20px;
-}
 .sensor-big-card.is-on {
     color: var(--gray000);
 }
@@ -2508,6 +2503,9 @@ body.popup-open, :host(.popup-open) {
     font-weight: 300;
     color: var(--gray800);
     padding: 0 0 14px 14px;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
 }
 /* --- Consolidated Light Card Styles --- */
 .lights-card {
@@ -2613,8 +2611,8 @@ body.popup-open, :host(.popup-open) {
     position: absolute;
     top: 10%;
     left: 0px;
-    margin-left: -20px;
-    width: 8px;
+    margin-left: -12px;
+    width: 4px;
     height: 80%;
     background-color: rgba(255, 255, 255, 0.5);
     border-radius: 2px;
@@ -2662,12 +2660,20 @@ body.popup-open, :host(.popup-open) {
 .light-name {
     font-weight: 500;
     color: var(--gray800);
+    text-shadow: 
+        0 0 3px rgba(255, 255, 255, 0.8),
+        0 0 6px rgba(255, 255, 255, 0.6),
+        0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .light-state {
     font-size: 0.85em;
     opacity: 0.7;
     color: var(--gray800);
+    text-shadow: 
+        0 0 3px rgba(255, 255, 255, 0.8),
+        0 0 6px rgba(255, 255, 255, 0.6),
+        0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .light-slider-area {

@@ -268,9 +268,7 @@ export class FloorManager {
               <div class="sensor-big-icon-cell">
                   <i class="mdi ${this._panel._processIconName(icon)}"></i>
               </div>
-              <div class="sensor-big-label-wrapper">
-                  <div class="sensor-big-label">${label}</div>
-              </div>
+              <div class="sensor-big-label">${label}</div>
           </div>
       </div>
     `;

@@ -341,9 +341,7 @@ class DashviewPanel extends HTMLElement {
             <i class="mdi ${this._processIconName(icon)}"></i>
           </div>
           <div class="sensor-big-name">${name}</div>
-          <div class="sensor-big-label-wrapper">
-            <div class="sensor-big-label">${label}</div>
-          </div>
+          <div class="sensor-big-label">${label}</div>
         </div>
       `;
 
