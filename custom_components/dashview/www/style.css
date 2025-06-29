@@ -1460,7 +1460,7 @@ body.popup-open, :host(.popup-open) {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin: 16px 0;
+    margin: 0 0 16px 0;
 }
 
 .notification-card {
@@ -1980,7 +1980,7 @@ body.popup-open, :host(.popup-open) {
     line-height: 1em;
     font-weight: 300;
     color: var(--gray800);
-    padding: 0 0 6px 14px;
+    padding: 0 0 14px 14px;
 }
 
 /* --- Garbage Collection Cards --- */
@@ -2437,7 +2437,7 @@ body.popup-open, :host(.popup-open) {
 }
 /* --- Sensor Big Card --- */
 .sensor-big-card {
-    height: 162px;
+    height: 100%;
     border-radius: 20px;
     padding: 20px;
     box-sizing: border-box;
@@ -2456,19 +2456,21 @@ body.popup-open, :host(.popup-open) {
         "name icon"
         "label label";
     grid-template-rows: auto 1fr;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr 50px;
     gap: 8px;
 }
 
 .sensor-big-icon-cell {
     grid-area: icon;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
+    justify-self: end;
+    align-self: start;
+    background: var(--highlight);
+    border-radius: 100%;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: -16px -16px 0 0;
     transition: background-color 0.3s ease;
 }
 
@@ -2520,11 +2522,14 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray000);
 }
 .sensor-big-label {
-    display: block;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    width: 100%;
+    justify-self: start;
+    align-self: end;
+    font-size: 2em;
+    line-height: 1em;
+    font-weight: 300;
+    color: var(--gray800);
+    padding: 0 0 14px 14px;
+
 }
 /* --- Consolidated Light Card Styles --- */
 .lights-card {

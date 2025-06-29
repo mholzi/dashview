@@ -27,6 +27,54 @@ export class SceneManager {
     this._initializeSceneButtonListeners();
   }
 
+  /**
+   * Render scene buttons for a specific room
+   * @param {HTMLElement} container - Container element to render scenes in
+   * @param {string} roomKey - Room key to filter scenes for
+   * @param {Object} roomConfig - Room configuration
+   */
+  renderRoomSceneButtons(container, roomKey, roomConfig) {
+    if (!container) return;
+
+    const roomScenes = this._getRoomScenes(roomKey, roomConfig);
+    container.innerHTML = ''; // Clear existing buttons
+    
+    roomScenes.forEach(scene => {
+        const buttonElement = this._createSceneButtonElementFromHTML(scene);
+        if (buttonElement) {
+            container.appendChild(buttonElement);
+        }
+    });
+
+    this._initializeSceneButtonListeners(container);
+  }
+
+  /**
+   * Get scenes relevant for a specific room
+   * @param {string} roomKey - Room key
+   * @param {Object} roomConfig - Room configuration
+   * @returns {Array} Array of scenes for the room
+   */
+  _getRoomScenes(roomKey, roomConfig) {
+    const scenes = this._config?.scenes || [];
+    return scenes.filter(scene => {
+        // Include auto-generated scenes for this room
+        if (scene.auto_generated && scene.room_key === roomKey) {
+            return true;
+        }
+        // Include manual scenes that control entities in this room
+        if (scene.entities) {
+            const roomEntities = [
+                ...(roomConfig.lights || []),
+                ...(roomConfig.covers || []),
+                ...(roomConfig.media_players?.map(mp => mp.entity) || [])
+            ];
+            return scene.entities.some(entity => roomEntities.includes(entity));
+        }
+        return false;
+    });
+  }
+
   _createSceneButtonElement(scene) {
     const template = this._panel.shadowRoot.querySelector('#scene-button-template');
     if (!template) return null;
@@ -50,16 +98,49 @@ export class SceneManager {
     return sceneButton;
   }
 
-  _initializeSceneButtonListeners() {
-    this._panel.shadowRoot.querySelectorAll('.scene-button').forEach(button => {
+  /**
+   * Create scene button element from HTML (for room popups)
+   * @param {Object} scene - Scene configuration
+   * @returns {HTMLElement|null} Scene button element
+   */
+  _createSceneButtonElementFromHTML(scene) {
+    const name = this._getButtonName(scene);
+    const icon = this._getButtonIcon(scene);
+    const styles = this._getButtonStyles(scene);
+    
+    const sceneButton = document.createElement('div');
+    sceneButton.className = 'scene-button';
+    sceneButton.dataset.sceneId = scene.id;
+    sceneButton.style.cssText = styles.card;
+    
+    sceneButton.innerHTML = `
+      <div class="scene-button-icon">
+        <i class="mdi ${icon}" style="color: ${styles.icon}"></i>
+      </div>
+      <div class="scene-button-name" style="color: ${styles.name}">${name}</div>
+    `;
+    
+    return sceneButton;
+  }
+
+  _initializeSceneButtonListeners(container = null) {
+    const searchRoot = container || this._panel.shadowRoot;
+    searchRoot.querySelectorAll('.scene-button').forEach(button => {
+      // Avoid double-attaching listeners
+      if (button.hasAttribute('data-listener-attached')) return;
+      
       button.addEventListener('click', () => {
         const sceneId = button.dataset.sceneId;
         const scene = this._config.scenes.find(s => s.id === sceneId);
         if (scene) {
           const action = this._getTapAction(scene);
-          this._hass.callService(action.service, action.service_data);
+          if (this._hass) {
+            this._hass.callService(action.service, action.service_data);
+          }
         }
       });
+      
+      button.setAttribute('data-listener-attached', 'true');
     });
   }
 
@@ -95,15 +176,41 @@ export class SceneManager {
           : 'Ambiente';
       case 'auto_room_lights_off':
         return scene.name || 'Lichter aus';
+      case 'auto_room_covers':
+        // Calculate average position for the room's covers
+        const avgPosition = this._calculateAverageCoverPosition(scene.entities || []);
+        return avgPosition < 30 ? 'Rollos hoch' : 'Rollos runter';
+      case 'auto_global_covers':
+        // Calculate average position for all covers
+        const globalAvgPosition = this._calculateAverageCoverPosition(scene.entities || []);
+        return globalAvgPosition < 30 ? 'Alle Rollos hoch' : 'Alle Rollos runter';
       default:
         return scene.name;
     }
+  }
+
+  _calculateAverageCoverPosition(entities) {
+    if (!this._hass || !entities || entities.length === 0) return 50;
+    
+    const positions = entities
+      .map(entityId => {
+        const state = this._hass.states[entityId];
+        const pos = state?.attributes?.current_position;
+        return typeof pos === 'number' ? pos : 50; // Default to 50% if unknown
+      })
+      .filter(pos => pos !== null);
+    
+    if (positions.length === 0) return 50;
+    
+    return positions.reduce((sum, pos) => sum + pos, 0) / positions.length;
   }
 
   _getButtonIcon(scene) {
     switch (scene.type) {
       case 'cover':
       case 'all_covers':
+      case 'auto_room_covers':
+      case 'auto_global_covers':
         return 'mdi:window-shutter';
       case 'roof_window':
         return 'mdi:window-open';
@@ -167,6 +274,16 @@ export class SceneManager {
           iconColor = 'var(--gray100)';
         }
         break;
+      case 'auto_room_covers':
+      case 'auto_global_covers':
+        const avgPos = this._calculateAverageCoverPosition(scene.entities || []);
+        // Highlight the button if covers are not fully open (position < 100)
+        if (avgPos < 100) {
+          cardColor = 'var(--gray800)';
+          textColor = 'var(--gray100)';
+          iconColor = 'var(--gray100)';
+        }
+        break;
       case 'computer':
       case 'all_lights_out':
       case 'auto_room_lights_off':
@@ -215,6 +332,11 @@ export class SceneManager {
         break;
       case 'computer':
         service = 'homeassistant.toggle';
+        break;
+      case 'auto_room_covers':
+      case 'auto_global_covers':
+        const avgPosition = this._calculateAverageCoverPosition(scene.entities || []);
+        service = avgPosition < 30 ? 'cover.open_cover' : 'cover.close_cover';
         break;
       case 'all_lights_out':
       case 'auto_room_lights_off':

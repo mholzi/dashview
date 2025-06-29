@@ -23,13 +23,30 @@ export class AutoSceneGenerator {
         const autoScenes = [];
         
         Object.entries(this._config.rooms).forEach(([roomKey, roomConfig]) => {
+            // Generate lights off scenes for rooms with lights
             if (roomConfig.lights && roomConfig.lights.length > 0) {
-                const autoScene = this._createRoomLightsOffScene(roomKey, roomConfig);
-                if (autoScene) {
-                    autoScenes.push(autoScene);
+                const lightScene = this._createRoomLightsOffScene(roomKey, roomConfig);
+                if (lightScene) {
+                    autoScenes.push(lightScene);
+                }
+            }
+            
+            // Generate cover scenes for rooms with covers
+            if (roomConfig.covers && roomConfig.covers.length > 0) {
+                const coverScene = this._createRoomCoversScene(roomKey, roomConfig);
+                if (coverScene) {
+                    autoScenes.push(coverScene);
                 }
             }
         });
+
+        // Generate global cover scene if enabled and covers exist
+        if (this._getGlobalCoverSceneEnabled()) {
+            const globalCoverScene = this._createGlobalCoverScene();
+            if (globalCoverScene) {
+                autoScenes.push(globalCoverScene);
+            }
+        }
 
         return autoScenes;
     }
@@ -69,6 +86,106 @@ export class AutoSceneGenerator {
     }
 
     /**
+     * Create a cover scene for a specific room
+     * @param {string} roomKey - The room identifier
+     * @param {Object} roomConfig - The room configuration
+     * @returns {Object|null} Generated scene object or null
+     */
+    _createRoomCoversScene(roomKey, roomConfig) {
+        if (!roomConfig.covers || roomConfig.covers.length === 0) {
+            return null;
+        }
+
+        // Filter out any invalid entities
+        const validCoverEntities = roomConfig.covers.filter(entityId => {
+            return this._hass?.states?.[entityId] !== undefined;
+        });
+
+        if (validCoverEntities.length === 0) {
+            return null;
+        }
+
+        const roomName = roomConfig.friendly_name || roomKey;
+        
+        return {
+            id: `dashview_auto_${roomKey}_covers`,
+            name: `${roomName} - Rollos`,
+            icon: 'mdi:window-shutter',
+            type: 'auto_room_covers',
+            entities: validCoverEntities,
+            room_key: roomKey,
+            auto_generated: true,
+            description: `Automatically generated scene to control all covers in ${roomName}`
+        };
+    }
+
+    /**
+     * Create a global cover scene for all covers in the house
+     * @returns {Object|null} Generated scene object or null
+     */
+    _createGlobalCoverScene() {
+        if (!this._config?.rooms) return null;
+
+        // Collect all cover entities from all rooms
+        const allCoverEntities = [];
+        Object.values(this._config.rooms).forEach(roomConfig => {
+            if (roomConfig.covers && roomConfig.covers.length > 0) {
+                allCoverEntities.push(...roomConfig.covers);
+            }
+        });
+
+        if (allCoverEntities.length === 0) return null;
+
+        // Filter out any invalid entities
+        const validCoverEntities = allCoverEntities.filter(entityId => {
+            return this._hass?.states?.[entityId] !== undefined;
+        });
+
+        if (validCoverEntities.length === 0) return null;
+
+        return {
+            id: 'dashview_auto_global_covers',
+            name: 'Alle Rollos',
+            icon: 'mdi:window-shutter',
+            type: 'auto_global_covers',
+            entities: validCoverEntities,
+            auto_generated: true,
+            description: 'Automatically generated scene to control all covers in the house'
+        };
+    }
+
+    /**
+     * Get the global cover scene enabled status from configuration
+     * @returns {boolean}
+     */
+    _getGlobalCoverSceneEnabled() {
+        return this._config?.auto_scenes?.global_covers_enabled !== false; // Default to true
+    }
+
+    /**
+     * Set the global cover scene enabled status
+     * @param {boolean} enabled - Whether to enable global cover scene
+     * @returns {Promise<boolean>} Success status
+     */
+    async setGlobalCoverSceneEnabled(enabled) {
+        try {
+            if (!this._config.auto_scenes) {
+                this._config.auto_scenes = {};
+            }
+            
+            this._config.auto_scenes.global_covers_enabled = enabled;
+            
+            // Update scenes based on enabled status
+            await this.updateConfiguration(this._getAutoSceneEnabled());
+            
+            return true;
+        } catch (error) {
+            console.error('[AutoSceneGenerator] Error setting global cover scene enabled status:', error);
+            return false;
+        }
+    }
+
+    /**
      * Check if a scene is auto-generated
      * @param {Object} scene - Scene object
      * @returns {boolean}
@@ -76,6 +193,8 @@ export class AutoSceneGenerator {
     isAutoGenerated(scene) {
         return scene.auto_generated === true || 
                scene.type === 'auto_room_lights_off' ||
+               scene.type === 'auto_room_covers' ||
+               scene.type === 'auto_global_covers' ||
                (scene.id && scene.id.startsWith('dashview_auto_'));
     }
 
