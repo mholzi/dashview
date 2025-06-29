@@ -98,6 +98,7 @@ export class SecurityComponents {
                 break;
             case DOOR:
             case 'other_door':
+            case 'door':
                 const doorState = entityState?.state?.toLowerCase();
                 if (doorState === 'on' || doorState === 'open') {
                     icon = 'mdi:door-open';
@@ -105,11 +106,11 @@ export class SecurityComponents {
                     cardClass = 'door-open';
                 } else if (doorState === 'unlocked') {
                     icon = 'mdi:door-closed';
-                    label = 'Entriegelt';
+                    label = 'Zu';
                     cardClass = 'door-unlocked';
                 } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
                     icon = 'mdi:door-closed-lock';
-                    label = 'Verriegelt';
+                    label = 'Abgeschlossen';
                     cardClass = 'door-locked';
                 } else {
                     icon = 'mdi:door';

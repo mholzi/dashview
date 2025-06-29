@@ -178,9 +178,6 @@ export class FloorManager {
     this._initializeSwiper(gridContainer);
 
     gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card, .garbage-card').forEach(card => this._initializeCardListeners(card));
-    
-    // Add overflow detection for sensor-big-card labels
-    this._checkTextOverflow(gridContainer);
   }
 
   _getEntitiesForFloor(floorId) {
@@ -402,6 +399,7 @@ export class FloorManager {
             break;
 
         case 'other_door':
+        case 'door':
             const doorState = entityState?.state?.toLowerCase();
             if (doorState === 'on' || doorState === 'open') {
                 icon = 'mdi:door-open';
@@ -409,11 +407,11 @@ export class FloorManager {
                 cardClass = 'door-open';
             } else if (doorState === 'unlocked') {
                 icon = 'mdi:door-closed';
-                label = 'Entriegelt';
+                label = 'Zu';
                 cardClass = 'door-unlocked';
             } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
                 icon = 'mdi:door-closed-lock';
-                label = 'Verriegelt';
+                label = 'Abgeschlossen';
                 cardClass = 'door-locked';
             } else {
                 icon = 'mdi:door';
@@ -643,20 +641,6 @@ export class FloorManager {
     return garbageNames[type] || 'Müll';
   }
 
-  _checkTextOverflow(container) {
-    container.querySelectorAll('.sensor-big-label').forEach(label => {
-      // Remove any existing overflow class first
-      label.classList.remove('overflow');
-      
-      // Check if text overflows the container
-      requestAnimationFrame(() => {
-        const wrapper = label.parentElement;
-        if (wrapper && label.scrollWidth > wrapper.clientWidth) {
-          label.classList.add('overflow');
-        }
-      });
-    });
-  }
 
   _getVacuumDisplayData(entityState) {
     if (!entityState) {
