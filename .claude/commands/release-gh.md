@@ -1,4 +1,4 @@
-# /release
+# /release-gh
 
 Automates the entire software release process.
 
