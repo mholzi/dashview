@@ -39,16 +39,7 @@ export class LightsCard {
             
             if (isDimmable) {
                 row.classList.add('is-dimmable');
-                this._initDraggableSlider(row, entityId);
-                
-                // Clicking on the content area (icon/text) will toggle the light.
-                const contentArea = row.querySelector('.light-content');
-                if (contentArea) {
-                    contentArea.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Prevent the drag handler from firing.
-                        this._toggleLight(entityId, row, card, lightEntities);
-                    });
-                }
+                this._initDraggableSlider(row, entityId, card, lightEntities);
             } else {
                 // Non-dimmable lights are simple toggles.
                 row.addEventListener('click', () => {
@@ -108,9 +99,11 @@ export class LightsCard {
     }
 
 
-    _initDraggableSlider(row, entityId) {
+    _initDraggableSlider(row, entityId, card, lightEntities) {
         let isDragging = false;
         let startX = 0;
+        let dragStartTime = 0;
+        let hasMoved = false;
 
         const updateVisuals = (clientX) => {
             const rect = row.getBoundingClientRect();
@@ -152,40 +145,57 @@ export class LightsCard {
             }
         };
 
-        const onDragStart = (e) => {
+        const onStart = (e) => {
             isDragging = true;
+            hasMoved = false;
+            dragStartTime = Date.now();
             startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             row.style.cursor = 'ew-resize';
             document.body.style.cursor = 'ew-resize';
+            e.preventDefault(); // Prevent text selection during drag
         };
 
-        const onDragMove = (e) => {
-            if (isDragging) {
-                updateVisuals(e.type === 'touchmove' ? e.touches[0].clientX : e.clientX);
+        const onMove = (e) => {
+            if (!isDragging) return;
+            
+            const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const deltaX = Math.abs(currentX - startX);
+            
+            // If moved more than 5px, consider it a drag
+            if (deltaX > 5) {
+                hasMoved = true;
+                updateVisuals(currentX);
             }
         };
 
-        const onDragEnd = (e) => {
+        const onEnd = (e) => {
             if (!isDragging) return;
             isDragging = false;
             row.style.cursor = 'pointer';
             document.body.style.cursor = '';
             
             const endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+            const dragDuration = Date.now() - dragStartTime;
+            const deltaX = Math.abs(endX - startX);
             
-            // Only call service if it was a real drag, not a click on the slider area.
-            if (Math.abs(endX - startX) > 5) {
+            if (hasMoved && deltaX > 5) {
+                // This was a drag - set brightness
                 callLightService(endX);
+            } else if (dragDuration < 300 && deltaX <= 5) {
+                // This was a click - toggle light
+                this._toggleLight(entityId, row, card, lightEntities);
             }
         };
 
-        row.addEventListener('mousedown', onDragStart);
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('mouseup', onDragEnd);
+        // Mouse events
+        row.addEventListener('mousedown', onStart);
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
 
-        row.addEventListener('touchstart', onDragStart, { passive: true });
-        document.addEventListener('touchmove', onDragMove);
-        document.addEventListener('touchend', onDragEnd);
+        // Touch events
+        row.addEventListener('touchstart', onStart, { passive: false });
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd, { passive: false });
     }
 
     update(popup, entityId) {
