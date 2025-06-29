@@ -78,7 +78,7 @@ export class SecurityComponents {
             cardClass = 'is-on';
         }
 
-        const { WINDOW, MOTION, SMOKE, VIBRATION } = this._panel._entityLabels;
+        const { WINDOW, MOTION, SMOKE, VIBRATION, DOOR } = this._panel._entityLabels;
         switch (type) {
             case WINDOW:
                  icon = entityState.state === 'on' ? 'mdi:window-open-variant' : 'mdi:window-closed';
@@ -95,6 +95,26 @@ export class SecurityComponents {
             case VIBRATION:
                 icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
                 label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
+                break;
+            case DOOR:
+            case 'other_door':
+                const doorState = entityState?.state?.toLowerCase();
+                if (doorState === 'on' || doorState === 'open') {
+                    icon = 'mdi:door-open';
+                    label = 'Offen';
+                    cardClass = 'door-open';
+                } else if (doorState === 'unlocked') {
+                    icon = 'mdi:door-closed';
+                    label = 'Entriegelt';
+                    cardClass = 'door-unlocked';
+                } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
+                    icon = 'mdi:door-closed-lock';
+                    label = 'Verriegelt';
+                    cardClass = 'door-locked';
+                } else {
+                    icon = 'mdi:door';
+                    label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
+                }
                 break;
             default:
                 if (entityState?.state === 'on' || entityState?.state === 'off') {
@@ -141,63 +161,6 @@ export class SecurityComponents {
             
             container.appendChild(card);
         });
-    }
-
-    _getSecurityCardDisplayData(entityId, type) {
-        const entityState = this._hass.states[entityId];
-        
-        let name = entityState?.attributes.friendly_name || entityId;
-        let label = entityState?.state || 'N/A';
-        let icon = 'mdi:help-circle';
-        let cardClass = '';
-
-        if (!entityState || entityState.state === 'unavailable') {
-            cardClass = 'is-unavailable';
-            label = 'Nicht verfügbar';
-        } else if (entityState.state === 'on') {
-            cardClass = 'is-on';
-        }
-
-        const { WINDOW, MOTION, SMOKE, VIBRATION } = this._panel._entityLabels;
-        switch (type) {
-            case WINDOW:
-                 icon = entityState.state === 'on' ? 'mdi:window-open-variant' : 'mdi:window-closed';
-                 label = entityState.state === 'on' ? 'Offen' : 'Geschlossen';
-                 break;
-            case MOTION:
-                 icon = entityState.state === 'on' ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
-                 label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
-                 if(entityState.state === 'on') cardClass += ' active-motion'; // Add a specific class for active motion
-                 break;
-            case SMOKE:
-                icon = entityState.state === 'on' ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector-variant';
-                label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
-                if(entityState.state === 'on') cardClass += ' active-smoke'; // Add a specific class for active smoke
-                break;
-            case VIBRATION:
-                icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
-                label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
-                if(entityState.state === 'on') cardClass += ' active-vibration'; // Add a specific class for active vibration
-                break;
-            case 'hoover':
-                const { icon: vacuumIcon, label: vacuumLabel, cardClass: vacuumCardClass } = this._panel._floorManager._getVacuumDisplayData(entityState);
-                icon = vacuumIcon;
-                label = vacuumLabel;
-                cardClass = vacuumCardClass;
-                break;
-            case 'mower':
-                const { icon: mowerIcon, label: mowerLabel, cardClass: mowerCardClass } = this._panel._floorManager._getMowerDisplayData(entityState);
-                icon = mowerIcon;
-                label = mowerLabel;
-                cardClass = mowerCardClass;
-                break;
-            default:
-                if (entityState?.state === 'on' || entityState?.state === 'off') {
-                    label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
-                }
-                break;
-        }
-        return { name, label, icon, cardClass };
     }
     _updateSecurityHeaderButtons(popup) {
         if (!this._hass || !popup) return;
