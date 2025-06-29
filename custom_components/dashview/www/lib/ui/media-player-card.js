@@ -11,12 +11,10 @@ export class MediaPlayerCard {
     }
 
     setHass(hass) {
-        console.log(`[MediaPlayerCard] setHass called, hass available: ${!!hass}`);
         this._hass = hass;
     }
 
     initialize(popup, roomKey, mediaPlayerEntities) {
-        console.log(`[MediaPlayerCard] initialize called for room ${roomKey}, hass available: ${!!this._hass}`);
         const card = popup.querySelector('.media-player-card');
         if (!card) return;
     
@@ -108,7 +106,6 @@ export class MediaPlayerCard {
     }
 
     _initializeMediaPlayerControls(popup) {
-        console.log(`[MediaPlayerCard] _initializeMediaPlayerControls called, hass available: ${!!this._hass}`);
 
         // Control buttons (play, pause, next, prev)
         popup.querySelectorAll('.media-control-button').forEach(button => {
@@ -116,12 +113,9 @@ export class MediaPlayerCard {
                 const controls = button.closest('.media-controls');
                 const entityId = controls.dataset.entity;
                 const action = button.dataset.action;
-                console.log(`[MediaPlayerCard] Button clicked: ${action} for ${entityId}, hass available: ${!!this._hass}`);
                 if (entityId && action && this._hass) {
                     this._ignoreUpdatesFor(entityId, controls.closest('.media-display'));
                     this._hass.callService('media_player', action, { entity_id: entityId });
-                } else {
-                    console.error(`[MediaPlayerCard] Cannot execute action: entityId=${entityId}, action=${action}, hass=${!!this._hass}`);
                 }
             });
         });
@@ -135,12 +129,9 @@ export class MediaPlayerCard {
             slider.addEventListener('change', (e) => {
                 const entityId = e.target.dataset.entity;
                 const volume = parseFloat(e.target.value) / 100;
-                console.log(`[MediaPlayerCard] Volume slider changed: ${volume} for ${entityId}, hass available: ${!!this._hass}`);
                 if (entityId && this._hass) {
                     this._ignoreUpdatesFor(entityId, e.target);
                     this._hass.callService('media_player', 'volume_set', { entity_id: entityId, volume_level: volume });
-                } else {
-                    console.error(`[MediaPlayerCard] Cannot set volume: entityId=${entityId}, hass=${!!this._hass}`);
                 }
             });
         });
