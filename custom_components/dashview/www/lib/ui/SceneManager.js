@@ -57,9 +57,12 @@ export class SceneManager {
    */
   _getRoomScenes(roomKey, roomConfig) {
     const scenes = this._config?.scenes || [];
-    return scenes.filter(scene => {
+    console.log(`[SceneManager] Getting scenes for room ${roomKey}:`, scenes.length, 'total scenes');
+    
+    const roomScenes = scenes.filter(scene => {
         // Include auto-generated scenes for this room
         if (scene.auto_generated && scene.room_key === roomKey) {
+            console.log(`[SceneManager] Including auto-generated scene:`, scene.name, scene.id);
             return true;
         }
         // Include manual scenes that control entities in this room
@@ -69,10 +72,17 @@ export class SceneManager {
                 ...(roomConfig.covers || []),
                 ...(roomConfig.media_players?.map(mp => mp.entity) || [])
             ];
-            return scene.entities.some(entity => roomEntities.includes(entity));
+            const hasMatchingEntities = scene.entities.some(entity => roomEntities.includes(entity));
+            if (hasMatchingEntities) {
+                console.log(`[SceneManager] Including manual scene:`, scene.name, scene.id);
+            }
+            return hasMatchingEntities;
         }
         return false;
     });
+    
+    console.log(`[SceneManager] Found ${roomScenes.length} scenes for room ${roomKey}:`, roomScenes.map(s => s.name));
+    return roomScenes;
   }
 
   _createSceneButtonElement(scene) {

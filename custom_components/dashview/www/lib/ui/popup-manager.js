@@ -191,6 +191,7 @@ export class PopupManager {
   }
 
   async _injectRoomCards(popupBody, roomConfig, roomKey) {
+    console.log(`[PopupManager] Injecting room cards for ${roomKey}`);
     const cardTemplates = {
         scenes: {
             condition: this._hasRoomScenes(roomConfig, roomKey),
@@ -220,8 +221,10 @@ export class PopupManager {
 
     const fetchPromises = [];
 
-    for (const cardInfo of Object.values(cardTemplates)) {
+    for (const [cardType, cardInfo] of Object.entries(cardTemplates)) {
+        console.log(`[PopupManager] Card ${cardType} condition:`, cardInfo.condition);
         if (cardInfo.condition) {
+            console.log(`[PopupManager] Loading card template for ${cardType}:`, cardInfo.path);
             fetchPromises.push(
                 fetch(cardInfo.path)
                     .then(response => {
@@ -334,9 +337,12 @@ export class PopupManager {
    */
   _hasRoomScenes(roomConfig, roomKey) {
     const scenes = this._config?.scenes || [];
-    return scenes.some(scene => {
+    console.log(`[PopupManager] Checking scenes for room ${roomKey}:`, scenes.length, 'total scenes');
+    
+    const hasScenes = scenes.some(scene => {
         // Check if it's an auto-generated scene for this room
         if (scene.auto_generated && scene.room_key === roomKey) {
+            console.log(`[PopupManager] Found auto-generated scene for ${roomKey}:`, scene.name);
             return true;
         }
         // Check if it's a manual scene that includes entities from this room
@@ -346,9 +352,16 @@ export class PopupManager {
                 ...(roomConfig.covers || []),
                 ...(roomConfig.media_players?.map(mp => mp.entity) || [])
             ];
-            return scene.entities.some(entity => roomEntities.includes(entity));
+            const hasMatchingEntities = scene.entities.some(entity => roomEntities.includes(entity));
+            if (hasMatchingEntities) {
+                console.log(`[PopupManager] Found manual scene for ${roomKey}:`, scene.name);
+            }
+            return hasMatchingEntities;
         }
         return false;
     });
+    
+    console.log(`[PopupManager] Room ${roomKey} has scenes:`, hasScenes);
+    return hasScenes;
   }
 }

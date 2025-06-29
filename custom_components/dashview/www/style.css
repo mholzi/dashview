@@ -288,7 +288,7 @@ body.popup-open, :host(.popup-open) {
     cursor: pointer;
     height: 60px;
     width: 60px;
-    font-size: 60px;
+    font-size: 60px !important;
 }
 .nav-button.active {
     color: var(--blue-dark);
@@ -1904,7 +1904,7 @@ body.popup-open, :host(.popup-open) {
 .room-card {
     padding: 8px;
     height: 100%;
-    border-radius: 18px;
+    border-radius: 12px;
     background: var(--gray000);
     cursor: pointer;
     box-sizing: border-box;
@@ -1969,14 +1969,15 @@ body.popup-open, :host(.popup-open) {
 
 .room-card-icon-cell i {
     font-size: 30px;
-    color: var(--white);
+    color: var(--gray800);
+    transition: color 0.3s ease;
 }
 
 .room-card-temp {
     grid-area: temp;
     justify-self: start;
     align-self: end;
-    font-size: 2em;
+    font-size: 1.5em;
     line-height: 1em;
     font-weight: 300;
     color: var(--gray800);
@@ -1993,11 +1994,15 @@ body.popup-open, :host(.popup-open) {
 }
 
 .garbage-card {
-    background: var(--gray000);
+    padding: 8px;
+    height: 100%;
     border-radius: 12px;
+    background: var(--gray000);
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
     margin: 0;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
 }
 
 .garbage-card.garbage-urgent {
@@ -2114,8 +2119,6 @@ body.popup-open, :host(.popup-open) {
         "date date";
     grid-template-rows: 1fr auto;
     grid-template-columns: 1fr 50px;
-    padding: 20px;
-    border-radius: 12px;
 }
 
 .garbage-card-name {
@@ -2132,7 +2135,7 @@ body.popup-open, :host(.popup-open) {
     justify-self: end;
     align-self: start;
     background: var(--highlight);
-    border-radius: 50%;
+    border-radius: 100%;
     width: 50px;
     height: 50px;
     display: flex;
@@ -2144,15 +2147,18 @@ body.popup-open, :host(.popup-open) {
 .garbage-card-icon-cell i {
     font-size: 30px;
     color: var(--gray800);
+    transition: color 0.3s ease;
 }
 
 .garbage-card-date {
     grid-area: date;
-    font-size: 1.0em;
-    color: var(--gray600);
-    font-weight: 400;
-    margin-top: 10px;
-    padding-bottom: 5px;
+    justify-self: start;
+    align-self: end;
+    font-size: 1.5em;
+    line-height: 1em;
+    font-weight: 300;
+    color: var(--gray800);
+    padding: 0 0 14px 14px;
 }
 
 /* Urgent and tomorrow styling for new layout */
@@ -2438,8 +2444,8 @@ body.popup-open, :host(.popup-open) {
 /* --- Sensor Big Card --- */
 .sensor-big-card {
     height: 100%;
-    border-radius: 20px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 8px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -2455,9 +2461,8 @@ body.popup-open, :host(.popup-open) {
     grid-template-areas:
         "name icon"
         "label label";
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 1fr auto;
     grid-template-columns: 1fr 50px;
-    gap: 8px;
 }
 
 .sensor-big-icon-cell {
@@ -2476,6 +2481,7 @@ body.popup-open, :host(.popup-open) {
 
 .sensor-big-icon-cell i {
     font-size: 30px;
+    color: var(--gray800);
     transition: color 0.3s ease;
 }
 
@@ -2522,14 +2528,14 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray000);
 }
 .sensor-big-label {
+    grid-area: label;
     justify-self: start;
     align-self: end;
-    font-size: 2em;
+    font-size: 1.5em;
     line-height: 1em;
     font-weight: 300;
     color: var(--gray800);
     padding: 0 0 14px 14px;
-
 }
 /* --- Consolidated Light Card Styles --- */
 .lights-card {

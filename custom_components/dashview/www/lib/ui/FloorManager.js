@@ -402,7 +402,7 @@ export class FloorManager {
             label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
             break;
         case 'media_player':
-            icon = 'mdi:play-network';
+            icon = 'mdi:music';
             const state = entityState?.state;
             if (state === 'playing') {
                 label = 'Playing';
@@ -434,11 +434,7 @@ export class FloorManager {
                 icon = 'mdi:door-open';
                 label = 'Offen';
                 cardClass = 'door-open';
-            } else if (doorState === 'unlocked') {
-                icon = 'mdi:door-closed';
-                label = 'Zu';
-                cardClass = 'door-unlocked';
-            } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
+            } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked' || doorState === 'unlocked') {
                 icon = 'mdi:door-closed-lock';
                 label = 'Abgeschlossen';
                 cardClass = 'door-locked';
@@ -786,7 +782,10 @@ export class FloorManager {
     if ((error && error !== 'none' && error !== 'None' && error.toLowerCase() !== 'no error') || 
         (lastError && lastError !== 'none' && lastError !== 'None' && lastError.toLowerCase() !== 'no error')) {
       let errorMessage = 'Fehler';
-      const currentError = error || lastError || state;
+      // Use actual error value, but exclude "none" values when determining current error
+      const validError = (error && error !== 'none' && error !== 'None' && error.toLowerCase() !== 'no error') ? error : null;
+      const validLastError = (lastError && lastError !== 'none' && lastError !== 'None' && lastError.toLowerCase() !== 'no error') ? lastError : null;
+      const currentError = validError || validLastError || state;
       
       if (currentError && currentError !== 'OK') {
         // Common lawn mower error translations
