@@ -5,6 +5,35 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.101] - 2024-12-29
+
+### Added
+
+- **Enhanced Temperature Card Layout**: Complete redesign of temperature cards in room popups with CSS Grid layout
+  - Large, prominent temperature display (2.6em font)
+  - Improved visual hierarchy with temperature at top, room name at bottom
+  - Enhanced graph rendering with smooth curves and better scaling
+  - Better responsive design for mobile devices
+
+- **Simplified Scene Management**: Streamlined admin interface for auto-generated scenes
+  - Single global toggle for "Lights Off" scenes across all rooms
+  - Automatic scene generation based on rooms with lights
+  - Removed complex per-room configuration interface
+  - Cleaner, more intuitive admin experience
+
+### Enhanced
+
+- **Improved Graph Visualization**: Better temperature history rendering with smooth curves
+- **Responsive Design**: Temperature cards now use CSS Grid for better layout control
+- **Admin Interface**: Simplified scene configuration with just two toggles and save button
+
+### Technical Improvements
+
+- CSS Grid implementation for temperature card layout
+- Enhanced AutoSceneGenerator with light_scenes_enabled flag
+- Improved graph rendering algorithms with better padding and scaling
+- Comprehensive test coverage for new features
+
 ## [0.1.100] - 2024-12-29
 
 ### Fixed
@@ -97,5 +126,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See [GitHub Releases](https://github.com/mholzi/dashview/releases) for older release notes.
 
+[0.1.101]: https://github.com/mholzi/dashview/compare/v0.1.100...v0.1.101
 [0.1.100]: https://github.com/mholzi/dashview/compare/v0.1.99...v0.1.100
 [0.1.99]: https://github.com/mholzi/dashview/compare/v0.1.98...v0.1.99
