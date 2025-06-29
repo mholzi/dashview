@@ -1995,7 +1995,6 @@ body.popup-open, :host(.popup-open) {
 .garbage-card {
     background: var(--gray000);
     border-radius: 20px;
-    padding: 20px;
     margin: 0;
     transition: all 0.3s ease;
     border: 2px solid transparent;
@@ -2006,9 +2005,17 @@ body.popup-open, :host(.popup-open) {
     border-color: #e74c3c;
 }
 
+.garbage-card.garbage-urgent .garbage-card-grid {
+    background-color: var(--red);
+}
+
 .garbage-card.garbage-tomorrow {
     background: var(--green);
     border-color: #27ae60;
+}
+
+.garbage-card.garbage-tomorrow .garbage-card-grid {
+    background-color: var(--green);
 }
 
 .garbage-card-header {
@@ -2095,6 +2102,68 @@ body.popup-open, :host(.popup-open) {
 .garbage-urgent .garbage-type,
 .garbage-urgent .days-number {
     color: #c0392b;
+}
+
+/* New garbage card grid layout to match room cards */
+.garbage-card-grid {
+    display: grid;
+    height: 100%;
+    background-color: var(--gray000);
+    grid-template-areas:
+        "name icon"
+        "date date";
+    grid-template-rows: 1fr auto;
+    grid-template-columns: 1fr 50px;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+.garbage-card-name {
+    grid-area: name;
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--gray800);
+    align-self: start;
+    padding-top: 5px;
+}
+
+.garbage-card-icon-cell {
+    grid-area: icon;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5px;
+}
+
+.garbage-card-icon-cell i {
+    font-size: 24px;
+    color: var(--gray700);
+}
+
+.garbage-card-date {
+    grid-area: date;
+    font-size: 1.0em;
+    color: var(--gray600);
+    font-weight: 400;
+    margin-top: 10px;
+    padding-bottom: 5px;
+}
+
+/* Urgent and tomorrow styling for new layout */
+.garbage-card.garbage-urgent .garbage-card-name {
+    color: #c0392b;
+}
+
+.garbage-card.garbage-urgent .garbage-card-icon-cell i {
+    color: #c0392b;
+}
+
+.garbage-card.garbage-tomorrow .garbage-card-name {
+    color: #27ae60;
+}
+
+.garbage-card.garbage-tomorrow .garbage-card-icon-cell i {
+    color: #27ae60;
 }
 
 .garbage-urgent .garbage-date,
