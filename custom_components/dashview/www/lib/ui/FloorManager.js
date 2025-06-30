@@ -575,7 +575,7 @@ export class FloorManager {
     
     return garbageSensors
       .map(sensor => {
-        const entityState = this._hass.states[sensor.entity_id];
+        const entityState = this._hass.states[sensor.entity];
         
         // The entity state contains the calculated text like "Heute", "Morgen", "X Tage"
         // Instead of trying to parse it as a date, use it directly
@@ -607,7 +607,7 @@ export class FloorManager {
   }
 
   _generateGarbageCardHTML(sensor) {
-    const { entity_id, type, daysUntil, entityState, stateText } = sensor;
+    const { entity, type, daysUntil, entityState, stateText } = sensor;
     const icon = this._getGarbageTypeIcon(type);
     const typeName = this._getGarbageTypeName(type);
     
@@ -629,7 +629,7 @@ export class FloorManager {
 
     return `
       <div class="swiper-slide">
-        <div class="${cardClass}" data-entity-id="${entity_id}">
+        <div class="${cardClass}" data-entity-id="${entity}">
           <div class="garbage-card-grid">
             <div class="garbage-card-name">${typeName}</div>
             <div class="garbage-card-icon-cell"><i class="mdi ${this._panel._processIconName(icon)}"></i></div>
