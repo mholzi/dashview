@@ -821,44 +821,44 @@ body.popup-open, :host(.popup-open) {
 
 .header-floor-button,
 .header-room-button {
-    background: var(--gray800);
+    background: var(--gray000);
     border: none;
-    border-radius: 50%;
-    height: 32px;
-    width: 32px;
+    border-radius: 12px;
+    height: 42px;
+    width: 42px;
     margin-left: 2px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .header-floor-button {
-    background: var(--gray800);
+    background: var(--gray000);
 }
 
 .header-room-button {
-    background: var(--active-big);
+    background: var(--active-small);
 }
 
 .header-floor-button i,
 .header-room-button i {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    font-size: 28px !important;
+    width: 28px;
+    height: 28px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .header-floor-button i {
-    color: var(--gray000);
+    color: var(--secondary-text-color);
 }
 
 .header-room-button i {
-    color: var(--gray000);
+    color: var(--gray800);
 }
 
 .header-room-button:hover {
