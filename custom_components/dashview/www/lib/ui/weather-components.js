@@ -260,33 +260,55 @@ export class WeatherComponents {
                 const item = document.createElement('div');
                 item.className = 'hourly-item';
                 
-                // Handle different datetime formats
+                // Handle different datetime formats with timezone conversion
                 let timeString = 'N/A';
                 try {
-                    const dateTime = new Date(forecast.datetime);
-                    if (!isNaN(dateTime.getTime())) {
-                        timeString = dateTime.getHours().toString().padStart(2, '0') + ':00';
+                    const dtUTC = new Date(forecast.datetime);
+                    if (!isNaN(dtUTC.getTime())) {
+                        // Convert to Berlin timezone and format
+                        const dtLocal = new Date(dtUTC.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+                        timeString = dtLocal.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false });
                     }
                 } catch (timeError) {
                     console.warn(`[WeatherManager] Invalid datetime for forecast ${index}:`, forecast.datetime);
                     timeString = `${index}h`;
                 }
                 
-                // Handle missing or invalid temperature
-                let tempString = 'N/A';
+                // Handle missing or invalid temperature with 1 decimal place
+                let tempString = '— °C';
                 if (typeof forecast.temperature === 'number') {
-                    tempString = `${Math.round(forecast.temperature)}°`;
+                    tempString = `${forecast.temperature.toFixed(1)}°C`;
                 } else if (forecast.temperature && !isNaN(parseFloat(forecast.temperature))) {
-                    tempString = `${Math.round(parseFloat(forecast.temperature))}°`;
+                    tempString = `${parseFloat(forecast.temperature).toFixed(1)}°C`;
+                }
+                
+                // Handle wind speed
+                let windString = '';
+                if (typeof forecast.wind_speed === 'number') {
+                    windString = `${forecast.wind_speed.toFixed(1)} km/h`;
+                } else if (forecast.wind_speed && !isNaN(parseFloat(forecast.wind_speed))) {
+                    windString = `${parseFloat(forecast.wind_speed).toFixed(1)} km/h`;
+                }
+                
+                // Handle precipitation 
+                let rainString = '';
+                if (typeof forecast.precipitation === 'number') {
+                    rainString = `${forecast.precipitation.toFixed(1)} mm`;
+                } else if (forecast.precipitation && !isNaN(parseFloat(forecast.precipitation))) {
+                    rainString = `${parseFloat(forecast.precipitation).toFixed(1)} mm`;
                 }
                 
                 // Handle missing condition
                 const condition = forecast.condition || 'unknown';
                 
                 item.innerHTML = `
-                    <div class="hourly-time">${timeString}</div>
-                    <div class="hourly-icon"><img src="/local/weather_icons/${condition}.svg" alt="${condition}" width="32" height="32" onerror="this.src='/local/weather_icons/unknown.svg'"></div>
-                    <div class="hourly-temp">${tempString}</div>
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
+                        <div style="font-size: 12px; font-weight: bold; color: #000;">${timeString}</div>
+                        <img src="/local/weather_icons/${condition}.svg" style="width: 50px; height: 50px;" onerror="this.src='/local/weather_icons/unknown.svg'" />
+                        <div style="font-size: 20px; font-weight: bold; color: #000;">${tempString}</div>
+                        <div style="font-size: 11px; color: #000; margin-top: 6px;">${windString}</div>
+                        <div style="font-size: 11px; color: #000;">${rainString}</div>
+                    </div>
                 `;
                 container.appendChild(item);
             } catch (error) {
