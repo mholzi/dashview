@@ -5,6 +5,31 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.106] - 2024-06-30
+
+### Fixed
+
+- **Critical JavaScript Syntax Error** (#282)
+  - Fixed "Identifier 'swipeableTypes' has already been declared" error in FloorManager.js
+  - Resolved duplicate const declarations that were breaking the component
+  - Moved swipeableTypes to class property `this._swipeableTypes` for better organization
+  - Eliminated 5 duplicate array declarations throughout the file
+  - Improved code maintainability with centralized swipeable entity type definition
+
+### Added
+
+- **Consolidated Admin Settings** (#281)
+  - Streamlined admin interface with consolidated settings tabs
+  - Improved user experience with simplified navigation
+  - Enhanced admin panel organization for better workflow
+
+### Technical Improvements
+
+- **Code Organization**: Centralized swipeable entity types as class property
+- **Performance**: Eliminated repeated array creation in methods
+- **Maintainability**: Single source of truth for swipeable entity configuration
+- **Error Prevention**: Proper variable scoping prevents future declaration conflicts
+
 ## [0.1.105] - 2024-06-30
 
 ### Fixed
@@ -193,6 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See [GitHub Releases](https://github.com/mholzi/dashview/releases) for older release notes.
 
+[0.1.106]: https://github.com/mholzi/dashview/compare/v0.1.105...v0.1.106
 [0.1.105]: https://github.com/mholzi/dashview/compare/v0.1.104...v0.1.105
 [0.1.101]: https://github.com/mholzi/dashview/compare/v0.1.100...v0.1.101
 [0.1.100]: https://github.com/mholzi/dashview/compare/v0.1.99...v0.1.100
