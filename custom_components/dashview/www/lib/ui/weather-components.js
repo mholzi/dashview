@@ -233,7 +233,7 @@ export class WeatherComponents {
             <div class="weather-card-temperature">${Math.round(temperature).toFixed(1)}°C</div>
             <div class="weather-card-condition">${conditionText}</div>
             <div class="weather-card-icon">
-                <img src="/local/weather_icons/${weatherState.state}.svg" width="120" height="120">
+                <img src="/local/weather_icons/${weatherState.state}.svg" width="96" height="96">
             </div>
         `;
     }
@@ -390,7 +390,7 @@ export class WeatherComponents {
                 <div class="weather-card-temperature">${tempValue}°C</div>
                 <div class="weather-card-condition">${conditionText}</div>
                 <div class="weather-card-icon">
-                    <img src="/local/weather_icons/${condition}.svg" width="120" height="120" onerror="this.src='/local/weather_icons/unknown.svg'">
+                    <img src="/local/weather_icons/${condition}.svg" width="96" height="96" onerror="this.src='/local/weather_icons/unknown.svg'">
                 </div>`;
         } catch (error) {
             console.error(`[WeatherManager] Error rendering daily forecast for day ${dayIndex}:`, error, forecast);
