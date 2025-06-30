@@ -2026,8 +2026,6 @@ body.popup-open, :host(.popup-open) {
 /* --- Garbage Collection Cards --- */
 .garbage-swipe-card-container {
     background: var(--gray000);
-    border-radius: 30px;
-    padding: 20px;
     position: relative;
     overflow: hidden;
 }
