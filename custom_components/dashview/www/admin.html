@@ -48,14 +48,15 @@
 
         <div class="config-section">
             <h5>Manual Scene Buttons</h5>
+            <p>Create custom scene buttons that appear in relevant room popups. Each scene controls specific entities and can have different behaviors based on their type.</p>
             <div id="scenes-status" class="status-display">Ready</div>
             <div id="scenes-list" class="floors-container">
                 </div>
             <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <input type="text" id="new-scene-name" class="form-input" placeholder="Scene Name (e.g., Ambiente)">
-                <input type="text" id="new-scene-id" class="form-input" placeholder="Unique ID (e.g., wohnzimmer_ambiente)">
-                <input type="text" id="new-scene-icon" class="form-input" placeholder="Icon (e.g., mdi:sofa)">
-                <select id="new-scene-type" class="dropdown-selector">
+                <input type="text" id="new-scene-name" class="form-input" placeholder="Scene Name (e.g., Ambiente)" data-tooltip="Friendly name displayed on the scene button">
+                <input type="text" id="new-scene-id" class="form-input" placeholder="Unique ID (e.g., wohnzimmer_ambiente)" data-tooltip="Unique identifier for this scene. Use lowercase, underscores instead of spaces. Must be unique across all scenes.">
+                <input type="text" id="new-scene-icon" class="form-input" placeholder="Icon (e.g., mdi:sofa)" data-tooltip="Material Design Icon name. Format: mdi:icon-name. Browse icons at materialdesignicons.com">
+                <select id="new-scene-type" class="dropdown-selector" data-tooltip="Scene type determines button behavior and styling. Default for simple on/off, Cover for blinds/shutters, Computer for smart toggles.">
                     <option value="default">Default</option>
                     <option value="cover">Cover</option>
                     <option value="all_covers">All Covers</option>
@@ -64,7 +65,7 @@
                     <option value="computer">Computer</option>
                     <option value="all_lights_out">All Lights Out</option>
                 </select>
-                <textarea id="new-scene-entities" class="config-textarea" placeholder="Entities (one per line)" style="grid-column: 1 / -1;"></textarea>
+                <textarea id="new-scene-entities" class="config-textarea" placeholder="Entities (one per line)" style="grid-column: 1 / -1;" data-tooltip="Home Assistant entity IDs controlled by this scene. Format: domain.entity_name (e.g., light.living_room_lamp). One entity per line."></textarea>
             </div>
             <button id="add-scene" class="action-button">Add Scene</button>
             <button id="save-scenes" class="save-button" style="margin-top: 20px;">Save All Scenes</button>
@@ -72,7 +73,7 @@
     </div>
     <div id="weather-tab" class="tab-content active">
         <h4>Weather Entity</h4>
-        <p>Select the primary weather entity to be used across the dashboard.</p>
+        <p>Select the primary weather entity that provides current conditions and forecasts for your dashboard. This entity will be used in weather cards and for weather-based automations throughout DashView.</p>
         <div id="weather-status" class="status-display">Ready</div>
         <div class="setting-row">
             <select id="weather-entity-selector" class="dropdown-selector"></select>
@@ -82,7 +83,7 @@
     </div>
     <div id="floor-layouts-tab" class="tab-content">
         <h4>Floor Layout Editor</h4>
-        <p>Configure the small sensor card slots for each floor. Choose between "Automatic" (smart ranking based on usage), "Pinned" (always show a specific sensor), or "Empty".</p>
+        <p>Configure the small sensor card slots for each floor. Choose between "Automatic" (smart ranking based on sensor state changes and importance), "Pinned" (always show a specific sensor), or "Empty" (hide the slot). Automatic mode prioritizes motion sensors, then window/door sensors, then temperature sensors.</p>
         <div id="floor-layout-editor-container">
             <!-- The editor will be dynamically generated here -->
             <div class="placeholder">Loading layout editor...</div>
@@ -92,32 +93,34 @@
     </div>
     <div id="house-setup-tab" class="tab-content">
         <h4>House Setup Configuration</h4>
-        <p>Configure your house with unified room and floor settings. This is the modern way to configure DashView.</p>
+        <p>Configure your house with unified room and floor settings using JSON format. This modern approach allows detailed control over room properties, floor assignments, and entity relationships. Replaces the legacy individual configuration methods.</p>
         
         <div class="config-section">
             <h5>House Configuration Status</h5>
+            <p>Current status of your house configuration. Reload to sync with Home Assistant's area and floor registry.</p>
             <div id="house-config-status" class="status-display">Loading...</div>
             <button id="reload-house-config" class="action-button">Reload House Configuration</button>
         </div>
         
         <div class="config-section">
             <h5>House Setup Configuration</h5>
-            <p>Each room contains its friendly name, icon, floor assignment, combined sensor, and placeholders for lights, covers, and media players.</p>
-            <textarea id="house-config" class="config-textarea" placeholder="House configuration will be loaded here..."></textarea>
+            <p>JSON configuration defining your house structure. Each room contains its friendly name, icon, floor assignment, combined sensor (aggregated activity), and entity assignments for lights, covers, and media players.</p>
+            <textarea id="house-config" class="config-textarea" placeholder="House configuration will be loaded here..." data-tooltip="JSON format: rooms object with room_key: {friendly_name, icon, floor, combined_sensor, lights[], covers[], media_players[]}. Use Home Assistant entity IDs."></textarea>
             <button id="save-house-config" class="save-button">Save House Config</button>
         </div>
     </div>
     <div id="media-presets-tab" class="tab-content">
         <h4>Media Player Presets</h4>
-        <p>Manage the playlist presets that appear in your media player cards.</p>
+        <p>Create playlist shortcuts that appear as quick-access buttons in your media player cards. Supports Spotify playlists, local media files, and other media sources supported by Home Assistant.</p>
         <div class="config-section">
             <h5>Preset Management</h5>
+            <p>Create and organize your media presets. Each preset needs a display name and a content identifier that your media player can understand.</p>
             <div id="media-presets-status" class="status-display">Ready</div>
             <div id="media-presets-list" class="floors-container">
                 </div>
             <div class="form-row" style="margin-top: 20px;">
-                <input type="text" id="new-preset-name" class="form-input" placeholder="Preset Name (e.g., Dinner Jazz)">
-                <input type="text" id="new-preset-id" class="form-input" placeholder="Content ID (e.g., spotify:playlist:...)">
+                <input type="text" id="new-preset-name" class="form-input" placeholder="Preset Name (e.g., Dinner Jazz)" data-tooltip="Display name for this preset button">
+                <input type="text" id="new-preset-id" class="form-input" placeholder="Content ID (e.g., spotify:playlist:...)" data-tooltip="Media content identifier. Examples: spotify:playlist:37i9dQZF1DX0XUsuxWHRQd, media-source://media_source/local/music/playlist.m3u, or radio station URLs">
                 <button id="add-media-preset" class="action-button">Add Preset</button>
             </div>
             <button id="save-media-presets" class="save-button" style="margin-top: 20px;">Save All Presets</button>
@@ -235,7 +238,7 @@
         <!-- Light Setup Section -->
         <div class="config-section">
             <h5>Light Setup</h5>
-            <p>Configure light entities from Home Assistant. Select lights to assign to rooms in DashView.</p>
+            <p>Configure light entities from Home Assistant's light domain. Assign lights to rooms for control in room popups and scene automation. Both individual lights and light groups are supported.</p>
             <div id="light-setup-status" class="status-display">Ready</div>
             <button id="reload-light-entities" class="action-button">Reload Lights</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search light entities..." data-target="lights-by-room">
@@ -247,7 +250,7 @@
         <!-- Cover Setup Section -->
         <div class="config-section">
             <h5>Cover Setup</h5>
-            <p>Configure cover entities from Home Assistant. Select covers to assign to rooms in DashView.</p>
+            <p>Configure cover entities (blinds, shutters, garage doors) from Home Assistant's cover domain. Assign covers to rooms for control in room popups and automated scenes.</p>
             <div id="cover-setup-status" class="status-display">Ready</div>
             <button id="reload-cover-entities" class="action-button">Reload Covers</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search cover entities..." data-target="covers-by-room">
@@ -259,7 +262,7 @@
         <!-- Media Player Setup Section -->
         <div class="config-section">
             <h5>Media Player Management</h5>
-            <p>Assign each available media player from Home Assistant to one of your configured rooms.</p>
+            <p>Assign media players (speakers, TVs, streaming devices) to rooms. Each room can have multiple media players. Assigned players will appear in room popups with playback controls and preset buttons.</p>
             <div id="media-player-status" class="status-display">Ready</div>
             <button id="reload-media-players" class="action-button">Reload Rooms & Players</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search media players..." data-target="media-player-assignment-list">
@@ -273,26 +276,28 @@
 
     <div id="room-maintenance-tab" class="tab-content">
         <h4>Room Maintenance</h4>
-        <p>Assign a combined activity sensor to each of your Home Assistant rooms.</p>
+        <p>Assign a combined activity sensor to each of your Home Assistant rooms. Combined sensors aggregate multiple sensor inputs (motion, door, window) to provide a single activity indicator for room presence detection.</p>
 
         <div class="config-section">
             <h5>Room Maintenance Status</h5>
+            <p>Current status of room sensor assignments. Reload to sync with Home Assistant's area registry.</p>
             <div id="room-maintenance-status" class="status-display">Ready</div>
             <button id="reload-room-maintenance" class="action-button">Reload Rooms</button>
         </div>
 
         <div class="config-section">
             <h5>Configured Rooms</h5>
+            <p>Select activity sensors for each room. Choose sensors that best represent overall room activity, such as binary sensors combining motion, door, and window states.</p>
             <div id="rooms-list" class="floors-container">
                 </div>
         </div>
     </div>
     <div id="integrations-tab" class="tab-content">
         <h4>Integrations</h4>
-        <p>Configure entities from third-party integrations.</p>
+        <p>Configure entities from third-party integrations that enhance your dashboard with specialized data sources and external service connections.</p>
         <div class="config-section">
             <h5>DWD Weather Warning</h5>
-            <p>Select your DWD (Deutscher Wetterdienst) warning level sensor from the list of available entities.</p>
+            <p>Select your DWD (Deutscher Wetterdienst) warning level sensor to display German weather warnings in your dashboard. This integration provides official weather alerts from Germany's national meteorological service.</p>
             <div id="dwd-config-status" class="status-display">Ready</div>
             <div class="setting-row">
                 <select id="dwd-weather-warnings-selector" class="dropdown-selector"></select>
@@ -337,10 +342,10 @@
                 <!-- Hoover entities will be rendered here -->
             </div>
             <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 2fr 3fr 1fr; gap: 12px;">
-                <select id="new-hoover-room" class="dropdown-selector">
+                <select id="new-hoover-room" class="dropdown-selector" data-tooltip="Choose which room this vacuum cleaner belongs to. Rooms come from Home Assistant's area registry.">
                     <option value="">Select Room</option>
                 </select>
-                <select id="new-hoover-entity" class="dropdown-selector">
+                <select id="new-hoover-entity" class="dropdown-selector" data-tooltip="Home Assistant vacuum entity ID. Only vacuum domain entities are shown here.">
                     <option value="">Select Vacuum Entity</option>
                 </select>
                 <button id="add-hoover-entity" class="action-button">Add</button>
@@ -380,7 +385,7 @@
                 <select id="new-other-door-room" class="dropdown-selector">
                     <option value="">Select Room</option>
                 </select>
-                <input type="text" id="new-other-door-entity" class="form-input" placeholder="Entity ID (e.g., binary_sensor.front_door)">
+                <input type="text" id="new-other-door-entity" class="form-input" placeholder="Entity ID (e.g., binary_sensor.front_door)" data-tooltip="Home Assistant entity ID for door/gate sensor. Format: domain.entity_name. Usually binary_sensor domain.">
                 <button id="add-other-door-entity" class="action-button">Add</button>
             </div>
             <button id="save-other-door-entities" class="save-button" style="margin-top: 12px;">Save Door Configuration</button>
@@ -389,18 +394,19 @@
 
     <div id="garbage-tab" class="tab-content">
         <h4>Garbage Collection Management</h4>
-        <p>Configure your garbage collection sensors for display in the floor area. Each sensor will show the next collection date.</p>
+        <p>Configure your garbage collection sensors for display in the floor area. Each sensor shows the next collection date with appropriate icons. Designed for German waste collection systems but can be adapted for other regions.</p>
         
         <div class="config-section">
             <h5>Garbage Sensors</h5>
+            <p>Add sensors that track garbage collection dates. Each type displays with specific icons and colors to help you remember collection days.</p>
             <div id="garbage-setup-status" class="status-display">Ready</div>
             <input type="text" class="form-input entity-search-input" placeholder="Search garbage sensors..." data-target="garbage-sensors-list">
             <div id="garbage-sensors-list" class="floors-container">
                 <!-- Garbage sensors will be rendered here -->
             </div>
             <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 12px;">
-                <input type="text" id="new-garbage-sensor" class="form-input" placeholder="Entity ID (e.g., sensor.biomuell)">
-                <select id="new-garbage-type" class="dropdown-selector">
+                <input type="text" id="new-garbage-sensor" class="form-input" placeholder="Entity ID (e.g., sensor.biomuell)" data-tooltip="Home Assistant sensor entity that provides next collection date. Should return date/datetime values.">
+                <select id="new-garbage-type" class="dropdown-selector" data-tooltip="German waste types: Biomüll (organic), Hausmüll (household), Gelber Sack (packaging), Altpapier (paper), Restmüll (residual), Wertstoff (recyclables), Sondermüll (hazardous).">
                     <option value="">Select Type</option>
                     <option value="biomuell">Biomüll</option>
                     <option value="hausmuell">Hausmüll</option>
@@ -419,6 +425,7 @@
 
     <div class="config-section">
         <h5>Configuration Summary</h5>
+        <p>Overview of your current DashView configuration status. Shows entity counts, assignments, and potential issues. Updates automatically when loading different configuration tabs.</p>
         <div id="config-summary-container" class="summary-grid">
             <p>Load a configuration tab to view summary.</p>
         </div>

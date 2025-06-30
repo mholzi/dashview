@@ -55,6 +55,9 @@ export class AdminManager {
   }
 
   initializeAdminEventListeners() {
+    // Initialize tooltips for all elements with data-tooltip attributes
+    this._initializeTooltips();
+    
     this._shadowRoot.addEventListener('click', (e) => {
         const moveUpBtn = e.target.closest('.floor-move-up-button');
         if (moveUpBtn) {
@@ -393,6 +396,9 @@ export class AdminManager {
     if (searchInput.value) {
       this._filterEntityListDisplay(searchInput, containerElementId);
     }
+    
+    // Re-initialize tooltips for any newly rendered content
+    this._initializeTooltips();
   }
 
   /**
@@ -1479,6 +1485,108 @@ async saveMediaPlayerPresets() {
     this.loadGenericSensorSetup({domain: 'light'}, 'light-setup-status', 'lights-by-room', 'Lights');
     this.loadGenericSensorSetup({domain: 'cover'}, 'cover-setup-status', 'covers-by-room', 'Covers');
     this.loadRoomMediaPlayerMaintenance();
+  }
+
+  /**
+   * Initialize tooltip functionality for all elements with data-tooltip attributes
+   */
+  _initializeTooltips() {
+    // Find all elements with data-tooltip attribute
+    const tooltipElements = this._shadowRoot.querySelectorAll('[data-tooltip]');
+    
+    tooltipElements.forEach(element => {
+      // Skip if already initialized
+      if (element.hasAttribute('data-tooltip-initialized')) return;
+      
+      // Mark as initialized
+      element.setAttribute('data-tooltip-initialized', 'true');
+      
+      // Add mouse events
+      element.addEventListener('mouseenter', (e) => this._showTooltip(e));
+      element.addEventListener('mouseleave', (e) => this._hideTooltip(e));
+      
+      // Add keyboard events for accessibility
+      element.addEventListener('focus', (e) => this._showTooltip(e));
+      element.addEventListener('blur', (e) => this._hideTooltip(e));
+    });
+  }
+
+  /**
+   * Show tooltip for an element
+   * @param {Event} event - The mouse/focus event
+   */
+  _showTooltip(event) {
+    const element = event.target;
+    const tooltipText = element.dataset.tooltip;
+    
+    if (!tooltipText) return;
+
+    // Remove any existing tooltip
+    this._hideTooltip();
+
+    // Create tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'dashview-tooltip';
+    tooltip.textContent = tooltipText;
+    tooltip.id = 'dashview-active-tooltip';
+
+    // Add tooltip to shadow root
+    this._shadowRoot.appendChild(tooltip);
+
+    // Position tooltip
+    this._positionTooltip(tooltip, element);
+  }
+
+  /**
+   * Hide active tooltip
+   */
+  _hideTooltip() {
+    const existingTooltip = this._shadowRoot.getElementById('dashview-active-tooltip');
+    if (existingTooltip) {
+      existingTooltip.remove();
+    }
+  }
+
+  /**
+   * Position tooltip relative to target element
+   * @param {HTMLElement} tooltip - The tooltip element
+   * @param {HTMLElement} target - The target element
+   */
+  _positionTooltip(tooltip, target) {
+    const targetRect = target.getBoundingClientRect();
+    const shadowRect = this._shadowRoot.host.getBoundingClientRect();
+    
+    // Calculate position relative to shadow root container
+    const left = targetRect.left - shadowRect.left + (targetRect.width / 2);
+    const top = targetRect.top - shadowRect.top - 10; // 10px above element
+
+    // Set initial position
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+
+    // Get tooltip dimensions after it's rendered
+    requestAnimationFrame(() => {
+      const tooltipRect = tooltip.getBoundingClientRect();
+      const containerRect = this._shadowRoot.host.getBoundingClientRect();
+
+      // Adjust horizontal position if tooltip goes off-screen
+      let adjustedLeft = left - (tooltipRect.width / 2);
+      if (adjustedLeft < 10) {
+        adjustedLeft = 10;
+      } else if (adjustedLeft + tooltipRect.width > containerRect.width - 10) {
+        adjustedLeft = containerRect.width - tooltipRect.width - 10;
+      }
+
+      // Adjust vertical position if tooltip goes off-screen (show below instead)
+      let adjustedTop = top - tooltipRect.height;
+      if (adjustedTop < 10) {
+        adjustedTop = targetRect.bottom - shadowRect.top + 10;
+        tooltip.classList.add('tooltip-below');
+      }
+
+      tooltip.style.left = adjustedLeft + 'px';
+      tooltip.style.top = adjustedTop + 'px';
+    });
   }
 
 }

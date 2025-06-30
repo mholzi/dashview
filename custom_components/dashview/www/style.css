@@ -3026,3 +3026,84 @@ body.popup-open, :host(.popup-open) {
 .action-button.secondary:hover {
     background-color: var(--gray400);
 }
+
+/* Tooltip Styles */
+.dashview-tooltip {
+    position: absolute;
+    z-index: 9999;
+    padding: 8px 12px;
+    background-color: var(--gray800);
+    color: var(--gray000);
+    font-size: 13px;
+    font-weight: 400;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 300px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    font-family: var(--primary-font-family);
+}
+
+/* Show tooltip with animation */
+.dashview-tooltip {
+    animation: tooltipFadeIn 0.2s ease forwards;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tooltip arrow for when shown below element */
+.dashview-tooltip.tooltip-below::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid var(--gray800);
+}
+
+/* Default tooltip arrow (shown above element) */
+.dashview-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--gray800);
+}
+
+/* Hide default arrow when tooltip is below */
+.dashview-tooltip.tooltip-below::after {
+    display: none;
+}
+
+/* Dark mode tooltip adjustments */
+.dark-mode .dashview-tooltip {
+    background-color: var(--gray000);
+    color: var(--gray800);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .dashview-tooltip::after {
+    border-top-color: var(--gray000);
+}
+
+.dark-mode .dashview-tooltip.tooltip-below::before {
+    border-bottom-color: var(--gray000);
+}
