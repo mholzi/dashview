@@ -2,6 +2,10 @@
 
 import { GestureDetector } from '../utils/GestureDetector.js';
 
+// Gesture detection constants
+const LONG_TAP_DURATION = 500; // ms
+const LONG_TAP_TOLERANCE = 10; // pixels
+
 export class FloorManager {
   constructor(panel) {
     this._panel = panel;
@@ -15,14 +19,38 @@ export class FloorManager {
     
     // Initialize gesture detector for long-tap functionality
     this._gestureDetector = new GestureDetector({
-      longTapDuration: 500, // 500ms for long-tap
-      longTapTolerance: 10, // 10px movement tolerance
+      longTapDuration: LONG_TAP_DURATION,
+      longTapTolerance: LONG_TAP_TOLERANCE,
       enableVisualFeedback: true
     });
   }
 
   setHass(hass) {
     this._hass = hass;
+  }
+
+  /**
+   * Clean up resources to prevent memory leaks
+   */
+  dispose() {
+    console.log('[FloorManager] Disposing and cleaning up resources');
+    
+    // Clean up gesture detector
+    if (this._gestureDetector) {
+      this._gestureDetector.dispose();
+      this._gestureDetector = null;
+    }
+    
+    // Clear swipe state maps
+    if (this._motionCardSwipeStates) {
+      this._motionCardSwipeStates.clear();
+    }
+    
+    // Clear references
+    this._panel = null;
+    this._hass = null;
+    this._houseConfig = null;
+    this._shadowRoot = null;
   }
   update() {
     if (!this._shadowRoot) return;
@@ -773,7 +801,7 @@ export class FloorManager {
       case 'auto_cleaning':
         return { icon: 'mdi:robot-vacuum', label: 'Automatische Reinigung', cardClass: 'is-on' };
       case 'room_cleaning':
-        return { icon: 'mdi:robot-vacuum', label: 'Zimmerreinigung', cardClass: 'is-on' };
+        return { icon: 'mdi:home-floor-a', label: 'Zimmerreinigung', cardClass: 'vacuum-room-cleaning' };
       case 'edge_cleaning':
         return { icon: 'mdi:robot-vacuum', label: 'Kantenreinigung', cardClass: 'is-on' };
       case 'find_robot':

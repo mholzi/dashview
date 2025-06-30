@@ -2320,6 +2320,25 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray800);
 }
 
+/* --- Vacuum Room Cleaning State --- */
+.sensor-small-card.vacuum-room-cleaning,
+.sensor-big-card.vacuum-room-cleaning {
+    background: var(--blue);
+}
+
+.sensor-small-card.vacuum-room-cleaning .sensor-small-icon-cell {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sensor-small-card.vacuum-room-cleaning .sensor-small-icon-cell i,
+.sensor-small-card.vacuum-room-cleaning .sensor-small-label,
+.sensor-small-card.vacuum-room-cleaning .sensor-small-name,
+.sensor-big-card.vacuum-room-cleaning .sensor-big-icon-cell i,
+.sensor-big-card.vacuum-room-cleaning .sensor-big-label,
+.sensor-big-card.vacuum-room-cleaning .sensor-big-name {
+    color: var(--gray000);
+}
+
 /* --- Sensor Small Card --- */
 .sensor-small-card {
     height: 75px;
@@ -3167,4 +3186,136 @@ body.popup-open, :host(.popup-open) {
     .room-card.gesture-longpress {
         box-shadow: 0 6px 16px rgba(255, 255, 255, 0.05);
     }
+}
+
+/* Enhanced Status Display Indicators */
+.status-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background-color: var(--gray100);
+    color: var(--primary-text-color);
+    min-height: 20px;
+}
+
+.status-icon {
+    font-size: 16px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.status-display.has-icon .status-icon {
+    opacity: 1;
+}
+
+.status-text {
+    flex: 1;
+}
+
+/* Loading State */
+.status-display.status-loading {
+    background-color: var(--gray200);
+    color: var(--primary-text-color);
+}
+
+.status-display.status-loading .status-icon {
+    opacity: 1;
+    animation: spin 1s linear infinite;
+}
+
+/* Success State */
+.status-display.status-success {
+    background-color: var(--green);
+    color: var(--gray800);
+}
+
+.status-display.status-success .status-icon {
+    opacity: 1;
+    color: var(--gray800);
+}
+
+/* Error State */
+.status-display.status-error {
+    background-color: var(--red);
+    color: var(--gray800);
+}
+
+.status-display.status-error .status-icon {
+    opacity: 1;
+    color: var(--gray800);
+}
+
+/* Warning State */
+.status-display.status-warning {
+    background-color: var(--yellow);
+    color: var(--gray800);
+}
+
+.status-display.status-warning .status-icon {
+    opacity: 1;
+    color: var(--gray800);
+}
+
+/* Spinning Animation for Loading Icons */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Status Display Transitions */
+.status-display.status-transition {
+    transform: scale(1.02);
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .status-display {
+    background-color: var(--gray800);
+    color: var(--gray000);
+}
+
+.dark-mode .status-display.status-loading {
+    background-color: var(--gray700);
+    color: var(--gray000);
+}
+
+.dark-mode .status-display.status-success {
+    background-color: var(--green);
+    color: var(--gray800);
+}
+
+.dark-mode .status-display.status-error {
+    background-color: var(--red);
+    color: var(--gray800);
+}
+
+.dark-mode .status-display.status-warning {
+    background-color: var(--yellow);
+    color: var(--gray800);
+}
+
+/* Status Icons Mapping */
+.status-display.status-loading .status-icon::before {
+    content: '\F0772'; /* mdi-loading */
+}
+
+.status-display.status-success .status-icon::before {
+    content: '\F012C'; /* mdi-check */
+}
+
+.status-display.status-error .status-icon::before {
+    content: '\F0156'; /* mdi-close-circle */
+}
+
+.status-display.status-warning .status-icon::before {
+    content: '\F0026'; /* mdi-alert */
 }
