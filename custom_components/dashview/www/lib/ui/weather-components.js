@@ -216,28 +216,24 @@ export class WeatherComponents {
         const container = popup.querySelector('.current-weather');
         if (!container) return;
     
-        const { temperature, apparent_temperature, humidity, wind_speed } = weatherState.attributes;
+        const { temperature } = weatherState.attributes;
+        
+        // Get precipitation from sensor if available
+        const precipitationSensor = this._hass.states['sensor.dreieich_precipitation'];
+        const precipitationValue = precipitationSensor ? parseFloat(precipitationSensor.state) : 0;
+        
+        // Build condition text with precipitation info
+        let conditionText = this._translateWeatherCondition(weatherState.state);
+        if (!isNaN(precipitationValue) && precipitationValue > 0) {
+            conditionText += ` – Niederschlag ${precipitationValue.toFixed(1)} mm`;
+        }
     
         container.innerHTML = `
-            <div class="daily-forecast">
-                <div class="daily-icon"><img src="/local/weather_icons/${weatherState.state}.svg" width="50" height="50"></div>
-                <div class="daily-info">
-                    <div class="daily-condition">${this._translateWeatherCondition(weatherState.state)}</div>
-                    <div class="daily-temps">
-                        <span class="daily-high">${Math.round(temperature)}°C</span>
-                        <span class="daily-low">Gefühlt ${Math.round(apparent_temperature)}°C</span>
-                    </div>
-                </div>
-                <div class="weather-details">
-                    <div class="detail-item">
-                        <span class="detail-label">Luftfeuchtigkeit</span>
-                        <span class="detail-value">${humidity}%</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Wind</span>
-                        <span class="detail-value">${Math.round(wind_speed)} km/h</span>
-                    </div>
-                </div>
+            <div class="weather-card-title">Aktuell</div>
+            <div class="weather-card-temperature">${Math.round(temperature).toFixed(1)}°C</div>
+            <div class="weather-card-condition">${conditionText}</div>
+            <div class="weather-card-icon">
+                <img src="/local/weather_icons/${weatherState.state}.svg" width="120" height="120">
             </div>
         `;
     }
@@ -343,37 +339,36 @@ export class WeatherComponents {
         
         try {
             // Handle missing or invalid temperature
-            let highTemp = 'N/A';
+            let tempValue = 'N/A';
             if (typeof forecast.temperature === 'number') {
-                highTemp = `${Math.round(forecast.temperature)}°C`;
+                tempValue = forecast.temperature.toFixed(1);
             } else if (forecast.temperature && !isNaN(parseFloat(forecast.temperature))) {
-                highTemp = `${Math.round(parseFloat(forecast.temperature))}°C`;
-            }
-            
-            // Handle missing or invalid low temperature
-            let lowTemp = '';
-            if (forecast.templow) {
-                if (typeof forecast.templow === 'number') {
-                    lowTemp = `${Math.round(forecast.templow)}°C`;
-                } else if (!isNaN(parseFloat(forecast.templow))) {
-                    lowTemp = `${Math.round(parseFloat(forecast.templow))}°C`;
-                }
+                tempValue = parseFloat(forecast.temperature).toFixed(1);
             }
             
             // Handle missing condition
             const condition = forecast.condition || 'unknown';
-            const translatedCondition = this._translateWeatherCondition(condition);
+            
+            // Get precipitation from sensor if available
+            const precipitationSensor = this._hass.states['sensor.dreieich_precipitation'];
+            const precipitationValue = precipitationSensor ? parseFloat(precipitationSensor.state) : 0;
+            
+            // Build condition text with precipitation info
+            let conditionText = this._translateWeatherCondition(condition);
+            if (!isNaN(precipitationValue) && precipitationValue > 0) {
+                conditionText += ` – Niederschlag ${precipitationValue.toFixed(1)} mm`;
+            }
+            
+            // Determine title based on day index
+            const titles = ['Heute', 'Morgen', 'Übermorgen'];
+            const title = titles[dayIndex] || `Tag ${dayIndex + 1}`;
             
             container.innerHTML = `
-                <div class="daily-forecast">
-                  <div class="daily-icon"><img src="/local/weather_icons/${condition}.svg" width="50" height="50" onerror="this.src='/local/weather_icons/unknown.svg'"></div>
-                  <div class="daily-info">
-                    <div class="daily-condition">${translatedCondition}</div>
-                    <div class="daily-temps">
-                      <span class="daily-high">${highTemp}</span>
-                      ${lowTemp ? `<span class="daily-low">${lowTemp}</span>` : ''}
-                    </div>
-                  </div>
+                <div class="weather-card-title">${title}</div>
+                <div class="weather-card-temperature">${tempValue}°C</div>
+                <div class="weather-card-condition">${conditionText}</div>
+                <div class="weather-card-icon">
+                    <img src="/local/weather_icons/${condition}.svg" width="120" height="120" onerror="this.src='/local/weather_icons/unknown.svg'">
                 </div>`;
         } catch (error) {
             console.error(`[WeatherManager] Error rendering daily forecast for day ${dayIndex}:`, error, forecast);
