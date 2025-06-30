@@ -168,11 +168,54 @@ export class AdminManager {
     });
   }
 
-  _setStatusMessage(element, message, type) {
+  _setStatusMessage(element, message, type = 'default') {
     if (!element) return;
-    element.textContent = message;
+    
+    // Clear any existing auto-clear timeout
+    if (element._statusTimeout) {
+      clearTimeout(element._statusTimeout);
+      element._statusTimeout = null;
+    }
+    
+    // Update the HTML structure for icon and text
+    const iconSpan = element.querySelector('.status-icon') || document.createElement('span');
+    const textSpan = element.querySelector('.status-text') || document.createElement('span');
+    
+    // Ensure proper structure exists
+    if (!element.querySelector('.status-icon')) {
+      iconSpan.className = 'status-icon mdi';
+      element.appendChild(iconSpan);
+    }
+    
+    if (!element.querySelector('.status-text')) {
+      textSpan.className = 'status-text';
+      element.appendChild(textSpan);
+    }
+    
+    // Set the message text
+    textSpan.textContent = message;
+    
+    // Reset classes and apply new status type
     element.className = 'status-display';
-    if (type) element.classList.add(type);
+    
+    if (type && type !== 'default') {
+      element.classList.add(`status-${type}`);
+      element.classList.add('has-icon');
+      
+      // Add transition effect
+      element.classList.add('status-transition');
+      setTimeout(() => {
+        element.classList.remove('status-transition');
+      }, 150);
+    }
+    
+    // Auto-clear success and error messages after 4 seconds
+    if (type === 'success' || type === 'error' || type === 'warning') {
+      element._statusTimeout = setTimeout(() => {
+        // Revert to ready state
+        this._setStatusMessage(element, 'Ready', 'default');
+      }, 4000);
+    }
   }
 
   async _saveConfigViaAPI(configType, configData) {

@@ -39,7 +39,10 @@
                 </label>
             </div>
             
-            <div id="auto-scenes-status" class="status-display">Ready</div>
+            <div id="auto-scenes-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             
             <div class="form-row" style="margin-top: 12px;">
                 <button id="save-auto-scenes" class="action-button">Save Settings</button>
@@ -49,7 +52,10 @@
         <div class="config-section">
             <h5>Manual Scene Buttons</h5>
             <p>Create custom scene buttons that appear in relevant room popups. Each scene controls specific entities and can have different behaviors based on their type.</p>
-            <div id="scenes-status" class="status-display">Ready</div>
+            <div id="scenes-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <div id="scenes-list" class="floors-container">
                 </div>
             <div class="form-row" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -74,7 +80,10 @@
     <div id="weather-tab" class="tab-content active">
         <h4>Weather Entity</h4>
         <p>Select the primary weather entity that provides current conditions and forecasts for your dashboard. This entity will be used in weather cards and for weather-based automations throughout DashView.</p>
-        <div id="weather-status" class="status-display">Ready</div>
+        <div id="weather-status" class="status-display">
+            <span class="status-icon mdi"></span>
+            <span class="status-text">Ready</span>
+        </div>
         <div class="setting-row">
             <select id="weather-entity-selector" class="dropdown-selector"></select>
             <button id="save-weather-entity" class="save-button">Save</button>
@@ -89,7 +98,10 @@
             <div class="placeholder">Loading layout editor...</div>
         </div>
         <button id="save-floor-layouts" class="save-button" style="margin-top: 20px;">Save Layouts</button>
-        <div id="floor-layouts-status" class="status-display" style="margin-top: 10px;">Ready</div>
+        <div id="floor-layouts-status" class="status-display" style="margin-top: 10px;">
+            <span class="status-icon mdi"></span>
+            <span class="status-text">Ready</span>
+        </div>
     </div>
     <div id="house-setup-tab" class="tab-content">
         <h4>House Setup Configuration</h4>
@@ -98,7 +110,10 @@
         <div class="config-section">
             <h5>House Configuration Status</h5>
             <p>Current status of your house configuration. Reload to sync with Home Assistant's area and floor registry.</p>
-            <div id="house-config-status" class="status-display">Loading...</div>
+            <div id="house-config-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Loading...</span>
+            </div>
             <button id="reload-house-config" class="action-button">Reload House Configuration</button>
         </div>
         
@@ -115,7 +130,10 @@
         <div class="config-section">
             <h5>Preset Management</h5>
             <p>Create and organize your media presets. Each preset needs a display name and a content identifier that your media player can understand.</p>
-            <div id="media-presets-status" class="status-display">Ready</div>
+            <div id="media-presets-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <div id="media-presets-list" class="floors-container">
                 </div>
             <div class="form-row" style="margin-top: 20px;">
@@ -134,7 +152,10 @@
         <div class="config-section">
             <h5>Motion Sensors</h5>
             <p>Configure motion sensors based on Home Assistant labels. Select motion sensors labeled "Motion" to assign to rooms.</p>
-            <div id="motion-setup-status" class="status-display">Ready</div>
+            <div id="motion-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-motion-sensors" class="action-button">Reload Motion Sensors</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search motion sensors..." data-target="motion-sensors-by-room">
             <div id="motion-sensors-by-room" class="floors-container">
@@ -146,7 +167,10 @@
         <div class="config-section">
             <h5>Window Sensors</h5>
             <p>Configure window sensors based on Home Assistant labels. Select window sensors labeled "Fenster" to assign to rooms.</p>
-            <div id="window-setup-status" class="status-display">Ready</div>
+            <div id="window-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-window-sensors" class="action-button">Reload Window Sensors</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search window sensors..." data-target="window-sensors-by-room">
             <div id="window-sensors-by-room" class="floors-container">
@@ -158,7 +182,10 @@
         <div class="config-section">
             <h5>Smoke Detectors</h5>
             <p>Configure smoke detector sensors based on Home Assistant labels. Select smoke detectors labeled "Rauchmelder" to assign to rooms.</p>
-            <div id="smoke-detector-setup-status" class="status-display">Ready</div>
+            <div id="smoke-detector-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-smoke-detector-sensors" class="action-button">Reload Smoke Detectors</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search smoke detectors..." data-target="smoke-detector-sensors-by-room">
             <div id="smoke-detector-sensors-by-room" class="floors-container">
@@ -170,7 +197,10 @@
         <div class="config-section">
             <h5>Vibration Sensors</h5>
             <p>Configure vibration sensors based on Home Assistant labels. Select vibration sensors labeled "Vibration" to assign to rooms.</p>
-            <div id="vibration-setup-status" class="status-display">Ready</div>
+            <div id="vibration-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-vibration-sensors" class="action-button">Reload Vibration Sensors</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search vibration sensors..." data-target="vibration-sensors-by-room">
             <div id="vibration-sensors-by-room" class="floors-container">
@@ -182,7 +212,10 @@
         <div class="config-section">
             <h5>Door Sensors</h5>
             <p>Configure door sensors based on Home Assistant labels. Select door sensors labeled "Door" to assign to rooms.</p>
-            <div id="door-setup-status" class="status-display">Ready</div>
+            <div id="door-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-door-sensors" class="action-button">Reload Door Sensors</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search door sensors..." data-target="door-sensors-by-room">
             <div id="door-sensors-by-room" class="floors-container">
@@ -198,7 +231,10 @@
             <div class="config-section">
                 <h6>Global Thresholds</h6>
                 <p>Set global thresholds for temperature and humidity notifications.</p>
-                <div id="thresholds-config-status" class="status-display">Ready</div>
+                <div id="thresholds-config-status" class="status-display">
+                    <span class="status-icon mdi"></span>
+                    <span class="status-text">Ready</span>
+                </div>
                 <div class="setting-row">
                     <label for="global-temp-threshold" style="width: 100px;">Temperature:</label>
                     <input type="number" id="global-temp-threshold" class="form-input" placeholder="e.g., 30">
@@ -210,7 +246,10 @@
                 <button id="save-thresholds-config" class="save-button" style="margin-top: 12px;">Save Thresholds</button>
             </div>
             
-            <div id="temperatur-setup-status" class="status-display">Ready</div>
+            <div id="temperatur-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-temperatur-sensors" class="action-button">Reload Temperature Sensors</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search temperature sensors..." data-target="temperatur-sensors-by-room">
             <div id="temperatur-sensors-by-room" class="floors-container">
@@ -222,7 +261,10 @@
         <div class="config-section">
             <h5>Humidity Sensors</h5>
             <p>Configure humidity sensors based on Home Assistant labels. Select sensors labeled "Humidity" to assign to rooms.</p>
-            <div id="humidity-setup-status" class="status-display">Ready</div>
+            <div id="humidity-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-humidity-sensors" class="action-button">Reload Humidity Sensors</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search humidity sensors..." data-target="humidity-sensors-by-room">
             <div id="humidity-sensors-by-room" class="floors-container">
@@ -239,7 +281,10 @@
         <div class="config-section">
             <h5>Light Setup</h5>
             <p>Configure light entities from Home Assistant's light domain. Assign lights to rooms for control in room popups and scene automation. Both individual lights and light groups are supported.</p>
-            <div id="light-setup-status" class="status-display">Ready</div>
+            <div id="light-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-light-entities" class="action-button">Reload Lights</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search light entities..." data-target="lights-by-room">
             <div id="lights-by-room" class="floors-container">
@@ -251,7 +296,10 @@
         <div class="config-section">
             <h5>Cover Setup</h5>
             <p>Configure cover entities (blinds, shutters, garage doors) from Home Assistant's cover domain. Assign covers to rooms for control in room popups and automated scenes.</p>
-            <div id="cover-setup-status" class="status-display">Ready</div>
+            <div id="cover-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-cover-entities" class="action-button">Reload Covers</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search cover entities..." data-target="covers-by-room">
             <div id="covers-by-room" class="floors-container">
@@ -263,7 +311,10 @@
         <div class="config-section">
             <h5>Media Player Management</h5>
             <p>Assign media players (speakers, TVs, streaming devices) to rooms. Each room can have multiple media players. Assigned players will appear in room popups with playback controls and preset buttons.</p>
-            <div id="media-player-status" class="status-display">Ready</div>
+            <div id="media-player-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-media-players" class="action-button">Reload Rooms & Players</button>
             <input type="text" class="form-input entity-search-input" placeholder="Search media players..." data-target="media-player-assignment-list">
             <div id="media-player-assignment-list" class="floors-container">
@@ -281,7 +332,10 @@
         <div class="config-section">
             <h5>Room Maintenance Status</h5>
             <p>Current status of room sensor assignments. Reload to sync with Home Assistant's area registry.</p>
-            <div id="room-maintenance-status" class="status-display">Ready</div>
+            <div id="room-maintenance-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <button id="reload-room-maintenance" class="action-button">Reload Rooms</button>
         </div>
 
@@ -298,7 +352,10 @@
         <div class="config-section">
             <h5>DWD Weather Warning</h5>
             <p>Select your DWD (Deutscher Wetterdienst) warning level sensor to display German weather warnings in your dashboard. This integration provides official weather alerts from Germany's national meteorological service.</p>
-            <div id="dwd-config-status" class="status-display">Ready</div>
+            <div id="dwd-config-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <div class="setting-row">
                 <select id="dwd-weather-warnings-selector" class="dropdown-selector"></select>
                 <button id="save-dwd-config" class="save-button">Save</button>
@@ -312,7 +369,10 @@
         
         <div class="config-section">
             <h5>Configuration Files Status</h5>
-            <div id="config-status" class="status-display">Loading...</div>
+            <div id="config-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Loading...</span>
+            </div>
             <button id="reload-config" class="action-button">Reload Configuration</button>
         </div>
         
@@ -336,7 +396,10 @@
         <div class="config-section">
             <h5>Hoover Entities</h5>
             <p>Add vacuum cleaner and robotic hoover entities to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
-            <div id="hoover-setup-status" class="status-display">Ready</div>
+            <div id="hoover-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <input type="text" class="form-input entity-search-input" placeholder="Search hoover entities..." data-target="hoover-entities-list">
             <div id="hoover-entities-list" class="floors-container">
                 <!-- Hoover entities will be rendered here -->
@@ -356,7 +419,10 @@
         <div class="config-section">
             <h5>Mower Entities</h5>
             <p>Add lawn mower and robotic mower entities to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
-            <div id="mower-setup-status" class="status-display">Ready</div>
+            <div id="mower-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <input type="text" class="form-input entity-search-input" placeholder="Search mower entities..." data-target="mower-entities-list">
             <div id="mower-entities-list" class="floors-container">
                 <!-- Mower entities will be rendered here -->
@@ -376,7 +442,10 @@
         <div class="config-section">
             <h5>Door Entities</h5>
             <p>Add additional door entities manually to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
-            <div id="other-door-setup-status" class="status-display">Ready</div>
+            <div id="other-door-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <input type="text" class="form-input entity-search-input" placeholder="Search door entities..." data-target="other-door-entities-list">
             <div id="other-door-entities-list" class="floors-container">
                 <!-- Door entities will be rendered here -->
@@ -399,7 +468,10 @@
         <div class="config-section">
             <h5>Garbage Sensors</h5>
             <p>Add sensors that track garbage collection dates. Each type displays with specific icons and colors to help you remember collection days.</p>
-            <div id="garbage-setup-status" class="status-display">Ready</div>
+            <div id="garbage-setup-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
             <input type="text" class="form-input entity-search-input" placeholder="Search garbage sensors..." data-target="garbage-sensors-list">
             <div id="garbage-sensors-list" class="floors-container">
                 <!-- Garbage sensors will be rendered here -->
