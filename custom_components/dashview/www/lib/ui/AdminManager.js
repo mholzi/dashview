@@ -39,23 +39,12 @@ export class AdminManager {
       'house-setup-tab': () => this.loadHouseSetupTab(),
       'integrations-tab': () => this.loadDwdConfig(),
       'room-maintenance-tab': () => this.loadRoomMaintenance(),
-      'media-player-maintenance-tab': () => this.loadRoomMediaPlayerMaintenance(),
       'weather-tab': () => this.loadWeatherEntityConfiguration(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
       'scenes-tab': () => this.loadScenes(),
       'media-presets-tab': () => this.loadMediaPlayerPresets(),
-      'motion-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.MOTION}, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
-      'window-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.WINDOW}, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors'),
-      'smoke-detector-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.SMOKE}, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room', 'Smoke Detectors'),
-      'vibration-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.VIBRATION}, 'vibration-setup-status', 'vibration-sensors-by-room', 'Vibration Sensors'),
-      'door-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.DOOR}, 'door-setup-status', 'door-sensors-by-room', 'Door Sensors'),
-      'cover-setup-tab': () => this.loadGenericSensorSetup({domain: 'cover'}, 'cover-setup-status', 'covers-by-room', 'Covers'),
-      'light-setup-tab': () => this.loadGenericSensorSetup({domain: 'light'}, 'light-setup-status', 'lights-by-room', 'Lights'),
-      'temperatur-setup-tab': () => {
-        this.loadGenericSensorSetup({label: this._entityLabels.TEMPERATUR}, 'temperatur-setup-status', 'temperatur-sensors-by-room', 'Temperature Sensors');
-        this.loadThresholdsConfig();
-      },
-      'humidity-setup-tab': () => this.loadGenericSensorSetup({label: this._entityLabels.HUMIDITY}, 'humidity-setup-status', 'humidity-sensors-by-room', 'Humidity Sensors'),
+      'sensor-management-tab': () => this.loadSensorManagementTab(),
+      'device-management-tab': () => this.loadDeviceManagementTab(),
       'other-entities-tab': () => this.loadOtherEntitiesTab(),
       'garbage-tab': () => this.loadGarbageTab(),
     };
@@ -85,23 +74,23 @@ export class AdminManager {
             '#save-weather-entity': () => this.saveWeatherEntityConfiguration(),
             '#reload-weather-config': () => this.loadWeatherEntityConfiguration(),
             '#save-motion-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.MOTION, 'motion-setup-status', 'motion-sensors-by-room'),
-            '#reload-motion-sensors': () => this.loadTabContent('motion-setup-tab'),
+            '#reload-motion-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.MOTION}, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
             '#save-cover-config': () => this.saveGenericSensorConfig('cover', 'cover-setup-status', 'covers-by-room', true),
-            '#reload-cover-entities': () => this.loadTabContent('cover-setup-tab'),
+            '#reload-cover-entities': () => this.loadGenericSensorSetup({domain: 'cover'}, 'cover-setup-status', 'covers-by-room', 'Covers'),
             '#save-light-config': () => this.saveGenericSensorConfig('light', 'light-setup-status', 'lights-by-room', true),
-            '#reload-light-entities': () => this.loadTabContent('light-setup-tab'),
+            '#reload-light-entities': () => this.loadGenericSensorSetup({domain: 'light'}, 'light-setup-status', 'lights-by-room', 'Lights'),
             '#save-window-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.WINDOW, 'window-setup-status', 'window-sensors-by-room'),
-            '#reload-window-sensors': () => this.loadTabContent('window-setup-tab'),
+            '#reload-window-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.WINDOW}, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors'),
             '#save-smoke-detector-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.SMOKE, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room'),
-            '#reload-smoke-detector-sensors': () => this.loadTabContent('smoke-detector-setup-tab'),
+            '#reload-smoke-detector-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.SMOKE}, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room', 'Smoke Detectors'),
             '#save-vibration-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.VIBRATION, 'vibration-setup-status', 'vibration-sensors-by-room'),
-            '#reload-vibration-sensors': () => this.loadTabContent('vibration-setup-tab'),
+            '#reload-vibration-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.VIBRATION}, 'vibration-setup-status', 'vibration-sensors-by-room', 'Vibration Sensors'),
             '#save-door-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.DOOR, 'door-setup-status', 'door-sensors-by-room'),
-            '#reload-door-sensors': () => this.loadTabContent('door-setup-tab'),
+            '#reload-door-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.DOOR}, 'door-setup-status', 'door-sensors-by-room', 'Door Sensors'),
             '#save-temperatur-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.TEMPERATUR, 'temperatur-setup-status', 'temperatur-sensors-by-room'),
-            '#reload-temperatur-sensors': () => this.loadTabContent('temperatur-setup-tab'),
+            '#reload-temperatur-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.TEMPERATUR}, 'temperatur-setup-status', 'temperatur-sensors-by-room', 'Temperature Sensors'),
             '#save-humidity-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.HUMIDITY, 'humidity-setup-status', 'humidity-sensors-by-room'),
-            '#reload-humidity-sensors': () => this.loadTabContent('humidity-setup-tab'),
+            '#reload-humidity-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.HUMIDITY}, 'humidity-setup-status', 'humidity-sensors-by-room', 'Humidity Sensors'),
             '#reload-room-maintenance': () => this.loadRoomMaintenance(),
             '#reload-media-players': () => this.loadRoomMediaPlayerMaintenance(),
             '#save-all-media-assignments': () => this.saveAllMediaPlayerAssignments(),
@@ -1333,5 +1322,30 @@ async saveMediaPlayerPresets() {
     } catch (error) {
       this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
     }
+  }
+
+  loadSensorManagementTab() {
+    console.log('[DashView] Loading Sensor Management tab - consolidating all sensor types');
+    
+    // Load all sensor types
+    this.loadGenericSensorSetup({label: this._entityLabels.MOTION}, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors');
+    this.loadGenericSensorSetup({label: this._entityLabels.WINDOW}, 'window-setup-status', 'window-sensors-by-room', 'Window Sensors');
+    this.loadGenericSensorSetup({label: this._entityLabels.SMOKE}, 'smoke-detector-setup-status', 'smoke-detector-sensors-by-room', 'Smoke Detectors');
+    this.loadGenericSensorSetup({label: this._entityLabels.VIBRATION}, 'vibration-setup-status', 'vibration-sensors-by-room', 'Vibration Sensors');
+    this.loadGenericSensorSetup({label: this._entityLabels.DOOR}, 'door-setup-status', 'door-sensors-by-room', 'Door Sensors');
+    this.loadGenericSensorSetup({label: this._entityLabels.TEMPERATUR}, 'temperatur-setup-status', 'temperatur-sensors-by-room', 'Temperature Sensors');
+    this.loadGenericSensorSetup({label: this._entityLabels.HUMIDITY}, 'humidity-setup-status', 'humidity-sensors-by-room', 'Humidity Sensors');
+    
+    // Load thresholds config for temperature section
+    this.loadThresholdsConfig();
+  }
+
+  loadDeviceManagementTab() {
+    console.log('[DashView] Loading Device Management tab - consolidating all device types');
+    
+    // Load all device types
+    this.loadGenericSensorSetup({domain: 'light'}, 'light-setup-status', 'lights-by-room', 'Lights');
+    this.loadGenericSensorSetup({domain: 'cover'}, 'cover-setup-status', 'covers-by-room', 'Covers');
+    this.loadRoomMediaPlayerMaintenance();
   }
 }
