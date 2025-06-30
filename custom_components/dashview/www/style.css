@@ -503,13 +503,60 @@ body.popup-open, :host(.popup-open) {
 }
 
 .current-weather {
-    display: flex;
+    display: grid;
+    grid-template-areas: 
+        "title weather_icon"
+        "temperature weather_icon"
+        "condition weather_icon";
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto;
     align-items: center;
-    gap: 20px;
+    background-color: var(--popupBG);
+    padding: 12px;
+    margin-top: 12px;
 }
 
 .weather-icon img {
     border-radius: 10px;
+}
+
+/* New weather card layout styles */
+.weather-card-title {
+    grid-area: title;
+    font-size: 12px;
+    color: var(--gray800);
+    justify-self: start;
+    margin-left: 15px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+
+.weather-card-temperature {
+    grid-area: temperature;
+    font-size: 45px;
+    font-weight: bold;
+    color: var(--gray800);
+    line-height: 1;
+    justify-self: start;
+    margin-left: 15px;
+}
+
+.weather-card-condition {
+    grid-area: condition;
+    font-size: 12px;
+    color: var(--gray800);
+    justify-self: start;
+    margin-left: 15px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+.weather-card-icon {
+    grid-area: weather_icon;
+    margin-top: -10px;
+    margin-bottom: -30px;
+    justify-self: end;
+    align-self: center;
 }
 
 .weather-info {
@@ -643,6 +690,17 @@ body.popup-open, :host(.popup-open) {
 
 .forecast-content {
     min-height: 100px;
+    display: grid;
+    grid-template-areas: 
+        "title weather_icon"
+        "temperature weather_icon"
+        "condition weather_icon";
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto;
+    align-items: center;
+    background-color: var(--popupBG);
+    padding: 12px;
+    margin-top: 12px;
 }
 
 .daily-forecast {
