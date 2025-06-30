@@ -735,6 +735,34 @@ export class FloorManager {
         return { icon: 'mdi:robot-vacuum-variant', label: 'Trocknet', cardClass: 'is-on' };
       case 'sleeping':
         return { icon: 'mdi:sleep', label: 'Ruhemodus', cardClass: '' };
+      // Additional Dreame Mova 30 specific states
+      case 'auto_cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Automatische Reinigung', cardClass: 'is-on' };
+      case 'room_cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Zimmerreinigung', cardClass: 'is-on' };
+      case 'edge_cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Kantenreinigung', cardClass: 'is-on' };
+      case 'find_robot':
+        return { icon: 'mdi:robot-vacuum-alert', label: 'Roboter suchen', cardClass: 'is-on' };
+      case 'remote_control':
+        return { icon: 'mdi:robot-vacuum', label: 'Fernsteuerung', cardClass: 'is-on' };
+      case 'upgrade':
+        return { icon: 'mdi:download', label: 'Update läuft', cardClass: 'is-on' };
+      case 'off':
+        return { icon: 'mdi:power-off', label: 'Ausgeschaltet', cardClass: '' };
+      case 'standby':
+        return { icon: 'mdi:robot-vacuum-variant', label: 'Standby', cardClass: '' };
+      // Additional Dreame Mova 30 extended states
+      case 'segment_cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Segmentreinigung', cardClass: 'is-on' };
+      case 'fast_mapping':
+        return { icon: 'mdi:map-outline', label: 'Schnelle Kartierung', cardClass: 'is-on' };
+      case 'locating':
+        return { icon: 'mdi:map-marker', label: 'Lokalisierung', cardClass: 'is-on' };
+      case 'auto_empty':
+        return { icon: 'mdi:delete-empty', label: 'Automatische Entleerung', cardClass: 'is-on' };
+      case 'deep_cleaning':
+        return { icon: 'mdi:robot-vacuum', label: 'Tiefenreinigung', cardClass: 'is-on' };
     }
 
     // Handle detailed status attribute if available
@@ -749,11 +777,32 @@ export class FloorManager {
         'docked': 'Bereit',
         'idle': 'Bereit',
         'returning': 'Kehrt zurück',
-        'paused': 'Pausiert'
+        'paused': 'Pausiert',
+        // Additional Dreame Mova 30 status translations
+        'auto_cleaning': 'Automatische Reinigung',
+        'room_cleaning': 'Zimmerreinigung',
+        'zone_cleaning': 'Zonenreinigung',
+        'spot_cleaning': 'Punktreinigung',
+        'edge_cleaning': 'Kantenreinigung',
+        'fast_mapping': 'Schnelle Kartierung',
+        'locating': 'Lokalisierung',
+        'remote_control': 'Fernsteuerung',
+        'find_robot': 'Roboter suchen',
+        'upgrade': 'Update läuft',
+        'washing': 'Mopp wird gewaschen',
+        'drying': 'Trocknet',
+        'standby': 'Standby',
+        'off': 'Ausgeschaltet',
+        'segment_cleaning': 'Segmentreinigung',
+        'auto_empty': 'Automatische Entleerung',
+        'deep_cleaning': 'Tiefenreinigung'
       };
       
       const translatedStatus = statusTranslations[status] || status;
-      const activeStates = ['sweeping', 'mopping', 'sweeping_and_mopping', 'returning', 'paused'];
+      const activeStates = ['sweeping', 'mopping', 'sweeping_and_mopping', 'returning', 'paused', 
+                           'auto_cleaning', 'room_cleaning', 'zone_cleaning', 'spot_cleaning', 'edge_cleaning', 
+                           'fast_mapping', 'locating', 'remote_control', 'find_robot', 'upgrade', 'washing', 'drying',
+                           'segment_cleaning', 'auto_empty', 'deep_cleaning'];
       
       return {
         icon: activeStates.includes(status) ? 'mdi:robot-vacuum' : 

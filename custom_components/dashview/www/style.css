@@ -630,33 +630,53 @@ body.popup-open, :host(.popup-open) {
 }
 
 .hourly-item {
-    min-width: 80px;
-    background-color: var(--card-background-color);
-    border-radius: 16px;
-    padding: 12px 8px;
+    width: 100px;
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 12px 24px 12px 0px;
     text-align: center;
     white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: auto;
 }
 
 .hourly-time {
-    font-size: 0.8em;
-    color: var(--secondary-text-color);
-    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 6px;
 }
 
 .hourly-icon {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .hourly-icon img {
-    width: 32px;
-    height: 32px;
+    width: 50px;
+    height: 50px;
 }
 
 .hourly-temp {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--primary-text-color);
+    font-size: 20px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 6px;
+}
+
+.hourly-wind {
+    font-size: 11px;
+    color: #000;
+    margin-top: 6px;
+    margin-bottom: 2px;
+}
+
+.hourly-rain {
+    font-size: 11px;
+    color: #000;
 }
 
 .daily-forecast-container {
