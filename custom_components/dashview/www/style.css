@@ -634,7 +634,7 @@ body.popup-open, :host(.popup-open) {
     width: 100px;
     background-color: #fff;
     border-radius: 12px;
-    padding: 12px 24px 12px 0px;
+    padding: 12px;
     text-align: center;
     white-space: nowrap;
     display: flex;
