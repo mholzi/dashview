@@ -302,13 +302,13 @@ export class WeatherComponents {
                 const condition = forecast.condition || 'unknown';
                 
                 item.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
-                        <div style="font-size: 12px; font-weight: bold; color: #000;">${timeString}</div>
-                        <img src="/local/weather_icons/${condition}.svg" style="width: 50px; height: 50px;" onerror="this.src='/local/weather_icons/unknown.svg'" />
-                        <div style="font-size: 20px; font-weight: bold; color: #000;">${tempString}</div>
-                        <div style="font-size: 11px; color: #000; margin-top: 6px;">${windString}</div>
-                        <div style="font-size: 11px; color: #000;">${rainString}</div>
+                    <div class="hourly-time">${timeString}</div>
+                    <div class="hourly-icon">
+                        <img src="/local/weather_icons/${condition}.svg" alt="${condition}" onerror="this.src='/local/weather_icons/unknown.svg'">
                     </div>
+                    <div class="hourly-temp">${tempString}</div>
+                    <div class="hourly-wind">${windString}</div>
+                    <div class="hourly-rain">${rainString}</div>
                 `;
                 container.appendChild(item);
             } catch (error) {
