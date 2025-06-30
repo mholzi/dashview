@@ -8,6 +8,8 @@ export class FloorManager {
     this._shadowRoot = panel.shadowRoot;
     // Track swipe state for motion sensor cards (entityId -> showTime boolean)
     this._motionCardSwipeStates = new Map();
+    // Define swipeable entity types as class constant
+    this._swipeableTypes = ['motion', 'door', 'other_door', 'smoke', 'cover', 'light'];
   }
 
   setHass(hass) {
@@ -34,14 +36,12 @@ export class FloorManager {
             card.className = `sensor-small-card ${cardClass}`; // Update class for styling
             
             // Use motion-specific label for swipeable sensors, otherwise use regular label
-            const swipeableTypes = ['motion', 'door', 'other_door', 'smoke', 'cover', 'light'];
-            const displayLabel = swipeableTypes.includes(cardType) ? this._getMotionCardLabel(entityId, cardType) : label;
+            const displayLabel = this._swipeableTypes.includes(cardType) ? this._getMotionCardLabel(entityId, cardType) : label;
             card.querySelector('.sensor-small-label').textContent = displayLabel;
             card.querySelector('.sensor-small-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
             
             // Initialize swipe handlers for swipeable cards if not already done
-            const swipeableTypes = ['motion', 'door', 'other_door', 'smoke', 'cover', 'light'];
-            if (swipeableTypes.includes(cardType) && !card.dataset.swipeInitialized) {
+            if (this._swipeableTypes.includes(cardType) && !card.dataset.swipeInitialized) {
                 this._initializeMotionCardSwipeHandlers(card);
             }
         }
@@ -247,8 +247,7 @@ export class FloorManager {
     const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, type, false);
     
     // Use motion-specific label for swipeable sensors
-    const swipeableTypes = ['motion', 'door', 'other_door', 'smoke', 'cover', 'light'];
-    const displayLabel = swipeableTypes.includes(type) ? this._getMotionCardLabel(entityId, type) : label;
+    const displayLabel = this._swipeableTypes.includes(type) ? this._getMotionCardLabel(entityId, type) : label;
 
     return `
       <div class="sensor-small-card ${cardClass}" style="grid-area: ${gridArea};" data-entity-id="${entityId}" data-type="${type}">
@@ -948,8 +947,7 @@ export class FloorManager {
     }
 
     // Check if this entity type supports swipe to show time
-    const swipeableTypes = ['motion', 'door', 'other_door', 'smoke', 'cover', 'light'];
-    if (!swipeableTypes.includes(type)) {
+    if (!this._swipeableTypes.includes(type)) {
       return this._getCardDisplayData(entityId, type).label;
     }
 
@@ -966,8 +964,7 @@ export class FloorManager {
     const type = card.dataset.type;
     
     // Check if this entity type supports swipe to show time
-    const swipeableTypes = ['motion', 'door', 'other_door', 'smoke', 'cover', 'light'];
-    if (!swipeableTypes.includes(type)) return;
+    if (!this._swipeableTypes.includes(type)) return;
 
     let startX = 0;
     let startTime = 0;
