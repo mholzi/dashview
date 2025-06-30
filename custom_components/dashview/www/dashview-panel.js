@@ -99,6 +99,7 @@ class DashviewPanel extends HTMLElement {
 
     this._hass = hass;
     if (this._stateManager) this._stateManager.setHass(hass);
+    if (this._headerManager) this._headerManager.setHass(hass);
     if (this._infoCardManager) this._infoCardManager.setHass(hass);
     if (this._weatherManager) this._weatherManager.setHass(hass);
     if (this._sceneManager) this._sceneManager.setHass(hass);
