@@ -5,6 +5,71 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2024-06-30
+
+### Added
+
+- **Long-Tap Gesture Detection System** (#289)
+  - Comprehensive gesture detection infrastructure for entity details popup foundation
+  - Cross-device compatibility supporting both touch (mobile) and mouse (desktop) inputs
+  - Configurable parameters: 500ms duration with 10px movement tolerance
+  - Visual feedback system with CSS transitions during gesture detection
+  - Smart context menu prevention for mobile devices
+  - Foundation for upcoming Entity Details Popup features (#290-292)
+
+- **GestureDetector Utility Class**
+  - Robust, reusable gesture detection with comprehensive event handling
+  - WeakMap-based state management for efficient memory usage
+  - Proper cleanup and disposal methods to prevent memory leaks
+  - Support for multiple callback types: onTap, onLongTap, onLongTapStart, onLongTapCancel
+
+- **Enhanced FloorManager Integration**
+  - Seamless integration with existing sensor card infrastructure
+  - Backward compatibility preservation - all existing click functionality maintained
+  - Smart event handling preventing conflicts with motion sensor swipe functionality
+  - Memory leak prevention with proper dispose() method implementation
+
+### Changed
+
+- **Code Quality Improvements**
+  - Replaced hardcoded gesture values with named constants (LONG_TAP_DURATION, LONG_TAP_TOLERANCE)
+  - Enhanced maintainability with centralized configuration values
+  - Improved code organization with proper separation of concerns
+
+- **Test Suite Overhaul**
+  - Complete rewrite of gesture detection tests with assertion-based validation
+  - Eliminated brittle string-based file content checks
+  - Implemented behavioral testing that verifies actual functionality
+  - Added comprehensive cross-device compatibility testing
+  - Enhanced error handling and reporting in test execution
+
+### Fixed
+
+- **Memory Management**
+  - Added proper dispose() method to FloorManager for resource cleanup
+  - Implemented comprehensive event listener cleanup in GestureDetector
+  - Prevented memory leaks through proper state management
+
+- **Test Infrastructure**
+  - Removed non-functional console.log-based tests
+  - Fixed brittle test implementations that relied on string matching
+  - Improved test reliability with proper assertion methods
+
+### Technical Details
+
+- **Event Handling**: touchstart, touchmove, touchend, touchcancel for mobile; mousedown, mousemove, mouseup, mouseleave for desktop
+- **Performance**: Minimal overhead with event listeners only on interactive elements
+- **Visual Feedback**: Subtle scale (0.98x) and opacity (0.9) changes during detection; more pronounced feedback (0.95x scale, 0.8 opacity) during long-press
+- **Dark Mode**: Proper styling adjustments for both light and dark themes
+
+### Breaking Changes
+
+None. This release maintains full backward compatibility with all existing functionality.
+
+### Migration Guide
+
+No migration required. This release is fully backward compatible.
+
 ## [0.1.106] - 2024-06-30
 
 ### Fixed
