@@ -65,8 +65,13 @@ export class SceneManager {
             console.log(`[SceneManager] Including auto-generated scene:`, scene.name, scene.id);
             return true;
         }
+        // Include global auto-generated scenes (should appear in all room popups)
+        if (scene.auto_generated && scene.type === 'auto_global_covers') {
+            console.log(`[SceneManager] Including global cover scene:`, scene.name, scene.id);
+            return true;
+        }
         // Include manual scenes that control entities in this room
-        if (scene.entities) {
+        if (scene.entities && !scene.auto_generated) {
             const roomEntities = [
                 ...(roomConfig.lights || []),
                 ...(roomConfig.covers || []),

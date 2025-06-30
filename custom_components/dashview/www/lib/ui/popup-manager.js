@@ -345,8 +345,13 @@ export class PopupManager {
             console.log(`[PopupManager] Found auto-generated scene for ${roomKey}:`, scene.name);
             return true;
         }
+        // Check if it's a global auto-generated scene (should appear in all room popups)
+        if (scene.auto_generated && scene.type === 'auto_global_covers') {
+            console.log(`[PopupManager] Found global cover scene for ${roomKey}:`, scene.name);
+            return true;
+        }
         // Check if it's a manual scene that includes entities from this room
-        if (scene.entities) {
+        if (scene.entities && !scene.auto_generated) {
             const roomEntities = [
                 ...(roomConfig.lights || []),
                 ...(roomConfig.covers || []),
