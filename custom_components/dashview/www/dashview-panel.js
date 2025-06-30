@@ -136,6 +136,9 @@ class DashviewPanel extends HTMLElement {
 
         this.initializeManagers();
         
+        // Generate and merge auto-scenes after managers are initialized
+        await this._generateAndMergeAutoScenes();
+        
         this._sceneManager.renderSceneButtons();
         this._floorManager.initializeFloorTabs();
 
@@ -587,6 +590,27 @@ class DashviewPanel extends HTMLElement {
       } catch (err) { console.error(`[DashView] Template error: ${name}`, err); }
     });
     await Promise.all(promises);
+  }
+
+  async _generateAndMergeAutoScenes() {
+    try {
+      if (!this._autoSceneGenerator) {
+        console.warn('[DashView] AutoSceneGenerator not initialized');
+        return;
+      }
+
+      // Generate auto-scenes
+      const autoScenes = this._autoSceneGenerator.generateAutoScenes(true);
+      console.log(`[DashView] Generated ${autoScenes.length} auto-scenes`);
+
+      // Merge with existing scenes in configuration
+      const updatedScenes = this._autoSceneGenerator.mergeWithExistingScenes(autoScenes);
+      this._houseConfig.scenes = updatedScenes;
+
+      console.log(`[DashView] Updated configuration with ${updatedScenes.length} total scenes (${autoScenes.length} auto-generated)`);
+    } catch (error) {
+      console.error('[DashView] Error generating and merging auto-scenes:', error);
+    }
   }
 }
 
