@@ -744,7 +744,7 @@ export class FloorManager {
       case 'auto_cleaning':
         return { icon: 'mdi:robot-vacuum', label: 'Automatische Reinigung', cardClass: 'is-on' };
       case 'room_cleaning':
-        return { icon: 'mdi:robot-vacuum', label: 'Zimmerreinigung', cardClass: 'is-on' };
+        return { icon: 'mdi:home-floor-a', label: 'Zimmerreinigung', cardClass: 'vacuum-room-cleaning' };
       case 'edge_cleaning':
         return { icon: 'mdi:robot-vacuum', label: 'Kantenreinigung', cardClass: 'is-on' };
       case 'find_robot':

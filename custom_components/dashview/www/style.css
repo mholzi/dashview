@@ -2320,6 +2320,25 @@ body.popup-open, :host(.popup-open) {
     color: var(--gray800);
 }
 
+/* --- Vacuum Room Cleaning State --- */
+.sensor-small-card.vacuum-room-cleaning,
+.sensor-big-card.vacuum-room-cleaning {
+    background: var(--blue);
+}
+
+.sensor-small-card.vacuum-room-cleaning .sensor-small-icon-cell {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sensor-small-card.vacuum-room-cleaning .sensor-small-icon-cell i,
+.sensor-small-card.vacuum-room-cleaning .sensor-small-label,
+.sensor-small-card.vacuum-room-cleaning .sensor-small-name,
+.sensor-big-card.vacuum-room-cleaning .sensor-big-icon-cell i,
+.sensor-big-card.vacuum-room-cleaning .sensor-big-label,
+.sensor-big-card.vacuum-room-cleaning .sensor-big-name {
+    color: var(--gray000);
+}
+
 /* --- Sensor Small Card --- */
 .sensor-small-card {
     height: 75px;
