@@ -996,6 +996,35 @@ body.popup-open, :host(.popup-open) {
     border-color: var(--primary-color);
 }
 
+/* Entity search input styling */
+.entity-search-input {
+    margin: 10px 0;
+    background: var(--card-background);
+    border: 1px solid var(--gray300);
+    position: relative;
+}
+
+.entity-search-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.entity-search-input::placeholder {
+    color: var(--gray600);
+    font-style: italic;
+}
+
+/* Search result count styling */
+.search-result-count {
+    font-size: 0.9em;
+    color: var(--gray600);
+    margin-bottom: 10px;
+    padding: 4px 8px;
+    background: var(--gray100);
+    border-radius: 4px;
+    border-left: 3px solid var(--primary-color);
+}
+
 .floors-container {
     display: flex;
     flex-direction: column;
