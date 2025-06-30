@@ -93,19 +93,26 @@ export class AutoSceneGenerator {
      */
     _createRoomCoversScene(roomKey, roomConfig) {
         if (!roomConfig.covers || roomConfig.covers.length === 0) {
+            console.log(`[AutoSceneGenerator] No covers configured for room ${roomKey}, skipping cover scene`);
             return null;
         }
 
         // Filter out any invalid entities
         const validCoverEntities = roomConfig.covers.filter(entityId => {
-            return this._hass?.states?.[entityId] !== undefined;
+            const hasValidState = this._hass?.states?.[entityId] !== undefined;
+            if (!hasValidState) {
+                console.log(`[AutoSceneGenerator] Cover entity ${entityId} not found in Home Assistant states`);
+            }
+            return hasValidState;
         });
 
         if (validCoverEntities.length === 0) {
+            console.log(`[AutoSceneGenerator] No valid cover entities found for room ${roomKey}, skipping cover scene`);
             return null;
         }
 
         const roomName = roomConfig.friendly_name || roomKey;
+        console.log(`[AutoSceneGenerator] Creating cover scene for room ${roomKey} with ${validCoverEntities.length} covers`);
         
         return {
             id: `dashview_auto_${roomKey}_covers`,
