@@ -5,6 +5,73 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.105] - 2024-06-30
+
+### Fixed
+
+- **Auto-Generated Scene Buttons** (#223, #279)
+  - Fixed issue where "All lights out" scenes were not appearing in room popups
+  - Added proper initialization flow for auto-scene generation in main panel
+  - Auto-scenes are now generated and merged with configuration after managers are initialized
+  - Scene buttons now display correctly in room popups for rooms with lights
+
+- **Header Icon Updates** (#234, #274)
+  - Fixed header icons not updating automatically when entity states change
+  - Added setHass() method to HeaderManager for real-time state updates
+  - Header icons now reflect current entity states immediately
+
+- **Weather Card Improvements** (#248, #271)
+  - Updated weather card styling with 12px border-radius for consistency
+  - Reduced weather card height by 20% for better proportions
+  - Scaled down icon sizes and font sizes proportionally (120px → 96px icons)
+  - Enhanced visual consistency across weather components
+
+- **Hourly Weather Forecast** (#255, #272)
+  - Fixed text and icon alignment in hourly forecast cards
+  - Changed asymmetric padding (12px 24px 12px 0px) to symmetric (12px)
+  - Removed redundant inline styles from JavaScript for cleaner code
+  - Content now properly centers within forecast cards
+
+- **Multiple UI Formatting Issues** (#256, #273)
+  - Added 12px gap between elements in room popups for better spacing
+  - Added 18px border-radius to garbage container for visual consistency
+  - Extended swipeable functionality to door, smoke, cover, and light entities
+  - Improved overall UI consistency and user experience
+
+- **Hoover/Vacuum States** (#252, #254)
+  - Added missing Dreame Mova 30 vacuum states with German descriptions:
+    - `docking`: "Zur Ladestation"
+    - `returning`: "Rückkehr zur Station" 
+    - `cleaning`: "Reinigung"
+    - `idle`: "Bereit"
+    - `paused`: "Pausiert"
+    - `error`: "Fehler"
+  - Updated hourly forecast format to match specified template requirements
+
+- **Container Styling** (#253)
+  - Removed unwanted border-radius and padding from garbage card container
+  - Improved visual consistency with other card components
+
+- **Entity State Handling**
+  - Improved mower entity error handling to exclude "none" error attributes
+  - Enhanced door entity state handling with dynamic icons and German translations
+  - Better garbage card and sensor formatting alignment with room card blueprint
+
+### Technical Improvements
+
+- Enhanced AutoSceneGenerator integration in main application flow
+- Improved component initialization sequence for better reliability
+- Better CSS consistency across weather components
+- Enhanced entity state management and error handling
+- Improved component-based architecture with proper state synchronization
+
+### Performance
+
+- Optimized scene generation and configuration merging
+- Reduced redundant style calculations in weather components
+- Improved entity state update efficiency
+- Better component lifecycle management
+
 ## [0.1.101] - 2024-12-29
 
 ### Added
@@ -126,6 +193,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See [GitHub Releases](https://github.com/mholzi/dashview/releases) for older release notes.
 
+[0.1.105]: https://github.com/mholzi/dashview/compare/v0.1.104...v0.1.105
 [0.1.101]: https://github.com/mholzi/dashview/compare/v0.1.100...v0.1.101
 [0.1.100]: https://github.com/mholzi/dashview/compare/v0.1.99...v0.1.100
 [0.1.99]: https://github.com/mholzi/dashview/compare/v0.1.98...v0.1.99
