@@ -87,8 +87,8 @@ function testSceneButtonStyling() {
     const sceneManagerPath = path.join(__dirname, '../www/lib/ui/SceneManager.js');
     const sceneManagerContent = fs.readFileSync(sceneManagerPath, 'utf8');
     
-    const hasInlineStyling = sceneManagerContent.includes('border-radius: 12px') &&
-                            sceneManagerContent.includes('margin-right: 8px') &&
+    const hasInlineStyling = sceneManagerContent.includes('background-color: ${cardColor}') &&
+                            sceneManagerContent.includes('color: ${textColor}') &&
                             sceneManagerContent.includes('dataset.sceneType');
     
     if (hasCorrectDimensions && hasCorrectIconSize && hasCorrectTextStyle && hasInlineStyling) {

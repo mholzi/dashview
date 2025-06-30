@@ -170,7 +170,7 @@ export class SceneManager {
     
     sceneButton.innerHTML = `
       <div class="scene-button-icon">
-        <i class="mdi ${icon}" style="color: ${styles.icon}; width: 22px; height: 22px;"></i>
+        <i class="mdi ${icon}" style="color: ${styles.icon};"></i>
       </div>
       <div class="scene-button-name" style="color: ${styles.name}">${name}</div>
     `;
@@ -358,7 +358,7 @@ export class SceneManager {
     }
     
     return {
-      card: `background-color: ${cardColor}; color: ${textColor}; border-radius: 12px; display: flex; justify-content: center; align-items: center; text-align: center; height: 80px; width: 80px; margin-right: 8px; padding: 10px 5px;`,
+      card: `background-color: ${cardColor}; color: ${textColor};`,
       name: textColor,
       icon: iconColor
     };
