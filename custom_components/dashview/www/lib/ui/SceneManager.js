@@ -60,17 +60,46 @@ export class SceneManager {
     console.log(`[SceneManager] Getting scenes for room ${roomKey}:`, scenes.length, 'total scenes');
     
     const roomScenes = scenes.filter(scene => {
-        // Include auto-generated scenes for this room
+        // Include auto-generated scenes for this room with visibility checks
         if (scene.auto_generated && scene.room_key === roomKey) {
+            // For lights off scenes, only show if there are lights that are on
+            if (scene.type === 'auto_room_lights_off') {
+                const hasLightsOn = (scene.entities || []).some(entityId => 
+                    this._hass?.states?.[entityId]?.state === 'on'
+                );
+                if (!hasLightsOn) {
+                    console.log(`[SceneManager] Skipping lights off scene - no lights are on:`, scene.name);
+                    return false;
+                }
+            }
+            // For cover scenes, only show if there are actually covers in the room
+            if (scene.type === 'auto_room_covers') {
+                const hasValidCovers = (roomConfig.covers || []).length > 0 && 
+                    (scene.entities || []).some(entityId => 
+                        this._hass?.states?.[entityId] !== undefined
+                    );
+                if (!hasValidCovers) {
+                    console.log(`[SceneManager] Skipping cover scene - no valid covers:`, scene.name);
+                    return false;
+                }
+            }
             console.log(`[SceneManager] Including auto-generated scene:`, scene.name, scene.id);
             return true;
         }
-        // Include global auto-generated scenes (should appear in all room popups)
+        // Include global auto-generated scenes (should appear in all room popups) with visibility checks
         if (scene.auto_generated && scene.type === 'auto_global_covers') {
+            // Only show global cover scene if there are actually covers in the house
+            const hasValidCovers = (scene.entities || []).some(entityId => 
+                this._hass?.states?.[entityId] !== undefined
+            );
+            if (!hasValidCovers) {
+                console.log(`[SceneManager] Skipping global cover scene - no valid covers:`, scene.name);
+                return false;
+            }
             console.log(`[SceneManager] Including global cover scene:`, scene.name, scene.id);
             return true;
         }
-        // Include manual scenes that control entities in this room
+        // Include manual scenes that control entities in this room with visibility checks
         if (scene.entities && !scene.auto_generated) {
             const roomEntities = [
                 ...(roomConfig.lights || []),
@@ -79,6 +108,16 @@ export class SceneManager {
             ];
             const hasMatchingEntities = scene.entities.some(entity => roomEntities.includes(entity));
             if (hasMatchingEntities) {
+                // For lights off scenes, only show if there are lights that are on
+                if (scene.type === 'all_lights_out') {
+                    const hasLightsOn = (scene.entities || []).some(entityId => 
+                        this._hass?.states?.[entityId]?.state === 'on'
+                    );
+                    if (!hasLightsOn) {
+                        console.log(`[SceneManager] Skipping manual lights off scene - no lights are on:`, scene.name);
+                        return false;
+                    }
+                }
                 console.log(`[SceneManager] Including manual scene:`, scene.name, scene.id);
             }
             return hasMatchingEntities;
@@ -126,11 +165,12 @@ export class SceneManager {
     const sceneButton = document.createElement('div');
     sceneButton.className = 'scene-button';
     sceneButton.dataset.sceneId = scene.id;
+    sceneButton.dataset.sceneType = scene.type;
     sceneButton.style.cssText = styles.card;
     
     sceneButton.innerHTML = `
       <div class="scene-button-icon">
-        <i class="mdi ${icon}" style="color: ${styles.icon}"></i>
+        <i class="mdi ${icon}" style="color: ${styles.icon}; width: 22px; height: 22px;"></i>
       </div>
       <div class="scene-button-name" style="color: ${styles.name}">${name}</div>
     `;
@@ -149,8 +189,14 @@ export class SceneManager {
         const scene = this._config.scenes.find(s => s.id === sceneId);
         if (scene) {
           const action = this._getTapAction(scene);
-          if (this._hass) {
-            this._hass.callService(action.service, action.service_data);
+          if (this._hass && action.service) {
+            // Split service into domain and action (e.g., "light.turn_off" -> ["light", "turn_off"])
+            const serviceParts = action.service.split('.');
+            if (serviceParts.length === 2) {
+              this._hass.callService(serviceParts[0], serviceParts[1], action.service_data || {});
+            } else {
+              console.error('[SceneManager] Invalid service format:', action.service);
+            }
           }
         }
       });
@@ -312,7 +358,7 @@ export class SceneManager {
     }
     
     return {
-      card: `background-color: ${cardColor};`,
+      card: `background-color: ${cardColor}; color: ${textColor}; border-radius: 12px; display: flex; justify-content: center; align-items: center; text-align: center; height: 80px; width: 80px; margin-right: 8px; padding: 10px 5px;`,
       name: textColor,
       icon: iconColor
     };
