@@ -8,6 +8,10 @@ export class HeaderManager {
     this._shadowRoot = panel.shadowRoot;
   }
 
+  setHass(hass) {
+    this._hass = hass;
+  }
+
   // ... (updateAll, updateWeatherButton, updateMediaHeaderButtons remain the same)
   updateAll() {
     this.updateHeaderButtons();
