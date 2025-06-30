@@ -488,7 +488,15 @@ class DashviewPanel extends HTMLElement {
               return (doorAlarm === 'present' || tempAlarm === 'present');
           case this._entityLabels.MOWER:
               const error = entity.attributes?.error;
-              return ['cleaning', 'error'].includes(state) && error !== 'OFF_DISABLED';
+              // Helper function to check if error value indicates an actual error
+              const isValidError = (errorValue) => {
+                if (!errorValue) return false;
+                if (typeof errorValue !== 'string') return false;
+                const errorStr = errorValue.toLowerCase();
+                return errorStr !== 'none' && errorStr !== 'no error' && errorStr !== 'ok' && errorStr !== '' && errorStr !== 'off_disabled';
+              };
+              // Show mower if it has a valid error OR if it's in an active state
+              return isValidError(error) || ['cleaning', 'error', 'mowing'].includes(state);
           default:
               return state === 'on';
       }

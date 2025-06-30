@@ -782,14 +782,21 @@ export class FloorManager {
     const activity = entityState.attributes?.activity;
     const batteryLevel = entityState.attributes?.battery_level;
 
-    // Handle error states - only if error is not none/null/undefined
-    if ((error && error !== 'none' && error !== 'None' && error.toLowerCase() !== 'no error') || 
-        (lastError && lastError !== 'none' && lastError !== 'None' && lastError.toLowerCase() !== 'no error')) {
+    // Helper function to check if error value indicates an actual error
+    const isValidError = (errorValue) => {
+      if (!errorValue) return false;
+      if (typeof errorValue !== 'string') return false;
+      const errorStr = errorValue.toLowerCase();
+      return errorStr !== 'none' && errorStr !== 'no error' && errorStr !== 'ok' && errorStr !== '';
+    };
+
+    // Handle error states - only if there is a valid error
+    if (isValidError(error) || isValidError(lastError)) {
       let errorMessage = 'Fehler';
       // Use actual error value, but exclude "none" values when determining current error
-      const validError = (error && error !== 'none' && error !== 'None' && error.toLowerCase() !== 'no error') ? error : null;
-      const validLastError = (lastError && lastError !== 'none' && lastError !== 'None' && lastError.toLowerCase() !== 'no error') ? lastError : null;
-      const currentError = validError || validLastError || state;
+      const validError = isValidError(error) ? error : null;
+      const validLastError = isValidError(lastError) ? lastError : null;
+      const currentError = validError || validLastError;
       
       if (currentError && currentError !== 'OK') {
         // Common lawn mower error translations
