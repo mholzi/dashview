@@ -26,7 +26,8 @@ export class MediaPlayerCard {
         
         container.innerHTML = this._generateRoomPlayerHTML(mediaPlayerEntities);
         
-        this._initializeMediaPlayerControls(popup);
+        // Initialize controls within the specific card context, not the entire popup
+        this._initializeMediaPlayerControls(card);
     
         // Initial update for all players in this card
         mediaPlayerEntities.forEach(player => {
@@ -105,23 +106,39 @@ export class MediaPlayerCard {
         }, 1500)); // Ignore updates for 1.5 seconds to allow state to propagate
     }
 
-    _initializeMediaPlayerControls(popup) {
+    _initializeMediaPlayerControls(container) {
+        console.log(`[MediaPlayerCard] Initializing controls in container:`, container);
 
         // Control buttons (play, pause, next, prev)
-        popup.querySelectorAll('.media-control-button').forEach(button => {
+        const controlButtons = container.querySelectorAll('.media-control-button');
+        console.log(`[MediaPlayerCard] Found ${controlButtons.length} control buttons`);
+        
+        controlButtons.forEach(button => {
+            // Remove any existing listeners to prevent duplicates
+            button.removeEventListener('click', this._handleControlClick);
             button.addEventListener('click', (event) => {
+                console.log(`[MediaPlayerCard] Control button clicked:`, button.dataset.action);
                 const controls = button.closest('.media-controls');
-                const entityId = controls.dataset.entity;
+                const entityId = controls?.dataset.entity;
                 const action = button.dataset.action;
+                
+                console.log(`[MediaPlayerCard] Entity ID: ${entityId}, Action: ${action}, Hass available: ${!!this._hass}`);
+                
                 if (entityId && action && this._hass) {
-                    this._ignoreUpdatesFor(entityId, controls.closest('.media-display'));
+                    console.log(`[MediaPlayerCard] Calling service: media_player.${action} for ${entityId}`);
+                    const mediaDisplay = controls.closest('.media-player-container')?.querySelector('.media-display');
+                    if (mediaDisplay) {
+                        this._ignoreUpdatesFor(entityId, mediaDisplay);
+                    }
                     this._hass.callService('media_player', action, { entity_id: entityId });
+                } else {
+                    console.error(`[MediaPlayerCard] Missing requirements - entityId: ${entityId}, action: ${action}, hass: ${!!this._hass}`);
                 }
             });
         });
 
         // Volume sliders
-        popup.querySelectorAll('.volume-slider').forEach(slider => {
+        container.querySelectorAll('.volume-slider').forEach(slider => {
             slider.addEventListener('input', (e) => {
                 const label = e.target.closest('.volume-row').querySelector('.volume-value');
                 if (label) label.textContent = `${e.target.value}%`;
@@ -137,12 +154,15 @@ export class MediaPlayerCard {
         });
         
         // Preset buttons
-        popup.querySelectorAll('.media-preset-button').forEach(button => {
+        container.querySelectorAll('.media-preset-button').forEach(button => {
             button.addEventListener('click', () => {
                 const contentId = button.dataset.contentId;
-                const primaryPlayerEntityId = popup.querySelector('.media-display').dataset.entity;
+                const primaryPlayerEntityId = container.querySelector('.media-display')?.dataset.entity;
                 if (contentId && primaryPlayerEntityId && this._hass) {
-                    this._ignoreUpdatesFor(primaryPlayerEntityId, popup.querySelector('.media-display'));
+                    const mediaDisplay = container.querySelector('.media-display');
+                    if (mediaDisplay) {
+                        this._ignoreUpdatesFor(primaryPlayerEntityId, mediaDisplay);
+                    }
                     this._hass.callService('media_player', 'play_media', {
                         entity_id: primaryPlayerEntityId,
                         media_content_id: contentId,
