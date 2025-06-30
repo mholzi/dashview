@@ -376,7 +376,7 @@ export class AdminManager {
    * @param {string} containerElementId - The container element ID to search within
    */
   _attachEntitySearchListener(containerElementId) {
-    const searchInput = this._shadowRoot.querySelector(`input[data-target="${containerElementId}"]`);
+    const searchInput = this._shadowRoot.querySelector(`input.entity-search-input[data-target="${containerElementId}"]`);
     if (!searchInput) return;
 
     // Remove existing listener to prevent duplicates
@@ -401,7 +401,8 @@ export class AdminManager {
    * @param {string} containerElementId - The container element ID to filter
    */
   _filterEntityListDisplay(inputElement, containerElementId) {
-    const searchTerm = inputElement.value.toLowerCase().trim();
+    const searchTerm = inputElement.value;
+    const searchTermLower = searchTerm.toLowerCase().trim();
     const container = this._shadowRoot.getElementById(containerElementId);
     
     if (!container) return;
@@ -423,17 +424,17 @@ export class AdminManager {
         // Standard sensor setup items
         const labelText = label.textContent.toLowerCase();
         const entityIdText = entityId.textContent.toLowerCase();
-        isMatch = !searchTerm || labelText.includes(searchTerm) || entityIdText.includes(searchTerm);
+        isMatch = !searchTermLower || labelText.includes(searchTermLower) || entityIdText.includes(searchTermLower);
       } else if (entityName) {
         // Other entities and garbage sensors
         const nameText = entityName.textContent.toLowerCase();
         const idText = entityId ? entityId.textContent.toLowerCase() : '';
         const detailsText = floorDetails ? floorDetails.textContent.toLowerCase() : '';
-        isMatch = !searchTerm || nameText.includes(searchTerm) || idText.includes(searchTerm) || detailsText.includes(searchTerm);
+        isMatch = !searchTermLower || nameText.includes(searchTermLower) || idText.includes(searchTermLower) || detailsText.includes(searchTermLower);
       } else {
         // Fallback: search all text content
         const allText = item.textContent.toLowerCase();
-        isMatch = !searchTerm || allText.includes(searchTerm);
+        isMatch = !searchTermLower || allText.includes(searchTermLower);
       }
       
       // Show/hide the entity item
@@ -459,13 +460,23 @@ export class AdminManager {
    * @param {string} searchTerm - The current search term
    */
   _updateSearchResultCount(containerElementId, searchTerm) {
-    if (!searchTerm) return;
-
     const container = this._shadowRoot.getElementById(containerElementId);
+    if (!container) return;
+    
+    // Find existing result count display
+    let resultCountEl = container.querySelector('.search-result-count');
+    
+    if (!searchTerm) {
+      // Hide the result count when search term is empty
+      if (resultCountEl) {
+        resultCountEl.style.display = 'none';
+      }
+      return;
+    }
+    
     const visibleItems = container.querySelectorAll('.entity-list-item:not([style*="display: none"])');
     
-    // Find or create result count display
-    let resultCountEl = container.querySelector('.search-result-count');
+    // Create result count display if it doesn't exist
     if (!resultCountEl) {
       resultCountEl = document.createElement('div');
       resultCountEl.className = 'search-result-count';
@@ -477,11 +488,7 @@ export class AdminManager {
     resultCountEl.textContent = count === 0 
       ? `No entities found for "${searchTerm}"` 
       : `${count} ${count === 1 ? 'entity' : 'entities'} found`;
-    
-    // Remove count display when search is cleared
-    if (!searchTerm && resultCountEl) {
-      resultCountEl.remove();
-    }
+    resultCountEl.style.display = 'block';
   }
   
   async saveGenericSensorConfig(entityType, statusElementId, containerElementId) {
@@ -1474,59 +1481,4 @@ async saveMediaPlayerPresets() {
     this.loadRoomMediaPlayerMaintenance();
   }
 
-  // Entity Search Functionality
-  _attachEntitySearchListener(containerElementId) {
-    const searchInput = this._shadowRoot.querySelector(`input.entity-search-input[data-target="${containerElementId}"]`);
-    if (!searchInput) return;
-    
-    searchInput.addEventListener('input', (e) => {
-      this._filterEntityListDisplay(e.target, containerElementId);
-    });
-  }
-
-  _filterEntityListDisplay(inputElement, containerElementId) {
-    const searchTerm = inputElement.value;
-    const container = this._shadowRoot.getElementById(containerElementId);
-    if (!container) return;
-    
-    const searchTermLower = searchTerm.toLowerCase().trim();
-
-    const items = container.querySelectorAll('.floor-item, .room-item, .entity-item, .config-section > div');
-    let visibleCount = 0;
-    
-    items.forEach(item => {
-      const entityIdText = item.querySelector('.entity-id, .floor-name, .room-name')?.textContent || '';
-      const labelText = item.querySelector('.checkbox-label, .entity-name, .floor-details')?.textContent || '';
-      const nameText = item.textContent || '';
-      
-      const isMatch = !searchTermLower || 
-                     entityIdText.toLowerCase().includes(searchTermLower) ||
-                     labelText.toLowerCase().includes(searchTermLower) ||
-                     nameText.toLowerCase().includes(searchTermLower);
-      
-      item.style.display = isMatch ? '' : 'none';
-      if (isMatch) visibleCount++;
-    });
-
-    this._updateSearchResultCount(containerElementId, searchTerm, visibleCount);
-  }
-
-  _updateSearchResultCount(containerElementId, searchTerm, visibleCount) {
-    const container = this._shadowRoot.getElementById(containerElementId);
-    if (!container) return;
-
-    let countDisplay = container.querySelector('.search-result-count');
-    if (!countDisplay) {
-      countDisplay = document.createElement('div');
-      countDisplay.className = 'search-result-count';
-      container.parentNode.insertBefore(countDisplay, container);
-    }
-
-    if (searchTerm) {
-      countDisplay.textContent = `Showing ${visibleCount} results for "${searchTerm}"`;
-      countDisplay.style.display = 'block';
-    } else {
-      countDisplay.style.display = 'none';
-    }
-  }
 }

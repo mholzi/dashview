@@ -8,12 +8,7 @@
 console.log('[DashView] Admin Entity Search Test');
 
 // Test 1: Validate that search inputs exist in admin.html
-function testSearchInputsExist() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    const adminHtmlPath = path.join(__dirname, '../www/admin.html');
-    const adminHtml = fs.readFileSync(adminHtmlPath, 'utf8');
+function testSearchInputsExist(adminHtml) {
     
     // Expected search inputs and their targets
     const expectedSearchInputs = [
@@ -58,12 +53,7 @@ function testSearchInputsExist() {
 }
 
 // Test 2: Validate search functionality exists in AdminManager.js
-function testSearchFunctionsExist() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    const adminManagerPath = path.join(__dirname, '../www/lib/ui/AdminManager.js');
-    const adminManagerContent = fs.readFileSync(adminManagerPath, 'utf8');
+function testSearchFunctionsExist(adminManagerContent) {
     
     const requiredFunctions = [
         '_attachEntitySearchListener',
@@ -108,12 +98,7 @@ function testSearchFunctionsExist() {
 }
 
 // Test 3: Validate search integration with rendering methods
-function testSearchIntegrationExists() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    const adminManagerPath = path.join(__dirname, '../www/lib/ui/AdminManager.js');
-    const adminManagerContent = fs.readFileSync(adminManagerPath, 'utf8');
+function testSearchIntegrationExists(adminManagerContent) {
     
     const expectedIntegrations = [
         '_renderGenericSensorSetup.*_attachEntitySearchListener',
@@ -142,12 +127,7 @@ function testSearchIntegrationExists() {
 }
 
 // Test 4: Validate CSS styling for search inputs
-function testSearchStylingExists() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    const stylePath = path.join(__dirname, '../www/style.css');
-    const styleContent = fs.readFileSync(stylePath, 'utf8');
+function testSearchStylingExists(styleContent) {
     
     const requiredStyles = [
         '.entity-search-input',
@@ -176,12 +156,7 @@ function testSearchStylingExists() {
 }
 
 // Test 5: Case-insensitive search validation
-function testCaseInsensitiveSearch() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    const adminManagerPath = path.join(__dirname, '../www/lib/ui/AdminManager.js');
-    const adminManagerContent = fs.readFileSync(adminManagerPath, 'utf8');
+function testCaseInsensitiveSearch(adminManagerContent) {
     
     // Check for case-insensitive search implementation
     const hasCaseInsensitive = adminManagerContent.includes('toLowerCase()') &&
@@ -197,12 +172,7 @@ function testCaseInsensitiveSearch() {
 }
 
 // Test 6: Real-time filtering validation
-function testRealTimeFiltering() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    const adminManagerPath = path.join(__dirname, '../www/lib/ui/AdminManager.js');
-    const adminManagerContent = fs.readFileSync(adminManagerPath, 'utf8');
+function testRealTimeFiltering(adminManagerContent) {
     
     // Check for input event listener for real-time filtering
     const hasInputListener = adminManagerContent.includes("addEventListener('input'") &&
@@ -220,12 +190,7 @@ function testRealTimeFiltering() {
 }
 
 // Test 7: Entity ID and friendly name search validation
-function testEntitySearchScope() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    const adminManagerPath = path.join(__dirname, '../www/lib/ui/AdminManager.js');
-    const adminManagerContent = fs.readFileSync(adminManagerPath, 'utf8');
+function testEntitySearchScope(adminManagerContent) {
     
     // Check that search covers both entity IDs and friendly names
     const searchesEntityId = adminManagerContent.includes('entityIdText') ||
@@ -249,14 +214,26 @@ function runAllTests() {
     console.log('Running Admin Entity Search Tests...');
     console.log('='.repeat(60));
     
+    // Read files once for efficiency
+    const fs = require('fs');
+    const path = require('path');
+    
+    const adminHtmlPath = path.join(__dirname, '../www/admin.html');
+    const adminManagerPath = path.join(__dirname, '../www/lib/ui/AdminManager.js');
+    const stylePath = path.join(__dirname, '../www/style.css');
+    
+    const adminHtml = fs.readFileSync(adminHtmlPath, 'utf8');
+    const adminManagerContent = fs.readFileSync(adminManagerPath, 'utf8');
+    const styleContent = fs.readFileSync(stylePath, 'utf8');
+    
     const tests = [
-        { name: 'Search Inputs Exist', func: testSearchInputsExist },
-        { name: 'Search Functions Exist', func: testSearchFunctionsExist },
-        { name: 'Search Integration Exists', func: testSearchIntegrationExists },
-        { name: 'Search Styling Exists', func: testSearchStylingExists },
-        { name: 'Case-Insensitive Search', func: testCaseInsensitiveSearch },
-        { name: 'Real-Time Filtering', func: testRealTimeFiltering },
-        { name: 'Entity Search Scope', func: testEntitySearchScope }
+        { name: 'Search Inputs Exist', func: () => testSearchInputsExist(adminHtml) },
+        { name: 'Search Functions Exist', func: () => testSearchFunctionsExist(adminManagerContent) },
+        { name: 'Search Integration Exists', func: () => testSearchIntegrationExists(adminManagerContent) },
+        { name: 'Search Styling Exists', func: () => testSearchStylingExists(styleContent) },
+        { name: 'Case-Insensitive Search', func: () => testCaseInsensitiveSearch(adminManagerContent) },
+        { name: 'Real-Time Filtering', func: () => testRealTimeFiltering(adminManagerContent) },
+        { name: 'Entity Search Scope', func: () => testEntitySearchScope(adminManagerContent) }
     ];
     
     let passedTests = 0;
