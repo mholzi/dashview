@@ -1,6 +1,7 @@
 // custom_components/dashview/www/lib/ui/FloorManager.js
 
 import { GestureDetector } from '../utils/GestureDetector.js';
+import { calculateTimeDifferenceShort } from '../utils/time-utils.js';
 
 // Gesture detection constants
 const LONG_TAP_DURATION = 500; // ms
@@ -988,14 +989,6 @@ export class FloorManager {
     };
   }
 
-  _calculateTimeDifference(lastChanged) {
-    const now = new Date();
-    const diffSeconds = Math.floor((now - new Date(lastChanged)) / 1000);
-    if (diffSeconds < 60) return 'Jetzt';
-    if (diffSeconds < 3600) return `vor ${Math.floor(diffSeconds / 60)}m`;
-    if (diffSeconds < 86400) return `vor ${Math.floor(diffSeconds / 3600)}h`;
-    return `vor ${Math.floor(diffSeconds / 86400)} Tagen`;
-  }
 
   _getMotionCardLabel(entityId, type) {
     const entityState = this._hass.states[entityId];
@@ -1010,7 +1003,7 @@ export class FloorManager {
 
     const showTime = this._motionCardSwipeStates.get(entityId) || false;
     if (showTime) {
-      return this._calculateTimeDifference(entityState.last_changed);
+      return calculateTimeDifferenceShort(entityState.last_changed);
     } else {
       return this._getCardDisplayData(entityId, type).label;
     }

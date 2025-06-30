@@ -62,6 +62,14 @@ grep -r "eval\|Function" custom_components/dashview/www/
 - **security-components.js**: Security system integration
 - **light-card.js**, **thermostat-card.js**, **media-player-card.js**: Device controls
 
+### Utilities
+- **time-utils.js**: Centralized time difference calculation utilities
+  - `calculateTimeDifference(timestamp, format)`: Core function with format options ('short', 'long')
+  - `calculateTimeDifferenceShort(timestamp)`: German short format (vor 5m, vor 2h, vor 3 Tagen)
+  - `calculateTimeDifferenceLong(timestamp)`: German long format (5 Minuten, 2 Stunden, 3 Tagen)
+  - `calculateTimeDifferenceEnglish(timestamp)`: English format (5m ago, 2h ago, 3d ago)
+  - Used by FloorManager, InfoCardManager, and main panel for consistent time display
+
 ## Core Architecture Principles
 
 ### 1. Centralized Data Persistence

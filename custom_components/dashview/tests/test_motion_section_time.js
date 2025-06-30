@@ -28,45 +28,30 @@ class MotionSectionTimeTests {
     }
   }
 
-  // Mock DashviewPanel for testing
-  createMockPanel() {
-    return {
-      _calculateTimeDifference: function(lastChanged) {
-        const now = new Date();
-        const diffSeconds = Math.floor((now - lastChanged) / 1000);
-        
-        if (diffSeconds < 60) {
-          return 'Jetzt';
-        } else if (diffSeconds < 3600) {
-          const minutes = Math.floor(diffSeconds / 60);
-          return `${minutes} Minuten`;
-        } else if (diffSeconds < 86400) {
-          const hours = Math.floor(diffSeconds / 3600);
-          return `${hours} Stunden`;
-        } else {
-          const days = Math.floor(diffSeconds / 86400);
-          return `${days} Tagen`;
-        }
-      }
-    };
+  // Import and test the centralized time utility
+  async importTimeUtils() {
+    if (!this._timeUtils) {
+      this._timeUtils = await import('/local/dashview/lib/utils/time-utils.js');
+    }
+    return this._timeUtils;
   }
 
   // Test time calculation for recent changes (< 60 seconds)
-  testRecentTimeCalculation() {
+  async testRecentTimeCalculation() {
     const testName = 'Recent Time Calculation';
     this.log(`Running test: ${testName}`);
 
     try {
-      const panel = this.createMockPanel();
+      const timeUtils = await this.importTimeUtils();
       
       // Test for 30 seconds ago
       const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
-      const result = panel._calculateTimeDifference(thirtySecondsAgo);
+      const result = timeUtils.calculateTimeDifferenceLong(thirtySecondsAgo);
       this.assertEqual(result, 'Jetzt', 'Should return "Jetzt" for 30 seconds ago');
 
       // Test for 45 seconds ago
       const fortyFiveSecondsAgo = new Date(Date.now() - 45 * 1000);
-      const result2 = panel._calculateTimeDifference(fortyFiveSecondsAgo);
+      const result2 = timeUtils.calculateTimeDifferenceLong(fortyFiveSecondsAgo);
       this.assertEqual(result2, 'Jetzt', 'Should return "Jetzt" for 45 seconds ago');
 
       this.testResults.push({ name: testName, passed: true });
@@ -76,21 +61,21 @@ class MotionSectionTimeTests {
   }
 
   // Test time calculation for minutes
-  testMinutesTimeCalculation() {
+  async testMinutesTimeCalculation() {
     const testName = 'Minutes Time Calculation';
     this.log(`Running test: ${testName}`);
 
     try {
-      const panel = this.createMockPanel();
+      const timeUtils = await this.importTimeUtils();
       
       // Test for 2 minutes ago
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-      const result = panel._calculateTimeDifference(twoMinutesAgo);
+      const result = timeUtils.calculateTimeDifferenceLong(twoMinutesAgo);
       this.assertEqual(result, '2 Minuten', 'Should return "2 Minuten" for 2 minutes ago');
 
       // Test for 30 minutes ago
       const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-      const result2 = panel._calculateTimeDifference(thirtyMinutesAgo);
+      const result2 = timeUtils.calculateTimeDifferenceLong(thirtyMinutesAgo);
       this.assertEqual(result2, '30 Minuten', 'Should return "30 Minuten" for 30 minutes ago');
 
       this.testResults.push({ name: testName, passed: true });
@@ -100,21 +85,21 @@ class MotionSectionTimeTests {
   }
 
   // Test time calculation for hours
-  testHoursTimeCalculation() {
+  async testHoursTimeCalculation() {
     const testName = 'Hours Time Calculation';
     this.log(`Running test: ${testName}`);
 
     try {
-      const panel = this.createMockPanel();
+      const timeUtils = await this.importTimeUtils();
       
       // Test for 2 hours ago
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-      const result = panel._calculateTimeDifference(twoHoursAgo);
+      const result = timeUtils.calculateTimeDifferenceLong(twoHoursAgo);
       this.assertEqual(result, '2 Stunden', 'Should return "2 Stunden" for 2 hours ago');
 
       // Test for 12 hours ago
       const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
-      const result2 = panel._calculateTimeDifference(twelveHoursAgo);
+      const result2 = timeUtils.calculateTimeDifferenceLong(twelveHoursAgo);
       this.assertEqual(result2, '12 Stunden', 'Should return "12 Stunden" for 12 hours ago');
 
       this.testResults.push({ name: testName, passed: true });
@@ -124,21 +109,21 @@ class MotionSectionTimeTests {
   }
 
   // Test time calculation for days
-  testDaysTimeCalculation() {
+  async testDaysTimeCalculation() {
     const testName = 'Days Time Calculation';
     this.log(`Running test: ${testName}`);
 
     try {
-      const panel = this.createMockPanel();
+      const timeUtils = await this.importTimeUtils();
       
       // Test for 2 days ago
       const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-      const result = panel._calculateTimeDifference(twoDaysAgo);
+      const result = timeUtils.calculateTimeDifferenceLong(twoDaysAgo);
       this.assertEqual(result, '2 Tagen', 'Should return "2 Tagen" for 2 days ago');
 
       // Test for 5 days ago
       const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-      const result2 = panel._calculateTimeDifference(fiveDaysAgo);
+      const result2 = timeUtils.calculateTimeDifferenceLong(fiveDaysAgo);
       this.assertEqual(result2, '5 Tagen', 'Should return "5 Tagen" for 5 days ago');
 
       this.testResults.push({ name: testName, passed: true });
@@ -148,26 +133,26 @@ class MotionSectionTimeTests {
   }
 
   // Test boundary conditions
-  testBoundaryConditions() {
+  async testBoundaryConditions() {
     const testName = 'Boundary Conditions';
     this.log(`Running test: ${testName}`);
 
     try {
-      const panel = this.createMockPanel();
+      const timeUtils = await this.importTimeUtils();
       
       // Test exactly 60 seconds ago (should return "1 Minuten")
       const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
-      const result = panel._calculateTimeDifference(sixtySecondsAgo);
+      const result = timeUtils.calculateTimeDifferenceLong(sixtySecondsAgo);
       this.assertEqual(result, '1 Minuten', 'Should return "1 Minuten" for exactly 60 seconds ago');
 
       // Test exactly 1 hour ago (should return "1 Stunden")
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      const result2 = panel._calculateTimeDifference(oneHourAgo);
+      const result2 = timeUtils.calculateTimeDifferenceLong(oneHourAgo);
       this.assertEqual(result2, '1 Stunden', 'Should return "1 Stunden" for exactly 1 hour ago');
 
       // Test exactly 1 day ago (should return "1 Tagen")
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const result3 = panel._calculateTimeDifference(oneDayAgo);
+      const result3 = timeUtils.calculateTimeDifferenceLong(oneDayAgo);
       this.assertEqual(result3, '1 Tagen', 'Should return "1 Tagen" for exactly 1 day ago');
 
       this.testResults.push({ name: testName, passed: true });
@@ -180,11 +165,11 @@ class MotionSectionTimeTests {
   async runAllTests() {
     this.log('Starting Motion Section Time Display Tests...');
     
-    this.testRecentTimeCalculation();
-    this.testMinutesTimeCalculation();
-    this.testHoursTimeCalculation();
-    this.testDaysTimeCalculation();
-    this.testBoundaryConditions();
+    await this.testRecentTimeCalculation();
+    await this.testMinutesTimeCalculation();
+    await this.testHoursTimeCalculation();
+    await this.testDaysTimeCalculation();
+    await this.testBoundaryConditions();
 
     const passedTests = this.testResults.filter(result => result.passed).length;
     const totalTests = this.testResults.length;

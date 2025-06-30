@@ -1,5 +1,7 @@
 // custom_components/dashview/www/lib/ui/info-card-manager.js
 
+import { calculateTimeDifferenceLong } from '../utils/time-utils.js';
+
 export class InfoCardManager {
   constructor(panel) {
     this._panel = panel;
@@ -234,7 +236,7 @@ export class InfoCardManager {
     const badge = section.querySelector('[data-type="motion-time"]');
     const suffix = section.querySelector('[data-type="motion-suffix"]');
     const badgeContainer = section.querySelector('.info-badge');
-    const timeText = this._calculateTimeDifference(motionEntity.last_changed);
+    const timeText = calculateTimeDifferenceLong(motionEntity.last_changed);
 
     if (motionEntity.state === 'on') {
       prefix.textContent = 'Im Haus ist seit';
@@ -477,12 +479,4 @@ export class InfoCardManager {
     section.classList.remove('hidden');
   }
 
-  _calculateTimeDifference(lastChanged) {
-    const now = new Date();
-    const diffSeconds = Math.floor((now - new Date(lastChanged)) / 1000);
-    if (diffSeconds < 60) return 'Jetzt';
-    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)} Minuten`;
-    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)} Stunden`;
-    return `${Math.floor(diffSeconds / 86400)} Tagen`;
-  }
 }

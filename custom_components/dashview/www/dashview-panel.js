@@ -15,6 +15,7 @@ import { ThermostatCard } from './lib/ui/thermostat-card.js';
 import { MediaPlayerCard } from './lib/ui/media-player-card.js';
 import { SceneManager } from './lib/ui/SceneManager.js';
 import { AutoSceneGenerator } from './lib/ui/AutoSceneGenerator.js';
+import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
 
 class DashviewPanel extends HTMLElement {
   constructor() {
@@ -521,12 +522,7 @@ class DashviewPanel extends HTMLElement {
               return diffMin > 0 ? `in ${diffMin}m` : 'Ready';
 
           case this._entityLabels.MOTION:
-              const lastChanged = new Date(entity.last_changed);
-              const currentTime = new Date();
-              const diffSec = Math.floor((currentTime - lastChanged) / 1000);
-              if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-              if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-              return `${Math.floor(diffSec / 86400)}d ago`;
+              return calculateTimeDifferenceEnglish(entity.last_changed);
 
           default:
               return entity.attributes?.friendly_name || '–';
