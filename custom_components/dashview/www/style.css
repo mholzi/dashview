@@ -2050,6 +2050,7 @@ body.popup-open, :host(.popup-open) {
     background: var(--gray000);
     position: relative;
     overflow: hidden;
+    border-radius: 18px;
 }
 
 .garbage-card {
@@ -2847,6 +2848,7 @@ body.popup-open, :host(.popup-open) {
     padding: 0 12px 12px 12px;
     border-top: 1px solid var(--divider-color);
     margin-top: 12px;
+    padding-top: 12px;
 }
 
 .other-entities-grid {
