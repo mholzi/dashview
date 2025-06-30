@@ -3107,3 +3107,64 @@ body.popup-open, :host(.popup-open) {
 .dark-mode .dashview-tooltip.tooltip-below::before {
     border-bottom-color: var(--gray000);
 }
+
+/* --- Gesture Detection Visual Feedback --- */
+/* Subtle feedback during long-tap detection */
+.gesture-detecting {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+/* More pronounced feedback during long-tap hold */
+.gesture-longpress {
+    transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure gesture feedback works with sensor cards */
+.sensor-small-card.gesture-detecting,
+.sensor-big-card.gesture-detecting {
+    transform: scale(0.98);
+}
+
+.sensor-small-card.gesture-longpress,
+.sensor-big-card.gesture-longpress {
+    transform: scale(0.95);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Room cards gesture feedback */
+.room-card.gesture-detecting {
+    transform: scale(0.98);
+}
+
+.room-card.gesture-longpress {
+    transform: scale(0.95);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Prevent text selection during gesture detection */
+.gesture-detecting,
+.gesture-longpress {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .gesture-longpress {
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    }
+    
+    .sensor-small-card.gesture-longpress,
+    .sensor-big-card.gesture-longpress,
+    .room-card.gesture-longpress {
+        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.05);
+    }
+}

@@ -1,5 +1,7 @@
 // custom_components/dashview/www/lib/ui/FloorManager.js
 
+import { GestureDetector } from '../utils/GestureDetector.js';
+
 export class FloorManager {
   constructor(panel) {
     this._panel = panel;
@@ -10,6 +12,13 @@ export class FloorManager {
     this._motionCardSwipeStates = new Map();
     // Define swipeable entity types as class constant
     this._swipeableTypes = ['motion', 'door', 'other_door', 'smoke', 'cover', 'light'];
+    
+    // Initialize gesture detector for long-tap functionality
+    this._gestureDetector = new GestureDetector({
+      longTapDuration: 500, // 500ms for long-tap
+      longTapTolerance: 10, // 10px movement tolerance
+      enableVisualFeedback: true
+    });
   }
 
   setHass(hass) {
@@ -330,13 +339,33 @@ export class FloorManager {
 
   _initializeCardListeners(cardElement) {
     if (!cardElement) return;
-    cardElement.addEventListener('click', () => {
-      const entityId = cardElement.dataset.entityId;
-      const navPath = cardElement.dataset.navigationPath;
-      if (navPath) {
-        window.location.hash = navPath;
-      } else if (entityId) {
-        this._hass.callService('homeassistant', 'toggle', { entity_id: entityId });
+    
+    // Use gesture detector for both tap and long-tap functionality
+    this._gestureDetector.attachToElement(cardElement, {
+      onTap: (element, event) => {
+        // Maintain existing click functionality
+        const entityId = element.dataset.entityId;
+        const navPath = element.dataset.navigationPath;
+        if (navPath) {
+          window.location.hash = navPath;
+        } else if (entityId) {
+          this._hass.callService('homeassistant', 'toggle', { entity_id: entityId });
+        }
+      },
+      
+      onLongTap: (element, event) => {
+        // Placeholder for future entity details popup functionality
+        const entityId = element.dataset.entityId;
+        if (entityId) {
+          console.log('[FloorManager] Long-tap detected on entity:', entityId);
+          // TODO: Implement entity details popup in future issues
+          // For now, just log the event for testing purposes
+        }
+      },
+      
+      onLongTapStart: (element, event) => {
+        // Optional: Additional feedback when long-tap starts
+        console.log('[FloorManager] Long-tap started on element');
       }
     });
   }
