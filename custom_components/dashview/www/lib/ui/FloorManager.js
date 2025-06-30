@@ -434,7 +434,11 @@ export class FloorManager {
                 icon = 'mdi:door-open';
                 label = 'Offen';
                 cardClass = 'door-open';
-            } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked' || doorState === 'unlocked') {
+            } else if (doorState === 'unlocked') {
+                icon = 'mdi:door-closed';
+                label = 'Zu';
+                cardClass = 'door-unlocked';
+            } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
                 icon = 'mdi:door-closed-lock';
                 label = 'Abgeschlossen';
                 cardClass = 'door-locked';
