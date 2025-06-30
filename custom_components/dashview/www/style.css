@@ -2162,11 +2162,14 @@ body.popup-open, :host(.popup-open) {
 
 .garbage-card-name {
     grid-area: name;
-    font-size: 1.2em;
+    justify-self: start;
+    align-self: start;
+    text-align: left;
+    font-size: 16px;
     font-weight: 500;
     color: var(--gray800);
-    align-self: start;
-    padding-top: 5px;
+    padding: 14px;
+    word-break: break-word;
 }
 
 .garbage-card-icon-cell {
@@ -2528,8 +2531,12 @@ body.popup-open, :host(.popup-open) {
     grid-area: name;
     justify-self: start;
     align-self: start;
-    font-weight: 500;
+    text-align: left;
     font-size: 16px;
+    font-weight: 500;
+    color: var(--gray800);
+    padding: 14px;
+    word-break: break-word;
     opacity: 0.7;
 }
 
