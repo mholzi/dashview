@@ -133,6 +133,7 @@
             <p>Configure motion sensors based on Home Assistant labels. Select motion sensors labeled "Motion" to assign to rooms.</p>
             <div id="motion-setup-status" class="status-display">Ready</div>
             <button id="reload-motion-sensors" class="action-button">Reload Motion Sensors</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search motion sensors..." data-target="motion-sensors-by-room">
             <div id="motion-sensors-by-room" class="floors-container">
             </div>
             <button id="save-motion-sensor-config" class="save-button" style="margin-top: 12px;">Save Motion Sensor Configuration</button>
@@ -144,6 +145,7 @@
             <p>Configure window sensors based on Home Assistant labels. Select window sensors labeled "Fenster" to assign to rooms.</p>
             <div id="window-setup-status" class="status-display">Ready</div>
             <button id="reload-window-sensors" class="action-button">Reload Window Sensors</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search window sensors..." data-target="window-sensors-by-room">
             <div id="window-sensors-by-room" class="floors-container">
             </div>
             <button id="save-window-sensor-config" class="save-button" style="margin-top: 12px;">Save Window Sensor Configuration</button>
@@ -155,6 +157,7 @@
             <p>Configure smoke detector sensors based on Home Assistant labels. Select smoke detectors labeled "Rauchmelder" to assign to rooms.</p>
             <div id="smoke-detector-setup-status" class="status-display">Ready</div>
             <button id="reload-smoke-detector-sensors" class="action-button">Reload Smoke Detectors</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search smoke detectors..." data-target="smoke-detector-sensors-by-room">
             <div id="smoke-detector-sensors-by-room" class="floors-container">
             </div>
             <button id="save-smoke-detector-sensor-config" class="save-button" style="margin-top: 12px;">Save Smoke Detector Configuration</button>
@@ -166,6 +169,7 @@
             <p>Configure vibration sensors based on Home Assistant labels. Select vibration sensors labeled "Vibration" to assign to rooms.</p>
             <div id="vibration-setup-status" class="status-display">Ready</div>
             <button id="reload-vibration-sensors" class="action-button">Reload Vibration Sensors</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search vibration sensors..." data-target="vibration-sensors-by-room">
             <div id="vibration-sensors-by-room" class="floors-container">
             </div>
             <button id="save-vibration-sensor-config" class="save-button" style="margin-top: 12px;">Save Vibration Sensor Configuration</button>
@@ -177,6 +181,7 @@
             <p>Configure door sensors based on Home Assistant labels. Select door sensors labeled "Door" to assign to rooms.</p>
             <div id="door-setup-status" class="status-display">Ready</div>
             <button id="reload-door-sensors" class="action-button">Reload Door Sensors</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search door sensors..." data-target="door-sensors-by-room">
             <div id="door-sensors-by-room" class="floors-container">
             </div>
             <button id="save-door-sensor-config" class="save-button" style="margin-top: 12px;">Save Door Sensor Configuration</button>
@@ -204,6 +209,7 @@
             
             <div id="temperatur-setup-status" class="status-display">Ready</div>
             <button id="reload-temperatur-sensors" class="action-button">Reload Temperature Sensors</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search temperature sensors..." data-target="temperatur-sensors-by-room">
             <div id="temperatur-sensors-by-room" class="floors-container">
             </div>
             <button id="save-temperatur-sensor-config" class="save-button" style="margin-top: 12px;">Save Temperature Sensor Configuration</button>
@@ -215,6 +221,7 @@
             <p>Configure humidity sensors based on Home Assistant labels. Select sensors labeled "Humidity" to assign to rooms.</p>
             <div id="humidity-setup-status" class="status-display">Ready</div>
             <button id="reload-humidity-sensors" class="action-button">Reload Humidity Sensors</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search humidity sensors..." data-target="humidity-sensors-by-room">
             <div id="humidity-sensors-by-room" class="floors-container">
             </div>
             <button id="save-humidity-sensor-config" class="save-button" style="margin-top: 12px;">Save Humidity Sensor Configuration</button>
@@ -231,6 +238,7 @@
             <p>Configure light entities from Home Assistant. Select lights to assign to rooms in DashView.</p>
             <div id="light-setup-status" class="status-display">Ready</div>
             <button id="reload-light-entities" class="action-button">Reload Lights</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search light entities..." data-target="lights-by-room">
             <div id="lights-by-room" class="floors-container">
             </div>
             <button id="save-light-config" class="save-button" style="margin-top: 12px;">Save Light Configuration</button>
@@ -242,6 +250,7 @@
             <p>Configure cover entities from Home Assistant. Select covers to assign to rooms in DashView.</p>
             <div id="cover-setup-status" class="status-display">Ready</div>
             <button id="reload-cover-entities" class="action-button">Reload Covers</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search cover entities..." data-target="covers-by-room">
             <div id="covers-by-room" class="floors-container">
             </div>
             <button id="save-cover-config" class="save-button" style="margin-top: 12px;">Save Cover Configuration</button>
@@ -253,6 +262,7 @@
             <p>Assign each available media player from Home Assistant to one of your configured rooms.</p>
             <div id="media-player-status" class="status-display">Ready</div>
             <button id="reload-media-players" class="action-button">Reload Rooms & Players</button>
+            <input type="text" class="form-input entity-search-input" placeholder="Search media players..." data-target="media-player-assignment-list">
             <div id="media-player-assignment-list" class="floors-container">
             </div>
             <button id="save-all-media-assignments" class="save-button" style="margin-top: 20px;">Save All Assignments</button>
@@ -322,6 +332,7 @@
             <h5>Hoover Entities</h5>
             <p>Add vacuum cleaner and robotic hoover entities to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
             <div id="hoover-setup-status" class="status-display">Ready</div>
+            <input type="text" class="form-input entity-search-input" placeholder="Search hoover entities..." data-target="hoover-entities-list">
             <div id="hoover-entities-list" class="floors-container">
                 <!-- Hoover entities will be rendered here -->
             </div>
@@ -341,6 +352,7 @@
             <h5>Mower Entities</h5>
             <p>Add lawn mower and robotic mower entities to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
             <div id="mower-setup-status" class="status-display">Ready</div>
+            <input type="text" class="form-input entity-search-input" placeholder="Search mower entities..." data-target="mower-entities-list">
             <div id="mower-entities-list" class="floors-container">
                 <!-- Mower entities will be rendered here -->
             </div>
@@ -360,6 +372,7 @@
             <h5>Door Entities</h5>
             <p>Add additional door entities manually to your rooms. These will appear in sensor cards with dynamic icons and background coloring.</p>
             <div id="other-door-setup-status" class="status-display">Ready</div>
+            <input type="text" class="form-input entity-search-input" placeholder="Search door entities..." data-target="other-door-entities-list">
             <div id="other-door-entities-list" class="floors-container">
                 <!-- Door entities will be rendered here -->
             </div>
@@ -381,6 +394,7 @@
         <div class="config-section">
             <h5>Garbage Sensors</h5>
             <div id="garbage-setup-status" class="status-display">Ready</div>
+            <input type="text" class="form-input entity-search-input" placeholder="Search garbage sensors..." data-target="garbage-sensors-list">
             <div id="garbage-sensors-list" class="floors-container">
                 <!-- Garbage sensors will be rendered here -->
             </div>

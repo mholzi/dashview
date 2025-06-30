@@ -356,6 +356,9 @@ export class AdminManager {
         html += `</div></div>`;
     });
     container.innerHTML = html;
+    
+    // Attach search functionality after rendering
+    this._attachEntitySearchListener(container.id);
   }
 
   _isEntityInRoom(entityId, entityType, houseConfig) {
@@ -366,6 +369,119 @@ export class AdminManager {
       : (room, id, type) => room.header_entities?.some(he => he.entity === id && he.entity_type === type);
       
     return Object.values(houseConfig.rooms).some(room => checkFunc(room, entityId, entityType));
+  }
+
+  /**
+   * Attach search listener for entity filtering
+   * @param {string} containerElementId - The container element ID to search within
+   */
+  _attachEntitySearchListener(containerElementId) {
+    const searchInput = this._shadowRoot.querySelector(`input[data-target="${containerElementId}"]`);
+    if (!searchInput) return;
+
+    // Remove existing listener to prevent duplicates
+    searchInput.removeEventListener('input', searchInput._entitySearchHandler);
+    
+    // Create and attach new listener
+    searchInput._entitySearchHandler = (event) => {
+      this._filterEntityListDisplay(event.target, containerElementId);
+    };
+    
+    searchInput.addEventListener('input', searchInput._entitySearchHandler);
+    
+    // Apply current search term if any (useful when switching tabs)
+    if (searchInput.value) {
+      this._filterEntityListDisplay(searchInput, containerElementId);
+    }
+  }
+
+  /**
+   * Filter entity list display based on search term
+   * @param {HTMLInputElement} inputElement - The search input element
+   * @param {string} containerElementId - The container element ID to filter
+   */
+  _filterEntityListDisplay(inputElement, containerElementId) {
+    const searchTerm = inputElement.value.toLowerCase().trim();
+    const container = this._shadowRoot.getElementById(containerElementId);
+    
+    if (!container) return;
+
+    // Get all entity list items
+    const entityItems = container.querySelectorAll('.entity-list-item, .floor-item');
+    const roomConfigs = container.querySelectorAll('.room-config');
+
+    entityItems.forEach(item => {
+      let isMatch = false;
+      
+      // Handle different item structures
+      const label = item.querySelector('.checkbox-label');
+      const entityId = item.querySelector('.entity-id');
+      const entityName = item.querySelector('.entity-name, .floor-name');
+      const floorDetails = item.querySelector('.floor-details');
+      
+      if (label && entityId) {
+        // Standard sensor setup items
+        const labelText = label.textContent.toLowerCase();
+        const entityIdText = entityId.textContent.toLowerCase();
+        isMatch = !searchTerm || labelText.includes(searchTerm) || entityIdText.includes(searchTerm);
+      } else if (entityName) {
+        // Other entities and garbage sensors
+        const nameText = entityName.textContent.toLowerCase();
+        const idText = entityId ? entityId.textContent.toLowerCase() : '';
+        const detailsText = floorDetails ? floorDetails.textContent.toLowerCase() : '';
+        isMatch = !searchTerm || nameText.includes(searchTerm) || idText.includes(searchTerm) || detailsText.includes(searchTerm);
+      } else {
+        // Fallback: search all text content
+        const allText = item.textContent.toLowerCase();
+        isMatch = !searchTerm || allText.includes(searchTerm);
+      }
+      
+      // Show/hide the entity item
+      item.style.display = isMatch ? '' : 'none';
+    });
+
+    // Hide room sections that have no visible entities (only for sensor setups)
+    roomConfigs.forEach(roomConfig => {
+      const entityList = roomConfig.querySelector('.entity-list');
+      if (!entityList) return;
+
+      const visibleItems = entityList.querySelectorAll('.entity-list-item:not([style*="display: none"])');
+      roomConfig.style.display = visibleItems.length > 0 ? '' : 'none';
+    });
+
+    // Update search result count (optional enhancement)
+    this._updateSearchResultCount(containerElementId, searchTerm);
+  }
+
+  /**
+   * Update search result count display (optional enhancement)
+   * @param {string} containerElementId - The container element ID
+   * @param {string} searchTerm - The current search term
+   */
+  _updateSearchResultCount(containerElementId, searchTerm) {
+    if (!searchTerm) return;
+
+    const container = this._shadowRoot.getElementById(containerElementId);
+    const visibleItems = container.querySelectorAll('.entity-list-item:not([style*="display: none"])');
+    
+    // Find or create result count display
+    let resultCountEl = container.querySelector('.search-result-count');
+    if (!resultCountEl) {
+      resultCountEl = document.createElement('div');
+      resultCountEl.className = 'search-result-count';
+      resultCountEl.style.cssText = 'font-size: 0.9em; color: var(--gray600); margin-bottom: 10px;';
+      container.insertBefore(resultCountEl, container.firstChild);
+    }
+
+    const count = visibleItems.length;
+    resultCountEl.textContent = count === 0 
+      ? `No entities found for "${searchTerm}"` 
+      : `${count} ${count === 1 ? 'entity' : 'entities'} found`;
+    
+    // Remove count display when search is cleared
+    if (!searchTerm && resultCountEl) {
+      resultCountEl.remove();
+    }
   }
   
   async saveGenericSensorConfig(entityType, statusElementId, containerElementId) {
@@ -855,11 +971,14 @@ _renderMediaPlayerAssignments() {
   allPlayers.forEach(player => {
       const assignedRoomKey = playerToRoomMap.get(player.entity_id) || '';
       const item = document.createElement('div');
-      item.className = 'floor-item';
-      item.innerHTML = `<div class="floor-info"><div class="floor-name">${player.friendly_name}</div><div class="floor-details">${player.entity_id}</div></div><div class="setting-row"><select class="dropdown-selector player-room-selector" data-entity-id="${player.entity_id}"><option value="">-- Unassigned --</option>${roomOptions}</select></div>`;
+      item.className = 'floor-item entity-list-item';
+      item.innerHTML = `<div class="floor-info"><div class="floor-name">${player.friendly_name}</div><div class="floor-details entity-id">${player.entity_id}</div></div><div class="setting-row"><select class="dropdown-selector player-room-selector" data-entity-id="${player.entity_id}"><option value="">-- Unassigned --</option>${roomOptions}</select></div>`;
       item.querySelector('.player-room-selector').value = assignedRoomKey;
       container.appendChild(item);
   });
+
+  // Attach search functionality after rendering
+  this._attachEntitySearchListener('media-player-assignment-list');
 }
 
 async saveAllMediaPlayerAssignments() {
@@ -1079,6 +1198,9 @@ async saveMediaPlayerPresets() {
         });
         
         container.innerHTML = html;
+        
+        // Attach search functionality after rendering
+        this._attachEntitySearchListener(containerId);
     });
   }
 
@@ -1256,6 +1378,9 @@ async saveMediaPlayerPresets() {
         this.removeGarbageSensor(index);
       });
     });
+
+    // Attach search functionality after rendering
+    this._attachEntitySearchListener('garbage-sensors-list');
   }
 
   addGarbageSensor() {
@@ -1347,5 +1472,61 @@ async saveMediaPlayerPresets() {
     this.loadGenericSensorSetup({domain: 'light'}, 'light-setup-status', 'lights-by-room', 'Lights');
     this.loadGenericSensorSetup({domain: 'cover'}, 'cover-setup-status', 'covers-by-room', 'Covers');
     this.loadRoomMediaPlayerMaintenance();
+  }
+
+  // Entity Search Functionality
+  _attachEntitySearchListener(containerElementId) {
+    const searchInput = this._shadowRoot.querySelector(`input.entity-search-input[data-target="${containerElementId}"]`);
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', (e) => {
+      this._filterEntityListDisplay(e.target, containerElementId);
+    });
+  }
+
+  _filterEntityListDisplay(inputElement, containerElementId) {
+    const searchTerm = inputElement.value;
+    const container = this._shadowRoot.getElementById(containerElementId);
+    if (!container) return;
+    
+    const searchTermLower = searchTerm.toLowerCase().trim();
+
+    const items = container.querySelectorAll('.floor-item, .room-item, .entity-item, .config-section > div');
+    let visibleCount = 0;
+    
+    items.forEach(item => {
+      const entityIdText = item.querySelector('.entity-id, .floor-name, .room-name')?.textContent || '';
+      const labelText = item.querySelector('.checkbox-label, .entity-name, .floor-details')?.textContent || '';
+      const nameText = item.textContent || '';
+      
+      const isMatch = !searchTermLower || 
+                     entityIdText.toLowerCase().includes(searchTermLower) ||
+                     labelText.toLowerCase().includes(searchTermLower) ||
+                     nameText.toLowerCase().includes(searchTermLower);
+      
+      item.style.display = isMatch ? '' : 'none';
+      if (isMatch) visibleCount++;
+    });
+
+    this._updateSearchResultCount(containerElementId, searchTerm, visibleCount);
+  }
+
+  _updateSearchResultCount(containerElementId, searchTerm, visibleCount) {
+    const container = this._shadowRoot.getElementById(containerElementId);
+    if (!container) return;
+
+    let countDisplay = container.querySelector('.search-result-count');
+    if (!countDisplay) {
+      countDisplay = document.createElement('div');
+      countDisplay.className = 'search-result-count';
+      container.parentNode.insertBefore(countDisplay, container);
+    }
+
+    if (searchTerm) {
+      countDisplay.textContent = `Showing ${visibleCount} results for "${searchTerm}"`;
+      countDisplay.style.display = 'block';
+    } else {
+      countDisplay.style.display = 'none';
+    }
   }
 }
