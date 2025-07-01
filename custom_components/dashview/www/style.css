@@ -1949,12 +1949,12 @@ body.popup-open, :host(.popup-open) {
 .media-player-card {
     margin: 8px 0;
     border-radius: 12px;
-    background: var(--gray200);
+    background: transparent;
   }
   
   .media-player-expander {
     border: none;
-    background: var(--gray200);
+    background: transparent;
     border-radius: 12px;
     margin: 0;
   }
