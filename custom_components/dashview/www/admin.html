@@ -643,6 +643,52 @@
                 <button id="reset-dashboard-sections" class="action-button">Reset to Default</button>
             </div>
         </div>
+
+        <div class="config-section">
+            <h5>Layout Presets</h5>
+            <p>Quick-apply predefined dashboard layouts or manage your custom configurations.</p>
+            
+            <div id="preset-selection-container" class="preset-buttons-grid">
+                <button class="preset-button" data-preset="default">
+                    <div class="preset-icon">🏠</div>
+                    <div class="preset-name">Default Layout</div>
+                    <div class="preset-description">All sections visible in standard order</div>
+                </button>
+                <button class="preset-button" data-preset="minimal">
+                    <div class="preset-icon">✨</div>
+                    <div class="preset-name">Minimal Dashboard</div>
+                    <div class="preset-description">Only essential sections</div>
+                </button>
+                <button class="preset-button" data-preset="media-focused">
+                    <div class="preset-icon">🎵</div>
+                    <div class="preset-name">Media Focused</div>
+                    <div class="preset-description">Prioritizes media controls</div>
+                </button>
+                <button class="preset-button" data-preset="info-heavy">
+                    <div class="preset-icon">📊</div>
+                    <div class="preset-name">Information Heavy</div>
+                    <div class="preset-description">Emphasizes notifications and info</div>
+                </button>
+            </div>
+        </div>
+
+        <div class="config-section">
+            <h5>Export & Import</h5>
+            <p>Save your dashboard configuration or load a configuration from file.</p>
+            
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button id="export-dashboard-config" class="action-button">📤 Export Configuration</button>
+                <label for="import-dashboard-config" class="action-button" style="text-align: center; cursor: pointer;">
+                    📥 Import Configuration
+                    <input type="file" id="import-dashboard-config" accept=".json" style="display: none;">
+                </label>
+            </div>
+            
+            <div id="import-export-status" class="status-display" style="margin-top: 12px;">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready for import/export</span>
+            </div>
+        </div>
     </div>
 
     <div class="config-section">
