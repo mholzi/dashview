@@ -1,7 +1,7 @@
 {
   "domain": "dashview",
   "name": "DashView",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "documentation": "https://github.com/mholzi/dashview",
   "issue_tracker": "https://github.com/mholzi/dashview/issues",
   "dependencies": [],

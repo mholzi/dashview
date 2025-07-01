@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2025-07-01
+
+### 🐛 Bug Fixes
+
+- **Calendar Error Handling** - Improved calendar error handling and diagnostics (#335)
+  - Enhanced backend error validation with entity existence checks
+  - Structured error responses with error type categorization (`entity_not_found`, `service_call_failed`)
+  - Detailed frontend error messages replacing generic "Fehler beim Laden der Termine"
+  - User-friendly error guidance directing to Admin → Calendar configuration
+  - Retry functionality for failed calendar requests
+  - Enhanced debug logging with `[DashView]` prefixes for better troubleshooting
+  - Graceful handling of partial calendar failures (some work, others don't)
+
+### 🔧 Technical Improvements
+
+- **Error Diagnostics** - Comprehensive error reporting and debugging capabilities
+  - Backend entity validation before Home Assistant service calls
+  - Frontend error categorization with specific user guidance
+  - Enhanced console logging for developer debugging
+  - Structured API responses for better error handling
+
 ## [0.5.0] - 2025-07-01
 
 ### 🚀 Major New Features
