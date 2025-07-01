@@ -2208,6 +2208,10 @@ async saveMediaPlayerPresets() {
       // Update main panel config
       if (this._panel._houseConfig) {
         this._panel._houseConfig.custom_cards = this._adminLocalState.houseConfig.custom_cards;
+        // Update custom cards in main dashboard
+        if (this._panel._floorManager) {
+          this._panel._floorManager.renderCustomCardsMain();
+        }
       }
     } catch (e) {
       this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');

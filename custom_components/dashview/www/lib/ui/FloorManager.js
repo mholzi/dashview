@@ -210,6 +210,9 @@ export class FloorManager {
         }
     });
     // By not calling renderFloorLayout(), the swiper is NOT re-initialized, preserving its state.
+    
+    // Update custom cards in main dashboard
+    this.renderCustomCardsMain();
   }
   
   initializeFloorTabs() {
@@ -2132,6 +2135,112 @@ export class FloorManager {
           contentElement.innerHTML = newContent;
         } catch (error) {
           console.error(`[FloorManager] Error updating custom card ${customCardId}:`, error);
+        }
+      }
+    }
+  }
+
+  /**
+   * Render custom cards for the main dashboard (not in grid layout)
+   */
+  async renderCustomCardsMain() {
+    const container = this._shadowRoot.querySelector('#custom-cards-main-container');
+    if (!container) return;
+
+    const customCards = this._houseConfig.custom_cards || {};
+    
+    // If no custom cards configured, hide the container
+    if (Object.keys(customCards).length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    // Render all custom cards
+    const cardPromises = Object.entries(customCards).map(async ([cardId, cardConfig]) => {
+      return await this._renderCustomCardMain(cardId, cardConfig);
+    });
+
+    const cardHTMLArray = await Promise.all(cardPromises);
+    container.innerHTML = cardHTMLArray.filter(html => html).join('');
+  }
+
+  /**
+   * Render a single custom card for the main dashboard
+   * @param {string} customCardId - The ID of the custom card
+   * @param {Object} cardConfig - The card configuration
+   * @returns {Promise<string>} HTML for the custom card
+   */
+  async _renderCustomCardMain(customCardId, cardConfig) {
+    try {
+      if (!cardConfig) {
+        console.warn(`[FloorManager] Custom card '${customCardId}' not found`);
+        return `<div class="custom-card-main-item custom-card-error">
+          <div class="error-content">
+            <i class="mdi mdi-alert-circle"></i>
+            <span>Card not found: ${customCardId}</span>
+          </div>
+        </div>`;
+      }
+
+      // Parse YAML configuration
+      let parsedConfig;
+      try {
+        parsedConfig = SimpleYamlParser.parse(cardConfig.yaml_config);
+      } catch (yamlError) {
+        console.error(`[FloorManager] YAML parsing error for card '${customCardId}':`, yamlError);
+        return `<div class="custom-card-main-item custom-card-error">
+          <div class="error-content">
+            <i class="mdi mdi-alert-circle"></i>
+            <span>YAML Error: ${yamlError.message}</span>
+          </div>
+        </div>`;
+      }
+
+      // Extract entity IDs for state management
+      const entityIds = SimpleYamlParser.extractEntityIds(parsedConfig);
+      if (entityIds.length > 0) {
+        this._panel._stateManager.watchEntities(entityIds, () => {
+          this._updateCustomCardMain(customCardId);
+        });
+      }
+
+      // Create custom card wrapper for main dashboard
+      const cardElementId = `custom-card-main-${customCardId.replace(/[^a-zA-Z0-9]/g, '')}`;
+      
+      return `<div class="custom-card-main-item" id="${cardElementId}" data-custom-card-id="${customCardId}">
+        <div class="custom-card-content" data-card-config='${JSON.stringify(parsedConfig)}'>
+          ${this._renderLovelaceCard(parsedConfig, cardElementId)}
+        </div>
+      </div>`;
+
+    } catch (error) {
+      console.error(`[FloorManager] Error rendering main custom card '${customCardId}':`, error);
+      return `<div class="custom-card-main-item custom-card-error">
+        <div class="error-content">
+          <i class="mdi mdi-alert-circle"></i>
+          <span>Error: ${error.message}</span>
+        </div>
+      </div>`;
+    }
+  }
+
+  /**
+   * Update a custom card in the main dashboard when its entities change
+   */
+  _updateCustomCardMain(customCardId) {
+    const cardElementId = `custom-card-main-${customCardId.replace(/[^a-zA-Z0-9]/g, '')}`;
+    const cardElement = this._shadowRoot.querySelector(`#${cardElementId}`);
+    if (cardElement) {
+      const contentElement = cardElement.querySelector('.custom-card-content');
+      if (contentElement) {
+        const configAttr = contentElement.getAttribute('data-card-config');
+        if (configAttr) {
+          try {
+            const parsedConfig = JSON.parse(configAttr);
+            contentElement.innerHTML = this._renderLovelaceCard(parsedConfig, cardElementId);
+          } catch (error) {
+            console.error(`[FloorManager] Error updating main custom card ${customCardId}:`, error);
+          }
         }
       }
     }
