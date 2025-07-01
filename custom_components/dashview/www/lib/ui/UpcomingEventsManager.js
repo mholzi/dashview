@@ -12,8 +12,11 @@ export class UpcomingEventsManager {
 
     setHass(hass) {
         this._hass = hass;
-        // Update events when hass changes
-        this.update();
+        // Don't update on every hass change - let the periodic timer handle updates
+        // Only update if we don't have events yet or if upcoming events card is visible
+        if (!this._events || this._events.length === 0) {
+            this.update();
+        }
     }
 
     /**
