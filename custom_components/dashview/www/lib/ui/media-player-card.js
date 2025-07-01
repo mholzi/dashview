@@ -254,7 +254,17 @@ export class MediaPlayerCard {
         const title = display.querySelector('.media-title');
         const artist = display.querySelector('.media-artist');
 
-        if (img) img.src = entityState.attributes.entity_picture || '';
+        if (img) {
+            const entityPicture = entityState.attributes.entity_picture;
+            if (entityPicture) {
+                img.src = entityPicture;
+                img.style.display = 'block';
+            } else {
+                // Use a placeholder when no entity picture is available
+                img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f5f5f5"/><text x="50" y="55" text-anchor="middle" font-family="Arial" font-size="12" fill="%23999">Kein Bild</text></svg>';
+                img.style.display = 'block';
+            }
+        }
         if (title) title.textContent = entityState.attributes.media_title || 'Kein Titel';
         if (artist) artist.textContent = entityState.attributes.media_artist || 'Unbekannt';
 

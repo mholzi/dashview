@@ -678,8 +678,8 @@ export class FloorManager {
       label = 'Offen';
       cardClass = 'door-open';
     } else if (doorState === 'unlocked') {
-      icon = 'mdi:door-closed';
-      label = 'Zu';
+      icon = 'mdi:door-closed-lock';
+      label = 'Abgeschlossen';
       cardClass = 'door-unlocked';
     } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
       icon = 'mdi:door-closed-lock';
@@ -905,7 +905,7 @@ export class FloorManager {
     if (!entityState || entityState.state === 'unavailable') {
       return {
         name: entityState?.attributes.friendly_name || entityId,
-        label: 'Unavailable',
+        label: 'Nicht verfügbar',
         icon: 'mdi:help-circle',
         cardClass: 'is-unavailable'
       };
