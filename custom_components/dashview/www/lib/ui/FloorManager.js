@@ -97,6 +97,14 @@ export class FloorManager {
         }
     });
 
+    // Update person cards
+    gridContainer.querySelectorAll('.person-card').forEach(card => {
+        const entityId = card.dataset.entityId;
+        if (entityId) {
+            this._updatePersonCard(card, entityId);
+        }
+    });
+
     // Update room cards within the swiper
     gridContainer.querySelectorAll('.room-card').forEach(card => {
         const navPath = card.dataset.navigationPath;
@@ -212,6 +220,8 @@ export class FloorManager {
                 cardHTML = this._renderRoomSwipeCard(floorId, slot.grid_area);
             } else if (slot.type === 'garbage') {
                 cardHTML = this._renderGarbageSwipeCard(slot.grid_area);
+            } else if (slot.type === 'person_cards') {
+                cardHTML = this._renderPersonCardsContainer(slot.grid_area);
             } else {
                 const entityId = entityProvider(slot.type);
                 if (entityId) {
@@ -222,12 +232,16 @@ export class FloorManager {
                 }
             }
         } else {
-            const entityId = entityProvider(slot.type);
-            if (entityId) {
-                cardHTML = this._generateSmallSensorCardHTML(entityId, slot.grid_area);
+            if (slot.type === 'person_card' && slot.person_id) {
+                cardHTML = this._renderSinglePersonCard(slot.person_id, slot.grid_area);
             } else {
-                // No entity available - keep slot empty
-                cardHTML = `<div style="grid-area: ${slot.grid_area};"></div>`;
+                const entityId = entityProvider(slot.type);
+                if (entityId) {
+                    cardHTML = this._generateSmallSensorCardHTML(entityId, slot.grid_area);
+                } else {
+                    // No entity available - keep slot empty
+                    cardHTML = `<div style="grid-area: ${slot.grid_area};"></div>`;
+                }
             }
         }
         gridHTML += cardHTML;
@@ -237,7 +251,7 @@ export class FloorManager {
 
     this._initializeSwiper(gridContainer);
 
-    gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card, .garbage-card').forEach(card => {
+    gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card, .garbage-card, .person-card').forEach(card => {
         this._initializeCardListeners(card);
         // Initialize swipe handlers for motion, door, smoke, cover, and light sensor cards
         if (card.classList.contains('sensor-small-card')) {
@@ -245,6 +259,10 @@ export class FloorManager {
             if (type === 'motion' || type === 'door' || type === 'other_door' || type === 'smoke' || type === 'cover' || type === 'light') {
                 this._initializeMotionCardSwipeHandlers(card);
             }
+        }
+        // Initialize person card interactions
+        if (card.classList.contains('person-card')) {
+            this._initializePersonCardHandlers(card);
         }
     });
   }
@@ -1229,5 +1247,416 @@ export class FloorManager {
     
     // Mark as initialized to avoid duplicate handlers
     card.dataset.swipeInitialized = 'true';
+  }
+
+  /**
+   * Render a container for multiple person cards (for big slots)
+   * @param {string} gridArea - The CSS grid area
+   * @returns {string} HTML for person cards container
+   */
+  _renderPersonCardsContainer(gridArea) {
+    if (!this._houseConfig.persons) {
+      return `<div style="grid-area: ${gridArea};" class="person-cards-empty">
+        <i class="mdi mdi-account-group"></i>
+        <h4>No Person Cards</h4>
+        <p>Configure persons in the admin panel to display person cards here.</p>
+      </div>`;
+    }
+
+    const enabledPersons = Object.entries(this._houseConfig.persons)
+      .filter(([personId, config]) => config.enabled)
+      .map(([personId, config]) => ({ personId, config }));
+
+    if (enabledPersons.length === 0) {
+      return `<div style="grid-area: ${gridArea};" class="person-cards-empty">
+        <i class="mdi mdi-account-off"></i>
+        <h4>No Enabled Persons</h4>
+        <p>Enable persons in the admin panel to display their cards.</p>
+      </div>`;
+    }
+
+    const personsHTML = enabledPersons.map(({ personId, config }) => 
+      this._generatePersonCardHTML(personId, config)
+    ).join('');
+
+    return `
+      <div style="grid-area: ${gridArea};" class="person-cards-section">
+        <h3><i class="mdi mdi-account-group"></i> People</h3>
+        <div class="person-cards-container">
+          ${personsHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render a single person card (for small slots)
+   * @param {string} personId - The person entity ID
+   * @param {string} gridArea - The CSS grid area
+   * @returns {string} HTML for single person card
+   */
+  _renderSinglePersonCard(personId, gridArea) {
+    const personConfig = this._houseConfig.persons?.[personId];
+    if (!personConfig || !personConfig.enabled) {
+      return `<div style="grid-area: ${gridArea};"></div>`;
+    }
+
+    const cardHTML = this._generatePersonCardHTML(personId, personConfig);
+    return `<div style="grid-area: ${gridArea};">${cardHTML}</div>`;
+  }
+
+  /**
+   * Generate HTML for a person card using template data
+   * @param {string} personId - The person entity ID
+   * @param {Object} personConfig - Person configuration from admin panel
+   * @returns {string} HTML for person card
+   */
+  _generatePersonCardHTML(personId, personConfig) {
+    const personEntity = this._hass.states[personId];
+    if (!personEntity) {
+      return `<div class="person-card-error">Person ${personId} not found</div>`;
+    }
+
+    // Get location data
+    const locationData = this._getPersonLocationData(personConfig);
+    
+    // Get battery data
+    const batteryData = this._getPersonBatteryData(personConfig);
+    
+    // Get current activity
+    const currentActivity = this._getPersonCurrentActivity(personConfig);
+    
+    // Format template data
+    const templateData = {
+      entity_id: personId,
+      friendly_name: personConfig.friendly_name || personEntity.attributes.friendly_name || personId,
+      state: personEntity.state,
+      state_class: personEntity.state.toLowerCase().replace('_', ''),
+      state_icon: this._getPersonStateIcon(personEntity.state),
+      state_display: this._formatPersonState(personEntity.state),
+      location_display: locationData.current,
+      last_seen_display: this._formatLastSeen(personEntity.last_updated),
+      battery_level: batteryData.level,
+      battery_color: batteryData.color,
+      battery_visibility: batteryData.level ? 'display: flex;' : 'display: none;',
+      toggle_action: personEntity.state === 'home' ? 'Away' : 'Home',
+      toggle_icon: personEntity.state === 'home' ? 'mdi-home-export-outline' : 'mdi-home-import-outline',
+      current_activity: currentActivity,
+      activity_visibility: currentActivity ? 'display: block;' : 'display: none;'
+    };
+
+    // Load and populate person card template
+    return this._populatePersonCardTemplate(templateData);
+  }
+
+  /**
+   * Get location data for a person
+   * @param {Object} personConfig - Person configuration
+   * @returns {Object} Location data
+   */
+  _getPersonLocationData(personConfig) {
+    if (!personConfig.device_trackers || personConfig.device_trackers.length === 0) {
+      return { current: 'Unknown', lastSeen: null };
+    }
+
+    // Use first available device tracker
+    for (const trackerId of personConfig.device_trackers) {
+      const trackerEntity = this._hass.states[trackerId];
+      if (trackerEntity) {
+        return {
+          current: this._formatLocationName(trackerEntity.state),
+          lastSeen: trackerEntity.last_changed
+        };
+      }
+    }
+
+    return { current: 'Unknown', lastSeen: null };
+  }
+
+  /**
+   * Get battery data for a person
+   * @param {Object} personConfig - Person configuration
+   * @returns {Object} Battery data
+   */
+  _getPersonBatteryData(personConfig) {
+    if (!personConfig.sensors) {
+      return { level: null, color: '#666' };
+    }
+
+    // Look for battery sensor
+    for (const sensorId of personConfig.sensors) {
+      const sensorEntity = this._hass.states[sensorId];
+      if (sensorEntity && sensorEntity.attributes.device_class === 'battery') {
+        const level = parseInt(sensorEntity.state);
+        const color = level > 50 ? '#4CAF50' : level > 20 ? '#FF9800' : '#F44336';
+        return { level, color };
+      }
+    }
+
+    return { level: null, color: '#666' };
+  }
+
+  /**
+   * Get current activity for a person
+   * @param {Object} personConfig - Person configuration
+   * @returns {string|null} Current activity text
+   */
+  _getPersonCurrentActivity(personConfig) {
+    // This would need calendar integration - placeholder for now
+    return null;
+  }
+
+  /**
+   * Populate person card template with data
+   * @param {Object} data - Template data
+   * @returns {string} Populated HTML
+   */
+  _populatePersonCardTemplate(data) {
+    // Use person-card.html template structure directly
+    return `
+      <div class="person-card" data-entity-id="${data.entity_id}" data-hash="#entity-details-${data.entity_id}">
+        <div class="person-card-header">
+          <div class="person-avatar">
+            <i class="mdi mdi-account person-avatar-icon"></i>
+          </div>
+          <div class="person-info">
+            <div class="person-name">${data.friendly_name}</div>
+            <div class="person-location">${data.location_display}</div>
+          </div>
+          <div class="person-status-badge ${data.state_class}">
+            <i class="mdi ${data.state_icon}"></i>
+            <span>${data.state_display}</span>
+          </div>
+        </div>
+        
+        <div class="person-card-body">
+          <div class="person-activity">
+            <div class="person-activity-item">
+              <i class="mdi mdi-clock-outline"></i>
+              <span class="person-last-seen">${data.last_seen_display}</span>
+            </div>
+            <div class="person-activity-item" style="${data.battery_visibility}">
+              <i class="mdi mdi-battery" style="color: ${data.battery_color}"></i>
+              <span class="person-battery">${data.battery_level}%</span>
+            </div>
+          </div>
+          
+          <div class="person-quick-actions">
+            <button class="person-quick-action-btn person-presence-toggle" 
+                    data-action="toggle-presence" 
+                    data-person-id="${data.entity_id}"
+                    data-current-state="${data.state}"
+                    title="Toggle ${data.toggle_action}">
+              <i class="mdi ${data.toggle_icon}"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="person-card-footer" style="${data.activity_visibility}">
+          <div class="person-current-activity">
+            <i class="mdi mdi-calendar-clock"></i>
+            <span class="person-activity-text">${data.current_activity}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Initialize event handlers for person cards
+   * @param {HTMLElement} card - The person card element
+   */
+  _initializePersonCardHandlers(card) {
+    // Handle popup opening (main card click)
+    card.addEventListener('click', (e) => {
+      // Don't trigger popup if clicking on action buttons
+      if (e.target.closest('.person-quick-action-btn')) {
+        return;
+      }
+      
+      const entityId = card.dataset.entityId;
+      if (entityId) {
+        window.location.hash = `#entity-details-${entityId}`;
+      }
+    });
+
+    // Handle quick actions
+    const toggleButton = card.querySelector('.person-presence-toggle');
+    if (toggleButton) {
+      toggleButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._handlePersonPresenceToggle(toggleButton);
+      });
+    }
+  }
+
+  /**
+   * Handle person presence toggle action
+   * @param {HTMLElement} button - The toggle button
+   */
+  async _handlePersonPresenceToggle(button) {
+    const personId = button.dataset.personId;
+    const currentState = button.dataset.currentState;
+    
+    if (!personId || !this._hass) return;
+    
+    try {
+      const newState = currentState === 'home' ? 'not_home' : 'home';
+      
+      await this._hass.callService('person', 'set_location', {
+        entity_id: personId,
+        location: newState
+      });
+      
+      console.log(`[FloorManager] Person ${personId} presence toggled to ${newState}`);
+      
+      // Update button visual feedback
+      button.style.opacity = '0.6';
+      setTimeout(() => {
+        button.style.opacity = '1';
+      }, 300);
+      
+    } catch (error) {
+      console.error('[FloorManager] Error toggling person presence:', error);
+      
+      // Visual error feedback
+      button.style.background = '#F44336';
+      setTimeout(() => {
+        button.style.background = '';
+      }, 1000);
+    }
+  }
+
+  // Helper methods for person data formatting
+
+  _getPersonStateIcon(state) {
+    const stateIcons = {
+      'home': 'mdi-home',
+      'away': 'mdi-home-export-outline',
+      'not_home': 'mdi-home-export-outline',
+      'unknown': 'mdi-help-circle'
+    };
+    return stateIcons[state.toLowerCase()] || 'mdi-account';
+  }
+
+  _formatPersonState(state) {
+    const stateNames = {
+      'home': 'Home',
+      'away': 'Away',
+      'not_home': 'Away',
+      'unknown': 'Unknown'
+    };
+    return stateNames[state.toLowerCase()] || state;
+  }
+
+  _formatLocationName(rawLocation) {
+    if (!rawLocation) return 'Unknown';
+    
+    const locationMap = {
+      'home': 'Home',
+      'away': 'Away',
+      'not_home': 'Away',
+      'unknown': 'Unknown'
+    };
+
+    return locationMap[rawLocation.toLowerCase()] || rawLocation;
+  }
+
+  _formatLastSeen(timestamp) {
+    if (!timestamp) return 'Unknown';
+    
+    // Use time utilities if available
+    if (this._panel._timeUtils && this._panel._timeUtils.calculateTimeDifferenceShort) {
+      return this._panel._timeUtils.calculateTimeDifferenceShort(timestamp);
+    }
+    
+    // Fallback calculation
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'Jetzt';
+    if (diffMinutes < 60) return `vor ${diffMinutes}m`;
+    
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `vor ${diffHours}h`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `vor ${diffDays} Tagen`;
+  }
+
+  /**
+   * Update an existing person card with current data
+   * @param {HTMLElement} card - The person card element
+   * @param {string} entityId - The person entity ID
+   */
+  _updatePersonCard(card, entityId) {
+    const personConfig = this._houseConfig.persons?.[entityId];
+    if (!personConfig || !personConfig.enabled) return;
+
+    const personEntity = this._hass.states[entityId];
+    if (!personEntity) return;
+
+    try {
+      // Get updated data
+      const locationData = this._getPersonLocationData(personConfig);
+      const batteryData = this._getPersonBatteryData(personConfig);
+
+      // Update person name
+      const nameEl = card.querySelector('.person-name');
+      if (nameEl) {
+        nameEl.textContent = personConfig.friendly_name || personEntity.attributes.friendly_name || entityId;
+      }
+
+      // Update location
+      const locationEl = card.querySelector('.person-location');
+      if (locationEl) {
+        locationEl.textContent = locationData.current;
+      }
+
+      // Update status badge
+      const statusBadge = card.querySelector('.person-status-badge');
+      if (statusBadge) {
+        statusBadge.className = `person-status-badge ${personEntity.state.toLowerCase().replace('_', '')}`;
+        const statusIcon = statusBadge.querySelector('i');
+        const statusText = statusBadge.querySelector('span');
+        if (statusIcon) statusIcon.className = `mdi ${this._getPersonStateIcon(personEntity.state)}`;
+        if (statusText) statusText.textContent = this._formatPersonState(personEntity.state);
+      }
+
+      // Update last seen
+      const lastSeenEl = card.querySelector('.person-last-seen');
+      if (lastSeenEl) {
+        lastSeenEl.textContent = this._formatLastSeen(personEntity.last_updated);
+      }
+
+      // Update battery level
+      const batteryEl = card.querySelector('.person-battery');
+      const batteryIcon = card.querySelector('.person-activity-item i[class*="mdi-battery"]');
+      const batteryItem = card.querySelector('.person-activity-item:nth-child(2)');
+      
+      if (batteryData.level) {
+        if (batteryEl) batteryEl.textContent = `${batteryData.level}%`;
+        if (batteryIcon) batteryIcon.style.color = batteryData.color;
+        if (batteryItem) batteryItem.style.display = 'flex';
+      } else {
+        if (batteryItem) batteryItem.style.display = 'none';
+      }
+
+      // Update toggle button
+      const toggleButton = card.querySelector('.person-presence-toggle');
+      if (toggleButton) {
+        toggleButton.dataset.currentState = personEntity.state;
+        toggleButton.title = `Toggle ${personEntity.state === 'home' ? 'Away' : 'Home'}`;
+        const toggleIcon = toggleButton.querySelector('i');
+        if (toggleIcon) {
+          toggleIcon.className = `mdi ${personEntity.state === 'home' ? 'mdi-home-export-outline' : 'mdi-home-import-outline'}`;
+        }
+      }
+
+    } catch (error) {
+      console.error(`[FloorManager] Error updating person card for ${entityId}:`, error);
+    }
   }
 }
