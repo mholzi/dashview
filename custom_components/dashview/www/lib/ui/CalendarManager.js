@@ -43,13 +43,16 @@ export class CalendarManager {
         this._showLoading(popupElement);
 
         try {
-            // Calculate date range (current week)
+            // Get display range from house config (default to 14 days)
+            const displayRange = this._panel._houseConfig?.calendar_display_range || 14;
+            
+            // Calculate date range based on configured display range
             const startDate = new Date(this._currentDate);
             startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of week
             startDate.setHours(0, 0, 0, 0);
             
             const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 13); // Next 2 weeks
+            endDate.setDate(endDate.getDate() + displayRange - 1); // Configured range
             endDate.setHours(23, 59, 59, 999);
 
             // Fetch events from backend
@@ -245,15 +248,16 @@ export class CalendarManager {
         const startTime = this._formatEventTime(event);
         const isAllDay = this._isAllDayEvent(event);
         const calendarName = this._getCalendarName(event.calendar_entity_id);
+        const calendarColor = this._getCalendarColor(event.calendar_entity_id);
         
         return `
-            <div class="calendar-event ${isAllDay ? 'calendar-event-all-day' : ''}">
+            <div class="calendar-event ${isAllDay ? 'calendar-event-all-day' : ''}" style="border-left: 4px solid ${calendarColor};">
                 <div class="calendar-event-time">
                     ${isAllDay ? 'All Day' : startTime}
                 </div>
                 <div class="calendar-event-details">
                     <div class="calendar-event-title">${this._escapeHtml(title)}</div>
-                    ${calendarName ? `<div class="calendar-event-source">${calendarName}</div>` : ''}
+                    ${calendarName ? `<div class="calendar-event-source" style="color: ${calendarColor};">${calendarName}</div>` : ''}
                     ${event.description ? `<div class="calendar-event-description">${this._escapeHtml(event.description)}</div>` : ''}
                 </div>
             </div>
@@ -310,6 +314,16 @@ export class CalendarManager {
         return entityId.replace('calendar.', '').replace(/_/g, ' ');
     }
 
+    _getCalendarColor(entityId) {
+        if (!entityId) return '#cccccc'; // Default gray color
+        
+        // Get calendar colors from house config
+        const calendarColors = this._panel._houseConfig?.calendar_colors || {};
+        
+        // Return configured color or default color
+        return calendarColors[entityId] || '#cccccc';
+    }
+
     _isToday(date) {
         const today = new Date();
         return date.toDateString() === today.toDateString();
@@ -340,18 +354,31 @@ export class CalendarManager {
         const prevButton = contentDiv.querySelector('#calendar-prev-week');
         const nextButton = contentDiv.querySelector('#calendar-next-week');
         
+        // Get navigation step size based on display range
+        const displayRange = this._panel._houseConfig?.calendar_display_range || 14;
+        const navigationStep = this._getNavigationStep(displayRange);
+        
         if (prevButton) {
             prevButton.addEventListener('click', () => {
-                this._currentDate.setDate(this._currentDate.getDate() - 7);
+                this._currentDate.setDate(this._currentDate.getDate() - navigationStep);
                 this.update(popupElement);
             });
         }
         
         if (nextButton) {
             nextButton.addEventListener('click', () => {
-                this._currentDate.setDate(this._currentDate.getDate() + 7);
+                this._currentDate.setDate(this._currentDate.getDate() + navigationStep);
                 this.update(popupElement);
             });
         }
+    }
+
+    _getNavigationStep(displayRange) {
+        // For short ranges (1-3 days), navigate by 1 day
+        // For longer ranges, navigate by 1 week
+        if (displayRange <= 3) {
+            return 1;
+        }
+        return 7;
     }
 }

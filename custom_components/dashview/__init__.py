@@ -211,7 +211,13 @@ class DashViewConfigView(HomeAssistantView):
         elif config_type == 'calendar_config':
             house_config = self._entry.options.get('house_config', {})
             linked_calendars = house_config.get('linked_calendars', [])
-            return web.json_response({'linked_calendars': linked_calendars})
+            calendar_colors = house_config.get('calendar_colors', {})
+            calendar_display_range = house_config.get('calendar_display_range', 14)
+            return web.json_response({
+                'linked_calendars': linked_calendars,
+                'calendar_colors': calendar_colors,
+                'calendar_display_range': calendar_display_range
+            })
         elif config_type == 'available_persons':
             all_persons = [
                 {
@@ -389,6 +395,12 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["scenes"] = config_payload
             elif config_type == "calendar":
                 current_options.setdefault("house_config", {})["linked_calendars"] = config_payload
+            elif config_type == "calendar_full":
+                # Handle full calendar configuration including display range and colors
+                house_config = current_options.setdefault("house_config", {})
+                house_config["linked_calendars"] = config_payload.get("linked_calendars", [])
+                house_config["calendar_colors"] = config_payload.get("calendar_colors", {})
+                house_config["calendar_display_range"] = config_payload.get("calendar_display_range", 14)
             elif config_type == "persons":
                 current_options.setdefault("house_config", {})["persons"] = config_payload
             else:
