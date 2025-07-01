@@ -84,13 +84,12 @@ function addTestResult(testName, passed, message) {
 }
 
 // Test 1: Person Card Template Structure
-function testPersonCardTemplate() {
+async function testPersonCardTemplate() {
     console.log('\n--- Testing Person Card Template ---');
     
     try {
-        fetch('/local/dashview/templates/person-card.html')
-            .then(response => response.text())
-            .then(template => {
+        const response = await fetch('/local/dashview/templates/person-card.html');
+        const template = await response.text();
                 // Check for required elements
                 const requiredElements = [
                     'person-card',
@@ -153,10 +152,6 @@ function testPersonCardTemplate() {
                 } else {
                     addTestResult('Person Card Popup Integration', false, 'Popup hash link not found');
                 }
-            })
-            .catch(error => {
-                addTestResult('Person Card Template', false, `Error loading template: ${error.message}`);
-            });
             
     } catch (error) {
         addTestResult('Person Card Template', false, `Error: ${error.message}`);
@@ -164,13 +159,12 @@ function testPersonCardTemplate() {
 }
 
 // Test 2: Person Card CSS Styling
-function testPersonCardStyling() {
+async function testPersonCardStyling() {
     console.log('\n--- Testing Person Card Styling ---');
     
     try {
-        fetch('/local/dashview/style.css')
-            .then(response => response.text())
-            .then(css => {
+        const response = await fetch('/local/dashview/style.css');
+        const css = await response.text();
                 // Check for person card styles
                 const requiredStyles = [
                     '.person-cards-container',
@@ -232,10 +226,6 @@ function testPersonCardStyling() {
                 } else {
                     addTestResult('Person Card Grid Layout', false, 'Grid layout styles not found');
                 }
-            })
-            .catch(error => {
-                addTestResult('Person Card Styling', false, `Error loading styles: ${error.message}`);
-            });
             
     } catch (error) {
         addTestResult('Person Card Styling', false, `Error: ${error.message}`);
@@ -243,13 +233,12 @@ function testPersonCardStyling() {
 }
 
 // Test 3: FloorManager Person Card Integration
-function testFloorManagerIntegration() {
+async function testFloorManagerIntegration() {
     console.log('\n--- Testing FloorManager Integration ---');
     
     try {
-        fetch('/local/dashview/lib/ui/FloorManager.js')
-            .then(response => response.text())
-            .then(content => {
+        const response = await fetch('/local/dashview/lib/ui/FloorManager.js');
+        const content = await response.text();
                 // Check for person card rendering methods
                 const requiredMethods = [
                     '_renderPersonCardsContainer',
@@ -293,10 +282,6 @@ function testFloorManagerIntegration() {
                 } else {
                     addTestResult('FloorManager Event Handlers', false, 'Person card event handler initialization not found');
                 }
-            })
-            .catch(error => {
-                addTestResult('FloorManager Integration', false, `Error loading FloorManager: ${error.message}`);
-            });
             
     } catch (error) {
         addTestResult('FloorManager Integration', false, `Error: ${error.message}`);
@@ -379,27 +364,24 @@ function testPersonCardDataStructure() {
 }
 
 // Test 5: Person Card Performance
-function testPersonCardPerformance() {
+async function testPersonCardPerformance() {
     console.log('\n--- Testing Person Card Performance ---');
     
     try {
         // Test template size
-        fetch('/local/dashview/templates/person-card.html')
-            .then(response => response.text())
-            .then(template => {
-                const templateSize = new Blob([template]).size;
-                
-                if (templateSize < 5000) { // Less than 5KB
-                    addTestResult('Person Card Template Size', true, `Template size: ${templateSize} bytes (acceptable)`);
-                } else {
-                    addTestResult('Person Card Template Size', false, `Template size: ${templateSize} bytes (too large)`);
-                }
-            });
+        const templateResponse = await fetch('/local/dashview/templates/person-card.html');
+        const template = await templateResponse.text();
+        const templateSize = new Blob([template]).size;
+        
+        if (templateSize < 5000) { // Less than 5KB
+            addTestResult('Person Card Template Size', true, `Template size: ${templateSize} bytes (acceptable)`);
+        } else {
+            addTestResult('Person Card Template Size', false, `Template size: ${templateSize} bytes (too large)`);
+        }
         
         // Test CSS size
-        fetch('/local/dashview/style.css')
-            .then(response => response.text())
-            .then(css => {
+        const cssResponse = await fetch('/local/dashview/style.css');
+        const css = await cssResponse.text();
                 // Count person card related CSS lines
                 const personCardCSS = css.split('\n').filter(line => 
                     line.includes('person-card') || 
@@ -413,37 +395,35 @@ function testPersonCardPerformance() {
                 } else {
                     addTestResult('Person Card CSS Size', false, `Person card CSS: ${personCardCSS.length} lines (too many)`);
                 }
-            });
         
         // Test JavaScript method complexity
-        fetch('/local/dashview/lib/ui/FloorManager.js')
-            .then(response => response.text())
-            .then(content => {
-                // Count person card related methods
-                const personCardMethods = [
-                    '_renderPersonCardsContainer',
-                    '_renderSinglePersonCard',
-                    '_generatePersonCardHTML',
-                    '_updatePersonCard'
-                ];
-                
-                let totalMethodSize = 0;
-                personCardMethods.forEach(method => {
-                    const methodStart = content.indexOf(method);
-                    if (methodStart !== -1) {
-                        const methodEnd = content.indexOf('\n  }', methodStart);
-                        if (methodEnd !== -1) {
-                            totalMethodSize += methodEnd - methodStart;
-                        }
-                    }
-                });
-                
-                if (totalMethodSize < 10000) { // Less than 10KB
-                    addTestResult('Person Card Method Complexity', true, `Total method size: ${totalMethodSize} characters (acceptable)`);
-                } else {
-                    addTestResult('Person Card Method Complexity', false, `Total method size: ${totalMethodSize} characters (too complex)`);
+        const jsResponse = await fetch('/local/dashview/lib/ui/FloorManager.js');
+        const content = await jsResponse.text();
+        
+        // Count person card related methods
+        const personCardMethods = [
+            '_renderPersonCardsContainer',
+            '_renderSinglePersonCard',
+            '_generatePersonCardHTML',
+            '_updatePersonCard'
+        ];
+        
+        let totalMethodSize = 0;
+        personCardMethods.forEach(method => {
+            const methodStart = content.indexOf(method);
+            if (methodStart !== -1) {
+                const methodEnd = content.indexOf('\n  }', methodStart);
+                if (methodEnd !== -1) {
+                    totalMethodSize += methodEnd - methodStart;
                 }
-            });
+            }
+        });
+        
+        if (totalMethodSize < 10000) { // Less than 10KB
+            addTestResult('Person Card Method Complexity', true, `Total method size: ${totalMethodSize} characters (acceptable)`);
+        } else {
+            addTestResult('Person Card Method Complexity', false, `Total method size: ${totalMethodSize} characters (too complex)`);
+        }
             
     } catch (error) {
         addTestResult('Person Card Performance', false, `Error: ${error.message}`);
@@ -451,37 +431,35 @@ function testPersonCardPerformance() {
 }
 
 // Test 6: Person Card Real-time Updates
-function testPersonCardUpdates() {
+async function testPersonCardUpdates() {
     console.log('\n--- Testing Person Card Real-time Updates ---');
     
     try {
         // Check StateManager integration
-        fetch('/local/dashview/lib/state-manager.js')
-            .then(response => response.text())
-            .then(content => {
-                // Check for person entity watching
-                if (content.includes('houseConfig.persons') && 
-                    content.includes('personConfig.enabled') &&
-                    content.includes('this.watchEntities(personId') &&
-                    content.includes('this.watchEntities(personConfig.device_trackers') &&
-                    content.includes('this.watchEntities(personConfig.sensors')) {
-                    addTestResult('Person Entity State Watching', true, 'Person entities are watched by StateManager');
-                } else {
-                    addTestResult('Person Entity State Watching', false, 'Person entity watching not found in StateManager');
-                }
-                
-                // Check for update callback
-                if (content.includes('this._panel.updateComponentForEntity(id)')) {
-                    addTestResult('Person Update Callback', true, 'Person entity updates trigger component updates');
-                } else {
-                    addTestResult('Person Update Callback', false, 'Person entity update callback not found');
-                }
-            });
+        const stateResponse = await fetch('/local/dashview/lib/state-manager.js');
+        const stateContent = await stateResponse.text();
+        
+        // Check for person entity watching
+        if (stateContent.includes('houseConfig.persons') && 
+            stateContent.includes('personConfig.enabled') &&
+            stateContent.includes('this.watchEntities(personId') &&
+            stateContent.includes('this.watchEntities(personConfig.device_trackers') &&
+            stateContent.includes('this.watchEntities(personConfig.sensors')) {
+            addTestResult('Person Entity State Watching', true, 'Person entities are watched by StateManager');
+        } else {
+            addTestResult('Person Entity State Watching', false, 'Person entity watching not found in StateManager');
+        }
+        
+        // Check for update callback
+        if (stateContent.includes('this._panel.updateComponentForEntity(id)')) {
+            addTestResult('Person Update Callback', true, 'Person entity updates trigger component updates');
+        } else {
+            addTestResult('Person Update Callback', false, 'Person entity update callback not found');
+        }
         
         // Check FloorManager update integration
-        fetch('/local/dashview/lib/ui/FloorManager.js')
-            .then(response => response.text())
-            .then(content => {
+        const floorResponse = await fetch('/local/dashview/lib/ui/FloorManager.js');
+        const content = await floorResponse.text();
                 // Check for person card update in main update method
                 if (content.includes("querySelectorAll('.person-card')") && 
                     content.includes('this._updatePersonCard(card, entityId)')) {
@@ -500,7 +478,6 @@ function testPersonCardUpdates() {
                 } else {
                     addTestResult('Person Card Update Comprehensiveness', false, 'Person card updates are incomplete');
                 }
-            });
             
     } catch (error) {
         addTestResult('Person Card Updates', false, `Error: ${error.message}`);
@@ -512,41 +489,38 @@ async function runAllTests() {
     console.log('🧪 DashView Person Card Integration Test Suite');
     console.log('='.repeat(50));
     
-    testPersonCardTemplate();
-    testPersonCardStyling();
-    testFloorManagerIntegration();
+    await testPersonCardTemplate();
+    await testPersonCardStyling();
+    await testFloorManagerIntegration();
     testPersonCardDataStructure();
-    testPersonCardPerformance();
-    testPersonCardUpdates();
+    await testPersonCardPerformance();
+    await testPersonCardUpdates();
     
-    // Wait for async tests to complete
-    setTimeout(() => {
-        console.log('\n' + '='.repeat(50));
-        console.log('📊 Test Results Summary');
-        console.log('='.repeat(50));
-        console.log(`✓ Passed: ${testResults.passed}`);
-        console.log(`✗ Failed: ${testResults.failed}`);
-        console.log(`📈 Success Rate: ${Math.round((testResults.passed / (testResults.passed + testResults.failed)) * 100)}%`);
-        
-        if (testResults.failed === 0) {
-            console.log('\n🎉 All person card integration tests passed!');
-            console.log('Person card functionality is ready for use.');
-        } else {
-            console.log('\n⚠️  Some tests failed. Please review the implementation.');
-            console.log('Failed tests:');
-            testResults.tests.filter(t => !t.passed).forEach(test => {
-                console.log(`   - ${test.name}: ${test.message}`);
-            });
-        }
-        
-        console.log('\n💡 To use person cards:');
-        console.log('1. Configure persons in Admin → Person Management');
-        console.log('2. Add "person_cards" or "person_card" slots to floor layouts');
-        console.log('3. Person cards will display on the dashboard with real-time updates');
-        console.log('4. Click cards to open detailed person popups');
-        console.log('5. Use quick action buttons to toggle home/away status');
-        
-    }, 5000); // Wait 5 seconds for all async tests
+    // Show results immediately since all tests are now awaited
+    console.log('\n' + '='.repeat(50));
+    console.log('📊 Test Results Summary');
+    console.log('='.repeat(50));
+    console.log(`✓ Passed: ${testResults.passed}`);
+    console.log(`✗ Failed: ${testResults.failed}`);
+    console.log(`📈 Success Rate: ${Math.round((testResults.passed / (testResults.passed + testResults.failed)) * 100)}%`);
+    
+    if (testResults.failed === 0) {
+        console.log('\n🎉 All person card integration tests passed!');
+        console.log('Person card functionality is ready for use.');
+    } else {
+        console.log('\n⚠️  Some tests failed. Please review the implementation.');
+        console.log('Failed tests:');
+        testResults.tests.filter(t => !t.passed).forEach(test => {
+            console.log(`   - ${test.name}: ${test.message}`);
+        });
+    }
+    
+    console.log('\n💡 To use person cards:');
+    console.log('1. Configure persons in Admin → Person Management');
+    console.log('2. Add "person_cards" or "person_card" slots to floor layouts');
+    console.log('3. Person cards will display on the dashboard with real-time updates');
+    console.log('4. Click cards to open detailed person popups');
+    console.log('5. Use quick action buttons to toggle home/away status');
 }
 
 // Export for use in test runner

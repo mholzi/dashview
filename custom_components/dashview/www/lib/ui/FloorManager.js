@@ -24,6 +24,9 @@ export class FloorManager {
       longTapTolerance: LONG_TAP_TOLERANCE,
       enableVisualFeedback: true
     });
+    
+    // Template cache for person cards
+    this._templateCache = new Map();
   }
 
   setHass(hass) {
@@ -47,11 +50,95 @@ export class FloorManager {
       this._motionCardSwipeStates.clear();
     }
     
+    // Clear template cache
+    if (this._templateCache) {
+      this._templateCache.clear();
+    }
+    
     // Clear references
     this._panel = null;
     this._hass = null;
     this._houseConfig = null;
     this._shadowRoot = null;
+  }
+
+  /**
+   * Load and cache a template file
+   * @param {string} templateName - Name of the template file (without .html extension)
+   * @returns {Promise<string>} Template content
+   */
+  async _loadTemplate(templateName) {
+    if (this._templateCache.has(templateName)) {
+      return this._templateCache.get(templateName);
+    }
+    
+    try {
+      const response = await fetch(`/local/dashview/templates/${templateName}.html`);
+      if (!response.ok) {
+        throw new Error(`Failed to load template: ${response.status} ${response.statusText}`);
+      }
+      const template = await response.text();
+      this._templateCache.set(templateName, template);
+      return template;
+    } catch (error) {
+      console.error(`[FloorManager] Error loading template ${templateName}:`, error);
+      // Return fallback template if loading fails
+      return this._getFallbackPersonCardTemplate();
+    }
+  }
+
+  /**
+   * Get fallback person card template structure
+   * @returns {string} Fallback template HTML
+   */
+  _getFallbackPersonCardTemplate() {
+    return `
+      <div class="person-card" data-entity-id="{{entity_id}}" data-hash="#entity-details-{{entity_id}}">
+        <div class="person-card-header">
+          <div class="person-avatar">
+            <i class="mdi mdi-account person-avatar-icon"></i>
+          </div>
+          <div class="person-info">
+            <div class="person-name">{{friendly_name}}</div>
+            <div class="person-location">{{location_display}}</div>
+          </div>
+          <div class="person-status-badge {{state_class}}">
+            <i class="mdi {{state_icon}}"></i>
+            <span>{{state_display}}</span>
+          </div>
+        </div>
+        
+        <div class="person-card-body">
+          <div class="person-activity">
+            <div class="person-activity-item">
+              <i class="mdi mdi-clock-outline"></i>
+              <span class="person-last-seen">{{last_seen_display}}</span>
+            </div>
+            <div class="person-activity-item person-battery-item {{battery_class}}">
+              <i class="mdi mdi-battery person-battery-icon" data-battery-level="{{battery_level}}"></i>
+              <span class="person-battery">{{battery_level}}%</span>
+            </div>
+          </div>
+          
+          <div class="person-quick-actions">
+            <button class="person-quick-action-btn person-presence-toggle" 
+                    data-action="toggle-presence" 
+                    data-person-id="{{entity_id}}"
+                    data-current-state="{{state}}"
+                    title="Toggle {{toggle_action}}">
+              <i class="mdi {{toggle_icon}}"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="person-card-footer {{activity_class}}">
+          <div class="person-current-activity">
+            <i class="mdi mdi-calendar-clock"></i>
+            <span class="person-activity-text">{{current_activity}}</span>
+          </div>
+        </div>
+      </div>
+    `;
   }
   update() {
     if (!this._shadowRoot) return;
@@ -179,7 +266,7 @@ export class FloorManager {
     }
   }
 
-  renderFloorLayout(floorId) {
+  async renderFloorLayout(floorId) {
     const gridContainer = this._shadowRoot.getElementById(`room-grid-${floorId}`);
     if (!gridContainer) return;
 
@@ -199,11 +286,9 @@ export class FloorManager {
     const pinnedEntities = new Set(layoutConfig.filter(s => s.type === 'pinned').map(s => s.entity_id));
     let autoPlacementQueue = rankedEntities.filter(e => !pinnedEntities.has(e.entity_id));
 
-    let gridHTML = '';
-    for (const slot of layoutConfig) {
+    const cardPromises = layoutConfig.map(async (slot) => {
         if (slot.type === 'empty') {
-            gridHTML += `<div style="grid-area: ${slot.grid_area};"></div>`;
-            continue;
+            return `<div style="grid-area: ${slot.grid_area};"></div>`;
         }
 
         const isBigSlot = slot.grid_area.includes('-big');
@@ -221,7 +306,7 @@ export class FloorManager {
             } else if (slot.type === 'garbage') {
                 cardHTML = this._renderGarbageSwipeCard(slot.grid_area);
             } else if (slot.type === 'person_cards') {
-                cardHTML = this._renderPersonCardsContainer(slot.grid_area);
+                cardHTML = await this._renderPersonCardsContainer(slot.grid_area);
             } else {
                 const entityId = entityProvider(slot.type);
                 if (entityId) {
@@ -233,7 +318,7 @@ export class FloorManager {
             }
         } else {
             if (slot.type === 'person_card' && slot.person_id) {
-                cardHTML = this._renderSinglePersonCard(slot.person_id, slot.grid_area);
+                cardHTML = await this._renderSinglePersonCard(slot.person_id, slot.grid_area);
             } else {
                 const entityId = entityProvider(slot.type);
                 if (entityId) {
@@ -244,8 +329,11 @@ export class FloorManager {
                 }
             }
         }
-        gridHTML += cardHTML;
-    }
+        return cardHTML;
+    });
+
+    const cardHTMLArray = await Promise.all(cardPromises);
+    const gridHTML = cardHTMLArray.join('');
 
     gridContainer.innerHTML = gridHTML;
 
@@ -1252,9 +1340,9 @@ export class FloorManager {
   /**
    * Render a container for multiple person cards (for big slots)
    * @param {string} gridArea - The CSS grid area
-   * @returns {string} HTML for person cards container
+   * @returns {Promise<string>} HTML for person cards container
    */
-  _renderPersonCardsContainer(gridArea) {
+  async _renderPersonCardsContainer(gridArea) {
     if (!this._houseConfig.persons) {
       return `<div style="grid-area: ${gridArea};" class="person-cards-empty">
         <i class="mdi mdi-account-group"></i>
@@ -1275,9 +1363,10 @@ export class FloorManager {
       </div>`;
     }
 
-    const personsHTML = enabledPersons.map(({ personId, config }) => 
+    const personsPromises = enabledPersons.map(({ personId, config }) => 
       this._generatePersonCardHTML(personId, config)
-    ).join('');
+    );
+    const personsHTML = (await Promise.all(personsPromises)).join('');
 
     return `
       <div style="grid-area: ${gridArea};" class="person-cards-section">
@@ -1293,15 +1382,15 @@ export class FloorManager {
    * Render a single person card (for small slots)
    * @param {string} personId - The person entity ID
    * @param {string} gridArea - The CSS grid area
-   * @returns {string} HTML for single person card
+   * @returns {Promise<string>} HTML for single person card
    */
-  _renderSinglePersonCard(personId, gridArea) {
+  async _renderSinglePersonCard(personId, gridArea) {
     const personConfig = this._houseConfig.persons?.[personId];
     if (!personConfig || !personConfig.enabled) {
       return `<div style="grid-area: ${gridArea};"></div>`;
     }
 
-    const cardHTML = this._generatePersonCardHTML(personId, personConfig);
+    const cardHTML = await this._generatePersonCardHTML(personId, personConfig);
     return `<div style="grid-area: ${gridArea};">${cardHTML}</div>`;
   }
 
@@ -1309,9 +1398,9 @@ export class FloorManager {
    * Generate HTML for a person card using template data
    * @param {string} personId - The person entity ID
    * @param {Object} personConfig - Person configuration from admin panel
-   * @returns {string} HTML for person card
+   * @returns {Promise<string>} HTML for person card
    */
-  _generatePersonCardHTML(personId, personConfig) {
+  async _generatePersonCardHTML(personId, personConfig) {
     const personEntity = this._hass.states[personId];
     if (!personEntity) {
       return `<div class="person-card-error">Person ${personId} not found</div>`;
@@ -1337,16 +1426,15 @@ export class FloorManager {
       location_display: locationData.current,
       last_seen_display: this._formatLastSeen(personEntity.last_updated),
       battery_level: batteryData.level,
-      battery_color: batteryData.color,
-      battery_visibility: batteryData.level ? 'display: flex;' : 'display: none;',
+      battery_class: batteryData.level ? 'visible' : 'hidden',
       toggle_action: personEntity.state === 'home' ? 'Away' : 'Home',
       toggle_icon: personEntity.state === 'home' ? 'mdi-home-export-outline' : 'mdi-home-import-outline',
       current_activity: currentActivity,
-      activity_visibility: currentActivity ? 'display: block;' : 'display: none;'
+      activity_class: currentActivity ? '' : 'hidden'
     };
 
     // Load and populate person card template
-    return this._populatePersonCardTemplate(templateData);
+    return await this._populatePersonCardTemplate(templateData);
   }
 
   /**
@@ -1387,7 +1475,10 @@ export class FloorManager {
     for (const sensorId of personConfig.sensors) {
       const sensorEntity = this._hass.states[sensorId];
       if (sensorEntity && sensorEntity.attributes.device_class === 'battery') {
-        const level = parseInt(sensorEntity.state);
+        const level = parseInt(sensorEntity.state, 10);
+        if (isNaN(level)) {
+          return { level: null, color: '#666' };
+        }
         const color = level > 50 ? '#4CAF50' : level > 20 ? '#FF9800' : '#F44336';
         return { level, color };
       }
@@ -1409,57 +1500,47 @@ export class FloorManager {
   /**
    * Populate person card template with data
    * @param {Object} data - Template data
-   * @returns {string} Populated HTML
+   * @returns {Promise<string>} Populated HTML
    */
-  _populatePersonCardTemplate(data) {
-    // Use person-card.html template structure directly
-    return `
-      <div class="person-card" data-entity-id="${data.entity_id}" data-hash="#entity-details-${data.entity_id}">
-        <div class="person-card-header">
-          <div class="person-avatar">
-            <i class="mdi mdi-account person-avatar-icon"></i>
-          </div>
-          <div class="person-info">
-            <div class="person-name">${data.friendly_name}</div>
-            <div class="person-location">${data.location_display}</div>
-          </div>
-          <div class="person-status-badge ${data.state_class}">
-            <i class="mdi ${data.state_icon}"></i>
-            <span>${data.state_display}</span>
-          </div>
-        </div>
-        
-        <div class="person-card-body">
-          <div class="person-activity">
-            <div class="person-activity-item">
-              <i class="mdi mdi-clock-outline"></i>
-              <span class="person-last-seen">${data.last_seen_display}</span>
-            </div>
-            <div class="person-activity-item" style="${data.battery_visibility}">
-              <i class="mdi mdi-battery" style="color: ${data.battery_color}"></i>
-              <span class="person-battery">${data.battery_level}%</span>
-            </div>
-          </div>
-          
-          <div class="person-quick-actions">
-            <button class="person-quick-action-btn person-presence-toggle" 
-                    data-action="toggle-presence" 
-                    data-person-id="${data.entity_id}"
-                    data-current-state="${data.state}"
-                    title="Toggle ${data.toggle_action}">
-              <i class="mdi ${data.toggle_icon}"></i>
-            </button>
-          </div>
-        </div>
-        
-        <div class="person-card-footer" style="${data.activity_visibility}">
-          <div class="person-current-activity">
-            <i class="mdi mdi-calendar-clock"></i>
-            <span class="person-activity-text">${data.current_activity}</span>
-          </div>
-        </div>
-      </div>
-    `;
+  async _populatePersonCardTemplate(data) {
+    try {
+      const template = await this._loadTemplate('person-card');
+      
+      // Replace all placeholders with actual data
+      return template
+        .replace(/\{\{entity_id\}\}/g, data.entity_id)
+        .replace(/\{\{friendly_name\}\}/g, data.friendly_name)
+        .replace(/\{\{state\}\}/g, data.state)
+        .replace(/\{\{state_class\}\}/g, data.state_class)
+        .replace(/\{\{state_icon\}\}/g, data.state_icon)
+        .replace(/\{\{state_display\}\}/g, data.state_display)
+        .replace(/\{\{location_display\}\}/g, data.location_display)
+        .replace(/\{\{last_seen_display\}\}/g, data.last_seen_display)
+        .replace(/\{\{battery_level\}\}/g, data.battery_level || '')
+        .replace(/\{\{battery_class\}\}/g, data.battery_class || 'hidden')
+        .replace(/\{\{toggle_action\}\}/g, data.toggle_action)
+        .replace(/\{\{toggle_icon\}\}/g, data.toggle_icon)
+        .replace(/\{\{current_activity\}\}/g, data.current_activity || '')
+        .replace(/\{\{activity_class\}\}/g, data.activity_class || 'hidden');
+    } catch (error) {
+      console.error('[FloorManager] Error populating person card template:', error);
+      // Fallback to hardcoded template
+      return this._getFallbackPersonCardTemplate()
+        .replace(/\{\{entity_id\}\}/g, data.entity_id)
+        .replace(/\{\{friendly_name\}\}/g, data.friendly_name)
+        .replace(/\{\{state\}\}/g, data.state)
+        .replace(/\{\{state_class\}\}/g, data.state_class)
+        .replace(/\{\{state_icon\}\}/g, data.state_icon)
+        .replace(/\{\{state_display\}\}/g, data.state_display)
+        .replace(/\{\{location_display\}\}/g, data.location_display)
+        .replace(/\{\{last_seen_display\}\}/g, data.last_seen_display)
+        .replace(/\{\{battery_level\}\}/g, data.battery_level || '')
+        .replace(/\{\{battery_class\}\}/g, data.battery_class || 'hidden')
+        .replace(/\{\{toggle_action\}\}/g, data.toggle_action)
+        .replace(/\{\{toggle_icon\}\}/g, data.toggle_icon)
+        .replace(/\{\{current_activity\}\}/g, data.current_activity || '')
+        .replace(/\{\{activity_class\}\}/g, data.activity_class || 'hidden');
+    }
   }
 
   /**
@@ -1634,14 +1715,31 @@ export class FloorManager {
       // Update battery level
       const batteryEl = card.querySelector('.person-battery');
       const batteryIcon = card.querySelector('.person-activity-item i[class*="mdi-battery"]');
-      const batteryItem = card.querySelector('.person-activity-item:nth-child(2)');
+      const batteryItem = card.querySelector('.person-battery-item');
       
       if (batteryData.level) {
         if (batteryEl) batteryEl.textContent = `${batteryData.level}%`;
-        if (batteryIcon) batteryIcon.style.color = batteryData.color;
-        if (batteryItem) batteryItem.style.display = 'flex';
+        if (batteryIcon) {
+          // Remove old battery color classes
+          batteryIcon.classList.remove('battery-high', 'battery-medium', 'battery-low', 'battery-unknown');
+          // Add appropriate battery color class
+          if (batteryData.level > 50) {
+            batteryIcon.classList.add('battery-high');
+          } else if (batteryData.level > 20) {
+            batteryIcon.classList.add('battery-medium');
+          } else {
+            batteryIcon.classList.add('battery-low');
+          }
+        }
+        if (batteryItem) {
+          batteryItem.classList.remove('hidden');
+          batteryItem.classList.add('visible');
+        }
       } else {
-        if (batteryItem) batteryItem.style.display = 'none';
+        if (batteryItem) {
+          batteryItem.classList.remove('visible');
+          batteryItem.classList.add('hidden');
+        }
       }
 
       // Update toggle button
