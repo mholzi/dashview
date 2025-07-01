@@ -23,7 +23,7 @@ export class ConfigManager {
   
       try {
         // Fetch all necessary configurations at the same time for efficiency.
-        const [houseConfig, integrationsConfig, weatherEntityResponse] = await Promise.all([
+        const [houseConfig, integrationsConfig, weatherEntityResponse, sectionsConfig] = await Promise.all([
           this._hass.callApi('GET', 'dashview/config?type=house').catch(e => {
             console.error('[ConfigManager] Failed to load house config.', e);
             return {}; // Return empty object on failure to prevent crashing.
@@ -35,6 +35,10 @@ export class ConfigManager {
           this._hass.callApi('GET', 'dashview/config?type=weather_entity').catch(e => {
             console.error('[ConfigManager] Failed to load weather entity.', e);
             return {};
+          }),
+          this._hass.callApi('GET', 'dashview/config?type=main_dashboard_sections').catch(e => {
+            console.error('[ConfigManager] Failed to load main dashboard sections config.', e);
+            return {};
           })
         ]);
   
@@ -43,7 +47,8 @@ export class ConfigManager {
         return {
           houseConfig: houseConfig || {},
           integrationsConfig: integrationsConfig || {},
-          weatherEntityId: weatherEntityResponse?.weather_entity || 'weather.forecast_home' // Provide a safe default.
+          weatherEntityId: weatherEntityResponse?.weather_entity || 'weather.forecast_home', // Provide a safe default.
+          sectionsConfig: sectionsConfig || {}
         };
   
       } catch (error) {
@@ -52,7 +57,8 @@ export class ConfigManager {
         return {
           houseConfig: {},
           integrationsConfig: {},
-          weatherEntityId: 'weather.forecast_home'
+          weatherEntityId: 'weather.forecast_home',
+          sectionsConfig: {}
         };
       }
     }

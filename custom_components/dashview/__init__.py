@@ -91,6 +91,15 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
     house_config.setdefault("rooms", {})
     house_config.setdefault("floor_layouts", {})
     house_config.setdefault("other_entities", [])
+    house_config.setdefault("main_dashboard_sections", {
+        "info-card": {"visible": True},
+        "train-departures-section": {"visible": True},
+        "notifications-container": {"visible": True},
+        "dwd-warning-card-container": {"visible": True},
+        "scenes-container": {"visible": True},
+        "media-header-buttons-container": {"visible": True},
+        "floor-tabs-container": {"visible": True}
+    })
 
     for floor in floor_registry.floors.values():
         if floor.floor_id not in house_config["floors"]:
@@ -263,6 +272,10 @@ class DashViewConfigView(HomeAssistantView):
             return web.json_response({'persons': person_config})
         elif config_type == 'config_health':
             return await self._get_configuration_health_check()
+        elif config_type == 'main_dashboard_sections':
+            house_config = self._entry.options.get('house_config', {})
+            sections_config = house_config.get('main_dashboard_sections', {})
+            return web.json_response(sections_config)
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -441,6 +454,8 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["persons"] = config_payload
             elif config_type == "custom_cards":
                 current_options.setdefault("house_config", {})["custom_cards"] = config_payload
+            elif config_type == "main_dashboard_sections":
+                current_options.setdefault("house_config", {})["main_dashboard_sections"] = config_payload
             elif config_type == "config_health_fix":
                 return await self._apply_configuration_fix(config_payload)
             else:

@@ -148,6 +148,10 @@ class DashviewPanel extends HTMLElement {
         this._houseConfig = configs.houseConfig;
         this._integrationsConfig = configs.integrationsConfig;
         this._weatherEntityId = configs.weatherEntityId;
+        this._sectionsConfig = configs.sectionsConfig;
+
+        // Apply section visibility settings
+        this._applySectionVisibility();
 
         this.initializeManagers();
         
@@ -666,6 +670,39 @@ class DashviewPanel extends HTMLElement {
     } catch (error) {
       console.error('[DashView] Error generating and merging auto-scenes:', error);
     }
+  }
+
+  _applySectionVisibility() {
+    console.log('[DashView] Applying section visibility settings', this._sectionsConfig);
+    
+    // Default sections configuration if not provided
+    const defaultSections = {
+      "info-card": { "visible": true },
+      "train-departures-section": { "visible": true },
+      "notifications-container": { "visible": true },
+      "dwd-warning-card-container": { "visible": true },
+      "scenes-container": { "visible": true },
+      "media-header-buttons-container": { "visible": true },
+      "floor-tabs-container": { "visible": true }
+    };
+
+    const sectionsConfig = Object.keys(this._sectionsConfig).length > 0 ? this._sectionsConfig : defaultSections;
+
+    // Apply visibility to each configurable section
+    Object.entries(sectionsConfig).forEach(([sectionId, config]) => {
+      const sectionElement = this.shadowRoot.querySelector(`#${sectionId}, .${sectionId}`);
+      if (sectionElement) {
+        if (config.visible === false) {
+          sectionElement.style.display = 'none';
+          console.log(`[DashView] Hidden section: ${sectionId}`);
+        } else {
+          sectionElement.style.display = '';
+          console.log(`[DashView] Showing section: ${sectionId}`);
+        }
+      } else {
+        console.warn(`[DashView] Section element not found: ${sectionId}`);
+      }
+    });
   }
 }
 

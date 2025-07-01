@@ -7,6 +7,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2024-07-01
+
+### 🐛 Bug Fixes
+
+#### Custom Cards Management (#348)
+- **Fixed custom cards persistence**: Custom cards now properly persist across page refreshes and navigation
+- **Added visibility toggle controls**: New checkbox control for showing/hiding custom cards in main dashboard  
+- **Enhanced admin interface**: Improved custom card form with visibility state handling and better user feedback
+- **Main dashboard integration**: Custom cards now properly respect visibility settings when rendering in info-text area
+- **Form management**: Enhanced form clearing and editing with proper visibility state preservation
+- **Backward compatibility**: Existing custom cards without explicit visibility setting default to visible
+
+#### Configuration & Admin Panel (#347)
+- **Fixed Configuration Summary auto-loading**: Configuration Summary now loads automatically when accessing admin tabs
+- **Enhanced configuration metrics**: Added comprehensive configuration health metrics and entity statistics  
+- **Improved admin experience**: Better status messages and real-time feedback throughout admin interface
+- **Performance optimization**: Optimized configuration loading and display rendering for faster response times
+
+#### Weather System (#346)
+- **Enhanced weather chart error handling**: Implemented robust error handling for weather forecast chart failures
+- **Added table fallback**: Automatic fallback to table display when chart rendering fails due to data issues
+- **Improved user experience**: Better error messages and graceful degradation for weather data problems
+- **Chart.js integration**: Proper error boundary handling for Chart.js component failures
+
+#### Room Management (#345)  
+- **Fixed door entity console errors**: Resolved console errors from door entities that were blocking room popup functionality
+- **Enhanced entity validation**: Improved entity data validation to prevent UI blocking errors and crashes
+- **Improved popup stability**: Room popups now load reliably even with problematic entity configurations
+- **Better error recovery**: Enhanced error handling to maintain UI functionality when individual entities fail
+
+#### Entity Display & Localization (#341, #342)
+- **Corrected door state labels**: Fixed door entity labels to use 'Zu' for unlocked state (proper German localization)
+- **Fixed mower entity display**: Added missing name field in mower entity display data preventing proper rendering
+- **Improved label consistency**: Enhanced entity label consistency and proper state representation across dashboard
+- **German localization**: Better German language support for entity states and labels
+
+#### Authentication & API Integration (#339)
+- **Resolved calendar authentication**: Fixed HTTP 401 authentication errors affecting calendar integration and event loading
+- **Enhanced API reliability**: Improved API error handling and retry mechanisms for better service integration  
+- **Better session management**: Enhanced authentication session handling and token refresh capabilities
+- **Service integration**: Improved integration with Home Assistant's calendar and authentication services
+
+#### Admin Interface Improvements
+- **Added missing event handlers**: Fixed Room Configuration Overview configure buttons that were not responding to clicks
+- **Enhanced form validation**: Improved input validation across admin forms with better error messages
+- **Better user feedback**: Enhanced status messages and error reporting throughout admin interface
+- **Stability improvements**: Better error handling to prevent admin interface crashes
+
+### 🔧 Technical Improvements
+
+#### Testing & Quality Assurance
+- **Comprehensive test suites**: Added extensive test coverage for custom cards (7 test cases), weather components, and door entities
+- **Error handling validation**: Implemented test cases for error scenarios and edge cases to prevent regressions
+- **Integration testing**: Added tests for component interaction and data flow validation
+- **Code quality**: Enhanced error handling and logging throughout codebase
+
+#### Data Structure Enhancements
+- **Extended custom card schema**: Custom card objects now include `visible` property for granular display control
+- **Maintained backward compatibility**: Existing custom cards without visibility setting automatically default to visible
+- **Improved entity validation**: Enhanced entity data structure validation and error handling
+- **Better state management**: Improved component state management and data persistence
+
+#### User Interface & Experience
+- **Enhanced admin feedback**: Improved status messages and user feedback throughout admin interface
+- **Better error display**: More informative error messages with actionable guidance for users
+- **Form validation improvements**: Strengthened input validation with clear, helpful error messages
+- **Visual consistency**: Improved visual feedback and status indicators across admin interface
+
+#### Performance & Security
+- **Optimized configuration loading**: Enhanced configuration loading with better caching and error handling
+- **Memory management**: Improved component lifecycle management and memory usage optimization
+- **Enhanced security**: Strengthened input validation and API security throughout application
+- **Error boundary handling**: Better error isolation to prevent cascading failures
+
+### 🧪 Testing
+
+- **Custom Cards**: 7 comprehensive test cases covering persistence, visibility, validation, and integration
+- **Weather Components**: Error handling and fallback mechanism testing  
+- **Door Entities**: Entity validation and error handling test coverage
+- **Admin Interface**: Form validation and user feedback testing
+- **Integration Tests**: Component interaction and data flow validation
+
+### 📦 Migration Guide
+
+For users upgrading from v0.5.2:
+
+1. **Custom Cards**: Existing custom cards will automatically default to visible. Use the new visibility toggle in admin panel to control display.
+2. **Configuration**: No configuration changes required - all improvements are backward compatible.
+3. **Performance**: Clear browser cache after updating for optimal performance.
+4. **Restart Recommendation**: Restart Home Assistant after updating for best stability.
+
+### 🎯 Impact
+
+- **8 GitHub issues resolved**: #339, #341, #342, #345, #346, #347, #348 plus additional improvements
+- **Enhanced stability**: Significantly improved error handling and component reliability
+- **Better user experience**: More intuitive admin interface with immediate feedback
+- **Comprehensive testing**: Added 15+ new test cases ensuring feature stability
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.5.2...v0.5.3
+
 ## [0.5.1] - 2025-07-01
 
 ### 🐛 Bug Fixes
