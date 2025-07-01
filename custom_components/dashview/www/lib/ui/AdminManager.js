@@ -2647,8 +2647,21 @@ async saveMediaPlayerPresets() {
       
       // Add click handlers
       overviewGrid.addEventListener('click', (e) => {
+        // Handle configure button clicks specifically
+        if (e.target.classList.contains('configure-btn')) {
+          e.stopPropagation(); // Prevent room card click handler from firing
+          const roomCard = e.target.closest('.room-overview-card');
+          if (roomCard) {
+            const roomKey = roomCard.dataset.roomKey;
+            this._shadowRoot.getElementById('room-selector').value = roomKey;
+            this.loadRoomConfiguration();
+          }
+          return;
+        }
+        
+        // Handle room card clicks (but not configure button)
         const roomCard = e.target.closest('.room-overview-card');
-        if (roomCard) {
+        if (roomCard && !e.target.classList.contains('configure-btn')) {
           const roomKey = roomCard.dataset.roomKey;
           this._shadowRoot.getElementById('room-selector').value = roomKey;
           this.loadRoomConfiguration();

@@ -588,6 +588,13 @@ export class WeatherComponents {
         this._showForecastLoading(popup, true);
 
         try {
+            // Check if Chart.js is available
+            if (typeof Chart === 'undefined') {
+                console.error('[WeatherComponents] Chart.js library not loaded');
+                this._showForecastFallback(popup);
+                return;
+            }
+
             // Get data based on current view
             const data = this._currentView === 'hourly' ? this._forecasts.hourly : this._forecasts.daily;
             
@@ -604,6 +611,14 @@ export class WeatherComponents {
                 return;
             }
 
+            // Validate canvas context
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('[WeatherComponents] Cannot get 2D context from canvas');
+                this._showForecastFallback(popup);
+                return;
+            }
+
             // Create or update chart
             this._createForecastChart(canvas, chartData);
             
@@ -613,7 +628,17 @@ export class WeatherComponents {
 
         } catch (error) {
             console.error('[WeatherComponents] Error updating forecast chart:', error);
-            this._showForecastError(popup, 'Fehler beim Laden des Diagramms');
+            
+            // Determine the specific type of error for better user feedback
+            if (error.name === 'ReferenceError' && error.message.includes('Chart')) {
+                console.error('[WeatherComponents] Chart.js library error:', error);
+                this._showForecastFallback(popup);
+            } else if (error.message.includes('canvas') || error.message.includes('context')) {
+                console.error('[WeatherComponents] Canvas rendering error:', error);
+                this._showForecastFallback(popup);
+            } else {
+                this._showForecastError(popup, 'Fehler beim Laden des Diagramms');
+            }
         }
     }
 
@@ -863,6 +888,154 @@ export class WeatherComponents {
         
         if (canvas) {
             canvas.style.opacity = message ? '0.3' : '1';
+        }
+    }
+
+    /**
+     * Show forecast data as table when chart fails (fallback)
+     * @param {HTMLElement} popup - Weather popup element
+     */
+    _showForecastFallback(popup) {
+        console.log('[WeatherComponents] Showing forecast data fallback (table view)');
+        
+        // Hide loading state
+        this._showForecastLoading(popup, false);
+        
+        // Get data based on current view
+        const data = this._currentView === 'hourly' ? this._forecasts.hourly : this._forecasts.daily;
+        
+        if (!data || data.length === 0) {
+            this._showForecastError(popup, 'Keine Vorhersagedaten verfügbar');
+            return;
+        }
+
+        // Find or create fallback container
+        let fallbackContainer = popup.querySelector('.forecast-fallback');
+        if (!fallbackContainer) {
+            fallbackContainer = document.createElement('div');
+            fallbackContainer.className = 'forecast-fallback';
+            
+            const chartContainer = popup.querySelector('.forecast-graph-content');
+            if (chartContainer) {
+                chartContainer.appendChild(fallbackContainer);
+            }
+        }
+
+        // Hide canvas and error elements
+        const canvas = popup.querySelector('#forecast-chart');
+        const errorEl = popup.querySelector('.forecast-error');
+        if (canvas) canvas.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'none';
+
+        // Generate fallback table
+        const tableHtml = this._generateForecastTable(data);
+        fallbackContainer.innerHTML = `
+            <div class="forecast-fallback-header">
+                <i class="mdi mdi-table"></i>
+                <p>Diagramm nicht verfügbar - Daten als Tabelle:</p>
+            </div>
+            ${tableHtml}
+        `;
+        
+        fallbackContainer.style.display = 'block';
+    }
+
+    /**
+     * Generate HTML table for forecast data
+     * @param {Array} data - Forecast data
+     * @returns {string} HTML table string
+     */
+    _generateForecastTable(data) {
+        const parameterName = this._getParameterDisplayName(this._currentParameter);
+        const unit = this._getParameterUnit(this._currentParameter);
+        const maxRows = this._currentView === 'hourly' ? 12 : 7; // Limit rows for readability
+        
+        let tableHtml = `
+            <table class="forecast-table">
+                <thead>
+                    <tr>
+                        <th>Zeit</th>
+                        <th>${parameterName}</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        data.slice(0, maxRows).forEach(item => {
+            const time = this._formatForecastTime(item, this._currentView);
+            const value = this._extractParameterValue(item, this._currentParameter);
+            
+            tableHtml += `
+                <tr>
+                    <td>${time}</td>
+                    <td>${value}${unit}</td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `
+                </tbody>
+            </table>
+        `;
+
+        return tableHtml;
+    }
+
+    /**
+     * Get display name for parameter
+     * @param {string} parameter - Parameter key
+     * @returns {string} Display name
+     */
+    _getParameterDisplayName(parameter) {
+        const names = {
+            temperature: 'Temperatur',
+            precipitation: 'Niederschlag',
+            wind: 'Wind'
+        };
+        return names[parameter] || parameter;
+    }
+
+    /**
+     * Format forecast time for table display
+     * @param {Object} item - Forecast item
+     * @param {string} view - hourly or daily
+     * @returns {string} Formatted time
+     */
+    _formatForecastTime(item, view) {
+        if (!item.datetime) return 'N/A';
+        
+        const date = new Date(item.datetime);
+        
+        if (view === 'hourly') {
+            return date.toLocaleTimeString('de-DE', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        } else {
+            return date.toLocaleDateString('de-DE', { 
+                weekday: 'short', 
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+    }
+
+    /**
+     * Extract parameter value from forecast item
+     * @param {Object} item - Forecast item
+     * @param {string} parameter - Parameter to extract
+     * @returns {number} Parameter value
+     */
+    _extractParameterValue(item, parameter) {
+        switch (parameter) {
+            case 'temperature':
+                return Math.round(item.temperature || 0);
+            case 'precipitation':
+                return Math.round((item.precipitation || 0) * 10) / 10;
+            case 'wind':
+                return Math.round((item.wind_speed || 0) * 10) / 10;
+            default:
+                return 0;
         }
     }
 
