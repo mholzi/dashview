@@ -712,7 +712,7 @@ class WeatherDisplayStrategy extends ContentStrategy {
 }
 
 /**
- * Sensor display strategy
+ * Sensor display strategy with historical data support
  */
 class SensorDisplayStrategy extends ContentStrategy {
   canHandle(entityType, entityId) {
@@ -736,15 +736,59 @@ class SensorDisplayStrategy extends ContentStrategy {
     html += `<span class="sensor-state-text">${displayData.label}</span>`;
     html += '</div>';
     
-    // State history placeholder
+    // Historical data section
     html += '<div class="sensor-history">';
-    html += '<h4>Recent Activity</h4>';
-    html += '<p>State history visualization would go here</p>';
-    html += '</div>';
+    html += '<h4>Historical Data</h4>';
     
+    // Check if entity supports historical data
+    if (this._panel._historicalDataManager?.supportsHistoricalData(entityId)) {
+      html += '<div class="historical-chart-container">';
+      html += '<div class="chart-loading">Loading historical data...</div>';
+      html += '</div>';
+    } else {
+      html += '<div class="no-historical-data">';
+      html += '<p>Historical data not available for this sensor type.</p>';
+      html += '</div>';
+    }
+    
+    html += '</div>';
     html += '</div>';
     
     container.innerHTML = html;
+    
+    // Load historical data for supported entities
+    if (this._panel._historicalDataManager?.supportsHistoricalData(entityId)) {
+      this._loadHistoricalChart(container, entityId);
+    }
+  }
+
+  async _loadHistoricalChart(container, entityId) {
+    const chartContainer = container.querySelector('.historical-chart-container');
+    const loadingElement = chartContainer.querySelector('.chart-loading');
+    
+    try {
+      console.log(`[SensorDisplayStrategy] Loading historical chart for ${entityId}`);
+      
+      // Fetch historical data
+      const historicalData = await this._panel._historicalDataManager.fetchHistoricalData(entityId, 24);
+      
+      if (historicalData && historicalData.length > 0) {
+        // Remove loading indicator
+        if (loadingElement) {
+          loadingElement.remove();
+        }
+        
+        // Create chart
+        await this._panel._historicalDataManager.createChart(chartContainer, entityId, historicalData);
+      } else {
+        // Show no data message
+        chartContainer.innerHTML = '<div class="no-historical-data"><p>No historical data available for the last 24 hours.</p></div>';
+      }
+      
+    } catch (error) {
+      console.error(`[SensorDisplayStrategy] Error loading historical chart for ${entityId}:`, error);
+      chartContainer.innerHTML = '<div class="chart-error"><p>Error loading historical data.</p></div>';
+    }
   }
 }
 

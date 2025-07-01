@@ -17,6 +17,7 @@ import { SceneManager } from './lib/ui/SceneManager.js';
 import { AutoSceneGenerator } from './lib/ui/AutoSceneGenerator.js';
 import { CalendarManager } from './lib/ui/CalendarManager.js';
 import { EntityDetailManager } from './lib/ui/EntityDetailManager.js';
+import { HistoricalDataManager } from './lib/ui/HistoricalDataManager.js';
 import { UpcomingEventsManager } from './lib/ui/UpcomingEventsManager.js';
 import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
 
@@ -123,6 +124,7 @@ class DashviewPanel extends HTMLElement {
     if (this._autoSceneGenerator) this._autoSceneGenerator.setHass(hass);
     if (this._calendarManager) this._calendarManager.setHass(hass);
     if (this._entityDetailManager) this._entityDetailManager.setHass(hass);
+    if (this._historicalDataManager) this._historicalDataManager.setHass(hass);
     if (this._upcomingEventsManager) this._upcomingEventsManager.setHass(hass);
 
     if (this._stateManager) {
@@ -185,6 +187,7 @@ class DashviewPanel extends HTMLElement {
     this._autoSceneGenerator = new AutoSceneGenerator(this);
     this._calendarManager = new CalendarManager(this);
     this._entityDetailManager = new EntityDetailManager(this);
+    this._historicalDataManager = new HistoricalDataManager(this);
     this._upcomingEventsManager = new UpcomingEventsManager(this);
 
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);

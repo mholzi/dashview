@@ -49,6 +49,12 @@
     --ha-card-border-radius: 30px;
     --ha-card-border-width: 0px;
     --ha-card-box-shadow: none;
+    
+    /* Historical Data Chart Colors */
+    --chart-background: var(--card-background-color);
+    --chart-border: var(--gray200);
+    --chart-text: var(--secondary-text-color);
+    --chart-loading: var(--gray500);
 }
 
 /* Dark Mode Overrides */
@@ -5236,4 +5242,191 @@ body.popup-open, :host(.popup-open) {
     margin: 0;
     font-size: 0.9rem;
     line-height: 1.4;
+}
+
+/* Calendar Enhancement Styles */
+.calendar-entity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.calendar-color-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendar-color-picker label {
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+    margin: 0;
+}
+
+.calendar-color-input {
+    width: 40px;
+    height: 30px;
+    border: 1px solid var(--separator-color);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+    background: none;
+}
+
+.calendar-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+}
+
+.calendar-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 3px;
+}
+
+/* Calendar Event Color Coding */
+.calendar-event {
+    border-left: 4px solid #cccccc;
+    padding-left: 12px;
+    margin-left: 8px;
+}
+
+.calendar-event-source {
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Responsive Calendar Config */
+@media (max-width: 768px) {
+    .calendar-entity-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .calendar-color-picker {
+        align-self: flex-end;
+    }
+}
+
+/* Historical Data Chart Styles */
+.historical-chart-container {
+    margin-top: 1rem;
+    min-height: 200px;
+    position: relative;
+    background: var(--chart-background);
+    border: 1px solid var(--chart-border);
+    border-radius: 12px;
+    padding: 1rem;
+    overflow: hidden;
+}
+
+.chart-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--chart-loading);
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-loading::before {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--chart-border);
+    border-top: 2px solid var(--chart-loading);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.no-historical-data {
+    text-align: center;
+    padding: 2rem;
+    color: var(--chart-text);
+    font-size: 0.9rem;
+}
+
+.no-historical-data p {
+    margin: 0;
+    opacity: 0.8;
+}
+
+.chart-error {
+    text-align: center;
+    padding: 2rem;
+    color: var(--red);
+    font-size: 0.9rem;
+}
+
+.chart-error p {
+    margin: 0;
+}
+
+/* Sensor Display Strategy Styles */
+.entity-detail-sensor {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sensor-state-large {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--card-background-color);
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.sensor-state-large i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.sensor-state-text {
+    color: var(--primary-text-color);
+}
+
+.sensor-history h4 {
+    margin: 0 0 1rem 0;
+    color: var(--primary-text-color);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Dark mode adjustments for charts */
+@media (prefers-color-scheme: dark) {
+    .historical-chart-container {
+        background: var(--gray000);
+        border-color: var(--gray200);
+    }
+    
+    .chart-loading {
+        color: var(--gray400);
+    }
+    
+    .chart-loading::before {
+        border-color: var(--gray200);
+        border-top-color: var(--gray400);
+    }
+    
+    .no-historical-data {
+        color: var(--gray400);
+    }
 }
