@@ -1,21 +1,23 @@
 <div class="dwd-warning-card-container"></div>
-<div class="current-weather">
-    <div class="weather-icon">
-        <img id="current-weather-icon" src="" alt="Weather" width="60" height="60">
-    </div>
-    <div class="weather-info">
-        <div class="temperature" id="current-temperature">--°C</div>
-        <div class="condition" id="current-condition">--</div>
-        <div class="feels-like">Gefühlt <span id="feels-like-temp">--°C</span></div>
-    </div>
-    <div class="weather-details">
-        <div class="detail-item">
-            <span class="detail-label">Luftfeuchtigkeit</span>
-            <span class="detail-value" id="humidity">--%</span>
+<div class="weather-forecast-card">
+    <div class="current-weather">
+        <div class="weather-icon">
+            <img id="current-weather-icon" src="" alt="Weather" width="60" height="60">
         </div>
-        <div class="detail-item">
-            <span class="detail-label">Wind</span>
-            <span class="detail-value" id="wind-speed">-- km/h</span>
+        <div class="weather-info">
+            <div class="temperature" id="current-temperature">--°C</div>
+            <div class="condition" id="current-condition">--</div>
+            <div class="feels-like">Gefühlt <span id="feels-like-temp">--°C</span></div>
+        </div>
+        <div class="weather-details">
+            <div class="detail-item">
+                <span class="detail-label">Luftfeuchtigkeit</span>
+                <span class="detail-value" id="humidity">--%</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Wind</span>
+                <span class="detail-value" id="wind-speed">-- km/h</span>
+            </div>
         </div>
     </div>
 </div>
@@ -24,6 +26,35 @@
     <h4>Stündliche Vorhersage</h4>
     <div class="hourly-forecast-scroll" id="hourly-forecast">
         </div>
+</div>
+
+<div class="forecast-graph-container">
+    <div class="forecast-graph-header">
+        <h4>Vorhersage Trend</h4>
+        <div class="forecast-controls">
+            <div class="forecast-view-toggle">
+                <button class="forecast-toggle-btn active" data-view="hourly">Stündlich</button>
+                <button class="forecast-toggle-btn" data-view="daily">Täglich</button>
+            </div>
+            <div class="forecast-parameter-toggle">
+                <button class="parameter-btn active" data-param="temperature">Temp</button>
+                <button class="parameter-btn" data-param="precipitation">Regen</button>
+                <button class="parameter-btn" data-param="wind">Wind</button>
+            </div>
+        </div>
+    </div>
+    <div class="forecast-graph-content">
+        <canvas id="forecast-chart" width="400" height="200"></canvas>
+        <div class="forecast-loading" style="display: none;">
+            <i class="mdi mdi-loading mdi-spin"></i>
+            <p>Lade Vorhersagedaten...</p>
+        </div>
+        <div class="forecast-error" style="display: none;">
+            <i class="mdi mdi-alert-circle"></i>
+            <p>Fehler beim Laden der Vorhersagedaten</p>
+            <button class="forecast-retry-btn">Erneut versuchen</button>
+        </div>
+    </div>
 </div>
 
 <div class="daily-forecast-container">

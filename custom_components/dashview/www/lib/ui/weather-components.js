@@ -6,6 +6,12 @@ export class WeatherComponents {
         this._hass = panel._hass;
         this._shadowRoot = panel.shadowRoot;
         this._forecasts = { daily: null, hourly: null };
+        
+        // Forecast graph state
+        this._currentView = 'hourly'; // 'hourly' or 'daily'
+        this._currentParameter = 'temperature'; // 'temperature', 'precipitation', 'wind'
+        this._chartInstance = null;
+        this._chartInitialized = false;
     }
 
     setHass(hass) {
@@ -27,6 +33,7 @@ export class WeatherComponents {
         this._updateCurrentWeather(weatherState);
         this._updateHourlyForecast(this._forecasts.hourly);
         this._initializeDailyForecast(this._forecasts.daily);
+        this._initializeForecastGraph(popup);
         this.updatePollenCard(popup);
     }
     
@@ -478,5 +485,396 @@ export class WeatherComponents {
         
         // TODO: Implement detailed forecast data fetching and display
         console.log('[WeatherComponents] Entity weather rendering complete for:', entityId);
+    }
+
+    /**
+     * Initialize forecast graph with controls and chart
+     * @param {HTMLElement} popup - The weather popup element
+     */
+    _initializeForecastGraph(popup) {
+        if (!popup) return;
+
+        const graphContainer = popup.querySelector('.forecast-graph-container');
+        if (!graphContainer) return;
+
+        // Initialize controls if not already done
+        if (!this._chartInitialized) {
+            this._initializeForecastControls(popup);
+            this._chartInitialized = true;
+        }
+
+        // Update the chart with current data
+        this._updateForecastChart();
+    }
+
+    /**
+     * Initialize forecast graph controls and event listeners
+     * @param {HTMLElement} popup - The weather popup element
+     */
+    _initializeForecastControls(popup) {
+        // View toggle buttons (hourly/daily)
+        const viewToggleBtns = popup.querySelectorAll('.forecast-toggle-btn');
+        viewToggleBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const newView = e.target.dataset.view;
+                if (newView && newView !== this._currentView) {
+                    this._currentView = newView;
+                    this._updateViewToggleState(popup);
+                    this._updateForecastChart();
+                }
+            });
+        });
+
+        // Parameter toggle buttons (temperature/precipitation/wind)
+        const paramBtns = popup.querySelectorAll('.parameter-btn');
+        paramBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const newParam = e.target.dataset.param;
+                if (newParam && newParam !== this._currentParameter) {
+                    this._currentParameter = newParam;
+                    this._updateParameterToggleState(popup);
+                    this._updateForecastChart();
+                }
+            });
+        });
+
+        // Retry button
+        const retryBtn = popup.querySelector('.forecast-retry-btn');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                this.update();
+            });
+        }
+
+        console.log('[WeatherComponents] Forecast controls initialized');
+    }
+
+    /**
+     * Update view toggle button states
+     * @param {HTMLElement} popup - The weather popup element
+     */
+    _updateViewToggleState(popup) {
+        const viewToggleBtns = popup.querySelectorAll('.forecast-toggle-btn');
+        viewToggleBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === this._currentView);
+        });
+    }
+
+    /**
+     * Update parameter toggle button states
+     * @param {HTMLElement} popup - The weather popup element
+     */
+    _updateParameterToggleState(popup) {
+        const paramBtns = popup.querySelectorAll('.parameter-btn');
+        paramBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.param === this._currentParameter);
+        });
+    }
+
+    /**
+     * Update forecast chart with current data and settings
+     */
+    _updateForecastChart() {
+        const canvas = this._shadowRoot.querySelector('#forecast-chart');
+        if (!canvas) {
+            console.warn('[WeatherComponents] Forecast chart canvas not found');
+            return;
+        }
+
+        const popup = this._shadowRoot.querySelector('#weather-popup.active');
+        if (!popup) return;
+
+        // Show loading state
+        this._showForecastLoading(popup, true);
+
+        try {
+            // Get data based on current view
+            const data = this._currentView === 'hourly' ? this._forecasts.hourly : this._forecasts.daily;
+            
+            if (!data || data.length === 0) {
+                this._showForecastError(popup, 'Keine Vorhersagedaten verfügbar');
+                return;
+            }
+
+            // Prepare chart data
+            const chartData = this._prepareForecastChartData(data);
+            
+            if (!chartData) {
+                this._showForecastError(popup, 'Fehler beim Verarbeiten der Vorhersagedaten');
+                return;
+            }
+
+            // Create or update chart
+            this._createForecastChart(canvas, chartData);
+            
+            // Hide loading/error states
+            this._showForecastLoading(popup, false);
+            this._showForecastError(popup, null);
+
+        } catch (error) {
+            console.error('[WeatherComponents] Error updating forecast chart:', error);
+            this._showForecastError(popup, 'Fehler beim Laden des Diagramms');
+        }
+    }
+
+    /**
+     * Prepare chart data based on current view and parameter
+     * @param {Array} forecastData - Raw forecast data
+     * @returns {Object} Chart.js compatible data object
+     */
+    _prepareForecastChartData(forecastData) {
+        if (!forecastData || forecastData.length === 0) return null;
+
+        const labels = [];
+        const dataPoints = [];
+        const borderColor = this._getParameterColor(this._currentParameter);
+        const backgroundColor = this._getParameterColor(this._currentParameter, 0.1);
+
+        // Limit data points for performance
+        const maxDataPoints = this._currentView === 'hourly' ? 24 : 7;
+        const limitedData = forecastData.slice(0, maxDataPoints);
+
+        limitedData.forEach(item => {
+            // Extract timestamp
+            let timestamp;
+            if (item.datetime) {
+                timestamp = new Date(item.datetime);
+            } else if (item.time) {
+                timestamp = new Date(item.time);
+            } else {
+                return; // Skip items without valid timestamp
+            }
+
+            // Format label based on view
+            let label;
+            if (this._currentView === 'hourly') {
+                label = timestamp.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            } else {
+                label = timestamp.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric' });
+            }
+
+            // Extract data point based on parameter
+            let value = null;
+            switch (this._currentParameter) {
+                case 'temperature':
+                    value = item.temperature || item.temp;
+                    break;
+                case 'precipitation':
+                    value = item.precipitation || item.rain || 0;
+                    break;
+                case 'wind':
+                    value = item.wind_speed || item.windSpeed || 0;
+                    break;
+            }
+
+            if (value !== null && !isNaN(value)) {
+                labels.push(label);
+                dataPoints.push(value);
+            }
+        });
+
+        if (dataPoints.length === 0) {
+            console.warn('[WeatherComponents] No valid data points found for parameter:', this._currentParameter);
+            return null;
+        }
+
+        return {
+            labels: labels,
+            datasets: [{
+                label: this._getParameterLabel(this._currentParameter),
+                data: dataPoints,
+                borderColor: borderColor,
+                backgroundColor: backgroundColor,
+                borderWidth: 2,
+                fill: this._currentParameter === 'precipitation',
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: borderColor,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 1
+            }]
+        };
+    }
+
+    /**
+     * Create or update the Chart.js instance
+     * @param {HTMLCanvasElement} canvas - Chart canvas element
+     * @param {Object} data - Chart data
+     */
+    _createForecastChart(canvas, data) {
+        // Destroy existing chart if it exists
+        if (this._chartInstance) {
+            this._chartInstance.destroy();
+        }
+
+        const ctx = canvas.getContext('2d');
+        
+        // Chart.js configuration
+        const config = {
+            type: this._currentParameter === 'precipitation' ? 'bar' : 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: 'rgba(0, 0, 0, 0.8)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: (context) => {
+                                const value = context.parsed.y;
+                                const unit = this._getParameterUnit(this._currentParameter);
+                                return `${context.dataset.label}: ${value}${unit}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim(),
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: this._currentParameter === 'precipitation',
+                        grid: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--gray200').trim(),
+                            borderDash: [2, 2]
+                        },
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim(),
+                            font: {
+                                size: 11
+                            },
+                            callback: (value) => {
+                                const unit = this._getParameterUnit(this._currentParameter);
+                                return `${value}${unit}`;
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        };
+
+        // Create new chart instance
+        this._chartInstance = new Chart(ctx, config);
+        console.log('[WeatherComponents] Forecast chart created successfully');
+    }
+
+    /**
+     * Get color for weather parameter
+     * @param {string} parameter - Parameter name
+     * @param {number} alpha - Alpha value for background color
+     * @returns {string} Color value
+     */
+    _getParameterColor(parameter, alpha = 1) {
+        const colors = {
+            temperature: alpha < 1 ? `rgba(255, 99, 132, ${alpha})` : '#ff6384',
+            precipitation: alpha < 1 ? `rgba(54, 162, 235, ${alpha})` : '#36a2eb',
+            wind: alpha < 1 ? `rgba(255, 206, 84, ${alpha})` : '#ffce56'
+        };
+        return colors[parameter] || '#999';
+    }
+
+    /**
+     * Get label for weather parameter
+     * @param {string} parameter - Parameter name
+     * @returns {string} Localized label
+     */
+    _getParameterLabel(parameter) {
+        const labels = {
+            temperature: 'Temperatur',
+            precipitation: 'Niederschlag',
+            wind: 'Windgeschwindigkeit'
+        };
+        return labels[parameter] || parameter;
+    }
+
+    /**
+     * Get unit for weather parameter
+     * @param {string} parameter - Parameter name
+     * @returns {string} Unit string
+     */
+    _getParameterUnit(parameter) {
+        const units = {
+            temperature: '°C',
+            precipitation: 'mm',
+            wind: 'km/h'
+        };
+        return units[parameter] || '';
+    }
+
+    /**
+     * Show/hide forecast loading state
+     * @param {HTMLElement} popup - Weather popup element
+     * @param {boolean} show - Whether to show loading state
+     */
+    _showForecastLoading(popup, show) {
+        const loadingEl = popup.querySelector('.forecast-loading');
+        const canvas = popup.querySelector('#forecast-chart');
+        
+        if (loadingEl) {
+            loadingEl.style.display = show ? 'block' : 'none';
+        }
+        if (canvas) {
+            canvas.style.opacity = show ? '0.3' : '1';
+        }
+    }
+
+    /**
+     * Show/hide forecast error state
+     * @param {HTMLElement} popup - Weather popup element
+     * @param {string|null} message - Error message or null to hide
+     */
+    _showForecastError(popup, message) {
+        const errorEl = popup.querySelector('.forecast-error');
+        const canvas = popup.querySelector('#forecast-chart');
+        
+        if (errorEl) {
+            if (message) {
+                errorEl.style.display = 'block';
+                const messageEl = errorEl.querySelector('p');
+                if (messageEl) {
+                    messageEl.textContent = message;
+                }
+            } else {
+                errorEl.style.display = 'none';
+            }
+        }
+        
+        if (canvas) {
+            canvas.style.opacity = message ? '0.3' : '1';
+        }
+    }
+
+    /**
+     * Cleanup chart instance when weather popup is closed
+     */
+    dispose() {
+        if (this._chartInstance) {
+            this._chartInstance.destroy();
+            this._chartInstance = null;
+        }
+        this._chartInitialized = false;
+        console.log('[WeatherComponents] Disposed forecast chart resources');
     }
 }
