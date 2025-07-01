@@ -7,6 +7,8 @@ export class PopupManager {
     this._config = panel._houseConfig;
     this._shadowRoot = panel.shadowRoot;
     this._componentInitializers = panel._componentInitializers;
+    this._templateCache = new Map(); // Template caching
+    this._contentInjectors = new Map(); // Content injectors registry
     this._setupEventListeners();
   }
 
@@ -47,12 +49,20 @@ export class PopupManager {
     document.body.classList.remove('popup-open');
 
     if (hash !== '#home') {
-      const popupType = hash.substring(1);
-      const popupId = popupType + '-popup';
+      let popupType = hash.substring(1);
+      let entityId = null;
+      
+      // Check if it's an entity detail popup
+      if (popupType.startsWith('entity-details-')) {
+        entityId = popupType.substring('entity-details-'.length);
+        popupType = 'entity-details';
+      }
+      
+      const popupId = entityId ? `entity-${entityId}-detail-popup` : `${popupType}-popup`;
       let targetPopup = this._shadowRoot.querySelector('#' + popupId);
 
       if (!targetPopup) {
-        targetPopup = await this.createPopup(popupType);
+        targetPopup = await this.createPopup(popupType, entityId);
       }
       
       if (targetPopup) {
@@ -64,6 +74,7 @@ export class PopupManager {
         
         setTimeout(() => {
             targetPopup.classList.add('ready');
+            this._emitLifecycleEvent('popup:shown', { popupType, entityId });
         }, 50);
       }
     }
@@ -74,7 +85,12 @@ export class PopupManager {
     }
   }
 
-  async createPopup(popupType) {
+  async createPopup(popupType, entityId = null) {
+    // Handle entity detail popups
+    if (popupType === 'entity-details' && entityId) {
+      return await this.createEntityDetailPopup(entityId);
+    }
+    
     const popupId = `${popupType}-popup`;
     let content = '';
     const isRoom = this._config?.rooms?.[popupType];
@@ -126,7 +142,20 @@ export class PopupManager {
   }
 
   closePopup() {
+    // Emit closing event
+    const activePopup = this._shadowRoot.querySelector('.popup.active');
+    if (activePopup) {
+      const entityMatch = activePopup.id.match(/^entity-(.+)-detail-popup$/);
+      const entityId = entityMatch ? entityMatch[1] : null;
+      this._emitLifecycleEvent('popup:closing', { popupId: activePopup.id, entityId });
+    }
+    
     window.location.hash = '#home';
+    
+    // Emit closed event after hash change
+    setTimeout(() => {
+      this._emitLifecycleEvent('popup:closed', {});
+    }, 100);
   }
 
   reinitializePopupContent(popup) {
@@ -368,5 +397,304 @@ export class PopupManager {
     
     console.log(`[PopupManager] Room ${roomKey} has scenes:`, hasScenes);
     return hasScenes;
+  }
+
+  /**
+   * Create entity detail popup
+   * @param {string} entityId - The entity ID to show details for
+   * @returns {Promise<HTMLElement|null>} The popup element or null
+   */
+  async createEntityDetailPopup(entityId) {
+    console.log('[PopupManager] Creating entity detail popup for:', entityId);
+    
+    // Emit popup:created event
+    this._emitLifecycleEvent('popup:created', { entityId });
+    
+    try {
+      // Load the container template
+      const containerHTML = await this._loadTemplate('/local/dashview/templates/entity-detail-popup-container.html');
+      if (!containerHTML) {
+        console.error('[PopupManager] Failed to load entity detail popup container template');
+        return null;
+      }
+      
+      // Create popup element
+      const popup = document.createElement('div');
+      popup.id = `entity-${entityId}-detail-popup`;
+      popup.className = 'popup entity-detail-popup';
+      popup.innerHTML = containerHTML;
+      
+      // Setup close button
+      const closeBtn = popup.querySelector('#entity-popup-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.closePopup());
+      }
+      
+      // Add popup to shadow DOM
+      this._shadowRoot.appendChild(popup);
+      
+      // Populate entity info
+      await this._populateEntityDetails(popup, entityId);
+      
+      return popup;
+      
+    } catch (error) {
+      console.error('[PopupManager] Error creating entity detail popup:', error);
+      this._emitLifecycleEvent('popup:content-error', { entityId, error });
+      return null;
+    }
+  }
+  
+  /**
+   * Populate entity details in the popup
+   * @param {HTMLElement} popup - The popup element
+   * @param {string} entityId - The entity ID
+   */
+  async _populateEntityDetails(popup, entityId) {
+    const entityState = this._hass.states[entityId];
+    if (!entityState) {
+      console.error('[PopupManager] Entity not found:', entityId);
+      return;
+    }
+    
+    // Update header info
+    const titleEl = popup.querySelector('#entity-popup-title');
+    const subtitleEl = popup.querySelector('#entity-popup-subtitle');
+    const iconEl = popup.querySelector('#entity-popup-icon');
+    
+    if (titleEl) titleEl.textContent = entityState.attributes.friendly_name || entityId;
+    if (subtitleEl) subtitleEl.textContent = entityId;
+    
+    // Set icon based on entity type
+    if (iconEl) {
+      const icon = this._getEntityIcon(entityState);
+      iconEl.className = `entity-detail-popup-icon mdi ${icon}`;
+    }
+    
+    // Emit content loading event
+    this._emitLifecycleEvent('popup:content-loading', { entityId });
+    
+    // Get appropriate content injector
+    const contentEl = popup.querySelector('#entity-popup-content');
+    if (contentEl) {
+      // Hide loading indicator
+      const loadingEl = contentEl.querySelector('.entity-detail-popup-loading');
+      if (loadingEl) loadingEl.style.display = 'none';
+      
+      // Inject content based on entity type
+      const injected = await this._injectEntityContent(contentEl, entityId, entityState);
+      
+      if (injected) {
+        this._emitLifecycleEvent('popup:content-loaded', { entityId });
+      } else {
+        // Show generic entity info if no specific template
+        contentEl.innerHTML = this._generateGenericEntityContent(entityState);
+        this._emitLifecycleEvent('popup:content-loaded', { entityId });
+      }
+    }
+  }
+  
+  /**
+   * Get icon for entity based on its type and state
+   * @param {Object} entityState - The entity state object
+   * @returns {string} The MDI icon class
+   */
+  _getEntityIcon(entityState) {
+    const domain = entityState.entity_id.split('.')[0];
+    const state = entityState.state;
+    
+    // Check for custom icon in attributes
+    if (entityState.attributes.icon) {
+      return this._panel._processIconName(entityState.attributes.icon);
+    }
+    
+    // Default icons by domain
+    const domainIcons = {
+      light: state === 'on' ? 'mdi-lightbulb' : 'mdi-lightbulb-outline',
+      switch: state === 'on' ? 'mdi-toggle-switch' : 'mdi-toggle-switch-off',
+      sensor: 'mdi-eye',
+      binary_sensor: 'mdi-checkbox-marked-circle',
+      climate: 'mdi-thermostat',
+      cover: 'mdi-window-shutter',
+      media_player: 'mdi-cast',
+      camera: 'mdi-camera',
+      vacuum: 'mdi-robot-vacuum',
+      fan: 'mdi-fan',
+      lock: state === 'locked' ? 'mdi-lock' : 'mdi-lock-open',
+      alarm_control_panel: 'mdi-shield',
+      automation: 'mdi-robot',
+      scene: 'mdi-palette',
+      script: 'mdi-script-text',
+      person: 'mdi-account',
+      device_tracker: 'mdi-map-marker'
+    };
+    
+    return domainIcons[domain] || 'mdi-help-circle';
+  }
+  
+  /**
+   * Inject entity-specific content
+   * @param {HTMLElement} container - The content container
+   * @param {string} entityId - The entity ID
+   * @param {Object} entityState - The entity state
+   * @returns {Promise<boolean>} Whether content was injected
+   */
+  async _injectEntityContent(container, entityId, entityState) {
+    const domain = entityId.split('.')[0];
+    
+    // Check for registered content injectors
+    const injector = this._contentInjectors.get(domain);
+    if (injector && injector.canHandle(entityId)) {
+      try {
+        await injector.populateContent(container, entityId);
+        return true;
+      } catch (error) {
+        console.error('[PopupManager] Content injector error:', error);
+      }
+    }
+    
+    // Try to load domain-specific template
+    const templatePath = `/local/dashview/templates/entity-${domain}-detail.html`;
+    const template = await this._loadTemplate(templatePath);
+    
+    if (template) {
+      container.innerHTML = template;
+      // Process template placeholders
+      this._processTemplatePlaceholders(container, entityState);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Generate generic entity content
+   * @param {Object} entityState - The entity state
+   * @returns {string} HTML content
+   */
+  _generateGenericEntityContent(entityState) {
+    const attributes = entityState.attributes;
+    const stateStr = entityState.state;
+    
+    let html = '<div class="entity-detail-generic">';
+    html += '<div class="entity-detail-state">';
+    html += `<span class="entity-detail-state-label">State:</span>`;
+    html += `<span class="entity-detail-state-value">${stateStr}</span>`;
+    html += '</div>';
+    
+    // Show key attributes
+    const importantAttrs = ['device_class', 'unit_of_measurement', 'last_changed', 'last_updated'];
+    
+    html += '<div class="entity-detail-attributes">';
+    html += '<h4>Attributes</h4>';
+    
+    for (const [key, value] of Object.entries(attributes)) {
+      if (key !== 'friendly_name' && key !== 'icon') {
+        const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        html += `<div class="entity-detail-attribute">`;
+        html += `<span class="entity-detail-attribute-key">${displayKey}:</span>`;
+        html += `<span class="entity-detail-attribute-value">${this._formatAttributeValue(value)}</span>`;
+        html += `</div>`;
+      }
+    }
+    
+    html += '</div></div>';
+    return html;
+  }
+  
+  /**
+   * Format attribute value for display
+   * @param {any} value - The attribute value
+   * @returns {string} Formatted value
+   */
+  _formatAttributeValue(value) {
+    if (value === null || value === undefined) return 'N/A';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (Array.isArray(value)) return value.join(', ');
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(value);
+  }
+  
+  /**
+   * Process template placeholders
+   * @param {HTMLElement} container - The container with template
+   * @param {Object} entityState - The entity state
+   */
+  _processTemplatePlaceholders(container, entityState) {
+    // Replace {{entity_id}}, {{state}}, {{friendly_name}}, etc.
+    const html = container.innerHTML;
+    const processed = html
+      .replace(/\{\{entity_id\}\}/g, entityState.entity_id)
+      .replace(/\{\{state\}\}/g, entityState.state)
+      .replace(/\{\{friendly_name\}\}/g, entityState.attributes.friendly_name || entityState.entity_id);
+    
+    // Process attributes
+    for (const [key, value] of Object.entries(entityState.attributes)) {
+      const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      processed.replace(placeholder, this._formatAttributeValue(value));
+    }
+    
+    container.innerHTML = processed;
+  }
+  
+  /**
+   * Load template with caching
+   * @param {string} templatePath - Path to template
+   * @returns {Promise<string|null>} Template content or null
+   */
+  async _loadTemplate(templatePath) {
+    // Check cache first
+    if (this._templateCache.has(templatePath)) {
+      return this._templateCache.get(templatePath);
+    }
+    
+    try {
+      const response = await fetch(templatePath);
+      if (response.ok) {
+        const content = await response.text();
+        // Cache the template
+        this._templateCache.set(templatePath, content);
+        return content;
+      }
+    } catch (error) {
+      console.error('[PopupManager] Failed to load template:', templatePath, error);
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Register a content injector
+   * @param {string} domain - Entity domain
+   * @param {Object} injector - Content injector object
+   */
+  registerContentInjector(domain, injector) {
+    this._contentInjectors.set(domain, injector);
+  }
+  
+  /**
+   * Emit lifecycle event
+   * @param {string} eventName - Event name
+   * @param {Object} detail - Event detail
+   */
+  _emitLifecycleEvent(eventName, detail) {
+    const event = new CustomEvent(eventName, {
+      detail,
+      bubbles: true,
+      composed: true
+    });
+    this._shadowRoot.dispatchEvent(event);
+  }
+  
+  /**
+   * Show entity detail popup
+   * @param {string} entityId - Entity ID to show details for
+   */
+  showEntityDetailPopup(entityId) {
+    // Close any existing popup
+    this.closePopup();
+    
+    // Create a temporary hash for entity detail popup
+    window.location.hash = `#entity-details-${entityId}`;
   }
 }
