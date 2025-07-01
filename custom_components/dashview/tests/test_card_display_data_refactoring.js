@@ -104,6 +104,14 @@ class CardDisplayDataRefactoringTests {
           state: 'locked',
           attributes: { friendly_name: 'Front Door' }
         },
+        'lock.door_unlocked': {
+          state: 'unlocked',
+          attributes: { friendly_name: 'Back Door' }
+        },
+        'lock.door_open': {
+          state: 'open',
+          attributes: { friendly_name: 'Side Door' }
+        },
         'sensor.unavailable': {
           state: 'unavailable',
           attributes: { friendly_name: 'Unavailable Sensor' }
@@ -286,16 +294,31 @@ class CardDisplayDataRefactoringTests {
 
     floorManager._getDefaultDisplayData = function(entityState, type) {
       let label = entityState?.state || 'N/A';
+      let cardClass = '';
       
-      if (entityState?.state === 'on' || entityState?.state === 'off') {
-        label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
+      // German translations for common states
+      if (entityState?.state === 'on') {
+        label = 'An';
+        cardClass = 'is-on';
+      } else if (entityState?.state === 'off') {
+        label = 'Aus';
+      } else if (entityState?.state === 'unlocked') {
+        label = 'Zu';
+        cardClass = 'is-on';
+      } else if (entityState?.state === 'locked') {
+        label = 'Verriegelt';
+      } else if (entityState?.state === 'open') {
+        label = 'Offen';
+        cardClass = 'is-on';
+      } else if (entityState?.state === 'closed') {
+        label = 'Geschlossen';
       }
       
       return {
         name: entityState?.attributes.friendly_name || type,
         label,
         icon: 'mdi:help-circle',
-        cardClass: ''
+        cardClass
       };
     };
 
@@ -564,6 +587,52 @@ class CardDisplayDataRefactoringTests {
     }
   }
 
+  // Test door unlocked state
+  async testDoorUnlockedDisplayData() {
+    const testName = 'Door Unlocked Display Data';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const floorManager = this.createMockFloorManager();
+      const result = floorManager._getCardDisplayData('lock.door_unlocked', 'door');
+      
+      const expected = {
+        name: 'Back Door',
+        label: 'Zu',
+        icon: 'mdi:door-closed',
+        cardClass: 'door-unlocked'
+      };
+
+      this.assertObjectEqual(result, expected, 'Unlocked door should show "Zu" label and door-closed icon');
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
+  // Test door open state
+  async testDoorOpenDisplayData() {
+    const testName = 'Door Open Display Data';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const floorManager = this.createMockFloorManager();
+      const result = floorManager._getCardDisplayData('lock.door_open', 'door');
+      
+      const expected = {
+        name: 'Side Door',
+        label: 'Offen',
+        icon: 'mdi:door-open',
+        cardClass: 'door-open'
+      };
+
+      this.assertObjectEqual(result, expected, 'Open door should show "Offen" label and door-open icon');
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
   // Test unavailable entity handling
   async testUnavailableEntityHandling() {
     const testName = 'Unavailable Entity Handling';
@@ -623,6 +692,8 @@ class CardDisplayDataRefactoringTests {
     await this.testMotionSensorDisplayData();
     await this.testMediaPlayerDisplayData();
     await this.testDoorDisplayData();
+    await this.testDoorUnlockedDisplayData();
+    await this.testDoorOpenDisplayData();
     await this.testUnavailableEntityHandling();
     await this.testDispatcherFunctionality();
 

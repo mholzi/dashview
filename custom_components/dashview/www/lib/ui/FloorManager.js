@@ -684,8 +684,8 @@ export class FloorManager {
       label = 'Offen';
       cardClass = 'door-open';
     } else if (doorState === 'unlocked') {
-      icon = 'mdi:door-closed-lock';
-      label = 'Abgeschlossen';
+      icon = 'mdi:door-closed';
+      label = 'Zu';
       cardClass = 'door-unlocked';
     } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
       icon = 'mdi:door-closed-lock';
@@ -752,7 +752,7 @@ export class FloorManager {
     } else if (entityState?.state === 'locked') {
       label = 'Verriegelt';
     } else if (entityState?.state === 'unlocked') {
-      label = 'Entriegelt';
+      label = 'Zu';
       cardClass = 'is-on';
     } else if (entityState?.state === 'open') {
       label = 'Offen';
