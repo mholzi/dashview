@@ -794,6 +794,170 @@ body.popup-open, :host(.popup-open) {
 }
 
 
+/* --- Forecast Graph Styles --- */
+.forecast-graph-container {
+    background-color: var(--card-background-color);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.forecast-graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.forecast-graph-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-text-color);
+}
+
+.forecast-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.forecast-view-toggle {
+    display: flex;
+    background-color: var(--gray100);
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.forecast-toggle-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.forecast-toggle-btn.active {
+    background-color: var(--primary-text-color);
+    color: var(--gray000);
+}
+
+.forecast-toggle-btn:hover:not(.active) {
+    background-color: var(--gray200);
+}
+
+.forecast-parameter-toggle {
+    display: flex;
+    gap: 4px;
+}
+
+.parameter-btn {
+    background: none;
+    border: 2px solid var(--gray200);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.parameter-btn.active {
+    border-color: var(--primary-text-color);
+    color: var(--primary-text-color);
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.parameter-btn:hover:not(.active) {
+    border-color: var(--gray400);
+}
+
+.forecast-graph-content {
+    position: relative;
+    height: 200px;
+    margin-top: 16px;
+}
+
+#forecast-chart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.forecast-loading,
+.forecast-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--secondary-text-color);
+}
+
+.forecast-loading i,
+.forecast-error i {
+    font-size: 32px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.forecast-loading p,
+.forecast-error p {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+}
+
+.forecast-retry-btn {
+    background-color: var(--primary-text-color);
+    color: var(--gray000);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.forecast-retry-btn:hover {
+    opacity: 0.8;
+}
+
+/* Dark mode adjustments for forecast graphs */
+@media (prefers-color-scheme: dark) {
+    .parameter-btn.active {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Mobile responsiveness for forecast graphs */
+@media (max-width: 480px) {
+    .forecast-graph-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .forecast-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .forecast-view-toggle {
+        flex: 1;
+        max-width: 160px;
+    }
+    
+    .forecast-toggle-btn {
+        flex: 1;
+        text-align: center;
+    }
+}
+
 /* --- Pollen Card --- */
 .pollen-card {
     margin: 12px 0;
