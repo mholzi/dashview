@@ -303,7 +303,7 @@ body.popup-open, :host(.popup-open) {
     cursor: pointer;
     height: 60px;
     width: 60px;
-    font-size: 25px !important;
+    font-size: 20px !important;
 }
 .nav-button.active {
     color: var(--blue-dark);
@@ -524,7 +524,7 @@ body.popup-open, :host(.popup-open) {
 
 /* --- Weather Components --- */
 .weather-forecast-card {
-    background-color: var(--card-background-color);
+    background-color: var(--gray100);
     border-radius: 20px;
     padding: 20px;
     margin-bottom: 20px;
@@ -2656,7 +2656,7 @@ body.popup-open, :host(.popup-open) {
 }
 
 .sensor-big-card[data-type="light"].is-on {
-    background: var(--active-big);
+    background: var(--active-light);
 }
 
 .sensor-big-card[data-type="media_player"].is-on {
@@ -2958,8 +2958,10 @@ body.popup-open, :host(.popup-open) {
 .other-entities-grid .sensor-big-card {
     background-color: var(--gray000);
     border-radius: 8px;
-    padding: 8px;
+    padding: 10px;
     transition: background-color 0.2s ease;
+    transform: scale(1.3);
+    margin: 8px;
 }
 
 .other-entities-grid .sensor-big-card:hover {
@@ -4975,6 +4977,8 @@ body.popup-open, :host(.popup-open) {
     padding: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
+    margin-right: 10px;
+    justify-self: end;
 }
 
 .person-button:hover {
@@ -5116,7 +5120,7 @@ body.popup-open, :host(.popup-open) {
 }
 
 .person-avatar-icon {
-    font-size: 24px;
+    font-size: 31px;
     color: var(--accent-color);
 }
 
