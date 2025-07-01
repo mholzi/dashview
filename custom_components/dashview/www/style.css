@@ -2615,17 +2615,7 @@ body.popup-open, :host(.popup-open) {
     opacity: 0.7;
 }
 
-.sensor-big-label-wrapper {
-    grid-area: label;
-    justify-self: start;
-    align-self: end;
-    font-size: 1.5em;
-    font-weight: 300;
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    margin-bottom: 20px;
-}
+
 .sensor-big-card.is-on {
     color: var(--gray000);
 }
@@ -2657,6 +2647,10 @@ body.popup-open, :host(.popup-open) {
     font-weight: 300;
     color: var(--gray800);
     padding: 0 0 14px 14px;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-bottom: 20px;
 }
 /* --- Consolidated Light Card Styles --- */
 .lights-card {
