@@ -12,6 +12,11 @@ dist/
 build/
 *.egg-info/
 
+# Node.js dependencies
+node_modules/
+package-lock.json
+package.json
+
 # IDE files
 .vscode/
 .idea/
