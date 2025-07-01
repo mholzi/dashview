@@ -37,3 +37,6 @@ Thumbs.db
 
 # VS Code settings
 .vscode/
+
+# Temporary person management files
+.person-management-files/

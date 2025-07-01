@@ -21,8 +21,8 @@
                 <i class="mdi mdi-clock-outline"></i>
                 <span class="person-last-seen">{{last_seen_display}}</span>
             </div>
-            <div class="person-activity-item" style="{{battery_visibility}}">
-                <i class="mdi mdi-battery" style="color: {{battery_color}}"></i>
+            <div class="person-activity-item person-battery-item {{battery_class}}">
+                <i class="mdi mdi-battery person-battery-icon" data-battery-level="{{battery_level}}"></i>
                 <span class="person-battery">{{battery_level}}%</span>
             </div>
         </div>
@@ -38,7 +38,7 @@
         </div>
     </div>
     
-    <div class="person-card-footer" style="{{activity_visibility}}">
+    <div class="person-card-footer {{activity_class}}">
         <div class="person-current-activity">
             <i class="mdi mdi-calendar-clock"></i>
             <span class="person-activity-text">{{current_activity}}</span>

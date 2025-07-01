@@ -5079,6 +5079,36 @@ body.popup-open, :host(.popup-open) {
     margin-top: 8px;
 }
 
+.person-card-footer.hidden {
+    display: none;
+}
+
+/* Person Card Utility Classes */
+.person-battery-item.hidden {
+    display: none !important;
+}
+
+.person-battery-item.visible {
+    display: flex !important;
+}
+
+/* Battery icon color classes */
+.person-battery-icon.battery-high {
+    color: #4CAF50 !important;
+}
+
+.person-battery-icon.battery-medium {
+    color: #FF9800 !important;
+}
+
+.person-battery-icon.battery-low {
+    color: #F44336 !important;
+}
+
+.person-battery-icon.battery-unknown {
+    color: #666 !important;
+}
+
 .person-current-activity {
     display: flex;
     align-items: center;
