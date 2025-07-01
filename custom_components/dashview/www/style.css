@@ -4205,3 +4205,234 @@ body.popup-open, :host(.popup-open) {
         font-size: 13px;
     }
 }
+
+/* Person Management Styles */
+.person-configs-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.person-config-card {
+    background: var(--card-bg);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.person-config-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.person-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--button-bg);
+    border-bottom: 1px solid var(--separator-color);
+}
+
+.person-config-header h6 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.person-config-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.person-config-content {
+    padding: 20px;
+    transition: opacity 0.2s ease;
+}
+
+.person-config-content.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.config-group {
+    margin-bottom: 20px;
+}
+
+.config-group:last-child {
+    margin-bottom: 0;
+}
+
+.config-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.multi-select-container {
+    position: relative;
+}
+
+.multi-select-dropdown {
+    width: 100%;
+    min-height: 80px;
+    max-height: 120px;
+    border: 1px solid var(--separator-color);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    padding: 8px;
+    font-size: 0.9rem;
+    resize: vertical;
+    overflow-y: auto;
+}
+
+.multi-select-dropdown:focus {
+    outline: 2px solid var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.multi-select-dropdown option {
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.multi-select-dropdown option:checked {
+    background: var(--accent-color);
+    color: white;
+}
+
+.custom-modes-container {
+    margin-bottom: 15px;
+}
+
+.custom-mode-item {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    background: var(--button-bg);
+    border: 1px solid var(--separator-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.custom-mode-item:last-child {
+    margin-bottom: 0;
+}
+
+.custom-mode-item .form-input {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.custom-mode-item .mode-name {
+    font-weight: 500;
+}
+
+.custom-mode-item .mode-icon {
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+.custom-mode-item .mode-service {
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+.add-mode-button {
+    width: 100%;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--text-color);
+    border: 1px dashed var(--separator-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-mode-button:hover {
+    background: var(--button-hover-bg);
+    border-color: var(--accent-color);
+}
+
+.remove-mode {
+    background: var(--error-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    transition: all 0.2s ease;
+}
+
+.remove-mode:hover {
+    background: var(--error-hover-color, #c53030);
+    transform: scale(1.05);
+}
+
+.remove-mode i {
+    font-size: 14px;
+}
+
+/* Responsive Person Management */
+@media (max-width: 768px) {
+    .person-config-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .person-config-controls {
+        justify-content: center;
+    }
+    
+    .custom-mode-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .custom-mode-item .form-input {
+        width: 100%;
+    }
+    
+    .remove-mode {
+        justify-self: end;
+        grid-row: 1;
+        grid-column: 1;
+        margin-left: auto;
+    }
+    
+    .multi-select-dropdown {
+        min-height: 100px;
+        max-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .person-configs-container {
+        gap: 12px;
+    }
+    
+    .person-config-content {
+        padding: 15px;
+    }
+    
+    .config-group {
+        margin-bottom: 15px;
+    }
+}

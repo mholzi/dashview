@@ -212,6 +212,45 @@ class DashViewConfigView(HomeAssistantView):
             house_config = self._entry.options.get('house_config', {})
             linked_calendars = house_config.get('linked_calendars', [])
             return web.json_response({'linked_calendars': linked_calendars})
+        elif config_type == 'available_persons':
+            all_persons = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.attributes.get("friendly_name", entity.entity_id),
+                }
+                for entity in self._hass.states.async_all()
+                if entity.entity_id.startswith("person.")
+            ]
+            all_persons.sort(key=lambda x: x["friendly_name"])
+            return web.json_response(all_persons)
+        elif config_type == 'available_device_trackers':
+            all_device_trackers = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.attributes.get("friendly_name", entity.entity_id),
+                }
+                for entity in self._hass.states.async_all()
+                if entity.entity_id.startswith("device_tracker.")
+            ]
+            all_device_trackers.sort(key=lambda x: x["friendly_name"])
+            return web.json_response(all_device_trackers)
+        elif config_type == 'available_sensors':
+            all_sensors = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.attributes.get("friendly_name", entity.entity_id),
+                    "device_class": entity.attributes.get("device_class"),
+                    "unit_of_measurement": entity.attributes.get("unit_of_measurement"),
+                }
+                for entity in self._hass.states.async_all()
+                if entity.entity_id.startswith("sensor.")
+            ]
+            all_sensors.sort(key=lambda x: x["friendly_name"])
+            return web.json_response(all_sensors)
+        elif config_type == 'person_config':
+            house_config = self._entry.options.get('house_config', {})
+            person_config = house_config.get('persons', {})
+            return web.json_response({'persons': person_config})
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -350,6 +389,8 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["scenes"] = config_payload
             elif config_type == "calendar":
                 current_options.setdefault("house_config", {})["linked_calendars"] = config_payload
+            elif config_type == "persons":
+                current_options.setdefault("house_config", {})["persons"] = config_payload
             else:
                 return web.json_response({"error": f"Invalid config type: {config_type}"}, status=400)
 

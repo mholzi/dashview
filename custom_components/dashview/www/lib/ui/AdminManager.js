@@ -41,6 +41,7 @@ export class AdminManager {
       'room-maintenance-tab': () => this.loadRoomMaintenance(),
       'weather-tab': () => this.loadWeatherEntityConfiguration(),
       'calendar-management-tab': () => this.loadCalendarManagement(),
+      'person-management-tab': () => this.loadPersonManagement(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
       'scenes-tab': () => this.loadScenes(),
       'media-presets-tab': () => this.loadMediaPlayerPresets(),
@@ -79,6 +80,9 @@ export class AdminManager {
             '#reload-weather-config': () => this.loadWeatherEntityConfiguration(),
             '#save-calendars': () => this.saveCalendarManagement(),
             '#reload-calendars': () => this.loadCalendarManagement(),
+            '#save-persons': () => this.savePersonManagement(),
+            '#reload-persons': () => this.loadPersonManagement(),
+            '#add-person': () => this.addPersonConfiguration(),
             '#save-motion-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.MOTION, 'motion-setup-status', 'motion-sensors-by-room'),
             '#reload-motion-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.MOTION}, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
             '#save-cover-config': () => this.saveGenericSensorConfig('cover', 'cover-setup-status', 'covers-by-room', true),
@@ -1719,6 +1723,306 @@ async saveMediaPlayerPresets() {
     } catch (error) {
       console.error('[DashView] Error saving calendar configuration:', error);
       this._setStatusMessage(statusElement, 'Error saving calendar configuration', 'error');
+    }
+  }
+
+  async loadPersonManagement() {
+    const statusElement = this._shadowRoot.getElementById('person-status');
+    this._setStatusMessage(statusElement, 'Loading person configuration...', 'processing');
+    
+    try {
+      // Fetch available persons
+      const personsResponse = await fetch('/api/dashview/config?type=available_persons');
+      const availablePersons = await personsResponse.json();
+      
+      // Fetch available device trackers
+      const trackersResponse = await fetch('/api/dashview/config?type=available_device_trackers');
+      const availableTrackers = await trackersResponse.json();
+      
+      // Fetch available sensors
+      const sensorsResponse = await fetch('/api/dashview/config?type=available_sensors');
+      const availableSensors = await sensorsResponse.json();
+      
+      // Fetch available calendars
+      const calendarsResponse = await fetch('/api/dashview/config?type=available_calendars');
+      const availableCalendars = await calendarsResponse.json();
+      
+      // Fetch current person configuration
+      const configResponse = await fetch('/api/dashview/config?type=person_config');
+      const personConfig = await configResponse.json();
+      const persons = personConfig.persons || {};
+      
+      // Store for local use
+      this._availablePersons = availablePersons;
+      this._availableTrackers = availableTrackers;
+      this._availableSensors = availableSensors;
+      this._availableCalendars = availableCalendars;
+      
+      // Update admin local state
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = {};
+      }
+      this._adminLocalState.houseConfig.persons = persons;
+      
+      // Populate person selector
+      const personSelector = this._shadowRoot.getElementById('person-selector');
+      personSelector.innerHTML = '<option value="">Select a person...</option>';
+      
+      availablePersons.forEach(person => {
+        if (!persons[person.entity_id]) {
+          const option = document.createElement('option');
+          option.value = person.entity_id;
+          option.textContent = person.friendly_name;
+          personSelector.appendChild(option);
+        }
+      });
+      
+      // Render existing person configurations
+      this._renderPersonConfigurations();
+      
+      this._setStatusMessage(statusElement, 'Person configuration loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading person configuration:', error);
+      this._setStatusMessage(statusElement, 'Error loading person configuration', 'error');
+    }
+  }
+  
+  addPersonConfiguration() {
+    const personSelector = this._shadowRoot.getElementById('person-selector');
+    const selectedPersonId = personSelector.value;
+    
+    if (!selectedPersonId) return;
+    
+    const selectedPerson = this._availablePersons.find(p => p.entity_id === selectedPersonId);
+    if (!selectedPerson) return;
+    
+    // Add to local state
+    if (!this._adminLocalState.houseConfig.persons) {
+      this._adminLocalState.houseConfig.persons = {};
+    }
+    
+    this._adminLocalState.houseConfig.persons[selectedPersonId] = {
+      enabled: true,
+      friendly_name: selectedPerson.friendly_name,
+      device_trackers: [],
+      sensors: [],
+      calendars: [],
+      custom_modes: []
+    };
+    
+    // Remove from selector
+    personSelector.querySelector(`option[value="${selectedPersonId}"]`).remove();
+    personSelector.value = '';
+    
+    // Re-render configurations
+    this._renderPersonConfigurations();
+  }
+  
+  _renderPersonConfigurations() {
+    const container = this._shadowRoot.getElementById('person-configurations');
+    const persons = this._adminLocalState.houseConfig.persons || {};
+    
+    container.innerHTML = '';
+    
+    Object.entries(persons).forEach(([personId, personConfig]) => {
+      const personDiv = document.createElement('div');
+      personDiv.className = 'person-config-card';
+      personDiv.innerHTML = `
+        <div class="person-config-header">
+          <h6>${personConfig.friendly_name} (${personId})</h6>
+          <div class="person-config-controls">
+            <label class="toggle-container">
+              <input type="checkbox" class="person-enabled-toggle" data-person-id="${personId}" ${personConfig.enabled ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Enabled</span>
+            </label>
+            <button class="delete-button" data-person-id="${personId}">
+              <i class="mdi mdi-delete"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="person-config-content ${!personConfig.enabled ? 'disabled' : ''}">
+          <div class="config-group">
+            <label>Device Trackers:</label>
+            <div class="multi-select-container">
+              <select multiple class="multi-select-dropdown" data-person-id="${personId}" data-config-type="device_trackers">
+                ${this._availableTrackers.map(tracker => `
+                  <option value="${tracker.entity_id}" ${personConfig.device_trackers.includes(tracker.entity_id) ? 'selected' : ''}>
+                    ${tracker.friendly_name}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+          
+          <div class="config-group">
+            <label>Sensors:</label>
+            <div class="multi-select-container">
+              <select multiple class="multi-select-dropdown" data-person-id="${personId}" data-config-type="sensors" size="4">
+                ${this._availableSensors.map(sensor => `
+                  <option value="${sensor.entity_id}" ${personConfig.sensors.includes(sensor.entity_id) ? 'selected' : ''}>
+                    ${sensor.friendly_name} ${sensor.unit_of_measurement ? `(${sensor.unit_of_measurement})` : ''}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+          
+          <div class="config-group">
+            <label>Calendars:</label>
+            <div class="multi-select-container">
+              <select multiple class="multi-select-dropdown" data-person-id="${personId}" data-config-type="calendars">
+                ${this._availableCalendars.map(calendar => `
+                  <option value="${calendar.entity_id}" ${personConfig.calendars.includes(calendar.entity_id) ? 'selected' : ''}>
+                    ${calendar.friendly_name}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+          
+          <div class="config-group">
+            <label>Custom Modes:</label>
+            <div class="custom-modes-container" data-person-id="${personId}">
+              ${this._renderCustomModes(personConfig.custom_modes, personId)}
+            </div>
+            <button class="action-button add-mode-button" data-person-id="${personId}">Add Mode</button>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(personDiv);
+    });
+    
+    // Add event listeners
+    this._addPersonConfigEventListeners();
+  }
+  
+  _renderCustomModes(customModes, personId) {
+    return customModes.map((mode, index) => `
+      <div class="custom-mode-item" data-mode-index="${index}">
+        <input type="text" class="form-input mode-name" placeholder="Mode Name" value="${mode.name || ''}" data-field="name">
+        <input type="text" class="form-input mode-icon" placeholder="mdi:icon" value="${mode.icon || ''}" data-field="icon">
+        <input type="text" class="form-input mode-service" placeholder="service.call" value="${mode.service || ''}" data-field="service">
+        <button class="delete-button remove-mode" data-mode-index="${index}">
+          <i class="mdi mdi-delete"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+  
+  _addPersonConfigEventListeners() {
+    // Enable/disable toggles
+    this._shadowRoot.querySelectorAll('.person-enabled-toggle').forEach(toggle => {
+      toggle.addEventListener('change', (e) => {
+        const personId = e.target.dataset.personId;
+        const enabled = e.target.checked;
+        this._adminLocalState.houseConfig.persons[personId].enabled = enabled;
+        
+        const content = e.target.closest('.person-config-card').querySelector('.person-config-content');
+        if (enabled) {
+          content.classList.remove('disabled');
+        } else {
+          content.classList.add('disabled');
+        }
+      });
+    });
+    
+    // Delete person buttons
+    this._shadowRoot.querySelectorAll('.delete-button[data-person-id]').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const personId = e.target.closest('[data-person-id]').dataset.personId;
+        delete this._adminLocalState.houseConfig.persons[personId];
+        
+        // Add back to selector
+        const personSelector = this._shadowRoot.getElementById('person-selector');
+        const person = this._availablePersons.find(p => p.entity_id === personId);
+        if (person) {
+          const option = document.createElement('option');
+          option.value = person.entity_id;
+          option.textContent = person.friendly_name;
+          personSelector.appendChild(option);
+        }
+        
+        this._renderPersonConfigurations();
+      });
+    });
+    
+    // Multi-select changes
+    this._shadowRoot.querySelectorAll('.multi-select-dropdown').forEach(select => {
+      select.addEventListener('change', (e) => {
+        const personId = e.target.dataset.personId;
+        const configType = e.target.dataset.configType;
+        const selectedValues = Array.from(e.target.selectedOptions).map(option => option.value);
+        
+        this._adminLocalState.houseConfig.persons[personId][configType] = selectedValues;
+      });
+    });
+    
+    // Add mode buttons
+    this._shadowRoot.querySelectorAll('.add-mode-button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const personId = e.target.dataset.personId;
+        if (!this._adminLocalState.houseConfig.persons[personId].custom_modes) {
+          this._adminLocalState.houseConfig.persons[personId].custom_modes = [];
+        }
+        this._adminLocalState.houseConfig.persons[personId].custom_modes.push({
+          name: '',
+          icon: '',
+          service: ''
+        });
+        this._renderPersonConfigurations();
+      });
+    });
+    
+    // Custom mode input changes
+    this._shadowRoot.querySelectorAll('.custom-mode-item input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const modeItem = e.target.closest('.custom-mode-item');
+        const modeIndex = parseInt(modeItem.dataset.modeIndex);
+        const field = e.target.dataset.field;
+        const personId = e.target.closest('[data-person-id]').dataset.personId;
+        
+        this._adminLocalState.houseConfig.persons[personId].custom_modes[modeIndex][field] = e.target.value;
+      });
+    });
+    
+    // Remove mode buttons
+    this._shadowRoot.querySelectorAll('.remove-mode').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const modeIndex = parseInt(e.target.dataset.modeIndex);
+        const personId = e.target.closest('[data-person-id]').dataset.personId;
+        
+        this._adminLocalState.houseConfig.persons[personId].custom_modes.splice(modeIndex, 1);
+        this._renderPersonConfigurations();
+      });
+    });
+  }
+  
+  async savePersonManagement() {
+    const statusElement = this._shadowRoot.getElementById('person-status');
+    this._setStatusMessage(statusElement, 'Saving person configuration...', 'processing');
+    
+    try {
+      const personConfig = this._adminLocalState.houseConfig.persons || {};
+      
+      // Save to backend
+      const response = await this._saveConfigViaAPI('persons', personConfig);
+      
+      if (response && response.status === 'success') {
+        this._setStatusMessage(statusElement, 'Person configuration saved successfully', 'success');
+        
+        // Update the panel's house config
+        if (this._panel._houseConfig) {
+          this._panel._houseConfig.persons = personConfig;
+        }
+      } else {
+        throw new Error('Failed to save person configuration');
+      }
+    } catch (error) {
+      console.error('[DashView] Error saving person configuration:', error);
+      this._setStatusMessage(statusElement, 'Error saving person configuration', 'error');
     }
   }
 

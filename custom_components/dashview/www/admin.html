@@ -4,6 +4,7 @@
     <div class="tab-buttons">
         <button class="tab-button active" data-target="weather-tab">Weather</button>
         <button class="tab-button" data-target="calendar-management-tab">Calendar</button>
+        <button class="tab-button" data-target="person-management-tab">Person Management</button>
         <button class="tab-button" data-target="house-setup-tab">House Setup</button>
         <button class="tab-button" data-target="sensor-management-tab">Sensor Management</button>
         <button class="tab-button" data-target="device-management-tab">Device Management</button>
@@ -107,6 +108,36 @@
             <div class="form-row" style="margin-top: 20px;">
                 <button id="save-calendars" class="save-button">Save Calendar Selection</button>
                 <button id="reload-calendars" class="action-button">Reload</button>
+            </div>
+        </div>
+    </div>
+    <div id="person-management-tab" class="tab-content">
+        <h4>Person Management</h4>
+        <p>Configure person entities and their associated data sources. Link device trackers, sensors, calendars, and custom modes for each family member.</p>
+        <div id="person-status" class="status-display">
+            <span class="status-icon mdi"></span>
+            <span class="status-text">Ready</span>
+        </div>
+        
+        <div class="config-section">
+            <h5>Person Configuration</h5>
+            <p>Select and configure person entities for the dashboard:</p>
+            
+            <div class="form-row">
+                <label for="person-selector">Add Person:</label>
+                <select id="person-selector" class="dropdown-selector">
+                    <option value="">Select a person...</option>
+                </select>
+                <button id="add-person" class="action-button">Add Person</button>
+            </div>
+            
+            <div id="person-configurations" class="person-configs-container">
+                <!-- Person configurations will be dynamically inserted here -->
+            </div>
+            
+            <div class="form-row" style="margin-top: 20px;">
+                <button id="save-persons" class="save-button">Save Person Configuration</button>
+                <button id="reload-persons" class="action-button">Reload</button>
             </div>
         </div>
     </div>
