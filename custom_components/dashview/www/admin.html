@@ -2,7 +2,8 @@
 
 <div class="tabs-container" style="margin-top: 20px;">
     <div class="tab-buttons">
-        <button class="tab-button active" data-target="weather-tab">Weather</button>
+        <button class="tab-button active" data-target="room-management-tab">Room Management</button>
+        <button class="tab-button" data-target="weather-tab">Weather</button>
         <button class="tab-button" data-target="calendar-management-tab">Calendar</button>
         <button class="tab-button" data-target="person-management-tab">Person Management</button>
         <button class="tab-button" data-target="sensor-management-tab">Sensor Management</button>
@@ -79,7 +80,71 @@
             <button id="save-scenes" class="save-button" style="margin-top: 20px;">Save All Scenes</button>
         </div>
     </div>
-    <div id="weather-tab" class="tab-content active">
+    <div id="room-management-tab" class="tab-content active">
+        <h4>Room-Based Entity Management</h4>
+        <p>Configure all entities room by room. This new interface provides a streamlined way to set up complete rooms with entity discovery guidance and bulk operations.</p>
+        
+        <!-- Room Overview Section -->
+        <div class="config-section">
+            <h5>Room Configuration Overview</h5>
+            <p>Quick overview of all rooms and their configuration completeness. Click on any room to configure it.</p>
+            
+            <div id="room-overview-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Loading...</span>
+            </div>
+            
+            <div id="room-overview-grid" class="room-overview-grid">
+                <!-- Room overview cards will be dynamically generated here -->
+            </div>
+            
+            <div class="form-row" style="margin-top: 20px;">
+                <button id="refresh-room-overview" class="action-button">Refresh Overview</button>
+                <button id="bulk-room-setup" class="save-button">Quick Setup All Rooms</button>
+            </div>
+        </div>
+        
+        <!-- Room Detail Configuration Section -->
+        <div class="config-section">
+            <h5>Room Detail Configuration</h5>
+            <p>Configure a specific room with all its entities, discovery status, and bulk operations.</p>
+            
+            <div class="form-row">
+                <select id="room-selector" class="dropdown-selector">
+                    <option value="">Select a room to configure...</option>
+                </select>
+                <button id="load-room-config" class="action-button">Load Room</button>
+            </div>
+            
+            <div id="room-detail-container" class="room-detail-container" style="display: none;">
+                <!-- Room detail configuration will be dynamically loaded here -->
+            </div>
+        </div>
+        
+        <!-- Entity Discovery Assistant Section -->
+        <div class="config-section">
+            <h5>Entity Discovery Assistant</h5>
+            <p>Scan for unlabeled entities and get suggestions for DashView integration. This helps identify entities that could be used in DashView but are missing required labels.</p>
+            
+            <div id="discovery-assistant-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
+            
+            <div class="form-row">
+                <select id="discovery-room-selector" class="dropdown-selector">
+                    <option value="">Select room for discovery...</option>
+                </select>
+                <button id="scan-room-entities" class="action-button">Scan Room</button>
+                <button id="scan-all-rooms" class="save-button">Scan All Rooms</button>
+            </div>
+            
+            <div id="discovery-results" class="discovery-results">
+                <!-- Discovery results will be shown here -->
+            </div>
+        </div>
+    </div>
+    <div id="weather-tab" class="tab-content">
         <h4>Weather Entity</h4>
         <p>Select the primary weather entity that provides current conditions and forecasts for your dashboard. This entity will be used in weather cards and for weather-based automations throughout DashView.</p>
         <div id="weather-status" class="status-display">
