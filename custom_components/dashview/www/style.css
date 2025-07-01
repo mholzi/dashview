@@ -2943,6 +2943,136 @@ body.popup-open, :host(.popup-open) {
     color: var(--secondary-text-color);
 }
 
+/* Enhanced Entity Type-Specific Styling */
+
+/* Climate entities */
+.sensor-small-card.climate-entity,
+.sensor-big-card.climate-entity {
+    border-left: 3px solid var(--blue);
+}
+
+.sensor-small-card.climate-entity.is-on,
+.sensor-big-card.climate-entity.is-on {
+    background: linear-gradient(145deg, rgba(200,221,250,0.8) 0%, rgba(171,203,248,0.9) 100%);
+}
+
+/* Switch entities */
+.sensor-small-card.switch-entity,
+.sensor-big-card.switch-entity {
+    border-left: 3px solid var(--green);
+}
+
+.sensor-small-card.switch-entity.is-on,
+.sensor-big-card.switch-entity.is-on {
+    background: linear-gradient(145deg, rgba(197,228,172,0.8) 0%, rgba(210,231,214,0.9) 100%);
+}
+
+/* Fan entities */
+.sensor-small-card.fan-entity,
+.sensor-big-card.fan-entity {
+    border-left: 3px solid var(--purple);
+}
+
+.sensor-small-card.fan-entity.is-on,
+.sensor-big-card.fan-entity.is-on {
+    background: linear-gradient(145deg, rgba(227,212,246,0.8) 0%, rgba(213,193,237,0.9) 100%);
+}
+
+/* Alarm entities */
+.sensor-small-card.alarm-entity,
+.sensor-big-card.alarm-entity {
+    border-left: 3px solid var(--red);
+}
+
+.sensor-small-card.alarm-entity.is-on,
+.sensor-big-card.alarm-entity.is-on {
+    background: linear-gradient(145deg, rgba(240,169,148,0.8) 0%, rgba(231,98,95,0.9) 100%);
+}
+
+/* Lock entities */
+.sensor-small-card.lock-entity,
+.sensor-big-card.lock-entity {
+    border-left: 3px solid var(--orange);
+}
+
+.sensor-small-card.lock-entity.is-on,
+.sensor-big-card.lock-entity.is-on {
+    background: linear-gradient(145deg, rgba(255,209,177,0.8) 0%, rgba(255,186,138,0.9) 100%);
+}
+
+/* Binary sensor entities */
+.sensor-small-card.binary-sensor-entity,
+.sensor-big-card.binary-sensor-entity {
+    border-left: 3px solid var(--yellow);
+}
+
+.sensor-small-card.binary-sensor-entity.is-on,
+.sensor-big-card.binary-sensor-entity.is-on {
+    background: linear-gradient(145deg, rgba(250,237,174,0.8) 0%, rgba(251,241,190,0.9) 100%);
+}
+
+/* Vacuum entities */
+.sensor-small-card.vacuum-entity,
+.sensor-big-card.vacuum-entity {
+    border-left: 3px solid var(--purple);
+}
+
+.sensor-small-card.vacuum-entity.is-on,
+.sensor-big-card.vacuum-entity.is-on {
+    background: var(--active-big);
+}
+
+/* Mower entities */
+.sensor-small-card.mower-entity,
+.sensor-big-card.mower-entity {
+    border-left: 3px solid var(--green);
+}
+
+.sensor-small-card.mower-entity.is-on,
+.sensor-big-card.mower-entity.is-on {
+    background: var(--active-big);
+}
+
+/* Person and tracker entities */
+.sensor-small-card.person-entity,
+.sensor-small-card.tracker-entity,
+.sensor-big-card.person-entity,
+.sensor-big-card.tracker-entity {
+    border-left: 3px solid var(--blue-dark);
+}
+
+.sensor-small-card.person-entity.is-on,
+.sensor-small-card.tracker-entity.is-on,
+.sensor-big-card.person-entity.is-on,
+.sensor-big-card.tracker-entity.is-on {
+    background: linear-gradient(145deg, rgba(171,203,248,0.8) 0%, rgba(200,221,250,0.9) 100%);
+}
+
+/* Unknown entities */
+.sensor-small-card.unknown-entity,
+.sensor-big-card.unknown-entity {
+    border-left: 3px solid var(--gray400);
+    opacity: 0.9;
+}
+
+.sensor-small-card.unknown-entity.is-on,
+.sensor-big-card.unknown-entity.is-on {
+    background: linear-gradient(145deg, rgba(144,145,147,0.3) 0%, rgba(112,113,115,0.4) 100%);
+}
+
+/* Enhanced error and warning states */
+.sensor-small-card.has-warning,
+.sensor-big-card.has-warning {
+    border-left: 3px solid var(--orange);
+    background: linear-gradient(145deg, rgba(255,186,138,0.3) 0%, rgba(255,209,177,0.4) 100%);
+}
+
+.sensor-small-card.has-error,
+.sensor-big-card.has-error {
+    border-left: 3px solid var(--red);
+    background: linear-gradient(145deg, rgba(231,98,95,0.3) 0%, rgba(240,169,148,0.4) 100%);
+}
+
 /* Auto-Scene Management Styles */
 .auto-scenes-container {
     margin: 16px 0;
