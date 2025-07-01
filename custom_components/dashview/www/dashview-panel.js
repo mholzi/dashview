@@ -464,7 +464,40 @@ class DashviewPanel extends HTMLElement {
           return this._shouldDisplayHeaderEntity(entity, entityConfig.entity_type);
       });
 
-      if (activeEntities.length === 0) {
+      // Add additional icons for covers and room scenes
+      const additionalIcons = [];
+      
+      // Add cover scene icon if global cover scene is enabled and room has covers
+      if (this._autoSceneGenerator && this._autoSceneGenerator.isGlobalCoverSceneEnabled() && 
+          roomConfig.covers && roomConfig.covers.length > 0) {
+          additionalIcons.push(`
+              <div class="header-info-chip" 
+                   data-type="cover-scene"
+                   style="background: var(--gray100);">
+                <div class="chip-icon-container">
+                  <i class="mdi mdi-window-shutter" style="color: var(--gray000);"></i>
+                </div>
+                <div class="chip-name" style="color: var(--gray800);">Rollläden</div>
+              </div>
+          `);
+      }
+      
+      // Add room scenes icon if room has configured scenes
+      const roomScenes = this._sceneManager ? this._sceneManager._getRoomScenes(roomConfig.name, roomConfig) : [];
+      if (roomScenes && roomScenes.length > 0) {
+          additionalIcons.push(`
+              <div class="header-info-chip" 
+                   data-type="room-scenes"
+                   style="background: var(--gray100);">
+                <div class="chip-icon-container">
+                  <i class="mdi mdi-lightbulb-group" style="color: var(--gray000);"></i>
+                </div>
+                <div class="chip-name" style="color: var(--gray800);">Szenen</div>
+              </div>
+          `);
+      }
+
+      if (activeEntities.length === 0 && additionalIcons.length === 0) {
           return '';
       }
 
@@ -488,10 +521,12 @@ class DashviewPanel extends HTMLElement {
           `;
       }).join('');
 
+      const allCards = entityCards + additionalIcons.join('');
+
       return `
         <div class="room-header-entities">
           <div class="header-entities-container">
-            ${entityCards}
+            ${allCards}
           </div>
         </div>
       `;
