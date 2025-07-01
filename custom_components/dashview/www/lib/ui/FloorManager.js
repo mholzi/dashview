@@ -684,8 +684,8 @@ export class FloorManager {
       label = 'Offen';
       cardClass = 'door-open';
     } else if (doorState === 'unlocked') {
-      icon = 'mdi:door-closed-lock';
-      label = 'Abgeschlossen';
+      icon = 'mdi:door-closed';
+      label = 'Zu';
       cardClass = 'door-unlocked';
     } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
       icon = 'mdi:door-closed-lock';
@@ -752,7 +752,7 @@ export class FloorManager {
     } else if (entityState?.state === 'locked') {
       label = 'Verriegelt';
     } else if (entityState?.state === 'unlocked') {
-      label = 'Entriegelt';
+      label = 'Zu';
       cardClass = 'is-on';
     } else if (entityState?.state === 'open') {
       label = 'Offen';
@@ -1324,7 +1324,7 @@ export class FloorManager {
 
   _getMowerDisplayData(entityState) {
     if (!entityState) {
-      return { icon: 'mdi:robot-mower-outline', label: 'Nicht verfügbar', cardClass: 'is-unavailable' };
+      return { name: 'Mower', icon: 'mdi:robot-mower-outline', label: 'Nicht verfügbar', cardClass: 'is-unavailable' };
     }
 
     const state = entityState.state?.toLowerCase();
@@ -1382,46 +1382,47 @@ export class FloorManager {
         };
         errorMessage = errorTranslations[currentError.toLowerCase()] || currentError;
       }
-      return { icon: 'mdi:robot-mower-alert', label: errorMessage, cardClass: 'mower-error' };
+      return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-alert', label: errorMessage, cardClass: 'mower-error' };
     }
 
     // Handle normal states
     switch (state) {
       case 'mowing':
-        return { icon: 'mdi:robot-mower', label: 'Mäht', cardClass: 'is-on' };
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower', label: 'Mäht', cardClass: 'is-on' };
       case 'charging':
-        return { icon: 'mdi:robot-mower-outline', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };
       case 'docked':
       case 'parked':
-        return { icon: 'mdi:robot-mower-outline', label: 'Geparkt', cardClass: '' };
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Geparkt', cardClass: '' };
       case 'going_home':
       case 'returning':
-        return { icon: 'mdi:robot-mower-outline', label: 'Kehrt zurück', cardClass: 'is-on' };
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Kehrt zurück', cardClass: 'is-on' };
       case 'paused':
-        return { icon: 'mdi:robot-mower-outline', label: 'Pausiert', cardClass: 'is-on' };
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Pausiert', cardClass: 'is-on' };
       case 'idle':
-        return { icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
       case 'ok':
         // Use activity if available
         if (activity) {
           switch (activity.toLowerCase()) {
             case 'mowing':
-              return { icon: 'mdi:robot-mower', label: 'Mäht', cardClass: 'is-on' };
+              return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower', label: 'Mäht', cardClass: 'is-on' };
             case 'charging':
-              return { icon: 'mdi:robot-mower-outline', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };
+              return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };
             case 'parked':
-              return { icon: 'mdi:robot-mower-outline', label: 'Geparkt', cardClass: '' };
+              return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Geparkt', cardClass: '' };
             case 'going_home':
-              return { icon: 'mdi:robot-mower-outline', label: 'Kehrt zurück', cardClass: 'is-on' };
+              return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Kehrt zurück', cardClass: 'is-on' };
             case 'none':
-              return { icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
+              return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
           }
         }
-        return { icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
     }
 
     // Fallback
     return { 
+      name: entityState?.attributes.friendly_name || 'Mower',
       icon: 'mdi:robot-mower-outline', 
       label: state ? state.charAt(0).toUpperCase() + state.slice(1) : 'Unbekannt', 
       cardClass: '' 
