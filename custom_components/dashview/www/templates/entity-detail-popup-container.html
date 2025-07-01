@@ -1,26 +1,54 @@
 <!-- entity-detail-popup-container.html -->
-<div class="entity-detail-popup-overlay">
-  <div class="entity-detail-popup-container">
+<div class="entity-detail-popup-overlay" 
+     role="dialog" 
+     aria-modal="true" 
+     aria-labelledby="entity-popup-title"
+     aria-describedby="entity-popup-content">
+  <div class="entity-detail-popup-container" 
+       role="document"
+       tabindex="-1">
     <div class="entity-detail-popup-header">
-      <div class="entity-detail-popup-icon-wrapper">
-        <i class="entity-detail-popup-icon mdi" id="entity-popup-icon"></i>
+      <div class="entity-detail-popup-icon-wrapper" 
+           role="img" 
+           aria-describedby="entity-popup-title">
+        <i class="entity-detail-popup-icon mdi" 
+           id="entity-popup-icon" 
+           aria-hidden="true"></i>
       </div>
       <div class="entity-detail-popup-title-wrapper">
-        <h3 class="entity-detail-popup-title" id="entity-popup-title">Entity Details</h3>
-        <div class="entity-detail-popup-subtitle" id="entity-popup-subtitle"></div>
+        <h2 class="entity-detail-popup-title" 
+            id="entity-popup-title" 
+            role="heading" 
+            aria-level="2">Entity Details</h2>
+        <div class="entity-detail-popup-subtitle" 
+             id="entity-popup-subtitle"
+             aria-label="Entity ID"></div>
       </div>
-      <button class="entity-detail-popup-close" id="entity-popup-close" aria-label="Close popup">
-        <i class="mdi mdi-close"></i>
+      <button class="entity-detail-popup-close" 
+              id="entity-popup-close" 
+              type="button"
+              aria-label="Close entity details popup"
+              title="Close (Escape key)">
+        <i class="mdi mdi-close" aria-hidden="true"></i>
       </button>
     </div>
-    <div class="entity-detail-popup-body" id="entity-popup-content">
+    <div class="entity-detail-popup-body" 
+         id="entity-popup-content"
+         role="main"
+         aria-live="polite"
+         aria-busy="true">
       <!-- Dynamic content will be injected here -->
-      <div class="entity-detail-popup-loading">
-        <i class="mdi mdi-loading mdi-spin"></i>
+      <div class="entity-detail-popup-loading" 
+           role="status" 
+           aria-label="Loading entity details">
+        <i class="mdi mdi-loading mdi-spin" aria-hidden="true"></i>
         <span>Loading entity details...</span>
       </div>
     </div>
-    <div class="entity-detail-popup-footer" id="entity-popup-footer" style="display: none;">
+    <div class="entity-detail-popup-footer" 
+         id="entity-popup-footer" 
+         role="contentinfo"
+         style="display: none;">
       <!-- Optional footer for actions/controls -->
     </div>
   </div>
