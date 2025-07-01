@@ -48,6 +48,7 @@ export class AdminManager {
 
   loadTabContent(targetId) {
     const loadActionMap = {
+      'room-management-tab': () => this.loadRoomManagementTab(),
       'house-setup-tab': () => this.loadHouseSetupTab(),
       'integrations-tab': () => this.loadDwdConfig(),
       'room-maintenance-tab': () => this.loadRoomMaintenance(),
@@ -166,6 +167,11 @@ export class AdminManager {
             '#add-garbage-sensor': () => this.addGarbageSensor(),
             '#save-garbage-sensors': () => this.saveGarbageSensors(),
             '#reload-garbage-sensors': () => this.loadGarbageTab(),
+            '#refresh-room-overview': () => this.refreshRoomOverview(),
+            '#bulk-room-setup': () => this.bulkRoomSetup(),
+            '#load-room-config': () => this.loadRoomConfiguration(),
+            '#scan-room-entities': () => this.scanRoomEntities(),
+            '#scan-all-rooms': () => this.scanAllRooms(),
         };
 
         for (const selector in buttonActions) {
@@ -2559,6 +2565,1014 @@ async saveMediaPlayerPresets() {
         }
       }, 300);
     }, 3000);
+  }
+
+  // =================================================================================
+  // ROOM MANAGEMENT METHODS
+  // =================================================================================
+
+  /**
+   * Load the room management tab with overview and configuration
+   */
+  async loadRoomManagementTab() {
+    console.log('[DashView] Loading Room Management tab');
+    
+    try {
+      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Loading room overview...', 'loading');
+      
+      // Load house configuration
+      await this._loadAdminState();
+      
+      // Populate room selectors
+      this._populateRoomSelectors();
+      
+      // Load room overview
+      await this.refreshRoomOverview();
+      
+      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Ready', 'success');
+    } catch (error) {
+      console.error('[DashView] Room Management loading error:', error);
+      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Failed to load room management', 'error');
+    }
+  }
+
+  /**
+   * Populate room selector dropdowns
+   */
+  _populateRoomSelectors() {
+    const roomSelector = this._shadowRoot.getElementById('room-selector');
+    const discoveryRoomSelector = this._shadowRoot.getElementById('discovery-room-selector');
+    
+    if (!roomSelector || !discoveryRoomSelector) return;
+    
+    // Clear existing options (keep first default option)
+    roomSelector.innerHTML = '<option value="">Select a room to configure...</option>';
+    discoveryRoomSelector.innerHTML = '<option value="">Select room for discovery...</option><option value="all">All Rooms</option>';
+    
+    if (!this._adminLocalState.houseConfig?.rooms) return;
+    
+    // Add room options
+    Object.entries(this._adminLocalState.houseConfig.rooms).forEach(([roomKey, roomData]) => {
+      const roomName = roomData.friendly_name || roomKey;
+      
+      const option1 = document.createElement('option');
+      option1.value = roomKey;
+      option1.textContent = roomName;
+      roomSelector.appendChild(option1);
+      
+      const option2 = document.createElement('option');
+      option2.value = roomKey;
+      option2.textContent = roomName;
+      discoveryRoomSelector.appendChild(option2);
+    });
+  }
+
+  /**
+   * Refresh room overview grid
+   */
+  async refreshRoomOverview() {
+    console.log('[DashView] Refreshing room overview');
+    
+    const overviewGrid = this._shadowRoot.getElementById('room-overview-grid');
+    if (!overviewGrid) return;
+    
+    this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Refreshing overview...', 'loading');
+    
+    try {
+      // Get room configurations and entity counts
+      const roomsData = await this._analyzeAllRooms();
+      
+      // Generate overview cards
+      overviewGrid.innerHTML = roomsData.map(roomData => this._generateRoomOverviewCard(roomData)).join('');
+      
+      // Add click handlers
+      overviewGrid.addEventListener('click', (e) => {
+        const roomCard = e.target.closest('.room-overview-card');
+        if (roomCard) {
+          const roomKey = roomCard.dataset.roomKey;
+          this._shadowRoot.getElementById('room-selector').value = roomKey;
+          this.loadRoomConfiguration();
+        }
+      });
+      
+      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), `${roomsData.length} rooms analyzed`, 'success');
+    } catch (error) {
+      console.error('[DashView] Room overview refresh error:', error);
+      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Failed to refresh overview', 'error');
+    }
+  }
+
+  /**
+   * Analyze all rooms for completeness
+   */
+  async _analyzeAllRooms() {
+    const rooms = this._adminLocalState.houseConfig?.rooms || {};
+    const roomsData = [];
+    
+    for (const [roomKey, roomData] of Object.entries(rooms)) {
+      const analysis = await this._analyzeRoomCompleteness(roomKey, roomData);
+      roomsData.push({
+        key: roomKey,
+        name: roomData.friendly_name || roomKey,
+        data: roomData,
+        analysis
+      });
+    }
+    
+    return roomsData;
+  }
+
+  /**
+   * Analyze room completeness and entity counts
+   */
+  async _analyzeRoomCompleteness(roomKey, roomData) {
+    // Count configured entities
+    const lights = roomData.lights?.length || 0;
+    const covers = roomData.covers?.length || 0;
+    const mediaPlayers = roomData.media_players?.length || 0;
+    const headerEntities = roomData.header_entities?.length || 0;
+    
+    // Analyze potential entities from HA area
+    const potentialEntities = await this._scanRoomForPotentialEntities(roomKey);
+    
+    // Calculate completeness score
+    const totalConfigured = lights + covers + mediaPlayers + headerEntities;
+    const totalPotential = potentialEntities.lights + potentialEntities.covers + 
+                          potentialEntities.mediaPlayers + potentialEntities.sensors;
+    
+    const completeness = totalPotential > 0 ? Math.round((totalConfigured / totalPotential) * 100) : 100;
+    
+    return {
+      lights,
+      covers,
+      mediaPlayers,
+      headerEntities,
+      totalConfigured,
+      potentialEntities,
+      completeness,
+      issues: potentialEntities.issues || []
+    };
+  }
+
+  /**
+   * Generate room overview card HTML
+   */
+  _generateRoomOverviewCard(roomData) {
+    const { key, name, analysis } = roomData;
+    const { completeness, totalConfigured, potentialEntities, issues } = analysis;
+    
+    let statusClass = 'complete';
+    let statusIcon = 'mdi:check-circle';
+    let statusText = 'Complete';
+    
+    if (completeness < 50) {
+      statusClass = 'incomplete';
+      statusIcon = 'mdi:alert-circle';
+      statusText = 'Needs Setup';
+    } else if (completeness < 90) {
+      statusClass = 'partial';
+      statusIcon = 'mdi:progress-check';
+      statusText = 'Partial';
+    }
+    
+    return `
+      <div class="room-overview-card ${statusClass}" data-room-key="${key}">
+        <div class="room-card-header">
+          <i class="mdi ${statusIcon}"></i>
+          <h6>${name}</h6>
+          <span class="completeness-badge">${completeness}%</span>
+        </div>
+        <div class="room-card-content">
+          <div class="entity-summary">
+            <div class="entity-count">
+              <i class="mdi mdi-lightbulb"></i>
+              <span>${analysis.lights}/${potentialEntities.lights} lights</span>
+            </div>
+            <div class="entity-count">
+              <i class="mdi mdi-window-shutter"></i>
+              <span>${analysis.covers}/${potentialEntities.covers} covers</span>
+            </div>
+            <div class="entity-count">
+              <i class="mdi mdi-speaker"></i>
+              <span>${analysis.mediaPlayers}/${potentialEntities.mediaPlayers} media</span>
+            </div>
+            <div class="entity-count">
+              <i class="mdi mdi-motion-sensor"></i>
+              <span>${analysis.headerEntities}/${potentialEntities.sensors} sensors</span>
+            </div>
+          </div>
+          ${issues.length > 0 ? `
+            <div class="room-issues">
+              <i class="mdi mdi-alert"></i>
+              <span>${issues.length} issue${issues.length !== 1 ? 's' : ''}</span>
+            </div>
+          ` : ''}
+        </div>
+        <div class="room-card-footer">
+          <span class="status-text">${statusText}</span>
+          <button class="configure-btn">Configure</button>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Scan room for potential entities that could be configured
+   */
+  async _scanRoomForPotentialEntities(roomKey) {
+    try {
+      // Get entities by room from multiple domains and labels
+      const [lightsData, coversData, mediaPlayersData, motionData, windowData, smokeData] = await Promise.all([
+        fetch(`/api/dashview/config?type=entities_by_room&domain=light`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&domain=cover`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=available_media_players`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=motion`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=fenster`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=rauchmelder`).then(r => r.json())
+      ]);
+      
+      const roomAreaData = lightsData[roomKey] || { entities: [] };
+      const issues = [];
+      
+      // Count potential entities
+      const lights = roomAreaData.entities?.filter(e => e.entity_id.startsWith('light.')).length || 0;
+      const covers = coversData[roomKey]?.entities?.length || 0;
+      
+      // Media players need special handling as they're not grouped by room in the API
+      const mediaPlayers = mediaPlayersData.filter(mp => {
+        // Simple heuristic: check if media player name contains room name
+        const roomName = this._adminLocalState.houseConfig?.rooms?.[roomKey]?.friendly_name || roomKey;
+        return mp.friendly_name.toLowerCase().includes(roomName.toLowerCase());
+      }).length;
+      
+      // Count sensors from different labels
+      const motionSensors = motionData[roomKey]?.entities?.length || 0;
+      const windowSensors = windowData[roomKey]?.entities?.length || 0;
+      const smokeSensors = smokeData[roomKey]?.entities?.length || 0;
+      const sensors = motionSensors + windowSensors + smokeSensors;
+      
+      // Check for missing label issues
+      if (roomAreaData.entities?.length > 0 && sensors === 0) {
+        issues.push('Entities found in HA area but none have DashView labels');
+      }
+      
+      return { lights, covers, mediaPlayers, sensors, issues };
+    } catch (error) {
+      console.error('[DashView] Error scanning room for potential entities:', error);
+      return { lights: 0, covers: 0, mediaPlayers: 0, sensors: 0, issues: ['Failed to scan room'] };
+    }
+  }
+
+  /**
+   * Load detailed configuration for selected room
+   */
+  async loadRoomConfiguration() {
+    const roomSelector = this._shadowRoot.getElementById('room-selector');
+    const roomDetailContainer = this._shadowRoot.getElementById('room-detail-container');
+    
+    if (!roomSelector?.value || !roomDetailContainer) return;
+    
+    const roomKey = roomSelector.value;
+    const roomData = this._adminLocalState.houseConfig?.rooms?.[roomKey];
+    
+    if (!roomData) {
+      roomDetailContainer.style.display = 'none';
+      return;
+    }
+    
+    try {
+      // Show container
+      roomDetailContainer.style.display = 'block';
+      roomDetailContainer.innerHTML = '<div class="loading">Loading room configuration...</div>';
+      
+      // Get comprehensive room data
+      const roomAnalysis = await this._analyzeRoomCompleteness(roomKey, roomData);
+      const roomEntities = await this._getRoomEntitiesByType(roomKey);
+      
+      // Generate room configuration UI
+      roomDetailContainer.innerHTML = this._generateRoomConfigurationUI(roomKey, roomData, roomAnalysis, roomEntities);
+      
+      // Add event listeners for room configuration
+      this._addRoomConfigurationListeners(roomKey);
+      
+    } catch (error) {
+      console.error('[DashView] Error loading room configuration:', error);
+      roomDetailContainer.innerHTML = '<div class="error">Failed to load room configuration</div>';
+    }
+  }
+
+  /**
+   * Get room entities organized by type
+   */
+  async _getRoomEntitiesByType(roomKey) {
+    try {
+      const [lightsData, coversData, mediaPlayersData, motionData, windowData, smokeData, tempData, humidityData] = await Promise.all([
+        fetch(`/api/dashview/config?type=entities_by_room&domain=light`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&domain=cover`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=available_media_players`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=motion`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=fenster`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=rauchmelder`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=temperatur`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=humidity`).then(r => r.json())
+      ]);
+      
+      const roomName = this._adminLocalState.houseConfig?.rooms?.[roomKey]?.friendly_name || roomKey;
+      
+      return {
+        lights: lightsData[roomKey]?.entities || [],
+        covers: coversData[roomKey]?.entities || [],
+        mediaPlayers: mediaPlayersData.filter(mp => 
+          mp.friendly_name.toLowerCase().includes(roomName.toLowerCase())
+        ),
+        motion: motionData[roomKey]?.entities || [],
+        windows: windowData[roomKey]?.entities || [],
+        smoke: smokeData[roomKey]?.entities || [],
+        temperature: tempData[roomKey]?.entities || [],
+        humidity: humidityData[roomKey]?.entities || []
+      };
+    } catch (error) {
+      console.error('[DashView] Error getting room entities by type:', error);
+      return { lights: [], covers: [], mediaPlayers: [], motion: [], windows: [], smoke: [], temperature: [], humidity: [] };
+    }
+  }
+
+  /**
+   * Generate room configuration UI
+   */
+  _generateRoomConfigurationUI(roomKey, roomData, analysis, entities) {
+    const roomName = roomData.friendly_name || roomKey;
+    
+    return `
+      <div class="room-config-header">
+        <h5>Configure Room: ${roomName}</h5>
+        <div class="room-config-stats">
+          <span class="completeness">${analysis.completeness}% Complete</span>
+          <span class="entity-count">${analysis.totalConfigured} entities configured</span>
+        </div>
+      </div>
+      
+      <div class="room-config-content">
+        ${this._generateEntityTypeSection('Lights', 'lights', entities.lights, roomData.lights)}
+        ${this._generateEntityTypeSection('Covers', 'covers', entities.covers, roomData.covers)}
+        ${this._generateEntityTypeSection('Media Players', 'media_players', entities.mediaPlayers, roomData.media_players)}
+        ${this._generateSensorSection(entities, roomData.header_entities)}
+        
+        <div class="room-config-actions">
+          <button id="save-room-config" class="save-button" data-room-key="${roomKey}">Save Room Configuration</button>
+          <button id="bulk-select-room" class="action-button" data-room-key="${roomKey}">Select All Suggested</button>
+          <button id="clear-room-config" class="danger-button" data-room-key="${roomKey}">Clear All</button>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate entity type section for room configuration
+   */
+  _generateEntityTypeSection(title, configKey, availableEntities, configuredEntities = []) {
+    if (availableEntities.length === 0) {
+      return `
+        <div class="entity-type-section">
+          <h6>${title} (0 found)</h6>
+          <p class="no-entities">No ${title.toLowerCase()} found in this room's HA area.</p>
+        </div>
+      `;
+    }
+    
+    return `
+      <div class="entity-type-section">
+        <h6>${title} (${availableEntities.length} found)</h6>
+        <div class="entity-checkboxes">
+          ${availableEntities.map(entity => {
+            const isConfigured = configuredEntities.includes(entity.entity_id);
+            return `
+              <label class="entity-checkbox">
+                <input type="checkbox" 
+                       name="${configKey}" 
+                       value="${entity.entity_id}"
+                       ${isConfigured ? 'checked' : ''}>
+                <span class="entity-name">${entity.name}</span>
+                <span class="entity-id">${entity.entity_id}</span>
+              </label>
+            `;
+          }).join('')}
+        </div>
+        <div class="section-actions">
+          <button class="select-all-btn" data-section="${configKey}">Select All</button>
+          <button class="clear-all-btn" data-section="${configKey}">Clear All</button>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate sensor section with discovery status
+   */
+  _generateSensorSection(entities, configuredSensors = []) {
+    const sensorTypes = [
+      { key: 'motion', title: 'Motion Sensors', entities: entities.motion, icon: 'mdi:motion-sensor' },
+      { key: 'windows', title: 'Window Sensors', entities: entities.windows, icon: 'mdi:window-open' },
+      { key: 'smoke', title: 'Smoke Detectors', entities: entities.smoke, icon: 'mdi:smoke-detector' },
+      { key: 'temperature', title: 'Temperature Sensors', entities: entities.temperature, icon: 'mdi:thermometer' },
+      { key: 'humidity', title: 'Humidity Sensors', entities: entities.humidity, icon: 'mdi:water-percent' }
+    ];
+    
+    return `
+      <div class="entity-type-section sensors-section">
+        <h6>Sensors & Header Entities</h6>
+        ${sensorTypes.map(sensorType => {
+          if (sensorType.entities.length === 0) {
+            return `
+              <div class="sensor-type-group missing">
+                <div class="sensor-type-header">
+                  <i class="${sensorType.icon}"></i>
+                  <span>${sensorType.title}</span>
+                  <span class="status-badge missing">0 found</span>
+                </div>
+                <div class="missing-label-help">
+                  <span>No entities found. Add label "${this._getLabelForSensorType(sensorType.key)}" to entities in HA.</span>
+                  <button class="help-btn" data-label="${this._getLabelForSensorType(sensorType.key)}">How to add labels</button>
+                </div>
+              </div>
+            `;
+          }
+          
+          return `
+            <div class="sensor-type-group">
+              <div class="sensor-type-header">
+                <i class="${sensorType.icon}"></i>
+                <span>${sensorType.title}</span>
+                <span class="status-badge found">${sensorType.entities.length} found</span>
+              </div>
+              <div class="entity-checkboxes">
+                ${sensorType.entities.map(entity => {
+                  const isConfigured = configuredSensors.includes(entity.entity_id);
+                  return `
+                    <label class="entity-checkbox">
+                      <input type="checkbox" 
+                             name="header_entities" 
+                             value="${entity.entity_id}"
+                             ${isConfigured ? 'checked' : ''}>
+                      <span class="entity-name">${entity.name}</span>
+                      <span class="entity-id">${entity.entity_id}</span>
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  /**
+   * Get DashView label for sensor type
+   */
+  _getLabelForSensorType(sensorType) {
+    const labelMap = {
+      'motion': 'motion',
+      'windows': 'fenster',
+      'smoke': 'rauchmelder',
+      'temperature': 'temperatur',
+      'humidity': 'humidity'
+    };
+    return labelMap[sensorType] || sensorType;
+  }
+
+  /**
+   * Add event listeners for room configuration
+   */
+  _addRoomConfigurationListeners(roomKey) {
+    const container = this._shadowRoot.getElementById('room-detail-container');
+    if (!container) return;
+    
+    // Section-level select/clear all buttons
+    container.addEventListener('click', (e) => {
+      if (e.target.classList.contains('select-all-btn')) {
+        const section = e.target.dataset.section;
+        const checkboxes = container.querySelectorAll(`input[name="${section}"]`);
+        checkboxes.forEach(cb => cb.checked = true);
+      }
+      
+      if (e.target.classList.contains('clear-all-btn')) {
+        const section = e.target.dataset.section;
+        const checkboxes = container.querySelectorAll(`input[name="${section}"]`);
+        checkboxes.forEach(cb => cb.checked = false);
+      }
+      
+      if (e.target.id === 'save-room-config') {
+        this._saveRoomConfiguration(roomKey);
+      }
+      
+      if (e.target.id === 'bulk-select-room') {
+        this._bulkSelectRoomEntities(roomKey);
+      }
+      
+      if (e.target.id === 'clear-room-config') {
+        this._clearRoomConfiguration(roomKey);
+      }
+      
+      if (e.target.classList.contains('help-btn')) {
+        const label = e.target.dataset.label;
+        this._showLabelHelp(label);
+      }
+    });
+  }
+
+  /**
+   * Save room configuration
+   */
+  async _saveRoomConfiguration(roomKey) {
+    const container = this._shadowRoot.getElementById('room-detail-container');
+    if (!container) return;
+    
+    try {
+      // Collect selected entities by type
+      const lights = Array.from(container.querySelectorAll('input[name="lights"]:checked')).map(cb => cb.value);
+      const covers = Array.from(container.querySelectorAll('input[name="covers"]:checked')).map(cb => cb.value);
+      const mediaPlayers = Array.from(container.querySelectorAll('input[name="media_players"]:checked')).map(cb => cb.value);
+      const headerEntities = Array.from(container.querySelectorAll('input[name="header_entities"]:checked')).map(cb => cb.value);
+      
+      // Update local state
+      const roomConfig = this._adminLocalState.houseConfig.rooms[roomKey];
+      roomConfig.lights = lights;
+      roomConfig.covers = covers;
+      roomConfig.media_players = mediaPlayers;
+      roomConfig.header_entities = headerEntities;
+      
+      // Save to backend
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'house',
+          config: this._adminLocalState.houseConfig
+        })
+      });
+      
+      if (response.ok) {
+        this._showToast(`Room "${roomConfig.friendly_name || roomKey}" configuration saved successfully`, 'success');
+        await this.refreshRoomOverview(); // Refresh the overview
+      } else {
+        throw new Error('Failed to save configuration');
+      }
+    } catch (error) {
+      console.error('[DashView] Error saving room configuration:', error);
+      this._showToast('Failed to save room configuration', 'error');
+    }
+  }
+
+  /**
+   * Bulk room setup with smart defaults
+   */
+  async bulkRoomSetup() {
+    console.log('[DashView] Starting bulk room setup');
+    
+    try {
+      let configuredRooms = 0;
+      const rooms = this._adminLocalState.houseConfig?.rooms || {};
+      
+      for (const [roomKey, roomData] of Object.entries(rooms)) {
+        const entities = await this._getRoomEntitiesByType(roomKey);
+        
+        // Apply smart defaults: select all found entities
+        const hasChanges = this._applySmartDefaults(roomKey, roomData, entities);
+        if (hasChanges) {
+          configuredRooms++;
+        }
+      }
+      
+      if (configuredRooms > 0) {
+        // Save all changes
+        const response = await fetch('/api/dashview/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'house',
+            config: this._adminLocalState.houseConfig
+          })
+        });
+        
+        if (response.ok) {
+          this._showToast(`Bulk setup completed for ${configuredRooms} rooms`, 'success');
+          await this.refreshRoomOverview();
+        } else {
+          throw new Error('Failed to save bulk configuration');
+        }
+      } else {
+        this._showToast('No rooms needed configuration updates', 'info');
+      }
+    } catch (error) {
+      console.error('[DashView] Bulk room setup error:', error);
+      this._showToast('Bulk room setup failed', 'error');
+    }
+  }
+
+  /**
+   * Apply smart defaults to a room
+   */
+  _applySmartDefaults(roomKey, roomData, entities) {
+    let hasChanges = false;
+    
+    // Lights: select all if none configured
+    if (entities.lights.length > 0 && (!roomData.lights || roomData.lights.length === 0)) {
+      roomData.lights = entities.lights.map(e => e.entity_id);
+      hasChanges = true;
+    }
+    
+    // Covers: select all if none configured
+    if (entities.covers.length > 0 && (!roomData.covers || roomData.covers.length === 0)) {
+      roomData.covers = entities.covers.map(e => e.entity_id);
+      hasChanges = true;
+    }
+    
+    // Media players: select all if none configured
+    if (entities.mediaPlayers.length > 0 && (!roomData.media_players || roomData.media_players.length === 0)) {
+      roomData.media_players = entities.mediaPlayers.map(e => e.entity_id);
+      hasChanges = true;
+    }
+    
+    // Sensors: prioritize motion, then windows, then smoke (smart selection)
+    if (!roomData.header_entities || roomData.header_entities.length === 0) {
+      const selectedSensors = [];
+      
+      // Add motion sensors (high priority)
+      if (entities.motion.length > 0) {
+        selectedSensors.push(...entities.motion.slice(0, 2).map(e => e.entity_id)); // Max 2 motion sensors
+      }
+      
+      // Add window sensors (medium priority)
+      if (entities.windows.length > 0 && selectedSensors.length < 3) {
+        const remaining = 3 - selectedSensors.length;
+        selectedSensors.push(...entities.windows.slice(0, remaining).map(e => e.entity_id));
+      }
+      
+      // Add smoke detectors (low priority)
+      if (entities.smoke.length > 0 && selectedSensors.length < 3) {
+        const remaining = 3 - selectedSensors.length;
+        selectedSensors.push(...entities.smoke.slice(0, remaining).map(e => e.entity_id));
+      }
+      
+      if (selectedSensors.length > 0) {
+        roomData.header_entities = selectedSensors;
+        hasChanges = true;
+      }
+    }
+    
+    return hasChanges;
+  }
+
+  /**
+   * Scan room for potential entities
+   */
+  async scanRoomEntities() {
+    const discoveryRoomSelector = this._shadowRoot.getElementById('discovery-room-selector');
+    if (!discoveryRoomSelector?.value) return;
+    
+    const roomKey = discoveryRoomSelector.value;
+    
+    if (roomKey === 'all') {
+      return this.scanAllRooms();
+    }
+    
+    await this._performRoomEntityScan(roomKey);
+  }
+
+  /**
+   * Scan all rooms for potential entities
+   */
+  async scanAllRooms() {
+    console.log('[DashView] Scanning all rooms for potential entities');
+    
+    const discoveryResults = this._shadowRoot.getElementById('discovery-results');
+    const discoveryStatus = this._shadowRoot.getElementById('discovery-assistant-status');
+    
+    if (!discoveryResults) return;
+    
+    this._setStatusMessage(discoveryStatus, 'Scanning all rooms...', 'loading');
+    
+    try {
+      const rooms = this._adminLocalState.houseConfig?.rooms || {};
+      const scanResults = [];
+      
+      for (const [roomKey, roomData] of Object.entries(rooms)) {
+        const result = await this._performRoomEntityScan(roomKey, false);
+        if (result.suggestions.length > 0 || result.issues.length > 0) {
+          scanResults.push(result);
+        }
+      }
+      
+      // Display consolidated results
+      discoveryResults.innerHTML = this._generateDiscoveryResultsUI(scanResults, true);
+      
+      this._setStatusMessage(discoveryStatus, `Scanned ${Object.keys(rooms).length} rooms`, 'success');
+    } catch (error) {
+      console.error('[DashView] All rooms scan error:', error);
+      this._setStatusMessage(discoveryStatus, 'Scan failed', 'error');
+    }
+  }
+
+  /**
+   * Perform entity scan for a specific room
+   */
+  async _performRoomEntityScan(roomKey, updateUI = true) {
+    const roomData = this._adminLocalState.houseConfig?.rooms?.[roomKey];
+    if (!roomData) return { suggestions: [], issues: [] };
+    
+    try {
+      // Get all entities in the room's HA area
+      const areaEntities = await this._getAreaEntities(roomKey);
+      
+      // Analyze entities for labeling suggestions
+      const suggestions = this._analyzeEntitiesForSuggestions(areaEntities, roomData);
+      const issues = this._identifyLabelingIssues(areaEntities, roomData);
+      
+      const result = {
+        roomKey,
+        roomName: roomData.friendly_name || roomKey,
+        suggestions,
+        issues,
+        areaEntitiesCount: areaEntities.length
+      };
+      
+      if (updateUI) {
+        const discoveryResults = this._shadowRoot.getElementById('discovery-results');
+        if (discoveryResults) {
+          discoveryResults.innerHTML = this._generateDiscoveryResultsUI([result], false);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('[DashView] Room entity scan error:', error);
+      return { suggestions: [], issues: [], roomKey, roomName: roomData.friendly_name || roomKey };
+    }
+  }
+
+  /**
+   * Get all entities in a room's HA area
+   */
+  async _getAreaEntities(roomKey) {
+    try {
+      // We need to get all entities for this area, not just specific domains
+      // This requires a custom approach since the API filters by domain or label
+      
+      const allStates = await fetch('/api/states').then(r => r.json());
+      const roomName = this._adminLocalState.houseConfig?.rooms?.[roomKey]?.friendly_name || roomKey;
+      
+      // For now, use a heuristic: entities with the room name in their entity_id or friendly_name
+      const areaEntities = allStates.filter(state => {
+        const entityId = state.entity_id.toLowerCase();
+        const friendlyName = (state.attributes.friendly_name || '').toLowerCase();
+        const roomNameLower = roomName.toLowerCase();
+        
+        return entityId.includes(roomNameLower) || friendlyName.includes(roomNameLower);
+      });
+      
+      return areaEntities;
+    } catch (error) {
+      console.error('[DashView] Error getting area entities:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Analyze entities for DashView labeling suggestions
+   */
+  _analyzeEntitiesForSuggestions(entities, roomData) {
+    const suggestions = [];
+    
+    entities.forEach(entity => {
+      const suggestion = this._getSuggestionForEntity(entity);
+      if (suggestion) {
+        suggestions.push({
+          entity_id: entity.entity_id,
+          friendly_name: entity.attributes.friendly_name || entity.entity_id,
+          current_labels: [], // Would need to fetch from entity registry
+          suggested_label: suggestion.label,
+          confidence: suggestion.confidence,
+          reason: suggestion.reason
+        });
+      }
+    });
+    
+    return suggestions;
+  }
+
+  /**
+   * Get labeling suggestion for an entity
+   */
+  _getSuggestionForEntity(entity) {
+    const entityId = entity.entity_id.toLowerCase();
+    const friendlyName = (entity.attributes.friendly_name || '').toLowerCase();
+    const deviceClass = entity.attributes.device_class;
+    
+    // Motion sensors
+    if (entityId.includes('motion') || friendlyName.includes('motion') || 
+        entityId.includes('bewegung') || friendlyName.includes('bewegung') ||
+        deviceClass === 'motion') {
+      return { label: 'motion', confidence: 'high', reason: 'Motion sensor detected' };
+    }
+    
+    // Window sensors
+    if (entityId.includes('window') || friendlyName.includes('window') ||
+        entityId.includes('fenster') || friendlyName.includes('fenster') ||
+        deviceClass === 'window') {
+      return { label: 'fenster', confidence: 'high', reason: 'Window sensor detected' };
+    }
+    
+    // Smoke detectors
+    if (entityId.includes('smoke') || friendlyName.includes('smoke') ||
+        entityId.includes('rauch') || friendlyName.includes('rauch') ||
+        deviceClass === 'smoke') {
+      return { label: 'rauchmelder', confidence: 'high', reason: 'Smoke detector detected' };
+    }
+    
+    // Temperature sensors
+    if (deviceClass === 'temperature' || entityId.includes('temp') || 
+        friendlyName.includes('temp') || entityId.includes('temperatur')) {
+      return { label: 'temperatur', confidence: 'medium', reason: 'Temperature sensor detected' };
+    }
+    
+    // Humidity sensors
+    if (deviceClass === 'humidity' || entityId.includes('humidity') ||
+        entityId.includes('feuchte') || friendlyName.includes('humidity')) {
+      return { label: 'humidity', confidence: 'medium', reason: 'Humidity sensor detected' };
+    }
+    
+    return null;
+  }
+
+  /**
+   * Identify labeling issues
+   */
+  _identifyLabelingIssues(entities, roomData) {
+    const issues = [];
+    
+    // Check for entities that look like sensors but aren't configured
+    const sensorLikeEntities = entities.filter(entity => {
+      const entityId = entity.entity_id;
+      return entityId.startsWith('binary_sensor.') || entityId.startsWith('sensor.');
+    });
+    
+    const configuredEntities = [
+      ...(roomData.lights || []),
+      ...(roomData.covers || []),
+      ...(roomData.media_players || []),
+      ...(roomData.header_entities || [])
+    ];
+    
+    const unconfiguredSensors = sensorLikeEntities.filter(entity => 
+      !configuredEntities.includes(entity.entity_id)
+    );
+    
+    if (unconfiguredSensors.length > 0) {
+      issues.push({
+        type: 'unconfigured_sensors',
+        count: unconfiguredSensors.length,
+        message: `${unconfiguredSensors.length} sensor(s) found but not configured in DashView`,
+        entities: unconfiguredSensors.slice(0, 5) // Show first 5
+      });
+    }
+    
+    return issues;
+  }
+
+  /**
+   * Generate discovery results UI
+   */
+  _generateDiscoveryResultsUI(scanResults, isMultiRoom) {
+    if (scanResults.length === 0) {
+      return '<div class="no-results">No labeling suggestions or issues found.</div>';
+    }
+    
+    return `
+      <div class="discovery-results-container">
+        <h6>Discovery Results</h6>
+        ${scanResults.map(result => this._generateRoomDiscoverySection(result)).join('')}
+        
+        ${scanResults.some(r => r.suggestions.length > 0) ? `
+          <div class="discovery-actions">
+            <button id="apply-all-suggestions" class="save-button">Apply All Suggestions</button>
+            <button id="export-suggestions" class="action-button">Export Suggestions</button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  /**
+   * Generate room discovery section
+   */
+  _generateRoomDiscoverySection(result) {
+    const { roomName, suggestions, issues } = result;
+    
+    return `
+      <div class="room-discovery-section">
+        <div class="room-discovery-header">
+          <h7>${roomName}</h7>
+          <span class="discovery-summary">
+            ${suggestions.length} suggestions, ${issues.length} issues
+          </span>
+        </div>
+        
+        ${suggestions.length > 0 ? `
+          <div class="suggestions-section">
+            <h8>Labeling Suggestions:</h8>
+            ${suggestions.map(suggestion => `
+              <div class="suggestion-item">
+                <div class="suggestion-entity">
+                  <span class="entity-name">${suggestion.friendly_name}</span>
+                  <span class="entity-id">${suggestion.entity_id}</span>
+                </div>
+                <div class="suggestion-label">
+                  <span class="suggested-label">${suggestion.suggested_label}</span>
+                  <span class="confidence ${suggestion.confidence}">${suggestion.confidence} confidence</span>
+                </div>
+                <div class="suggestion-actions">
+                  <button class="apply-suggestion-btn" 
+                          data-entity="${suggestion.entity_id}" 
+                          data-label="${suggestion.suggested_label}">
+                    Apply Label
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+        
+        ${issues.length > 0 ? `
+          <div class="issues-section">
+            <h8>Issues Found:</h8>
+            ${issues.map(issue => `
+              <div class="issue-item">
+                <i class="mdi mdi-alert"></i>
+                <span>${issue.message}</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  /**
+   * Bulk select all entities for a room
+   */
+  _bulkSelectRoomEntities(roomKey) {
+    const container = this._shadowRoot.getElementById('room-detail-container');
+    if (!container) return;
+    
+    // Select all checkboxes
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = true);
+    
+    this._showToast('All available entities selected for room', 'info');
+  }
+
+  /**
+   * Clear all room configuration
+   */
+  _clearRoomConfiguration(roomKey) {
+    if (!confirm('Are you sure you want to clear all entity assignments for this room?')) {
+      return;
+    }
+    
+    const container = this._shadowRoot.getElementById('room-detail-container');
+    if (!container) return;
+    
+    // Uncheck all checkboxes
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    this._showToast('Room configuration cleared', 'info');
+  }
+
+  /**
+   * Show label help modal
+   */
+  _showLabelHelp(label) {
+    const helpContent = this._getLabelHelpContent(label);
+    
+    // Create modal (simplified for now)
+    this._showToast(`To add "${label}" label: Go to HA Settings > Devices & Services > Entities, select your entity, click "Labels" and add "${label}"`, 'info');
+  }
+
+  /**
+   * Get help content for a specific label
+   */
+  _getLabelHelpContent(label) {
+    const labelGuides = {
+      'motion': 'Add the "motion" label to binary sensors that detect movement.',
+      'fenster': 'Add the "fenster" label to binary sensors that detect window open/close state.',
+      'rauchmelder': 'Add the "rauchmelder" label to binary sensors that detect smoke.',
+      'temperatur': 'Add the "temperatur" label to sensors that measure temperature.',
+      'humidity': 'Add the "humidity" label to sensors that measure humidity/moisture.'
+    };
+    
+    return labelGuides[label] || `Add the "${label}" label to appropriate entities in Home Assistant.`;
   }
 
   /**
