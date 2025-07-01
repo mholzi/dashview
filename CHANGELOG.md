@@ -7,7 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 🚀 Added
+## [0.5.0] - 2025-07-01
+
+### 🚀 Major New Features
+
+- **Interactive Configuration Validation** - Comprehensive real-time validation system for admin interface (#312)
+  - Real-time input validation with entity ID format checking and existence verification
+  - Numeric range validation with min/max constraints and clear error messages
+  - Required field validation with comprehensive empty value detection
+  - Unique key validation to prevent duplicate room/floor keys
+  - Debounced validation with intelligent 500ms debouncing to prevent API spam
+  - Smart caching with 30-second cache for entity existence checks
+  - Visual feedback system with red/green borders and inline error messages
+  - Loading states with animated spinners during async validation
+  - Toast notifications for user-friendly action feedback
+  - Full dark/light mode theme support for all validation states
+
+- **Configuration Health Monitoring** - Automated configuration issue detection and resolution (#312)
+  - Comprehensive health checks detecting 6 types of configuration issues:
+    - Rooms not assigned to floors
+    - Missing entity references
+    - Empty floors without assigned rooms
+    - Invalid room references
+    - Broken scene entities
+    - Missing weather/integration entities
+  - New "Config Health" admin tab with interactive issue dashboard
+  - Color-coded issue categorization (errors vs warnings)
+  - Summary statistics with at-a-glance health overview
+  - Automated fix system with one-click repairs
+  - Bulk "Fix All" functionality for reparable issues
+  - Safe automated operations for removing missing entities and orphaned configs
+  - Real-time progress feedback during fix application
+  - Clear success/failure messaging with confirmation
+
+- **Weather Forecast Trend Graphs** - Advanced weather visualization with Chart.js integration (#318)
+  - Interactive forecast graphs in weather popup with 400+ lines of functionality
+  - Hourly and daily forecast view toggle with smooth transitions
+  - Temperature, precipitation, and weather condition trending
+  - German localization for all weather controls and labels
+  - Chart.js integration with proper resource management and cleanup
+  - Responsive design scaling for different screen sizes
+  - Real-time data updates from Home Assistant's weather.get_forecasts service
+  - Memory leak prevention with proper component disposal
 
 - **Custom YAML Cards Integration** - Add custom Home Assistant Lovelace cards directly to DashView layouts (#327)
   - Complete admin panel for managing custom cards with YAML input
@@ -22,20 +63,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🏗️ Technical Improvements
 
 - **Backend API Enhancement**
+  - New API endpoints: `GET /api/dashview/config?type=config_health` for health check reports
+  - New API endpoint: `POST /api/dashview/config` with `type=config_health_fix` for applying fixes
+  - 6 comprehensive health check methods for room, entity, floor, scene, weather, and integration validation
+  - 6 automated fix methods for safe removal and cleanup operations
+  - 320+ lines of robust backend validation logic
   - Added `custom_cards` configuration type to DashViewConfigView
   - Extended POST/GET endpoints for custom card CRUD operations
   - Proper ConfigEntry storage for persistent custom card configurations
 
 - **Frontend Architecture**
+  - New ValidationUtils class with 740+ lines of comprehensive validation logic
+  - Enhanced AdminManager with 340+ lines of validation integration
+  - New Config Health tab with interactive health monitoring interface
+  - Comprehensive styling with 200+ lines of validation-specific CSS
+  - Toast notification system for non-intrusive user feedback
   - New SimpleYamlParser utility for client-side YAML processing
   - Enhanced FloorManager with custom card rendering capabilities
   - Extended AdminManager with comprehensive custom card management
   - Updated layout editor to support custom card slot assignment
 
+- **Testing and Quality Assurance**
+  - 48+ validation tests across frontend and backend
+  - Comprehensive error handling with user-friendly messages
+  - Performance optimization with caching and debouncing strategies
+  - Extensive code documentation and JSDoc coverage
+
 - **Styling and UX**
   - Custom card CSS styling with error states and placeholders
   - Consistent theming across all custom card types
   - Responsive design for both big and small layout slots
+  - Enhanced visual feedback for validation states
+  - Improved user experience with immediate feedback and automated problem resolution
 
 ## [0.4.0] - 2025-07-01
 
