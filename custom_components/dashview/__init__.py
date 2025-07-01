@@ -261,6 +261,8 @@ class DashViewConfigView(HomeAssistantView):
             house_config = self._entry.options.get('house_config', {})
             person_config = house_config.get('persons', {})
             return web.json_response({'persons': person_config})
+        elif config_type == 'config_health':
+            return await self._get_configuration_health_check()
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -409,6 +411,8 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["persons"] = config_payload
             elif config_type == "custom_cards":
                 current_options.setdefault("house_config", {})["custom_cards"] = config_payload
+            elif config_type == "config_health_fix":
+                return await self._apply_configuration_fix(config_payload)
             else:
                 return web.json_response({"error": f"Invalid config type: {config_type}"}, status=400)
 
@@ -419,3 +423,324 @@ class DashViewConfigView(HomeAssistantView):
         except Exception as e:
             _LOGGER.error("[DashView] Error saving configuration: %s", e)
             return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+    async def _get_configuration_health_check(self) -> web.Response:
+        """Perform comprehensive configuration health check."""
+        try:
+            issues = []
+            house_config = self._entry.options.get('house_config', {})
+            
+            # Check room consistency
+            issues.extend(await self._check_room_consistency(house_config))
+            
+            # Check entity references
+            issues.extend(await self._check_entity_references(house_config))
+            
+            # Check floor consistency
+            issues.extend(await self._check_floor_consistency(house_config))
+            
+            # Check scene consistency
+            issues.extend(await self._check_scene_consistency(house_config))
+            
+            # Check weather configuration
+            issues.extend(await self._check_weather_configuration())
+            
+            # Check integration settings
+            issues.extend(await self._check_integration_settings())
+            
+            health_report = {
+                "totalIssues": len(issues),
+                "errors": len([i for i in issues if i["type"] == "error"]),
+                "warnings": len([i for i in issues if i["type"] == "warning"]),
+                "issues": issues
+            }
+            
+            return web.json_response(health_report)
+            
+        except Exception as e:
+            _LOGGER.error("[DashView] Health check error: %s", e)
+            return web.json_response({
+                "totalIssues": 1,
+                "errors": 1,
+                "warnings": 0,
+                "issues": [{
+                    "id": "health_check_error",
+                    "type": "error",
+                    "category": "system",
+                    "title": "Fehler bei der Konsistenzprüfung",
+                    "description": "Ein Fehler ist bei der Überprüfung der Konfiguration aufgetreten.",
+                    "fixable": False
+                }]
+            }, status=500)
+
+    async def _check_room_consistency(self, house_config: dict) -> list:
+        """Check for rooms not assigned to floors."""
+        issues = []
+        rooms = house_config.get('rooms', {})
+        floors = house_config.get('floors', {})
+
+        for room_key, room in rooms.items():
+            assigned_to_floor = any(
+                room_key in floor.get('rooms', [])
+                for floor in floors.values()
+            )
+            
+            if not assigned_to_floor:
+                issues.append({
+                    "id": f"unassigned_room_{room_key}",
+                    "type": "warning",
+                    "category": "rooms",
+                    "title": f"Raum \"{room.get('name', room_key)}\" nicht zugewiesen",
+                    "description": f"Der Raum \"{room.get('name', room_key)}\" ({room_key}) ist keiner Etage zugeordnet.",
+                    "fixable": True,
+                    "fixAction": "assign_room_to_floor",
+                    "fixData": {"roomKey": room_key, "roomName": room.get('name', room_key)}
+                })
+        
+        return issues
+
+    async def _check_entity_references(self, house_config: dict) -> list:
+        """Check for missing entity references."""
+        issues = []
+        rooms = house_config.get('rooms', {})
+        
+        entity_fields = [
+            'room_lights', 'room_sensors', 'room_temperature_sensor',
+            'room_humidity_sensor', 'room_covers', 'room_media_players'
+        ]
+
+        for room_key, room in rooms.items():
+            for field in entity_fields:
+                entities = room.get(field, [])
+                entity_list = entities if isinstance(entities, list) else [entities] if entities else []
+                
+                for entity_id in entity_list:
+                    if entity_id and self._hass.states.get(entity_id) is None:
+                        issues.append({
+                            "id": f"missing_entity_{room_key}_{field}_{entity_id}",
+                            "type": "error",
+                            "category": "entities",
+                            "title": f"Entity nicht gefunden: {entity_id}",
+                            "description": f"Entity \"{entity_id}\" in Raum \"{room.get('name', room_key)}\" ({field}) existiert nicht in Home Assistant.",
+                            "fixable": True,
+                            "fixAction": "remove_missing_entity",
+                            "fixData": {
+                                "roomKey": room_key,
+                                "field": field,
+                                "entityId": entity_id,
+                                "roomName": room.get('name', room_key)
+                            }
+                        })
+        
+        return issues
+
+    async def _check_floor_consistency(self, house_config: dict) -> list:
+        """Check floor consistency."""
+        issues = []
+        floors = house_config.get('floors', {})
+        rooms = house_config.get('rooms', {})
+
+        for floor_key, floor in floors.items():
+            floor_rooms = floor.get('rooms', [])
+            
+            # Check for empty floors
+            if not floor_rooms:
+                issues.append({
+                    "id": f"empty_floor_{floor_key}",
+                    "type": "warning",
+                    "category": "floors",
+                    "title": f"Leere Etage: {floor.get('name', floor_key)}",
+                    "description": f"Die Etage \"{floor.get('name', floor_key)}\" ({floor_key}) hat keine zugewiesenen Räume.",
+                    "fixable": True,
+                    "fixAction": "remove_empty_floor",
+                    "fixData": {"floorKey": floor_key, "floorName": floor.get('name', floor_key)}
+                })
+            
+            # Check for references to non-existent rooms
+            for room_key in floor_rooms:
+                if room_key not in rooms:
+                    issues.append({
+                        "id": f"missing_room_ref_{floor_key}_{room_key}",
+                        "type": "error",
+                        "category": "floors",
+                        "title": f"Ungültige Raumreferenz: {room_key}",
+                        "description": f"Etage \"{floor.get('name', floor_key)}\" referenziert nicht existierenden Raum \"{room_key}\".",
+                        "fixable": True,
+                        "fixAction": "remove_missing_room_ref",
+                        "fixData": {"floorKey": floor_key, "roomKey": room_key, "floorName": floor.get('name', floor_key)}
+                    })
+        
+        return issues
+
+    async def _check_scene_consistency(self, house_config: dict) -> list:
+        """Check scene consistency."""
+        issues = []
+        scenes = house_config.get('scenes', {})
+
+        for scene_key, scene in scenes.items():
+            entities = scene.get('entities', {})
+            
+            for entity_id in entities.keys():
+                if self._hass.states.get(entity_id) is None:
+                    issues.append({
+                        "id": f"scene_missing_entity_{scene_key}_{entity_id}",
+                        "type": "error",
+                        "category": "scenes",
+                        "title": f"Scene Entity nicht gefunden: {entity_id}",
+                        "description": f"Scene \"{scene.get('name', scene_key)}\" referenziert nicht existierende Entity \"{entity_id}\".",
+                        "fixable": True,
+                        "fixAction": "remove_scene_entity",
+                        "fixData": {"sceneKey": scene_key, "entityId": entity_id, "sceneName": scene.get('name', scene_key)}
+                    })
+        
+        return issues
+
+    async def _check_weather_configuration(self) -> list:
+        """Check weather configuration."""
+        issues = []
+        weather_entity = self._entry.options.get('weather_entity')
+        
+        if weather_entity and self._hass.states.get(weather_entity) is None:
+            issues.append({
+                "id": "missing_weather_entity",
+                "type": "error",
+                "category": "weather",
+                "title": "Wetter-Entity nicht gefunden",
+                "description": f"Die konfigurierte Wetter-Entity \"{weather_entity}\" existiert nicht in Home Assistant.",
+                "fixable": True,
+                "fixAction": "clear_weather_entity",
+                "fixData": {"entityId": weather_entity}
+            })
+        
+        return issues
+
+    async def _check_integration_settings(self) -> list:
+        """Check integration settings."""
+        issues = []
+        integrations = self._entry.options.get('integrations_config', {})
+        
+        if 'dwd' in integrations and 'weather_entity' in integrations['dwd']:
+            dwd_entity = integrations['dwd']['weather_entity']
+            if self._hass.states.get(dwd_entity) is None:
+                issues.append({
+                    "id": "missing_dwd_entity",
+                    "type": "warning",
+                    "category": "integrations",
+                    "title": "DWD Wetter-Entity nicht gefunden",
+                    "description": f"Die DWD Wetter-Entity \"{dwd_entity}\" existiert nicht in Home Assistant.",
+                    "fixable": True,
+                    "fixAction": "clear_dwd_entity",
+                    "fixData": {"entityId": dwd_entity}
+                })
+        
+        return issues
+
+    async def _apply_configuration_fix(self, fix_data: dict) -> web.Response:
+        """Apply automated fix for configuration issues."""
+        try:
+            fix_action = fix_data.get('fixAction')
+            data = fix_data.get('fixData', {})
+            
+            if fix_action == 'remove_missing_entity':
+                return await self._fix_remove_missing_entity(data)
+            elif fix_action == 'remove_missing_room_ref':
+                return await self._fix_remove_missing_room_ref(data)
+            elif fix_action == 'remove_empty_floor':
+                return await self._fix_remove_empty_floor(data)
+            elif fix_action == 'remove_scene_entity':
+                return await self._fix_remove_scene_entity(data)
+            elif fix_action == 'clear_weather_entity':
+                return await self._fix_clear_weather_entity(data)
+            elif fix_action == 'clear_dwd_entity':
+                return await self._fix_clear_dwd_entity(data)
+            else:
+                return web.json_response({"success": False, "message": "Unbekannte Fix-Aktion"}, status=400)
+                
+        except Exception as e:
+            _LOGGER.error("[DashView] Fix application error: %s", e)
+            return web.json_response({"success": False, "message": "Fehler beim Anwenden der Korrektur"}, status=500)
+
+    async def _fix_remove_missing_entity(self, fix_data: dict) -> web.Response:
+        """Remove missing entity from room configuration."""
+        current_options = dict(self._entry.options)
+        house_config = current_options.get('house_config', {})
+        
+        room_key = fix_data.get('roomKey')
+        field = fix_data.get('field')
+        entity_id = fix_data.get('entityId')
+        
+        if room_key in house_config.get('rooms', {}):
+            room = house_config['rooms'][room_key]
+            if field in room:
+                if isinstance(room[field], list):
+                    room[field] = [e for e in room[field] if e != entity_id]
+                elif room[field] == entity_id:
+                    del room[field]
+        
+        self._hass.config_entries.async_update_entry(self._entry, options=current_options)
+        return web.json_response({"success": True, "message": f"Entity \"{entity_id}\" entfernt"})
+
+    async def _fix_remove_missing_room_ref(self, fix_data: dict) -> web.Response:
+        """Remove missing room reference from floor."""
+        current_options = dict(self._entry.options)
+        house_config = current_options.get('house_config', {})
+        
+        floor_key = fix_data.get('floorKey')
+        room_key = fix_data.get('roomKey')
+        
+        if floor_key in house_config.get('floors', {}):
+            floor = house_config['floors'][floor_key]
+            if 'rooms' in floor and room_key in floor['rooms']:
+                floor['rooms'].remove(room_key)
+        
+        self._hass.config_entries.async_update_entry(self._entry, options=current_options)
+        return web.json_response({"success": True, "message": f"Raumreferenz \"{room_key}\" entfernt"})
+
+    async def _fix_remove_empty_floor(self, fix_data: dict) -> web.Response:
+        """Remove empty floor."""
+        current_options = dict(self._entry.options)
+        house_config = current_options.get('house_config', {})
+        
+        floor_key = fix_data.get('floorKey')
+        floor_name = fix_data.get('floorName')
+        
+        if floor_key in house_config.get('floors', {}):
+            del house_config['floors'][floor_key]
+        
+        self._hass.config_entries.async_update_entry(self._entry, options=current_options)
+        return web.json_response({"success": True, "message": f"Leere Etage \"{floor_name}\" entfernt"})
+
+    async def _fix_remove_scene_entity(self, fix_data: dict) -> web.Response:
+        """Remove entity from scene."""
+        current_options = dict(self._entry.options)
+        house_config = current_options.get('house_config', {})
+        
+        scene_key = fix_data.get('sceneKey')
+        entity_id = fix_data.get('entityId')
+        
+        if scene_key in house_config.get('scenes', {}):
+            scene = house_config['scenes'][scene_key]
+            if 'entities' in scene and entity_id in scene['entities']:
+                del scene['entities'][entity_id]
+        
+        self._hass.config_entries.async_update_entry(self._entry, options=current_options)
+        return web.json_response({"success": True, "message": f"Entity \"{entity_id}\" aus Scene entfernt"})
+
+    async def _fix_clear_weather_entity(self, fix_data: dict) -> web.Response:
+        """Clear weather entity configuration."""
+        current_options = dict(self._entry.options)
+        current_options['weather_entity'] = None
+        
+        self._hass.config_entries.async_update_entry(self._entry, options=current_options)
+        return web.json_response({"success": True, "message": "Wetter-Entity Konfiguration gelöscht"})
+
+    async def _fix_clear_dwd_entity(self, fix_data: dict) -> web.Response:
+        """Clear DWD weather entity configuration."""
+        current_options = dict(self._entry.options)
+        integrations = current_options.get('integrations_config', {})
+        
+        if 'dwd' in integrations and 'weather_entity' in integrations['dwd']:
+            del integrations['dwd']['weather_entity']
+        
+        self._hass.config_entries.async_update_entry(self._entry, options=current_options)
+        return web.json_response({"success": True, "message": "DWD Wetter-Entity Konfiguration gelöscht"})

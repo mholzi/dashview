@@ -1,5 +1,6 @@
 // custom_components/dashview/www/lib/ui/AdminManager.js
 import { AutoSceneGenerator } from './AutoSceneGenerator.js';
+import { ValidationUtils, ConfigHealthChecker } from '../utils/validation-utils.js';
 
 export class AdminManager {
   constructor(panel) {
@@ -18,6 +19,11 @@ export class AdminManager {
     // Initialize AutoSceneGenerator
     this._autoSceneGenerator = new AutoSceneGenerator(panel);
 
+    // Initialize validation utilities
+    this._validationUtils = new ValidationUtils(this._hass, panel._stateManager);
+    this._configHealthChecker = new ConfigHealthChecker(this._hass, panel._configManager);
+    this._validationInstances = new Map(); // Track validation instances for cleanup
+
     // Make AdminManager self-sufficient
     this._entityLabels = {
         MOTION: 'motion', WINDOW: 'fenster', SMOKE: 'rauchmelder', VIBRATION: 'vibration',
@@ -31,6 +37,12 @@ export class AdminManager {
     this._hass = hass;
     if (this._autoSceneGenerator) {
       this._autoSceneGenerator.setHass(hass);
+    }
+    if (this._validationUtils) {
+      this._validationUtils._hass = hass;
+    }
+    if (this._configHealthChecker) {
+      this._configHealthChecker._hass = hass;
     }
   }
 
@@ -50,6 +62,7 @@ export class AdminManager {
       'device-management-tab': () => this.loadDeviceManagementTab(),
       'other-entities-tab': () => this.loadOtherEntitiesTab(),
       'garbage-tab': () => this.loadGarbageTab(),
+      'config-health-tab': () => this.loadConfigurationHealthCheck(),
     };
 
     if (loadActionMap[targetId]) {
@@ -2230,6 +2243,338 @@ async saveMediaPlayerPresets() {
     }
     if (nameInput) nameInput.value = '';
     if (yamlInput) yamlInput.value = '';
+  }
+
+  /**
+   * Load configuration health check tab
+   */
+  async loadConfigurationHealthCheck() {
+    const tabContent = this._shadowRoot.getElementById('admin-tab-content');
+    
+    // Show loading state
+    tabContent.innerHTML = `
+      <div class="config-health-loading">
+        <h3>Konfiguration wird überprüft...</h3>
+        <div class="loading-spinner"></div>
+      </div>
+    `;
+
+    try {
+      // Fetch health check data from backend
+      const response = await fetch('/api/dashview/config?type=config_health');
+      const healthData = await response.json();
+
+      this._renderConfigurationHealthReport(healthData);
+    } catch (error) {
+      console.error('[DashView] Error loading configuration health check:', error);
+      tabContent.innerHTML = `
+        <div class="error-message">
+          <h3>Fehler beim Laden der Konsistenzprüfung</h3>
+          <p>Die Konfigurationsprüfung konnte nicht geladen werden: ${error.message}</p>
+          <button onclick="this.closest('.admin-manager').dispatchEvent(new CustomEvent('reload-health-check'))">
+            Erneut versuchen
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Render configuration health report
+   */
+  _renderConfigurationHealthReport(healthData) {
+    const tabContent = this._shadowRoot.getElementById('admin-tab-content');
+    
+    const hasIssues = healthData.totalIssues > 0;
+    const fixableIssues = healthData.issues.filter(issue => issue.fixable);
+    
+    tabContent.innerHTML = `
+      <div class="config-health-container">
+        <h3>Konfiguration Konsistenzprüfung</h3>
+        
+        <div class="config-health-report">
+          <div class="config-health-summary">
+            <div class="health-stat total">
+              <div class="health-stat-number">${healthData.totalIssues}</div>
+              <div class="health-stat-label">Gesamt Probleme</div>
+            </div>
+            <div class="health-stat errors">
+              <div class="health-stat-number">${healthData.errors}</div>
+              <div class="health-stat-label">Fehler</div>
+            </div>
+            <div class="health-stat warnings">
+              <div class="health-stat-number">${healthData.warnings}</div>
+              <div class="health-stat-label">Warnungen</div>
+            </div>
+          </div>
+
+          ${fixableIssues.length > 0 ? `
+            <div class="health-fix-all-container">
+              <span>Automatische Korrekturen verfügbar für ${fixableIssues.length} Problem(e)</span>
+              <button class="health-fix-all-btn" id="fix-all-issues">
+                Alle reparierbare Probleme beheben
+              </button>
+            </div>
+          ` : ''}
+
+          ${hasIssues ? `
+            <div class="config-health-issues">
+              ${healthData.issues.map(issue => this._renderHealthIssue(issue)).join('')}
+            </div>
+          ` : `
+            <div class="no-issues-message">
+              <i class="mdi mdi-check-circle" style="color: var(--green); font-size: 48px;"></i>
+              <h4>Alles in Ordnung!</h4>
+              <p>Keine Konfigurationsprobleme gefunden.</p>
+            </div>
+          `}
+        </div>
+
+        <div class="health-check-actions">
+          <button id="refresh-health-check" class="secondary-button">
+            <i class="mdi mdi-refresh"></i> Erneut prüfen
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Add event listeners
+    this._setupHealthCheckEventListeners();
+  }
+
+  /**
+   * Render individual health issue
+   */
+  _renderHealthIssue(issue) {
+    return `
+      <div class="health-issue ${issue.type}" data-issue-id="${issue.id}">
+        <div class="health-issue-icon">
+          <i class="mdi ${issue.type === 'error' ? 'mdi-alert-circle' : 'mdi-alert'}"></i>
+        </div>
+        <div class="health-issue-content">
+          <div class="health-issue-title">${issue.title}</div>
+          <div class="health-issue-description">${issue.description}</div>
+          ${issue.fixable ? `
+            <div class="health-issue-actions">
+              <button class="health-fix-btn" data-fix-action="${issue.fixAction}" data-fix-data='${JSON.stringify(issue.fixData)}'>
+                Reparieren
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Setup event listeners for health check UI
+   */
+  _setupHealthCheckEventListeners() {
+    // Refresh health check
+    const refreshBtn = this._shadowRoot.getElementById('refresh-health-check');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        this.loadConfigurationHealthCheck();
+      });
+    }
+
+    // Fix all issues
+    const fixAllBtn = this._shadowRoot.getElementById('fix-all-issues');
+    if (fixAllBtn) {
+      fixAllBtn.addEventListener('click', async () => {
+        await this._fixAllIssues();
+      });
+    }
+
+    // Individual fix buttons
+    this._shadowRoot.querySelectorAll('.health-fix-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const fixAction = e.target.dataset.fixAction;
+        const fixData = JSON.parse(e.target.dataset.fixData);
+        await this._applyFix(fixAction, fixData, e.target);
+      });
+    });
+  }
+
+  /**
+   * Apply fix for all reparable issues
+   */
+  async _fixAllIssues() {
+    const fixAllBtn = this._shadowRoot.getElementById('fix-all-issues');
+    const originalText = fixAllBtn.textContent;
+    
+    fixAllBtn.disabled = true;
+    fixAllBtn.textContent = 'Reparaturen werden angewandt...';
+
+    try {
+      const fixButtons = this._shadowRoot.querySelectorAll('.health-fix-btn');
+      let successCount = 0;
+      let totalFixes = fixButtons.length;
+
+      for (const btn of fixButtons) {
+        const fixAction = btn.dataset.fixAction;
+        const fixData = JSON.parse(btn.dataset.fixData);
+        
+        const success = await this._applyFix(fixAction, fixData, btn);
+        if (success) successCount++;
+      }
+
+      // Show summary
+      const summaryMessage = `${successCount} von ${totalFixes} Reparaturen erfolgreich angewandt.`;
+      this._showToast(summaryMessage, successCount === totalFixes ? 'success' : 'warning');
+
+      // Refresh the health check
+      setTimeout(() => {
+        this.loadConfigurationHealthCheck();
+      }, 1000);
+
+    } catch (error) {
+      console.error('[DashView] Error applying fixes:', error);
+      this._showToast('Fehler beim Anwenden der Reparaturen', 'error');
+    } finally {
+      fixAllBtn.disabled = false;
+      fixAllBtn.textContent = originalText;
+    }
+  }
+
+  /**
+   * Apply individual fix
+   */
+  async _applyFix(fixAction, fixData, buttonElement) {
+    const originalText = buttonElement.textContent;
+    
+    buttonElement.disabled = true;
+    buttonElement.textContent = 'Wird repariert...';
+
+    try {
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'config_health_fix',
+          config: {
+            fixAction,
+            fixData
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        buttonElement.textContent = 'Repariert ✓';
+        buttonElement.style.background = 'var(--green)';
+        this._showToast(result.message, 'success');
+        
+        // Remove the issue from display after a delay
+        setTimeout(() => {
+          const issueElement = buttonElement.closest('.health-issue');
+          issueElement.style.opacity = '0.5';
+          issueElement.style.pointerEvents = 'none';
+        }, 1000);
+
+        return true;
+      } else {
+        throw new Error(result.message || 'Unbekannter Fehler');
+      }
+    } catch (error) {
+      console.error('[DashView] Error applying fix:', error);
+      buttonElement.textContent = 'Fehler';
+      buttonElement.style.background = 'var(--red)';
+      this._showToast(`Fehler: ${error.message}`, 'error');
+      return false;
+    }
+  }
+
+  /**
+   * Setup validation for an input element
+   */
+  setupInputValidation(input, validationRules, options = {}) {
+    if (!input || !this._validationUtils) return null;
+
+    // Clean up existing validation
+    const existingValidation = this._validationInstances.get(input);
+    if (existingValidation) {
+      existingValidation.destroy();
+    }
+
+    // Setup new validation
+    const validation = this._validationUtils.setupInputValidation(input, validationRules, options);
+    this._validationInstances.set(input, validation);
+
+    return validation;
+  }
+
+  /**
+   * Setup entity ID validation for an input
+   */
+  setupEntityIdValidation(input, options = {}) {
+    return this.setupInputValidation(input, [
+      { type: ValidationUtils.VALIDATION_TYPES.ENTITY_ID },
+      { type: ValidationUtils.VALIDATION_TYPES.ENTITY_EXISTS }
+    ], options);
+  }
+
+  /**
+   * Setup unique key validation
+   */
+  setupUniqueKeyValidation(input, existingKeys, currentKey = null, options = {}) {
+    return this.setupInputValidation(input, [
+      { type: ValidationUtils.VALIDATION_TYPES.UNIQUE_KEY, existingKeys, currentKey }
+    ], options);
+  }
+
+  /**
+   * Setup numeric range validation
+   */
+  setupNumericValidation(input, min, max, required = false, options = {}) {
+    return this.setupInputValidation(input, [
+      { type: ValidationUtils.VALIDATION_TYPES.NUMERIC_RANGE, min, max, required }
+    ], options);
+  }
+
+  /**
+   * Show toast notification
+   */
+  _showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+
+    // Add to shadow root
+    this._shadowRoot.appendChild(toast);
+
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+
+    // Hide and remove toast
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  /**
+   * Cleanup validation instances
+   */
+  destroy() {
+    // Clean up all validation instances
+    for (const validation of this._validationInstances.values()) {
+      validation.destroy();
+    }
+    this._validationInstances.clear();
+
+    // Clean up validation utilities
+    if (this._validationUtils) {
+      this._validationUtils.destroy();
+    }
   }
 
 }
