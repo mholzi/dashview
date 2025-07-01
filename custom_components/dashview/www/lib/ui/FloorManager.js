@@ -399,127 +399,300 @@ export class FloorManager {
     });
   }
 
+  /**
+   * Get display data for temperature and humidity sensors
+   * @param {Object} entityState - The entity state object
+   * @param {string} type - The entity type (temperatur or humidity)
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getTemperatureHumidityDisplayData(entityState, type) {
+    const { TEMPERATUR, HUMIDITY } = this._panel._entityLabels;
+    
+    if (type === TEMPERATUR) {
+      const tempValue = parseFloat(entityState?.state);
+      return {
+        name: 'Temperatur',
+        label: isNaN(tempValue) ? '--°' : `${tempValue.toFixed(1)}°`,
+        icon: 'mdi:thermometer',
+        cardClass: ''
+      };
+    } else if (type === HUMIDITY) {
+      const humValue = parseFloat(entityState?.state);
+      return {
+        name: 'Luftfeuchtigkeit',
+        label: isNaN(humValue) ? '--%' : `${Math.round(humValue)}%`,
+        icon: 'mdi:water-percent',
+        cardClass: ''
+      };
+    }
+    
+    return this._getDefaultDisplayData(entityState, type);
+  }
+
+  /**
+   * Get display data for light entities
+   * @param {Object} entityState - The entity state object
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getLightDisplayData(entityState) {
+    const isOn = entityState?.state === 'on';
+    const icon = isOn ? 
+      (entityState?.attributes.icon || 'mdi:lightbulb') : 
+      (entityState?.attributes.icon || 'mdi:lightbulb-outline');
+    
+    let label = 'Aus';
+    let cardClass = '';
+    
+    if (isOn) {
+      label = entityState.attributes.brightness ? 
+        `${Math.round(entityState.attributes.brightness / 2.55)}%` : 
+        'An';
+      cardClass = 'active-light';
+    }
+    
+    return {
+      name: entityState?.attributes.friendly_name || 'Light',
+      label,
+      icon,
+      cardClass
+    };
+  }
+
+  /**
+   * Get display data for cover entities
+   * @param {Object} entityState - The entity state object
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getCoverDisplayData(entityState) {
+    const position = entityState?.attributes.current_position || 0;
+    const isOpen = position > 20;
+    
+    let icon, label, cardClass = '';
+    
+    if (isOpen) {
+      icon = 'mdi:window-shutter-open';
+      label = `Offen - ${position}%`;
+      // Don't set cardClass here as global logic will handle 'is-on'
+    } else {
+      icon = 'mdi:window-shutter';
+      label = `Geschlossen - ${position}%`;
+    }
+    
+    return {
+      name: entityState?.attributes.friendly_name || 'Cover',
+      label,
+      icon,
+      cardClass
+    };
+  }
+
+  /**
+   * Get display data for general binary sensors (motion, window, smoke, vibration)
+   * @param {Object} entityState - The entity state object
+   * @param {string} type - The entity type
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getGeneralSensorDisplayData(entityState, type) {
+    const { MOTION, WINDOW, SMOKE, VIBRATION } = this._panel._entityLabels;
+    const isOn = entityState.state === 'on';
+    
+    let icon, label, name;
+    
+    switch (type) {
+      case MOTION:
+        icon = isOn ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
+        label = isOn ? 'Erkannt' : 'Klar';
+        name = 'Motion';
+        break;
+      case WINDOW:
+        icon = isOn ? 'mdi:window-open-variant' : 'mdi:window-closed';
+        label = isOn ? 'Offen' : 'Geschlossen';
+        name = 'Window';
+        break;
+      case SMOKE:
+        icon = isOn ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector-variant';
+        label = isOn ? 'Erkannt' : 'Klar';
+        name = 'Smoke Detector';
+        break;
+      case VIBRATION:
+        icon = isOn ? 'mdi:vibrate' : 'mdi:vibrate-off';
+        label = isOn ? 'Erkannt' : 'Klar';
+        name = 'Vibration';
+        break;
+      default:
+        return this._getDefaultDisplayData(entityState, type);
+    }
+    
+    return {
+      name: entityState?.attributes.friendly_name || name,
+      label,
+      icon,
+      cardClass: ''
+    };
+  }
+
+  /**
+   * Get display data for media player entities
+   * @param {Object} entityState - The entity state object
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getMediaPlayerDisplayData(entityState) {
+    const state = entityState?.state;
+    let label;
+    
+    if (state === 'playing') {
+      label = 'Playing';
+    } else if (['idle', 'standby', 'off'].includes(state)) {
+      label = 'Aus';
+    } else {
+      label = state ? state.charAt(0).toUpperCase() + state.slice(1) : 'N/A';
+    }
+    
+    return {
+      name: entityState?.attributes.friendly_name || 'Media Player',
+      label,
+      icon: 'mdi:music',
+      cardClass: ''
+    };
+  }
+
+  /**
+   * Get display data for door entities
+   * @param {Object} entityState - The entity state object
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getDoorDisplayData(entityState) {
+    const doorState = entityState?.state?.toLowerCase();
+    let icon, label, cardClass;
+    
+    if (doorState === 'on' || doorState === 'open') {
+      icon = 'mdi:door-open';
+      label = 'Offen';
+      cardClass = 'door-open';
+    } else if (doorState === 'unlocked') {
+      icon = 'mdi:door-closed';
+      label = 'Zu';
+      cardClass = 'door-unlocked';
+    } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
+      icon = 'mdi:door-closed-lock';
+      label = 'Abgeschlossen';
+      cardClass = 'door-locked';
+    } else {
+      icon = 'mdi:door';
+      label = entityState?.state ? 
+        entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 
+        'N/A';
+      cardClass = '';
+    }
+    
+    return {
+      name: entityState?.attributes.friendly_name || 'Door',
+      label,
+      icon,
+      cardClass
+    };
+  }
+
+  /**
+   * Get display data for appliance entities (hoover, mower)
+   * @param {Object} entityState - The entity state object
+   * @param {string} type - The entity type (hoover or mower)
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getApplianceDisplayData(entityState, type) {
+    if (type === 'hoover') {
+      return this._getVacuumDisplayData(entityState);
+    } else if (type === 'mower') {
+      return this._getMowerDisplayData(entityState);
+    }
+    
+    return this._getDefaultDisplayData(entityState, type);
+  }
+
+  /**
+   * Get default display data for unknown or unhandled entity types
+   * @param {Object} entityState - The entity state object
+   * @param {string} type - The entity type
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
+  _getDefaultDisplayData(entityState, type) {
+    let label = entityState?.state || 'N/A';
+    
+    if (entityState?.state === 'on' || entityState?.state === 'off') {
+      label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
+    }
+    
+    console.warn(`[FloorManager] Using default card for unknown type: ${type}`);
+    
+    return {
+      name: entityState?.attributes.friendly_name || type,
+      label,
+      icon: 'mdi:help-circle',
+      cardClass: ''
+    };
+  }
+
+  /**
+   * Get card display data for entities - acts as dispatcher to type-specific functions
+   * @param {string} entityId - The entity ID
+   * @param {string} type - The entity type
+   * @returns {Object} Display data object with name, label, icon, cardClass
+   */
   _getCardDisplayData(entityId, type) {
     const entityState = this._hass.states[entityId];
 
-    let name = entityState?.attributes.friendly_name || entityId;
-    let label = entityState?.state || 'N/A';
-    let icon = 'mdi:help-circle';
-    let cardClass = '';
-
+    // Handle unavailable entities first
     if (!entityState || entityState.state === 'unavailable') {
-        cardClass = 'is-unavailable';
-        label = 'Unavailable';
-    } else if (entityState.state === 'on' || entityState.state === 'Run' || entityState.state === 'playing' || (type === 'cover' && entityState.state === 'open')) {
-        // This is the fix: added a check for covers being open
-        cardClass = 'is-on';
+      return {
+        name: entityState?.attributes.friendly_name || entityId,
+        label: 'Unavailable',
+        icon: 'mdi:help-circle',
+        cardClass: 'is-unavailable'
+      };
     }
 
+    // Get type-specific display data
     const { TEMPERATUR, HUMIDITY, LIGHT, MOTION, WINDOW, COVER, SMOKE, VIBRATION } = this._panel._entityLabels;
-    switch (type) {
-        case TEMPERATUR:
-            const tempValue = parseFloat(entityState?.state);
-            label = isNaN(tempValue) ? '--°' : `${tempValue.toFixed(1)}°`;
-            name = 'Temperatur';
-            icon = 'mdi:thermometer';
-            break;
-        case HUMIDITY:
-            const humValue = parseFloat(entityState?.state);
-            label = isNaN(humValue) ? '--%' : `${Math.round(humValue)}%`;
-            name = 'Luftfeuchtigkeit';
-            icon = 'mdi:water-percent';
-            break;
-        case LIGHT:
-            icon = entityState?.state === 'on' ? (entityState?.attributes.icon || 'mdi:lightbulb') : (entityState?.attributes.icon || 'mdi:lightbulb-outline');
-            label = entityState?.state === 'on' ? `${entityState.attributes.brightness ? Math.round(entityState.attributes.brightness / 2.55) + '%' : 'An'}` : 'Aus';
-            if(entityState?.state === 'on') cardClass += ' active-light';
-            break;
-        case MOTION:
-             icon = entityState.state === 'on' ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
-             label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
-             break;
-        case WINDOW:
-             icon = entityState.state === 'on' ? 'mdi:window-open-variant' : 'mdi:window-closed';
-             label = entityState.state === 'on' ? 'Offen' : 'Geschlossen';
-             break;
-        case COVER:
-            const position = entityState?.attributes.current_position || 0;
-            const isOpen = position > 20;
-            
-            if (isOpen) {
-                icon = 'mdi:window-shutter-open';
-                label = `Offen - ${position}%`;
-                if (!cardClass.includes('is-on')) cardClass += ' is-on';
-            } else {
-                icon = 'mdi:window-shutter';
-                label = `Geschlossen - ${position}%`;
-                cardClass = cardClass.replace('is-on', '').trim();
-            }
-            break;
-        case SMOKE:
-            icon = entityState.state === 'on' ? 'mdi:smoke-detector-variant-alert' : 'mdi:smoke-detector-variant';
-            label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
-            break;
-        case VIBRATION:
-            icon = entityState.state === 'on' ? 'mdi:vibrate' : 'mdi:vibrate-off';
-            label = entityState.state === 'on' ? 'Erkannt' : 'Klar';
-            break;
-        case 'media_player':
-            icon = 'mdi:music';
-            const state = entityState?.state;
-            if (state === 'playing') {
-                label = 'Playing';
-            } else if (['idle', 'standby', 'off'].includes(state)) {
-                label = 'Aus';
-            } else {
-                label = state ? state.charAt(0).toUpperCase() + state.slice(1) : 'N/A';
-            }
-            break;
+    let displayData;
 
-        case 'hoover':
-            const { icon: vacuumIcon, label: vacuumLabel, cardClass: vacuumCardClass } = this._getVacuumDisplayData(entityState);
-            icon = vacuumIcon;
-            label = vacuumLabel;
-            cardClass = vacuumCardClass;
-            break;
-
-        case 'mower':
-            const { icon: mowerIcon, label: mowerLabel, cardClass: mowerCardClass } = this._getMowerDisplayData(entityState);
-            icon = mowerIcon;
-            label = mowerLabel;
-            cardClass = mowerCardClass;
-            break;
-
-        case 'other_door':
-        case 'door':
-            const doorState = entityState?.state?.toLowerCase();
-            if (doorState === 'on' || doorState === 'open') {
-                icon = 'mdi:door-open';
-                label = 'Offen';
-                cardClass = 'door-open';
-            } else if (doorState === 'unlocked') {
-                icon = 'mdi:door-closed';
-                label = 'Zu';
-                cardClass = 'door-unlocked';
-            } else if (doorState === 'off' || doorState === 'closed' || doorState === 'locked') {
-                icon = 'mdi:door-closed-lock';
-                label = 'Abgeschlossen';
-                cardClass = 'door-locked';
-            } else {
-                icon = 'mdi:door';
-                label = entityState?.state ? entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1) : 'N/A';
-            }
-            break;
-
-        default:
-            if (entityState?.state === 'on' || entityState?.state === 'off') {
-                label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
-            }
-            console.warn(`[FloorManager] Using default card for unknown type: ${type}`);
-            break;
+    // Dispatch to appropriate type-specific function
+    if (type === TEMPERATUR || type === HUMIDITY) {
+      displayData = this._getTemperatureHumidityDisplayData(entityState, type);
+    } else if (type === LIGHT) {
+      displayData = this._getLightDisplayData(entityState);
+    } else if (type === COVER) {
+      displayData = this._getCoverDisplayData(entityState);
+    } else if ([MOTION, WINDOW, SMOKE, VIBRATION].includes(type)) {
+      displayData = this._getGeneralSensorDisplayData(entityState, type);
+    } else if (type === 'media_player') {
+      displayData = this._getMediaPlayerDisplayData(entityState);
+    } else if (type === 'hoover' || type === 'mower') {
+      displayData = this._getApplianceDisplayData(entityState, type);
+    } else if (type === 'door' || type === 'other_door') {
+      displayData = this._getDoorDisplayData(entityState);
+    } else {
+      displayData = this._getDefaultDisplayData(entityState, type);
     }
 
-    return { name, label, icon, cardClass };
+    // Apply global state-based classes
+    let globalCardClass = '';
+    if (entityState.state === 'on' || 
+        entityState.state === 'Run' || 
+        entityState.state === 'playing' || 
+        (type === 'cover' && entityState.state === 'open')) {
+      globalCardClass = 'is-on';
+    }
+
+    // Merge global class with type-specific class
+    const finalCardClass = [globalCardClass, displayData.cardClass]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    return {
+      ...displayData,
+      cardClass: finalCardClass
+    };
   }
 
   _isRoomActive(roomConfig) {
