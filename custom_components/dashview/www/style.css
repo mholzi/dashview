@@ -3800,3 +3800,186 @@ body.popup-open, :host(.popup-open) {
         font-size: 16px;
     }
 }
+
+/* ========================================
+   Upcoming Events Card Styles
+   ======================================== */
+
+.upcoming-events-card {
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--gray200);
+    margin: 2px 0;
+    background: var(--card-background-color, var(--gray000));
+}
+
+.upcoming-events-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.upcoming-events-header:hover {
+    opacity: 0.8;
+}
+
+.upcoming-events-header i {
+    font-size: 20px;
+    color: var(--primary-color, var(--gray800));
+}
+
+.upcoming-events-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray800);
+}
+
+.upcoming-events-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Individual Event Item */
+.upcoming-event-item {
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 8px;
+    background: var(--gray050, #fafafa);
+    transition: all 0.2s ease;
+}
+
+.upcoming-event-item:hover {
+    background: var(--gray100, #f5f5f5);
+    transform: translateY(-1px);
+}
+
+.upcoming-event-item.upcoming-event-today {
+    background: var(--active-small, var(--orange));
+    color: var(--gray000);
+}
+
+.upcoming-event-item.upcoming-event-today:hover {
+    background: var(--orange);
+    opacity: 0.9;
+}
+
+.upcoming-event-grid {
+    display: grid;
+    grid-template-areas: 
+        "icon time"
+        "icon title";
+    grid-template-columns: 32px 1fr;
+    grid-template-rows: auto auto;
+    gap: 2px 8px;
+    align-items: center;
+}
+
+.upcoming-event-icon {
+    grid-area: icon;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upcoming-event-icon i {
+    font-size: 18px;
+    color: var(--gray600);
+}
+
+.upcoming-event-item.upcoming-event-today .upcoming-event-icon i {
+    color: var(--gray000);
+}
+
+.upcoming-event-time {
+    grid-area: time;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.upcoming-event-item.upcoming-event-today .upcoming-event-time {
+    color: var(--gray000);
+}
+
+.upcoming-event-title {
+    grid-area: title;
+    font-size: 14px;
+    color: var(--gray800);
+    font-weight: 400;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.upcoming-event-item.upcoming-event-today .upcoming-event-title {
+    color: var(--gray000);
+}
+
+/* Empty and Error States */
+.upcoming-events-empty,
+.upcoming-events-error {
+    text-align: center;
+    padding: 16px;
+    color: var(--gray600);
+}
+
+.upcoming-events-empty-text,
+.upcoming-events-error-text {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.upcoming-events-help {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.upcoming-events-error i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: var(--red, #ff5252);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .upcoming-events-card {
+        padding: 12px;
+        margin: 1px 0;
+    }
+    
+    .upcoming-events-header {
+        margin-bottom: 8px;
+    }
+    
+    .upcoming-events-title {
+        font-size: 15px;
+    }
+    
+    .upcoming-event-item {
+        padding: 6px;
+    }
+    
+    .upcoming-event-grid {
+        grid-template-columns: 28px 1fr;
+        gap: 2px 6px;
+    }
+    
+    .upcoming-event-icon i {
+        font-size: 16px;
+    }
+    
+    .upcoming-event-time {
+        font-size: 11px;
+    }
+    
+    .upcoming-event-title {
+        font-size: 13px;
+    }
+}
