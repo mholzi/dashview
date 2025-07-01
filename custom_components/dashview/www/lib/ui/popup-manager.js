@@ -148,14 +148,45 @@ export class PopupManager {
       const entityMatch = activePopup.id.match(/^entity-(.+)-detail-popup$/);
       const entityId = entityMatch ? entityMatch[1] : null;
       this._emitLifecycleEvent('popup:closing', { popupId: activePopup.id, entityId });
+      
+      // Cleanup accessibility features
+      this._cleanupPopupAccessibility(activePopup);
     }
     
     window.location.hash = '#home';
+    
+    // Restore focus to previously focused element
+    if (this._previouslyFocusedElement) {
+      try {
+        this._previouslyFocusedElement.focus();
+      } catch (error) {
+        // Element might not be focusable anymore, ignore
+        console.debug('[PopupManager] Could not restore focus:', error);
+      }
+      this._previouslyFocusedElement = null;
+    }
     
     // Emit closed event after hash change
     setTimeout(() => {
       this._emitLifecycleEvent('popup:closed', {});
     }, 100);
+  }
+  
+  /**
+   * Cleanup accessibility features when popup closes
+   * @param {HTMLElement} popup - The popup element
+   */
+  _cleanupPopupAccessibility(popup) {
+    // Remove keyboard event listeners
+    if (popup._keyDownHandler) {
+      popup.removeEventListener('keydown', popup._keyDownHandler);
+      popup._keyDownHandler = null;
+    }
+    
+    // Clear focus trapping function
+    if (popup._getFocusableElements) {
+      popup._getFocusableElements = null;
+    }
   }
 
   reinitializePopupContent(popup) {
@@ -410,6 +441,9 @@ export class PopupManager {
   async createEntityDetailPopup(entityId) {
     console.log('[PopupManager] Creating entity detail popup for:', entityId);
     
+    // Store currently focused element for restoration
+    this._previouslyFocusedElement = document.activeElement;
+    
     // Emit popup:created event
     this._emitLifecycleEvent('popup:created', { entityId });
     
@@ -427,11 +461,8 @@ export class PopupManager {
       popup.className = 'popup entity-detail-popup';
       popup.innerHTML = containerHTML;
       
-      // Setup close button
-      const closeBtn = popup.querySelector('#entity-popup-close');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', () => this.closePopup());
-      }
+      // Setup accessibility and interactions
+      this._setupPopupAccessibility(popup, entityId);
       
       // Add popup to shadow DOM
       this._shadowRoot.appendChild(popup);
@@ -445,6 +476,141 @@ export class PopupManager {
       console.error('[PopupManager] Error creating entity detail popup:', error);
       this._emitLifecycleEvent('popup:content-error', { entityId, error });
       return null;
+    }
+  }
+  
+  /**
+   * Setup accessibility features for entity detail popup
+   * @param {HTMLElement} popup - The popup element
+   * @param {string} entityId - The entity ID
+   */
+  _setupPopupAccessibility(popup, entityId) {
+    const container = popup.querySelector('.entity-detail-popup-container');
+    const closeBtn = popup.querySelector('#entity-popup-close');
+    const overlay = popup.querySelector('.entity-detail-popup-overlay');
+    
+    // Setup close button
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.closePopup());
+    }
+    
+    // Setup overlay click to close
+    if (overlay) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          this.closePopup();
+        }
+      });
+    }
+    
+    // Setup keyboard navigation
+    this._setupKeyboardNavigation(popup);
+    
+    // Setup focus trapping
+    this._setupFocusTrapping(popup);
+    
+    // Set initial focus
+    setTimeout(() => {
+      this._setInitialFocus(popup);
+    }, 100);
+  }
+  
+  /**
+   * Setup keyboard navigation for popup
+   * @param {HTMLElement} popup - The popup element
+   */
+  _setupKeyboardNavigation(popup) {
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case 'Escape':
+          e.preventDefault();
+          this.closePopup();
+          break;
+        case 'Tab':
+          this._handleTabNavigation(e, popup);
+          break;
+      }
+    };
+    
+    popup.addEventListener('keydown', handleKeyDown);
+    
+    // Store reference for cleanup
+    popup._keyDownHandler = handleKeyDown;
+  }
+  
+  /**
+   * Setup focus trapping within popup
+   * @param {HTMLElement} popup - The popup element
+   */
+  _setupFocusTrapping(popup) {
+    const getFocusableElements = () => {
+      const focusableSelectors = [
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        'a[href]',
+        '[tabindex]:not([tabindex="-1"])'
+      ];
+      
+      return popup.querySelectorAll(focusableSelectors.join(','));
+    };
+    
+    popup._getFocusableElements = getFocusableElements;
+  }
+  
+  /**
+   * Handle tab navigation within popup
+   * @param {KeyboardEvent} e - The keyboard event
+   * @param {HTMLElement} popup - The popup element
+   */
+  _handleTabNavigation(e, popup) {
+    const focusableElements = popup._getFocusableElements();
+    if (focusableElements.length === 0) return;
+    
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    
+    if (e.shiftKey) {
+      // Shift + Tab
+      if (document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      // Tab
+      if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  }
+  
+  /**
+   * Set initial focus in popup
+   * @param {HTMLElement} popup - The popup element
+   */
+  _setInitialFocus(popup) {
+    // Try to focus the first interactive element, fallback to container
+    const focusableElements = popup._getFocusableElements();
+    
+    if (focusableElements.length > 0) {
+      // Skip close button for better UX, focus first content element
+      const contentElements = Array.from(focusableElements).filter(el => 
+        !el.classList.contains('entity-detail-popup-close')
+      );
+      
+      if (contentElements.length > 0) {
+        contentElements[0].focus();
+      } else {
+        focusableElements[0].focus();
+      }
+    } else {
+      // Focus the container itself
+      const container = popup.querySelector('.entity-detail-popup-container');
+      if (container) {
+        container.focus();
+      }
     }
   }
   
@@ -476,6 +642,12 @@ export class PopupManager {
     
     // Emit content loading event
     this._emitLifecycleEvent('popup:content-loading', { entityId });
+    
+    // Update ARIA busy state
+    const contentEl = popup.querySelector('#entity-popup-content');
+    if (contentEl) {
+      contentEl.setAttribute('aria-busy', 'false');
+    }
     
     // Use EntityDetailManager for content orchestration
     if (this._panel._entityDetailManager) {

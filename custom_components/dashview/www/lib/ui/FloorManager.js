@@ -383,12 +383,14 @@ export class FloorManager {
       },
       
       onLongTap: (element, event) => {
-        // Placeholder for future entity details popup functionality
+        // Open entity details popup on long-tap
         const entityId = element.dataset.entityId;
         if (entityId) {
           console.log('[FloorManager] Long-tap detected on entity:', entityId);
-          // TODO: Implement entity details popup in future issues
-          // For now, just log the event for testing purposes
+          // Trigger entity details popup
+          if (this._panel._popupManager) {
+            this._panel._popupManager.showEntityDetailPopup(entityId);
+          }
         }
       },
       
