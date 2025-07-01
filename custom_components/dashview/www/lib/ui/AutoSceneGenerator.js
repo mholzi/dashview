@@ -165,6 +165,14 @@ export class AutoSceneGenerator {
     }
 
     /**
+     * Check if global cover scene is enabled (public API)
+     * @returns {boolean}
+     */
+    isGlobalCoverSceneEnabled() {
+        return this._getGlobalCoverSceneEnabled();
+    }
+
+    /**
      * Set the global cover scene enabled status
      * @param {boolean} enabled - Whether to enable global cover scene
      * @returns {Promise<boolean>} Success status
