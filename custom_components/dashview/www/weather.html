@@ -28,6 +28,35 @@
         </div>
 </div>
 
+<div class="forecast-graph-container">
+    <div class="forecast-graph-header">
+        <h4>Vorhersage Trend</h4>
+        <div class="forecast-controls">
+            <div class="forecast-view-toggle">
+                <button class="forecast-toggle-btn active" data-view="hourly">Stündlich</button>
+                <button class="forecast-toggle-btn" data-view="daily">Täglich</button>
+            </div>
+            <div class="forecast-parameter-toggle">
+                <button class="parameter-btn active" data-param="temperature">Temp</button>
+                <button class="parameter-btn" data-param="precipitation">Regen</button>
+                <button class="parameter-btn" data-param="wind">Wind</button>
+            </div>
+        </div>
+    </div>
+    <div class="forecast-graph-content">
+        <canvas id="forecast-chart" width="400" height="200"></canvas>
+        <div class="forecast-loading" style="display: none;">
+            <i class="mdi mdi-loading mdi-spin"></i>
+            <p>Lade Vorhersagedaten...</p>
+        </div>
+        <div class="forecast-error" style="display: none;">
+            <i class="mdi mdi-alert-circle"></i>
+            <p>Fehler beim Laden der Vorhersagedaten</p>
+            <button class="forecast-retry-btn">Erneut versuchen</button>
+        </div>
+    </div>
+</div>
+
 <div class="daily-forecast-container">
     <div class="forecast-tabs">
         <button class="forecast-tab active" data-day="0">Heute</button>

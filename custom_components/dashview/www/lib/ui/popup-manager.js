@@ -149,6 +149,11 @@ export class PopupManager {
       const entityId = entityMatch ? entityMatch[1] : null;
       this._emitLifecycleEvent('popup:closing', { popupId: activePopup.id, entityId });
       
+      // Cleanup weather components if this is a weather popup
+      if (activePopup.id === 'weather-popup' && this._panel._weatherManager) {
+        this._panel._weatherManager.dispose();
+      }
+      
       // Cleanup accessibility features
       this._cleanupPopupAccessibility(activePopup);
     }
