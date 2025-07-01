@@ -62,17 +62,11 @@ export class CalendarManager {
             
             console.log('[DashView] CalendarManager: Fetching events for calendars:', linkedCalendars);
             
-            const response = await fetch(
-                `/api/dashview/config?type=calendar_events&entity_ids=${encodeURIComponent(entityIds)}&start_date=${encodeURIComponent(startDateString)}&end_date=${encodeURIComponent(endDateString)}`
+            // Use hass.callApi for proper authentication
+            const data = await this._hass.callApi(
+                'GET',
+                `dashview/config?type=calendar_events&entity_ids=${encodeURIComponent(entityIds)}&start_date=${encodeURIComponent(startDateString)}&end_date=${encodeURIComponent(endDateString)}`
             );
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('[DashView] CalendarManager: API Error:', response.status, errorText);
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
             
             // Handle backend errors
             if (data.errors && data.errors.length > 0) {
