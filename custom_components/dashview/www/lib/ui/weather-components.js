@@ -408,4 +408,75 @@ export class WeatherComponents {
         };
         return translations[condition] || condition;
     }
+
+    /**
+     * Render entity-specific weather data for popup context
+     * @param {HTMLElement} container - The popup container
+     * @param {string} entityId - The weather entity ID to render
+     */
+    async renderEntityWeather(container, entityId) {
+        console.log('[WeatherComponents] Rendering entity weather for popup:', entityId);
+        
+        if (!this._hass || !entityId) {
+            console.warn('[WeatherComponents] Cannot render entity weather: missing hass or entityId');
+            return;
+        }
+        
+        const entityState = this._hass.states[entityId];
+        if (!entityState) {
+            console.warn('[WeatherComponents] Weather entity not found:', entityId);
+            return;
+        }
+        
+        // Create entity-specific weather display
+        let html = '<div class="entity-weather-display">';
+        
+        // Current weather display
+        html += '<div class="weather-current-display">';
+        html += `<div class="weather-icon">`;
+        html += `<img src="/local/weather_icons/${entityState.state}.svg" width="96" height="96" alt="${entityState.state}">`;
+        html += `</div>`;
+        html += `<div class="weather-temperature">${Math.round(entityState.attributes.temperature || 0)}°C</div>`;
+        html += `<div class="weather-condition">${this._translateWeatherCondition(entityState.state)}</div>`;
+        html += '</div>';
+        
+        // Weather details
+        html += '<div class="weather-details">';
+        html += '<h4>Weather Details</h4>';
+        
+        const attributes = entityState.attributes || {};
+        const weatherDetails = [
+            { key: 'humidity', label: 'Luftfeuchtigkeit', unit: '%' },
+            { key: 'pressure', label: 'Luftdruck', unit: ' hPa' },
+            { key: 'wind_speed', label: 'Windgeschwindigkeit', unit: ' km/h' },
+            { key: 'wind_bearing', label: 'Windrichtung', unit: '°' },
+            { key: 'visibility', label: 'Sichtweite', unit: ' km' }
+        ];
+        
+        weatherDetails.forEach(detail => {
+            if (attributes[detail.key] !== undefined) {
+                html += `<div class="weather-detail-item">`;
+                html += `<span class="detail-label">${detail.label}:</span>`;
+                html += `<span class="detail-value">${attributes[detail.key]}${detail.unit}</span>`;
+                html += `</div>`;
+            }
+        });
+        
+        html += '</div>';
+        
+        // Forecast placeholder
+        html += '<div class="weather-forecast-preview">';
+        html += '<h4>Forecast Data</h4>';
+        html += '<div class="forecast-placeholder">';
+        html += '<p>Detailed weather forecast and historical data would be displayed here</p>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '</div>';
+        
+        container.innerHTML = html;
+        
+        // TODO: Implement detailed forecast data fetching and display
+        console.log('[WeatherComponents] Entity weather rendering complete for:', entityId);
+    }
 }

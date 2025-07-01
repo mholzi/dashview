@@ -477,7 +477,29 @@ export class PopupManager {
     // Emit content loading event
     this._emitLifecycleEvent('popup:content-loading', { entityId });
     
-    // Get appropriate content injector
+    // Use EntityDetailManager for content orchestration
+    if (this._panel._entityDetailManager) {
+      try {
+        await this._panel._entityDetailManager.populatePopupContent(popup, entityId);
+        this._emitLifecycleEvent('popup:content-loaded', { entityId });
+      } catch (error) {
+        console.error('[PopupManager] EntityDetailManager failed:', error);
+        // Fallback to generic content
+        await this._populateGenericContent(popup, entityId, entityState);
+      }
+    } else {
+      // Fallback to original logic if EntityDetailManager not available
+      await this._populateGenericContent(popup, entityId, entityState);
+    }
+  }
+  
+  /**
+   * Fallback method for generic content population
+   * @param {HTMLElement} popup - The popup element
+   * @param {string} entityId - The entity ID
+   * @param {Object} entityState - The entity state
+   */
+  async _populateGenericContent(popup, entityId, entityState) {
     const contentEl = popup.querySelector('#entity-popup-content');
     if (contentEl) {
       // Hide loading indicator

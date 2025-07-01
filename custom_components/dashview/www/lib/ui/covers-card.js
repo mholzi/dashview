@@ -79,6 +79,79 @@ export class CoversCard {
     }
 
     /**
+     * Initialize covers card for single-entity popup context
+     * @param {HTMLElement} container - The popup container
+     * @param {string} entityId - The single entity ID to control
+     */
+    initializeForPopup(container, entityId) {
+        console.log('[CoversCard] Initializing for popup with entity:', entityId);
+        
+        if (!this._hass || !entityId) {
+            console.warn('[CoversCard] Cannot initialize popup: missing hass or entityId');
+            return;
+        }
+        
+        const entityState = this._hass.states[entityId];
+        if (!entityState) {
+            console.warn('[CoversCard] Entity not found:', entityId);
+            return;
+        }
+        
+        // Find the cover row in the popup (should be created by strategy)
+        const coverRow = container.querySelector(`[data-entity-id="${entityId}"]`);
+        if (!coverRow) {
+            console.warn('[CoversCard] Cover row not found for entity:', entityId);
+            return;
+        }
+        
+        // Set up the cover name
+        const nameEl = coverRow.querySelector('.cover-name');
+        if (nameEl) {
+            nameEl.textContent = entityState.attributes.friendly_name || entityId;
+        }
+        
+        // Set up the slider for position control
+        const sliderEl = coverRow.querySelector('.cover-slider');
+        const labelEl = coverRow.querySelector('.cover-position-label');
+        
+        if (sliderEl && labelEl) {
+            // Add event listeners if not already attached
+            if (!sliderEl.listenerAttached) {
+                sliderEl.addEventListener('change', (e) => {
+                    this._hass.callService('cover', 'set_cover_position', { 
+                        entity_id: entityId, 
+                        position: e.target.value 
+                    });
+                });
+                sliderEl.addEventListener('input', (e) => {
+                    labelEl.textContent = `${e.target.value}%`;
+                });
+                sliderEl.listenerAttached = true;
+            }
+        }
+        
+        // Set up position buttons if present
+        const positionButtons = coverRow.querySelectorAll('.cover-position-buttons button');
+        positionButtons.forEach(button => {
+            if (!button.listenerAttached) {
+                button.addEventListener('click', () => {
+                    const position = button.dataset.position;
+                    this._hass.callService('cover', 'set_cover_position', { 
+                        entity_id: entityId, 
+                        position: position 
+                    });
+                });
+                button.listenerAttached = true;
+            }
+        });
+        
+        // Update initial state
+        this.update(container, entityId);
+        
+        console.log('[CoversCard] Popup initialization complete for:', entityId);
+    }
+
+    /**
      * Updates a single cover row and the main slider if applicable.
      * @param {HTMLElement} popup The popup element containing the card.
      * @param {string} entityId The specific cover entity that changed.

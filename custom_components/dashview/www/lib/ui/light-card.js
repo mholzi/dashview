@@ -53,6 +53,55 @@ export class LightsCard {
 
         this._updateCount(card, lightEntities);
     }
+
+    /**
+     * Initialize lights card for single-entity popup context
+     * @param {HTMLElement} container - The popup container
+     * @param {string} entityId - The single entity ID to control
+     */
+    initializeForPopup(container, entityId) {
+        console.log('[LightsCard] Initializing for popup with entity:', entityId);
+        
+        if (!this._hass || !entityId) {
+            console.warn('[LightsCard] Cannot initialize popup: missing hass or entityId');
+            return;
+        }
+        
+        const entityState = this._hass.states[entityId];
+        if (!entityState) {
+            console.warn('[LightsCard] Entity not found:', entityId);
+            return;
+        }
+        
+        // Find the light row in the popup (should be created by strategy)
+        const lightRow = container.querySelector(`[data-entity-id="${entityId}"]`);
+        if (!lightRow) {
+            console.warn('[LightsCard] Light row not found for entity:', entityId);
+            return;
+        }
+        
+        // Check if light is dimmable
+        const isDimmable = entityState.attributes?.supported_color_modes?.some(mode => 
+            ['brightness', 'color_temp', 'hs'].includes(mode));
+        
+        if (isDimmable) {
+            lightRow.classList.add('is-dimmable');
+            this._initDraggableSlider(lightRow, entityId, container, [entityId]);
+        } else {
+            // Non-dimmable lights are simple toggles
+            if (!lightRow.listenerAttached) {
+                lightRow.addEventListener('click', () => {
+                    this._toggleLight(entityId, lightRow, container, [entityId]);
+                });
+                lightRow.listenerAttached = true;
+            }
+        }
+        
+        // Update initial state
+        this.update(container, entityId);
+        
+        console.log('[LightsCard] Popup initialization complete for:', entityId);
+    }
     
     _toggleLight(entityId, row, card, lightEntities) {
         const currentState = row.getAttribute('state');

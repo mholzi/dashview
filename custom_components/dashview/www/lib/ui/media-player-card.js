@@ -33,7 +33,75 @@ export class MediaPlayerCard {
         mediaPlayerEntities.forEach(player => {
             this.update(player.entity);
         });
-    }    
+    }
+
+    initializeForPopup(container, entityId) {
+        console.log('[MediaPlayerCard] Initializing for popup with entity:', entityId);
+        
+        if (!this._hass || !entityId) {
+            console.warn('[MediaPlayerCard] Cannot initialize popup: missing hass or entityId');
+            return;
+        }
+        
+        const entityState = this._hass.states[entityId];
+        if (!entityState) {
+            console.warn('[MediaPlayerCard] Entity not found:', entityId);
+            return;
+        }
+        
+        // Find the media player container in the popup (should be created by strategy)
+        const mediaPlayerContainer = container.querySelector('.media-player-container');
+        if (!mediaPlayerContainer) {
+            console.warn('[MediaPlayerCard] Media player container not found for entity:', entityId);
+            return;
+        }
+        
+        // Generate HTML for single entity media player control
+        mediaPlayerContainer.innerHTML = this._generateSinglePlayerHTML(entityId);
+        
+        // Initialize controls for the single entity
+        this._initializeMediaPlayerControls(mediaPlayerContainer);
+        
+        // Update initial state
+        this.update(entityId);
+        
+        console.log('[MediaPlayerCard] Popup initialization complete for:', entityId);
+    }
+
+    _generateSinglePlayerHTML(entityId) {
+        const presets = this._config?.media_presets || [];
+        
+        return `
+            <div class="media-presets">
+              ${presets.map(preset => `
+                <button class="media-preset-button" data-content-id="${preset.content_id}">
+                  <span class="preset-name">${preset.name}</span>
+                </button>
+              `).join('')}
+            </div>
+            <div class="media-display" data-entity="${entityId}">
+                <div class="media-image"><img src="" alt="Media Cover" class="media-cover"></div>
+                <div class="media-info">
+                    <div class="media-title">Kein Titel</div>
+                    <div class="media-artist">Unbekannt</div>
+                </div>
+            </div>
+            <div class="media-controls" data-entity="${entityId}">
+                <button class="media-control-button" data-action="media_previous_track"><i class="mdi mdi-skip-previous"></i></button>
+                <button class="media-control-button play-pause" data-action="media_play_pause"><i class="mdi mdi-play"></i></button>
+                <button class="media-control-button" data-action="media_next_track"><i class="mdi mdi-skip-next"></i></button>
+            </div>
+            <div class="media-volume-control">
+                <div class="volume-row">
+                    <span class="volume-label">${this._hass.states[entityId]?.attributes.friendly_name || entityId}</span>
+                    <div class="volume-slider-container">
+                        <input type="range" class="volume-slider" data-entity="${entityId}" min="0" max="100" value="50">
+                    </div>
+                    <span class="volume-value">50%</span>
+                </div>
+            </div>`;
+    }
+    
     update(entityId) {
         const popups = this._shadowRoot.querySelectorAll('.popup.active');
         popups.forEach(popup => {

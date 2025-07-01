@@ -131,4 +131,56 @@ export class ThermostatCard {
                 <path d="${pathD}" class="graph-path" stroke="var(--gray800)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
             </svg>`;
     }
+
+    /**
+     * Render entity-specific thermostat data for popup context
+     * @param {HTMLElement} container - The popup container
+     * @param {string} entityId - The entity ID to render
+     */
+    async renderEntityThermostat(container, entityId) {
+        console.log('[ThermostatCard] Rendering entity thermostat for popup:', entityId);
+        
+        if (!this._hass || !entityId) {
+            console.warn('[ThermostatCard] Cannot render entity thermostat: missing hass or entityId');
+            return;
+        }
+        
+        const entityState = this._hass.states[entityId];
+        if (!entityState) {
+            console.warn('[ThermostatCard] Entity not found:', entityId);
+            return;
+        }
+        
+        // Determine if this is a temperature or humidity sensor
+        const unitOfMeasurement = entityState.attributes?.unit_of_measurement;
+        const isTemperature = unitOfMeasurement === '°C' || unitOfMeasurement === '°F';
+        const isHumidity = unitOfMeasurement === '%' && entityState.attributes?.device_class === 'humidity';
+        
+        // Create single-entity thermostat display
+        let html = '<div class="entity-thermostat-display">';
+        
+        // Current value display
+        html += '<div class="thermostat-current-value">';
+        html += `<span class="value">${entityState.state}</span>`;
+        html += `<span class="unit">${unitOfMeasurement || ''}</span>`;
+        html += '</div>';
+        
+        // Entity name
+        html += `<div class="thermostat-entity-name">${entityState.attributes.friendly_name || entityId}</div>`;
+        
+        // Historical graph placeholder
+        html += '<div class="thermostat-history">';
+        html += '<h4>Historical Data</h4>';
+        html += '<div class="graph-placeholder">';
+        html += '<p>Historical temperature/humidity graph would be displayed here</p>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '</div>';
+        
+        container.innerHTML = html;
+        
+        // TODO: Implement actual historical data fetching and graphing
+        console.log('[ThermostatCard] Entity thermostat rendering complete for:', entityId);
+    }
 }
