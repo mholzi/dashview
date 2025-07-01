@@ -140,8 +140,21 @@ export class SimpleYamlParser {
     const entityIds = new Set();
     
     const traverse = (obj) => {
-      if (typeof obj === 'string' && /^[a-z_]+\.[a-z0-9_]+$/.test(obj)) {
-        entityIds.add(obj);
+      if (typeof obj === 'string') {
+        // Extract entity IDs from regular strings
+        if (/^[a-z_]+\.[a-z0-9_]+$/.test(obj)) {
+          entityIds.add(obj);
+        }
+        // Extract entity IDs from template strings like {{ states('sensor.temperature') }}
+        const templateMatches = obj.match(/\{\{\s*states\(['"]([^'"]+)['"]\)\s*\}\}/g);
+        if (templateMatches) {
+          templateMatches.forEach(match => {
+            const entityMatch = match.match(/\{\{\s*states\(['"]([^'"]+)['"]\)\s*\}\}/);
+            if (entityMatch && entityMatch[1]) {
+              entityIds.add(entityMatch[1]);
+            }
+          });
+        }
       } else if (Array.isArray(obj)) {
         obj.forEach(traverse);
       } else if (obj && typeof obj === 'object') {
