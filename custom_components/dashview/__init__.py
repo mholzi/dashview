@@ -333,16 +333,28 @@ class DashViewConfigView(HomeAssistantView):
         end_date = request.query.get('end_date')
         
         if not entity_ids or not entity_ids[0]:
-            return web.json_response({"error": "entity_ids parameter is required"}, status=400)
+            return web.json_response({"error": "entity_ids parameter is required", "error_type": "missing_parameters"}, status=400)
         
         if not start_date or not end_date:
-            return web.json_response({"error": "start_date and end_date parameters are required"}, status=400)
+            return web.json_response({"error": "start_date and end_date parameters are required", "error_type": "missing_parameters"}, status=400)
         
         all_events = []
+        errors = []
         
         for entity_id in entity_ids:
             entity_id = entity_id.strip()
             if not entity_id:
+                continue
+                
+            # Validate that the calendar entity exists
+            if not self._hass.states.get(entity_id):
+                error_msg = f"Calendar entity '{entity_id}' not found in Home Assistant"
+                _LOGGER.warning(f"[DashView] Calendar: {error_msg}")
+                errors.append({
+                    "entity_id": entity_id,
+                    "error": error_msg,
+                    "error_type": "entity_not_found"
+                })
                 continue
                 
             try:
@@ -352,6 +364,8 @@ class DashViewConfigView(HomeAssistantView):
                     "start_date_time": start_date,
                     "end_date_time": end_date,
                 }
+                
+                _LOGGER.debug(f"[DashView] Calendar: Fetching events for {entity_id} from {start_date} to {end_date}")
                 
                 response = await self._hass.services.async_call(
                     "calendar",
@@ -364,18 +378,34 @@ class DashViewConfigView(HomeAssistantView):
                 # Extract events from the response
                 if entity_id in response:
                     events = response[entity_id].get("events", [])
+                    _LOGGER.debug(f"[DashView] Calendar: Found {len(events)} events for {entity_id}")
                     for event in events:
                         event["calendar_entity_id"] = entity_id
                         all_events.append(event)
+                else:
+                    _LOGGER.warning(f"[DashView] Calendar: No response data for entity {entity_id}")
                         
             except Exception as e:
-                _LOGGER.error(f"Error fetching events for {entity_id}: {e}")
+                error_msg = f"Error fetching events for {entity_id}: {str(e)}"
+                _LOGGER.error(f"[DashView] Calendar: {error_msg}")
+                errors.append({
+                    "entity_id": entity_id,
+                    "error": error_msg,
+                    "error_type": "service_call_failed"
+                })
                 continue
         
         # Sort events by start time
         all_events.sort(key=lambda x: x.get("start", ""))
         
-        return web.json_response({"events": all_events})
+        response_data = {
+            "events": all_events,
+            "errors": errors,
+            "total_events": len(all_events),
+            "entity_count": len([e for e in entity_ids if e.strip()])
+        }
+        
+        return web.json_response(response_data)
 
     async def post(self, request: web.Request) -> web.Response:
         """Handle POST requests to save configuration."""

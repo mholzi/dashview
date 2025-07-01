@@ -60,23 +60,36 @@ export class CalendarManager {
             const startDateString = startDate.toISOString();
             const endDateString = endDate.toISOString();
             
+            console.log('[DashView] CalendarManager: Fetching events for calendars:', linkedCalendars);
+            
             const response = await fetch(
                 `/api/dashview/config?type=calendar_events&entity_ids=${encodeURIComponent(entityIds)}&start_date=${encodeURIComponent(startDateString)}&end_date=${encodeURIComponent(endDateString)}`
             );
             
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[DashView] CalendarManager: API Error:', response.status, errorText);
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
+            
+            // Handle backend errors
+            if (data.errors && data.errors.length > 0) {
+                console.warn('[DashView] CalendarManager: Backend reported errors:', data.errors);
+                this._showDetailedError(popupElement, data.errors);
+                return;
+            }
+            
             this._events = data.events || [];
+            console.log('[DashView] CalendarManager: Successfully loaded', this._events.length, 'events');
             
             // Render events
             this._renderEvents(popupElement);
             
         } catch (error) {
             console.error('[DashView] CalendarManager: Error fetching events:', error);
-            this._showError(popupElement, 'Failed to load calendar events');
+            this._showError(popupElement, 'Failed to load calendar events', error.message);
         } finally {
             this._isLoading = false;
         }
@@ -109,17 +122,71 @@ export class CalendarManager {
         }
     }
 
-    _showError(popupElement, message) {
+    _showError(popupElement, message, details = null) {
         const contentDiv = popupElement.querySelector('.calendar-content') || 
                           popupElement.querySelector('.popup-content');
         if (contentDiv) {
-            contentDiv.innerHTML = `
+            let errorHtml = `
                 <div class="calendar-error">
                     <i class="mdi mdi-alert-circle-outline"></i>
                     <p>${message}</p>
+            `;
+            
+            if (details) {
+                errorHtml += `<p class="calendar-error-details">${this._escapeHtml(details)}</p>`;
+            }
+            
+            errorHtml += `
                     <button class="calendar-retry-button">Retry</button>
                 </div>
             `;
+            
+            contentDiv.innerHTML = errorHtml;
+            
+            // Add retry functionality
+            const retryButton = contentDiv.querySelector('.calendar-retry-button');
+            if (retryButton) {
+                retryButton.addEventListener('click', () => {
+                    this.update(popupElement);
+                });
+            }
+        }
+    }
+
+    _showDetailedError(popupElement, errors) {
+        const contentDiv = popupElement.querySelector('.calendar-content') || 
+                          popupElement.querySelector('.popup-content');
+        if (contentDiv) {
+            let errorMessages = [];
+            
+            errors.forEach(error => {
+                switch (error.error_type) {
+                    case 'entity_not_found':
+                        errorMessages.push(`Calendar "${error.entity_id}" not found`);
+                        break;
+                    case 'service_call_failed':
+                        errorMessages.push(`Failed to load "${error.entity_id}"`);
+                        break;
+                    default:
+                        errorMessages.push(`Error: ${error.error}`);
+                }
+            });
+            
+            const errorHtml = `
+                <div class="calendar-error">
+                    <i class="mdi mdi-alert-circle-outline"></i>
+                    <p>Calendar Configuration Error</p>
+                    <div class="calendar-error-list">
+                        ${errorMessages.map(msg => `<div class="calendar-error-item">• ${this._escapeHtml(msg)}</div>`).join('')}
+                    </div>
+                    <p class="calendar-error-help">
+                        Go to Admin → Calendar to check your calendar configuration.
+                    </p>
+                    <button class="calendar-retry-button">Retry</button>
+                </div>
+            `;
+            
+            contentDiv.innerHTML = errorHtml;
             
             // Add retry functionality
             const retryButton = contentDiv.querySelector('.calendar-retry-button');

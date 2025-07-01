@@ -86,23 +86,36 @@ export class UpcomingEventsManager {
             const startDateString = startDate.toISOString();
             const endDateString = endDate.toISOString();
             
+            console.log('[DashView] UpcomingEventsManager: Fetching events for calendars:', linkedCalendars);
+            
             const response = await fetch(
                 `/api/dashview/config?type=calendar_events&entity_ids=${encodeURIComponent(entityIds)}&start_date=${encodeURIComponent(startDateString)}&end_date=${encodeURIComponent(endDateString)}`
             );
             
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[DashView] UpcomingEventsManager: API Error:', response.status, errorText);
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
+            
+            // Handle backend errors
+            if (data.errors && data.errors.length > 0) {
+                console.warn('[DashView] UpcomingEventsManager: Backend reported errors:', data.errors);
+                this._showDetailedError(cardElement, data.errors);
+                return;
+            }
+            
             this._events = data.events || [];
+            console.log('[DashView] UpcomingEventsManager: Successfully loaded', this._events.length, 'events');
             
             // Render events
             this._renderEvents(cardElement);
             
         } catch (error) {
             console.error('[DashView] UpcomingEventsManager: Error fetching events:', error);
-            this._showError(cardElement, 'Fehler beim Laden der Termine');
+            this._showError(cardElement, 'Fehler beim Laden der Termine', error.message);
         } finally {
             this._isLoading = false;
         }
@@ -120,15 +133,77 @@ export class UpcomingEventsManager {
         }
     }
 
-    _showError(cardElement, message) {
+    _showError(cardElement, message, details = null) {
         const contentDiv = cardElement.querySelector('.upcoming-events-content');
         if (contentDiv) {
-            contentDiv.innerHTML = `
+            let errorHtml = `
                 <div class="upcoming-events-error">
                     <i class="mdi mdi-alert-circle-outline"></i>
                     <div class="upcoming-events-error-text">${message}</div>
+            `;
+            
+            if (details) {
+                errorHtml += `<div class="upcoming-events-error-details">${this._escapeHtml(details)}</div>`;
+            }
+            
+            errorHtml += `
+                    <button class="upcoming-events-retry-button">Erneut versuchen</button>
                 </div>
             `;
+            
+            contentDiv.innerHTML = errorHtml;
+            
+            // Add retry functionality
+            const retryButton = contentDiv.querySelector('.upcoming-events-retry-button');
+            if (retryButton) {
+                retryButton.addEventListener('click', () => {
+                    this.update();
+                });
+            }
+        }
+    }
+
+    _showDetailedError(cardElement, errors) {
+        const contentDiv = cardElement.querySelector('.upcoming-events-content');
+        if (contentDiv) {
+            let errorMessages = [];
+            
+            errors.forEach(error => {
+                switch (error.error_type) {
+                    case 'entity_not_found':
+                        errorMessages.push(`Kalender "${error.entity_id}" nicht gefunden`);
+                        break;
+                    case 'service_call_failed':
+                        errorMessages.push(`Fehler beim Laden von "${error.entity_id}"`);
+                        break;
+                    default:
+                        errorMessages.push(`Fehler: ${error.error}`);
+                }
+            });
+            
+            const errorHtml = `
+                <div class="upcoming-events-error">
+                    <i class="mdi mdi-alert-circle-outline"></i>
+                    <div class="upcoming-events-error-text">Kalender-Konfigurationsfehler</div>
+                    <div class="upcoming-events-error-list">
+                        ${errorMessages.map(msg => `<div class="upcoming-events-error-item">• ${this._escapeHtml(msg)}</div>`).join('')}
+                    </div>
+                    <div class="upcoming-events-error-help">
+                        Gehen Sie zu Admin → Kalender, um die Kalender-Konfiguration zu überprüfen.
+                    </div>
+                    <button class="upcoming-events-retry-button">Erneut versuchen</button>
+                </div>
+            `;
+            
+            contentDiv.innerHTML = errorHtml;
+            
+            // Add retry functionality
+            const retryButton = contentDiv.querySelector('.upcoming-events-retry-button');
+            if (retryButton) {
+                retryButton.addEventListener('click', () => {
+                    this.update();
+                });
+            }
         }
     }
 
