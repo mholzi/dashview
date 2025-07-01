@@ -15,6 +15,7 @@ import { ThermostatCard } from './lib/ui/thermostat-card.js';
 import { MediaPlayerCard } from './lib/ui/media-player-card.js';
 import { SceneManager } from './lib/ui/SceneManager.js';
 import { AutoSceneGenerator } from './lib/ui/AutoSceneGenerator.js';
+import { CalendarManager } from './lib/ui/CalendarManager.js';
 import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
 
 class DashviewPanel extends HTMLElement {
@@ -84,6 +85,12 @@ class DashviewPanel extends HTMLElement {
         if (roomConfig?.header_entities?.some(e => ['hoover', 'mower', 'other_door'].includes(e.entity_type))) {
           this._initializeOtherEntitiesCard(popup, roomKey, roomConfig);
         }
+      },
+      '.calendar-content': (el) => {
+        const popup = el.closest('.popup');
+        if (popup && popup.id === 'calendar-popup') {
+          this._calendarManager.update(popup);
+        }
       }
     };
   }
@@ -112,6 +119,7 @@ class DashviewPanel extends HTMLElement {
     if (this._lightsManager) this._lightsManager.setHass(hass);
     if (this._thermostatManager) this._thermostatManager.setHass(hass);
     if (this._autoSceneGenerator) this._autoSceneGenerator.setHass(hass);
+    if (this._calendarManager) this._calendarManager.setHass(hass);
 
     if (this._stateManager) {
         this._stateManager.handleHassUpdate();
@@ -171,6 +179,7 @@ class DashviewPanel extends HTMLElement {
     this._floorManager = new FloorManager(this);
     this._sceneManager = new SceneManager(this);
     this._autoSceneGenerator = new AutoSceneGenerator(this);
+    this._calendarManager = new CalendarManager(this);
 
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
   }
@@ -238,6 +247,8 @@ class DashviewPanel extends HTMLElement {
       this._weatherManager.update();
     } else if (popupId === 'security-popup' && (entityDomain === 'binary_sensor' || entityDomain === 'alarm_control_panel')) {
       this._securityManager.update();
+    } else if (popupId === 'calendar-popup' && entityDomain === 'calendar') {
+      this._calendarManager.update(activePopup);
     }
   }
 

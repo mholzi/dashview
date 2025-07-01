@@ -195,6 +195,9 @@ export class PopupManager {
     if (popup.id === 'weather-popup') {
         this._panel._weatherManager.update();
     }
+    if (popup.id === 'calendar-popup') {
+        this._panel._calendarManager.update(popup);
+    }
     
     // Handle room popup entity refresh
     const roomKey = popup.id.replace('-popup', '');
