@@ -67,13 +67,20 @@ export class AdminManager {
     };
 
     if (loadActionMap[targetId]) {
-      setTimeout(() => loadActionMap[targetId](), 50);
+      setTimeout(() => {
+        loadActionMap[targetId]();
+        // Update Configuration Summary after loading any tab
+        setTimeout(async () => await this._updateAdminSummary(), 100);
+      }, 50);
     }
   }
 
   initializeAdminEventListeners() {
     // Initialize tooltips for all elements with data-tooltip attributes
     this._initializeTooltips();
+    
+    // Initialize the Configuration Summary on first load
+    setTimeout(async () => await this._updateAdminSummary(), 200);
     
     this._shadowRoot.addEventListener('click', (e) => {
         const moveUpBtn = e.target.closest('.floor-move-up-button');
@@ -370,7 +377,7 @@ export class AdminManager {
         this._adminLocalState.houseConfig = houseConfig || { rooms: {}, floors: {} };
         textarea.value = JSON.stringify(this._adminLocalState.houseConfig, null, 2);
         this._setStatusMessage(statusEl, '✓ Loaded', 'success');
-        this._updateAdminSummary();
+        await this._updateAdminSummary();
     } catch (e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
     }
@@ -386,7 +393,7 @@ export class AdminManager {
         this._panel._houseConfig = configData;
         this._adminLocalState.houseConfig = configData;
         this._setStatusMessage(statusEl, '✓ Saved!', 'success');
-        this._updateAdminSummary();
+        await this._updateAdminSummary();
     } catch (e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
     }
@@ -1170,25 +1177,62 @@ async saveMediaPlayerPresets() {
   }
 }
 
-  _updateAdminSummary() {
+  async _updateAdminSummary() {
     const container = this._shadowRoot.getElementById('config-summary-container');
     if (!container) return;
+    
+    // If houseConfig is not loaded, fetch it
+    if (!this._adminLocalState.houseConfig) {
+      try {
+        container.innerHTML = '<p>Loading configuration summary...</p>';
+        this._adminLocalState.houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house') || {};
+      } catch (error) {
+        console.warn('[DashView] Could not load house config for summary:', error);
+        container.innerHTML = '<p>Unable to load configuration data.</p>';
+        return;
+      }
+    }
+    
     const houseConfig = this._adminLocalState.houseConfig || {};
     const floors = houseConfig.floors || {};
-    const rooms = houseConfig.rooms || {}; // This line is correct in your file
+    const rooms = houseConfig.rooms || {};
     const stats = { Floors: Object.keys(floors).length, Rooms: Object.keys(rooms).length };
     
     let lightCount = 0, coverCount = 0, mediaPlayerCount = 0, headerEntityCount = 0;
+    let motionSensorCount = 0, windowSensorCount = 0, temperatureSensorCount = 0;
+    let sceneCount = 0, customCardCount = 0, mediaPresetCount = 0;
+    let calendarCount = 0, personCount = 0, garbageSensorCount = 0;
+    
     Object.values(rooms).forEach(room => {
         lightCount += room.lights?.length || 0;
         coverCount += room.covers?.length || 0;
         mediaPlayerCount += room.media_players?.length || 0;
         headerEntityCount += room.header_entities?.length || 0;
+        motionSensorCount += room.motion_sensors?.length || 0;
+        windowSensorCount += room.window_sensors?.length || 0;
+        temperatureSensorCount += room.temperatur_sensors?.length || 0;
     });
+    
+    sceneCount = houseConfig.scenes?.length || 0;
+    customCardCount = Object.keys(houseConfig.custom_cards || {}).length;
+    mediaPresetCount = houseConfig.media_presets?.length || 0;
+    calendarCount = houseConfig.linked_calendars?.length || 0;
+    personCount = Object.keys(houseConfig.persons || {}).length;
+    garbageSensorCount = houseConfig.garbage_sensors?.length || 0;
+    
     stats['Lights'] = lightCount;
     stats['Covers'] = coverCount;
     stats['Media Players'] = mediaPlayerCount;
     stats['Header Entities'] = headerEntityCount;
+    stats['Motion Sensors'] = motionSensorCount;
+    stats['Window Sensors'] = windowSensorCount;
+    stats['Temperature Sensors'] = temperatureSensorCount;
+    stats['Scenes'] = sceneCount;
+    stats['Custom Cards'] = customCardCount;
+    stats['Media Presets'] = mediaPresetCount;
+    stats['Calendars'] = calendarCount;
+    stats['Persons'] = personCount;
+    stats['Garbage Sensors'] = garbageSensorCount;
   
     let summaryHTML = '';
     Object.entries(stats).forEach(([name, count]) => {
@@ -2120,13 +2164,20 @@ async saveMediaPlayerPresets() {
     let html = '';
 
     Object.entries(customCards).forEach(([cardId, cardData]) => {
+      const isVisible = cardData.visible !== false; // Default to true for backward compatibility
+      const visibilityIcon = isVisible ? 'eye' : 'eye-off';
+      const visibilityLabel = isVisible ? 'Visible' : 'Hidden';
+      
       html += `
         <div class="entity-list-item">
           <div class="entity-info">
             <div class="entity-name">${cardData.name}</div>
-            <div class="entity-details">ID: ${cardId}</div>
+            <div class="entity-details">ID: ${cardId} • ${visibilityLabel}</div>
           </div>
           <div class="entity-actions">
+            <button class="action-button" onclick="window.dashviewAdmin.toggleCustomCardVisibility('${cardId}')" title="Toggle visibility">
+              <i class="mdi mdi-${visibilityIcon}"></i>
+            </button>
             <button class="action-button" onclick="window.dashviewAdmin.editCustomCard('${cardId}')">Edit</button>
             <button class="action-button" onclick="window.dashviewAdmin.removeCustomCard('${cardId}')">Remove</button>
           </div>
