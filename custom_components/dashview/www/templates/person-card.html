@@ -1,0 +1,47 @@
+<!-- person-card.html -->
+<!-- Person card template for main dashboard display -->
+<div class="person-card" data-entity-id="{{entity_id}}" data-hash="#entity-details-{{entity_id}}">
+    <div class="person-card-header">
+        <div class="person-avatar">
+            <i class="mdi mdi-account person-avatar-icon"></i>
+        </div>
+        <div class="person-info">
+            <div class="person-name">{{friendly_name}}</div>
+            <div class="person-location">{{location_display}}</div>
+        </div>
+        <div class="person-status-badge {{state_class}}">
+            <i class="mdi {{state_icon}}"></i>
+            <span>{{state_display}}</span>
+        </div>
+    </div>
+    
+    <div class="person-card-body">
+        <div class="person-activity">
+            <div class="person-activity-item">
+                <i class="mdi mdi-clock-outline"></i>
+                <span class="person-last-seen">{{last_seen_display}}</span>
+            </div>
+            <div class="person-activity-item" style="{{battery_visibility}}">
+                <i class="mdi mdi-battery" style="color: {{battery_color}}"></i>
+                <span class="person-battery">{{battery_level}}%</span>
+            </div>
+        </div>
+        
+        <div class="person-quick-actions">
+            <button class="person-quick-action-btn person-presence-toggle" 
+                    data-action="toggle-presence" 
+                    data-person-id="{{entity_id}}"
+                    data-current-state="{{state}}"
+                    title="Toggle {{toggle_action}}">
+                <i class="mdi {{toggle_icon}}"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="person-card-footer" style="{{activity_visibility}}">
+        <div class="person-current-activity">
+            <i class="mdi mdi-calendar-clock"></i>
+            <span class="person-activity-text">{{current_activity}}</span>
+        </div>
+    </div>
+</div>

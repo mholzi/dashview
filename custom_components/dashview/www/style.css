@@ -4436,3 +4436,804 @@ body.popup-open, :host(.popup-open) {
         margin-bottom: 15px;
     }
 }
+
+/* Person Detail Popup Styles */
+.person-detail-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.person-section {
+    background: var(--card-bg);
+    border: 1px solid var(--separator-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.person-section:last-child {
+    margin-bottom: 0;
+}
+
+.person-section h4 {
+    margin: 0 0 16px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.person-section h4 i {
+    font-size: 1.2rem;
+    color: var(--accent-color);
+}
+
+/* Person Status Section */
+.person-status-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: white;
+    margin-bottom: 20px;
+    border: none;
+}
+
+.person-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.person-state-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.person-state-badge.home {
+    background: var(--green);
+    color: var(--gray800);
+    border-color: transparent;
+}
+
+.person-state-badge.away,
+.person-state-badge.not_home {
+    background: var(--orange);
+    color: var(--gray800);
+    border-color: transparent;
+}
+
+.person-state-badge.unknown {
+    background: var(--gray400);
+    color: var(--gray000);
+    border-color: transparent;
+}
+
+.person-last-updated {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+/* Location Section */
+.person-location-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.person-current-location {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--button-bg);
+    border-radius: 8px;
+    border: 1px solid var(--separator-color);
+}
+
+.location-name {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.location-time {
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+}
+
+/* Sensors Section */
+.person-sensors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.person-sensor-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--button-bg);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.person-sensor-card:hover {
+    background: var(--button-hover-bg);
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.sensor-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    font-size: 1.2rem;
+}
+
+.sensor-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sensor-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.sensor-name {
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+}
+
+/* Calendar Section */
+.person-current-event {
+    padding: 16px;
+    background: var(--blue);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    color: var(--gray800);
+}
+
+.current-event-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    opacity: 0.8;
+}
+
+.current-event-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.current-event-time {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.person-upcoming-events h5 {
+    margin: 0 0 12px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.person-upcoming-event {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--button-bg);
+    border: 1px solid var(--separator-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.person-upcoming-event:last-child {
+    margin-bottom: 0;
+}
+
+.upcoming-event-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.upcoming-event-time {
+    font-size: 0.8rem;
+    color: var(--secondary-text-color);
+}
+
+/* Actions Section */
+.person-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.person-action-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 16px;
+    background: var(--button-bg);
+    border: 1px solid var(--separator-color);
+    border-radius: 12px;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 80px;
+}
+
+.person-action-button:hover {
+    background: var(--button-hover-bg);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.person-action-button:active {
+    transform: translateY(0);
+}
+
+.person-action-button i {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+}
+
+.person-home-away-toggle {
+    background: var(--green);
+    color: var(--gray800);
+    border-color: transparent;
+}
+
+.person-home-away-toggle:hover {
+    background: var(--blue);
+    color: white;
+}
+
+.person-home-away-toggle i {
+    color: currentColor;
+}
+
+.person-custom-mode {
+    background: var(--purple);
+    color: var(--gray800);
+    border-color: transparent;
+}
+
+.person-custom-mode:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.person-custom-mode i {
+    color: currentColor;
+}
+
+/* Error and Loading States */
+.person-error-state,
+.person-not-configured {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-color);
+}
+
+.person-error-state i,
+.person-not-configured i {
+    font-size: 3rem;
+    color: var(--error-color);
+    margin-bottom: 16px;
+    display: block;
+}
+
+.person-error-state h3,
+.person-not-configured h3 {
+    margin: 0 0 12px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.person-error-state p,
+.person-not-configured p {
+    margin: 8px 0;
+    color: var(--secondary-text-color);
+    line-height: 1.5;
+}
+
+.person-location-loading,
+.person-sensors-loading,
+.person-calendar-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+}
+
+.person-location-loading i,
+.person-sensors-loading i,
+.person-calendar-loading i {
+    font-size: 1.2rem;
+    animation: spin 1s linear infinite;
+}
+
+/* Updated Person Button Styles */
+.person-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.person-button:hover {
+    background: var(--button-hover-bg);
+    transform: translateY(-2px);
+}
+
+.person-button .image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.person-icon {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-bottom: 4px;
+}
+
+.person-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-color);
+    text-align: center;
+}
+
+.person-state {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 2px;
+}
+
+.person-state.home {
+    background: var(--green);
+    color: var(--gray800);
+}
+
+.person-state.away,
+.person-state.not_home {
+    background: var(--orange);
+    color: var(--gray800);
+}
+
+.person-state.unknown {
+    background: var(--gray400);
+    color: var(--gray000);
+}
+
+/* Responsive Person Popup */
+@media (max-width: 768px) {
+    .person-status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .person-sensors-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .person-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .person-current-location {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .person-section {
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .person-sensor-card {
+        padding: 12px;
+    }
+    
+    .person-action-button {
+        padding: 16px 12px;
+        min-height: 70px;
+    }
+}
+
+/* Person Card Styles for Dashboard Integration */
+.person-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+    padding: 0 20px;
+}
+
+.person-card {
+    background: var(--card-bg);
+    border: 1px solid var(--separator-color);
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.person-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--accent-color);
+}
+
+.person-card:active {
+    transform: translateY(0);
+}
+
+/* Person Card Header */
+.person-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.person-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--button-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.person-avatar-icon {
+    font-size: 24px;
+    color: var(--accent-color);
+}
+
+.person-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.person-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.person-location {
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.person-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.person-status-badge.home {
+    background: var(--green);
+    color: var(--gray800);
+}
+
+.person-status-badge.away,
+.person-status-badge.not_home {
+    background: var(--orange);
+    color: var(--gray800);
+}
+
+.person-status-badge.unknown {
+    background: var(--gray400);
+    color: var(--gray000);
+}
+
+.person-status-badge i {
+    font-size: 0.9rem;
+}
+
+/* Person Card Body */
+.person-card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.person-activity {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.person-activity-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--secondary-text-color);
+}
+
+.person-activity-item i {
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+}
+
+.person-last-seen,
+.person-battery {
+    white-space: nowrap;
+}
+
+.person-quick-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.person-quick-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--button-bg);
+    border: 1px solid var(--separator-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.person-quick-action-btn:hover {
+    background: var(--button-hover-bg);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.person-quick-action-btn:active {
+    transform: scale(0.95);
+}
+
+.person-presence-toggle[data-current-state="home"] {
+    background: var(--green);
+    color: var(--gray800);
+    border-color: transparent;
+}
+
+.person-presence-toggle[data-current-state="away"],
+.person-presence-toggle[data-current-state="not_home"] {
+    background: var(--orange);
+    color: var(--gray800);
+    border-color: transparent;
+}
+
+/* Person Card Footer */
+.person-card-footer {
+    border-top: 1px solid var(--separator-color);
+    padding-top: 12px;
+    margin-top: 8px;
+}
+
+.person-current-activity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-color);
+}
+
+.person-current-activity i {
+    color: var(--accent-color);
+    font-size: 0.9rem;
+}
+
+.person-activity-text {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Person Cards Grid Layout */
+.floor-content .person-cards-container {
+    margin: 0 0 20px 0;
+    padding: 0;
+}
+
+.person-cards-section {
+    margin-bottom: 24px;
+}
+
+.person-cards-section h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.person-cards-section h3 i {
+    color: var(--accent-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .person-cards-container {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 0 16px;
+    }
+    
+    .person-card {
+        padding: 14px;
+    }
+    
+    .person-card-header {
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .person-avatar {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .person-avatar-icon {
+        font-size: 20px;
+    }
+    
+    .person-name {
+        font-size: 0.95rem;
+    }
+    
+    .person-location {
+        font-size: 0.8rem;
+    }
+    
+    .person-status-badge {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .person-cards-container {
+        gap: 10px;
+        padding: 0 12px;
+    }
+    
+    .person-card {
+        padding: 12px;
+    }
+    
+    .person-card-header {
+        gap: 8px;
+    }
+    
+    .person-avatar {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .person-avatar-icon {
+        font-size: 18px;
+    }
+    
+    .person-quick-action-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .person-activity-item {
+        font-size: 0.75rem;
+    }
+}
+
+/* Loading and Error States */
+.person-cards-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 40px 20px;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+}
+
+.person-cards-loading i {
+    font-size: 1.2rem;
+    animation: spin 1s linear infinite;
+}
+
+.person-cards-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--secondary-text-color);
+}
+
+.person-cards-empty i {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.person-cards-empty h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.person-cards-empty p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
