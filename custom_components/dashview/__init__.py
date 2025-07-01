@@ -206,6 +206,10 @@ class DashViewConfigView(HomeAssistantView):
             ]
             all_calendars.sort(key=lambda x: x["friendly_name"])
             return web.json_response(all_calendars)
+        elif config_type == 'custom_cards':
+            house_config = self._entry.options.get('house_config', {})
+            custom_cards = house_config.get('custom_cards', {})
+            return web.json_response(custom_cards)
         elif config_type == 'calendar_events':
             return await self._get_calendar_events(request)
         elif config_type == 'calendar_config':
@@ -403,6 +407,8 @@ class DashViewConfigView(HomeAssistantView):
                 house_config["calendar_display_range"] = config_payload.get("calendar_display_range", 14)
             elif config_type == "persons":
                 current_options.setdefault("house_config", {})["persons"] = config_payload
+            elif config_type == "custom_cards":
+                current_options.setdefault("house_config", {})["custom_cards"] = config_payload
             else:
                 return web.json_response({"error": f"Invalid config type: {config_type}"}, status=400)
 
