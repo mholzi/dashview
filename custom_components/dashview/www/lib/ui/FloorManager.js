@@ -773,8 +773,6 @@ export class FloorManager {
     // Try to get a better icon based on entity domain or custom icon
     let icon = this._getIconForEntityType(entityState, type);
     
-    console.warn(`[FloorManager] Using default card for unknown type: ${type}`);
-    
     // Add type-specific card class for better styling
     const typeCardClass = this._getTypeSpecificCardClass(type);
     const finalCardClass = [cardClass, typeCardClass].filter(Boolean).join(' ').trim();
@@ -934,7 +932,8 @@ export class FloorManager {
       displayData = this._getMediaPlayerDisplayData(entityState);
     } else if (type === 'hoover' || type === 'mower') {
       displayData = this._getApplianceDisplayData(entityState, type);
-    } else if (type === 'door' || type === 'other_door') {
+    } else if (type?.toLowerCase() === 'door' || type?.toLowerCase() === 'other_door' || 
+               (type?.toLowerCase() === 'lock' && entityId.toLowerCase().includes('door'))) {
       displayData = this._getDoorDisplayData(entityState);
     } else {
       displayData = this._getDefaultDisplayData(entityState, type);
