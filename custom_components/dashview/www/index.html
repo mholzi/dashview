@@ -7,6 +7,23 @@
         <link rel="stylesheet" href="/local/dashview/style.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
         <script src="/local/dashview/lib/chart.min.js"></script>
+        <script>
+            // CDN fallback for Chart.js if local file fails to load
+            if (typeof Chart === 'undefined') {
+                console.warn('[DashView] Local Chart.js not loaded, trying CDN fallback...');
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.js';
+                script.onload = () => {
+                    console.log('[DashView] Chart.js loaded from CDN');
+                };
+                script.onerror = () => {
+                    console.error('[DashView] Failed to load Chart.js from CDN, chart functionality will be disabled');
+                };
+                document.head.appendChild(script);
+            } else {
+                console.log('[DashView] Chart.js loaded locally');
+            }
+        </script>
     </head>
     <body>
         <div class="dashboard-container">
