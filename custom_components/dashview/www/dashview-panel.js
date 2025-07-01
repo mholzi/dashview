@@ -156,6 +156,7 @@ class DashviewPanel extends HTMLElement {
         
         this._sceneManager.renderSceneButtons();
         this._floorManager.initializeFloorTabs();
+        this._floorManager.renderCustomCardsMain();
 
         this.initializeCard();
         

@@ -2,6 +2,7 @@
 
 import { GestureDetector } from '../utils/GestureDetector.js';
 import { calculateTimeDifferenceShort } from '../utils/time-utils.js';
+import { SimpleYamlParser } from '../utils/yaml-parser.js';
 
 // Gesture detection constants
 const LONG_TAP_DURATION = 500; // ms
@@ -209,6 +210,9 @@ export class FloorManager {
         }
     });
     // By not calling renderFloorLayout(), the swiper is NOT re-initialized, preserving its state.
+    
+    // Update custom cards in main dashboard
+    this.renderCustomCardsMain();
   }
   
   initializeFloorTabs() {
@@ -307,6 +311,8 @@ export class FloorManager {
                 cardHTML = this._renderGarbageSwipeCard(slot.grid_area);
             } else if (slot.type === 'person_cards') {
                 cardHTML = await this._renderPersonCardsContainer(slot.grid_area);
+            } else if (slot.type === 'custom_card' && slot.custom_card_id) {
+                cardHTML = await this._renderCustomCard(slot.custom_card_id, slot.grid_area, true);
             } else {
                 const entityId = entityProvider(slot.type);
                 if (entityId) {
@@ -319,6 +325,8 @@ export class FloorManager {
         } else {
             if (slot.type === 'person_card' && slot.person_id) {
                 cardHTML = await this._renderSinglePersonCard(slot.person_id, slot.grid_area);
+            } else if (slot.type === 'custom_card' && slot.custom_card_id) {
+                cardHTML = await this._renderCustomCard(slot.custom_card_id, slot.grid_area, false);
             } else {
                 const entityId = entityProvider(slot.type);
                 if (entityId) {
@@ -1905,6 +1913,336 @@ export class FloorManager {
 
     } catch (error) {
       console.error(`[FloorManager] Error updating person card for ${entityId}:`, error);
+    }
+  }
+
+  /**
+   * Render a custom card from YAML configuration
+   * @param {string} customCardId - The ID of the custom card
+   * @param {string} gridArea - The CSS grid area
+   * @param {boolean} isBigSlot - Whether this is a big slot
+   * @returns {Promise<string>} HTML for the custom card
+   */
+  async _renderCustomCard(customCardId, gridArea, isBigSlot) {
+    try {
+      const customCards = this._houseConfig.custom_cards || {};
+      const cardConfig = customCards[customCardId];
+      
+      if (!cardConfig) {
+        console.warn(`[FloorManager] Custom card '${customCardId}' not found`);
+        return `<div style="grid-area: ${gridArea};" class="custom-card-error">
+          <div class="error-content">
+            <i class="mdi mdi-alert-circle"></i>
+            <span>Card not found: ${customCardId}</span>
+          </div>
+        </div>`;
+      }
+
+      // Parse YAML configuration
+      let parsedConfig;
+      try {
+        parsedConfig = SimpleYamlParser.parse(cardConfig.yaml_config);
+      } catch (yamlError) {
+        console.error(`[FloorManager] YAML parsing error for card '${customCardId}':`, yamlError);
+        return `<div style="grid-area: ${gridArea};" class="custom-card-error">
+          <div class="error-content">
+            <i class="mdi mdi-alert-circle"></i>
+            <span>YAML Error: ${yamlError.message}</span>
+          </div>
+        </div>`;
+      }
+
+      // Extract entity IDs for state management
+      const entityIds = SimpleYamlParser.extractEntityIds(parsedConfig);
+      if (entityIds.length > 0) {
+        this._panel._stateManager.watchEntities(entityIds, () => {
+          this._updateCustomCard(customCardId, gridArea);
+        });
+      }
+
+      // Create custom card wrapper
+      const sizeClass = isBigSlot ? 'custom-card-big' : 'custom-card-small';
+      const cardElementId = `custom-card-${customCardId}-${gridArea.replace(/[^a-zA-Z0-9]/g, '')}`;
+      
+      return `<div style="grid-area: ${gridArea};" class="custom-card-wrapper ${sizeClass}" id="${cardElementId}" data-custom-card-id="${customCardId}">
+        <div class="custom-card-content" data-card-config='${JSON.stringify(parsedConfig)}'>
+          ${this._renderLovelaceCard(parsedConfig, cardElementId)}
+        </div>
+      </div>`;
+
+    } catch (error) {
+      console.error(`[FloorManager] Error rendering custom card '${customCardId}':`, error);
+      return `<div style="grid-area: ${gridArea};" class="custom-card-error">
+        <div class="error-content">
+          <i class="mdi mdi-alert-circle"></i>
+          <span>Render Error</span>
+        </div>
+      </div>`;
+    }
+  }
+
+  /**
+   * Render a Home Assistant Lovelace card from parsed config
+   * @param {Object} config - Parsed card configuration
+   * @param {string} elementId - Unique element ID
+   * @returns {string} HTML for the Lovelace card
+   */
+  _renderLovelaceCard(config, elementId) {
+    try {
+      // For now, render basic card types that don't require complex HA frontend integration
+      switch (config.type) {
+        case 'markdown':
+          return this._renderMarkdownCard(config);
+        case 'entity':
+          return this._renderEntityCard(config);
+        case 'button':
+          return this._renderButtonCard(config);
+        case 'picture':
+          return this._renderPictureCard(config);
+        default:
+          // For complex card types, create a placeholder that can be enhanced later
+          return `<div class="custom-card-placeholder">
+            <div class="placeholder-header">
+              <i class="mdi mdi-card-text-outline"></i>
+              <span>${config.type || 'Custom'} Card</span>
+            </div>
+            <div class="placeholder-content">
+              <p>Card type: ${config.type}</p>
+              ${config.entity ? `<p>Entity: ${config.entity}</p>` : ''}
+              ${config.title ? `<p>Title: ${config.title}</p>` : ''}
+            </div>
+          </div>`;
+      }
+    } catch (error) {
+      console.error('[FloorManager] Error rendering Lovelace card:', error);
+      return `<div class="custom-card-error">
+        <i class="mdi mdi-alert"></i>
+        <span>Card render error</span>
+      </div>`;
+    }
+  }
+
+  /**
+   * Render a markdown card
+   */
+  _renderMarkdownCard(config) {
+    const content = config.content || '';
+    const title = config.title || '';
+    
+    // Simple markdown-to-HTML conversion for basic formatting
+    let htmlContent = content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/\n/g, '<br>');
+
+    // Replace entity state templates like {{ states('sensor.temperature') }}
+    htmlContent = this._replaceEntityTemplates(htmlContent);
+
+    return `<div class="markdown-card">
+      ${title ? `<div class="card-header">${title}</div>` : ''}
+      <div class="markdown-content">${htmlContent}</div>
+    </div>`;
+  }
+
+  /**
+   * Render an entity card
+   */
+  _renderEntityCard(config) {
+    const entityId = config.entity;
+    if (!entityId) {
+      return '<div class="entity-card-error">No entity specified</div>';
+    }
+
+    const entityState = this._hass.states[entityId];
+    if (!entityState) {
+      return `<div class="entity-card-error">Entity not found: ${entityId}</div>`;
+    }
+
+    const name = config.name || entityState.attributes.friendly_name || entityId;
+    const icon = config.icon || entityState.attributes.icon || 'mdi:help-circle';
+    const showState = config.show_state !== false;
+
+    return `<div class="entity-card" data-entity-id="${entityId}">
+      <div class="entity-card-content">
+        <i class="mdi ${this._panel._processIconName(icon)}"></i>
+        <div class="entity-info">
+          <div class="entity-name">${name}</div>
+          ${showState ? `<div class="entity-state">${entityState.state}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /**
+   * Render a button card
+   */
+  _renderButtonCard(config) {
+    const name = config.name || 'Button';
+    const icon = config.icon || 'mdi:gesture-tap';
+    const entityId = config.entity;
+
+    return `<div class="button-card" ${entityId ? `data-entity-id="${entityId}"` : ''}>
+      <div class="button-content">
+        <i class="mdi ${this._panel._processIconName(icon)}"></i>
+        <span class="button-name">${name}</span>
+      </div>
+    </div>`;
+  }
+
+  /**
+   * Render a picture card
+   */
+  _renderPictureCard(config) {
+    const image = config.image || '';
+    const title = config.title || '';
+
+    if (!image) {
+      return '<div class="picture-card-error">No image specified</div>';
+    }
+
+    return `<div class="picture-card">
+      ${title ? `<div class="card-header">${title}</div>` : ''}
+      <img src="${image}" alt="${title}" class="picture-content" />
+    </div>`;
+  }
+
+  /**
+   * Replace entity state templates in content
+   */
+  _replaceEntityTemplates(content) {
+    return content.replace(/\{\{\s*states\(['"]([^'"]+)['"]\)\s*\}\}/g, (match, entityId) => {
+      const entityState = this._hass.states[entityId];
+      return entityState ? entityState.state : 'unavailable';
+    });
+  }
+
+  /**
+   * Update a custom card when its entities change
+   */
+  _updateCustomCard(customCardId, gridArea) {
+    const cardElementId = `custom-card-${customCardId}-${gridArea.replace(/[^a-zA-Z0-9]/g, '')}`;
+    const cardElement = this._shadowRoot.getElementById(cardElementId);
+    
+    if (cardElement) {
+      const contentElement = cardElement.querySelector('.custom-card-content');
+      if (contentElement) {
+        try {
+          const config = JSON.parse(contentElement.dataset.cardConfig);
+          const newContent = this._renderLovelaceCard(config, cardElementId);
+          contentElement.innerHTML = newContent;
+        } catch (error) {
+          console.error(`[FloorManager] Error updating custom card ${customCardId}:`, error);
+        }
+      }
+    }
+  }
+
+  /**
+   * Render custom cards for the main dashboard (not in grid layout)
+   */
+  async renderCustomCardsMain() {
+    const container = this._shadowRoot.querySelector('#custom-cards-main-container');
+    if (!container) return;
+
+    const customCards = this._houseConfig.custom_cards || {};
+    
+    // If no custom cards configured, hide the container
+    if (Object.keys(customCards).length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    // Render all custom cards
+    const cardPromises = Object.entries(customCards).map(async ([cardId, cardConfig]) => {
+      return await this._renderCustomCardMain(cardId, cardConfig);
+    });
+
+    const cardHTMLArray = await Promise.all(cardPromises);
+    container.innerHTML = cardHTMLArray.filter(html => html).join('');
+  }
+
+  /**
+   * Render a single custom card for the main dashboard
+   * @param {string} customCardId - The ID of the custom card
+   * @param {Object} cardConfig - The card configuration
+   * @returns {Promise<string>} HTML for the custom card
+   */
+  async _renderCustomCardMain(customCardId, cardConfig) {
+    try {
+      if (!cardConfig) {
+        console.warn(`[FloorManager] Custom card '${customCardId}' not found`);
+        return `<div class="custom-card-main-item custom-card-error">
+          <div class="error-content">
+            <i class="mdi mdi-alert-circle"></i>
+            <span>Card not found: ${customCardId}</span>
+          </div>
+        </div>`;
+      }
+
+      // Parse YAML configuration
+      let parsedConfig;
+      try {
+        parsedConfig = SimpleYamlParser.parse(cardConfig.yaml_config);
+      } catch (yamlError) {
+        console.error(`[FloorManager] YAML parsing error for card '${customCardId}':`, yamlError);
+        return `<div class="custom-card-main-item custom-card-error">
+          <div class="error-content">
+            <i class="mdi mdi-alert-circle"></i>
+            <span>YAML Error: ${yamlError.message}</span>
+          </div>
+        </div>`;
+      }
+
+      // Extract entity IDs for state management
+      const entityIds = SimpleYamlParser.extractEntityIds(parsedConfig);
+      if (entityIds.length > 0) {
+        this._panel._stateManager.watchEntities(entityIds, () => {
+          this._updateCustomCardMain(customCardId);
+        });
+      }
+
+      // Create custom card wrapper for main dashboard
+      const cardElementId = `custom-card-main-${customCardId.replace(/[^a-zA-Z0-9]/g, '')}`;
+      
+      return `<div class="custom-card-main-item" id="${cardElementId}" data-custom-card-id="${customCardId}">
+        <div class="custom-card-content" data-card-config='${JSON.stringify(parsedConfig)}'>
+          ${this._renderLovelaceCard(parsedConfig, cardElementId)}
+        </div>
+      </div>`;
+
+    } catch (error) {
+      console.error(`[FloorManager] Error rendering main custom card '${customCardId}':`, error);
+      return `<div class="custom-card-main-item custom-card-error">
+        <div class="error-content">
+          <i class="mdi mdi-alert-circle"></i>
+          <span>Error: ${error.message}</span>
+        </div>
+      </div>`;
+    }
+  }
+
+  /**
+   * Update a custom card in the main dashboard when its entities change
+   */
+  _updateCustomCardMain(customCardId) {
+    const cardElementId = `custom-card-main-${customCardId.replace(/[^a-zA-Z0-9]/g, '')}`;
+    const cardElement = this._shadowRoot.querySelector(`#${cardElementId}`);
+    if (cardElement) {
+      const contentElement = cardElement.querySelector('.custom-card-content');
+      if (contentElement) {
+        const configAttr = contentElement.getAttribute('data-card-config');
+        if (configAttr) {
+          try {
+            const parsedConfig = JSON.parse(configAttr);
+            contentElement.innerHTML = this._renderLovelaceCard(parsedConfig, cardElementId);
+          } catch (error) {
+            console.error(`[FloorManager] Error updating main custom card ${customCardId}:`, error);
+          }
+        }
+      }
     }
   }
 }

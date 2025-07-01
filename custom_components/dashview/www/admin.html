@@ -9,6 +9,7 @@
         <button class="tab-button" data-target="device-management-tab">Device Management</button>
         <button class="tab-button" data-target="integrations-tab">Integrations</button>
         <button class="tab-button" data-target="floor-layouts-tab">Floor Layouts</button>
+        <button class="tab-button" data-target="custom-cards-tab">Custom Cards</button>
         <button class="tab-button" data-target="scenes-tab">Scenes</button>
         <button class="tab-button" data-target="media-presets-tab">Media Presets</button>
         <button class="tab-button" data-target="other-entities-tab">Other Entities</button>
@@ -150,6 +151,48 @@
         <div id="floor-layouts-status" class="status-display" style="margin-top: 10px;">
             <span class="status-icon mdi"></span>
             <span class="status-text">Ready</span>
+        </div>
+    </div>
+    <div id="custom-cards-tab" class="tab-content">
+        <h4>Custom Cards</h4>
+        <p>Add custom Home Assistant Lovelace cards to your DashView layouts by pasting their YAML configuration. These cards will integrate seamlessly with your dashboard and update with real-time entity data.</p>
+        
+        <!-- New Custom Card Section -->
+        <div class="config-section">
+            <h5>Add New Custom Card</h5>
+            <p>Create a new custom card by providing a unique ID, display name, and YAML configuration.</p>
+            
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <input type="text" id="new-card-id" class="form-input" placeholder="Unique ID (e.g., weather_detail)" data-tooltip="Unique identifier for this card. Use lowercase, underscores instead of spaces. Must be unique across all custom cards.">
+                <input type="text" id="new-card-name" class="form-input" placeholder="Display Name (e.g., Detailed Weather)" data-tooltip="Friendly name for this card displayed in the admin interface.">
+            </div>
+            
+            <div class="form-row" style="margin-top: 12px;">
+                <textarea id="new-card-yaml" class="config-textarea" placeholder="YAML Configuration (e.g., type: markdown, content: '# My Custom Card')" style="height: 200px;" data-tooltip="Home Assistant Lovelace card YAML configuration. Example:&#10;type: markdown&#10;content: |&#10;  # Custom Content&#10;  Temperature: {{ states('sensor.temperature') }}°C"></textarea>
+            </div>
+            
+            <div class="form-row" style="margin-top: 12px;">
+                <button id="add-custom-card" class="action-button">Add Card</button>
+            </div>
+        </div>
+        
+        <!-- Configured Cards Section -->
+        <div class="config-section">
+            <h5>Configured Custom Cards</h5>
+            <p>Manage your existing custom cards. You can edit, delete, or update any of your configured cards.</p>
+            
+            <div id="custom-cards-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
+            
+            <div id="custom-cards-list" class="floors-container">
+                <!-- Custom cards will be dynamically inserted here -->
+            </div>
+            
+            <div class="form-row" style="margin-top: 20px;">
+                <button id="save-custom-cards" class="save-button">Save All Custom Cards</button>
+            </div>
         </div>
     </div>
     <div id="media-presets-tab" class="tab-content">

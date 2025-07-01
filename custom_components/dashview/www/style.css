@@ -5637,3 +5637,282 @@ body.popup-open, :host(.popup-open) {
         color: var(--gray400);
     }
 }
+
+/* ===========================
+   CUSTOM CARDS
+   =========================== */
+
+/* Main dashboard custom cards container */
+.custom-cards-main-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+    padding: 0 16px;
+}
+
+.custom-cards-main-container:empty {
+    display: none;
+}
+
+.custom-card-main-item {
+    background: var(--card-background-color);
+    border-radius: var(--ha-card-border-radius);
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.custom-card-main-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.custom-card-wrapper {
+    background: var(--card-background-color);
+    border-radius: var(--ha-card-border-radius);
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.custom-card-wrapper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.custom-card-big {
+    min-height: 120px;
+}
+
+.custom-card-small {
+    min-height: 80px;
+}
+
+.custom-card-content {
+    width: 100%;
+    height: 100%;
+}
+
+/* Error states */
+.custom-card-error {
+    background: var(--red);
+    border-radius: var(--ha-card-border-radius);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+}
+
+.error-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--gray000);
+    text-align: center;
+}
+
+.error-content i {
+    font-size: 24px;
+}
+
+/* Markdown card styling */
+.markdown-card {
+    width: 100%;
+    height: 100%;
+}
+
+.markdown-card .card-header {
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: var(--primary-text-color);
+    border-bottom: 1px solid var(--divider-color);
+    padding-bottom: 8px;
+}
+
+.markdown-content {
+    color: var(--primary-text-color);
+    line-height: 1.5;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    margin: 8px 0;
+    color: var(--primary-text-color);
+}
+
+.markdown-content h1 {
+    font-size: 18px;
+}
+
+.markdown-content h2 {
+    font-size: 16px;
+}
+
+.markdown-content h3 {
+    font-size: 14px;
+}
+
+/* Entity card styling */
+.entity-card {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.entity-card:hover {
+    background: var(--highlight);
+}
+
+.entity-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+}
+
+.entity-card-content i {
+    font-size: 24px;
+    color: var(--accent-color);
+}
+
+.entity-info {
+    flex: 1;
+}
+
+.entity-name {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    font-size: 14px;
+}
+
+.entity-state {
+    color: var(--secondary-text-color);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.entity-card-error {
+    color: var(--red);
+    padding: 16px;
+    text-align: center;
+    font-size: 12px;
+}
+
+/* Button card styling */
+.button-card {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: var(--accent-color);
+    border-radius: calc(var(--ha-card-border-radius) - 8px);
+    transition: all 0.3s ease;
+    color: var(--gray000);
+}
+
+.button-card:hover {
+    background: var(--blue);
+    transform: scale(1.02);
+}
+
+.button-card:active {
+    transform: scale(0.98);
+}
+
+.button-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-content i {
+    font-size: 24px;
+}
+
+.button-name {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* Picture card styling */
+.picture-card {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.picture-card .card-header {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--primary-text-color);
+    text-align: center;
+}
+
+.picture-content {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: calc(var(--ha-card-border-radius) - 8px);
+}
+
+.picture-card-error {
+    color: var(--red);
+    padding: 16px;
+    text-align: center;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* Placeholder for unsupported card types */
+.custom-card-placeholder {
+    width: 100%;
+    height: 100%;
+    border: 2px dashed var(--divider-color);
+    border-radius: calc(var(--ha-card-border-radius) - 8px);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--secondary-text-color);
+}
+
+.placeholder-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.placeholder-header i {
+    font-size: 20px;
+    color: var(--accent-color);
+}
+
+.placeholder-content {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.placeholder-content p {
+    margin: 4px 0;
+}

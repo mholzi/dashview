@@ -43,6 +43,7 @@ export class AdminManager {
       'calendar-management-tab': () => this.loadCalendarManagement(),
       'person-management-tab': () => this.loadPersonManagement(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
+      'custom-cards-tab': () => this.loadCustomCards(),
       'scenes-tab': () => this.loadScenes(),
       'media-presets-tab': () => this.loadMediaPlayerPresets(),
       'sensor-management-tab': () => this.loadSensorManagementTab(),
@@ -108,6 +109,8 @@ export class AdminManager {
             '#reload-dwd-config': () => this.loadDwdConfig(),
             '#save-thresholds-config': () => this.saveThresholdsConfig(),
             '#save-floor-layouts': () => this.saveFloorLayouts(),
+            '#add-custom-card': () => this.addCustomCard(),
+            '#save-custom-cards': () => this.saveCustomCards(),
             '#add-scene': () => {
               const name = this._shadowRoot.getElementById('new-scene-name').value;
               const id = this._shadowRoot.getElementById('new-scene-id').value;
@@ -750,24 +753,39 @@ export class AdminManager {
       if (e.target.classList.contains('layout-type-selector')) {
         const slot = e.target.closest('.layout-slot');
         const entitySelector = slot.querySelector('.entity-selector');
+        const customCardSelector = slot.querySelector('.custom-card-selector');
+        
         if (e.target.value === 'pinned') {
           entitySelector.style.display = 'block';
+          if (customCardSelector) customCardSelector.style.display = 'none';
+        } else if (e.target.value === 'custom_card') {
+          entitySelector.style.display = 'none';
+          if (customCardSelector) customCardSelector.style.display = 'block';
         } else {
           entitySelector.style.display = 'none';
+          if (customCardSelector) customCardSelector.style.display = 'none';
         }
       }
     });
   }
 
   _renderLayoutSlotEditor(slot, entities) {
-    const { grid_area, type, entity_id } = slot;
+    const { grid_area, type, entity_id, custom_card_id } = slot;
     const isBigSlot = grid_area.includes('-big');
     const isPinned = type === 'pinned';
+    const isCustomCard = type === 'custom_card';
     const entityOptions = entities.map(entity => `<option value="${entity.entity_id}" ${entity.entity_id === entity_id ? 'selected' : ''}>${entity.name} (${entity.entity_id})</option>`).join('');
-    let typeOptions = `<option value="auto" ${type === 'auto' ? 'selected' : ''}>Automatic</option><option value="pinned" ${type === 'pinned' ? 'selected' : ''}>Pinned</option><option value="empty" ${type === 'empty' ? 'selected' : ''}>Empty</option>`;
+    
+    // Generate custom card options
+    const customCards = this._adminLocalState.houseConfig.custom_cards || {};
+    const customCardOptions = Object.entries(customCards).map(([cardId, cardData]) => 
+      `<option value="${cardId}" ${cardId === custom_card_id ? 'selected' : ''}>${cardData.name} (${cardId})</option>`
+    ).join('');
+    
+    let typeOptions = `<option value="auto" ${type === 'auto' ? 'selected' : ''}>Automatic</option><option value="pinned" ${type === 'pinned' ? 'selected' : ''}>Pinned</option><option value="custom_card" ${type === 'custom_card' ? 'selected' : ''}>Custom Card</option><option value="empty" ${type === 'empty' ? 'selected' : ''}>Empty</option>`;
     if (isBigSlot) typeOptions = `<option value="room_swipe_card" ${type === 'room_swipe_card' ? 'selected' : ''}>Room Swiper</option><option value="garbage" ${type === 'garbage' ? 'selected' : ''}>Garbage</option>${typeOptions}`;
 
-    return `<div class="layout-slot" data-grid-area="${grid_area}" style="grid-area: ${grid_area};"><div class="slot-name">${grid_area}</div><div class="slot-config"><select class="layout-type-selector">${typeOptions}</select><select class="entity-selector" style="display: ${isPinned ? 'block' : 'none'};"><option value="">-- Select --</option>${entityOptions}</select></div></div>`;
+    return `<div class="layout-slot" data-grid-area="${grid_area}" style="grid-area: ${grid_area};"><div class="slot-name">${grid_area}</div><div class="slot-config"><select class="layout-type-selector">${typeOptions}</select><select class="entity-selector" style="display: ${isPinned ? 'block' : 'none'};"><option value="">-- Select Entity --</option>${entityOptions}</select><select class="custom-card-selector" style="display: ${isCustomCard ? 'block' : 'none'};"><option value="">-- Select Custom Card --</option>${customCardOptions}</select></div></div>`;
   }
   
   _moveFloor(floorId, direction) {
@@ -811,7 +829,19 @@ export class AdminManager {
             const gridArea = slot.dataset.gridArea;
             const type = slot.querySelector('.layout-type-selector').value;
             const entityId = slot.querySelector('.entity-selector').value;
-            newLayouts[floorId].push({ grid_area: gridArea, type: type, entity_id: type === 'pinned' ? entityId : null });
+            const customCardId = slot.querySelector('.custom-card-selector')?.value;
+            
+            const slotConfig = { 
+              grid_area: gridArea, 
+              type: type, 
+              entity_id: type === 'pinned' ? entityId : null 
+            };
+            
+            if (type === 'custom_card' && customCardId) {
+              slotConfig.custom_card_id = customCardId;
+            }
+            
+            newLayouts[floorId].push(slotConfig);
         });
     });
     this._adminLocalState.houseConfig.floor_layouts = newLayouts;
@@ -2042,6 +2072,164 @@ async saveMediaPlayerPresets() {
       console.error('[DashView] Error saving person configuration:', error);
       this._setStatusMessage(statusElement, 'Error saving person configuration', 'error');
     }
+  }
+
+  // ===========================
+  // CUSTOM CARDS MANAGEMENT
+  // ===========================
+
+  async loadCustomCards() {
+    const statusEl = this._shadowRoot.getElementById('custom-cards-status');
+    this._setStatusMessage(statusEl, 'Loading custom cards...', 'loading');
+    
+    try {
+      const customCards = await this._hass.callApi('GET', 'dashview/config?type=custom_cards');
+      this._adminLocalState.houseConfig.custom_cards = customCards || {};
+      this._renderCustomCardsList();
+      this._clearCustomCardInputs();
+      this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+    } catch (e) {
+      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
+  }
+
+  _renderCustomCardsList() {
+    const container = this._shadowRoot.getElementById('custom-cards-list');
+    if (!container) return;
+
+    const customCards = this._adminLocalState.houseConfig.custom_cards || {};
+    let html = '';
+
+    Object.entries(customCards).forEach(([cardId, cardData]) => {
+      html += `
+        <div class="entity-list-item">
+          <div class="entity-info">
+            <div class="entity-name">${cardData.name}</div>
+            <div class="entity-details">ID: ${cardId}</div>
+          </div>
+          <div class="entity-actions">
+            <button class="action-button" onclick="window.dashviewAdmin.editCustomCard('${cardId}')">Edit</button>
+            <button class="action-button" onclick="window.dashviewAdmin.removeCustomCard('${cardId}')">Remove</button>
+          </div>
+        </div>
+      `;
+    });
+
+    if (html === '') {
+      html = '<div class="placeholder">No custom cards configured yet.</div>';
+    }
+
+    container.innerHTML = html;
+    
+    // Make AdminManager accessible for onclick handlers
+    window.dashviewAdmin = this;
+  }
+
+  addCustomCard() {
+    const idInput = this._shadowRoot.getElementById('new-card-id');
+    const nameInput = this._shadowRoot.getElementById('new-card-name');
+    const yamlInput = this._shadowRoot.getElementById('new-card-yaml');
+    const statusEl = this._shadowRoot.getElementById('custom-cards-status');
+
+    const cardId = idInput.value.trim();
+    const cardName = nameInput.value.trim();
+    const yamlConfig = yamlInput.value.trim();
+
+    // Basic validation
+    if (!cardId || !cardName || !yamlConfig) {
+      this._setStatusMessage(statusEl, 'All fields are required', 'error');
+      return;
+    }
+
+    // Validate ID format (only lowercase, numbers, underscores)
+    if (!/^[a-z0-9_]+$/.test(cardId)) {
+      this._setStatusMessage(statusEl, 'Card ID must contain only lowercase letters, numbers, and underscores', 'error');
+      return;
+    }
+
+    // Check for duplicate ID
+    if (this._adminLocalState.houseConfig.custom_cards && this._adminLocalState.houseConfig.custom_cards[cardId]) {
+      this._setStatusMessage(statusEl, 'Card ID already exists', 'error');
+      return;
+    }
+
+    // Add card to local state
+    if (!this._adminLocalState.houseConfig.custom_cards) {
+      this._adminLocalState.houseConfig.custom_cards = {};
+    }
+
+    this._adminLocalState.houseConfig.custom_cards[cardId] = {
+      name: cardName,
+      yaml_config: yamlConfig
+    };
+
+    this._renderCustomCardsList();
+    this._clearCustomCardInputs();
+    this._setStatusMessage(statusEl, 'Card added successfully', 'success');
+  }
+
+  editCustomCard(cardId) {
+    const card = this._adminLocalState.houseConfig.custom_cards[cardId];
+    if (!card) return;
+
+    const idInput = this._shadowRoot.getElementById('new-card-id');
+    const nameInput = this._shadowRoot.getElementById('new-card-name');
+    const yamlInput = this._shadowRoot.getElementById('new-card-yaml');
+
+    idInput.value = cardId;
+    nameInput.value = card.name;
+    yamlInput.value = card.yaml_config;
+
+    // Make ID input read-only when editing
+    idInput.readOnly = true;
+    idInput.style.backgroundColor = '#f0f0f0';
+
+    this._setStatusMessage(this._shadowRoot.getElementById('custom-cards-status'), 'Editing card...', 'processing');
+  }
+
+  removeCustomCard(cardId) {
+    if (!this._adminLocalState.houseConfig.custom_cards) return;
+
+    if (confirm(`Are you sure you want to remove the custom card "${cardId}"?`)) {
+      delete this._adminLocalState.houseConfig.custom_cards[cardId];
+      this._renderCustomCardsList();
+      this._setStatusMessage(this._shadowRoot.getElementById('custom-cards-status'), 'Card removed', 'success');
+    }
+  }
+
+  async saveCustomCards() {
+    const statusEl = this._shadowRoot.getElementById('custom-cards-status');
+    this._setStatusMessage(statusEl, 'Saving custom cards...', 'loading');
+
+    try {
+      await this._saveConfigViaAPI('custom_cards', this._adminLocalState.houseConfig.custom_cards || {});
+      this._setStatusMessage(statusEl, '✓ Saved!', 'success');
+      
+      // Update main panel config
+      if (this._panel._houseConfig) {
+        this._panel._houseConfig.custom_cards = this._adminLocalState.houseConfig.custom_cards;
+        // Update custom cards in main dashboard
+        if (this._panel._floorManager) {
+          this._panel._floorManager.renderCustomCardsMain();
+        }
+      }
+    } catch (e) {
+      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
+  }
+
+  _clearCustomCardInputs() {
+    const idInput = this._shadowRoot.getElementById('new-card-id');
+    const nameInput = this._shadowRoot.getElementById('new-card-name');
+    const yamlInput = this._shadowRoot.getElementById('new-card-yaml');
+
+    if (idInput) {
+      idInput.value = '';
+      idInput.readOnly = false;
+      idInput.style.backgroundColor = '';
+    }
+    if (nameInput) nameInput.value = '';
+    if (yamlInput) yamlInput.value = '';
   }
 
 }

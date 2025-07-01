@@ -5,6 +5,38 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🚀 Added
+
+- **Custom YAML Cards Integration** - Add custom Home Assistant Lovelace cards directly to DashView layouts (#327)
+  - Complete admin panel for managing custom cards with YAML input
+  - Support for markdown, entity, button, and picture card types
+  - Lightweight YAML parser for common Lovelace card patterns
+  - Real-time entity state updates with StateManager integration
+  - Custom card slot type in floor layout editor
+  - Comprehensive error handling and user feedback
+  - Template support for entity states (e.g., `{{ states('sensor.temperature') }}`)
+  - Seamless integration with DashView theming and responsive design
+
+### 🏗️ Technical Improvements
+
+- **Backend API Enhancement**
+  - Added `custom_cards` configuration type to DashViewConfigView
+  - Extended POST/GET endpoints for custom card CRUD operations
+  - Proper ConfigEntry storage for persistent custom card configurations
+
+- **Frontend Architecture**
+  - New SimpleYamlParser utility for client-side YAML processing
+  - Enhanced FloorManager with custom card rendering capabilities
+  - Extended AdminManager with comprehensive custom card management
+  - Updated layout editor to support custom card slot assignment
+
+- **Styling and UX**
+  - Custom card CSS styling with error states and placeholders
+  - Consistent theming across all custom card types
+  - Responsive design for both big and small layout slots
+
 ## [0.4.0] - 2025-07-01
 
 ### 🚀 Added
