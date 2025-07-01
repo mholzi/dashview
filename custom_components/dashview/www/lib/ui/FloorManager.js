@@ -2155,10 +2155,12 @@ export class FloorManager {
       return;
     }
 
-    // Render all custom cards
-    const cardPromises = Object.entries(customCards).map(async ([cardId, cardConfig]) => {
-      return await this._renderCustomCardMain(cardId, cardConfig);
-    });
+    // Render all visible custom cards
+    const cardPromises = Object.entries(customCards)
+      .filter(([cardId, cardConfig]) => cardConfig.visible !== false) // Only include visible cards
+      .map(async ([cardId, cardConfig]) => {
+        return await this._renderCustomCardMain(cardId, cardConfig);
+      });
 
     const cardHTMLArray = await Promise.all(cardPromises);
     container.innerHTML = cardHTMLArray.filter(html => html).join('');

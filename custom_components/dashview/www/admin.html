@@ -16,6 +16,7 @@
         <button class="tab-button" data-target="other-entities-tab">Other Entities</button>
         <button class="tab-button" data-target="garbage-tab">Garbage</button>
         <button class="tab-button" data-target="config-health-tab">Config Health</button>
+        <button class="tab-button" data-target="dashboard-layout-tab">Dashboard Layout</button>
     </div>
     <div id="scenes-tab" class="tab-content">
         <h4>Scene Button Management</h4>
@@ -235,6 +236,14 @@
             
             <div class="form-row" style="margin-top: 12px;">
                 <textarea id="new-card-yaml" class="config-textarea" placeholder="YAML Configuration (e.g., type: markdown, content: '# My Custom Card')" style="height: 200px;" data-tooltip="Home Assistant Lovelace card YAML configuration. Example:&#10;type: markdown&#10;content: |&#10;  # Custom Content&#10;  Temperature: {{ states('sensor.temperature') }}°C"></textarea>
+            </div>
+            
+            <div class="form-row" style="margin-top: 12px;">
+                <label class="form-checkbox">
+                    <input type="checkbox" id="new-card-visible" checked>
+                    Show in main dashboard
+                    <span class="form-tooltip" data-tooltip="When enabled, this custom card will be displayed in the info-text area of the main dashboard"></span>
+                </label>
             </div>
             
             <div class="form-row" style="margin-top: 12px;">
@@ -608,6 +617,31 @@
                 <button id="reload-garbage-sensors" class="action-button">Reload</button>
             </div>
             <button id="save-garbage-sensors" class="save-button" style="margin-top: 12px;">Save Garbage Configuration</button>
+        </div>
+    </div>
+
+    <div id="dashboard-layout-tab" class="tab-content">
+        <h4>Dashboard Layout Configuration</h4>
+        <p>Control which sections are visible on your main dashboard. Hide sections you don't use to create a cleaner, more personalized interface.</p>
+        
+        <div class="config-section">
+            <h5>Section Visibility</h5>
+            <p>Toggle the visibility of main dashboard sections. Hidden sections are not rendered, improving performance and reducing visual clutter.</p>
+            
+            <div id="dashboard-sections-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
+            
+            <div id="dashboard-sections-container" class="dashboard-sections-grid">
+                <!-- Section toggles will be dynamically generated here -->
+            </div>
+            
+            <div class="form-row" style="margin-top: 20px;">
+                <button id="save-dashboard-sections" class="save-button">Save Dashboard Layout</button>
+                <button id="reload-dashboard-sections" class="action-button">Reload</button>
+                <button id="reset-dashboard-sections" class="action-button">Reset to Default</button>
+            </div>
         </div>
     </div>
 

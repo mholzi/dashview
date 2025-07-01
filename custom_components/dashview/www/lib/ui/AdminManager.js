@@ -2199,11 +2199,13 @@ async saveMediaPlayerPresets() {
     const idInput = this._shadowRoot.getElementById('new-card-id');
     const nameInput = this._shadowRoot.getElementById('new-card-name');
     const yamlInput = this._shadowRoot.getElementById('new-card-yaml');
+    const visibleInput = this._shadowRoot.getElementById('new-card-visible');
     const statusEl = this._shadowRoot.getElementById('custom-cards-status');
 
     const cardId = idInput.value.trim();
     const cardName = nameInput.value.trim();
     const yamlConfig = yamlInput.value.trim();
+    const isVisible = visibleInput ? visibleInput.checked : true; // Default to visible if checkbox not found
 
     // Basic validation
     if (!cardId || !cardName || !yamlConfig) {
@@ -2230,7 +2232,8 @@ async saveMediaPlayerPresets() {
 
     this._adminLocalState.houseConfig.custom_cards[cardId] = {
       name: cardName,
-      yaml_config: yamlConfig
+      yaml_config: yamlConfig,
+      visible: isVisible
     };
 
     this._renderCustomCardsList();
@@ -2245,10 +2248,14 @@ async saveMediaPlayerPresets() {
     const idInput = this._shadowRoot.getElementById('new-card-id');
     const nameInput = this._shadowRoot.getElementById('new-card-name');
     const yamlInput = this._shadowRoot.getElementById('new-card-yaml');
+    const visibleInput = this._shadowRoot.getElementById('new-card-visible');
 
     idInput.value = cardId;
     nameInput.value = card.name;
     yamlInput.value = card.yaml_config;
+    if (visibleInput) {
+      visibleInput.checked = card.visible !== false; // Default to true for backward compatibility
+    }
 
     // Make ID input read-only when editing
     idInput.readOnly = true;
@@ -2292,6 +2299,7 @@ async saveMediaPlayerPresets() {
     const idInput = this._shadowRoot.getElementById('new-card-id');
     const nameInput = this._shadowRoot.getElementById('new-card-name');
     const yamlInput = this._shadowRoot.getElementById('new-card-yaml');
+    const visibleInput = this._shadowRoot.getElementById('new-card-visible');
 
     if (idInput) {
       idInput.value = '';
@@ -2300,6 +2308,20 @@ async saveMediaPlayerPresets() {
     }
     if (nameInput) nameInput.value = '';
     if (yamlInput) yamlInput.value = '';
+    if (visibleInput) visibleInput.checked = true; // Default to visible
+  }
+
+  toggleCustomCardVisibility(cardId) {
+    if (!this._adminLocalState.houseConfig.custom_cards || !this._adminLocalState.houseConfig.custom_cards[cardId]) {
+      return;
+    }
+
+    const card = this._adminLocalState.houseConfig.custom_cards[cardId];
+    card.visible = !card.visible;
+    
+    this._renderCustomCardsList();
+    this._setStatusMessage(this._shadowRoot.getElementById('custom-cards-status'), 
+      `Card visibility ${card.visible ? 'enabled' : 'disabled'}`, 'success');
   }
 
   /**
