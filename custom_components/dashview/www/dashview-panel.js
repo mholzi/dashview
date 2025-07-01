@@ -673,36 +673,67 @@ class DashviewPanel extends HTMLElement {
   }
 
   _applySectionVisibility() {
-    console.log('[DashView] Applying section visibility settings', this._sectionsConfig);
+    console.log('[DashView] Applying section visibility and ordering settings', this._sectionsConfig);
     
     // Default sections configuration if not provided
     const defaultSections = {
-      "info-card": { "visible": true },
-      "train-departures-section": { "visible": true },
-      "notifications-container": { "visible": true },
-      "dwd-warning-card-container": { "visible": true },
-      "scenes-container": { "visible": true },
-      "media-header-buttons-container": { "visible": true },
-      "floor-tabs-container": { "visible": true }
+      "info-card": { "visible": true, "order": 1 },
+      "train-departures-section": { "visible": true, "order": 2 },
+      "notifications-container": { "visible": true, "order": 3 },
+      "dwd-warning-card-container": { "visible": true, "order": 4 },
+      "scenes-container": { "visible": true, "order": 5 },
+      "media-header-buttons-container": { "visible": true, "order": 6 },
+      "floor-tabs-container": { "visible": true, "order": 7 }
     };
 
     const sectionsConfig = Object.keys(this._sectionsConfig).length > 0 ? this._sectionsConfig : defaultSections;
 
-    // Apply visibility to each configurable section
+    // Get dashboard container
+    const dashboardContainer = this.shadowRoot.querySelector('.dashboard-container');
+    if (!dashboardContainer) {
+      console.warn('[DashView] Dashboard container not found');
+      return;
+    }
+
+    // Collect sections with their order and elements
+    const sectionsWithElements = [];
     Object.entries(sectionsConfig).forEach(([sectionId, config]) => {
       const sectionElement = this.shadowRoot.querySelector(`#${sectionId}, .${sectionId}`);
       if (sectionElement) {
-        if (config.visible === false) {
-          sectionElement.style.display = 'none';
-          console.log(`[DashView] Hidden section: ${sectionId}`);
-        } else {
-          sectionElement.style.display = '';
-          console.log(`[DashView] Showing section: ${sectionId}`);
-        }
+        sectionsWithElements.push({
+          id: sectionId,
+          element: sectionElement,
+          config: config,
+          order: config.order || 999 // Default high order for sections without explicit order
+        });
       } else {
         console.warn(`[DashView] Section element not found: ${sectionId}`);
       }
     });
+
+    // Sort sections by order
+    sectionsWithElements.sort((a, b) => a.order - b.order);
+
+    // Apply visibility and reorder sections
+    sectionsWithElements.forEach((section, index) => {
+      const { element, config } = section;
+      
+      // Apply visibility
+      if (config.visible === false) {
+        element.style.display = 'none';
+        console.log(`[DashView] Hidden section: ${section.id}`);
+      } else {
+        element.style.display = '';
+        console.log(`[DashView] Showing section: ${section.id} (order: ${section.order})`);
+      }
+
+      // Apply ordering by setting CSS order property
+      element.style.order = section.order;
+    });
+
+    // Set dashboard container to flex to respect order property
+    dashboardContainer.style.display = 'flex';
+    dashboardContainer.style.flexDirection = 'column';
   }
 }
 

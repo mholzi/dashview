@@ -92,13 +92,13 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
     house_config.setdefault("floor_layouts", {})
     house_config.setdefault("other_entities", [])
     house_config.setdefault("main_dashboard_sections", {
-        "info-card": {"visible": True},
-        "train-departures-section": {"visible": True},
-        "notifications-container": {"visible": True},
-        "dwd-warning-card-container": {"visible": True},
-        "scenes-container": {"visible": True},
-        "media-header-buttons-container": {"visible": True},
-        "floor-tabs-container": {"visible": True}
+        "info-card": {"visible": True, "order": 1},
+        "train-departures-section": {"visible": True, "order": 2},
+        "notifications-container": {"visible": True, "order": 3},
+        "dwd-warning-card-container": {"visible": True, "order": 4},
+        "scenes-container": {"visible": True, "order": 5},
+        "media-header-buttons-container": {"visible": True, "order": 6},
+        "floor-tabs-container": {"visible": True, "order": 7}
     })
 
     for floor in floor_registry.floors.values():
