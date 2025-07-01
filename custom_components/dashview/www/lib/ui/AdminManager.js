@@ -1644,13 +1644,21 @@ async saveMediaPlayerPresets() {
     this._setStatusMessage(statusElement, 'Loading calendar configuration...', 'processing');
     
     try {
-      // Fetch available calendars
-      const calendarsResponse = await fetch('/api/dashview/config?type=available_calendars');
-      const availableCalendars = await calendarsResponse.json();
+      // Fetch available calendars using authenticated API call
+      const availableCalendars = await this._hass.callApi('GET', 'dashview/config?type=available_calendars');
       
-      // Fetch current calendar configuration
-      const configResponse = await fetch('/api/dashview/config?type=calendar_config');
-      const calendarConfig = await configResponse.json();
+      // Validate response data
+      if (!Array.isArray(availableCalendars)) {
+        throw new Error('Invalid response format: available calendars should be an array');
+      }
+      
+      // Fetch current calendar configuration using authenticated API call
+      const calendarConfig = await this._hass.callApi('GET', 'dashview/config?type=calendar_config');
+      
+      // Validate configuration response
+      if (!calendarConfig || typeof calendarConfig !== 'object') {
+        throw new Error('Invalid response format: calendar configuration should be an object');
+      }
       const linkedCalendars = calendarConfig.linked_calendars || [];
       
       // Update admin local state
@@ -1731,25 +1739,20 @@ async saveMediaPlayerPresets() {
     this._setStatusMessage(statusElement, 'Loading person configuration...', 'processing');
     
     try {
-      // Fetch available persons
-      const personsResponse = await fetch('/api/dashview/config?type=available_persons');
-      const availablePersons = await personsResponse.json();
+      // Fetch available persons using authenticated API call
+      const availablePersons = await this._hass.callApi('GET', 'dashview/config?type=available_persons');
       
-      // Fetch available device trackers
-      const trackersResponse = await fetch('/api/dashview/config?type=available_device_trackers');
-      const availableTrackers = await trackersResponse.json();
+      // Fetch available device trackers using authenticated API call
+      const availableTrackers = await this._hass.callApi('GET', 'dashview/config?type=available_device_trackers');
       
-      // Fetch available sensors
-      const sensorsResponse = await fetch('/api/dashview/config?type=available_sensors');
-      const availableSensors = await sensorsResponse.json();
+      // Fetch available sensors using authenticated API call
+      const availableSensors = await this._hass.callApi('GET', 'dashview/config?type=available_sensors');
       
-      // Fetch available calendars
-      const calendarsResponse = await fetch('/api/dashview/config?type=available_calendars');
-      const availableCalendars = await calendarsResponse.json();
+      // Fetch available calendars using authenticated API call
+      const availableCalendars = await this._hass.callApi('GET', 'dashview/config?type=available_calendars');
       
-      // Fetch current person configuration
-      const configResponse = await fetch('/api/dashview/config?type=person_config');
-      const personConfig = await configResponse.json();
+      // Fetch current person configuration using authenticated API call
+      const personConfig = await this._hass.callApi('GET', 'dashview/config?type=person_config');
       const persons = personConfig.persons || {};
       
       // Store for local use
