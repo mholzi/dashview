@@ -226,8 +226,14 @@ export class AdminManager {
   }
 
   async _saveConfigViaAPI(configType, configData) {
-    await this._hass.callApi('POST', 'dashview/config', { type: configType, config: configData });
-    console.log(`[DashView] ${configType} configuration saved.`);
+    try {
+      await this._hass.callApi('POST', 'dashview/config', { type: configType, config: configData });
+      console.log(`[DashView] ${configType} configuration saved.`);
+      return { status: 'success' };
+    } catch (error) {
+      console.error(`[DashView] Error saving ${configType} configuration:`, error);
+      throw new Error(`Failed to save ${configType} configuration: ${error.message || 'Unknown error'}`);
+    }
   }
 
   _findRoomKeyByName(roomName) {
@@ -1659,6 +1665,7 @@ async saveMediaPlayerPresets() {
       if (!calendarConfig || typeof calendarConfig !== 'object') {
         throw new Error('Invalid response format: calendar configuration should be an object');
       }
+      
       const linkedCalendars = calendarConfig.linked_calendars || [];
       
       // Update admin local state
@@ -1696,7 +1703,11 @@ async saveMediaPlayerPresets() {
       this._setStatusMessage(statusElement, 'Calendar configuration loaded successfully', 'success');
     } catch (error) {
       console.error('[DashView] Error loading calendar configuration:', error);
-      this._setStatusMessage(statusElement, 'Error loading calendar configuration', 'error');
+      let errorMessage = 'Error loading calendar configuration';
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      this._setStatusMessage(statusElement, errorMessage, 'error');
     }
   }
   
@@ -1726,11 +1737,15 @@ async saveMediaPlayerPresets() {
           this._panel._houseConfig.linked_calendars = selectedCalendars;
         }
       } else {
-        throw new Error('Failed to save calendar configuration');
+        throw new Error('Failed to save calendar configuration: Invalid response');
       }
     } catch (error) {
       console.error('[DashView] Error saving calendar configuration:', error);
-      this._setStatusMessage(statusElement, 'Error saving calendar configuration', 'error');
+      let errorMessage = 'Error saving calendar configuration';
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      this._setStatusMessage(statusElement, errorMessage, 'error');
     }
   }
 
