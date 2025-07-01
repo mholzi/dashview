@@ -3,6 +3,7 @@
 <div class="tabs-container" style="margin-top: 20px;">
     <div class="tab-buttons">
         <button class="tab-button active" data-target="weather-tab">Weather</button>
+        <button class="tab-button" data-target="calendar-management-tab">Calendar</button>
         <button class="tab-button" data-target="house-setup-tab">House Setup</button>
         <button class="tab-button" data-target="sensor-management-tab">Sensor Management</button>
         <button class="tab-button" data-target="device-management-tab">Device Management</button>
@@ -88,6 +89,25 @@
             <select id="weather-entity-selector" class="dropdown-selector"></select>
             <button id="save-weather-entity" class="save-button">Save</button>
             <button id="reload-weather-config" class="action-button">Reload</button>
+        </div>
+    </div>
+    <div id="calendar-management-tab" class="tab-content">
+        <h4>Calendar Management</h4>
+        <p>Select which calendar entities should be displayed in the DashView calendar popup. Events from all selected calendars will be merged and displayed chronologically.</p>
+        <div id="calendar-status" class="status-display">
+            <span class="status-icon mdi"></span>
+            <span class="status-text">Ready</span>
+        </div>
+        <div class="config-section">
+            <h5>Available Calendars</h5>
+            <p>Check the calendars you want to include in the dashboard:</p>
+            <div id="calendar-list" class="entity-list">
+                <!-- Calendar checkboxes will be dynamically inserted here -->
+            </div>
+            <div class="form-row" style="margin-top: 20px;">
+                <button id="save-calendars" class="save-button">Save Calendar Selection</button>
+                <button id="reload-calendars" class="action-button">Reload</button>
+            </div>
         </div>
     </div>
     <div id="floor-layouts-tab" class="tab-content">

@@ -195,6 +195,23 @@ class DashViewConfigView(HomeAssistantView):
         elif config_type == 'integrations':
             config = self._entry.options.get('integrations_config', {})
             return web.json_response(config)
+        elif config_type == 'available_calendars':
+            all_calendars = [
+                {
+                    "entity_id": entity.entity_id,
+                    "friendly_name": entity.attributes.get("friendly_name", entity.entity_id),
+                }
+                for entity in self._hass.states.async_all()
+                if entity.entity_id.startswith("calendar.")
+            ]
+            all_calendars.sort(key=lambda x: x["friendly_name"])
+            return web.json_response(all_calendars)
+        elif config_type == 'calendar_events':
+            return await self._get_calendar_events(request)
+        elif config_type == 'calendar_config':
+            house_config = self._entry.options.get('house_config', {})
+            linked_calendars = house_config.get('linked_calendars', [])
+            return web.json_response({'linked_calendars': linked_calendars})
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -258,6 +275,57 @@ class DashViewConfigView(HomeAssistantView):
 
         return web.json_response(entities_by_area)
 
+    async def _get_calendar_events(self, request: web.Request) -> web.Response:
+        """Get calendar events for specified entities."""
+        entity_ids = request.query.get('entity_ids', '').split(',')
+        start_date = request.query.get('start_date')
+        end_date = request.query.get('end_date')
+        
+        if not entity_ids or not entity_ids[0]:
+            return web.json_response({"error": "entity_ids parameter is required"}, status=400)
+        
+        if not start_date or not end_date:
+            return web.json_response({"error": "start_date and end_date parameters are required"}, status=400)
+        
+        all_events = []
+        
+        for entity_id in entity_ids:
+            entity_id = entity_id.strip()
+            if not entity_id:
+                continue
+                
+            try:
+                # Call the calendar.get_events service
+                service_data = {
+                    "entity_id": entity_id,
+                    "start_date_time": start_date,
+                    "end_date_time": end_date,
+                }
+                
+                response = await self._hass.services.async_call(
+                    "calendar",
+                    "get_events",
+                    service_data,
+                    blocking=True,
+                    return_response=True
+                )
+                
+                # Extract events from the response
+                if entity_id in response:
+                    events = response[entity_id].get("events", [])
+                    for event in events:
+                        event["calendar_entity_id"] = entity_id
+                        all_events.append(event)
+                        
+            except Exception as e:
+                _LOGGER.error(f"Error fetching events for {entity_id}: {e}")
+                continue
+        
+        # Sort events by start time
+        all_events.sort(key=lambda x: x.get("start", ""))
+        
+        return web.json_response({"events": all_events})
+
     async def post(self, request: web.Request) -> web.Response:
         """Handle POST requests to save configuration."""
         try:
@@ -280,6 +348,8 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["media_presets"] = config_payload
             elif config_type == "scenes":
                 current_options.setdefault("house_config", {})["scenes"] = config_payload
+            elif config_type == "calendar":
+                current_options.setdefault("house_config", {})["linked_calendars"] = config_payload
             else:
                 return web.json_response({"error": f"Invalid config type: {config_type}"}, status=400)
 

@@ -40,6 +40,7 @@ export class AdminManager {
       'integrations-tab': () => this.loadDwdConfig(),
       'room-maintenance-tab': () => this.loadRoomMaintenance(),
       'weather-tab': () => this.loadWeatherEntityConfiguration(),
+      'calendar-management-tab': () => this.loadCalendarManagement(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
       'scenes-tab': () => this.loadScenes(),
       'media-presets-tab': () => this.loadMediaPlayerPresets(),
@@ -76,6 +77,8 @@ export class AdminManager {
             '#save-house-config': () => this.saveHouseConfiguration(),
             '#save-weather-entity': () => this.saveWeatherEntityConfiguration(),
             '#reload-weather-config': () => this.loadWeatherEntityConfiguration(),
+            '#save-calendars': () => this.saveCalendarManagement(),
+            '#reload-calendars': () => this.loadCalendarManagement(),
             '#save-motion-sensor-config': () => this.saveGenericSensorConfig(this._entityLabels.MOTION, 'motion-setup-status', 'motion-sensors-by-room'),
             '#reload-motion-sensors': () => this.loadGenericSensorSetup({label: this._entityLabels.MOTION}, 'motion-setup-status', 'motion-sensors-by-room', 'Motion Sensors'),
             '#save-cover-config': () => this.saveGenericSensorConfig('cover', 'cover-setup-status', 'covers-by-room', true),
@@ -1630,6 +1633,93 @@ async saveMediaPlayerPresets() {
       tooltip.style.left = adjustedLeft + 'px';
       tooltip.style.top = adjustedTop + 'px';
     });
+  }
+
+  async loadCalendarManagement() {
+    const statusElement = this._shadowRoot.getElementById('calendar-status');
+    this._setStatusMessage(statusElement, 'Loading calendar configuration...', 'processing');
+    
+    try {
+      // Fetch available calendars
+      const calendarsResponse = await fetch('/api/dashview/config?type=available_calendars');
+      const availableCalendars = await calendarsResponse.json();
+      
+      // Fetch current calendar configuration
+      const configResponse = await fetch('/api/dashview/config?type=calendar_config');
+      const calendarConfig = await configResponse.json();
+      const linkedCalendars = calendarConfig.linked_calendars || [];
+      
+      // Update admin local state
+      if (!this._adminLocalState.houseConfig) {
+        this._adminLocalState.houseConfig = {};
+      }
+      this._adminLocalState.houseConfig.linked_calendars = linkedCalendars;
+      
+      // Render calendar list
+      const calendarList = this._shadowRoot.getElementById('calendar-list');
+      calendarList.innerHTML = '';
+      
+      if (availableCalendars.length === 0) {
+        calendarList.innerHTML = '<p class="no-data-message">No calendar entities found in Home Assistant.</p>';
+      } else {
+        availableCalendars.forEach(calendar => {
+          const isChecked = linkedCalendars.includes(calendar.entity_id);
+          const item = document.createElement('div');
+          item.className = 'entity-list-item';
+          item.innerHTML = `
+            <label class="checkbox-container">
+              <input type="checkbox" 
+                     class="calendar-checkbox" 
+                     data-entity-id="${calendar.entity_id}"
+                     ${isChecked ? 'checked' : ''}>
+              <span class="checkbox-checkmark"></span>
+              <span class="entity-name">${calendar.friendly_name}</span>
+              <span class="entity-id">${calendar.entity_id}</span>
+            </label>
+          `;
+          calendarList.appendChild(item);
+        });
+      }
+      
+      this._setStatusMessage(statusElement, 'Calendar configuration loaded successfully', 'success');
+    } catch (error) {
+      console.error('[DashView] Error loading calendar configuration:', error);
+      this._setStatusMessage(statusElement, 'Error loading calendar configuration', 'error');
+    }
+  }
+  
+  async saveCalendarManagement() {
+    const statusElement = this._shadowRoot.getElementById('calendar-status');
+    this._setStatusMessage(statusElement, 'Saving calendar configuration...', 'processing');
+    
+    try {
+      // Collect selected calendars
+      const selectedCalendars = [];
+      const checkboxes = this._shadowRoot.querySelectorAll('.calendar-checkbox:checked');
+      checkboxes.forEach(checkbox => {
+        selectedCalendars.push(checkbox.dataset.entityId);
+      });
+      
+      // Update local state
+      this._adminLocalState.houseConfig.linked_calendars = selectedCalendars;
+      
+      // Save to backend
+      const response = await this._saveConfigViaAPI('calendar', selectedCalendars);
+      
+      if (response && response.status === 'success') {
+        this._setStatusMessage(statusElement, 'Calendar configuration saved successfully', 'success');
+        
+        // Update the panel's house config
+        if (this._panel._houseConfig) {
+          this._panel._houseConfig.linked_calendars = selectedCalendars;
+        }
+      } else {
+        throw new Error('Failed to save calendar configuration');
+      }
+    } catch (error) {
+      console.error('[DashView] Error saving calendar configuration:', error);
+      this._setStatusMessage(statusElement, 'Error saving calendar configuration', 'error');
+    }
   }
 
 }
