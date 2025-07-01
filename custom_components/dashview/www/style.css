@@ -365,6 +365,28 @@ body.popup-open, :host(.popup-open) {
     gap: 8px;
 }
 
+.person-trigger-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gray200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.person-trigger-icon:hover {
+    background: var(--gray300);
+    transform: scale(1.05);
+}
+
+.person-trigger-icon i {
+    font-size: 16px;
+    color: var(--gray800);
+}
+
 .weather-button .icon-container img {
     width: 40px;
     height: 40px;
@@ -1657,11 +1679,9 @@ body.popup-open, :host(.popup-open) {
   }
   
   .media-player-container {
-    background: var(--popupBG);
     border-radius: 12px;
     padding: 16px;
     margin: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
   /* Compact styles for room cards */
@@ -2307,6 +2327,16 @@ body.popup-open, :host(.popup-open) {
     background: var(--gray000);
 }
 
+/* Door entity text and icon colors */
+.sensor-small-card.door-unlocked .sensor-small-name,
+.sensor-small-card.door-unlocked .sensor-small-label,
+.sensor-small-card.door-unlocked .sensor-small-icon-cell i,
+.sensor-big-card.door-unlocked .sensor-big-name,
+.sensor-big-card.door-unlocked .sensor-big-label,
+.sensor-big-card.door-unlocked .sensor-big-icon-cell i {
+    color: var(--gray800);
+}
+
 /* --- Vacuum and Mower Error Styles --- */
 .sensor-small-card.vacuum-error,
 .sensor-big-card.vacuum-error,
@@ -2635,6 +2665,10 @@ body.popup-open, :host(.popup-open) {
     background: var(--active-big);
 }
 
+.sensor-big-card[data-type="light"].is-on {
+    background: var(--active-big);
+}
+
 .sensor-big-card[data-type="media_player"].is-on {
     background: var(--purple);
 }
@@ -2647,6 +2681,21 @@ body.popup-open, :host(.popup-open) {
 .sensor-big-card.is-on .sensor-big-name,
 .sensor-big-card.is-on .sensor-big-label {
     color: var(--gray000);
+}
+
+/* General unavailable state styling */
+.sensor-small-card.is-unavailable,
+.sensor-big-card.is-unavailable {
+    background: var(--red);
+}
+
+.sensor-small-card.is-unavailable .sensor-small-name,
+.sensor-small-card.is-unavailable .sensor-small-label,
+.sensor-small-card.is-unavailable .sensor-small-icon-cell i,
+.sensor-big-card.is-unavailable .sensor-big-name,
+.sensor-big-card.is-unavailable .sensor-big-label,
+.sensor-big-card.is-unavailable .sensor-big-icon-cell i {
+    color: var(--gray800);
 }
 .sensor-big-label {
     grid-area: label;

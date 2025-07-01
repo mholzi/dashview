@@ -143,7 +143,7 @@ export class InfoCardManager {
         card.innerHTML = `
             <div class="notification-icon"><i class="mdi mdi-thermometer-alert"></i></div>
             <div class="notification-info">
-                <div class="notification-title">High Temperature Alert</div>
+                <div class="notification-title">Hohe Temperatur Warnung</div>
                 <div class="notification-details">
                     <span>${highTempRooms.join(', ')}</span>
                 </div>

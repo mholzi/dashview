@@ -102,7 +102,7 @@ export class UpcomingEventsManager {
             
         } catch (error) {
             console.error('[DashView] UpcomingEventsManager: Error fetching events:', error);
-            this._showError(cardElement, 'Failed to load events');
+            this._showError(cardElement, 'Fehler beim Laden der Termine');
         } finally {
             this._isLoading = false;
         }
@@ -113,8 +113,8 @@ export class UpcomingEventsManager {
         if (contentDiv) {
             contentDiv.innerHTML = `
                 <div class="upcoming-events-empty">
-                    <div class="upcoming-events-empty-text">No calendars configured</div>
-                    <div class="upcoming-events-help">Configure calendars in Admin</div>
+                    <div class="upcoming-events-empty-text">Keine Kalender konfiguriert</div>
+                    <div class="upcoming-events-help">Kalender im Admin konfigurieren</div>
                 </div>
             `;
         }
@@ -139,8 +139,8 @@ export class UpcomingEventsManager {
         if (this._events.length === 0) {
             contentDiv.innerHTML = `
                 <div class="upcoming-events-empty">
-                    <div class="upcoming-events-empty-text">No upcoming events</div>
-                    <div class="upcoming-events-help">Your schedule is clear!</div>
+                    <div class="upcoming-events-empty-text">Keine kommenden Termine</div>
+                    <div class="upcoming-events-help">Ihr Kalender ist frei!</div>
                 </div>
             `;
             return;
@@ -207,9 +207,9 @@ export class UpcomingEventsManager {
         
         if (this._isAllDayEvent(event)) {
             if (this._isEventToday(event)) {
-                return 'Today';
+                return 'Heute';
             } else if (this._isEventTomorrow(event)) {
-                return 'Tomorrow';
+                return 'Morgen';
             } else {
                 return this._formatDateShort(startTime);
             }
@@ -221,7 +221,7 @@ export class UpcomingEventsManager {
                     hour12: false
                 });
             } else if (this._isEventTomorrow(event)) {
-                return `Tomorrow, ${startTime.toLocaleTimeString([], { 
+                return `Morgen, ${startTime.toLocaleTimeString([], { 
                     hour: '2-digit', 
                     minute: '2-digit',
                     hour12: false

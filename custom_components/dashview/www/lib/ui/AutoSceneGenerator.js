@@ -31,13 +31,8 @@ export class AutoSceneGenerator {
                 }
             }
             
-            // Generate cover scenes for rooms with covers (only if global cover scene is NOT enabled)
-            if (!this._getGlobalCoverSceneEnabled() && roomConfig.covers && roomConfig.covers.length > 0) {
-                const coverScene = this._createRoomCoversScene(roomKey, roomConfig);
-                if (coverScene) {
-                    autoScenes.push(coverScene);
-                }
-            }
+            // Cover scenes are disabled per user request - rely on global variables only
+            // Room-specific cover scenes should not appear regardless of global setting
         });
 
         // Generate global cover scene if enabled and covers exist
