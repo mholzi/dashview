@@ -5,6 +5,82 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-07
+
+### 🚀 New Features
+
+- **Entity Detail Popups**: Complete entity detail popup system with container architecture, content orchestration, and comprehensive styling (#290, #291, #292)
+  - Generic popup container system with template loading and lifecycle management
+  - Intelligent entity content orchestration with type-specific strategies
+  - Advanced animations with GPU acceleration and responsive design
+  - Full accessibility features including ARIA attributes and keyboard navigation
+  - Long-tap gesture integration for triggering entity detail popups
+
+- **Calendar Integration**: Multi-calendar support for enhanced event management (#268)
+  - Support for multiple calendar entities in dashboard
+  - Integrated calendar event display and filtering
+  - Upcoming events card for main dashboard (#269)
+
+- **Time Utilities**: Generalized time difference calculation system (#265)
+  - Centralized time formatting with multiple language support
+  - Consistent time display across all components
+  - Support for short, long, and English time formats
+
+### 🔧 Improvements
+
+- **Code Architecture**: Enhanced component organization and maintainability (#266)
+  - Decomposed card display logic into type-specific functions
+  - Improved separation of concerns for better code maintainability
+  - Cleaner component interfaces and reduced code duplication
+
+### 🎨 Enhanced User Experience
+
+- **Responsive Design**: Mobile-first approach with comprehensive breakpoint support
+  - Mobile (320px+), tablet (768px+), and desktop (1024px+) optimized layouts
+  - Advanced CSS animations with reduced motion support
+  - Elegant shadows, backdrop blur effects, and smooth transitions
+
+- **Accessibility**: Full accessibility compliance
+  - ARIA attributes and semantic HTML structure
+  - Focus management and keyboard navigation (Escape/Tab support)
+  - Screen reader compatibility and proper heading hierarchy
+
+### 🧪 Testing
+
+- Comprehensive test coverage for upcoming events functionality
+- Performance validation across multiple device types
+- Cross-browser compatibility testing
+
+### 🔧 Technical Details
+
+**New Components:**
+- `EntityDetailManager.js` - Content orchestration for entity popups
+- `UpcomingEventsManager.js` - Calendar events management
+- `entity-detail-popup-container.html` - Reusable popup template
+- `upcoming-events-card.html` - Events display template
+
+**Enhanced Components:**
+- `PopupManager.js` - Extended with accessibility and entity detail support
+- `FloorManager.js` - Integrated gesture detection for popup triggering
+- `AdminManager.js` - Additional configuration management
+- `style.css` - Comprehensive popup styling system
+
+### 📦 Dependencies
+
+- No additional external dependencies
+- Maintains compatibility with Home Assistant 2023.x+
+- Pure vanilla JavaScript with ES6+ features
+
+### 🔄 Migration Guide
+
+This release is fully backward compatible. No migration steps required.
+
+### 👥 Contributors
+
+Special thanks to all contributors who made this release possible through issue reports, testing, and feedback.
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.2.0...v0.3.0
+
 ## [0.2.0] - 2024-06-30
 
 ### Added
