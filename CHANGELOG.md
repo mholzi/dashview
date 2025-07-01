@@ -5,6 +5,148 @@ All notable changes to DashView will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-07-01
+
+### 🚀 Added
+
+- **Enhanced Entity Picker Component** - Unified EntityPicker with advanced filtering and bulk actions (#311)
+  - Real-time search across entity IDs and friendly names
+  - Advanced filtering by domain, area, and device class
+  - Multi-selection with checkboxes and bulk operations
+  - Keyboard navigation and accessibility features
+  - Comprehensive test suite with 21 test cases
+
+- **Historical Data Graphs** - Interactive entity popups with historical data visualization (#314)
+  - Chart.js integration for time-series data visualization
+  - 24-hour historical data display for supported entities
+  - Responsive design with proper error handling
+  - Support for sensor, binary_sensor, and numeric entity types
+
+- **Configurable Calendar Display** - Enhanced calendar management system (#313)
+  - Configurable display range (1, 3, 7, 14, 30 days)
+  - Calendar event color-coding by source calendar
+  - Smart navigation with dynamic step sizes
+  - Enhanced admin panel with color picker integration
+
+- **Person Card Integration** - Main dashboard person management (#297)
+  - Person card display in floor sections
+  - Device tracker integration for presence detection
+  - Configurable person entities with custom icons
+  - Template-based rendering with caching
+
+### 🎨 Enhanced
+
+- **Sensor Card Display Improvements** - German localization and visual differentiation (#320)
+  - German text translations for all entity states (on→An, off→Aus, etc.)
+  - Type-specific CSS classes for visual differentiation
+  - Enhanced icon support with domain-based mapping
+  - 128+ new CSS rules for entity type-specific styling
+  - Colored borders and gradients for better visual hierarchy
+
+### 🔧 Fixed
+
+- **Calendar API Authentication** - Replaced raw fetch with authenticated API calls (#310)
+  - Proper Home Assistant authentication integration
+  - Fixed calendar management in admin panel
+  - Improved error handling for API requests
+
+- **Person Card Review Improvements** - Code quality enhancements
+  - Addressed Gemini Code Assist review comments
+  - Improved error handling and validation
+  - Better template loading with fallback mechanisms
+
+### 🏗️ Technical Improvements
+
+- **Code Organization**
+  - Enhanced FloorManager with helper methods for better maintainability
+  - Improved EntityDetailManager with content strategy pattern
+  - Better separation of concerns across UI managers
+  - Added comprehensive German translation system
+
+- **Enhanced CSS System**
+  - Entity type-specific styling with visual differentiation
+  - Support for warning/error states with appropriate colors
+  - Enhanced color system with gradients and borders
+  - Improved responsive design consistency
+
+- **Testing Infrastructure**
+  - Comprehensive test suite for EntityPicker component
+  - Validation tests for configuration and functionality
+  - Security checks and code quality validations
+
+### 📊 Performance
+
+- **Optimized Rendering**
+  - Template caching for person cards
+  - Efficient entity type detection and display data calculation
+  - Reduced DOM manipulation with better state management
+  - Lazy loading for non-critical components
+
+### 🔒 Security
+
+- **Enhanced Input Validation**
+  - Proper sanitization of user inputs
+  - Secure API communication with authentication
+  - No eval() or Function() constructor usage
+  - MDI icon class validation to prevent injection
+
+### 🌐 Internationalization
+
+- **German Language Support**
+  - Complete German translations for entity states
+  - German entity type names (climate→Klima, switch→Schalter)
+  - Localized error messages and status indicators
+  - Consistent German text throughout the interface
+
+### 🎯 User Experience
+
+- **Visual Enhancements**
+  - Better entity type differentiation through colors and icons
+  - Improved calendar navigation with smart step sizes
+  - Enhanced admin panel with real-time validation
+  - More intuitive person card management
+
+- **Accessibility Improvements**
+  - Keyboard navigation support for EntityPicker
+  - Better contrast ratios with enhanced color system
+  - Screen reader friendly entity state descriptions
+  - Proper ARIA labels and semantic HTML
+
+### 📱 Compatibility
+
+- **Home Assistant Integration**
+  - Compatible with Home Assistant 2024.1+
+  - Proper integration with area, device, and entity registries
+  - Support for latest Home Assistant authentication methods
+  - Calendar integration with Home Assistant calendar entities
+
+### 🔄 Migration Notes
+
+For users upgrading from v0.3.x:
+
+1. **Calendar Configuration**: Existing calendar configurations will be preserved. New color-coding and display range features are opt-in.
+
+2. **Entity Display**: Sensor cards will now show German text by default. This improves localization but may affect custom styling that depends on English text.
+
+3. **Person Cards**: Person card functionality requires configuration through the admin panel. Existing person entities will need to be configured.
+
+4. **Historical Data**: Historical data graphs are automatically available for supported entity types in entity detail popups.
+
+### 👥 Contributors
+
+- @mholzi - Primary development and feature implementation
+- Community feedback and testing from GitHub issues and discussions
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.3.1...v0.4.0
+
+---
+
+## [0.3.1] - 2025-01-08
+
+### Fixed
+- Minor bug fixes and stability improvements
+- Updated dependencies for security patches
+
 ## [0.3.0] - 2025-01-07
 
 ### 🚀 New Features
