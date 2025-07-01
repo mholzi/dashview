@@ -725,19 +725,171 @@ export class FloorManager {
    */
   _getDefaultDisplayData(entityState, type) {
     let label = entityState?.state || 'N/A';
+    let cardClass = '';
     
-    if (entityState?.state === 'on' || entityState?.state === 'off') {
-      label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
+    // German translations for common states
+    if (entityState?.state === 'on') {
+      label = 'An';
+      cardClass = 'is-on';
+    } else if (entityState?.state === 'off') {
+      label = 'Aus';
+    } else if (entityState?.state === 'unavailable') {
+      label = 'Nicht verfügbar';
+      cardClass = 'is-unavailable';
+    } else if (entityState?.state === 'unknown') {
+      label = 'Unbekannt';
+    } else if (entityState?.state === 'idle') {
+      label = 'Bereit';
+    } else if (entityState?.state === 'active') {
+      label = 'Aktiv';
+      cardClass = 'is-on';
+    } else if (entityState?.state === 'locked') {
+      label = 'Verriegelt';
+    } else if (entityState?.state === 'unlocked') {
+      label = 'Entriegelt';
+      cardClass = 'is-on';
+    } else if (entityState?.state === 'open') {
+      label = 'Offen';
+      cardClass = 'is-on';
+    } else if (entityState?.state === 'closed') {
+      label = 'Geschlossen';
+    } else if (entityState?.state) {
+      // For numeric states, keep the value as is
+      const numericValue = parseFloat(entityState.state);
+      if (!isNaN(numericValue)) {
+        label = entityState.state;
+      } else {
+        // Capitalize first letter for other states
+        label = entityState.state.charAt(0).toUpperCase() + entityState.state.slice(1);
+      }
     }
+    
+    // Try to get a better icon based on entity domain or custom icon
+    let icon = this._getIconForEntityType(entityState, type);
     
     console.warn(`[FloorManager] Using default card for unknown type: ${type}`);
     
+    // Add type-specific card class for better styling
+    const typeCardClass = this._getTypeSpecificCardClass(type);
+    const finalCardClass = [cardClass, typeCardClass].filter(Boolean).join(' ').trim();
+    
     return {
-      name: entityState?.attributes.friendly_name || type,
+      name: entityState?.attributes.friendly_name || this._getTypeDisplayName(type),
       label,
-      icon: 'mdi:help-circle',
-      cardClass: ''
+      icon,
+      cardClass: finalCardClass
     };
+  }
+
+  /**
+   * Get appropriate icon for entity type with fallback logic
+   * @param {Object} entityState - The entity state object
+   * @param {string} type - The entity type
+   * @returns {string} Icon name
+   */
+  _getIconForEntityType(entityState, type) {
+    // First try to use custom icon from entity attributes
+    if (entityState?.attributes?.icon) {
+      return entityState.attributes.icon;
+    }
+    
+    // Domain-based icon mapping for common entity types
+    const domain = type.includes('.') ? type.split('.')[0] : type;
+    const iconMap = {
+      'climate': 'mdi:thermostat',
+      'switch': 'mdi:toggle-switch',
+      'fan': 'mdi:fan',
+      'alarm_control_panel': 'mdi:shield-home',
+      'lock': 'mdi:lock',
+      'binary_sensor': 'mdi:radiobox-marked',
+      'sensor': 'mdi:gauge',
+      'input_boolean': 'mdi:toggle-switch',
+      'input_select': 'mdi:format-list-bulleted',
+      'input_number': 'mdi:numeric',
+      'input_text': 'mdi:form-textbox',
+      'automation': 'mdi:robot',
+      'script': 'mdi:script-text',
+      'scene': 'mdi:palette',
+      'timer': 'mdi:timer',
+      'counter': 'mdi:counter',
+      'device_tracker': 'mdi:map-marker',
+      'person': 'mdi:account',
+      'zone': 'mdi:map-marker-radius',
+      'sun': 'mdi:white-balance-sunny',
+      'weather': 'mdi:weather-partly-cloudy',
+      'camera': 'mdi:camera',
+      'vacuum': 'mdi:robot-vacuum',
+      'lawn_mower': 'mdi:robot-mower',
+      'water_heater': 'mdi:water-boiler',
+      'humidifier': 'mdi:air-humidifier',
+      'air_quality': 'mdi:air-filter'
+    };
+    
+    return iconMap[domain] || 'mdi:help-circle';
+  }
+
+  /**
+   * Get type-specific CSS class for better visual differentiation
+   * @param {string} type - The entity type
+   * @returns {string} CSS class name
+   */
+  _getTypeSpecificCardClass(type) {
+    const domain = type.includes('.') ? type.split('.')[0] : type;
+    const classMap = {
+      'climate': 'climate-entity',
+      'switch': 'switch-entity',
+      'fan': 'fan-entity',
+      'alarm_control_panel': 'alarm-entity',
+      'lock': 'lock-entity',
+      'binary_sensor': 'binary-sensor-entity',
+      'sensor': 'sensor-entity',
+      'vacuum': 'vacuum-entity',
+      'lawn_mower': 'mower-entity',
+      'device_tracker': 'tracker-entity',
+      'person': 'person-entity'
+    };
+    
+    return classMap[domain] || 'unknown-entity';
+  }
+
+  /**
+   * Get display name for entity type
+   * @param {string} type - The entity type
+   * @returns {string} Friendly display name
+   */
+  _getTypeDisplayName(type) {
+    const domain = type.includes('.') ? type.split('.')[0] : type;
+    const nameMap = {
+      'climate': 'Klima',
+      'switch': 'Schalter',
+      'fan': 'Lüfter',
+      'alarm_control_panel': 'Alarmanlage',
+      'lock': 'Schloss',
+      'binary_sensor': 'Binärer Sensor',
+      'sensor': 'Sensor',
+      'input_boolean': 'Eingabe (Boolean)',
+      'input_select': 'Auswahl',
+      'input_number': 'Eingabe (Zahl)',
+      'input_text': 'Eingabe (Text)',
+      'automation': 'Automatisierung',
+      'script': 'Skript',
+      'scene': 'Szene',
+      'timer': 'Timer',
+      'counter': 'Zähler',
+      'device_tracker': 'Geräteverfolgung',
+      'person': 'Person',
+      'zone': 'Zone',
+      'sun': 'Sonne',
+      'weather': 'Wetter',
+      'camera': 'Kamera',
+      'vacuum': 'Staubsauger',
+      'lawn_mower': 'Rasenmäher',
+      'water_heater': 'Warmwasserbereiter',
+      'humidifier': 'Luftbefeuchter',
+      'air_quality': 'Luftqualität'
+    };
+    
+    return nameMap[domain] || type;
   }
 
   /**
