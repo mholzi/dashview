@@ -247,6 +247,12 @@ export class UpcomingEventsManager {
         return events.sort((a, b) => {
             const timeA = this._getEventStartTime(a);
             const timeB = this._getEventStartTime(b);
+            
+            // Handle invalid dates gracefully - put them at the end
+            if (isNaN(timeA.getTime()) && isNaN(timeB.getTime())) return 0;
+            if (isNaN(timeA.getTime())) return 1;
+            if (isNaN(timeB.getTime())) return -1;
+            
             return timeA - timeB;
         });
     }
@@ -261,7 +267,7 @@ export class UpcomingEventsManager {
                 return new Date(event.start.date);
             }
         }
-        return new Date(0);
+        return new Date(NaN); // Return invalid date for missing start
     }
 
     _getEventEndTime(event) {
@@ -338,6 +344,12 @@ export class UpcomingEventsManager {
         // All-day events should show for the entire day they occur
         if (this._isAllDayEvent(event)) {
             const eventDate = this._getEventStartTime(event);
+            
+            // Handle invalid dates gracefully
+            if (isNaN(eventDate.getTime())) {
+                return false; // If we can't parse the date, don't filter it out
+            }
+            
             const today = new Date();
             
             // Compare just the date parts (YYYY-MM-DD)
@@ -350,6 +362,12 @@ export class UpcomingEventsManager {
         
         // For timed events, check if the end time has passed
         const endTime = this._getEventEndTime(event);
+        
+        // Handle invalid dates gracefully
+        if (isNaN(endTime.getTime())) {
+            return false; // If we can't parse the end time, don't filter it out
+        }
+        
         return now > endTime;
     }
 

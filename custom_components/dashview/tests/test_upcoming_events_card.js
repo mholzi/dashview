@@ -110,13 +110,33 @@ class UpcomingEventsCardTests {
           return new Date(event.start.date);
         }
       }
-      return new Date(0);
+      return new Date(NaN); // Return invalid date for missing start
+    };
+    
+    manager._getEventEndTime = function(event) {
+      if (event.end) {
+        if (typeof event.end === 'string') {
+          return new Date(event.end);
+        } else if (event.end.dateTime) {
+          return new Date(event.end.dateTime);
+        } else if (event.end.date) {
+          return new Date(event.end.date);
+        }
+      }
+      // If no end time provided, fallback to start time
+      return this._getEventStartTime(event);
     };
 
     manager._sortEventsByTime = function(events) {
       return events.sort((a, b) => {
         const timeA = this._getEventStartTime(a);
         const timeB = this._getEventStartTime(b);
+        
+        // Handle invalid dates gracefully - put them at the end
+        if (isNaN(timeA.getTime()) && isNaN(timeB.getTime())) return 0;
+        if (isNaN(timeA.getTime())) return 1;
+        if (isNaN(timeB.getTime())) return -1;
+        
         return timeA - timeB;
       });
     };
@@ -223,6 +243,12 @@ class UpcomingEventsCardTests {
       // All-day events should show for the entire day they occur
       if (this._isAllDayEvent(event)) {
         const eventDate = this._getEventStartTime(event);
+        
+        // Handle invalid dates gracefully
+        if (isNaN(eventDate.getTime())) {
+          return false; // If we can't parse the date, don't filter it out
+        }
+        
         const today = new Date();
         
         // Compare just the date parts (YYYY-MM-DD)
@@ -235,6 +261,12 @@ class UpcomingEventsCardTests {
       
       // For timed events, check if the end time has passed
       const endTime = this._getEventEndTime(event);
+      
+      // Handle invalid dates gracefully
+      if (isNaN(endTime.getTime())) {
+        return false; // If we can't parse the end time, don't filter it out
+      }
+      
       return now > endTime;
     };
 
@@ -645,6 +677,55 @@ class UpcomingEventsCardTests {
     }
   }
 
+  // Test edge case handling for malformed events
+  async testEdgeCaseHandling() {
+    const testName = 'Edge Case Handling';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const manager = this.createMockUpcomingEventsManager();
+      
+      // Test event with no end time
+      const noEndEvent = {
+        summary: 'No End Event',
+        start: { dateTime: new Date().toISOString() }
+        // No end property
+      };
+      
+      // Should not throw error and should use start time as end time
+      const endTime = manager._getEventEndTime(noEndEvent);
+      const startTime = manager._getEventStartTime(noEndEvent);
+      this.assertEqual(endTime.getTime(), startTime.getTime(), 'Should use start time as end time when no end provided');
+      
+      // Test completely empty event
+      const emptyEvent = {
+        summary: 'Empty Event'
+        // No start or end
+      };
+      
+      // Should handle gracefully without throwing errors
+      const isFinished = manager._isEventFinished(emptyEvent);
+      this.assertTrue(typeof isFinished === 'boolean', 'Should return boolean for empty event without throwing error');
+      this.assertTrue(!isFinished, 'Empty event should not be filtered out (graceful handling)');
+      
+      // Test event with malformed date
+      const malformedEvent = {
+        summary: 'Malformed Event',
+        start: 'invalid-date-string',
+        end: { dateTime: new Date().toISOString() }
+      };
+      
+      // Should handle gracefully
+      const malformedFinished = manager._isEventFinished(malformedEvent);
+      this.assertTrue(typeof malformedFinished === 'boolean', 'Should return boolean for malformed event');
+      this.assertTrue(!malformedFinished, 'Malformed event should not be filtered out (graceful handling)');
+      
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
   // Run all tests
   async runAllTests() {
     this.log('Starting upcoming events card tests...');
@@ -661,6 +742,7 @@ class UpcomingEventsCardTests {
     await this.testFinishedTimedEventDetection();
     await this.testFinishedAllDayEventDetection();
     await this.testEventFilteringIntegration();
+    await this.testEdgeCaseHandling();
 
     const passedTests = this.testResults.filter(result => result.passed).length;
     const totalTests = this.testResults.length;
