@@ -50,7 +50,7 @@ function testBottomNavigationActiveStates() {
         const indexPath = path.join(__dirname, 'custom_components/dashview/www/index.html');
         const indexContent = fs.readFileSync(indexPath, 'utf8');
         
-        const expectedButtons = ['#home', '#security', '#calendar', '#music', '#admin'];
+        const expectedButtons = ['#security', '#calendar', '#music', '#admin'];
         let foundButtons = 0;
         
         expectedButtons.forEach(hash => {

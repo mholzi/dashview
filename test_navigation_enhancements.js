@@ -49,70 +49,71 @@ function testNavigationEnhancements() {
         }
     }
     
-    // Test 2: Verify home button addition
-    function testHomeButtonAddition() {
+    // Test 2: Verify navigation buttons structure (without home button)
+    function testNavigationButtonStructure() {
         const indexPath = path.join(__dirname, 'custom_components/dashview/www/index.html');
         const indexContent = fs.readFileSync(indexPath, 'utf8');
         
+        // Verify no home button is present
         const hasHomeButton = indexContent.includes('data-hash="#home"');
         const hasHomeIcon = indexContent.includes('mdi-home');
-        const homeButtonPosition = indexContent.indexOf('data-hash="#home"');
-        const securityButtonPosition = indexContent.indexOf('data-hash="#security"');
         
-        const isFirstButton = homeButtonPosition > 0 && homeButtonPosition < securityButtonPosition;
+        // Verify other navigation buttons are present
+        const hasSecurityButton = indexContent.includes('data-hash="#security"');
+        const hasCalendarButton = indexContent.includes('data-hash="#calendar"');
         
-        if (hasHomeButton && hasHomeIcon && isFirstButton) {
-            console.log('✓ Home button properly added as first navigation button');
+        if (!hasHomeButton && !hasHomeIcon && hasSecurityButton && hasCalendarButton) {
+            console.log('✓ Navigation structure correct (no home button, other buttons present)');
             return true;
         } else {
-            console.error('✗ Home button addition incomplete');
-            if (!hasHomeButton) console.error('  Missing data-hash="#home"');
-            if (!hasHomeIcon) console.error('  Missing mdi-home icon');
-            if (!isFirstButton) console.error('  Home button not positioned first');
+            console.error('✗ Navigation structure incorrect');
+            if (hasHomeButton) console.error('  Unexpected home button found');
+            if (hasHomeIcon) console.error('  Unexpected mdi-home icon found');
+            if (!hasSecurityButton) console.error('  Missing security button');
+            if (!hasCalendarButton) console.error('  Missing calendar button');
             return false;
         }
     }
     
-    // Test 3: Verify PopupManager handles home state
-    function testPopupManagerHomeStateHandling() {
+    // Test 3: Verify PopupManager active state handling
+    function testPopupManagerActiveStateHandling() {
         const popupManagerPath = path.join(__dirname, 'custom_components/dashview/www/lib/ui/popup-manager.js');
         const popupManagerContent = fs.readFileSync(popupManagerPath, 'utf8');
         
-        // Check that the activeButton logic is outside the if (hash !== '#home') block
+        // Check that the activeButton logic is properly implemented
         const hasActiveButtonLogic = popupManagerContent.includes('const activeButton = this._shadowRoot.querySelector(`.nav-button[data-hash="${hash}"]`);');
         const hasAlwaysComment = popupManagerContent.includes('Always set active button based on current hash');
+        const hasAddActiveClass = popupManagerContent.includes('activeButton.classList.add(\'active\')');
         
-        // Check if the active button logic is after the home check
-        const homeCheckIndex = popupManagerContent.indexOf('if (hash !== \'#home\')');
-        const activeButtonIndex = popupManagerContent.indexOf('const activeButton = this._shadowRoot.querySelector');
-        
-        const activeButtonAfterHomeCheck = homeCheckIndex > 0 && activeButtonIndex > homeCheckIndex;
-        
-        if (hasActiveButtonLogic && activeButtonAfterHomeCheck) {
-            console.log('✓ PopupManager properly handles home state active button');
+        if (hasActiveButtonLogic && hasAddActiveClass) {
+            console.log('✓ PopupManager properly handles active state navigation');
             return true;
         } else {
-            console.error('✗ PopupManager home state handling incomplete');
-            if (!hasActiveButtonLogic) console.error('  Missing active button logic');
-            if (!activeButtonAfterHomeCheck) console.error('  Active button logic in wrong position');
+            console.error('✗ PopupManager active state handling incomplete');
+            if (!hasActiveButtonLogic) console.error('  Missing active button selection logic');
+            if (!hasAddActiveClass) console.error('  Missing active class addition');
             return false;
         }
     }
     
-    // Test 4: Verify complete navigation button set
-    function testCompleteNavigationSet() {
+    // Test 4: Verify navigation button set (without home)
+    function testNavigationSet() {
         const indexPath = path.join(__dirname, 'custom_components/dashview/www/index.html');
         const indexContent = fs.readFileSync(indexPath, 'utf8');
         
         const expectedButtons = [
-            { hash: '#home', icon: 'mdi-home', name: 'Home' },
             { hash: '#security', icon: 'mdi-security', name: 'Security' },
             { hash: '#calendar', icon: 'mdi-calendar', name: 'Calendar' },
             { hash: '#music', icon: 'mdi-music', name: 'Music' },
             { hash: '#admin', icon: 'mdi-cog', name: 'Admin' }
         ];
         
-        let allButtonsPresent = true;
+        // Verify home button is NOT present
+        const hasHomeButton = indexContent.includes('data-hash="#home"');
+        const hasHomeIcon = indexContent.includes('mdi-home');
+        
+        let allButtonsCorrect = !hasHomeButton && !hasHomeIcon;
+        
         expectedButtons.forEach(button => {
             const hasHash = indexContent.includes(`data-hash="${button.hash}"`);
             const hasIcon = indexContent.includes(button.icon);
@@ -121,12 +122,19 @@ function testNavigationEnhancements() {
                 console.log(`  ✓ ${button.name} button present`);
             } else {
                 console.error(`  ✗ ${button.name} button missing or incomplete`);
-                allButtonsPresent = false;
+                allButtonsCorrect = false;
             }
         });
         
-        if (allButtonsPresent) {
-            console.log('✓ Complete navigation button set verified');
+        if (hasHomeButton || hasHomeIcon) {
+            console.error('  ✗ Home button found (should be removed)');
+            allButtonsCorrect = false;
+        } else {
+            console.log('  ✓ Home button correctly removed');
+        }
+        
+        if (allButtonsCorrect) {
+            console.log('✓ Navigation button set verified (no home button)');
             return true;
         } else {
             console.error('✗ Navigation button set incomplete');
@@ -157,9 +165,9 @@ function testNavigationEnhancements() {
     // Run all tests
     const results = [
         testEnhancedActiveStateCSS(),
-        testHomeButtonAddition(),
-        testPopupManagerHomeStateHandling(),
-        testCompleteNavigationSet(),
+        testNavigationButtonStructure(),
+        testPopupManagerActiveStateHandling(),
+        testNavigationSet(),
         testBackwardsCompatibility()
     ];
     
@@ -172,10 +180,10 @@ function testNavigationEnhancements() {
         console.log('✅ All navigation enhancement tests passed!');
         console.log('🎯 UX improvement successfully implemented:');
         console.log('   • Enhanced visual active states with background, shadow, and scale');
-        console.log('   • Added home button for complete navigation');
         console.log('   • Smooth transitions and hover effects');
         console.log('   • Visual indicator dot for active state');
         console.log('   • Proper hash-based navigation handling');
+        console.log('   • Navigation without home button as requested');
         return true;
     } else {
         console.log('❌ Some navigation enhancement tests failed');
