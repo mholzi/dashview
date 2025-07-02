@@ -306,9 +306,30 @@ body.popup-open, :host(.popup-open) {
     height: 60px;
     width: 60px;
     font-size: 20px !important;
+    border-radius: 50%;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+.nav-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
 }
 .nav-button.active {
     color: var(--blue-dark);
+    background: var(--gray000);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.nav-button.active::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--blue-dark);
+    border-radius: 50%;
 }
 
 /* --- MDI Icon Support --- */

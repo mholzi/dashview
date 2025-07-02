@@ -79,6 +79,7 @@ export class PopupManager {
       }
     }
 
+    // Always set active button based on current hash
     const activeButton = this._shadowRoot.querySelector(`.nav-button[data-hash="${hash}"]`);
     if (activeButton) {
       activeButton.classList.add('active');
