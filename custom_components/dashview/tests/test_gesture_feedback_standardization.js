@@ -200,6 +200,14 @@ class GestureFeedbackTests {
       const lightsModule = await import('/local/dashview/lib/ui/light-card.js');
       this.assertNotNull(lightsModule.LightsCard, 'LightsCard should be importable');
       
+      // Test MediaPlayerCard imports GestureFeedbackManager
+      const mediaModule = await import('/local/dashview/lib/ui/media-player-card.js');
+      this.assertNotNull(mediaModule.MediaPlayerCard, 'MediaPlayerCard should be importable');
+      
+      // Test CoversCard imports GestureFeedbackManager
+      const coversModule = await import('/local/dashview/lib/ui/covers-card.js');
+      this.assertNotNull(coversModule.CoversCard, 'CoversCard should be importable');
+      
       this.testResults.push({ test: 'testUIManagerIntegration', passed: true });
       
     } catch (error) {

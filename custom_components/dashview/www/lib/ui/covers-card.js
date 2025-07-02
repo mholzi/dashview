@@ -1,10 +1,18 @@
 // custom_components/dashview/lib/ui/covers-card.js
 
+import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+
 export class CoversCard {
     constructor(panel) {
         this._panel = panel;
         this._hass = panel._hass;
         this._config = panel._houseConfig;
+        
+        // Initialize gesture feedback manager for cover controls
+        this._gestureFeedbackManager = new GestureFeedbackManager({
+            longTapDuration: 500,
+            enableVisualFeedback: true
+        });
     }
 
     setHass(hass) {
@@ -44,6 +52,15 @@ export class CoversCard {
 
         // Setup main position buttons (0%, 50%, 100%)
         positionButtons.forEach(button => {
+            // Add gesture feedback to cover position buttons
+            this._gestureFeedbackManager.addFeedbackToElement(button, {
+                feedbackClass: 'gesture-detecting',
+                longPressClass: 'gesture-longpress',
+                onLongTapStart: (element) => {
+                    console.log('[CoversCard] Long-tap feedback started on cover position button:', element.dataset.position);
+                }
+            });
+            
             button.addEventListener('click', () => {
                 const position = button.dataset.position;
                 coverEntities.forEach(entityId => {
@@ -134,6 +151,15 @@ export class CoversCard {
         const positionButtons = coverRow.querySelectorAll('.cover-position-buttons button');
         positionButtons.forEach(button => {
             if (!button.listenerAttached) {
+                // Add gesture feedback to individual cover position buttons
+                this._gestureFeedbackManager.addFeedbackToElement(button, {
+                    feedbackClass: 'gesture-detecting',
+                    longPressClass: 'gesture-longpress',
+                    onLongTapStart: (element) => {
+                        console.log('[CoversCard] Long-tap feedback started on individual cover button:', element.dataset.position);
+                    }
+                });
+                
                 button.addEventListener('click', () => {
                     const position = button.dataset.position;
                     this._hass.callService('cover', 'set_cover_position', { 
@@ -180,6 +206,16 @@ export class CoversCard {
         if (mainSlider && roomConfig) {
             if (mainSlider.value != roundedPosition) mainSlider.value = roundedPosition;
             popup.querySelector('.main-position-label').textContent = `${roundedPosition}%`;
+        }
+    }
+
+    /**
+     * Clean up gesture feedback manager
+     */
+    dispose() {
+        if (this._gestureFeedbackManager) {
+            this._gestureFeedbackManager.dispose();
+            this._gestureFeedbackManager = null;
         }
     }
 }
