@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DashView Trend Indicators Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .demo-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .room-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 10px 0;
+        }
+        .room-card-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-rows: auto auto;
+            gap: 8px;
+            align-items: center;
+        }
+        .room-card-name {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .room-card-icon-cell {
+            grid-row: 1 / 3;
+            font-size: 2em;
+            text-align: center;
+        }
+        .room-card-temp {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .trend-indicator {
+            color: #4CAF50;
+            font-size: 0.7em;
+            margin-left: 4px;
+        }
+        .trend-indicator.down {
+            color: #F44336;
+        }
+        .sensor-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sensor-icon {
+            font-size: 1.5em;
+            color: #666;
+        }
+        .sensor-info {
+            flex: 1;
+        }
+        .sensor-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .sensor-value {
+            font-size: 1.2em;
+            color: #333;
+        }
+        .pattern-alert {
+            font-size: 0.65em;
+            color: #FF9800;
+            margin-top: 2px;
+        }
+        .demo-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .feature-list {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .feature-list li {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">🏠 DashView Trend Indicators Demo</h1>
+        
+        <div class="feature-list">
+            <h3>🚀 New Features:</h3>
+            <ul>
+                <li><strong>Trend Indicators:</strong> Visual arrows showing sensor data trends (↗ ↘ →)</li>
+                <li><strong>Pattern Recognition:</strong> Alerts for unusual activity patterns</li>
+                <li><strong>Configurable Sensitivity:</strong> Low/Medium/High detection thresholds</li>
+                <li><strong>Multiple Time Horizons:</strong> Short-term (2h), long-term (24h), baseline (7d)</li>
+                <li><strong>Performance Optimized:</strong> Intelligent caching and minimal API calls</li>
+            </ul>
+        </div>
+
+        <h3>Room Cards with Trend Indicators:</h3>
+        
+        <div class="room-card">
+            <div class="room-card-grid">
+                <div class="room-card-name">Living Room</div>
+                <div class="room-card-icon-cell">🏠</div>
+                <div class="room-card-temp">
+                    🌡️ 22.3°
+                    <span class="trend-indicator">↗ +2.1%</span>
+                    💧 45%
+                    <span class="trend-indicator down">↘ -3.5%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="room-card">
+            <div class="room-card-grid">
+                <div class="room-card-name">Kitchen</div>
+                <div class="room-card-icon-cell">🍳</div>
+                <div class="room-card-temp">
+                    🌡️ 24.1°
+                    <span class="trend-indicator">↗ +5.8%</span>
+                    💧 52%
+                    <span class="trend-indicator">↗ +1.2%</span>
+                </div>
+            </div>
+        </div>
+
+        <h3>Enhanced Sensor Cards:</h3>
+
+        <div class="sensor-card">
+            <div class="sensor-icon">🌡️</div>
+            <div class="sensor-info">
+                <div class="sensor-name">
+                    Temperature Sensor
+                    <div class="pattern-alert">⚠️ 15% higher than usual</div>
+                </div>
+                <div class="sensor-value">
+                    23.7°C
+                    <span class="trend-indicator">↗ +3.2%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sensor-card">
+            <div class="sensor-icon">💧</div>
+            <div class="sensor-info">
+                <div class="sensor-name">Humidity Sensor</div>
+                <div class="sensor-value">
+                    48%
+                    <span class="trend-indicator down">↘ -2.1%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sensor-card">
+            <div class="sensor-icon">🌡️</div>
+            <div class="sensor-info">
+                <div class="sensor-name">
+                    Bedroom Temperature
+                    <div class="pattern-alert">ℹ️ More stable than usual</div>
+                </div>
+                <div class="sensor-value">
+                    20.8°C
+                    <span class="trend-indicator" style="color: #666;">→ stable</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="feature-list">
+            <h3>📊 Technical Details:</h3>
+            <ul>
+                <li><strong>Linear Regression:</strong> Statistical trend calculation with confidence indicators</li>
+                <li><strong>Anomaly Detection:</strong> Compares recent data against 7-day baseline</li>
+                <li><strong>Color Coding:</strong> Green (increasing), Red/Orange (decreasing), Gray (stable)</li>
+                <li><strong>Confidence Levels:</strong> High/Medium/Low based on statistical correlation</li>
+                <li><strong>Tooltips:</strong> Hover for detailed trend information and confidence levels</li>
+            </ul>
+        </div>
+
+        <p style="text-align: center; color: #666; margin-top: 30px;">
+            <em>This demo shows the new trend indicators and pattern recognition features added to DashView. 
+            All indicators update automatically based on real sensor data from Home Assistant.</em>
+        </p>
+    </div>
+</body>
+</html>

@@ -10,6 +10,7 @@ Experience a dashboard that adapts to your needs, centralizing all your smart ho
 * **Customizable Layouts:** Design your dashboard with flexible grid-based layouts, allowing you to arrange sensor cards, room overviews, and information panels precisely how you want them.
 * **Intelligent Sensor & Device Management:**
     * **Dynamic Sensor Cards:** Visualize motion, window, smoke, temperature, humidity, and other sensor states with dynamic icons and contextual information.
+    * **Trend Indicators & Pattern Recognition:** Temperature and humidity sensors display intelligent trend indicators (↗ +5.2%, ↘ -3.1%) showing short-term changes, alongside pattern alerts for unusual activity (e.g., "25% higher than usual"). Fully configurable sensitivity levels and time periods allow you to customize the intelligence to your needs.
     * **Interactive Controls:** Easily control lights (including dimmable options), covers (blinds, shutters), and media players with intuitive sliders and buttons.
     * **Swipeable Cards:** Toggle between sensor state and time-since-last-change for motion, door, smoke, cover, and light entities with a simple swipe.
 * **Advanced Integrations:**
@@ -92,8 +93,35 @@ Assign and manage various sensor types for comprehensive home monitoring. DashVi
 * **Smoke Detectors:** Link smoke detectors (labeled "Rauchmelder", "Smoke", etc.) for safety monitoring.
 * **Vibration Sensors:** Integrate vibration sensors (labeled "Vibration", etc.) for security or anomaly detection.
 * **Door Sensors:** Assign door sensors (labeled "Door", etc.) for access monitoring.
-* **Temperature & Humidity Sensors:** Assign these sensors to rooms.
+* **Temperature & Humidity Sensors:** Assign these sensors to rooms for monitoring and intelligent trend analysis.
 * **Global Thresholds:** Set global temperature and humidity thresholds to receive alerts when values exceed your limits.
+
+##### Smart Trend Analysis & Pattern Recognition
+
+DashView's intelligent trend analysis system automatically monitors your temperature and humidity sensors, providing actionable insights:
+
+* **Real-time Trend Indicators:** Room cards and sensor displays show visual trend arrows and percentage changes:
+  * ↗ +2.5% (increasing trend with green color)
+  * ↘ -1.8% (decreasing trend with red/orange color) 
+  * → stable (neutral trend with gray color)
+
+* **Pattern Recognition:** Detects unusual activity patterns by comparing recent data against historical baselines:
+  * "25% higher than usual" - alerts for significant deviations
+  * "More volatile than usual" - detects increased variability
+  * Configurable sensitivity levels (low/medium/high)
+
+* **Multiple Time Horizons:** 
+  * Short-term trends (2 hours) for immediate changes
+  * Long-term trends (24 hours) for daily patterns
+  * Baseline analysis (7 days) for anomaly detection
+
+* **Configuration Options:**
+  * Enable/disable trend indicators and pattern alerts
+  * Adjust sensitivity thresholds
+  * Customize time periods for trend calculation
+  * Toggle individual features (indicators, patterns, etc.)
+
+* **Performance Optimized:** Intelligent caching and minimal API calls ensure smooth operation without impacting Home Assistant performance.
 
 #### Device Management: Lights, Covers & Media Players
 
@@ -128,6 +156,26 @@ Configure sensors that track upcoming garbage collection dates for display in yo
 #### Integrations: DWD Weather Warnings
 
 * **DWD Weather Warning:** Select your DWD (Deutscher Wetterdienst) warning level sensor to display official German weather warnings in your dashboard.
+
+#### Trend Analysis Configuration
+
+Configure the intelligent trend analysis system for your temperature and humidity sensors:
+
+* **Enable/Disable Features:** Toggle trend indicators and pattern recognition on or off
+* **Sensitivity Levels:** Choose from three sensitivity levels:
+  * **Low:** Only detect significant changes (10%+ for trends, 50%+ for patterns)
+  * **Medium:** Balanced detection (5%+ for trends, 30%+ for patterns) - *Default*
+  * **High:** Detect subtle changes (2%+ for trends, 15%+ for patterns)
+* **Time Periods:** Customize analysis time horizons:
+  * Short-term trend analysis (default: 2 hours)
+  * Long-term trend analysis (default: 24 hours)
+  * Baseline comparison period (default: 7 days)
+* **Display Options:** Control what information is shown:
+  * Show trend indicators (arrows and percentages)
+  * Show pattern alerts (unusual activity notifications)
+  * Tooltip details and confidence levels
+
+All trend analysis configuration is accessible through the admin panel's integrations section.
 
 #### Calendar Integration: Your Schedule at a Glance
 
