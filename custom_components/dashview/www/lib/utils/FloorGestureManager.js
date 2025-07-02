@@ -84,9 +84,26 @@ export class FloorGestureManager {
   }
 
   /**
+   * Check if touch event originates from a sensor card that has its own swipe functionality
+   */
+  _isSensorCardTouch(touch) {
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!element) return false;
+    
+    // Check if the touch is on a sensor card or its children
+    const sensorCard = element.closest('.sensor-small-card, .sensor-big-card');
+    return sensorCard !== null;
+  }
+
+  /**
    * Handle touch start events
    */
   _handleTouchStart(event) {
+    // Skip floor gesture processing if touch originates from sensor cards
+    if (event.touches.length === 1 && this._isSensorCardTouch(event.touches[0])) {
+      return;
+    }
+    
     if (event.touches.length === 1) {
       // Single touch - potential swipe
       this._startSingleTouch(event.touches[0]);
@@ -422,9 +439,26 @@ export class FloorGestureManager {
   }
 
   /**
+   * Check if mouse event originates from a sensor card that has its own swipe functionality
+   */
+  _isSensorCardMouse(clientX, clientY) {
+    const element = document.elementFromPoint(clientX, clientY);
+    if (!element) return false;
+    
+    // Check if the click is on a sensor card or its children
+    const sensorCard = element.closest('.sensor-small-card, .sensor-big-card');
+    return sensorCard !== null;
+  }
+
+  /**
    * Mouse event handlers (desktop fallback)
    */
   _handleMouseDown(event) {
+    // Skip floor gesture processing if mouse event originates from sensor cards
+    if (this._isSensorCardMouse(event.clientX, event.clientY)) {
+      return;
+    }
+    
     this._startSingleTouch({
       clientX: event.clientX,
       clientY: event.clientY
