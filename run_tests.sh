@@ -451,6 +451,16 @@ fi
 
 echo "[OK] Code analysis completed"
 
+# Run Trend Analysis tests
+echo ""
+echo "📈 Running Trend Analysis tests..."
+if node custom_components/dashview/tests/test_trend_analysis.js > /dev/null; then
+    echo "[OK] Trend Analysis tests passed"
+else
+    echo "❌ Trend Analysis tests failed"
+    exit 1
+fi
+
 echo ""
 echo "🎉 All tests and validations passed!"
 echo ""
