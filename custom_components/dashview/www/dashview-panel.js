@@ -473,7 +473,7 @@ class DashviewPanel extends HTMLElement {
       const additionalIcons = [];
       
       // Add cover scene icon if global cover scene is enabled and room has covers
-      if (this._autoSceneGenerator && this._autoSceneGenerator.isGlobalCoverSceneEnabled() && 
+      if (this._autoSceneGenerator && this._autoSceneGenerator._getGlobalCoverSceneEnabled() && 
           roomConfig.covers && roomConfig.covers.length > 0) {
           additionalIcons.push(`
               <div class="header-info-chip" 
