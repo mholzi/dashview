@@ -62,6 +62,7 @@ export class AdminManager {
       'device-management-tab': () => this.loadDeviceManagementTab(),
       'other-entities-tab': () => this.loadOtherEntitiesTab(),
       'garbage-tab': () => this.loadGarbageTab(),
+      'usage-analytics-tab': () => this.loadUsageAnalyticsTab(),
       'config-health-tab': () => this.loadConfigurationHealthCheck(),
     };
 
@@ -3923,6 +3924,498 @@ async saveMediaPlayerPresets() {
     }
     
     console.log('[AdminManager] Applied gesture settings to active managers');
+  }
+
+  /**
+   * Load Usage Analytics Tab
+   */
+  async loadUsageAnalyticsTab() {
+    console.log('[AdminManager] Loading Usage Analytics tab...');
+    
+    try {
+      // Get latest usage analysis
+      const usageAnalyticsManager = this._panel._usageAnalyticsManager;
+      const recommendationEngine = this._panel._recommendationEngine;
+      
+      if (!usageAnalyticsManager || !recommendationEngine) {
+        throw new Error('Usage analytics components not initialized');
+      }
+      
+      // Trigger analysis if not already done
+      let analysis = usageAnalyticsManager.getLatestAnalysis();
+      if (!analysis) {
+        console.log('[AdminManager] Running usage analysis...');
+        analysis = await usageAnalyticsManager.analyzeUsagePatterns();
+      }
+      
+      // Generate recommendations
+      const recommendations = analysis.recommendations || [];
+      
+      const content = `
+        <div class="usage-analytics-container">
+          <h3><i class="mdi mdi-chart-line"></i> Usage Analytics & Optimization</h3>
+          
+          ${this._generateAnalyticsSummaryCard(analysis)}
+          ${this._generateRecommendationsSection(recommendations)}
+          ${this._generateUsagePatternCharts(analysis)}
+          ${this._generateEnergyAnalysisSection(analysis)}
+          
+          <div class="analytics-actions">
+            <button id="refresh-analytics" class="save-button">
+              <i class="mdi mdi-refresh"></i> Refresh Analysis
+            </button>
+            <button id="export-analytics" class="action-button">
+              <i class="mdi mdi-download"></i> Export Data
+            </button>
+            <button id="analytics-settings" class="action-button">
+              <i class="mdi mdi-cog"></i> Settings
+            </button>
+          </div>
+        </div>
+      `;
+      
+      this._shadowRoot.querySelector('.admin-content').innerHTML = content;
+      this._initializeAnalyticsEventListeners();
+      
+    } catch (error) {
+      console.error('[AdminManager] Error loading Usage Analytics tab:', error);
+      this._shadowRoot.querySelector('.admin-content').innerHTML = `
+        <div class="error-container">
+          <h3><i class="mdi mdi-alert"></i> Usage Analytics Error</h3>
+          <p>Unable to load usage analytics: ${error.message}</p>
+          <button onclick="this.closest('.admin-content').innerHTML = ''; 
+                         this._panel._adminManager.loadUsageAnalyticsTab();" 
+                  class="retry-button">Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Generate analytics summary card
+   */
+  _generateAnalyticsSummaryCard(analysis) {
+    const summary = analysis.summary || {};
+    
+    return `
+      <div class="analytics-summary-card">
+        <h4><i class="mdi mdi-chart-box-outline"></i> Analytics Summary</h4>
+        <div class="summary-stats">
+          <div class="stat-item">
+            <span class="stat-label">Devices Analyzed</span>
+            <span class="stat-value">${summary.totalDevicesAnalyzed || 0}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Energy Entities</span>
+            <span class="stat-value">${summary.energyEntitiesFound || 0}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Recommendations</span>
+            <span class="stat-value">${summary.recommendationsGenerated || 0}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">High Priority</span>
+            <span class="stat-value">${summary.highPriorityRecommendations || 0}</span>
+          </div>
+        </div>
+        
+        ${summary.potentialSavings ? `
+          <div class="potential-savings">
+            <h5>Potential Savings</h5>
+            <div class="savings-stats">
+              ${summary.potentialSavings.energy > 0 ? `
+                <div class="savings-item">
+                  <i class="mdi mdi-lightning-bolt"></i>
+                  <span>Energy: ~${Math.round(summary.potentialSavings.energy)}%</span>
+                </div>
+              ` : ''}
+              ${summary.potentialSavings.cost > 0 ? `
+                <div class="savings-item">
+                  <i class="mdi mdi-currency-usd"></i>
+                  <span>Cost: ~${Math.round(summary.potentialSavings.cost)}%</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  /**
+   * Generate recommendations section
+   */
+  _generateRecommendationsSection(recommendations) {
+    if (!recommendations || recommendations.length === 0) {
+      return `
+        <div class="recommendations-section">
+          <h4><i class="mdi mdi-lightbulb-outline"></i> Optimization Recommendations</h4>
+          <div class="no-recommendations">
+            <i class="mdi mdi-check-circle"></i>
+            <p>No optimization opportunities found. Your setup is already well optimized!</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Group recommendations by priority
+    const highPriority = recommendations.filter(r => r.priority >= 80);
+    const mediumPriority = recommendations.filter(r => r.priority >= 60 && r.priority < 80);
+    const lowPriority = recommendations.filter(r => r.priority < 60);
+    
+    return `
+      <div class="recommendations-section">
+        <h4><i class="mdi mdi-lightbulb-outline"></i> Optimization Recommendations</h4>
+        
+        ${highPriority.length > 0 ? `
+          <div class="recommendations-group">
+            <h5><i class="mdi mdi-alert"></i> High Priority (${highPriority.length})</h5>
+            ${highPriority.map(rec => this._generateRecommendationCard(rec)).join('')}
+          </div>
+        ` : ''}
+        
+        ${mediumPriority.length > 0 ? `
+          <div class="recommendations-group">
+            <h5><i class="mdi mdi-information"></i> Medium Priority (${mediumPriority.length})</h5>
+            ${mediumPriority.map(rec => this._generateRecommendationCard(rec)).join('')}
+          </div>
+        ` : ''}
+        
+        ${lowPriority.length > 0 ? `
+          <div class="recommendations-group">
+            <h5><i class="mdi mdi-lightbulb-outline"></i> Low Priority (${lowPriority.length})</h5>
+            ${lowPriority.map(rec => this._generateRecommendationCard(rec)).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  /**
+   * Generate individual recommendation card
+   */
+  _generateRecommendationCard(recommendation) {
+    const priorityClass = recommendation.priority >= 80 ? 'high' : 
+                         recommendation.priority >= 60 ? 'medium' : 'low';
+    
+    const typeIcon = {
+      'energy_savings': 'mdi-lightning-bolt',
+      'automation_optimization': 'mdi-cogs',
+      'device_lifecycle': 'mdi-wrench',
+      'usage_efficiency': 'mdi-speedometer'
+    }[recommendation.type] || 'mdi-information';
+    
+    return `
+      <div class="recommendation-card priority-${priorityClass}" data-recommendation-id="${recommendation.id}">
+        <div class="recommendation-header">
+          <i class="mdi ${typeIcon}"></i>
+          <h6>${recommendation.title}</h6>
+          <span class="priority-badge">${this._getPriorityLabel(recommendation.priority)}</span>
+        </div>
+        
+        <p class="recommendation-description">${recommendation.description}</p>
+        
+        ${recommendation.savings ? `
+          <div class="savings-info">
+            <i class="mdi mdi-trending-up"></i>
+            <span>Potential ${recommendation.savings.type} savings: ${recommendation.savings.estimated}</span>
+          </div>
+        ` : ''}
+        
+        ${recommendation.actions && recommendation.actions.length > 0 ? `
+          <div class="recommendation-actions">
+            <h6>Suggested Actions:</h6>
+            <ul>
+              ${recommendation.actions.map(action => `
+                <li>
+                  <i class="mdi mdi-arrow-right"></i>
+                  ${action.description || action.suggestion || action}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        
+        ${recommendation.implementation ? `
+          <div class="implementation-info">
+            <span class="difficulty difficulty-${recommendation.implementation.difficulty}">
+              Difficulty: ${recommendation.implementation.difficulty}
+            </span>
+            <span class="time-required">
+              <i class="mdi mdi-clock-outline"></i>
+              ${recommendation.implementation.timeRequired}
+            </span>
+          </div>
+        ` : ''}
+        
+        <div class="recommendation-controls">
+          <button class="apply-recommendation-btn" data-recommendation-id="${recommendation.id}">
+            <i class="mdi mdi-check"></i> Apply
+          </button>
+          <button class="dismiss-recommendation-btn" data-recommendation-id="${recommendation.id}">
+            <i class="mdi mdi-close"></i> Dismiss
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate usage pattern charts section
+   */
+  _generateUsagePatternCharts(analysis) {
+    const deviceUsage = analysis.deviceUsage || {};
+    const deviceCount = Object.keys(deviceUsage).length;
+    
+    if (deviceCount === 0) {
+      return `
+        <div class="usage-patterns-section">
+          <h4><i class="mdi mdi-chart-line"></i> Usage Patterns</h4>
+          <p>No device usage data available for analysis.</p>
+        </div>
+      `;
+    }
+    
+    // Get top 5 most used devices
+    const topDevices = Object.entries(deviceUsage)
+      .sort((a, b) => b[1].usagePattern.dailyAverageHours - a[1].usagePattern.dailyAverageHours)
+      .slice(0, 5);
+    
+    return `
+      <div class="usage-patterns-section">
+        <h4><i class="mdi mdi-chart-line"></i> Usage Patterns</h4>
+        
+        <div class="pattern-charts">
+          <div class="top-devices-chart">
+            <h5>Most Used Devices (Daily Hours)</h5>
+            <div class="device-usage-bars">
+              ${topDevices.map(([entityId, data]) => {
+                const deviceName = data.friendlyName || entityId;
+                const hours = Math.round(data.usagePattern.dailyAverageHours * 10) / 10;
+                const percentage = Math.min((hours / 24) * 100, 100);
+                
+                return `
+                  <div class="usage-bar-item">
+                    <span class="device-name">${deviceName}</span>
+                    <div class="usage-bar">
+                      <div class="usage-fill" style="width: ${percentage}%"></div>
+                      <span class="usage-hours">${hours}h</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+          
+          <div class="efficiency-overview">
+            <h5>Device Efficiency Scores</h5>
+            <div class="efficiency-grid">
+              ${Object.entries(deviceUsage).slice(0, 8).map(([entityId, data]) => {
+                const deviceName = data.friendlyName || entityId;
+                const efficiency = data.efficiency || 0;
+                const efficiencyClass = efficiency >= 80 ? 'high' : efficiency >= 60 ? 'medium' : 'low';
+                
+                return `
+                  <div class="efficiency-item">
+                    <span class="device-name">${deviceName}</span>
+                    <div class="efficiency-score efficiency-${efficiencyClass}">
+                      ${efficiency}%
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate energy analysis section
+   */
+  _generateEnergyAnalysisSection(analysis) {
+    const energyAnalysis = analysis.energyAnalysis || {};
+    const hasEnergyData = Object.keys(energyAnalysis.consumptionByDevice || {}).length > 0;
+    
+    if (!hasEnergyData) {
+      return `
+        <div class="energy-analysis-section">
+          <h4><i class="mdi mdi-flash"></i> Energy Analysis</h4>
+          <div class="no-energy-data">
+            <i class="mdi mdi-information-outline"></i>
+            <p>No energy monitoring devices detected. Consider adding energy monitoring to track consumption and identify savings opportunities.</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    const topConsumers = Object.entries(energyAnalysis.consumptionByDevice)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 5);
+    
+    return `
+      <div class="energy-analysis-section">
+        <h4><i class="mdi mdi-flash"></i> Energy Analysis</h4>
+        
+        <div class="energy-overview">
+          <div class="energy-stats">
+            <div class="energy-stat">
+              <span class="stat-label">Total Consumption</span>
+              <span class="stat-value">${Math.round(energyAnalysis.totalConsumption || 0)} kWh</span>
+            </div>
+            <div class="energy-stat">
+              <span class="stat-label">Daily Average</span>
+              <span class="stat-value">${Math.round(energyAnalysis.averageDailyConsumption || 0)} kWh</span>
+            </div>
+            <div class="energy-stat">
+              <span class="stat-label">Monitoring Devices</span>
+              <span class="stat-value">${Object.keys(energyAnalysis.consumptionByDevice).length}</span>
+            </div>
+          </div>
+          
+          <div class="top-consumers">
+            <h5>Top Energy Consumers</h5>
+            <div class="consumer-list">
+              ${topConsumers.map(([entityId, data]) => {
+                const percentage = ((data.total / energyAnalysis.totalConsumption) * 100) || 0;
+                return `
+                  <div class="consumer-item">
+                    <span class="consumer-name">${data.friendlyName || entityId}</span>
+                    <div class="consumer-usage">
+                      <div class="usage-bar">
+                        <div class="usage-fill" style="width: ${percentage}%"></div>
+                      </div>
+                      <span class="usage-percentage">${Math.round(percentage)}%</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Get priority label for recommendation
+   */
+  _getPriorityLabel(priority) {
+    if (priority >= 80) return 'High';
+    if (priority >= 60) return 'Medium';
+    return 'Low';
+  }
+
+  /**
+   * Initialize analytics event listeners
+   */
+  _initializeAnalyticsEventListeners() {
+    const adminContent = this._shadowRoot.querySelector('.admin-content');
+    
+    // Refresh analytics button
+    const refreshBtn = adminContent.querySelector('#refresh-analytics');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Analyzing...';
+        
+        try {
+          const usageAnalyticsManager = this._panel._usageAnalyticsManager;
+          await usageAnalyticsManager.analyzeUsagePatterns();
+          await this.loadUsageAnalyticsTab(); // Reload the tab with fresh data
+        } catch (error) {
+          console.error('[AdminManager] Error refreshing analytics:', error);
+          alert('Failed to refresh analytics: ' + error.message);
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = '<i class="mdi mdi-refresh"></i> Refresh Analysis';
+        }
+      });
+    }
+    
+    // Export analytics button
+    const exportBtn = adminContent.querySelector('#export-analytics');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        this._exportAnalyticsData();
+      });
+    }
+    
+    // Apply recommendation buttons
+    adminContent.querySelectorAll('.apply-recommendation-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const recommendationId = e.target.dataset.recommendationId;
+        this._applyRecommendation(recommendationId);
+      });
+    });
+    
+    // Dismiss recommendation buttons
+    adminContent.querySelectorAll('.dismiss-recommendation-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const recommendationId = e.target.dataset.recommendationId;
+        this._dismissRecommendation(recommendationId);
+      });
+    });
+  }
+
+  /**
+   * Export analytics data
+   */
+  _exportAnalyticsData() {
+    try {
+      const usageAnalyticsManager = this._panel._usageAnalyticsManager;
+      const analysis = usageAnalyticsManager.getLatestAnalysis();
+      
+      if (!analysis) {
+        alert('No analytics data available to export');
+        return;
+      }
+      
+      const exportData = {
+        timestamp: new Date().toISOString(),
+        analysis: analysis,
+        generatedBy: 'DashView Usage Analytics'
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dashview-analytics-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      console.log('[AdminManager] Analytics data exported');
+    } catch (error) {
+      console.error('[AdminManager] Error exporting analytics:', error);
+      alert('Failed to export analytics data: ' + error.message);
+    }
+  }
+
+  /**
+   * Apply a recommendation
+   */
+  _applyRecommendation(recommendationId) {
+    // This would implement specific recommendation actions
+    // For now, just show a confirmation
+    if (confirm('This feature will guide you through implementing this recommendation. Continue?')) {
+      alert('Recommendation implementation guide would be shown here. This feature will be enhanced in future updates.');
+      // Future: Show step-by-step implementation guide
+    }
+  }
+
+  /**
+   * Dismiss a recommendation
+   */
+  _dismissRecommendation(recommendationId) {
+    if (confirm('Dismiss this recommendation? It will be hidden from the list.')) {
+      const recommendationCard = this._shadowRoot.querySelector(`[data-recommendation-id="${recommendationId}"]`);
+      if (recommendationCard) {
+        recommendationCard.style.display = 'none';
+        console.log(`[AdminManager] Dismissed recommendation: ${recommendationId}`);
+      }
+    }
   }
 
 }

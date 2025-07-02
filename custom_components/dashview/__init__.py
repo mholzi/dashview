@@ -288,6 +288,38 @@ class DashViewConfigView(HomeAssistantView):
                 'show_indicators': True
             })
             return web.json_response(trend_config)
+        elif config_type == 'usage_analytics':
+            # Get usage analytics configuration and data
+            house_config = self._entry.options.get('house_config', {})
+            analytics_config = house_config.get('usage_analytics', {
+                'enabled': True,
+                'analysis_interval_hours': 24,
+                'data_retention_days': 30,
+                'min_data_points': 10,
+                'categories': ['lighting', 'climate', 'media', 'security', 'covers', 'appliances']
+            })
+            
+            # Include stored usage data if available
+            usage_data = house_config.get('usage_analytics_data', {})
+            
+            return web.json_response({
+                'config': analytics_config,
+                'data': usage_data,
+                'timestamp': usage_data.get('timestamp', 0)
+            })
+        elif config_type == 'optimization_recommendations':
+            # Get latest optimization recommendations
+            house_config = self._entry.options.get('house_config', {})
+            recommendations = house_config.get('optimization_recommendations', {
+                'recommendations': [],
+                'last_analysis': 0,
+                'summary': {
+                    'total_recommendations': 0,
+                    'high_priority': 0,
+                    'potential_savings': {}
+                }
+            })
+            return web.json_response(recommendations)
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -470,6 +502,14 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["main_dashboard_sections"] = config_payload
             elif config_type == "trend_analysis":
                 current_options.setdefault("house_config", {})["trend_analysis"] = config_payload
+            elif config_type == "usage_analytics":
+                current_options.setdefault("house_config", {})["usage_analytics"] = config_payload
+            elif config_type == "usage_analytics_data":
+                # Store usage analytics data
+                current_options.setdefault("house_config", {})["usage_analytics_data"] = config_payload
+            elif config_type == "optimization_recommendations":
+                # Store optimization recommendations
+                current_options.setdefault("house_config", {})["optimization_recommendations"] = config_payload
             elif config_type == "config_health_fix":
                 return await self._apply_configuration_fix(config_payload)
             else:

@@ -19,6 +19,8 @@ import { CalendarManager } from './lib/ui/CalendarManager.js';
 import { EntityDetailManager } from './lib/ui/EntityDetailManager.js';
 import { HistoricalDataManager } from './lib/ui/HistoricalDataManager.js';
 import { TrendAnalysisManager } from './lib/ui/TrendAnalysisManager.js';
+import { UsageAnalyticsManager } from './lib/ui/UsageAnalyticsManager.js';
+import { RecommendationEngine } from './lib/ui/RecommendationEngine.js';
 import { UpcomingEventsManager } from './lib/ui/UpcomingEventsManager.js';
 import { RefreshManager } from './lib/utils/RefreshManager.js';
 import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
@@ -128,6 +130,8 @@ class DashviewPanel extends HTMLElement {
     if (this._entityDetailManager) this._entityDetailManager.setHass(hass);
     if (this._historicalDataManager) this._historicalDataManager.setHass(hass);
     if (this._trendAnalysisManager) this._trendAnalysisManager.setHass(hass);
+    if (this._usageAnalyticsManager) this._usageAnalyticsManager.setHass(hass);
+    if (this._recommendationEngine) this._recommendationEngine.setHass(hass);
     if (this._upcomingEventsManager) this._upcomingEventsManager.setHass(hass);
     if (this._refreshManager) this._refreshManager.setHass(hass);
 
@@ -158,6 +162,11 @@ class DashviewPanel extends HTMLElement {
         this._applySectionVisibility();
 
         this.initializeManagers();
+        
+        // Initialize usage analytics
+        if (this._usageAnalyticsManager) {
+            await this._usageAnalyticsManager.initialize();
+        }
         
         // Generate and merge auto-scenes after managers are initialized
         await this._generateAndMergeAutoScenes();
@@ -198,6 +207,8 @@ class DashviewPanel extends HTMLElement {
     this._entityDetailManager = new EntityDetailManager(this);
     this._historicalDataManager = new HistoricalDataManager(this);
     this._trendAnalysisManager = new TrendAnalysisManager(this);
+    this._usageAnalyticsManager = new UsageAnalyticsManager(this);
+    this._recommendationEngine = new RecommendationEngine(this);
     this._upcomingEventsManager = new UpcomingEventsManager(this);
     this._refreshManager = new RefreshManager(this);
 
