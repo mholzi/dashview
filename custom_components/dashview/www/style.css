@@ -539,7 +539,7 @@ body.popup-open, :host(.popup-open) {
     grid-template-columns: 1fr auto;
     grid-template-rows: auto auto auto;
     align-items: center;
-    background-color: var(--popupBG);
+    background-color: var(--gray100);
     padding: 10px;
     margin-top: 12px;
     border-radius: 12px;
@@ -2609,24 +2609,40 @@ body.popup-open, :host(.popup-open) {
 
 /* Urgent and tomorrow styling for new layout */
 .garbage-card.garbage-urgent .garbage-card-name {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 .garbage-card.garbage-urgent .garbage-card-icon-cell i {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 .garbage-card.garbage-tomorrow .garbage-card-name {
-    color: #27ae60;
+    color: var(--gray000);
 }
 
 .garbage-card.garbage-tomorrow .garbage-card-icon-cell i {
-    color: #27ae60;
+    color: var(--gray000);
+}
+
+.garbage-card.garbage-urgent .garbage-card-icon-cell {
+    background: var(--gray800);
+}
+
+.garbage-card.garbage-tomorrow .garbage-card-icon-cell {
+    background: var(--gray800);
+}
+
+.garbage-card.garbage-urgent .garbage-card-date {
+    color: var(--gray000);
+}
+
+.garbage-card.garbage-tomorrow .garbage-card-date {
+    color: var(--gray000);
 }
 
 .garbage-urgent .garbage-date,
 .garbage-urgent .days-label {
-    color: #a93226;
+    color: var(--gray000);
 }
 
 .garbage-tomorrow .garbage-type,
@@ -2636,7 +2652,7 @@ body.popup-open, :host(.popup-open) {
 
 .garbage-tomorrow .garbage-date,
 .garbage-tomorrow .days-label {
-    color: #239b56;
+    color: var(--gray000);
 }
 
 /* --- Door Entity Styles --- */
@@ -2750,18 +2766,16 @@ body.popup-open, :host(.popup-open) {
     grid-area: label;
     justify-self: start;
     align-self: end;
-    font-size: 1.5em;
-    line-height: 1em;
+    font-size: 14px;
     font-weight: 300;
     color: var(--gray800);
-    padding: 0 0 14px 14px;
 }
 
 .sensor-small-name {
     grid-area: name;
     justify-self: start;
     align-self: start;
-    font-size: 14px;
+    font-size: 16px;
     color: var(--gray800);
     opacity: 0.7;
 }
@@ -2851,7 +2865,11 @@ body.popup-open, :host(.popup-open) {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    margin: 16px 0;
+    margin: 12px 0;
+}
+
+.train-departures-section:empty {
+    display: none;
 }
 
 .train-departures-container {
@@ -4492,6 +4510,50 @@ body.popup-open, :host(.popup-open) {
     transform: translateY(-1px);
 }
 
+/* Calendar Event Templates */
+.calendar-event-big {
+    margin-bottom: 15px;
+}
+
+.calendar-event-small {
+    margin-bottom: 8px;
+}
+
+.calendar-event-active {
+    border: 2px solid var(--accent-color) !important;
+    box-shadow: 0 0 10px rgba(var(--accent-color-rgb), 0.3);
+}
+
+.calendar-event-big .sensor-big-grid {
+    position: relative;
+}
+
+.calendar-event-big .sensor-big-icon-cell i {
+    color: var(--accent-color);
+}
+
+.calendar-event-small .sensor-small-icon-cell i {
+    color: var(--accent-color);
+}
+
+.calendar-event-active .sensor-big-icon-cell i,
+.calendar-event-active .sensor-small-icon-cell i {
+    color: var(--accent-color);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.calendar-event-source {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
 /* Calendar Admin Styles */
 .calendar-list {
     margin-top: 15px;
@@ -4542,7 +4604,7 @@ body.popup-open, :host(.popup-open) {
     border-radius: 20px;
     padding: 16px;
     border: 1px solid var(--gray200);
-    margin: 2px 0;
+    margin: 2px 0 12px 0;
     background: var(--card-background-color, var(--gray000));
 }
 
@@ -6000,11 +6062,15 @@ body.popup-open, :host(.popup-open) {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin: 16px 0;
+    margin: 12px 0;
     padding: 0 16px;
 }
 
 .custom-cards-main-container:empty {
+    display: none;
+}
+
+[data-template="custom-cards-main"]:empty {
     display: none;
 }
 
