@@ -7259,63 +7259,7 @@ body.popup-open, :host(.popup-open) {
     color: rgba(255, 255, 255, 0.9);
 }
 
-/* --- Manual Refresh Controls --- */
-.refresh-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    border: none;
-    border-radius: 50%;
-    background: var(--card-background-color);
-    color: var(--primary-text-color);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 36px;
-    height: 36px;
-    position: relative;
-    overflow: hidden;
-}
-
-.refresh-button:hover {
-    background: var(--highlight);
-    transform: scale(1.05);
-}
-
-.refresh-button:active {
-    transform: scale(0.95);
-}
-
-.refresh-button.refreshing {
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-.refresh-button.refreshing i {
-    animation: spin 1s linear infinite;
-}
-
-.refresh-button i {
-    font-size: 18px;
-    transition: transform 0.2s ease;
-}
-
-/* Refresh button in header */
-.header-refresh-button {
-    margin-left: 8px;
-}
-
-/* Refresh button in popups */
-.popup-refresh-button {
-    position: absolute;
-    top: 20px;
-    right: 60px;
-    z-index: 10;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--gray200);
-}
-
+/* --- Pull-to-Refresh Controls --- */
 /* Pull-to-refresh indicator */
 .pull-to-refresh-indicator {
     position: fixed;
@@ -7360,7 +7304,7 @@ body.popup-open, :host(.popup-open) {
     white-space: nowrap;
 }
 
-/* Refresh animation */
+/* Refresh animation for pull-to-refresh */
 @keyframes spin {
     from {
         transform: rotate(0deg);
@@ -7368,25 +7312,4 @@ body.popup-open, :host(.popup-open) {
     to {
         transform: rotate(360deg);
     }
-}
-
-/* Refresh ripple effect */
-.refresh-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: var(--accent-color);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    transition: all 0.3s ease;
-}
-
-.refresh-button:active::after {
-    width: 40px;
-    height: 40px;
-    opacity: 0.3;
 }

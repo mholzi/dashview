@@ -228,21 +228,22 @@ export class RefreshManager {
    * Show loading indicators during refresh
    */
   _showRefreshIndicators() {
-    // Add refresh class to refresh buttons to show loading state
-    this._shadowRoot.querySelectorAll('.refresh-button').forEach(btn => {
-      btn.classList.add('refreshing');
-      btn.disabled = true;
-    });
+    // Show pull-to-refresh indicator if it exists
+    const indicator = this._shadowRoot.querySelector('.pull-to-refresh-indicator');
+    if (indicator && indicator.style.display !== 'none') {
+      indicator.classList.add('refreshing');
+    }
   }
 
   /**
    * Hide loading indicators after refresh
    */
   _hideRefreshIndicators() {
-    this._shadowRoot.querySelectorAll('.refresh-button').forEach(btn => {
-      btn.classList.remove('refreshing');
-      btn.disabled = false;
-    });
+    // Hide pull-to-refresh indicator  
+    const indicator = this._shadowRoot.querySelector('.pull-to-refresh-indicator');
+    if (indicator) {
+      indicator.classList.remove('refreshing');
+    }
   }
 
   /**
@@ -289,27 +290,6 @@ export class RefreshManager {
     // Calculate rolling average
     const totalDuration = this._refreshStats.averageRefreshDuration * (this._refreshStats.totalRefreshes - 1) + duration;
     this._refreshStats.averageRefreshDuration = Math.round(totalDuration / this._refreshStats.totalRefreshes);
-  }
-
-  /**
-   * Create a refresh button element
-   * @param {string} title - Button title/tooltip
-   * @param {Function} clickHandler - Click event handler
-   * @returns {HTMLElement} Button element
-   */
-  createRefreshButton(title = 'Refresh data', clickHandler = null) {
-    const button = document.createElement('button');
-    button.className = 'refresh-button';
-    button.title = title;
-    button.innerHTML = '<i class="mdi mdi-refresh"></i>';
-    
-    if (clickHandler) {
-      button.addEventListener('click', clickHandler);
-    } else {
-      button.addEventListener('click', () => this.refreshData());
-    }
-    
-    return button;
   }
 
   /**
