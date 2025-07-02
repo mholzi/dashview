@@ -1,10 +1,18 @@
 // custom_components/dashview/lib/ui/security-components.js
 
+import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+
 export class SecurityComponents {
     constructor(panel) {
         this._panel = panel;
         this._hass = panel._hass;
         this._shadowRoot = panel.shadowRoot;
+        
+        // Initialize gesture feedback manager for security chips
+        this._gestureFeedbackManager = new GestureFeedbackManager({
+            longTapDuration: 500,
+            enableVisualFeedback: true
+        });
     }
 
     setHass(hass) {
@@ -268,6 +276,13 @@ export class SecurityComponents {
     
     initializeChips(popup) {
         popup.querySelectorAll('#security-header-chips .header-info-chip').forEach(chip => {
+            // Add gesture feedback to security chips
+            this._gestureFeedbackManager.addFeedbackToElement(chip, {
+                onLongTapStart: (element) => {
+                    console.log('[SecurityComponents] Long-tap feedback started on security chip:', element.getAttribute('data-type'));
+                }
+            });
+            
             chip.addEventListener('click', () => {
                 const chipType = chip.getAttribute('data-type');
                 const tabMap = {
@@ -282,5 +297,15 @@ export class SecurityComponents {
                 }
             });
         });
+    }
+
+    /**
+     * Clean up gesture feedback manager
+     */
+    dispose() {
+        if (this._gestureFeedbackManager) {
+            this._gestureFeedbackManager.dispose();
+            this._gestureFeedbackManager = null;
+        }
     }
 }

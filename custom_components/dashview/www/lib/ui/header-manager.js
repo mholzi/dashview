@@ -121,4 +121,5 @@ export class HeaderManager {
 
     return buttonsHTML || '<div class="no-activity">No active rooms</div>';
   }
+
 }

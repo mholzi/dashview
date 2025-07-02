@@ -50,9 +50,8 @@ export class AdminManager {
     const loadActionMap = {
       'room-management-tab': () => this.loadRoomManagementTab(),
       'house-setup-tab': () => this.loadHouseSetupTab(),
-      'integrations-tab': () => this.loadDwdConfig(),
+      'integrations-tab': () => this.loadIntegrationsTab(),
       'room-maintenance-tab': () => this.loadRoomMaintenance(),
-      'weather-tab': () => this.loadWeatherEntityConfiguration(),
       'calendar-management-tab': () => this.loadCalendarManagement(),
       'person-management-tab': () => this.loadPersonManagement(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
@@ -179,6 +178,10 @@ export class AdminManager {
             '#load-room-config': () => this.loadRoomConfiguration(),
             '#scan-room-entities': () => this.scanRoomEntities(),
             '#scan-all-rooms': () => this.scanAllRooms(),
+            '#save-gesture-settings': () => this.saveGestureSettings(),
+            '#reload-gesture-settings': () => this.loadGestureSettings(),
+            '#reset-gesture-settings': () => this.resetGestureSettings(),
+            '#test-haptic': () => this.testHapticFeedback(),
         };
 
         for (const selector in buttonActions) {
@@ -202,6 +205,9 @@ export class AdminManager {
             this.removeOtherEntity(entityType, roomKey, entityId);
         }
     });
+    
+    // Initialize gesture settings range input listeners
+    this._initializeGestureRangeInputs();
   }
 
   _setStatusMessage(element, message, type = 'default') {
@@ -626,6 +632,17 @@ export class AdminManager {
     } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
     }
+  }
+
+  /**
+   * Load the integrations tab content - loads both weather and DWD configurations
+   */
+  loadIntegrationsTab() {
+    console.log('[DashView] Loading Integrations tab - loading weather entity and DWD configurations');
+    
+    // Load both weather entity configuration and DWD configuration
+    this.loadWeatherEntityConfiguration();
+    this.loadDwdConfig();
   }
 
   async loadDwdConfig() {
@@ -3675,6 +3692,237 @@ async saveMediaPlayerPresets() {
     if (this._validationUtils) {
       this._validationUtils.destroy();
     }
+  }
+
+  // Gesture Settings Methods
+  
+  /**
+   * Initialize range input listeners for gesture settings
+   */
+  _initializeGestureRangeInputs() {
+    const rangeInputs = [
+      { id: 'swipe-threshold', valueId: 'swipe-threshold-value', suffix: 'px' },
+      { id: 'swipe-velocity', valueId: 'swipe-velocity-value', suffix: '' },
+      { id: 'pinch-sensitivity', valueId: 'pinch-sensitivity-value', suffix: 'x' },
+      { id: 'menu-timeout', valueId: 'menu-timeout-value', suffix: 's' },
+      { id: 'long-press-duration', valueId: 'long-press-duration-value', suffix: 'ms' }
+    ];
+
+    rangeInputs.forEach(({ id, valueId, suffix }) => {
+      const input = this._shadowRoot.getElementById(id);
+      const valueDisplay = this._shadowRoot.getElementById(valueId);
+      
+      if (input && valueDisplay) {
+        input.addEventListener('input', (e) => {
+          valueDisplay.textContent = e.target.value + suffix;
+        });
+      }
+    });
+  }
+
+  /**
+   * Load gesture settings from configuration
+   */
+  async loadGestureSettings() {
+    const statusEl = this._shadowRoot.getElementById('gesture-settings-status');
+    this._setStatusMessage(statusEl, 'Loading gesture settings...', 'loading');
+    
+    try {
+      const config = await this._hass.callApi('GET', 'dashview/config?type=gesture_settings') || {};
+      this._populateGestureSettings(config);
+      this._setStatusMessage(statusEl, '✓ Loaded', 'success');
+    } catch (e) {
+      console.warn('[AdminManager] Could not load gesture settings:', e);
+      this._populateGestureSettings({}); // Use defaults
+      this._setStatusMessage(statusEl, '✓ Using defaults', 'success');
+    }
+  }
+
+  /**
+   * Save gesture settings to configuration
+   */
+  async saveGestureSettings() {
+    const statusEl = this._shadowRoot.getElementById('gesture-settings-status');
+    this._setStatusMessage(statusEl, 'Saving gesture settings...', 'loading');
+    
+    try {
+      const settings = this._collectGestureSettings();
+      await this._hass.callApi('POST', 'dashview/config', {
+        type: 'gesture_settings',
+        data: settings
+      });
+      this._setStatusMessage(statusEl, '✓ Saved!', 'success');
+      
+      // Apply settings to existing gesture managers
+      this._applyGestureSettings(settings);
+      
+    } catch (e) {
+      this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
+    }
+  }
+
+  /**
+   * Reset gesture settings to defaults
+   */
+  resetGestureSettings() {
+    const defaults = this._getDefaultGestureSettings();
+    this._populateGestureSettings(defaults);
+    
+    const statusEl = this._shadowRoot.getElementById('gesture-settings-status');
+    this._setStatusMessage(statusEl, 'Reset to defaults', 'success');
+  }
+
+  /**
+   * Test haptic feedback
+   */
+  testHapticFeedback() {
+    if (!navigator.vibrate) {
+      const statusEl = this._shadowRoot.getElementById('gesture-settings-status');
+      this._setStatusMessage(statusEl, 'Haptic feedback not supported on this device', 'error');
+      return;
+    }
+
+    const intensity = this._shadowRoot.getElementById('haptic-intensity').value;
+    const patterns = {
+      light: [10],
+      medium: [20],
+      strong: [50]
+    };
+
+    navigator.vibrate(patterns[intensity] || patterns.medium);
+    
+    const statusEl = this._shadowRoot.getElementById('gesture-settings-status');
+    this._setStatusMessage(statusEl, `Haptic test (${intensity}) triggered`, 'success');
+  }
+
+  /**
+   * Populate gesture settings form with values
+   */
+  _populateGestureSettings(settings) {
+    const defaults = this._getDefaultGestureSettings();
+    const config = { ...defaults, ...settings };
+
+    // Range inputs
+    const rangeInputs = [
+      { id: 'swipe-threshold', key: 'swipeThreshold', valueId: 'swipe-threshold-value', suffix: 'px' },
+      { id: 'swipe-velocity', key: 'swipeVelocityThreshold', valueId: 'swipe-velocity-value', suffix: '' },
+      { id: 'pinch-sensitivity', key: 'pinchThreshold', valueId: 'pinch-sensitivity-value', suffix: 'x' },
+      { id: 'menu-timeout', key: 'menuTimeout', valueId: 'menu-timeout-value', suffix: 's', scale: 1000 },
+      { id: 'long-press-duration', key: 'longTapDuration', valueId: 'long-press-duration-value', suffix: 'ms' }
+    ];
+
+    rangeInputs.forEach(({ id, key, valueId, suffix, scale = 1 }) => {
+      const input = this._shadowRoot.getElementById(id);
+      const valueDisplay = this._shadowRoot.getElementById(valueId);
+      
+      if (input && valueDisplay) {
+        const value = config[key] / scale;
+        input.value = value;
+        valueDisplay.textContent = value + suffix;
+      }
+    });
+
+    // Checkbox inputs
+    const checkboxes = [
+      { id: 'haptic-enabled', key: 'enableHapticFeedback' },
+      { id: 'floor-swipe-enabled', key: 'enableFloorSwipe' },
+      { id: 'room-swipe-enabled', key: 'enableRoomSwipe' },
+      { id: 'pinch-overview-enabled', key: 'enablePinchOverview' },
+      { id: 'context-menus-enabled', key: 'enableContextMenus' },
+      { id: 'enhanced-touch-targets', key: 'enableEnhancedTouchTargets' },
+      { id: 'gesture-hints', key: 'enableGestureHints' },
+      { id: 'gesture-animations', key: 'enableGestureAnimations' }
+    ];
+
+    checkboxes.forEach(({ id, key }) => {
+      const checkbox = this._shadowRoot.getElementById(id);
+      if (checkbox) {
+        checkbox.checked = config[key];
+      }
+    });
+
+    // Select inputs
+    const selects = [
+      { id: 'haptic-intensity', key: 'hapticIntensity' }
+    ];
+
+    selects.forEach(({ id, key }) => {
+      const select = this._shadowRoot.getElementById(id);
+      if (select) {
+        select.value = config[key];
+      }
+    });
+  }
+
+  /**
+   * Collect gesture settings from form
+   */
+  _collectGestureSettings() {
+    return {
+      swipeThreshold: parseInt(this._shadowRoot.getElementById('swipe-threshold').value),
+      swipeVelocityThreshold: parseFloat(this._shadowRoot.getElementById('swipe-velocity').value),
+      pinchThreshold: parseFloat(this._shadowRoot.getElementById('pinch-sensitivity').value),
+      menuTimeout: parseInt(this._shadowRoot.getElementById('menu-timeout').value) * 1000,
+      longTapDuration: parseInt(this._shadowRoot.getElementById('long-press-duration').value),
+      enableHapticFeedback: this._shadowRoot.getElementById('haptic-enabled').checked,
+      hapticIntensity: this._shadowRoot.getElementById('haptic-intensity').value,
+      enableFloorSwipe: this._shadowRoot.getElementById('floor-swipe-enabled').checked,
+      enableRoomSwipe: this._shadowRoot.getElementById('room-swipe-enabled').checked,
+      enablePinchOverview: this._shadowRoot.getElementById('pinch-overview-enabled').checked,
+      enableContextMenus: this._shadowRoot.getElementById('context-menus-enabled').checked,
+      enableEnhancedTouchTargets: this._shadowRoot.getElementById('enhanced-touch-targets').checked,
+      enableGestureHints: this._shadowRoot.getElementById('gesture-hints').checked,
+      enableGestureAnimations: this._shadowRoot.getElementById('gesture-animations').checked
+    };
+  }
+
+  /**
+   * Get default gesture settings
+   */
+  _getDefaultGestureSettings() {
+    return {
+      swipeThreshold: 50,
+      swipeVelocityThreshold: 0.3,
+      pinchThreshold: 1.2,
+      menuTimeout: 5000,
+      longTapDuration: 500,
+      enableHapticFeedback: true,
+      hapticIntensity: 'medium',
+      enableFloorSwipe: true,
+      enableRoomSwipe: true,
+      enablePinchOverview: true,
+      enableContextMenus: true,
+      enableEnhancedTouchTargets: true,
+      enableGestureHints: true,
+      enableGestureAnimations: true
+    };
+  }
+
+  /**
+   * Apply gesture settings to existing gesture managers
+   */
+  _applyGestureSettings(settings) {
+    // Apply to FloorManager's gesture managers
+    const floorManager = this._panel._floorManager;
+    if (floorManager) {
+      if (floorManager._floorGestureManager) {
+        floorManager._floorGestureManager.swipeThreshold = settings.swipeThreshold;
+        floorManager._floorGestureManager.swipeVelocityThreshold = settings.swipeVelocityThreshold;
+        floorManager._floorGestureManager.pinchThreshold = settings.pinchThreshold;
+        floorManager._floorGestureManager.enableHapticFeedback = settings.enableHapticFeedback;
+      }
+      
+      if (floorManager._contextMenuManager) {
+        floorManager._contextMenuManager.enableHapticFeedback = settings.enableHapticFeedback;
+        floorManager._contextMenuManager.menuTimeout = settings.menuTimeout;
+      }
+      
+      if (floorManager._gestureDetector) {
+        floorManager._gestureDetector.longTapDuration = settings.longTapDuration;
+      }
+    }
+    
+    console.log('[AdminManager] Applied gesture settings to active managers');
   }
 
 }

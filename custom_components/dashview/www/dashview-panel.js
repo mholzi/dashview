@@ -18,7 +18,9 @@ import { AutoSceneGenerator } from './lib/ui/AutoSceneGenerator.js';
 import { CalendarManager } from './lib/ui/CalendarManager.js';
 import { EntityDetailManager } from './lib/ui/EntityDetailManager.js';
 import { HistoricalDataManager } from './lib/ui/HistoricalDataManager.js';
+import { TrendAnalysisManager } from './lib/ui/TrendAnalysisManager.js';
 import { UpcomingEventsManager } from './lib/ui/UpcomingEventsManager.js';
+import { RefreshManager } from './lib/utils/RefreshManager.js';
 import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
 
 class DashviewPanel extends HTMLElement {
@@ -125,7 +127,9 @@ class DashviewPanel extends HTMLElement {
     if (this._calendarManager) this._calendarManager.setHass(hass);
     if (this._entityDetailManager) this._entityDetailManager.setHass(hass);
     if (this._historicalDataManager) this._historicalDataManager.setHass(hass);
+    if (this._trendAnalysisManager) this._trendAnalysisManager.setHass(hass);
     if (this._upcomingEventsManager) this._upcomingEventsManager.setHass(hass);
+    if (this._refreshManager) this._refreshManager.setHass(hass);
 
     if (this._stateManager) {
         this._stateManager.handleHassUpdate();
@@ -193,9 +197,12 @@ class DashviewPanel extends HTMLElement {
     this._calendarManager = new CalendarManager(this);
     this._entityDetailManager = new EntityDetailManager(this);
     this._historicalDataManager = new HistoricalDataManager(this);
+    this._trendAnalysisManager = new TrendAnalysisManager(this);
     this._upcomingEventsManager = new UpcomingEventsManager(this);
+    this._refreshManager = new RefreshManager(this);
 
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
+    this._setupRefreshCallbacks();
   }
 
   _getRoomKeyForEntity(entityId) {
@@ -213,6 +220,62 @@ class DashviewPanel extends HTMLElement {
       }
     }
     return null;
+  }
+
+  /**
+   * Setup refresh callbacks for different components
+   */
+  _setupRefreshCallbacks() {
+    if (!this._refreshManager) return;
+
+    // Main dashboard refresh
+    this._refreshManager.registerRefreshCallback('main', async () => {
+      console.log('[DashView] Refreshing main dashboard...');
+      this._headerManager.updateAll();
+      this._infoCardManager.update();
+      this._sceneManager.renderSceneButtons();
+      this._floorManager.update();
+    });
+
+    // Weather popup refresh
+    this._refreshManager.registerRefreshCallback('weather', async () => {
+      console.log('[DashView] Refreshing weather data...');
+      if (this._weatherManager) {
+        await this._weatherManager.update();
+      }
+    });
+
+    // Security popup refresh
+    this._refreshManager.registerRefreshCallback('security', async () => {
+      console.log('[DashView] Refreshing security data...');
+      if (this._securityManager) {
+        await this._securityManager.update();
+      }
+    });
+
+    // Calendar popup refresh
+    this._refreshManager.registerRefreshCallback('calendar', async () => {
+      console.log('[DashView] Refreshing calendar data...');
+      const activePopup = this.shadowRoot.querySelector('#calendar-popup.active');
+      if (this._calendarManager && activePopup) {
+        await this._calendarManager.update(activePopup);
+      }
+    });
+
+    // Room popup refresh
+    if (this._houseConfig?.rooms) {
+      Object.keys(this._houseConfig.rooms).forEach(roomKey => {
+        this._refreshManager.registerRefreshCallback(`room-${roomKey}`, async () => {
+          console.log(`[DashView] Refreshing room data for: ${roomKey}`);
+          const popup = this.shadowRoot.querySelector(`#${roomKey}-popup.active`);
+          if (popup && this._popupManager) {
+            this._popupManager._refreshRoomEntities(roomKey, popup);
+          }
+        });
+      });
+    }
+
+    console.log('[DashView] Refresh callbacks registered');
   }
 
   updateComponentForEntity(entityId, entityState) {
@@ -673,36 +736,67 @@ class DashviewPanel extends HTMLElement {
   }
 
   _applySectionVisibility() {
-    console.log('[DashView] Applying section visibility settings', this._sectionsConfig);
+    console.log('[DashView] Applying section visibility and ordering settings', this._sectionsConfig);
     
     // Default sections configuration if not provided
     const defaultSections = {
-      "info-card": { "visible": true },
-      "train-departures-section": { "visible": true },
-      "notifications-container": { "visible": true },
-      "dwd-warning-card-container": { "visible": true },
-      "scenes-container": { "visible": true },
-      "media-header-buttons-container": { "visible": true },
-      "floor-tabs-container": { "visible": true }
+      "info-card": { "visible": true, "order": 1 },
+      "train-departures-section": { "visible": true, "order": 2 },
+      "notifications-container": { "visible": true, "order": 3 },
+      "dwd-warning-card-container": { "visible": true, "order": 4 },
+      "scenes-container": { "visible": true, "order": 5 },
+      "media-header-buttons-container": { "visible": true, "order": 6 },
+      "floor-tabs-container": { "visible": true, "order": 7 }
     };
 
     const sectionsConfig = Object.keys(this._sectionsConfig).length > 0 ? this._sectionsConfig : defaultSections;
 
-    // Apply visibility to each configurable section
+    // Get dashboard container
+    const dashboardContainer = this.shadowRoot.querySelector('.dashboard-container');
+    if (!dashboardContainer) {
+      console.warn('[DashView] Dashboard container not found');
+      return;
+    }
+
+    // Collect sections with their order and elements
+    const sectionsWithElements = [];
     Object.entries(sectionsConfig).forEach(([sectionId, config]) => {
       const sectionElement = this.shadowRoot.querySelector(`#${sectionId}, .${sectionId}`);
       if (sectionElement) {
-        if (config.visible === false) {
-          sectionElement.style.display = 'none';
-          console.log(`[DashView] Hidden section: ${sectionId}`);
-        } else {
-          sectionElement.style.display = '';
-          console.log(`[DashView] Showing section: ${sectionId}`);
-        }
+        sectionsWithElements.push({
+          id: sectionId,
+          element: sectionElement,
+          config: config,
+          order: config.order || 999 // Default high order for sections without explicit order
+        });
       } else {
         console.warn(`[DashView] Section element not found: ${sectionId}`);
       }
     });
+
+    // Sort sections by order
+    sectionsWithElements.sort((a, b) => a.order - b.order);
+
+    // Apply visibility and reorder sections
+    sectionsWithElements.forEach((section, index) => {
+      const { element, config } = section;
+      
+      // Apply visibility
+      if (config.visible === false) {
+        element.style.display = 'none';
+        console.log(`[DashView] Hidden section: ${section.id}`);
+      } else {
+        element.style.display = '';
+        console.log(`[DashView] Showing section: ${section.id} (order: ${section.order})`);
+      }
+
+      // Apply ordering by setting CSS order property
+      element.style.order = section.order;
+    });
+
+    // Set dashboard container to flex to respect order property
+    dashboardContainer.style.display = 'flex';
+    dashboardContainer.style.flexDirection = 'column';
   }
 }
 

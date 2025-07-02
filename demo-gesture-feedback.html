@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DashView Gesture Feedback Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .demo-section {
+            margin-bottom: 30px;
+        }
+        
+        .demo-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .demo-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        /* Import DashView gesture feedback styles */
+        .gesture-detecting {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .gesture-longpress {
+            transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+            transform: scale(0.95);
+            opacity: 0.8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Scene button styles */
+        .scene-button {
+            padding: 12px 20px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+        
+        .scene-button:hover {
+            background: #d0d0d0;
+        }
+
+        .scene-button.gesture-detecting {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .scene-button.gesture-longpress {
+            transform: scale(0.95);
+            opacity: 0.8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Light control row styles */
+        .light-control-row {
+            padding: 15px;
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .light-control-row:hover {
+            background: #efefef;
+        }
+
+        .light-control-row.gesture-detecting {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .light-control-row.gesture-longpress {
+            transform: scale(0.95);
+            opacity: 0.8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Security chip styles */
+        .header-info-chip {
+            padding: 8px 16px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .header-info-chip:hover {
+            background: #1976D2;
+        }
+
+        .header-info-chip.gesture-detecting {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .header-info-chip.gesture-longpress {
+            transform: scale(0.95);
+            opacity: 0.8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Media control button styles */
+        .media-control-button {
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+        
+        .media-control-button:hover {
+            background: #45a049;
+        }
+
+        .media-control-button.gesture-detecting {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+
+        .media-control-button.gesture-longpress {
+            transform: scale(0.90);
+            opacity: 0.8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Cover button styles */
+        .cover-button {
+            padding: 8px 16px;
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .cover-button:hover {
+            background: #F57C00;
+        }
+
+        .cover-button.gesture-detecting {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .cover-button.gesture-longpress {
+            transform: scale(0.95);
+            opacity: 0.8;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #2196F3;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>DashView Gesture Feedback Demo</h1>
+        
+        <div class="instructions">
+            <strong>Instructions:</strong> Press and hold any button for 500ms to see the long-tap gesture feedback.
+            You'll notice two phases:
+            <ol>
+                <li><strong>Initial feedback</strong> (gesture-detecting): Slight scale down and opacity change</li>
+                <li><strong>Long-press feedback</strong> (gesture-longpress): More pronounced scale down, opacity change, and shadow</li>
+            </ol>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Scene Buttons</h3>
+            <div class="demo-buttons">
+                <button class="scene-button">🏠 Home Scene</button>
+                <button class="scene-button">🌙 Night Scene</button>
+                <button class="scene-button">☀️ Morning Scene</button>
+                <button class="scene-button">🎬 Movie Scene</button>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Light Controls</h3>
+            <div class="light-control-row">💡 Living Room Light</div>
+            <div class="light-control-row">💡 Kitchen Light</div>
+            <div class="light-control-row">💡 Bedroom Light</div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Security Chips</h3>
+            <div class="demo-buttons">
+                <button class="header-info-chip">🚪 Windows (2)</button>
+                <button class="header-info-chip">🏃 Motion (1)</button>
+                <button class="header-info-chip">🔥 Smoke (0)</button>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Media Controls</h3>
+            <div class="demo-buttons">
+                <button class="media-control-button">⏯️</button>
+                <button class="media-control-button">⏭️</button>
+                <button class="media-control-button">⏮️</button>
+                <button class="media-control-button">🔊</button>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Cover Controls</h3>
+            <div class="demo-buttons">
+                <button class="cover-button">0%</button>
+                <button class="cover-button">50%</button>
+                <button class="cover-button">100%</button>
+                <button class="cover-button">Open All</button>
+                <button class="cover-button">Close All</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the GestureFeedbackManager
+        // Note: This demo simulates the functionality without actual Home Assistant integration
+        
+        class SimpleFeedbackManager {
+            constructor() {
+                this.longTapDuration = 500;
+                this.longTapTolerance = 10;
+                this.feedbackStates = new WeakMap();
+            }
+            
+            addFeedbackToElement(element, options = {}) {
+                const feedbackState = {
+                    isTracking: false,
+                    startTime: 0,
+                    startPosition: { x: 0, y: 0 },
+                    longTapTimer: null,
+                    isLongTap: false
+                };
+                
+                this.feedbackStates.set(element, feedbackState);
+                
+                const startFeedback = (e) => {
+                    const x = e.clientX || e.touches?.[0]?.clientX || 0;
+                    const y = e.clientY || e.touches?.[0]?.clientY || 0;
+                    
+                    feedbackState.isTracking = true;
+                    feedbackState.startTime = Date.now();
+                    feedbackState.startPosition = { x, y };
+                    feedbackState.isLongTap = false;
+                    
+                    element.classList.add('gesture-detecting');
+                    
+                    feedbackState.longTapTimer = setTimeout(() => {
+                        if (feedbackState.isTracking) {
+                            feedbackState.isLongTap = true;
+                            element.classList.remove('gesture-detecting');
+                            element.classList.add('gesture-longpress');
+                        }
+                    }, this.longTapDuration);
+                };
+                
+                const endFeedback = () => {
+                    if (feedbackState.longTapTimer) {
+                        clearTimeout(feedbackState.longTapTimer);
+                    }
+                    element.classList.remove('gesture-detecting', 'gesture-longpress');
+                    feedbackState.isTracking = false;
+                    feedbackState.isLongTap = false;
+                };
+                
+                const updateFeedback = (e) => {
+                    if (!feedbackState.isTracking) return;
+                    
+                    const x = e.clientX || e.touches?.[0]?.clientX || 0;
+                    const y = e.clientY || e.touches?.[0]?.clientY || 0;
+                    
+                    const deltaX = x - feedbackState.startPosition.x;
+                    const deltaY = y - feedbackState.startPosition.y;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    
+                    if (distance > this.longTapTolerance) {
+                        endFeedback();
+                    }
+                };
+                
+                element.addEventListener('mousedown', startFeedback);
+                element.addEventListener('touchstart', startFeedback);
+                element.addEventListener('mouseup', endFeedback);
+                element.addEventListener('touchend', endFeedback);
+                element.addEventListener('mouseleave', endFeedback);
+                element.addEventListener('touchcancel', endFeedback);
+                element.addEventListener('mousemove', updateFeedback);
+                element.addEventListener('touchmove', updateFeedback);
+            }
+        }
+        
+        // Initialize feedback for all demo elements
+        const feedbackManager = new SimpleFeedbackManager();
+        
+        document.querySelectorAll('.scene-button, .light-control-row, .header-info-chip, .media-control-button, .cover-button').forEach(element => {
+            feedbackManager.addFeedbackToElement(element);
+        });
+        
+        // Add click handlers for demonstration
+        document.querySelectorAll('button, .light-control-row').forEach(element => {
+            element.addEventListener('click', () => {
+                console.log('Clicked:', element.textContent || element.innerHTML);
+            });
+        });
+    </script>
+</body>
+</html>

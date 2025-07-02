@@ -136,7 +136,7 @@ h3 {
     overflow-y: auto;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     box-sizing: border-box;
     display: flex;
     justify-content: center;
@@ -162,7 +162,7 @@ body.popup-open, :host(.popup-open) {
     box-sizing: border-box;
     position: relative;
     transform: translateY(100vh);
-    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     max-height: calc(100vh - 40px);
     min-height: 40vh;
     display: flex;
@@ -281,10 +281,13 @@ body.popup-open, :host(.popup-open) {
 
 /* --- Fixed Navigation Bar --- */
 .bottom-nav {
-    position: sticky;
+    position: fixed;
     bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     height: 60px;
     width: 100%;
+    max-width: 500px;
     box-sizing: border-box;
     background-color: var(--gray800);
     border-radius: 100px;
@@ -294,7 +297,6 @@ body.popup-open, :host(.popup-open) {
     align-items: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     z-index: 5;
-    margin-top: 12px;
 }
 .nav-button {
     background: none;
@@ -304,9 +306,30 @@ body.popup-open, :host(.popup-open) {
     height: 60px;
     width: 60px;
     font-size: 20px !important;
+    border-radius: 50%;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+.nav-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
 }
 .nav-button.active {
     color: var(--blue-dark);
+    background: var(--gray000);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.nav-button.active::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--blue-dark);
+    border-radius: 50%;
 }
 
 /* --- MDI Icon Support --- */
@@ -1265,6 +1288,21 @@ body.popup-open, :host(.popup-open) {
     font-weight: 600;
 }
 
+.config-subsection {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--popupBG);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.config-subsection h6 {
+    margin: 0 0 8px 0;
+    color: var(--primary-text-color);
+    font-weight: 500;
+    font-size: 1em;
+}
+
 .status-display {
     padding: 8px 12px;
     border-radius: 8px;
@@ -1804,6 +1842,96 @@ body.popup-open, :host(.popup-open) {
     background-color: var(--gray100);
     padding: 2px 8px;
     border-radius: 12px;
+}
+
+/* --- Dashboard Sections Grid Styles --- */
+.dashboard-sections-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding-top: 15px;
+}
+
+.dashboard-section-item {
+    background-color: var(--gray000);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--gray200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+.dashboard-section-item:hover {
+    background-color: var(--gray100);
+    border-color: var(--gray400);
+}
+
+.dashboard-section-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.dashboard-section-name {
+    font-weight: 500;
+    color: var(--gray800);
+    margin-bottom: 4px;
+}
+
+.dashboard-section-description {
+    color: var(--gray500);
+    font-size: 0.85em;
+    line-height: 1.3;
+}
+
+.dashboard-section-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dashboard-section-reorder {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dashboard-reorder-btn {
+    width: 28px;
+    height: 28px;
+    background: var(--gray100);
+    border: 1px solid var(--gray200);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    color: var(--gray500);
+}
+
+.dashboard-reorder-btn:hover {
+    background: var(--gray200);
+    color: var(--gray800);
+    border-color: var(--gray400);
+}
+
+.dashboard-reorder-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.dashboard-reorder-btn:disabled:hover {
+    background: var(--gray100);
+    color: var(--gray500);
+    border-color: var(--gray200);
+}
+
+.dashboard-section-toggle {
+    margin-left: 8px;
 }
 
 /* --- Floor-Room Consistency Warning Styles --- */
@@ -2549,7 +2677,7 @@ body.popup-open, :host(.popup-open) {
 
 .garbage-urgent .garbage-type,
 .garbage-urgent .days-number {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 /* New garbage card grid layout to match room cards */
@@ -2609,11 +2737,11 @@ body.popup-open, :host(.popup-open) {
 
 /* Urgent and tomorrow styling for new layout */
 .garbage-card.garbage-urgent .garbage-card-name {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 .garbage-card.garbage-urgent .garbage-card-icon-cell i {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 .garbage-card.garbage-tomorrow .garbage-card-name {
@@ -2626,7 +2754,7 @@ body.popup-open, :host(.popup-open) {
 
 .garbage-urgent .garbage-date,
 .garbage-urgent .days-label {
-    color: #a93226;
+    color: var(--gray000);
 }
 
 .garbage-tomorrow .garbage-type,
@@ -2750,18 +2878,18 @@ body.popup-open, :host(.popup-open) {
     grid-area: label;
     justify-self: start;
     align-self: end;
-    font-size: 1.5em;
+    font-size: 14px;
     line-height: 1em;
     font-weight: 300;
     color: var(--gray800);
-    padding: 0 0 14px 14px;
+    padding: 0;
 }
 
 .sensor-small-name {
     grid-area: name;
     justify-self: start;
     align-self: start;
-    font-size: 14px;
+    font-size: 16px;
     color: var(--gray800);
     opacity: 0.7;
 }
@@ -3676,6 +3804,135 @@ body.popup-open, :host(.popup-open) {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
+/* Scene button gesture feedback */
+.scene-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.scene-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Light control row gesture feedback */
+.light-control-row.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.light-control-row.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Media player button gesture feedback */
+.media-button.gesture-detecting,
+.media-control-button.gesture-detecting {
+    transform: scale(0.95);
+    opacity: 0.9;
+}
+
+.media-button.gesture-longpress,
+.media-control-button.gesture-longpress {
+    transform: scale(0.90);
+    opacity: 0.8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Security chip gesture feedback */
+.header-info-chip.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.header-info-chip.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Cover button gesture feedback */
+.cover-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.cover-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Scene button gesture feedback */
+.scene-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.scene-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Light control row gesture feedback */
+.light-control-row.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.light-control-row.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Media player button gesture feedback */
+.media-button.gesture-detecting,
+.media-control-button.gesture-detecting {
+    transform: scale(0.95);
+    opacity: 0.9;
+}
+
+.media-button.gesture-longpress,
+.media-control-button.gesture-longpress {
+    transform: scale(0.90);
+    opacity: 0.8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Security chip gesture feedback */
+.header-info-chip.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.header-info-chip.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Cover button gesture feedback */
+.cover-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.cover-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.room-card.gesture-longpress {
+    transform: scale(0.95);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
 /* Prevent text selection during gesture detection */
 .gesture-detecting,
 .gesture-longpress {
@@ -3839,7 +4096,7 @@ body.popup-open, :host(.popup-open) {
     --popup-border-radius: var(--ha-card-border-radius, 12px);
     --popup-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     --popup-animation-duration: 300ms;
-    --popup-animation-easing: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --popup-animation-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --popup-content-padding: 20px;
     --popup-header-height: 80px;
 }
@@ -7167,4 +7424,448 @@ body.popup-open, :host(.popup-open) {
 
 .preset-button.active .preset-description {
     color: rgba(255, 255, 255, 0.9);
+}
+
+/* --- Pull-to-Refresh Controls --- */
+/* Pull-to-refresh indicator */
+.pull-to-refresh-indicator {
+    position: fixed;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-background-color);
+    border: 1px solid var(--gray200);
+    border-radius: 20px;
+    padding: 16px 24px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.pull-to-refresh-indicator.ready {
+    background: var(--accent-color);
+    color: white;
+}
+
+.pull-to-refresh-indicator .pull-icon {
+    margin-bottom: 8px;
+}
+
+.pull-to-refresh-indicator .pull-icon i {
+    font-size: 24px;
+    transition: transform 0.3s ease;
+}
+
+.pull-to-refresh-indicator.ready .pull-icon i {
+    transform: rotate(180deg);
+}
+
+.pull-to-refresh-indicator .pull-text {
+    font-size: 0.9em;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Refresh animation for pull-to-refresh */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- Integration Tab Mobile Optimizations --- */
+/* Mobile: Reduce excessive nested padding and improve touch interfaces */
+@media (max-width: 767px) {
+    #integrations-tab .config-section {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+    
+    #integrations-tab .config-subsection {
+        padding: 8px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+    }
+    
+    #integrations-tab .config-subsection h6 {
+        font-size: 1rem;
+        margin-bottom: 6px;
+    }
+    
+    #integrations-tab .config-subsection p {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+    
+    #integrations-tab .setting-row {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        padding: 6px;
+    }
+    
+    #integrations-tab .dropdown-selector {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        min-height: 44px; /* Touch-friendly */
+    }
+    
+    #integrations-tab .save-button,
+    #integrations-tab .action-button {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 1rem;
+        min-height: 44px; /* Touch-friendly */
+        border-radius: 6px;
+    }
+    
+    #integrations-tab .status-display {
+        padding: 6px 8px;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+}
+
+/* Small mobile: Further optimizations for very small screens */
+@media (max-width: 480px) {
+    #integrations-tab .config-section {
+        padding: 8px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+    
+    #integrations-tab .config-subsection {
+        padding: 6px;
+        margin-bottom: 8px;
+    }
+    
+    #integrations-tab h4 {
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+    }
+    
+    #integrations-tab h5 {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+    
+    #integrations-tab .config-subsection h6 {
+        font-size: 0.95rem;
+    }
+    
+    #integrations-tab .setting-row {
+        gap: 6px;
+        padding: 4px;
+    }
+}
+
+/* --- Floor Gesture & Overview Styles --- */
+.floor-overview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.floor-overview-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.floor-overview-content {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.floor-overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--separator-color);
+    padding-bottom: 15px;
+}
+
+.floor-overview-header h3 {
+    margin: 0;
+    color: var(--primary-text-color);
+    font-size: 1.2rem;
+}
+
+.floor-overview-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    font-size: 1.5rem;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.floor-overview-close:hover {
+    background: var(--separator-color);
+}
+
+.floor-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.floor-overview-card {
+    background: var(--background-alt);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.floor-overview-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.floor-overview-card.active {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light);
+}
+
+.floor-overview-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.floor-overview-icon i {
+    color: inherit;
+}
+
+.floor-overview-name {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.floor-overview-stats {
+    color: var(--secondary-text-color);
+    font-size: 0.85rem;
+}
+
+/* Context Menu Styles */
+.context-menu-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
+.context-menu {
+    background: var(--background);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+    max-width: 300px;
+    overflow: hidden;
+    animation: contextMenuSlideIn 0.2s ease-out;
+}
+
+@keyframes contextMenuSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+.context-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator-color);
+    background: var(--background-alt);
+}
+
+.context-menu-title {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    font-size: 0.9rem;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.context-menu-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    padding: 2px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.context-menu-close:hover {
+    background: var(--separator-color);
+}
+
+.context-menu-items {
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: var(--primary-text-color);
+    gap: 12px;
+}
+
+.context-menu-item:hover {
+    background: var(--background-alt);
+}
+
+.context-menu-item[data-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.context-menu-item[data-disabled="true"]:hover {
+    background: none;
+}
+
+.context-menu-item i {
+    width: 16px;
+    color: var(--secondary-text-color);
+    font-size: 16px;
+}
+
+.context-menu-label {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.context-menu-shortcut {
+    color: var(--secondary-text-color);
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.context-menu-separator {
+    height: 1px;
+    background: var(--separator-color);
+    margin: 4px 0;
+}
+
+/* Gesture feedback enhancements */
+.room-card.highlighted,
+.sensor-small-card.highlighted,
+.sensor-big-card.highlighted {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    animation: gestureHighlight 0.3s ease;
+}
+
+@keyframes gestureHighlight {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Enhanced touch targets for mobile */
+@media (max-width: 768px) {
+    .floor-tab-button {
+        min-width: 48px;
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+    
+    .room-card,
+    .sensor-small-card,
+    .sensor-big-card {
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+    
+    /* Gesture hints */
+    .floor-tabs-container::before {
+        content: "← Swipe to navigate floors →";
+        display: block;
+        text-align: center;
+        color: var(--secondary-text-color);
+        font-size: 0.75rem;
+        margin-bottom: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .floor-tabs-container:hover::before {
+        opacity: 1;
+    }
+    
+    /* Context menu mobile adjustments */
+    .context-menu {
+        min-width: 250px;
+        max-width: 90vw;
+    }
+    
+    .context-menu-item {
+        padding: 14px 16px;
+        min-height: 48px;
+    }
+}
+
+/* Gesture Settings Styles */
+.range-input {
+    flex: 1;
+    margin: 0 10px;
+}
+
+.range-value {
+    min-width: 60px;
+    text-align: right;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+    font-family: monospace;
 }

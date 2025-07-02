@@ -92,13 +92,13 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
     house_config.setdefault("floor_layouts", {})
     house_config.setdefault("other_entities", [])
     house_config.setdefault("main_dashboard_sections", {
-        "info-card": {"visible": True},
-        "train-departures-section": {"visible": True},
-        "notifications-container": {"visible": True},
-        "dwd-warning-card-container": {"visible": True},
-        "scenes-container": {"visible": True},
-        "media-header-buttons-container": {"visible": True},
-        "floor-tabs-container": {"visible": True}
+        "info-card": {"visible": True, "order": 1},
+        "train-departures-section": {"visible": True, "order": 2},
+        "notifications-container": {"visible": True, "order": 3},
+        "dwd-warning-card-container": {"visible": True, "order": 4},
+        "scenes-container": {"visible": True, "order": 5},
+        "media-header-buttons-container": {"visible": True, "order": 6},
+        "floor-tabs-container": {"visible": True, "order": 7}
     })
 
     for floor in floor_registry.floors.values():
@@ -276,6 +276,18 @@ class DashViewConfigView(HomeAssistantView):
             house_config = self._entry.options.get('house_config', {})
             sections_config = house_config.get('main_dashboard_sections', {})
             return web.json_response(sections_config)
+        elif config_type == 'trend_analysis':
+            house_config = self._entry.options.get('house_config', {})
+            trend_config = house_config.get('trend_analysis', {
+                'enabled': True,
+                'sensitivity': 'medium',
+                'short_term_hours': 2,
+                'long_term_hours': 24,
+                'baseline_hours': 168,
+                'show_patterns': True,
+                'show_indicators': True
+            })
+            return web.json_response(trend_config)
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -456,6 +468,8 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["custom_cards"] = config_payload
             elif config_type == "main_dashboard_sections":
                 current_options.setdefault("house_config", {})["main_dashboard_sections"] = config_payload
+            elif config_type == "trend_analysis":
+                current_options.setdefault("house_config", {})["trend_analysis"] = config_payload
             elif config_type == "config_health_fix":
                 return await self._apply_configuration_fix(config_payload)
             else:

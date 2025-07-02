@@ -1,6 +1,8 @@
 // custom_components/dashview/www/lib/ui/FloorManager.js
 
 import { GestureDetector } from '../utils/GestureDetector.js';
+import { FloorGestureManager } from '../utils/FloorGestureManager.js';
+import { ContextMenuManager } from '../utils/ContextMenuManager.js';
 import { calculateTimeDifferenceShort } from '../utils/time-utils.js';
 import { SimpleYamlParser } from '../utils/yaml-parser.js';
 
@@ -26,6 +28,12 @@ export class FloorManager {
       enableVisualFeedback: true
     });
     
+    // Initialize advanced floor gesture manager for swipe navigation
+    this._floorGestureManager = null; // Initialize after DOM is ready
+    
+    // Initialize context menu manager for long-press actions
+    this._contextMenuManager = null; // Initialize after DOM is ready
+    
     // Template cache for person cards
     this._templateCache = new Map();
   }
@@ -37,6 +45,82 @@ export class FloorManager {
   /**
    * Clean up resources to prevent memory leaks
    */
+  /**
+   * Add trend indicators to sensor cards for temperature and humidity
+   * @param {HTMLElement} card - The sensor card element
+   * @param {string} entityId - The entity ID
+   * @param {string} cardType - The card type (temperatur, humidity, etc.)
+   * @param {string} cardSize - 'small' or 'big'
+   */
+  async _addTrendIndicatorToCard(card, entityId, cardType, cardSize) {
+    // Only add trends to temperature and humidity sensors
+    if (!['temperatur', 'humidity'].includes(cardType) || !this._panel._trendAnalysisManager) {
+      return;
+    }
+    
+    try {
+      const trendData = await this._panel._trendAnalysisManager.getTrendData(entityId);
+      const trendIndicator = this._panel._trendAnalysisManager.getTrendIndicator(trendData);
+      const patternAlert = this._panel._trendAnalysisManager.getPatternAlert(trendData);
+      
+      // Remove existing trend indicators
+      const existingTrend = card.querySelector('.trend-indicator');
+      if (existingTrend) {
+        existingTrend.remove();
+      }
+      
+      const existingPattern = card.querySelector('.pattern-alert');
+      if (existingPattern) {
+        existingPattern.remove();
+      }
+      
+      // Add trend indicator if available and meaningful
+      if (trendIndicator && trendIndicator.text !== '→ stable') {
+        const trendElement = document.createElement('div');
+        trendElement.className = 'trend-indicator';
+        trendElement.style.cssText = `
+          color: ${trendIndicator.color};
+          font-size: ${cardSize === 'small' ? '0.6em' : '0.7em'};
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          margin-top: 2px;
+        `;
+        trendElement.innerHTML = `<i class="mdi ${trendIndicator.icon}" style="font-size: 1.1em;"></i><span>${trendIndicator.text}</span>`;
+        trendElement.title = `${cardType === 'temperatur' ? 'Temperature' : 'Humidity'} trend: ${trendIndicator.text} (${trendIndicator.confidence} confidence)`;
+        
+        const labelElement = card.querySelector(`.sensor-${cardSize}-label`);
+        if (labelElement) {
+          labelElement.appendChild(trendElement);
+        }
+      }
+      
+      // Add pattern alert if available
+      if (patternAlert) {
+        const alertElement = document.createElement('div');
+        alertElement.className = 'pattern-alert';
+        alertElement.style.cssText = `
+          color: ${patternAlert.color};
+          font-size: ${cardSize === 'small' ? '0.55em' : '0.65em'};
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          margin-top: 1px;
+          opacity: 0.9;
+        `;
+        alertElement.innerHTML = `<i class="mdi ${patternAlert.icon}" style="font-size: 1em;"></i><span>${patternAlert.description}</span>`;
+        alertElement.title = `Pattern: ${patternAlert.description} (${patternAlert.severity} severity)`;
+        
+        const nameElement = card.querySelector(`.sensor-${cardSize}-name`);
+        if (nameElement) {
+          nameElement.appendChild(alertElement);
+        }
+      }
+    } catch (error) {
+      console.warn(`[FloorManager] Error adding trend indicator to ${entityId}:`, error);
+    }
+  }
+
   dispose() {
     console.log('[FloorManager] Disposing and cleaning up resources');
     
@@ -44,6 +128,18 @@ export class FloorManager {
     if (this._gestureDetector) {
       this._gestureDetector.dispose();
       this._gestureDetector = null;
+    }
+    
+    // Clean up floor gesture manager
+    if (this._floorGestureManager) {
+      this._floorGestureManager.dispose();
+      this._floorGestureManager = null;
+    }
+    
+    // Clean up context menu manager
+    if (this._contextMenuManager) {
+      this._contextMenuManager.dispose();
+      this._contextMenuManager = null;
     }
     
     // Clear swipe state maps
@@ -154,7 +250,7 @@ export class FloorManager {
     // Instead of re-rendering, find existing cards and update them individually.
     
     // Update small sensor cards
-    gridContainer.querySelectorAll('.sensor-small-card').forEach(card => {
+    gridContainer.querySelectorAll('.sensor-small-card').forEach(async (card) => {
         const entityId = card.dataset.entityId;
         if (entityId) {
             const cardType = card.dataset.type;
@@ -166,6 +262,9 @@ export class FloorManager {
             card.querySelector('.sensor-small-label').textContent = displayLabel;
             card.querySelector('.sensor-small-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
             
+            // Add trend indicators for temperature and humidity sensors
+            await this._addTrendIndicatorToCard(card, entityId, cardType, 'small');
+            
             // Initialize swipe handlers for swipeable cards if not already done
             if (this._swipeableTypes.includes(cardType) && !card.dataset.swipeInitialized) {
                 this._initializeMotionCardSwipeHandlers(card);
@@ -174,7 +273,7 @@ export class FloorManager {
     });
 
     // Update big sensor cards
-    gridContainer.querySelectorAll('.sensor-big-card').forEach(card => {
+    gridContainer.querySelectorAll('.sensor-big-card').forEach(async (card) => {
         const entityId = card.dataset.entityId;
         if (entityId) {
             const cardType = card.dataset.type;
@@ -182,6 +281,9 @@ export class FloorManager {
             card.className = `sensor-big-card ${cardClass}`; // Update class for styling
             card.querySelector('.sensor-big-label').textContent = label; // Update only the text
             card.querySelector('.sensor-big-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
+            
+            // Add trend indicators for temperature and humidity sensors
+            await this._addTrendIndicatorToCard(card, entityId, cardType, 'big');
         }
     });
 
@@ -267,6 +369,23 @@ export class FloorManager {
 
     if (floors.length > 0) {
       this.renderFloorLayout(floors[0][0]);
+      
+      // Initialize floor gesture manager after floor tabs are created
+      if (!this._floorGestureManager) {
+        this._floorGestureManager = new FloorGestureManager(this, {
+          enableHapticFeedback: true,
+          swipeThreshold: 50,
+          swipeVelocityThreshold: 0.3
+        });
+      }
+      
+      // Initialize context menu manager
+      if (!this._contextMenuManager) {
+        this._contextMenuManager = new ContextMenuManager(this._panel, {
+          enableHapticFeedback: true,
+          menuTimeout: 5000
+        });
+      }
     }
   }
 
@@ -306,7 +425,7 @@ export class FloorManager {
 
         if (isBigSlot) {
             if (slot.type === 'room_swipe_card') {
-                cardHTML = this._renderRoomSwipeCard(floorId, slot.grid_area);
+                cardHTML = await this._renderRoomSwipeCard(floorId, slot.grid_area);
             } else if (slot.type === 'garbage') {
                 cardHTML = this._renderGarbageSwipeCard(slot.grid_area);
             } else if (slot.type === 'person_cards') {
@@ -431,7 +550,7 @@ export class FloorManager {
     `;
   }
 
-  _renderRoomSwipeCard(floorId, gridArea) {
+  async _renderRoomSwipeCard(floorId, gridArea) {
     const roomsOnFloor = Object.entries(this._houseConfig.rooms || {})
         .filter(([, roomConfig]) => roomConfig.floor === floorId)
         .map(([roomKey, roomConfig]) => ({ key: roomKey, ...roomConfig }));
@@ -440,7 +559,8 @@ export class FloorManager {
         return `<div class="placeholder-card placeholder-big" style="grid-area: ${gridArea};">No rooms on this floor.</div>`;
     }
 
-    const cardsHTML = roomsOnFloor.map(room => this._generateRoomCardHTML(room)).join('');
+    const cardsHTMLArray = await Promise.all(roomsOnFloor.map(room => this._generateRoomCardHTML(room)));
+    const cardsHTML = cardsHTMLArray.join('');
 
     return `
       <div class="room-swipe-card-container" style="grid-area: ${gridArea};">
@@ -452,7 +572,7 @@ export class FloorManager {
     `;
   }
 
-  _generateRoomCardHTML(room) {
+  async _generateRoomCardHTML(room) {
     const roomName = room.friendly_name || 'Room';
     const roomIcon = this._panel._processIconName(room.icon || 'mdi:home-city');
     const navPath = `#${room.key}`;
@@ -460,9 +580,36 @@ export class FloorManager {
     const humSensor = room.header_entities?.find(e => e.entity_type === 'humidity')?.entity;
     const tempState = tempSensor && this._hass.states[tempSensor];
     const humState = humSensor && this._hass.states[humSensor];
+    
     let tempHumHTML = '';
-    if (tempState && tempState.state !== 'unavailable') tempHumHTML += `<i class="mdi mdi-thermometer"></i> ${parseFloat(tempState.state).toFixed(1)}°`;
-    if (humState && humState.state !== 'unavailable') tempHumHTML += ` <span style="font-size:0.8em;opacity:0.7">${parseFloat(humState.state).toFixed(0)}%</span>`;
+    if (tempState && tempState.state !== 'unavailable') {
+      tempHumHTML += `<i class="mdi mdi-thermometer"></i> ${parseFloat(tempState.state).toFixed(1)}°`;
+    }
+    if (humState && humState.state !== 'unavailable') {
+      tempHumHTML += ` <span style="font-size:0.8em;opacity:0.7">${parseFloat(humState.state).toFixed(0)}%</span>`;
+    }
+
+    // Add trend indicators for temperature and humidity
+    let trendHTML = '';
+    try {
+      if (tempSensor && this._panel._trendAnalysisManager) {
+        const tempTrendData = await this._panel._trendAnalysisManager.getTrendData(tempSensor);
+        const tempIndicator = this._panel._trendAnalysisManager.getTrendIndicator(tempTrendData);
+        if (tempIndicator && tempIndicator.text !== '→ stable') {
+          trendHTML += `<span class="trend-indicator temp-trend" style="color: ${tempIndicator.color}; font-size: 0.7em; margin-left: 4px;" title="Temperature trend: ${tempIndicator.text}">${tempIndicator.text}</span>`;
+        }
+      }
+      
+      if (humSensor && this._panel._trendAnalysisManager) {
+        const humTrendData = await this._panel._trendAnalysisManager.getTrendData(humSensor);
+        const humIndicator = this._panel._trendAnalysisManager.getTrendIndicator(humTrendData);
+        if (humIndicator && humIndicator.text !== '→ stable') {
+          trendHTML += `<span class="trend-indicator hum-trend" style="color: ${humIndicator.color}; font-size: 0.7em; margin-left: 4px;" title="Humidity trend: ${humIndicator.text}">💧${humIndicator.text}</span>`;
+        }
+      }
+    } catch (error) {
+      console.warn('[FloorManager] Error getting trend data for room card:', error);
+    }
 
     const cardStateClass = this._isRoomActive(room) ? 'is-on' : 'is-off';
 
@@ -472,7 +619,7 @@ export class FloorManager {
           <div class="room-card-grid">
             <div class="room-card-name">${roomName}</div>
             <div class="room-card-icon-cell"><i class="mdi ${roomIcon}"></i></div>
-            <div class="room-card-temp">${tempHumHTML}</div>
+            <div class="room-card-temp">${tempHumHTML}${trendHTML}</div>
           </div>
         </div>
       </div>`;
@@ -495,13 +642,28 @@ export class FloorManager {
       },
       
       onLongTap: (element, event) => {
-        // Open entity details popup on long-tap
+        // Show context menu for entity actions
         const entityId = element.dataset.entityId;
+        const navPath = element.dataset.navigationPath;
+        
         if (entityId) {
           console.log('[FloorManager] Long-tap detected on entity:', entityId);
-          // Trigger entity details popup
-          if (this._panel._popupManager) {
-            this._panel._popupManager.showEntityDetailPopup(entityId);
+          // Show context menu for entity
+          if (this._contextMenuManager) {
+            this._contextMenuManager.showMenu(element, {
+              entityId: entityId,
+              type: 'entity'
+            });
+          }
+        } else if (navPath) {
+          console.log('[FloorManager] Long-tap detected on room card');
+          // Show context menu for room
+          if (this._contextMenuManager) {
+            this._contextMenuManager.showMenu(element, {
+              type: 'room',
+              roomKey: navPath.replace('#', ''),
+              customTitle: element.querySelector('.room-card-name')?.textContent || 'Room'
+            });
           }
         }
       },
