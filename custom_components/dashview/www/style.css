@@ -1267,6 +1267,21 @@ body.popup-open, :host(.popup-open) {
     font-weight: 600;
 }
 
+.config-subsection {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--popupBG);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.config-subsection h6 {
+    margin: 0 0 8px 0;
+    color: var(--primary-text-color);
+    font-weight: 500;
+    font-size: 1em;
+}
+
 .status-display {
     padding: 8px 12px;
     border-radius: 8px;
