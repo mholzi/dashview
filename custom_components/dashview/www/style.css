@@ -7834,3 +7834,17 @@ body.popup-open, :host(.popup-open) {
         min-height: 48px;
     }
 }
+
+/* Gesture Settings Styles */
+.range-input {
+    flex: 1;
+    margin: 0 10px;
+}
+
+.range-value {
+    min-width: 60px;
+    text-align: right;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+    font-family: monospace;
+}

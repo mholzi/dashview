@@ -264,6 +264,52 @@ class AdvancedGestureTests {
     }
   }
 
+  // Test admin panel integration
+  testAdminPanelIntegration() {
+    this.log('Testing admin panel gesture settings integration');
+    
+    try {
+      // Check if admin.html contains gesture settings tab
+      const fs = require('fs');
+      const path = require('path');
+      const adminFile = path.join(__dirname, '../www/admin.html');
+      
+      if (!fs.existsSync(adminFile)) {
+        return { success: false, message: 'admin.html file not found' };
+      }
+      
+      const adminContent = fs.readFileSync(adminFile, 'utf8');
+      
+      // Check for gesture settings tab
+      this.assertContains(adminContent, 'gesture-settings-tab', 'Should contain gesture settings tab');
+      this.assertContains(adminContent, 'Gesture & Touch Interactions', 'Should contain gesture settings title');
+      
+      // Check for key gesture settings controls
+      this.assertContains(adminContent, 'swipe-threshold', 'Should contain swipe threshold control');
+      this.assertContains(adminContent, 'haptic-enabled', 'Should contain haptic feedback toggle');
+      this.assertContains(adminContent, 'context-menus-enabled', 'Should contain context menu toggle');
+      this.assertContains(adminContent, 'enhanced-touch-targets', 'Should contain touch target enhancement toggle');
+      
+      // Check for save/reset buttons
+      this.assertContains(adminContent, 'save-gesture-settings', 'Should contain save button');
+      this.assertContains(adminContent, 'reset-gesture-settings', 'Should contain reset button');
+      this.assertContains(adminContent, 'test-haptic', 'Should contain haptic test button');
+      
+      // Check AdminManager integration
+      const adminManagerFile = path.join(__dirname, '../www/lib/ui/AdminManager.js');
+      const adminManagerContent = fs.readFileSync(adminManagerFile, 'utf8');
+      
+      this.assertContains(adminManagerContent, 'saveGestureSettings', 'Should contain saveGestureSettings method');
+      this.assertContains(adminManagerContent, 'loadGestureSettings', 'Should contain loadGestureSettings method');
+      this.assertContains(adminManagerContent, '_initializeGestureRangeInputs', 'Should contain range input initialization');
+      
+      return { success: true, message: 'Admin panel integration tests passed' };
+      
+    } catch (error) {
+      return { success: false, message: `Admin panel integration test failed: ${error.message}` };
+    }
+  }
+
   // Run all tests
   async runAllTests() {
     console.log('[DashView] Running Advanced Gesture & Touch Interactions tests...');
@@ -275,7 +321,8 @@ class AdvancedGestureTests {
       { name: 'FloorManager Integration', method: this.testFloorManagerIntegration },
       { name: 'Haptic Feedback', method: this.testHapticFeedback },
       { name: 'Gesture Configuration', method: this.testGestureConfiguration },
-      { name: 'Touch Accessibility', method: this.testTouchAccessibility }
+      { name: 'Touch Accessibility', method: this.testTouchAccessibility },
+      { name: 'Admin Panel Integration', method: this.testAdminPanelIntegration }
     ];
     
     let passedCount = 0;
