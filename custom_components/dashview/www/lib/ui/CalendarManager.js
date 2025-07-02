@@ -197,62 +197,56 @@ export class CalendarManager {
                           popupElement.querySelector('.popup-content');
         if (!contentDiv) return;
 
-        if (this._events.length === 0) {
+        // Filter to only show running or future meetings
+        const now = new Date();
+        const filteredEvents = this._events.filter(event => {
+            const eventEnd = this._getEventEndTime(event);
+            return eventEnd >= now; // Show events that haven't ended yet
+        });
+
+        if (filteredEvents.length === 0) {
             contentDiv.innerHTML = `
                 <div class="calendar-no-events">
                     <i class="mdi mdi-calendar-check"></i>
                     <p>No upcoming events</p>
-                    <p class="help-text">Your calendars don't have any events in the next 2 weeks</p>
+                    <p class="help-text">Your calendars don't have any events coming up</p>
                 </div>
             `;
             return;
         }
 
-        // Group events by date
-        const eventsByDate = this._groupEventsByDate(this._events);
+        // Find the next/current meeting (closest to now)
+        const nextCurrentMeeting = this._findNextCurrentMeeting(filteredEvents);
         
         let html = `
             <div class="calendar-header">
-                <button class="calendar-nav-button" id="calendar-prev-week">
+                <button class="calendar-nav-button" id="calendar-prev-day">
                     <i class="mdi mdi-chevron-left"></i>
                 </button>
-                <h3>Upcoming Events</h3>
-                <button class="calendar-nav-button" id="calendar-next-week">
+                <h3 id="calendar-current-day">${this._formatCurrentDay()}</h3>
+                <button class="calendar-nav-button" id="calendar-next-day">
                     <i class="mdi mdi-chevron-right"></i>
                 </button>
             </div>
             <div class="calendar-events-container">
         `;
 
-        // Render events grouped by date
-        for (const [dateKey, events] of Object.entries(eventsByDate)) {
-            const date = new Date(dateKey);
-            const isToday = this._isToday(date);
-            const isTomorrow = this._isTomorrow(date);
-            
-            let dateLabel;
-            if (isToday) {
-                dateLabel = 'Today';
-            } else if (isTomorrow) {
-                dateLabel = 'Tomorrow';
-            } else {
-                dateLabel = this._formatDate(date);
-            }
-
+        // Filter events for current day
+        const dayEvents = this._getEventsForCurrentDay(filteredEvents);
+        
+        if (dayEvents.length === 0) {
             html += `
-                <div class="calendar-day-section ${isToday ? 'calendar-today' : ''}">
-                    <h4 class="calendar-day-header">${dateLabel}</h4>
-                    <div class="calendar-day-events">
-            `;
-
-            events.forEach(event => {
-                html += this._renderEvent(event);
-            });
-
-            html += `
-                    </div>
+                <div class="calendar-no-events">
+                    <i class="mdi mdi-calendar-check"></i>
+                    <p>No events for this day</p>
                 </div>
             `;
+        } else {
+            dayEvents.forEach((event) => {
+                // Use sensor-big template for next/current meeting, sensor-small for others
+                const isNextCurrent = event === nextCurrentMeeting;
+                html += this._renderEventWithTemplate(event, isNextCurrent);
+            });
         }
 
         html += '</div>';
@@ -304,25 +298,45 @@ export class CalendarManager {
         return grouped;
     }
 
-    _renderEvent(event) {
+    _renderEventWithTemplate(event, usesBigTemplate) {
         const title = event.summary || event.title || 'Untitled Event';
         const startTime = this._formatEventTime(event);
         const isAllDay = this._isAllDayEvent(event);
         const calendarName = this._getCalendarName(event.calendar_entity_id);
         const calendarColor = this._getCalendarColor(event.calendar_entity_id);
+        const isActive = this._isEventActive(event);
         
-        return `
-            <div class="calendar-event ${isAllDay ? 'calendar-event-all-day' : ''}" style="border-left: 4px solid ${calendarColor};">
-                <div class="calendar-event-time">
-                    ${isAllDay ? 'All Day' : startTime}
+        if (usesBigTemplate) {
+            // Use sensor-big template for next/current meeting
+            return `
+                <div class="sensor-big-card calendar-event-big ${isActive ? 'calendar-event-active' : ''}" data-entity-id="${event.calendar_entity_id}" data-type="calendar">
+                    <div class="sensor-big-grid">
+                        <div class="sensor-big-icon-cell">
+                            <i class="mdi mdi-calendar${isActive ? '-clock' : ''}"></i>
+                        </div>
+                        <div class="sensor-big-name">${this._escapeHtml(title)}</div>
+                        <div class="sensor-big-label">
+                            ${isAllDay ? 'All Day' : startTime}
+                            ${isActive ? ' (Active)' : ''}
+                        </div>
+                    </div>
+                    ${calendarName ? `<div class="calendar-event-source" style="color: ${calendarColor}; margin-top: 5px; font-size: 0.9em;">${calendarName}</div>` : ''}
                 </div>
-                <div class="calendar-event-details">
-                    <div class="calendar-event-title">${this._escapeHtml(title)}</div>
-                    ${calendarName ? `<div class="calendar-event-source" style="color: ${calendarColor};">${calendarName}</div>` : ''}
-                    ${event.description ? `<div class="calendar-event-description">${this._escapeHtml(event.description)}</div>` : ''}
+            `;
+        } else {
+            // Use sensor-small template for other meetings
+            return `
+                <div class="sensor-small-card calendar-event-small ${isActive ? 'calendar-event-active' : ''}" data-entity-id="${event.calendar_entity_id}" data-type="calendar">
+                    <div class="sensor-small-grid">
+                        <div class="sensor-small-icon-cell">
+                            <i class="mdi mdi-calendar${isActive ? '-clock' : ''}"></i>
+                        </div>
+                        <div class="sensor-small-label">${isAllDay ? 'All Day' : startTime}</div>
+                        <div class="sensor-small-name">${this._escapeHtml(title)}</div>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
     }
 
     _getEventStartTime(event) {
@@ -336,6 +350,100 @@ export class CalendarManager {
             }
         }
         return new Date(0);
+    }
+
+    _getEventEndTime(event) {
+        if (event.end) {
+            if (typeof event.end === 'string') {
+                return new Date(event.end);
+            } else if (event.end.dateTime) {
+                return new Date(event.end.dateTime);
+            } else if (event.end.date) {
+                return new Date(event.end.date);
+            }
+        }
+        // If no end time, assume 1 hour duration
+        const startTime = this._getEventStartTime(event);
+        const endTime = new Date(startTime);
+        endTime.setHours(endTime.getHours() + 1);
+        return endTime;
+    }
+
+    _isEventActive(event) {
+        const now = new Date();
+        const startTime = this._getEventStartTime(event);
+        const endTime = this._getEventEndTime(event);
+        
+        // Event is active if current time is between start and end time
+        return now >= startTime && now <= endTime;
+    }
+
+    _findNextCurrentMeeting(events) {
+        const now = new Date();
+        let nextCurrent = null;
+        let minTimeDiff = Infinity;
+        
+        events.forEach(event => {
+            const startTime = this._getEventStartTime(event);
+            const endTime = this._getEventEndTime(event);
+            
+            // If event is currently active, prioritize it
+            if (now >= startTime && now <= endTime) {
+                return nextCurrent = event;
+            }
+            
+            // Otherwise, find the closest future event
+            if (startTime > now) {
+                const timeDiff = startTime - now;
+                if (timeDiff < minTimeDiff) {
+                    minTimeDiff = timeDiff;
+                    nextCurrent = event;
+                }
+            }
+        });
+        
+        return nextCurrent;
+    }
+
+    _getEventsForCurrentDay(events) {
+        const currentDay = new Date(this._currentDate);
+        currentDay.setHours(0, 0, 0, 0);
+        const nextDay = new Date(currentDay);
+        nextDay.setDate(nextDay.getDate() + 1);
+        
+        return events.filter(event => {
+            const eventStart = this._getEventStartTime(event);
+            return eventStart >= currentDay && eventStart < nextDay;
+        }).sort((a, b) => {
+            return this._getEventStartTime(a) - this._getEventStartTime(b);
+        });
+    }
+
+    _formatCurrentDay() {
+        const today = new Date();
+        const currentDay = new Date(this._currentDate);
+        
+        if (currentDay.toDateString() === today.toDateString()) {
+            return 'Today';
+        }
+        
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        if (currentDay.toDateString() === tomorrow.toDateString()) {
+            return 'Tomorrow';
+        }
+        
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (currentDay.toDateString() === yesterday.toDateString()) {
+            return 'Yesterday';
+        }
+        
+        return currentDay.toLocaleDateString('en-US', { 
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric'
+        });
     }
 
     _formatEventTime(event) {
@@ -412,23 +520,19 @@ export class CalendarManager {
     }
 
     _addNavigationListeners(contentDiv, popupElement) {
-        const prevButton = contentDiv.querySelector('#calendar-prev-week');
-        const nextButton = contentDiv.querySelector('#calendar-next-week');
-        
-        // Get navigation step size based on display range
-        const displayRange = this._panel._houseConfig?.calendar_display_range || 14;
-        const navigationStep = this._getNavigationStep(displayRange);
+        const prevButton = contentDiv.querySelector('#calendar-prev-day');
+        const nextButton = contentDiv.querySelector('#calendar-next-day');
         
         if (prevButton) {
             prevButton.addEventListener('click', () => {
-                this._currentDate.setDate(this._currentDate.getDate() - navigationStep);
+                this._currentDate.setDate(this._currentDate.getDate() - 1);
                 this.update(popupElement);
             });
         }
         
         if (nextButton) {
             nextButton.addEventListener('click', () => {
-                this._currentDate.setDate(this._currentDate.getDate() + navigationStep);
+                this._currentDate.setDate(this._currentDate.getDate() + 1);
                 this.update(popupElement);
             });
         }

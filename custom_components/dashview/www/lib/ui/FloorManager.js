@@ -1387,6 +1387,7 @@ export class FloorManager {
     // Handle normal states
     switch (state) {
       case 'mowing':
+      case 'cleaning':
         return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower', label: 'Mäht', cardClass: 'is-on' };
       case 'charging':
         return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: `Lädt ${batteryLevel || 0}%`, cardClass: '' };

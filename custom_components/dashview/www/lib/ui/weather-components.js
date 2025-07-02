@@ -588,8 +588,9 @@ export class WeatherComponents {
         this._showForecastLoading(popup, true);
 
         try {
-            // Check if Chart.js is available
-            if (typeof Chart === 'undefined') {
+            // Check if Chart.js is available (access from parent window for Shadow DOM)
+            const Chart = window.parent?.Chart || window.Chart || globalThis.Chart;
+            if (typeof Chart === 'undefined' || !Chart) {
                 console.error('[WeatherComponents] Chart.js library not loaded');
                 this._showForecastFallback(popup);
                 return;
@@ -620,7 +621,7 @@ export class WeatherComponents {
             }
 
             // Create or update chart
-            this._createForecastChart(canvas, chartData);
+            this._createForecastChart(canvas, chartData, Chart);
             
             // Hide loading/error states
             this._showForecastLoading(popup, false);
@@ -726,8 +727,9 @@ export class WeatherComponents {
      * Create or update the Chart.js instance
      * @param {HTMLCanvasElement} canvas - Chart canvas element
      * @param {Object} data - Chart data
+     * @param {Function} Chart - Chart.js constructor
      */
-    _createForecastChart(canvas, data) {
+    _createForecastChart(canvas, data, Chart) {
         // Destroy existing chart if it exists
         if (this._chartInstance) {
             this._chartInstance.destroy();
