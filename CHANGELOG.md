@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2024-07-02
+
+### ✨ New Features
+
+#### Calendar Event Highlighting
+- **Active meeting visualization**: Calendar events currently in progress now display with an active gradient background (`--active-big`)
+- **Smart event detection**: Intelligent detection of ongoing meetings based on current time vs. event start/end times
+- **Visual distinction**: Inactive and future events use a subtle gray background (`--gray000`) for clear visual separation
+- **All-day event support**: Proper handling of all-day events with appropriate visual treatment throughout the day
+- **Real-time updates**: Events automatically update their appearance as they transition from inactive to active states
+
+### 🐛 Bug Fixes
+
+#### Component Stability (#360)
+- **Fixed AutoSceneGenerator method**: Corrected method name from `AutoSceneGeneratorautoGenerateScene` to `autoGenerateScene` to prevent TypeError
+- **Enhanced error handling**: Improved component initialization and method resolution for better stability
+- **Code consistency**: Fixed naming convention issues that could cause runtime errors in scene generation
+
 ## [0.5.3] - 2024-07-01
 
 ### 🐛 Bug Fixes
