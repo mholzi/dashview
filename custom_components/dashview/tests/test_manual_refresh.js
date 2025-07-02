@@ -50,22 +50,42 @@ class ManualRefreshTests {
         this.testResults.push({ name: 'RefreshManager creation', passed: true });
     }
 
-    // Test refresh button creation
-    testRefreshButtonCreation() {
-        console.log('\n[DashView] Testing refresh button creation...');
+    // Test pull-to-refresh functionality
+    testPullToRefreshFunctionality() {
+        console.log('\n[DashView] Testing pull-to-refresh functionality...');
         
-        // Mock button creation
-        const button = document.createElement('button');
-        button.className = 'refresh-button';
-        button.innerHTML = '<i class="mdi mdi-refresh"></i>';
-        button.title = 'Test refresh button';
+        // Mock pull-to-refresh gesture handling
+        let pullStarted = false;
+        let pullDistance = 0;
+        let refreshTriggered = false;
 
-        this.assert(button.classList.contains('refresh-button'), 'Button should have refresh-button class');
-        this.assert(button.innerHTML.includes('mdi-refresh'), 'Button should contain refresh icon');
-        this.assert(button.title === 'Test refresh button', 'Button should have appropriate title');
+        const mockHandleTouchStart = (startY) => {
+            pullStarted = true;
+            pullDistance = 0;
+        };
 
-        console.log('  ✓ Refresh button creation test passed');
-        this.testResults.push({ name: 'Refresh button creation', passed: true });
+        const mockHandleTouchMove = (currentY, startY) => {
+            if (!pullStarted) return;
+            pullDistance = Math.max(0, currentY - startY);
+        };
+
+        const mockHandleTouchEnd = (threshold = 80) => {
+            if (pullStarted && pullDistance > threshold) {
+                refreshTriggered = true;
+            }
+            pullStarted = false;
+            pullDistance = 0;
+        };
+
+        // Test pull gesture
+        mockHandleTouchStart(100);
+        mockHandleTouchMove(200, 100); // Pull down 100px
+        mockHandleTouchEnd(80); // 100px > 80px threshold
+
+        this.assert(refreshTriggered === true, 'Pull-to-refresh should trigger when threshold exceeded');
+
+        console.log('  ✓ Pull-to-refresh functionality test passed');
+        this.testResults.push({ name: 'Pull-to-refresh functionality', passed: true });
     }
 
     // Test refresh callback registration
@@ -188,7 +208,7 @@ class ManualRefreshTests {
         
         try {
             this.testRefreshManagerCreation();
-            this.testRefreshButtonCreation();
+            this.testPullToRefreshFunctionality();
             this.testRefreshCallbackRegistration();
             await this.testManualRefreshExecution();
             this.testPullToRefreshIndicators();
