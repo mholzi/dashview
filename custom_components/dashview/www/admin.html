@@ -8,6 +8,7 @@
         <button class="tab-button" data-target="sensor-management-tab">Sensor Management</button>
         <button class="tab-button" data-target="device-management-tab">Device Management</button>
         <button class="tab-button" data-target="integrations-tab">Integrations</button>
+        <button class="tab-button" data-target="gesture-settings-tab">Gesture Settings</button>
         <button class="tab-button" data-target="floor-layouts-tab">Floor Layouts</button>
         <button class="tab-button" data-target="custom-cards-tab">Custom Cards</button>
         <button class="tab-button" data-target="scenes-tab">Scenes</button>
@@ -190,6 +191,177 @@
             <div class="form-row" style="margin-top: 20px;">
                 <button id="save-persons" class="save-button">Save Person Configuration</button>
                 <button id="reload-persons" class="action-button">Reload</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gesture-settings-tab" class="tab-content">
+        <h4>Gesture & Touch Interactions</h4>
+        <p>Configure advanced gesture controls for enhanced mobile and tablet navigation. These settings control swipe sensitivity, haptic feedback, and gesture behavior throughout DashView.</p>
+        
+        <!-- Gesture Sensitivity Section -->
+        <div class="config-section">
+            <h5>Gesture Sensitivity</h5>
+            <div class="config-subsection">
+                <h6>Swipe Sensitivity</h6>
+                <p>Adjust how sensitive gesture detection is for floor navigation and room switching. Higher values require more deliberate gestures.</p>
+                
+                <div class="setting-row">
+                    <label for="swipe-threshold">Swipe Distance Threshold (pixels):</label>
+                    <input type="range" id="swipe-threshold" min="30" max="100" value="50" class="range-input">
+                    <span id="swipe-threshold-value" class="range-value">50px</span>
+                </div>
+                
+                <div class="setting-row">
+                    <label for="swipe-velocity">Swipe Velocity Threshold:</label>
+                    <input type="range" id="swipe-velocity" min="0.1" max="1.0" step="0.1" value="0.3" class="range-input">
+                    <span id="swipe-velocity-value" class="range-value">0.3</span>
+                </div>
+                
+                <div class="setting-row">
+                    <label for="pinch-sensitivity">Pinch Zoom Sensitivity:</label>
+                    <input type="range" id="pinch-sensitivity" min="1.1" max="2.0" step="0.1" value="1.2" class="range-input">
+                    <span id="pinch-sensitivity-value" class="range-value">1.2x</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Haptic Feedback Section -->
+        <div class="config-section">
+            <h5>Haptic Feedback</h5>
+            <div class="config-subsection">
+                <h6>Vibration Settings</h6>
+                <p>Control haptic feedback for gesture interactions. Note: Haptic feedback requires device support and may not work on all devices.</p>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="haptic-enabled" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Haptic Feedback</span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <label for="haptic-intensity">Haptic Intensity:</label>
+                    <select id="haptic-intensity" class="dropdown-selector">
+                        <option value="light">Light</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="strong">Strong</option>
+                    </select>
+                </div>
+                
+                <div class="setting-row">
+                    <button id="test-haptic" class="action-button">Test Haptic Feedback</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gesture Behavior Section -->
+        <div class="config-section">
+            <h5>Gesture Behavior</h5>
+            <div class="config-subsection">
+                <h6>Floor Navigation</h6>
+                <p>Configure how gestures interact with floor navigation and room switching.</p>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="floor-swipe-enabled" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Floor Swipe Navigation (left/right)</span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="room-swipe-enabled" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Room Swipe Switching (up/down)</span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="pinch-overview-enabled" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Pinch-to-Zoom Floor Overview</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Context Menu Section -->
+        <div class="config-section">
+            <h5>Context Menus</h5>
+            <div class="config-subsection">
+                <h6>Long-Press Behavior</h6>
+                <p>Configure long-press context menus for quick actions on entities and rooms.</p>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="context-menus-enabled" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Long-Press Context Menus</span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <label for="menu-timeout">Menu Auto-Hide Timeout (seconds):</label>
+                    <input type="range" id="menu-timeout" min="3" max="10" value="5" class="range-input">
+                    <span id="menu-timeout-value" class="range-value">5s</span>
+                </div>
+                
+                <div class="setting-row">
+                    <label for="long-press-duration">Long-Press Duration (ms):</label>
+                    <input type="range" id="long-press-duration" min="300" max="800" step="50" value="500" class="range-input">
+                    <span id="long-press-duration-value" class="range-value">500ms</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Touch Optimization Section -->
+        <div class="config-section">
+            <h5>Touch Optimization</h5>
+            <div class="config-subsection">
+                <h6>Mobile Enhancement</h6>
+                <p>Settings to optimize touch interactions for mobile and tablet devices.</p>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="enhanced-touch-targets" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enhanced Touch Targets (48px minimum)</span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="gesture-hints" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Show Gesture Hints on Mobile</span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="gesture-animations" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Gesture Animations</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Section -->
+        <div class="config-section">
+            <div id="gesture-settings-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
+            
+            <div class="form-row" style="margin-top: 20px;">
+                <button id="save-gesture-settings" class="save-button">Save Gesture Settings</button>
+                <button id="reset-gesture-settings" class="action-button">Reset to Defaults</button>
+                <button id="reload-gesture-settings" class="action-button">Reload Settings</button>
             </div>
         </div>
     </div>
