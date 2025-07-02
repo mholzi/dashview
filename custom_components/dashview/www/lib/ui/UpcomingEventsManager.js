@@ -251,14 +251,50 @@ export class UpcomingEventsManager {
         return new Date(0);
     }
 
+    _getEventEndTime(event) {
+        if (event.end) {
+            if (typeof event.end === 'string') {
+                return new Date(event.end);
+            } else if (event.end.dateTime) {
+                return new Date(event.end.dateTime);
+            } else if (event.end.date) {
+                // For all-day events, the end date is exclusive, so subtract one day
+                const endDate = new Date(event.end.date);
+                endDate.setDate(endDate.getDate() - 1);
+                endDate.setHours(23, 59, 59, 999);
+                return endDate;
+            }
+        }
+        // If no end time, assume it's the same as start time
+        return this._getEventStartTime(event);
+    }
+
+    _isEventActive(event) {
+        const now = new Date();
+        const startTime = this._getEventStartTime(event);
+        const endTime = this._getEventEndTime(event);
+        
+        // Event is active if current time is between start and end time
+        return now >= startTime && now <= endTime;
+    }
+
     _renderEventItem(event) {
         const title = this._escapeHtml(event.summary || event.title || 'Untitled Event');
         const timeDisplay = this._getEventTimeDisplay(event);
         const isToday = this._isEventToday(event);
+        const isActive = this._isEventActive(event);
         const calendarIcon = this._getCalendarIcon(event.calendar_entity_id);
 
+        // Determine CSS class based on active status
+        let cssClass = 'upcoming-event-item';
+        if (isActive) {
+            cssClass += ' upcoming-event-active';
+        } else {
+            cssClass += ' upcoming-event-inactive';
+        }
+
         return `
-            <div class="upcoming-event-item ${isToday ? 'upcoming-event-today' : ''}" data-event-date="${this._getEventDateString(event)}">
+            <div class="${cssClass}" data-event-date="${this._getEventDateString(event)}">
                 <div class="upcoming-event-grid">
                     <div class="upcoming-event-icon">
                         <i class="mdi ${calendarIcon}"></i>

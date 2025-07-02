@@ -4600,6 +4600,29 @@ body.popup-open, :host(.popup-open) {
     opacity: 0.9;
 }
 
+/* Active meeting styles */
+.upcoming-event-item.upcoming-event-active {
+    background: var(--active-big);
+    color: var(--gray000);
+}
+
+.upcoming-event-item.upcoming-event-active:hover {
+    background: var(--active-big);
+    opacity: 0.9;
+}
+
+/* Inactive meeting styles */
+.upcoming-event-item.upcoming-event-inactive {
+    background: var(--gray000);
+}
+
+/* Active meeting text styles */
+.upcoming-event-item.upcoming-event-active .upcoming-event-icon i,
+.upcoming-event-item.upcoming-event-active .upcoming-event-time,
+.upcoming-event-item.upcoming-event-active .upcoming-event-title {
+    color: var(--gray000);
+}
+
 .upcoming-event-grid {
     display: grid;
     grid-template-areas: 
