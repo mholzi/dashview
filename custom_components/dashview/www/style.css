@@ -7330,3 +7330,91 @@ body.popup-open, :host(.popup-open) {
         transform: rotate(360deg);
     }
 }
+
+/* --- Integration Tab Mobile Optimizations --- */
+/* Mobile: Reduce excessive nested padding and improve touch interfaces */
+@media (max-width: 767px) {
+    #integrations-tab .config-section {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+    
+    #integrations-tab .config-subsection {
+        padding: 8px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+    }
+    
+    #integrations-tab .config-subsection h6 {
+        font-size: 1rem;
+        margin-bottom: 6px;
+    }
+    
+    #integrations-tab .config-subsection p {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+    
+    #integrations-tab .setting-row {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        padding: 6px;
+    }
+    
+    #integrations-tab .dropdown-selector {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        min-height: 44px; /* Touch-friendly */
+    }
+    
+    #integrations-tab .save-button,
+    #integrations-tab .action-button {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 1rem;
+        min-height: 44px; /* Touch-friendly */
+        border-radius: 6px;
+    }
+    
+    #integrations-tab .status-display {
+        padding: 6px 8px;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+}
+
+/* Small mobile: Further optimizations for very small screens */
+@media (max-width: 480px) {
+    #integrations-tab .config-section {
+        padding: 8px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+    
+    #integrations-tab .config-subsection {
+        padding: 6px;
+        margin-bottom: 8px;
+    }
+    
+    #integrations-tab h4 {
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+    }
+    
+    #integrations-tab h5 {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+    
+    #integrations-tab .config-subsection h6 {
+        font-size: 0.95rem;
+    }
+    
+    #integrations-tab .setting-row {
+        gap: 6px;
+        padding: 4px;
+    }
+}
