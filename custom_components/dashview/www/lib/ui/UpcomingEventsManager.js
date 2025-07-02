@@ -215,8 +215,21 @@ export class UpcomingEventsManager {
             return;
         }
 
-        // Sort events by start time and get next 3 events
-        const sortedEvents = this._sortEventsByTime(this._events);
+        // Filter out finished events first
+        const activeEvents = this._events.filter(event => !this._isEventFinished(event));
+        
+        if (activeEvents.length === 0) {
+            contentDiv.innerHTML = `
+                <div class="upcoming-events-empty">
+                    <div class="upcoming-events-empty-text">Keine kommenden Termine</div>
+                    <div class="upcoming-events-help">Ihr Kalender ist frei!</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Sort active events by start time and get next 3 events
+        const sortedEvents = this._sortEventsByTime(activeEvents);
         const upcomingEvents = sortedEvents.slice(0, 3);
 
         let html = '';
@@ -249,6 +262,20 @@ export class UpcomingEventsManager {
             }
         }
         return new Date(0);
+    }
+
+    _getEventEndTime(event) {
+        if (event.end) {
+            if (typeof event.end === 'string') {
+                return new Date(event.end);
+            } else if (event.end.dateTime) {
+                return new Date(event.end.dateTime);
+            } else if (event.end.date) {
+                return new Date(event.end.date);
+            }
+        }
+        // If no end time provided, fallback to start time
+        return this._getEventStartTime(event);
     }
 
     _renderEventItem(event) {
@@ -303,6 +330,27 @@ export class UpcomingEventsManager {
                 })}`;
             }
         }
+    }
+
+    _isEventFinished(event) {
+        const now = new Date();
+        
+        // All-day events should show for the entire day they occur
+        if (this._isAllDayEvent(event)) {
+            const eventDate = this._getEventStartTime(event);
+            const today = new Date();
+            
+            // Compare just the date parts (YYYY-MM-DD)
+            const eventDateStr = eventDate.toISOString().split('T')[0];
+            const todayDateStr = today.toISOString().split('T')[0];
+            
+            // All-day events are considered finished only if they're before today
+            return eventDateStr < todayDateStr;
+        }
+        
+        // For timed events, check if the end time has passed
+        const endTime = this._getEventEndTime(event);
+        return now > endTime;
     }
 
     _isAllDayEvent(event) {
