@@ -17,6 +17,7 @@ export class HeaderManager {
     this.updateHeaderButtons();
     this.updateWeatherButton();
     this.updateMediaHeaderButtons();
+    this._setupMainRefreshButton();
   }
 
   updateWeatherButton() {
@@ -120,5 +121,27 @@ export class HeaderManager {
     });
 
     return buttonsHTML || '<div class="no-activity">No active rooms</div>';
+  }
+
+  /**
+   * Setup the main refresh button in the header
+   */
+  _setupMainRefreshButton() {
+    const refreshButton = this._shadowRoot.getElementById('main-refresh-button');
+    if (!refreshButton || refreshButton.listenerAttached) return;
+
+    refreshButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (this._panel._refreshManager) {
+        // Refresh all main components
+        this._panel._refreshManager.refreshData(['main', 'weather', 'security']);
+      }
+    });
+    
+    refreshButton.listenerAttached = true;
+    refreshButton.classList.add('refresh-button');
+    console.log('[HeaderManager] Main refresh button initialized');
   }
 }

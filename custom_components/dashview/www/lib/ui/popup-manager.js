@@ -240,6 +240,9 @@ export class PopupManager {
     if (this._config?.rooms?.[roomKey]) {
         this._refreshRoomEntities(roomKey, popup);
     }
+
+    // Setup popup-specific refresh buttons
+    this._setupPopupRefreshButtons(popup);
   }
 
   _initializeDynamicContent(container) {
@@ -395,6 +398,76 @@ export class PopupManager {
             this._panel._thermostatCard.update(popup, roomKey);
         }
     });
+  }
+
+  /**
+   * Setup refresh buttons for popup windows
+   * @param {HTMLElement} popup - The popup element
+   */
+  _setupPopupRefreshButtons(popup) {
+    if (!popup) return;
+
+    // Weather popup refresh button
+    if (popup.id === 'weather-popup') {
+      const refreshButton = popup.querySelector('#weather-refresh-button');
+      if (refreshButton && !refreshButton.listenerAttached) {
+        refreshButton.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (this._panel._refreshManager) {
+            await this._panel._refreshManager.refreshData(['weather']);
+          }
+        });
+        refreshButton.listenerAttached = true;
+        refreshButton.classList.add('refresh-button');
+        console.log('[PopupManager] Weather refresh button initialized');
+      }
+    }
+
+    // Security popup refresh button
+    if (popup.id === 'security-popup') {
+      const refreshButton = popup.querySelector('#security-refresh-button');
+      if (refreshButton && !refreshButton.listenerAttached) {
+        refreshButton.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (this._panel._refreshManager) {
+            await this._panel._refreshManager.refreshData(['security']);
+          }
+        });
+        refreshButton.listenerAttached = true;
+        refreshButton.classList.add('refresh-button');
+        console.log('[PopupManager] Security refresh button initialized');
+      }
+    }
+
+    // Room popup refresh button - add dynamically
+    const roomKey = popup.id.replace('-popup', '');
+    if (this._config?.rooms?.[roomKey]) {
+      let refreshButton = popup.querySelector('.popup-refresh-button');
+      if (!refreshButton) {
+        refreshButton = document.createElement('div');
+        refreshButton.className = 'popup-refresh-button refresh-button';
+        refreshButton.title = `Refresh ${this._config.rooms[roomKey].friendly_name} data`;
+        refreshButton.innerHTML = '<i class="mdi mdi-refresh"></i>';
+        popup.appendChild(refreshButton);
+      }
+
+      if (!refreshButton.listenerAttached) {
+        refreshButton.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (this._panel._refreshManager) {
+            await this._panel._refreshManager.refreshData([`room-${roomKey}`]);
+          }
+        });
+        refreshButton.listenerAttached = true;
+        console.log(`[PopupManager] Room refresh button initialized for: ${roomKey}`);
+      }
+    }
   }
 
   /**
