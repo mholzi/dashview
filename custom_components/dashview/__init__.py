@@ -276,6 +276,18 @@ class DashViewConfigView(HomeAssistantView):
             house_config = self._entry.options.get('house_config', {})
             sections_config = house_config.get('main_dashboard_sections', {})
             return web.json_response(sections_config)
+        elif config_type == 'trend_analysis':
+            house_config = self._entry.options.get('house_config', {})
+            trend_config = house_config.get('trend_analysis', {
+                'enabled': True,
+                'sensitivity': 'medium',
+                'short_term_hours': 2,
+                'long_term_hours': 24,
+                'baseline_hours': 168,
+                'show_patterns': True,
+                'show_indicators': True
+            })
+            return web.json_response(trend_config)
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -456,6 +468,8 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["custom_cards"] = config_payload
             elif config_type == "main_dashboard_sections":
                 current_options.setdefault("house_config", {})["main_dashboard_sections"] = config_payload
+            elif config_type == "trend_analysis":
+                current_options.setdefault("house_config", {})["trend_analysis"] = config_payload
             elif config_type == "config_health_fix":
                 return await self._apply_configuration_fix(config_payload)
             else:
