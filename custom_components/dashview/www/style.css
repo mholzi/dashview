@@ -281,10 +281,13 @@ body.popup-open, :host(.popup-open) {
 
 /* --- Fixed Navigation Bar --- */
 .bottom-nav {
-    position: sticky;
+    position: fixed;
     bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     height: 60px;
     width: 100%;
+    max-width: 500px;
     box-sizing: border-box;
     background-color: var(--gray800);
     border-radius: 100px;
@@ -294,7 +297,6 @@ body.popup-open, :host(.popup-open) {
     align-items: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     z-index: 5;
-    margin-top: 12px;
 }
 .nav-button {
     background: none;
