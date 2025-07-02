@@ -1,6 +1,7 @@
 // custom_components/dashview/lib/ui/security-components.js
 
 import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+import { calculateTimeDifferenceShort } from '../utils/time-utils.js';
 
 export class SecurityComponents {
     constructor(panel) {
@@ -22,23 +23,7 @@ export class SecurityComponents {
     _formatTimeAgo(lastChanged) {
         if (!lastChanged) return 'Unbekannt';
         
-        const now = new Date();
-        const changed = new Date(lastChanged);
-        const diffMs = now - changed;
-        const diffSeconds = Math.floor(diffMs / 1000);
-        const diffMinutes = Math.floor(diffSeconds / 60);
-        const diffHours = Math.floor(diffMinutes / 60);
-        const diffDays = Math.floor(diffHours / 24);
-
-        if (diffSeconds < 60) {
-            return 'Jetzt';
-        } else if (diffMinutes < 60) {
-            return `vor ${diffMinutes} min`;
-        } else if (diffHours < 24) {
-            return `vor ${diffHours} h`;
-        } else {
-            return `vor ${diffDays} Tagen`;
-        }
+        return calculateTimeDifferenceShort(lastChanged);
     }
 
     /**

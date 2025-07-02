@@ -1966,25 +1966,7 @@ export class FloorManager {
   _formatLastSeen(timestamp) {
     if (!timestamp) return 'Unknown';
     
-    // Use time utilities if available
-    if (this._panel._timeUtils && this._panel._timeUtils.calculateTimeDifferenceShort) {
-      return this._panel._timeUtils.calculateTimeDifferenceShort(timestamp);
-    }
-    
-    // Fallback calculation
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    
-    if (diffMinutes < 1) return 'Jetzt';
-    if (diffMinutes < 60) return `vor ${diffMinutes}m`;
-    
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `vor ${diffHours}h`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `vor ${diffDays} Tagen`;
+    return calculateTimeDifferenceShort(timestamp);
   }
 
   /**
