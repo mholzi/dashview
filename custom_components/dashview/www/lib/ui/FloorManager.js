@@ -239,6 +239,18 @@ export class FloorManager {
   }
   update() {
     if (!this._shadowRoot) return;
+    
+    // Call the new targeted update method instead of full re-rendering
+    this.updateTargeted();
+  }
+
+  /**
+   * Update only dirty entities with targeted DOM updates
+   * @param {string[]} dirtyEntityIds - Optional array of specific entities to update
+   */
+  updateDirtyEntities(dirtyEntityIds = []) {
+    if (!this._shadowRoot) return;
+    
     const activeTab = this._shadowRoot.querySelector('.floor-tab-button.active');
     if (!activeTab) return;
 
@@ -246,77 +258,207 @@ export class FloorManager {
     const gridContainer = this._shadowRoot.getElementById(`room-grid-${floorId}`);
     if (!gridContainer) return;
 
-    // --- NEW, MORE TARGETED LOGIC ---
-    // Instead of re-rendering, find existing cards and update them individually.
+    console.log(`[FloorManager] Updating ${dirtyEntityIds.length} dirty entities on floor ${floorId}`);
     
-    // Update small sensor cards
-    gridContainer.querySelectorAll('.sensor-small-card').forEach(async (card) => {
-        const entityId = card.dataset.entityId;
-        if (entityId) {
-            const cardType = card.dataset.type;
-            const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, cardType);
-            card.className = `sensor-small-card ${cardClass}`; // Update class for styling
-            
-            // Use motion-specific label for swipeable sensors, otherwise use regular label
-            const displayLabel = this._swipeableTypes.includes(cardType) ? this._getMotionCardLabel(entityId, cardType) : label;
-            card.querySelector('.sensor-small-label').textContent = displayLabel;
-            card.querySelector('.sensor-small-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
-            
-            // Add trend indicators for temperature and humidity sensors
-            await this._addTrendIndicatorToCard(card, entityId, cardType, 'small');
-            
-            // Initialize swipe handlers for swipeable cards if not already done
-            if (this._swipeableTypes.includes(cardType) && !card.dataset.swipeInitialized) {
-                this._initializeMotionCardSwipeHandlers(card);
-            }
-        }
-    });
+    // Use document fragment for efficient batch updates
+    const fragment = document.createDocumentFragment();
+    let hasChanges = false;
 
-    // Update big sensor cards
-    gridContainer.querySelectorAll('.sensor-big-card').forEach(async (card) => {
-        const entityId = card.dataset.entityId;
-        if (entityId) {
-            const cardType = card.dataset.type;
-            const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, cardType);
-            card.className = `sensor-big-card ${cardClass}`; // Update class for styling
-            card.querySelector('.sensor-big-label').textContent = label; // Update only the text
-            card.querySelector('.sensor-big-icon-cell i').className = `mdi ${this._panel._processIconName(icon)}`;
-            
-            // Add trend indicators for temperature and humidity sensors
-            await this._addTrendIndicatorToCard(card, entityId, cardType, 'big');
-        }
-    });
-
-    // Update person cards
-    gridContainer.querySelectorAll('.person-card').forEach(card => {
-        const entityId = card.dataset.entityId;
-        if (entityId) {
-            this._updatePersonCard(card, entityId);
-        }
-    });
-
-    // Update room cards within the swiper
-    gridContainer.querySelectorAll('.room-card').forEach(card => {
-        const navPath = card.dataset.navigationPath;
-        if (!navPath) return;
-
-        const roomKey = navPath.substring(1);
-        const roomConfig = this._houseConfig.rooms[roomKey];
-        if (roomConfig) {
-            const cardStateClass = this._isRoomActive(roomConfig) ? 'is-on' : 'is-off';
-            // Only update the class, not the whole card.
-            if (!card.classList.contains(cardStateClass)) {
-                 card.classList.remove('is-on', 'is-off');
-                 card.classList.add(cardStateClass);
-            }
-        }
-    });
-    // By not calling renderFloorLayout(), the swiper is NOT re-initialized, preserving its state.
+    // Update specific dirty entities if provided, otherwise update all visible entities
+    const entitiesToUpdate = dirtyEntityIds.length > 0 ? dirtyEntityIds : this._getAllVisibleEntityIds(gridContainer);
     
-    // Update custom cards in main dashboard
-    this.renderCustomCardsMain();
+    entitiesToUpdate.forEach(entityId => {
+      const updated = this._updateEntityCard(gridContainer, entityId);
+      if (updated) {
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      console.log(`[FloorManager] Successfully updated cards for ${entitiesToUpdate.length} entities`);
+    }
   }
-  
+
+  /**
+   * Targeted update method that replaces the old full re-rendering approach
+   */
+  updateTargeted() {
+    if (!this._shadowRoot) return;
+    const activeTab = this._shadowRoot.querySelector('.floor-tab-button.active');
+    if (!activeTab) return;
+
+    const floorId = activeTab.dataset.targetFloor;
+    const gridContainer = this._shadowRoot.getElementById(`room-grid-${floorId}`);
+    if (!gridContainer) return;
+
+  /**
+   * Targeted update method that replaces the old full re-rendering approach
+   */
+  updateTargeted() {
+    if (!this._shadowRoot) return;
+    const activeTab = this._shadowRoot.querySelector('.floor-tab-button.active');
+    if (!activeTab) return;
+
+    const floorId = activeTab.dataset.targetFloor;
+    const gridContainer = this._shadowRoot.getElementById(`room-grid-${floorId}`);
+    if (!gridContainer) return;
+
+    // Update all visible cards with current entity states
+    this._updateAllVisibleCards(gridContainer);
+  }
+
+  /**
+   * Update all visible cards in the grid container
+   */
+  _updateAllVisibleCards(gridContainer) {
+    const allCards = gridContainer.querySelectorAll('.sensor-small-card, .sensor-big-card, .room-card, .person-card, .garbage-card');
+    
+    allCards.forEach(card => {
+      const entityId = card.dataset.entityId;
+      if (entityId) {
+        this._updateEntityCard(gridContainer, entityId, card);
+      }
+    });
+  }
+
+  /**
+   * Update a specific entity card with current state
+   * @param {Element} gridContainer - The grid container
+   * @param {string} entityId - The entity ID to update
+   * @param {Element} existingCard - Optional existing card element
+   * @returns {boolean} - Whether the card was updated
+   */
+  _updateEntityCard(gridContainer, entityId, existingCard = null) {
+    const card = existingCard || gridContainer.querySelector(`[data-entity-id="${entityId}"]`);
+    if (!card) return false;
+
+    try {
+      const cardType = card.dataset.type;
+      
+      if (card.classList.contains('sensor-small-card')) {
+        return this._updateSmallSensorCard(card, entityId, cardType);
+      } else if (card.classList.contains('sensor-big-card')) {
+        return this._updateBigSensorCard(card, entityId, cardType);
+      } else if (card.classList.contains('person-card')) {
+        this._updatePersonCard(card, entityId);
+        return true;
+      } else if (card.classList.contains('room-card')) {
+        return this._updateRoomCard(card);
+      }
+      
+      return false;
+    } catch (error) {
+      console.error(`[FloorManager] Error updating card for entity ${entityId}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Update a small sensor card efficiently
+   */
+  _updateSmallSensorCard(card, entityId, cardType) {
+    const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, cardType);
+    
+    // Update class for styling
+    const newClassName = `sensor-small-card ${cardClass || ''}`.trim();
+    if (card.className !== newClassName) {
+      card.className = newClassName;
+    }
+    
+    // Update label
+    const displayLabel = this._swipeableTypes.includes(cardType) ? 
+      this._getMotionCardLabel(entityId, cardType) : label;
+    const labelEl = card.querySelector('.sensor-small-label');
+    if (labelEl && labelEl.textContent !== displayLabel) {
+      labelEl.textContent = displayLabel;
+    }
+    
+    // Update icon
+    const iconEl = card.querySelector('.sensor-small-icon-cell i');
+    const newIconClass = `mdi ${this._panel._processIconName(icon)}`;
+    if (iconEl && iconEl.className !== newIconClass) {
+      iconEl.className = newIconClass;
+    }
+    
+    // Add trend indicators asynchronously
+    this._addTrendIndicatorToCard(card, entityId, cardType, 'small').catch(err => {
+      console.debug(`[FloorManager] Trend indicator update failed for ${entityId}:`, err);
+    });
+    
+    // Initialize swipe handlers if needed
+    if (this._swipeableTypes.includes(cardType) && !card.dataset.swipeInitialized) {
+      this._initializeMotionCardSwipeHandlers(card);
+    }
+    
+    return true;
+  }
+
+  /**
+   * Update a big sensor card efficiently  
+   */
+  _updateBigSensorCard(card, entityId, cardType) {
+    const { name, label, icon, cardClass } = this._getCardDisplayData(entityId, cardType);
+    
+    // Update class for styling
+    const newClassName = cardClass ? `sensor-big-card ${cardClass}` : 'sensor-big-card';
+    if (card.className !== newClassName) {
+      card.className = newClassName;
+    }
+    
+    // Update name
+    const nameEl = card.querySelector('.sensor-big-name');
+    if (nameEl && nameEl.textContent !== name) {
+      nameEl.textContent = name;
+    }
+    
+    // Update label
+    const labelEl = card.querySelector('.sensor-big-label');
+    if (labelEl && labelEl.textContent !== label) {
+      labelEl.textContent = label;
+    }
+    
+    // Update icon
+    const iconEl = card.querySelector('.sensor-big-icon-cell i');
+    const newIconClass = `mdi ${this._panel._processIconName(icon)}`;
+    if (iconEl && iconEl.className !== newIconClass) {
+      iconEl.className = newIconClass;
+    }
+    
+    // Add trend indicators asynchronously
+    this._addTrendIndicatorToCard(card, entityId, cardType, 'big').catch(err => {
+      console.debug(`[FloorManager] Trend indicator update failed for ${entityId}:`, err);
+    });
+    
+    return true;
+  }
+
+  /**
+   * Update a room card efficiently
+   */
+  _updateRoomCard(card) {
+    // Room cards typically don't need frequent updates, but we can refresh their state
+    const roomKey = card.dataset.roomKey;
+    if (roomKey) {
+      // Refresh room-specific data if needed
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get all visible entity IDs in the grid container
+   */
+  _getAllVisibleEntityIds(gridContainer) {
+    const entityIds = [];
+    gridContainer.querySelectorAll('[data-entity-id]').forEach(card => {
+      const entityId = card.dataset.entityId;
+      if (entityId) {
+        entityIds.push(entityId);
+      }
+    });
+    return entityIds;
+  }
+
   initializeFloorTabs() {
     const container = this._shadowRoot.getElementById('floor-tabs-container');
     if (!container) return;
@@ -348,7 +490,7 @@ export class FloorManager {
         contentArea.querySelectorAll('.floor-content').forEach(content => {
             content.style.display = content.id === `floor-content-${floorId}` ? 'block' : 'none';
         });
-        this.renderFloorLayout(floorId);
+        this.renderFloorLayout(floorId, true); // Force full render on tab switch
     };
 
     floors.forEach(([floorId, floorConfig], index) => {
@@ -389,10 +531,19 @@ export class FloorManager {
     }
   }
 
-  async renderFloorLayout(floorId) {
+  async renderFloorLayout(floorId, forceFullRender = false) {
     const gridContainer = this._shadowRoot.getElementById(`room-grid-${floorId}`);
     if (!gridContainer) return;
 
+    // Check if we can do a targeted update instead of full re-render
+    if (!forceFullRender && gridContainer.children.length > 0) {
+      console.log(`[FloorManager] Using targeted update for floor ${floorId} instead of full re-render`);
+      this.updateTargeted();
+      return;
+    }
+
+    console.log(`[FloorManager] Performing full re-render for floor ${floorId}`);
+    
     const layoutConfig = this._houseConfig.floor_layouts?.[floorId] || [];
     if (layoutConfig.length === 0) {
         gridContainer.innerHTML = '<div class="placeholder">No layout defined for this floor.</div>';

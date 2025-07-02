@@ -8,6 +8,8 @@ export class StateManager {
     // This map will store which function to call when an entity changes.
     // Key: entityId, Value: callback function
     this._entityCallbacks = new Map();
+    this._dirtyEntities = new Set(); // Track entities that have changed
+    this._batchUpdateTimeout = null; // For batching multiple updates
   }
 
   setHass(hass) {
@@ -62,6 +64,20 @@ handleHassUpdate() {
       if (hasChanged) {
         const newStateSnapshot = currentState ? JSON.parse(JSON.stringify(currentState)) : null;
         this._lastEntityStates.set(entityId, newStateSnapshot);
+        
+        // Track dirty entity and batch updates for performance
+        this._dirtyEntities.add(entityId);
+        
+        // Clear existing timeout and set a new one for batched updates
+        if (this._batchUpdateTimeout) {
+          clearTimeout(this._batchUpdateTimeout);
+        }
+        
+        this._batchUpdateTimeout = setTimeout(() => {
+          this._processBatchedUpdates();
+        }, 50); // 50ms batch window
+        
+        // Still call individual callback for backward compatibility
         if (typeof callback === 'function') {
           callback(entityId, currentState);
         }
@@ -123,5 +139,40 @@ _areAttributesChanged(newAttrs, oldAttrs) {
     this.watchEntities(staticEntities, (id) => this._panel.updateComponentForEntity(id));
 
     console.log(`[StateManager] Now watching ${this._entityCallbacks.size} entities.`);
+  }
+
+  /**
+   * Process batched entity updates efficiently
+   */
+  _processBatchedUpdates() {
+    if (this._dirtyEntities.size === 0) return;
+    
+    console.log(`[StateManager] Processing batched updates for ${this._dirtyEntities.size} entities`);
+    
+    // Notify FloorManager about dirty entities for targeted updates
+    if (this._panel._floorManager && typeof this._panel._floorManager.updateDirtyEntities === 'function') {
+      this._panel._floorManager.updateDirtyEntities(Array.from(this._dirtyEntities));
+    }
+    
+    // Clear dirty entities set
+    this._dirtyEntities.clear();
+    this._batchUpdateTimeout = null;
+  }
+
+  /**
+   * Get current dirty entities (for debugging/monitoring)
+   */
+  getDirtyEntities() {
+    return Array.from(this._dirtyEntities);
+  }
+
+  /**
+   * Force immediate processing of dirty entities
+   */
+  flushUpdates() {
+    if (this._batchUpdateTimeout) {
+      clearTimeout(this._batchUpdateTimeout);
+      this._processBatchedUpdates();
+    }
   }
 }
