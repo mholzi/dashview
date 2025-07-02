@@ -2656,7 +2656,7 @@ body.popup-open, :host(.popup-open) {
 
 .garbage-urgent .garbage-type,
 .garbage-urgent .days-number {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 /* New garbage card grid layout to match room cards */
@@ -2716,11 +2716,11 @@ body.popup-open, :host(.popup-open) {
 
 /* Urgent and tomorrow styling for new layout */
 .garbage-card.garbage-urgent .garbage-card-name {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 .garbage-card.garbage-urgent .garbage-card-icon-cell i {
-    color: #c0392b;
+    color: var(--gray000);
 }
 
 .garbage-card.garbage-tomorrow .garbage-card-name {
@@ -2733,7 +2733,7 @@ body.popup-open, :host(.popup-open) {
 
 .garbage-urgent .garbage-date,
 .garbage-urgent .days-label {
-    color: #a93226;
+    color: var(--gray000);
 }
 
 .garbage-tomorrow .garbage-type,
