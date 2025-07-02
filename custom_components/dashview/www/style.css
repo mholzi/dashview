@@ -7547,3 +7547,290 @@ body.popup-open, :host(.popup-open) {
         padding: 4px;
     }
 }
+
+/* --- Floor Gesture & Overview Styles --- */
+.floor-overview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.floor-overview-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.floor-overview-content {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.floor-overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--separator-color);
+    padding-bottom: 15px;
+}
+
+.floor-overview-header h3 {
+    margin: 0;
+    color: var(--primary-text-color);
+    font-size: 1.2rem;
+}
+
+.floor-overview-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    font-size: 1.5rem;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.floor-overview-close:hover {
+    background: var(--separator-color);
+}
+
+.floor-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.floor-overview-card {
+    background: var(--background-alt);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.floor-overview-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.floor-overview-card.active {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light);
+}
+
+.floor-overview-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.floor-overview-icon i {
+    color: inherit;
+}
+
+.floor-overview-name {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.floor-overview-stats {
+    color: var(--secondary-text-color);
+    font-size: 0.85rem;
+}
+
+/* Context Menu Styles */
+.context-menu-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
+.context-menu {
+    background: var(--background);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+    max-width: 300px;
+    overflow: hidden;
+    animation: contextMenuSlideIn 0.2s ease-out;
+}
+
+@keyframes contextMenuSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+.context-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator-color);
+    background: var(--background-alt);
+}
+
+.context-menu-title {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    font-size: 0.9rem;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.context-menu-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    padding: 2px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.context-menu-close:hover {
+    background: var(--separator-color);
+}
+
+.context-menu-items {
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: var(--primary-text-color);
+    gap: 12px;
+}
+
+.context-menu-item:hover {
+    background: var(--background-alt);
+}
+
+.context-menu-item[data-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.context-menu-item[data-disabled="true"]:hover {
+    background: none;
+}
+
+.context-menu-item i {
+    width: 16px;
+    color: var(--secondary-text-color);
+    font-size: 16px;
+}
+
+.context-menu-label {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.context-menu-shortcut {
+    color: var(--secondary-text-color);
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.context-menu-separator {
+    height: 1px;
+    background: var(--separator-color);
+    margin: 4px 0;
+}
+
+/* Gesture feedback enhancements */
+.room-card.highlighted,
+.sensor-small-card.highlighted,
+.sensor-big-card.highlighted {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    animation: gestureHighlight 0.3s ease;
+}
+
+@keyframes gestureHighlight {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Enhanced touch targets for mobile */
+@media (max-width: 768px) {
+    .floor-tab-button {
+        min-width: 48px;
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+    
+    .room-card,
+    .sensor-small-card,
+    .sensor-big-card {
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+    
+    /* Gesture hints */
+    .floor-tabs-container::before {
+        content: "← Swipe to navigate floors →";
+        display: block;
+        text-align: center;
+        color: var(--secondary-text-color);
+        font-size: 0.75rem;
+        margin-bottom: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .floor-tabs-container:hover::before {
+        opacity: 1;
+    }
+    
+    /* Context menu mobile adjustments */
+    .context-menu {
+        min-width: 250px;
+        max-width: 90vw;
+    }
+    
+    .context-menu-item {
+        padding: 14px 16px;
+        min-height: 48px;
+    }
+}
