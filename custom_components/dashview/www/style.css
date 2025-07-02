@@ -2844,14 +2844,14 @@ body.popup-open, :host(.popup-open) {
     line-height: 1em;
     font-weight: 300;
     color: var(--gray800);
-    padding: 0 0 14px 14px;
+    padding: 0;
 }
 
 .sensor-small-name {
     grid-area: name;
     justify-self: start;
     align-self: start;
-    font-size: 14px;
+    font-size: 16px;
     color: var(--gray800);
     opacity: 0.7;
 }
