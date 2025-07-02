@@ -290,17 +290,24 @@ export class UpcomingEventsManager {
     _renderEventItem(event) {
         const title = this._escapeHtml(event.summary || event.title || 'Untitled Event');
         const timeDisplay = this._getEventTimeDisplay(event);
-        const isToday = this._isEventToday(event);
+        const isActive = this._isEventActive(event);
         const calendarIcon = this._getCalendarIcon(event.calendar_entity_id);
+        
+        // Use sensor-small template structure
+        const cardClasses = ['sensor-small-card'];
+        if (isActive) {
+            cardClasses.push('is-on', 'is-big');
+        }
+        cardClasses.push('calendar-entity'); // Add entity type for styling
 
         return `
-            <div class="upcoming-event-item ${isToday ? 'upcoming-event-today' : ''}" data-event-date="${this._getEventDateString(event)}">
-                <div class="upcoming-event-grid">
-                    <div class="upcoming-event-icon">
+            <div class="${cardClasses.join(' ')}" data-type="calendar" data-event-date="${this._getEventDateString(event)}">
+                <div class="sensor-small-grid">
+                    <div class="sensor-small-icon-cell">
                         <i class="mdi ${calendarIcon}"></i>
                     </div>
-                    <div class="upcoming-event-time">${timeDisplay}</div>
-                    <div class="upcoming-event-title">${title}</div>
+                    <div class="sensor-small-label">${timeDisplay}</div>
+                    <div class="sensor-small-name">${title}</div>
                 </div>
             </div>
         `;
@@ -398,6 +405,30 @@ export class UpcomingEventsManager {
         return eventDate.toDateString() === tomorrow.toDateString();
     }
 
+    /**
+     * Check if an event is currently active (happening now)
+     * @param {Object} event - The event object
+     * @returns {boolean} True if the event is currently active
+     */
+    _isEventActive(event) {
+        const now = new Date();
+        const startTime = this._getEventStartTime(event);
+        const endTime = this._getEventEndTime(event);
+        
+        // Handle invalid dates gracefully
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+            return false;
+        }
+        
+        // For all-day events, check if today is the event day
+        if (this._isAllDayEvent(event)) {
+            return this._isEventToday(event);
+        }
+        
+        // For timed events, check if current time is between start and end
+        return now >= startTime && now <= endTime;
+    }
+
     _getEventDateString(event) {
         const eventDate = this._getEventStartTime(event);
         return eventDate.toISOString().split('T')[0];
@@ -439,7 +470,7 @@ export class UpcomingEventsManager {
     }
 
     _addEventClickHandlers(contentDiv) {
-        const eventItems = contentDiv.querySelectorAll('.upcoming-event-item');
+        const eventItems = contentDiv.querySelectorAll('.sensor-small-card');
         eventItems.forEach(item => {
             item.addEventListener('click', () => {
                 // Open calendar popup

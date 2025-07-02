@@ -3563,6 +3563,27 @@ body.popup-open, :host(.popup-open) {
     background: linear-gradient(145deg, rgba(144,145,147,0.3) 0%, rgba(112,113,115,0.4) 100%);
 }
 
+/* Calendar entities */
+.sensor-small-card.calendar-entity,
+.sensor-big-card.calendar-entity {
+    border-left: 3px solid var(--purple);
+}
+
+.sensor-small-card.calendar-entity.is-on,
+.sensor-big-card.calendar-entity.is-on {
+    background: var(--active-big);
+}
+
+.sensor-small-card[data-type="calendar"].is-on .sensor-small-icon-cell {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sensor-small-card[data-type="calendar"].is-on .sensor-small-icon-cell i,
+.sensor-small-card[data-type="calendar"].is-on .sensor-small-label,
+.sensor-small-card[data-type="calendar"].is-on .sensor-small-name {
+    color: var(--gray000);
+}
+
 /* Enhanced error and warning states */
 .sensor-small-card.has-warning,
 .sensor-big-card.has-warning {
@@ -4830,7 +4851,7 @@ body.popup-open, :host(.popup-open) {
 .upcoming-events-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
 
 /* Individual Event Item */
