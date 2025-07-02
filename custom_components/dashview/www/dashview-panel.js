@@ -20,6 +20,7 @@ import { EntityDetailManager } from './lib/ui/EntityDetailManager.js';
 import { HistoricalDataManager } from './lib/ui/HistoricalDataManager.js';
 import { TrendAnalysisManager } from './lib/ui/TrendAnalysisManager.js';
 import { UpcomingEventsManager } from './lib/ui/UpcomingEventsManager.js';
+import { NotificationManager } from './lib/ui/NotificationManager.js';
 import { RefreshManager } from './lib/utils/RefreshManager.js';
 import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
 
@@ -96,6 +97,11 @@ class DashviewPanel extends HTMLElement {
         if (popup && popup.id === 'calendar-popup') {
           this._calendarManager.update(popup);
         }
+      },
+      '.notifications-container': (el) => {
+        if (this._notificationManager) {
+          this._notificationManager.initialize(el);
+        }
       }
     };
   }
@@ -129,6 +135,7 @@ class DashviewPanel extends HTMLElement {
     if (this._historicalDataManager) this._historicalDataManager.setHass(hass);
     if (this._trendAnalysisManager) this._trendAnalysisManager.setHass(hass);
     if (this._upcomingEventsManager) this._upcomingEventsManager.setHass(hass);
+    if (this._notificationManager) this._notificationManager.setHass(hass);
     if (this._refreshManager) this._refreshManager.setHass(hass);
 
     if (this._stateManager) {
@@ -199,6 +206,7 @@ class DashviewPanel extends HTMLElement {
     this._historicalDataManager = new HistoricalDataManager(this);
     this._trendAnalysisManager = new TrendAnalysisManager(this);
     this._upcomingEventsManager = new UpcomingEventsManager(this);
+    this._notificationManager = new NotificationManager(this);
     this._refreshManager = new RefreshManager(this);
 
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
@@ -259,6 +267,14 @@ class DashviewPanel extends HTMLElement {
       const activePopup = this.shadowRoot.querySelector('#calendar-popup.active');
       if (this._calendarManager && activePopup) {
         await this._calendarManager.update(activePopup);
+      }
+    });
+
+    // Notifications refresh
+    this._refreshManager.registerRefreshCallback('notifications', async () => {
+      console.log('[DashView] Refreshing notifications...');
+      if (this._notificationManager) {
+        await this._notificationManager.refresh();
       }
     });
 

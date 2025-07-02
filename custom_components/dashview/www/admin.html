@@ -9,6 +9,7 @@
         <button class="tab-button" data-target="device-management-tab">Device Management</button>
         <button class="tab-button" data-target="integrations-tab">Integrations</button>
         <button class="tab-button" data-target="gesture-settings-tab">Gesture Settings</button>
+        <button class="tab-button" data-target="notifications-tab">Notifications</button>
         <button class="tab-button" data-target="floor-layouts-tab">Floor Layouts</button>
         <button class="tab-button" data-target="custom-cards-tab">Custom Cards</button>
         <button class="tab-button" data-target="scenes-tab">Scenes</button>
@@ -874,6 +875,141 @@
         </div>
     </div>
 
+    <div id="notifications-tab" class="tab-content">
+        <h4>Notification System</h4>
+        <p>Configure the persistent notification system for alerts, reminders, and system status updates.</p>
+        
+        <div class="config-section">
+            <h5>General Settings</h5>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="notifications-enabled" checked> Enable Notifications
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label for="max-persistent">Max Persistent Notifications:</label>
+                <input type="number" id="max-persistent" min="10" max="100" value="50">
+            </div>
+            
+            <div class="form-group">
+                <label for="default-duration">Default Duration (seconds):</label>
+                <input type="number" id="default-duration" min="30" max="3600" value="300">
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="auto-dismiss" checked> Auto-dismiss after actions
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="sound-enabled"> Enable sound notifications
+                </label>
+            </div>
+            
+            <div id="notifications-config-status" class="status-display">
+                <span class="status-icon mdi"></span>
+                <span class="status-text">Ready</span>
+            </div>
+            
+            <button id="save-notifications-config" class="action-button">💾 Save Notification Settings</button>
+        </div>
+        
+        <div class="config-section">
+            <h5>Test Notifications</h5>
+            <p>Test the notification system with different types and priorities.</p>
+            
+            <div class="test-notifications" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <button class="action-button" onclick="testNotification('info', 'low')">📘 Info (Low)</button>
+                <button class="action-button" onclick="testNotification('warning', 'medium')">⚠️ Warning (Medium)</button>
+                <button class="action-button" onclick="testNotification('error', 'high')">❌ Error (High)</button>
+                <button class="action-button" onclick="testNotification('success', 'medium')">✅ Success (Medium)</button>
+                <button class="action-button" onclick="testNotification('info', 'critical')">🚨 Critical Alert</button>
+                <button class="action-button" onclick="testPersistentNotification()">💾 Persistent Test</button>
+            </div>
+        </div>
+        
+        <div class="config-section">
+            <h5>Entity Triggers</h5>
+            <p>Configure automatic notifications based on entity state changes.</p>
+            
+            <div class="entity-triggers-container">
+                <div class="form-group">
+                    <label for="trigger-entity-selector">Entity:</label>
+                    <select id="trigger-entity-selector">
+                        <option value="">Select an entity...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="trigger-condition">Condition:</label>
+                    <select id="trigger-condition">
+                        <option value="state_change">State Change</option>
+                        <option value="value_threshold">Value Threshold</option>
+                        <option value="attribute_change">Attribute Change</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="trigger-value">Value/State:</label>
+                    <input type="text" id="trigger-value" placeholder="e.g., 'on', '>25', '<20'">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification-title">Notification Title:</label>
+                    <input type="text" id="notification-title" placeholder="{{entity_name}} Alert">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification-message">Message:</label>
+                    <input type="text" id="notification-message" placeholder="{{entity_name}} is {{state}}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification-type">Type:</label>
+                    <select id="notification-type">
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                        <option value="success">Success</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification-priority">Priority:</label>
+                    <select id="notification-priority">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+                
+                <button id="add-trigger" class="action-button">➕ Add Trigger</button>
+            </div>
+            
+            <div class="triggers-list" id="triggers-list">
+                <p>No triggers configured yet.</p>
+            </div>
+        </div>
+        
+        <div class="config-section">
+            <h5>Notification History</h5>
+            <p>View and manage notification history.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;">
+                <div>
+                    <span id="notification-count">0</span> active notifications, 
+                    <span id="history-count">0</span> in history
+                </div>
+                <button id="clear-all-notifications" class="action-button">🗑️ Clear All</button>
+            </div>
+        </div>
+    </div>
+
     <div class="config-section">
         <h5>Configuration Summary</h5>
         <p>Overview of your current DashView configuration status. Shows entity counts, assignments, and potential issues. Updates automatically when loading different configuration tabs.</p>
@@ -882,3 +1018,48 @@
         </div>
     </div>
 </div>
+
+<script>
+// Test notification functions for admin panel
+function testNotification(type, priority) {
+    // Get the panel element to access the notification manager
+    const panel = document.querySelector('dashview-panel');
+    if (panel && panel._notificationManager) {
+        panel._notificationManager.createNotification({
+            type: type,
+            title: `Test ${type.charAt(0).toUpperCase() + type.slice(1)} Notification`,
+            message: `This is a test ${type} notification with ${priority} priority.`,
+            priority: priority,
+            persistence: 'session',
+            duration: type === 'error' ? 0 : 10, // Error notifications don't auto-dismiss
+            actions: type === 'warning' ? [
+                { id: 'test-action', label: 'Test Action', service: 'homeassistant.toggle', entity_id: 'light.test' }
+            ] : []
+        });
+        console.log(`[Admin] Created test ${type} notification with ${priority} priority`);
+    } else {
+        console.warn('[Admin] Notification manager not available');
+        alert('Notification manager not initialized. Please ensure you are on the main DashView panel.');
+    }
+}
+
+function testPersistentNotification() {
+    const panel = document.querySelector('dashview-panel');
+    if (panel && panel._notificationManager) {
+        panel._notificationManager.createNotification({
+            type: 'info',
+            title: 'Persistent Test Notification',
+            message: 'This notification will persist across sessions until manually dismissed.',
+            priority: 'medium',
+            persistence: 'permanent',
+            actions: [
+                { id: 'test-persistent-action', label: 'Mark as Read', service: '', entity_id: '' }
+            ]
+        });
+        console.log('[Admin] Created persistent test notification');
+    } else {
+        console.warn('[Admin] Notification manager not available');
+        alert('Notification manager not initialized. Please ensure you are on the main DashView panel.');
+    }
+}
+</script>

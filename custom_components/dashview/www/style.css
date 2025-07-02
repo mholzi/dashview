@@ -2035,18 +2035,146 @@ body.popup-open, :host(.popup-open) {
     flex-direction: column;
     gap: 12px;
     margin: 0 0 16px 0;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
+.notifications-container:empty {
+    display: none;
+}
+
+/* Notification Card Base */
 .notification-card {
+    display: grid;
+    grid-template-areas: "icon content actions";
+    grid-template-columns: 50px 1fr auto;
+    gap: 12px;
+    background-color: var(--card-background-color);
+    border-radius: 16px;
+    padding: 16px;
+    border-left: 4px solid var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    animation: slideInRight 0.3s ease-out;
+}
+
+/* Notification Types */
+.notification-card[data-type="success"] {
+    border-left-color: var(--green);
+}
+
+.notification-card[data-type="warning"] {
+    border-left-color: var(--yellow);
+}
+
+.notification-card[data-type="error"] {
+    border-left-color: var(--red);
+}
+
+.notification-card[data-type="info"] {
+    border-left-color: var(--blue);
+}
+
+/* Priority Styling */
+.notification-card[data-priority="critical"] {
+    border-width: 0 0 0 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    animation: slideInRight 0.3s ease-out, pulse 2s infinite;
+}
+
+.notification-card[data-priority="high"] {
+    border-left-width: 5px;
+}
+
+/* Icon Cell */
+.notification-icon-cell {
+    grid-area: icon;
     display: flex;
     align-items: center;
-    background-color: var(--card-background-color);
-    border-radius: 20px;
-    padding: 16px;
-    gap: 16px;
-    border: 1px solid var(--red);
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--highlight);
 }
 
+.notification-icon-cell i {
+    font-size: 24px;
+    color: var(--primary-text-color);
+}
+
+/* Content Area */
+.notification-content {
+    grid-area: content;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notification-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-text-color);
+    line-height: 1.2;
+}
+
+.notification-message {
+    font-size: 14px;
+    color: var(--secondary-text-color);
+    line-height: 1.4;
+}
+
+.notification-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--disabled-text-color);
+    margin-top: 4px;
+}
+
+/* Actions */
+.notification-actions {
+    grid-area: actions;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.notification-action-btn {
+    background: var(--accent-color);
+    color: var(--gray000);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.notification-action-btn:hover {
+    background: var(--accent-color);
+    opacity: 0.8;
+}
+
+.notification-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: var(--disabled-text-color);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-dismiss-btn:hover {
+    background: var(--highlight);
+    color: var(--primary-text-color);
+}
+
+/* Legacy notification styles - kept for compatibility */
 .notification-card .notification-icon {
     font-size: 28px;
     color: var(--red);
@@ -2060,18 +2188,51 @@ body.popup-open, :host(.popup-open) {
     gap: 4px;
 }
 
-.notification-card .notification-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--primary-text-color);
-}
-
 .notification-card .notification-details {
     font-size: 14px;
     font-weight: 400;
     color: var(--secondary-text-color);
     display: flex;
     gap: 12px;
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Dark Mode Adjustments */
+@media (prefers-color-scheme: dark) {
+    .notification-card {
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+    }
+    
+    .notification-card[data-priority="critical"] {
+        box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+    }
 }
 /* --- ADDED: Media Player Card Styles --- */
 .media-player-card {
