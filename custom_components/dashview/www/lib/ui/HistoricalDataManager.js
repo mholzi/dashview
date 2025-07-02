@@ -1,5 +1,7 @@
 // custom_components/dashview/www/lib/ui/HistoricalDataManager.js
 
+import { LoadingUtils } from '../utils/loading-utils.js';
+
 export class HistoricalDataManager {
   constructor(panel) {
     this._panel = panel;
@@ -112,9 +114,10 @@ export class HistoricalDataManager {
    * Fetch historical data from Home Assistant
    * @param {string} entityId - The entity ID
    * @param {number} hours - Hours of history to fetch (default: 24)
+   * @param {HTMLElement} loadingContainer - Optional container to show loading state
    * @returns {Promise<Array>} Historical data points
    */
-  async fetchHistoricalData(entityId, hours = 24) {
+  async fetchHistoricalData(entityId, hours = 24, loadingContainer = null) {
     console.log(`[HistoricalDataManager] Fetching ${hours}h of data for ${entityId}`);
     
     // Check cache first
@@ -123,6 +126,11 @@ export class HistoricalDataManager {
     if (cachedData && Date.now() - cachedData.timestamp < 300000) { // 5 min cache
       console.log('[HistoricalDataManager] Using cached data');
       return cachedData.data;
+    }
+    
+    // Show loading state if container provided
+    if (loadingContainer) {
+      LoadingUtils.showLoading(loadingContainer, 'Fetching historical data...', 'small');
     }
     
     try {
@@ -164,6 +172,11 @@ export class HistoricalDataManager {
     } catch (error) {
       console.error('[HistoricalDataManager] Error fetching historical data:', error);
       throw error;
+    } finally {
+      // Hide loading state
+      if (loadingContainer) {
+        LoadingUtils.hideLoading(loadingContainer);
+      }
     }
   }
 

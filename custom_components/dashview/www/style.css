@@ -7333,6 +7333,60 @@ body.popup-open, :host(.popup-open) {
     font-weight: 500;
 }
 
+/* Enhanced Loading Indicator Styles */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--secondary-text-color);
+    text-align: center;
+}
+
+.loading-indicator.loading-small {
+    font-size: 0.8em;
+    padding: 8px;
+}
+
+.loading-indicator.loading-medium {
+    font-size: 0.9em;
+    padding: 16px;
+}
+
+.loading-indicator.loading-large {
+    font-size: 1em;
+    padding: 24px;
+}
+
+.skeleton-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(var(--rgb-card-background-color, 255, 255, 255), 0.8);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: inherit;
+}
+
+/* Dark mode adjustments for loading overlays */
+@media (prefers-color-scheme: dark) {
+    .loading-overlay {
+        background: rgba(58, 59, 61, 0.8);
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .room-overview-grid {

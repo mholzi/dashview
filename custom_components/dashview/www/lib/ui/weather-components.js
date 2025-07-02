@@ -1,5 +1,7 @@
 // custom_components/dashview/lib/ui/weather-components.js
 
+import { LoadingUtils } from '../utils/loading-utils.js';
+
 export class WeatherComponents {
     constructor(panel) {
         this._panel = panel;
@@ -854,14 +856,13 @@ export class WeatherComponents {
      * @param {boolean} show - Whether to show loading state
      */
     _showForecastLoading(popup, show) {
-        const loadingEl = popup.querySelector('.forecast-loading');
-        const canvas = popup.querySelector('#forecast-chart');
+        const chartContainer = popup.querySelector('.forecast-graph-content');
+        if (!chartContainer) return;
         
-        if (loadingEl) {
-            loadingEl.style.display = show ? 'block' : 'none';
-        }
-        if (canvas) {
-            canvas.style.opacity = show ? '0.3' : '1';
+        if (show) {
+            LoadingUtils.showLoading(chartContainer, 'Loading forecast data...', 'medium');
+        } else {
+            LoadingUtils.hideLoading(chartContainer);
         }
     }
 

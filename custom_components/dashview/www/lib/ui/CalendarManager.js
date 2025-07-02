@@ -1,5 +1,7 @@
 // custom_components/dashview/www/lib/ui/CalendarManager.js
 
+import { LoadingUtils } from '../utils/loading-utils.js';
+
 export class CalendarManager {
     constructor(panel) {
         this._panel = panel;
@@ -93,12 +95,7 @@ export class CalendarManager {
         const contentDiv = popupElement.querySelector('.calendar-content') || 
                           popupElement.querySelector('.popup-content');
         if (contentDiv) {
-            contentDiv.innerHTML = `
-                <div class="calendar-loading">
-                    <i class="mdi mdi-loading mdi-spin"></i>
-                    <p>Loading calendar events...</p>
-                </div>
-            `;
+            LoadingUtils.showLoading(contentDiv, 'Loading calendar events...', 'medium');
         }
     }
 

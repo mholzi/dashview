@@ -1,5 +1,6 @@
 // custom_components/dashview/www/lib/ui/info-card-manager.js
 
+import { LoadingUtils } from '../utils/loading-utils.js';
 import { calculateTimeDifferenceLong } from '../utils/time-utils.js';
 
 export class InfoCardManager {

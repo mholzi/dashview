@@ -1,6 +1,7 @@
 // custom_components/dashview/www/lib/ui/media-player-card.js
 
 import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+import { LoadingUtils } from '../utils/loading-utils.js';
 
 export class MediaPlayerCard {
     constructor(panel) {
@@ -199,7 +200,7 @@ export class MediaPlayerCard {
             
             // Remove any existing listeners to prevent duplicates
             button.removeEventListener('click', this._handleControlClick);
-            button.addEventListener('click', (event) => {
+            button.addEventListener('click', async (event) => {
                 console.log(`[MediaPlayerCard] Control button clicked:`, button.dataset.action);
                 const controls = button.closest('.media-controls');
                 const entityId = controls?.dataset.entity;
@@ -208,12 +209,35 @@ export class MediaPlayerCard {
                 console.log(`[MediaPlayerCard] Entity ID: ${entityId}, Action: ${action}, Hass available: ${!!this._hass}`);
                 
                 if (entityId && action && this._hass) {
-                    console.log(`[MediaPlayerCard] Calling service: media_player.${action} for ${entityId}`);
-                    const mediaDisplay = controls.closest('.media-player-container')?.querySelector('.media-display');
-                    if (mediaDisplay) {
-                        this._ignoreUpdatesFor(entityId, mediaDisplay);
+                    // Show loading state on button
+                    const originalIcon = button.querySelector('i').className;
+                    const iconEl = button.querySelector('i');
+                    iconEl.className = 'mdi mdi-loading mdi-spin';
+                    button.disabled = true;
+                    
+                    try {
+                        console.log(`[MediaPlayerCard] Calling service: media_player.${action} for ${entityId}`);
+                        const mediaDisplay = controls.closest('.media-player-container')?.querySelector('.media-display');
+                        if (mediaDisplay) {
+                            this._ignoreUpdatesFor(entityId, mediaDisplay);
+                        }
+                        await this._hass.callService('media_player', action, { entity_id: entityId });
+                        
+                        // Brief success feedback
+                        iconEl.className = 'mdi mdi-check';
+                        setTimeout(() => {
+                            iconEl.className = originalIcon;
+                            button.disabled = false;
+                        }, 1000);
+                    } catch (error) {
+                        console.error('[MediaPlayerCard] Error executing media player action:', error);
+                        // Show error feedback
+                        iconEl.className = 'mdi mdi-alert';
+                        setTimeout(() => {
+                            iconEl.className = originalIcon;
+                            button.disabled = false;
+                        }, 2000);
                     }
-                    this._hass.callService('media_player', action, { entity_id: entityId });
                 } else {
                     console.error(`[MediaPlayerCard] Missing requirements - entityId: ${entityId}, action: ${action}, hass: ${!!this._hass}`);
                 }

@@ -3,6 +3,7 @@
 import { GestureDetector } from '../utils/GestureDetector.js';
 import { FloorGestureManager } from '../utils/FloorGestureManager.js';
 import { ContextMenuManager } from '../utils/ContextMenuManager.js';
+import { LoadingUtils } from '../utils/loading-utils.js';
 import { calculateTimeDifferenceShort } from '../utils/time-utils.js';
 import { SimpleYamlParser } from '../utils/yaml-parser.js';
 
@@ -162,11 +163,17 @@ export class FloorManager {
   /**
    * Load and cache a template file
    * @param {string} templateName - Name of the template file (without .html extension)
+   * @param {HTMLElement} loadingContainer - Optional container to show loading state
    * @returns {Promise<string>} Template content
    */
-  async _loadTemplate(templateName) {
+  async _loadTemplate(templateName, loadingContainer = null) {
     if (this._templateCache.has(templateName)) {
       return this._templateCache.get(templateName);
+    }
+    
+    // Show loading state if container provided
+    if (loadingContainer) {
+      LoadingUtils.showLoading(loadingContainer, `Loading ${templateName} template...`, 'small');
     }
     
     try {
@@ -181,6 +188,11 @@ export class FloorManager {
       console.error(`[FloorManager] Error loading template ${templateName}:`, error);
       // Return fallback template if loading fails
       return this._getFallbackPersonCardTemplate();
+    } finally {
+      // Hide loading state
+      if (loadingContainer) {
+        LoadingUtils.hideLoading(loadingContainer);
+      }
     }
   }
 

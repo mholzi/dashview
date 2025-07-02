@@ -21,6 +21,7 @@ import { HistoricalDataManager } from './lib/ui/HistoricalDataManager.js';
 import { TrendAnalysisManager } from './lib/ui/TrendAnalysisManager.js';
 import { UpcomingEventsManager } from './lib/ui/UpcomingEventsManager.js';
 import { RefreshManager } from './lib/utils/RefreshManager.js';
+import { LoadingUtils } from './lib/utils/loading-utils.js';
 import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
 
 class DashviewPanel extends HTMLElement {
@@ -138,6 +139,23 @@ class DashviewPanel extends HTMLElement {
 
   async loadContent() {
     try {
+        // Show initial loading state
+        this.shadowRoot.innerHTML = `
+          <style>
+            .initial-loading {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              background: var(--card-background-color, #ffffff);
+              color: var(--primary-text-color, #212121);
+            }
+          </style>
+          <div class="initial-loading">
+            ${LoadingUtils.createLoadingElement('Loading DashView...', 'large').outerHTML}
+          </div>
+        `;
+        
         const [styleText, htmlText] = await Promise.all([
             fetch('/local/dashview/style.css').then(res => res.text()),
             fetch('/local/dashview/index.html').then(res => res.text())

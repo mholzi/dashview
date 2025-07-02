@@ -1,6 +1,7 @@
 // custom_components/dashview/www/lib/ui/light-card.js
 
 import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+import { LoadingUtils } from '../utils/loading-utils.js';
 
 export class LightsCard {
     constructor(panel) {
@@ -125,15 +126,41 @@ export class LightsCard {
         console.log('[LightsCard] Popup initialization complete for:', entityId);
     }
     
-    _toggleLight(entityId, row, card, lightEntities) {
+    async _toggleLight(entityId, row, card, lightEntities) {
         const currentState = row.getAttribute('state');
         const newState = currentState === 'on' ? 'off' : 'on';
 
-        // Optimistic UI update
-        this._updateRowState(row, newState);
-        this._updateCount(card, lightEntities, newState, entityId);
+        // Show loading state on icon
+        const iconEl = row.querySelector('.light-icon .mdi');
+        const originalIcon = iconEl.className;
+        iconEl.className = 'mdi mdi-loading mdi-spin';
 
-        this._hass.callService('light', 'toggle', { entity_id: entityId });
+        try {
+            // Optimistic UI update
+            this._updateRowState(row, newState);
+            this._updateCount(card, lightEntities, newState, entityId);
+
+            await this._hass.callService('light', 'toggle', { entity_id: entityId });
+            
+            // Brief success feedback
+            iconEl.className = 'mdi mdi-check';
+            setTimeout(() => {
+                const currentEntityState = this._hass.states[entityId];
+                const actualState = currentEntityState?.state || 'off';
+                iconEl.className = actualState === 'on' ? 'mdi mdi-lightbulb' : 'mdi mdi-lightbulb-outline';
+            }, 500);
+        } catch (error) {
+            console.error('[LightsCard] Error toggling light:', error);
+            // Revert UI on error
+            this._updateRowState(row, currentState);
+            this._updateCount(card, lightEntities, currentState, entityId);
+            
+            // Show error feedback
+            iconEl.className = 'mdi mdi-alert';
+            setTimeout(() => {
+                iconEl.className = originalIcon;
+            }, 2000);
+        }
     }
     
     _updateRowState(row, state, brightnessPercent = null) {

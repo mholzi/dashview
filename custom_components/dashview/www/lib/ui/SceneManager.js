@@ -1,6 +1,7 @@
 // custom_components/dashview/www/lib/ui/SceneManager.js
 
 import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+import { LoadingUtils } from '../utils/loading-utils.js';
 
 export class SceneManager {
   constructor(panel) {
@@ -199,18 +200,42 @@ export class SceneManager {
         }
       });
       
-      button.addEventListener('click', () => {
+      button.addEventListener('click', async () => {
         const sceneId = button.dataset.sceneId;
         const scene = this._config.scenes.find(s => s.id === sceneId);
         if (scene) {
           const action = this._getTapAction(scene);
           if (this._hass && action.service) {
-            // Split service into domain and action (e.g., "light.turn_off" -> ["light", "turn_off"])
-            const serviceParts = action.service.split('.');
-            if (serviceParts.length === 2) {
-              this._hass.callService(serviceParts[0], serviceParts[1], action.service_data || {});
-            } else {
-              console.error('[SceneManager] Invalid service format:', action.service);
+            // Show loading state on button
+            const originalContent = button.innerHTML;
+            button.innerHTML = `<i class="mdi mdi-loading mdi-spin"></i>`;
+            button.disabled = true;
+            
+            try {
+              // Split service into domain and action (e.g., "light.turn_off" -> ["light", "turn_off"])
+              const serviceParts = action.service.split('.');
+              if (serviceParts.length === 2) {
+                await this._hass.callService(serviceParts[0], serviceParts[1], action.service_data || {});
+                
+                // Brief success feedback
+                button.innerHTML = `<i class="mdi mdi-check"></i>`;
+                setTimeout(() => {
+                  button.innerHTML = originalContent;
+                  button.disabled = false;
+                }, 1000);
+              } else {
+                console.error('[SceneManager] Invalid service format:', action.service);
+                button.innerHTML = originalContent;
+                button.disabled = false;
+              }
+            } catch (error) {
+              console.error('[SceneManager] Error executing scene:', error);
+              // Show error feedback
+              button.innerHTML = `<i class="mdi mdi-alert"></i>`;
+              setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.disabled = false;
+              }, 2000);
             }
           }
         }

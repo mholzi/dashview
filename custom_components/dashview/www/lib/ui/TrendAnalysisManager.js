@@ -1,5 +1,7 @@
 // custom_components/dashview/www/lib/ui/TrendAnalysisManager.js
 
+import { LoadingUtils } from '../utils/loading-utils.js';
+
 /**
  * TrendAnalysisManager
  * 
@@ -62,9 +64,10 @@ export class TrendAnalysisManager {
   /**
    * Get trend data for an entity
    * @param {string} entityId - The entity ID
+   * @param {HTMLElement} loadingContainer - Optional container to show loading state
    * @returns {Promise<Object>} Trend data object
    */
-  async getTrendData(entityId) {
+  async getTrendData(entityId, loadingContainer = null) {
     // Check if trends are disabled
     if (!this._config.enabled) {
       return null;
@@ -79,6 +82,11 @@ export class TrendAnalysisManager {
     const cachedData = this._trendCache.get(cacheKey);
     if (cachedData && Date.now() - cachedData.timestamp < this._config.cacheTimeout) {
       return cachedData.data;
+    }
+
+    // Show loading state if container provided
+    if (loadingContainer) {
+      LoadingUtils.showLoading(loadingContainer, 'Analyzing trends...', 'small');
     }
 
     try {
@@ -108,6 +116,11 @@ export class TrendAnalysisManager {
     } catch (error) {
       console.error(`[TrendAnalysisManager] Error getting trend data for ${entityId}:`, error);
       return null;
+    } finally {
+      // Hide loading state
+      if (loadingContainer) {
+        LoadingUtils.hideLoading(loadingContainer);
+      }
     }
   }
 
