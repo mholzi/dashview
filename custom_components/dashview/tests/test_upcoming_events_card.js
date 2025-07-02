@@ -110,13 +110,33 @@ class UpcomingEventsCardTests {
           return new Date(event.start.date);
         }
       }
-      return new Date(0);
+      return new Date(NaN); // Return invalid date for missing start
+    };
+    
+    manager._getEventEndTime = function(event) {
+      if (event.end) {
+        if (typeof event.end === 'string') {
+          return new Date(event.end);
+        } else if (event.end.dateTime) {
+          return new Date(event.end.dateTime);
+        } else if (event.end.date) {
+          return new Date(event.end.date);
+        }
+      }
+      // If no end time provided, fallback to start time
+      return this._getEventStartTime(event);
     };
 
     manager._sortEventsByTime = function(events) {
       return events.sort((a, b) => {
         const timeA = this._getEventStartTime(a);
         const timeB = this._getEventStartTime(b);
+        
+        // Handle invalid dates gracefully - put them at the end
+        if (isNaN(timeA.getTime()) && isNaN(timeB.getTime())) return 0;
+        if (isNaN(timeA.getTime())) return 1;
+        if (isNaN(timeB.getTime())) return -1;
+        
         return timeA - timeB;
       });
     };
@@ -200,6 +220,54 @@ class UpcomingEventsCardTests {
       }
       
       return icon;
+    };
+
+    // Add the new filtering methods
+    manager._getEventEndTime = function(event) {
+      if (event.end) {
+        if (typeof event.end === 'string') {
+          return new Date(event.end);
+        } else if (event.end.dateTime) {
+          return new Date(event.end.dateTime);
+        } else if (event.end.date) {
+          return new Date(event.end.date);
+        }
+      }
+      // If no end time provided, fallback to start time
+      return this._getEventStartTime(event);
+    };
+
+    manager._isEventFinished = function(event) {
+      const now = new Date();
+      
+      // All-day events should show for the entire day they occur
+      if (this._isAllDayEvent(event)) {
+        const eventDate = this._getEventStartTime(event);
+        
+        // Handle invalid dates gracefully
+        if (isNaN(eventDate.getTime())) {
+          return false; // If we can't parse the date, don't filter it out
+        }
+        
+        const today = new Date();
+        
+        // Compare just the date parts (YYYY-MM-DD)
+        const eventDateStr = eventDate.toISOString().split('T')[0];
+        const todayDateStr = today.toISOString().split('T')[0];
+        
+        // All-day events are considered finished only if they're before today
+        return eventDateStr < todayDateStr;
+      }
+      
+      // For timed events, check if the end time has passed
+      const endTime = this._getEventEndTime(event);
+      
+      // Handle invalid dates gracefully
+      if (isNaN(endTime.getTime())) {
+        return false; // If we can't parse the end time, don't filter it out
+      }
+      
+      return now > endTime;
     };
 
     return manager;
@@ -427,6 +495,237 @@ class UpcomingEventsCardTests {
     }
   }
 
+  // Test event end time extraction
+  async testEventEndTimeExtraction() {
+    const testName = 'Event End Time Extraction';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const manager = this.createMockUpcomingEventsManager();
+      
+      // Test event with dateTime end
+      const timedEvent = {
+        start: { dateTime: '2024-01-15T14:30:00Z' },
+        end: { dateTime: '2024-01-15T15:30:00Z' }
+      };
+      const timedEndTime = manager._getEventEndTime(timedEvent);
+      this.assertEqual(timedEndTime.toISOString(), '2024-01-15T15:30:00.000Z', 'Should extract dateTime end correctly');
+      
+      // Test event with date end (all-day)
+      const allDayEvent = {
+        start: { date: '2024-01-15' },
+        end: { date: '2024-01-16' }
+      };
+      const allDayEndTime = manager._getEventEndTime(allDayEvent);
+      this.assertEqual(allDayEndTime.toISOString(), '2024-01-16T00:00:00.000Z', 'Should extract date end correctly');
+      
+      // Test event with string format end
+      const stringEvent = {
+        start: '2024-01-15T14:30:00Z',
+        end: '2024-01-15T15:30:00Z'
+      };
+      const stringEndTime = manager._getEventEndTime(stringEvent);
+      this.assertEqual(stringEndTime.toISOString(), '2024-01-15T15:30:00.000Z', 'Should extract string end correctly');
+      
+      // Test event without end time - should fallback to start time
+      const noEndEvent = {
+        start: { dateTime: '2024-01-15T14:30:00Z' }
+      };
+      const noEndTime = manager._getEventEndTime(noEndEvent);
+      this.assertEqual(noEndTime.toISOString(), '2024-01-15T14:30:00.000Z', 'Should fallback to start time when no end provided');
+      
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
+  // Test finished event detection for timed events
+  async testFinishedTimedEventDetection() {
+    const testName = 'Finished Timed Event Detection';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const manager = this.createMockUpcomingEventsManager();
+      
+      const now = new Date();
+      
+      // Test finished event (ended 1 hour ago)
+      const finishedEvent = {
+        summary: 'Finished Meeting',
+        start: { dateTime: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString() }, // 2 hours ago
+        end: { dateTime: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString() }     // 1 hour ago
+      };
+      this.assertTrue(manager._isEventFinished(finishedEvent), 'Should detect finished timed event');
+      
+      // Test ongoing event (started 1 hour ago, ends in 1 hour)
+      const ongoingEvent = {
+        summary: 'Ongoing Meeting',
+        start: { dateTime: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString() }, // 1 hour ago
+        end: { dateTime: new Date(now.getTime() + 1 * 60 * 60 * 1000).toISOString() }     // 1 hour from now
+      };
+      this.assertTrue(!manager._isEventFinished(ongoingEvent), 'Should not detect ongoing event as finished');
+      
+      // Test future event (starts in 1 hour, ends in 2 hours)
+      const futureEvent = {
+        summary: 'Future Meeting',
+        start: { dateTime: new Date(now.getTime() + 1 * 60 * 60 * 1000).toISOString() }, // 1 hour from now
+        end: { dateTime: new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString() }     // 2 hours from now
+      };
+      this.assertTrue(!manager._isEventFinished(futureEvent), 'Should not detect future event as finished');
+      
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
+  // Test finished event detection for all-day events
+  async testFinishedAllDayEventDetection() {
+    const testName = 'Finished All-Day Event Detection';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const manager = this.createMockUpcomingEventsManager();
+      
+      // Test today's all-day event (should not be finished)
+      const todayDate = new Date().toISOString().split('T')[0];
+      const todayAllDay = {
+        summary: 'Today All Day',
+        start: { date: todayDate },
+        end: { date: todayDate }
+      };
+      this.assertTrue(!manager._isEventFinished(todayAllDay), 'Today all-day event should not be finished');
+      
+      // Test yesterday's all-day event (should be finished)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayDate = yesterday.toISOString().split('T')[0];
+      const yesterdayAllDay = {
+        summary: 'Yesterday All Day',
+        start: { date: yesterdayDate },
+        end: { date: yesterdayDate }
+      };
+      this.assertTrue(manager._isEventFinished(yesterdayAllDay), 'Yesterday all-day event should be finished');
+      
+      // Test tomorrow's all-day event (should not be finished)
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDate = tomorrow.toISOString().split('T')[0];
+      const tomorrowAllDay = {
+        summary: 'Tomorrow All Day',
+        start: { date: tomorrowDate },
+        end: { date: tomorrowDate }
+      };
+      this.assertTrue(!manager._isEventFinished(tomorrowAllDay), 'Tomorrow all-day event should not be finished');
+      
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
+  // Test event filtering integration
+  async testEventFilteringIntegration() {
+    const testName = 'Event Filtering Integration';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const manager = this.createMockUpcomingEventsManager();
+      
+      const now = new Date();
+      
+      // Create mix of events: finished, ongoing, and future
+      const events = [
+        {
+          summary: 'Finished Meeting',
+          start: { dateTime: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString() },
+          end: { dateTime: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString() }
+        },
+        {
+          summary: 'Ongoing Meeting',
+          start: { dateTime: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString() },
+          end: { dateTime: new Date(now.getTime() + 1 * 60 * 60 * 1000).toISOString() }
+        },
+        {
+          summary: 'Future Meeting 1',
+          start: { dateTime: new Date(now.getTime() + 1 * 60 * 60 * 1000).toISOString() },
+          end: { dateTime: new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString() }
+        },
+        {
+          summary: 'Future Meeting 2',
+          start: { dateTime: new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString() },
+          end: { dateTime: new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString() }
+        }
+      ];
+      
+      // Filter active events (should exclude the finished one)
+      const activeEvents = events.filter(event => !manager._isEventFinished(event));
+      
+      this.assertEqual(activeEvents.length, 3, 'Should filter out 1 finished event from 4 total events');
+      
+      // Check that the right events are kept
+      const activeSummaries = activeEvents.map(e => e.summary);
+      this.assertTrue(activeSummaries.includes('Ongoing Meeting'), 'Should keep ongoing meeting');
+      this.assertTrue(activeSummaries.includes('Future Meeting 1'), 'Should keep future meeting 1');
+      this.assertTrue(activeSummaries.includes('Future Meeting 2'), 'Should keep future meeting 2');
+      this.assertTrue(!activeSummaries.includes('Finished Meeting'), 'Should not keep finished meeting');
+      
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
+  // Test edge case handling for malformed events
+  async testEdgeCaseHandling() {
+    const testName = 'Edge Case Handling';
+    this.log(`Running test: ${testName}`);
+
+    try {
+      const manager = this.createMockUpcomingEventsManager();
+      
+      // Test event with no end time
+      const noEndEvent = {
+        summary: 'No End Event',
+        start: { dateTime: new Date().toISOString() }
+        // No end property
+      };
+      
+      // Should not throw error and should use start time as end time
+      const endTime = manager._getEventEndTime(noEndEvent);
+      const startTime = manager._getEventStartTime(noEndEvent);
+      this.assertEqual(endTime.getTime(), startTime.getTime(), 'Should use start time as end time when no end provided');
+      
+      // Test completely empty event
+      const emptyEvent = {
+        summary: 'Empty Event'
+        // No start or end
+      };
+      
+      // Should handle gracefully without throwing errors
+      const isFinished = manager._isEventFinished(emptyEvent);
+      this.assertTrue(typeof isFinished === 'boolean', 'Should return boolean for empty event without throwing error');
+      this.assertTrue(!isFinished, 'Empty event should not be filtered out (graceful handling)');
+      
+      // Test event with malformed date
+      const malformedEvent = {
+        summary: 'Malformed Event',
+        start: 'invalid-date-string',
+        end: { dateTime: new Date().toISOString() }
+      };
+      
+      // Should handle gracefully
+      const malformedFinished = manager._isEventFinished(malformedEvent);
+      this.assertTrue(typeof malformedFinished === 'boolean', 'Should return boolean for malformed event');
+      this.assertTrue(!malformedFinished, 'Malformed event should not be filtered out (graceful handling)');
+      
+      this.testResults.push({ name: testName, passed: true });
+    } catch (error) {
+      this.testResults.push({ name: testName, passed: false, error: error.message });
+    }
+  }
+
   // Run all tests
   async runAllTests() {
     this.log('Starting upcoming events card tests...');
@@ -439,6 +738,11 @@ class UpcomingEventsCardTests {
     await this.testCalendarIconSelection();
     await this.testAllDayEventDetection();
     await this.testDisposal();
+    await this.testEventEndTimeExtraction();
+    await this.testFinishedTimedEventDetection();
+    await this.testFinishedAllDayEventDetection();
+    await this.testEventFilteringIntegration();
+    await this.testEdgeCaseHandling();
 
     const passedTests = this.testResults.filter(result => result.passed).length;
     const totalTests = this.testResults.length;
