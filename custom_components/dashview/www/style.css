@@ -3783,6 +3783,135 @@ body.popup-open, :host(.popup-open) {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
+/* Scene button gesture feedback */
+.scene-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.scene-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Light control row gesture feedback */
+.light-control-row.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.light-control-row.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Media player button gesture feedback */
+.media-button.gesture-detecting,
+.media-control-button.gesture-detecting {
+    transform: scale(0.95);
+    opacity: 0.9;
+}
+
+.media-button.gesture-longpress,
+.media-control-button.gesture-longpress {
+    transform: scale(0.90);
+    opacity: 0.8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Security chip gesture feedback */
+.header-info-chip.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.header-info-chip.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Cover button gesture feedback */
+.cover-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.cover-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Scene button gesture feedback */
+.scene-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.scene-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Light control row gesture feedback */
+.light-control-row.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.light-control-row.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Media player button gesture feedback */
+.media-button.gesture-detecting,
+.media-control-button.gesture-detecting {
+    transform: scale(0.95);
+    opacity: 0.9;
+}
+
+.media-button.gesture-longpress,
+.media-control-button.gesture-longpress {
+    transform: scale(0.90);
+    opacity: 0.8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Security chip gesture feedback */
+.header-info-chip.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.header-info-chip.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Cover button gesture feedback */
+.cover-button.gesture-detecting {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.cover-button.gesture-longpress {
+    transform: scale(0.95);
+    opacity: 0.8;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.room-card.gesture-longpress {
+    transform: scale(0.95);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
 /* Prevent text selection during gesture detection */
 .gesture-detecting,
 .gesture-longpress {

@@ -1,5 +1,7 @@
 // custom_components/dashview/www/lib/ui/media-player-card.js
 
+import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+
 export class MediaPlayerCard {
     constructor(panel) {
         this._panel = panel;
@@ -8,6 +10,12 @@ export class MediaPlayerCard {
         this._shadowRoot = panel.shadowRoot;
         // Map to hold debounce timers for each entity to prevent UI snapping back.
         this._updateDebounceTimers = new Map();
+        
+        // Initialize gesture feedback manager for media player controls
+        this._gestureFeedbackManager = new GestureFeedbackManager({
+            longTapDuration: 500,
+            enableVisualFeedback: true
+        });
     }
 
     setHass(hass) {
@@ -182,6 +190,13 @@ export class MediaPlayerCard {
         console.log(`[MediaPlayerCard] Found ${controlButtons.length} control buttons`);
         
         controlButtons.forEach(button => {
+            // Add gesture feedback to media control buttons
+            this._gestureFeedbackManager.addFeedbackToElement(button, {
+                onLongTapStart: (element) => {
+                    console.log('[MediaPlayerCard] Long-tap feedback started on media control:', element.dataset.action);
+                }
+            });
+            
             // Remove any existing listeners to prevent duplicates
             button.removeEventListener('click', this._handleControlClick);
             button.addEventListener('click', (event) => {
@@ -296,4 +311,13 @@ export class MediaPlayerCard {
         label.textContent = `${volumePercent}%`;
     }
 
+    /**
+     * Clean up gesture feedback manager
+     */
+    dispose() {
+        if (this._gestureFeedbackManager) {
+            this._gestureFeedbackManager.dispose();
+            this._gestureFeedbackManager = null;
+        }
+    }
 }
