@@ -1,10 +1,18 @@
 // custom_components/dashview/www/lib/ui/SceneManager.js
 
+import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+
 export class SceneManager {
   constructor(panel) {
     this._panel = panel;
     this._hass = panel._hass;
     this._config = panel._houseConfig;
+    
+    // Initialize gesture feedback manager for scene buttons
+    this._gestureFeedbackManager = new GestureFeedbackManager({
+      longTapDuration: 500,
+      enableVisualFeedback: true
+    });
   }
 
   setHass(hass) {
@@ -183,6 +191,13 @@ export class SceneManager {
     searchRoot.querySelectorAll('.scene-button').forEach(button => {
       // Avoid double-attaching listeners
       if (button.hasAttribute('data-listener-attached')) return;
+      
+      // Add gesture feedback to scene button
+      this._gestureFeedbackManager.addFeedbackToElement(button, {
+        onLongTapStart: (element) => {
+          console.log('[SceneManager] Long-tap feedback started on scene button:', element.dataset.sceneId);
+        }
+      });
       
       button.addEventListener('click', () => {
         const sceneId = button.dataset.sceneId;
@@ -409,5 +424,15 @@ export class SceneManager {
     }
 
     return { service, service_data };
+  }
+
+  /**
+   * Clean up gesture feedback manager
+   */
+  dispose() {
+    if (this._gestureFeedbackManager) {
+      this._gestureFeedbackManager.dispose();
+      this._gestureFeedbackManager = null;
+    }
   }
 }

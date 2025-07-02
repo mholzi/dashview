@@ -1,11 +1,19 @@
 // custom_components/dashview/www/lib/ui/light-card.js
 
+import { GestureFeedbackManager } from '../utils/gesture-feedback.js';
+
 export class LightsCard {
     constructor(panel) {
         this._panel = panel;
         this._hass = panel._hass;
         this._config = panel._houseConfig;
         this._updateDebounceTimers = new Map();
+        
+        // Initialize gesture feedback manager for light controls
+        this._gestureFeedbackManager = new GestureFeedbackManager({
+            longTapDuration: 500,
+            enableVisualFeedback: true
+        });
     }
 
     setHass(hass) {
@@ -42,6 +50,13 @@ export class LightsCard {
                 this._initDraggableSlider(row, entityId, card, lightEntities);
             } else {
                 // Non-dimmable lights are simple toggles.
+                // Add gesture feedback to non-dimmable light rows
+                this._gestureFeedbackManager.addFeedbackToElement(row, {
+                    onLongTapStart: (element) => {
+                        console.log('[LightsCard] Long-tap feedback started on light control:', element.dataset.entityId);
+                    }
+                });
+                
                 row.addEventListener('click', () => {
                     this._toggleLight(entityId, row, card, lightEntities);
                 });
@@ -90,6 +105,13 @@ export class LightsCard {
         } else {
             // Non-dimmable lights are simple toggles
             if (!lightRow.listenerAttached) {
+                // Add gesture feedback to non-dimmable light rows
+                this._gestureFeedbackManager.addFeedbackToElement(lightRow, {
+                    onLongTapStart: (element) => {
+                        console.log('[LightsCard] Long-tap feedback started on popup light control:', element.dataset.entityId);
+                    }
+                });
+                
                 lightRow.addEventListener('click', () => {
                     this._toggleLight(entityId, lightRow, container, [entityId]);
                 });
@@ -313,5 +335,15 @@ export class LightsCard {
         }).length;
         
         countElement.textContent = `${onLights}/${lightEntities.length}`;
+    }
+
+    /**
+     * Clean up gesture feedback manager
+     */
+    dispose() {
+        if (this._gestureFeedbackManager) {
+            this._gestureFeedbackManager.dispose();
+            this._gestureFeedbackManager = null;
+        }
     }
 }
