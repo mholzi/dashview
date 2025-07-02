@@ -50,9 +50,8 @@ export class AdminManager {
     const loadActionMap = {
       'room-management-tab': () => this.loadRoomManagementTab(),
       'house-setup-tab': () => this.loadHouseSetupTab(),
-      'integrations-tab': () => this.loadDwdConfig(),
+      'integrations-tab': () => this.loadIntegrationsTab(),
       'room-maintenance-tab': () => this.loadRoomMaintenance(),
-      'weather-tab': () => this.loadWeatherEntityConfiguration(),
       'calendar-management-tab': () => this.loadCalendarManagement(),
       'person-management-tab': () => this.loadPersonManagement(),
       'floor-layouts-tab': () => this.loadFloorLayoutEditor(),
@@ -626,6 +625,17 @@ export class AdminManager {
     } catch (error) {
         this._setStatusMessage(statusElement, `✗ Error: ${error.message}`, 'error');
     }
+  }
+
+  /**
+   * Load the integrations tab content - loads both weather and DWD configurations
+   */
+  loadIntegrationsTab() {
+    console.log('[DashView] Loading Integrations tab - loading weather entity and DWD configurations');
+    
+    // Load both weather entity configuration and DWD configuration
+    this.loadWeatherEntityConfiguration();
+    this.loadDwdConfig();
   }
 
   async loadDwdConfig() {
