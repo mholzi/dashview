@@ -136,7 +136,7 @@ h3 {
     overflow-y: auto;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     box-sizing: border-box;
     display: flex;
     justify-content: center;
@@ -162,7 +162,7 @@ body.popup-open, :host(.popup-open) {
     box-sizing: border-box;
     position: relative;
     transform: translateY(100vh);
-    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     max-height: calc(100vh - 40px);
     min-height: 40vh;
     display: flex;
@@ -4075,7 +4075,7 @@ body.popup-open, :host(.popup-open) {
     --popup-border-radius: var(--ha-card-border-radius, 12px);
     --popup-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     --popup-animation-duration: 300ms;
-    --popup-animation-easing: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --popup-animation-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --popup-content-padding: 20px;
     --popup-header-height: 80px;
 }
