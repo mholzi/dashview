@@ -19,6 +19,7 @@ import { CalendarManager } from './lib/ui/CalendarManager.js';
 import { EntityDetailManager } from './lib/ui/EntityDetailManager.js';
 import { HistoricalDataManager } from './lib/ui/HistoricalDataManager.js';
 import { UpcomingEventsManager } from './lib/ui/UpcomingEventsManager.js';
+import { RefreshManager } from './lib/utils/RefreshManager.js';
 import { calculateTimeDifferenceEnglish } from './lib/utils/time-utils.js';
 
 class DashviewPanel extends HTMLElement {
@@ -126,6 +127,7 @@ class DashviewPanel extends HTMLElement {
     if (this._entityDetailManager) this._entityDetailManager.setHass(hass);
     if (this._historicalDataManager) this._historicalDataManager.setHass(hass);
     if (this._upcomingEventsManager) this._upcomingEventsManager.setHass(hass);
+    if (this._refreshManager) this._refreshManager.setHass(hass);
 
     if (this._stateManager) {
         this._stateManager.handleHassUpdate();
@@ -194,8 +196,10 @@ class DashviewPanel extends HTMLElement {
     this._entityDetailManager = new EntityDetailManager(this);
     this._historicalDataManager = new HistoricalDataManager(this);
     this._upcomingEventsManager = new UpcomingEventsManager(this);
+    this._refreshManager = new RefreshManager(this);
 
     this._stateManager.setConfig(this._houseConfig, this._integrationsConfig);
+    this._setupRefreshCallbacks();
   }
 
   _getRoomKeyForEntity(entityId) {
@@ -213,6 +217,62 @@ class DashviewPanel extends HTMLElement {
       }
     }
     return null;
+  }
+
+  /**
+   * Setup refresh callbacks for different components
+   */
+  _setupRefreshCallbacks() {
+    if (!this._refreshManager) return;
+
+    // Main dashboard refresh
+    this._refreshManager.registerRefreshCallback('main', async () => {
+      console.log('[DashView] Refreshing main dashboard...');
+      this._headerManager.updateAll();
+      this._infoCardManager.update();
+      this._sceneManager.renderSceneButtons();
+      this._floorManager.update();
+    });
+
+    // Weather popup refresh
+    this._refreshManager.registerRefreshCallback('weather', async () => {
+      console.log('[DashView] Refreshing weather data...');
+      if (this._weatherManager) {
+        await this._weatherManager.update();
+      }
+    });
+
+    // Security popup refresh
+    this._refreshManager.registerRefreshCallback('security', async () => {
+      console.log('[DashView] Refreshing security data...');
+      if (this._securityManager) {
+        await this._securityManager.update();
+      }
+    });
+
+    // Calendar popup refresh
+    this._refreshManager.registerRefreshCallback('calendar', async () => {
+      console.log('[DashView] Refreshing calendar data...');
+      const activePopup = this.shadowRoot.querySelector('#calendar-popup.active');
+      if (this._calendarManager && activePopup) {
+        await this._calendarManager.update(activePopup);
+      }
+    });
+
+    // Room popup refresh
+    if (this._houseConfig?.rooms) {
+      Object.keys(this._houseConfig.rooms).forEach(roomKey => {
+        this._refreshManager.registerRefreshCallback(`room-${roomKey}`, async () => {
+          console.log(`[DashView] Refreshing room data for: ${roomKey}`);
+          const popup = this.shadowRoot.querySelector(`#${roomKey}-popup.active`);
+          if (popup && this._popupManager) {
+            this._popupManager._refreshRoomEntities(roomKey, popup);
+          }
+        });
+      });
+    }
+
+    console.log('[DashView] Refresh callbacks registered');
   }
 
   updateComponentForEntity(entityId, entityState) {

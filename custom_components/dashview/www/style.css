@@ -7260,3 +7260,58 @@ body.popup-open, :host(.popup-open) {
 .preset-button.active .preset-description {
     color: rgba(255, 255, 255, 0.9);
 }
+
+/* --- Pull-to-Refresh Controls --- */
+/* Pull-to-refresh indicator */
+.pull-to-refresh-indicator {
+    position: fixed;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-background-color);
+    border: 1px solid var(--gray200);
+    border-radius: 20px;
+    padding: 16px 24px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.pull-to-refresh-indicator.ready {
+    background: var(--accent-color);
+    color: white;
+}
+
+.pull-to-refresh-indicator .pull-icon {
+    margin-bottom: 8px;
+}
+
+.pull-to-refresh-indicator .pull-icon i {
+    font-size: 24px;
+    transition: transform 0.3s ease;
+}
+
+.pull-to-refresh-indicator.ready .pull-icon i {
+    transform: rotate(180deg);
+}
+
+.pull-to-refresh-indicator .pull-text {
+    font-size: 0.9em;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Refresh animation for pull-to-refresh */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
