@@ -2,7 +2,6 @@
 
 import { GestureDetector } from '../utils/GestureDetector.js';
 import { FloorGestureManager } from '../utils/FloorGestureManager.js';
-import { ContextMenuManager } from '../utils/ContextMenuManager.js';
 import { calculateTimeDifferenceShort } from '../utils/time-utils.js';
 import { SimpleYamlParser } from '../utils/yaml-parser.js';
 
@@ -31,8 +30,6 @@ export class FloorManager {
     // Initialize advanced floor gesture manager for swipe navigation
     this._floorGestureManager = null; // Initialize after DOM is ready
     
-    // Initialize context menu manager for long-press actions
-    this._contextMenuManager = null; // Initialize after DOM is ready
     
     // Template cache for person cards
     this._templateCache = new Map();
@@ -137,10 +134,6 @@ export class FloorManager {
     }
     
     // Clean up context menu manager
-    if (this._contextMenuManager) {
-      this._contextMenuManager.dispose();
-      this._contextMenuManager = null;
-    }
     
     // Clear swipe state maps
     if (this._motionCardSwipeStates) {
@@ -379,13 +372,6 @@ export class FloorManager {
         });
       }
       
-      // Initialize context menu manager
-      if (!this._contextMenuManager) {
-        this._contextMenuManager = new ContextMenuManager(this._panel, {
-          enableHapticFeedback: true,
-          menuTimeout: 5000
-        });
-      }
     }
   }
 
@@ -642,29 +628,18 @@ export class FloorManager {
       },
       
       onLongTap: (element, event) => {
-        // Show context menu for entity actions
+        // Long-tap now opens entity details popup directly
         const entityId = element.dataset.entityId;
         const navPath = element.dataset.navigationPath;
         
         if (entityId) {
           console.log('[FloorManager] Long-tap detected on entity:', entityId);
-          // Show context menu for entity
-          if (this._contextMenuManager) {
-            this._contextMenuManager.showMenu(element, {
-              entityId: entityId,
-              type: 'entity'
-            });
-          }
+          // Open entity details popup
+          window.location.hash = `#entity-details-${entityId}`;
         } else if (navPath) {
           console.log('[FloorManager] Long-tap detected on room card');
-          // Show context menu for room
-          if (this._contextMenuManager) {
-            this._contextMenuManager.showMenu(element, {
-              type: 'room',
-              roomKey: navPath.replace('#', ''),
-              customTitle: element.querySelector('.room-card-name')?.textContent || 'Room'
-            });
-          }
+          // Open room popup
+          window.location.hash = navPath;
         }
       },
       
