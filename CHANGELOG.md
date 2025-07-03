@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-07-03
+
+### ✨ Major Features
+
+#### 🏠 Enhanced Admin Section - Room-Based Entity Management (#471)
+- **Complete admin panel overhaul**: Transformed device and sensor management from global, type-centric approach to intuitive, room-centric workflow
+- **Instant persistence**: Individual entity checkbox changes and ignore actions save immediately to backend with visual feedback
+- **New entity detection**: Automatic discovery and highlighting of newly added Home Assistant entities with confirmation workflow
+- **Granular control**: Users can assign, unassign, ignore, or un-ignore entities individually per room
+- **Room confirmation**: Dedicated "Confirm Room Setup" button to acknowledge new entities and maintain up-to-date dashboard
+- **Enhanced UI**: Status badges (New!, Configured, Ignored), save indicators, and improved error handling
+- **Backend API enhancements**: New granular endpoints for entity status updates and room confirmation
+
+#### 🎯 Entity Detail Popup Actions (#468)
+- **Integrated entity actions**: Added hide and favorite functionality directly in entity detail popups
+- **Removed tab action menu**: Streamlined floor section by moving actions to more intuitive popup location
+- **Enhanced user experience**: Direct access to entity management from detail views with immediate feedback
+
+### 🐛 Bug Fixes
+
+#### 🎵 Media Popup Styling (#467)
+- **Fixed container gaps**: Ensured consistent 8px spacing between containers (except header)
+- **Removed horizontal lines**: Eliminated unwanted separators between rooms and core media container
+- **Added gray100 background**: Applied consistent background color to full core media container including presets
+- **Enhanced tab styling**: Added comprehensive music popup styling for better visual consistency
+
+### 🔧 Technical Improvements
+
+#### Backend Enhancements
+- **New API endpoints**: Added `entity_status_update` and `confirm_room_setup` for granular management
+- **Enhanced entity discovery**: Room-specific entity queries with configuration status tracking
+- **Persistent storage**: Added `ignored_entities` list per room with proper ConfigEntry persistence
+- **Status tracking**: Comprehensive entity state management (configured, ignored, newly discovered)
+
+#### Frontend Architecture
+- **Instant persistence handlers**: Real-time processing of checkbox and ignore button interactions
+- **Enhanced AdminManager**: Updated with async/await throughout for better error handling
+- **Optimistic UI updates**: Immediate visual feedback with automatic rollback on API failures
+- **Improved state management**: Better tracking of entity status and room configuration state
+
+### 🔄 Migration Notes
+- **Backward compatibility**: All existing room configurations remain fully compatible
+- **Automatic initialization**: New `ignored_entities` structure automatically initialized for existing rooms
+- **Enhanced API**: New endpoints are fully backward compatible with existing functionality
+- **No breaking changes**: All previous admin functionality preserved while adding new capabilities
+
+### 👥 Contributors
+- @mholzi - Complete implementation of enhanced admin section, entity popup actions, and media popup fixes
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.5.12...v0.6.0
+
 ## [0.5.3] - 2024-07-01
 
 ### 🐛 Bug Fixes
