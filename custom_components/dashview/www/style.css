@@ -2056,7 +2056,6 @@ body.popup-open, :host(.popup-open) {
     border-left: 4px solid var(--accent-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
-    animation: slideInRight 0.3s ease-out;
 }
 
 /* Notification Types */
@@ -2080,7 +2079,7 @@ body.popup-open, :host(.popup-open) {
 .notification-card[data-priority="critical"] {
     border-width: 0 0 0 6px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    animation: slideInRight 0.3s ease-out, pulse 2s infinite;
+    animation: pulse 2s infinite;
 }
 
 .notification-card[data-priority="high"] {
