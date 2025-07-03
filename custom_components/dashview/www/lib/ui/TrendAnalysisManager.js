@@ -53,9 +53,14 @@ export class TrendAnalysisManager {
         const config = await response.json();
         this._config = { ...this._config, ...config };
         console.log('[TrendAnalysisManager] Configuration loaded:', this._config);
+      } else if (response.status === 401) {
+        // Silently ignore authentication errors during initial load
+        console.debug('[TrendAnalysisManager] Authentication pending, using default configuration');
+      } else {
+        console.warn('[TrendAnalysisManager] Configuration endpoint returned:', response.status);
       }
     } catch (error) {
-      console.warn('[TrendAnalysisManager] Failed to load configuration, using defaults:', error);
+      console.debug('[TrendAnalysisManager] Using default configuration');
     }
   }
 

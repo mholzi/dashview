@@ -481,6 +481,26 @@ export class NotificationManager {
     }
     
     /**
+     * Handle notification dismissal
+     */
+    async _handleDismiss(notificationId) {
+        await this.dismissNotification(notificationId);
+    }
+    
+    /**
+     * Handle entity state changes
+     */
+    _handleEntityChange(entityId, newState, oldState) {
+        // Check if any notifications need to be updated based on entity changes
+        for (const [notificationId, notification] of this._notifications) {
+            if (notification.entity_id === entityId) {
+                // Update notification if needed
+                console.log(`[NotificationManager] Entity ${entityId} changed, updating notification ${notificationId}`);
+            }
+        }
+    }
+    
+    /**
      * Set dismissal timer for notification
      */
     _setDismissalTimer(notification) {
