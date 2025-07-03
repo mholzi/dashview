@@ -5015,6 +5015,12 @@ body.popup-open, :host(.popup-open) {
     gap: 12px;
 }
 
+/* Ensure sensor-small cards in upcoming events match floor section width */
+.upcoming-events-content .sensor-small-card {
+    width: 180px;
+    flex-shrink: 0;
+}
+
 /* Individual Event Item */
 .upcoming-event-item {
     cursor: pointer;
