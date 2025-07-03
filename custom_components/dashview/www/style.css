@@ -1630,6 +1630,7 @@ body.popup-open, :host(.popup-open) {
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    min-height: 50px;
 }
 
 .header-entities-container::-webkit-scrollbar {
@@ -2898,11 +2899,11 @@ body.popup-open, :host(.popup-open) {
 
 /* Urgent and tomorrow styling for new layout */
 .garbage-card.garbage-urgent .garbage-card-name {
-    color: var(--gray000);
+    color: var(--gray800);
 }
 
 .garbage-card.garbage-urgent .garbage-card-icon-cell i {
-    color: var(--gray000);
+    color: var(--gray800);
 }
 
 .garbage-card.garbage-tomorrow .garbage-card-name {
@@ -3010,6 +3011,7 @@ body.popup-open, :host(.popup-open) {
     grid-template-columns: 56px 1fr;
     grid-template-rows: 1fr 1fr;
     align-items: center;
+    gap: 3px 0;
 }
 
 .sensor-small-icon-cell {

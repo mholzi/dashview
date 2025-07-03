@@ -3,7 +3,8 @@
 /**
  * Test garbage card urgent color styling
  * Validates that when garbage cards have urgent (red) background, 
- * text and icon colors use gray000 for better readability
+ * icon and name colors use gray800 for better readability,
+ * while other text elements still use gray000
  */
 
 const fs = require('fs');
@@ -15,11 +16,11 @@ function testGarbageCardUrgentColors() {
     const cssPath = path.join(__dirname, '../www/style.css');
     const cssContent = fs.readFileSync(cssPath, 'utf8');
     
-    // Test 1: Check that garbage-urgent rules use gray000 for text colors
+    // Test 1: Check that garbage-urgent rules use gray800 for text colors
     const expectedUrgentRules = [
         '.garbage-urgent .garbage-type,\n.garbage-urgent .days-number {\n    color: var(--gray000);',
-        '.garbage-card.garbage-urgent .garbage-card-name {\n    color: var(--gray000);',
-        '.garbage-card.garbage-urgent .garbage-card-icon-cell i {\n    color: var(--gray000);',
+        '.garbage-card.garbage-urgent .garbage-card-name {\n    color: var(--gray800);',
+        '.garbage-card.garbage-urgent .garbage-card-icon-cell i {\n    color: var(--gray800);',
         '.garbage-urgent .garbage-date,\n.garbage-urgent .days-label {\n    color: var(--gray000);'
     ];
     
@@ -35,7 +36,7 @@ function testGarbageCardUrgentColors() {
         missingRules.forEach(rule => console.error(`   ${rule}`));
         return false;
     }
-    console.log('✅ All garbage-urgent text and icon colors use gray000');
+    console.log('✅ Garbage-urgent icon and name colors use gray800 for better readability on red background');
     
     // Test 2: Verify no dark red colors remain for urgent garbage cards
     const forbiddenColors = ['#c0392b', '#a93226'];
