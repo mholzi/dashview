@@ -172,70 +172,34 @@ export class ContextMenuManager {
     
     const actions = [
       {
-        id: 'toggle',
-        label: 'Toggle',
-        icon: 'mdi-toggle-switch',
-        shortcut: 'Space'
-      },
-      {
-        id: 'history',
-        label: 'View History',
-        icon: 'mdi-chart-line',
-        shortcut: 'H'
-      },
-      {
-        id: 'favorite',
-        label: 'Add to Favorites',
-        icon: 'mdi-star-outline'
-      },
-      {
-        id: 'edit',
-        label: 'Edit Configuration',
-        icon: 'mdi-pencil'
-      },
-      {
-        id: 'separator',
-        type: 'separator'
-      },
-      {
         id: 'hide',
         label: 'Hide from Dashboard',
         icon: 'mdi-eye-off-outline'
       },
       {
-        id: 'remove',
-        label: 'Remove from Room',
-        icon: 'mdi-delete-outline'
+        id: 'details',
+        label: 'Show Details',
+        icon: 'mdi-information-outline'
+      },
+      {
+        id: 'room-allocation',
+        label: 'Room Allocation',
+        icon: 'mdi-home-edit-outline'
       }
     ];
     
-    // Customize based on entity domain
+    // Add toggle option if entity supports it
     const domain = entityId.split('.')[0];
-    switch (domain) {
-      case 'light':
-        actions.splice(1, 0, {
-          id: 'brightness',
-          label: 'Adjust Brightness',
-          icon: 'mdi-brightness-6'
-        });
-        break;
-      case 'media_player':
-        actions.splice(1, 0, {
-          id: 'volume',
-          label: 'Volume Control',
-          icon: 'mdi-volume-high'
-        });
-        break;
-      case 'climate':
-        actions.splice(1, 0, {
-          id: 'temperature',
-          label: 'Set Temperature',
-          icon: 'mdi-thermometer'
-        });
-        break;
+    const toggleableDomains = ['light', 'switch', 'fan', 'cover', 'lock', 'media_player', 'climate'];
+    if (toggleableDomains.includes(domain)) {
+      actions.push({
+        id: 'toggle',
+        label: 'Toggle',
+        icon: 'mdi-toggle-switch'
+      });
     }
     
-    return actions.filter(action => action);
+    return actions;
   }
 
   /**
@@ -432,28 +396,20 @@ export class ContextMenuManager {
     console.log(`[ContextMenuManager] Handling action: ${action}`, options);
     
     switch (action) {
-      case 'toggle':
-        this._toggleEntity(entityId);
-        break;
-        
-      case 'history':
-        this._showEntityHistory(entityId);
-        break;
-        
-      case 'favorite':
-        this._addToFavorites(entityId, options);
-        break;
-        
-      case 'edit':
-        this._editConfiguration(entityId, options);
-        break;
-        
       case 'hide':
         this._hideFromDashboard(entityId, options);
         break;
         
-      case 'remove':
-        this._removeFromRoom(entityId, options);
+      case 'details':
+        this._showEntityDetails(entityId);
+        break;
+        
+      case 'room-allocation':
+        this._openRoomAllocation(entityId);
+        break;
+        
+      case 'toggle':
+        this._toggleEntity(entityId);
         break;
         
       default:
@@ -514,6 +470,31 @@ export class ContextMenuManager {
   _hideFromDashboard(entityId, options) {
     console.log(`[ContextMenuManager] Hiding from dashboard: ${entityId}`);
     // TODO: Update configuration to hide entity
+  }
+
+  /**
+   * Show entity details - opens entity detail popup
+   */
+  _showEntityDetails(entityId) {
+    if (!entityId) return;
+    
+    console.log(`[ContextMenuManager] Opening entity details for: ${entityId}`);
+    
+    // Use the popup manager to open entity detail popup
+    if (this._panel._popupManager) {
+      const hash = `#entity-detail-${entityId}`;
+      window.location.hash = hash;
+    }
+  }
+
+  /**
+   * Open room allocation - opens admin room management section
+   */
+  _openRoomAllocation(entityId) {
+    console.log(`[ContextMenuManager] Opening room allocation for: ${entityId}`);
+    
+    // Open admin panel with room management tab
+    window.open('/local/dashview/admin.html#room-management-tab', '_blank');
   }
 
   /**

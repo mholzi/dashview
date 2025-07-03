@@ -97,8 +97,6 @@ export class AdminManager {
         const buttonActions = {
             '#reload-house-config': () => this.loadHouseSetupTab(),
             '#save-house-config': () => this.saveHouseConfiguration(),
-            '#save-weather-entity': () => this.saveWeatherEntityConfiguration(),
-            '#reload-weather-config': () => this.loadWeatherEntityConfiguration(),
             '#save-calendars': () => this.saveCalendarManagement(),
             '#reload-calendars': () => this.loadCalendarManagement(),
             '#save-persons': () => this.savePersonManagement(),
@@ -125,8 +123,6 @@ export class AdminManager {
             '#reload-room-maintenance': () => this.loadRoomMaintenance(),
             '#reload-media-players': () => this.loadRoomMediaPlayerMaintenance(),
             '#save-all-media-assignments': () => this.saveAllMediaPlayerAssignments(),
-            '#save-dwd-config': () => this.saveDwdConfig(),
-            '#reload-dwd-config': () => this.loadDwdConfig(),
             '#save-thresholds-config': () => this.saveThresholdsConfig(),
             '#save-floor-layouts': () => this.saveFloorLayouts(),
             '#add-custom-card': () => this.addCustomCard(),
@@ -346,6 +342,15 @@ export class AdminManager {
                 selector.appendChild(option);
             });
         }
+        
+        // Add change event listener for auto-save
+        if (!selector.hasAttribute('data-auto-save-listener')) {
+            selector.addEventListener('change', () => {
+                this.saveWeatherEntityConfiguration();
+            });
+            selector.setAttribute('data-auto-save-listener', 'true');
+        }
+        
         this._setStatusMessage(statusEl, '✓ Loaded', 'success');
     } catch (e) {
         this._setStatusMessage(statusEl, `✗ Error: ${e.message}`, 'error');
@@ -683,6 +688,14 @@ export class AdminManager {
             option.selected = entity.entity_id === currentEntity;
             selector.appendChild(option);
         });
+
+        // Add change event listener for auto-save
+        if (!selector.hasAttribute('data-auto-save-listener')) {
+            selector.addEventListener('change', () => {
+                this.saveDwdConfig();
+            });
+            selector.setAttribute('data-auto-save-listener', 'true');
+        }
 
         this._setStatusMessage(statusEl, '✓ Loaded', 'success');
     } catch (e) {
@@ -2671,7 +2684,9 @@ async saveMediaPlayerPresets() {
       this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Loading room overview...', 'loading');
       
       // Load house configuration
-      await this._loadAdminState();
+      const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+      this._adminLocalState.houseConfig = houseConfig || { rooms: {}, floors: {} };
+      this._adminLocalState.isLoaded = true;
       
       // Populate room selectors
       this._populateRoomSelectors();
@@ -2682,7 +2697,22 @@ async saveMediaPlayerPresets() {
       this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Ready', 'success');
     } catch (error) {
       console.error('[DashView] Room Management loading error:', error);
-      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Failed to load room management', 'error');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to load room management';
+      if (error.message) {
+        if (error.message.includes('401') || error.message.includes('403')) {
+          errorMessage = 'Authentication error - please refresh the page';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Room management API not found';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timeout - please try again';
+        } else {
+          errorMessage = `Error: ${error.message}`;
+        }
+      }
+      
+      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), errorMessage, 'error');
     }
   }
 
@@ -2693,17 +2723,34 @@ async saveMediaPlayerPresets() {
     const roomSelector = this._shadowRoot.getElementById('room-selector');
     const discoveryRoomSelector = this._shadowRoot.getElementById('discovery-room-selector');
     
-    if (!roomSelector || !discoveryRoomSelector) return;
+    if (!roomSelector || !discoveryRoomSelector) {
+      console.warn('[DashView] Room selector elements not found in DOM');
+      return;
+    }
     
     // Clear existing options (keep first default option)
     roomSelector.innerHTML = '<option value="">Select a room to configure...</option>';
     discoveryRoomSelector.innerHTML = '<option value="">Select room for discovery...</option><option value="all">All Rooms</option>';
     
-    if (!this._adminLocalState.houseConfig?.rooms) return;
+    if (!this._adminLocalState.houseConfig?.rooms) {
+      console.info('[DashView] No rooms found in house configuration');
+      
+      // Add helpful message when no rooms exist
+      const noRoomsOption = document.createElement('option');
+      noRoomsOption.value = '';
+      noRoomsOption.textContent = 'No rooms configured - check Home Assistant areas';
+      noRoomsOption.disabled = true;
+      roomSelector.appendChild(noRoomsOption);
+      
+      return;
+    }
     
     // Add room options
-    Object.entries(this._adminLocalState.houseConfig.rooms).forEach(([roomKey, roomData]) => {
-      const roomName = roomData.friendly_name || roomKey;
+    const roomEntries = Object.entries(this._adminLocalState.houseConfig.rooms);
+    console.log(`[DashView] Populating ${roomEntries.length} rooms in selectors`);
+    
+    roomEntries.forEach(([roomKey, roomData]) => {
+      const roomName = roomData?.friendly_name || roomKey;
       
       const option1 = document.createElement('option');
       option1.value = roomKey;
