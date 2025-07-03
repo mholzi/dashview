@@ -313,9 +313,10 @@ class DashViewConfigView(HomeAssistantView):
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
     async def _get_entities_by_room(self, request: web.Request) -> web.Response:
-        """A robust method to get entities filtered by domain or label, grouped by room."""
+        """Enhanced method to get entities filtered by domain or label, grouped by room with configuration status."""
         label_param = request.query.get('label')
         domain_param = request.query.get('domain')
+        room_id = request.query.get('room_id')  # For detailed room configuration
 
         if not label_param and not domain_param:
             return web.json_response({"error": "A 'label' or 'domain' parameter is required."}, status=400)
@@ -324,6 +325,10 @@ class DashViewConfigView(HomeAssistantView):
         area_reg = ar.async_get(self._hass)
         label_reg = lr.async_get(self._hass)
         device_reg = dr.async_get(self._hass)
+        
+        # Get current house configuration
+        house_config = self._entry.options.get('house_config', {})
+        rooms = house_config.get('rooms', {})
         
         target_label_id = None
         if label_param:
@@ -341,13 +346,16 @@ class DashViewConfigView(HomeAssistantView):
             area_id = entity_entry.area_id
 
             # If the entity itself has no area, check its device.
-            # This handles cases where area is assigned to the device, not the entity.
             if not area_id and entity_entry.device_id:
                 device = device_reg.async_get(entity_entry.device_id)
                 if device and device.area_id:
                     area_id = device.area_id
             
             if not area_id:
+                continue
+
+            # Skip if room_id is specified and doesn't match
+            if room_id and area_id != room_id:
                 continue
 
             domain_matches = domain_param and entity_entry.domain == domain_param
@@ -362,15 +370,202 @@ class DashViewConfigView(HomeAssistantView):
                     entities_by_area[area.id] = {"name": area.name, "entities": []}
                 
                 if entity_entry.domain != 'automation':
+                    # Determine entity configuration status
+                    is_configured = self._is_entity_configured_in_room(entity_id, area.id, rooms, domain_param, label_param)
+                    is_ignored = self._is_entity_ignored_in_room(entity_id, area.id, rooms)
+                    is_newly_discovered = self._is_entity_newly_discovered(entity_id, area.id, rooms)
+                    
                     entities_by_area[area.id]["entities"].append({
                         "entity_id": entity_entry.entity_id,
                         "name": entity_entry.name or entity_entry.original_name or entity_entry.entity_id,
+                        "domain": entity_entry.domain,
+                        "labels": list(entity_entry.labels),
+                        "is_configured_in_dashview": is_configured,
+                        "is_ignored_in_dashview": is_ignored,
+                        "is_newly_discovered_and_unconfirmed": is_newly_discovered
                     })
 
         for area_data in entities_by_area.values():
             area_data["entities"].sort(key=lambda x: x["name"])
 
         return web.json_response(entities_by_area)
+
+    def _is_entity_configured_in_room(self, entity_id: str, area_id: str, rooms: dict, domain_param: str = None, label_param: str = None) -> bool:
+        """Check if entity is configured in the specified room."""
+        if area_id not in rooms:
+            return False
+        
+        room_config = rooms[area_id]
+        
+        # Check different entity types based on domain/label
+        if domain_param == 'light':
+            return entity_id in room_config.get('lights', [])
+        elif domain_param == 'cover':
+            return entity_id in room_config.get('covers', [])
+        elif domain_param == 'media_player':
+            return entity_id in room_config.get('media_players', [])
+        elif label_param:
+            # Check in header_entities for labeled sensors
+            header_entities = room_config.get('header_entities', [])
+            return any(he.get('entity') == entity_id for he in header_entities)
+        
+        return False
+
+    def _is_entity_ignored_in_room(self, entity_id: str, area_id: str, rooms: dict) -> bool:
+        """Check if entity is explicitly ignored in the specified room."""
+        if area_id not in rooms:
+            return False
+        
+        ignored_entities = rooms[area_id].get('ignored_entities', [])
+        return entity_id in ignored_entities
+
+    def _is_entity_newly_discovered(self, entity_id: str, area_id: str, rooms: dict) -> bool:
+        """Check if entity is newly discovered and unconfirmed."""
+        # An entity is newly discovered if it's not configured and not ignored
+        is_configured = self._is_entity_configured_in_room(entity_id, area_id, rooms)
+        is_ignored = self._is_entity_ignored_in_room(entity_id, area_id, rooms)
+        
+        # Also check if the room has a confirmation flag
+        if area_id in rooms:
+            room_config = rooms[area_id]
+            # If the room has been confirmed recently, new entities since then are unconfirmed
+            last_confirmed = room_config.get('last_confirmed_timestamp', 0)
+            # For now, consider any non-configured, non-ignored entity as newly discovered
+            return not is_configured and not is_ignored
+        
+        return not is_configured and not is_ignored
+
+    async def _handle_entity_status_update(self, payload: dict) -> web.Response:
+        """Handle granular entity status updates (assign/unassign/ignore/unignore)."""
+        try:
+            room_id = payload.get("room_id")
+            entity_id = payload.get("entity_id")
+            status_type = payload.get("status_type")
+            entity_domain = payload.get("entity_domain")
+            entity_label = payload.get("entity_label")
+
+            if not all([room_id, entity_id, status_type]):
+                return web.json_response({"error": "room_id, entity_id, and status_type are required."}, status=400)
+
+            if status_type not in ["assigned", "unassigned", "ignored", "unignored"]:
+                return web.json_response({"error": "status_type must be 'assigned', 'unassigned', 'ignored', or 'unignored'."}, status=400)
+
+            current_options = dict(self._entry.options)
+            house_config = current_options.setdefault("house_config", {})
+            rooms = house_config.setdefault("rooms", {})
+            
+            # Initialize room if it doesn't exist
+            if room_id not in rooms:
+                rooms[room_id] = {
+                    "friendly_name": room_id.replace("_", " ").title(),
+                    "lights": [],
+                    "covers": [],
+                    "media_players": [],
+                    "header_entities": [],
+                    "ignored_entities": []
+                }
+
+            room_config = rooms[room_id]
+            ignored_entities = room_config.setdefault("ignored_entities", [])
+
+            if status_type == "assigned":
+                # Remove from ignored list if present
+                if entity_id in ignored_entities:
+                    ignored_entities.remove(entity_id)
+                
+                # Add to appropriate entity list based on domain
+                if entity_domain == "light":
+                    if entity_id not in room_config.setdefault("lights", []):
+                        room_config["lights"].append(entity_id)
+                elif entity_domain == "cover":
+                    if entity_id not in room_config.setdefault("covers", []):
+                        room_config["covers"].append(entity_id)
+                elif entity_domain == "media_player":
+                    if entity_id not in room_config.setdefault("media_players", []):
+                        room_config["media_players"].append(entity_id)
+                elif entity_label:
+                    # Add to header_entities for labeled sensors
+                    header_entities = room_config.setdefault("header_entities", [])
+                    if not any(he.get("entity") == entity_id for he in header_entities):
+                        header_entities.append({
+                            "entity": entity_id,
+                            "entity_type": entity_label.lower()
+                        })
+
+            elif status_type == "unassigned":
+                # Remove from appropriate entity list
+                if entity_domain == "light" and entity_id in room_config.get("lights", []):
+                    room_config["lights"].remove(entity_id)
+                elif entity_domain == "cover" and entity_id in room_config.get("covers", []):
+                    room_config["covers"].remove(entity_id)
+                elif entity_domain == "media_player" and entity_id in room_config.get("media_players", []):
+                    room_config["media_players"].remove(entity_id)
+                elif entity_label:
+                    header_entities = room_config.get("header_entities", [])
+                    room_config["header_entities"] = [he for he in header_entities if he.get("entity") != entity_id]
+
+            elif status_type == "ignored":
+                # Remove from all entity lists first
+                if entity_domain == "light" and entity_id in room_config.get("lights", []):
+                    room_config["lights"].remove(entity_id)
+                elif entity_domain == "cover" and entity_id in room_config.get("covers", []):
+                    room_config["covers"].remove(entity_id)
+                elif entity_domain == "media_player" and entity_id in room_config.get("media_players", []):
+                    room_config["media_players"].remove(entity_id)
+                elif entity_label:
+                    header_entities = room_config.get("header_entities", [])
+                    room_config["header_entities"] = [he for he in header_entities if he.get("entity") != entity_id]
+                
+                # Add to ignored list
+                if entity_id not in ignored_entities:
+                    ignored_entities.append(entity_id)
+
+            elif status_type == "unignored":
+                # Remove from ignored list
+                if entity_id in ignored_entities:
+                    ignored_entities.remove(entity_id)
+
+            # Save the updated configuration
+            self._hass.config_entries.async_update_entry(
+                self._entry, options=current_options
+            )
+
+            return web.json_response({"status": "success", "message": f"Entity {entity_id} {status_type} successfully"})
+
+        except Exception as e:
+            _LOGGER.error("[DashView] Error updating entity status: %s", e)
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+    async def _handle_room_confirmation(self, payload: dict) -> web.Response:
+        """Handle room setup confirmation to mark newly discovered entities as acknowledged."""
+        try:
+            room_id = payload.get("room_id")
+
+            if not room_id:
+                return web.json_response({"error": "room_id is required."}, status=400)
+
+            current_options = dict(self._entry.options)
+            house_config = current_options.setdefault("house_config", {})
+            rooms = house_config.setdefault("rooms", {})
+
+            if room_id not in rooms:
+                return web.json_response({"error": f"Room {room_id} not found."}, status=404)
+
+            # Update the room's confirmation timestamp
+            import time
+            rooms[room_id]["last_confirmed_timestamp"] = int(time.time())
+            rooms[room_id]["has_unconfirmed_entities"] = False
+
+            # Save the updated configuration
+            self._hass.config_entries.async_update_entry(
+                self._entry, options=current_options
+            )
+
+            return web.json_response({"status": "success", "message": f"Room {room_id} setup confirmed successfully"})
+
+        except Exception as e:
+            _LOGGER.error("[DashView] Error confirming room setup: %s", e)
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
 
     async def _get_calendar_events(self, request: web.Request) -> web.Response:
         """Get calendar events for specified entities."""
@@ -495,6 +690,10 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["notifications"] = config_payload
             elif config_type == "config_health_fix":
                 return await self._apply_configuration_fix(config_payload)
+            elif config_type == "entity_status_update":
+                return await self._handle_entity_status_update(config_payload)
+            elif config_type == "confirm_room_setup":
+                return await self._handle_room_confirmation(config_payload)
             else:
                 return web.json_response({"error": f"Invalid config type: {config_type}"}, status=400)
 
