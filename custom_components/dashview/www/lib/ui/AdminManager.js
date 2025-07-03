@@ -3012,29 +3012,25 @@ async saveMediaPlayerPresets() {
   }
 
   /**
-   * Get room entities organized by type
+   * Get room entities organized by type with enhanced configuration status
    */
   async _getRoomEntitiesByType(roomKey) {
     try {
       const [lightsData, coversData, mediaPlayersData, motionData, windowData, smokeData, tempData, humidityData] = await Promise.all([
-        fetch(`/api/dashview/config?type=entities_by_room&domain=light`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&domain=cover`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=available_media_players`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=motion`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=fenster`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=rauchmelder`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=temperatur`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=humidity`).then(r => r.json())
+        fetch(`/api/dashview/config?type=entities_by_room&domain=light&room_id=${roomKey}`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&domain=cover&room_id=${roomKey}`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&domain=media_player&room_id=${roomKey}`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=motion&room_id=${roomKey}`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=fenster&room_id=${roomKey}`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=rauchmelder&room_id=${roomKey}`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=temperatur&room_id=${roomKey}`).then(r => r.json()),
+        fetch(`/api/dashview/config?type=entities_by_room&label=humidity&room_id=${roomKey}`).then(r => r.json())
       ]);
-      
-      const roomName = this._adminLocalState.houseConfig?.rooms?.[roomKey]?.friendly_name || roomKey;
       
       return {
         lights: lightsData[roomKey]?.entities || [],
         covers: coversData[roomKey]?.entities || [],
-        mediaPlayers: mediaPlayersData.filter(mp => 
-          mp.friendly_name.toLowerCase().includes(roomName.toLowerCase())
-        ),
+        mediaPlayers: mediaPlayersData[roomKey]?.entities || [],
         motion: motionData[roomKey]?.entities || [],
         windows: windowData[roomKey]?.entities || [],
         smoke: smokeData[roomKey]?.entities || [],
@@ -3069,12 +3065,33 @@ async saveMediaPlayerPresets() {
         ${this._generateSensorSection(entities, roomData.header_entities)}
         
         <div class="room-config-actions">
-          <button id="save-room-config" class="save-button" data-room-key="${roomKey}">Save Room Configuration</button>
+          ${this._shouldShowConfirmButton(entities) ? 
+            `<button id="confirm-room-setup" class="confirm-button" data-room-key="${roomKey}">
+               <i class="mdi mdi-check-circle"></i> Confirm Room Setup
+             </button>` : ''}
           <button id="bulk-select-room" class="action-button" data-room-key="${roomKey}">Select All Suggested</button>
           <button id="clear-room-config" class="danger-button" data-room-key="${roomKey}">Clear All</button>
         </div>
       </div>
     `;
+  }
+
+  /**
+   * Check if the confirm room setup button should be shown
+   */
+  _shouldShowConfirmButton(entities) {
+    const allEntities = [
+      ...entities.lights,
+      ...entities.covers, 
+      ...entities.mediaPlayers,
+      ...entities.motion,
+      ...entities.windows,
+      ...entities.smoke,
+      ...entities.temperature,
+      ...entities.humidity
+    ];
+    
+    return allEntities.some(entity => entity.is_newly_discovered_and_unconfirmed);
   }
 
   /**
@@ -3090,21 +3107,45 @@ async saveMediaPlayerPresets() {
       `;
     }
     
+    const configuredCount = availableEntities.filter(e => e.is_configured_in_dashview).length;
+    const ignoredCount = availableEntities.filter(e => e.is_ignored_in_dashview).length;
+    const newCount = availableEntities.filter(e => e.is_newly_discovered_and_unconfirmed).length;
+    
     return `
-      <div class="entity-type-section">
-        <h6>${title} (${availableEntities.length} found)</h6>
+      <div class="entity-type-section" data-section="${configKey}">
+        <h6>${title} (${configuredCount}/${availableEntities.length} configured, ${ignoredCount} ignored)</h6>
+        ${newCount > 0 ? `<div class="new-entities-alert">⚠️ ${newCount} new entities detected!</div>` : ''}
         <div class="entity-checkboxes">
           ${availableEntities.map(entity => {
-            const isConfigured = configuredEntities.includes(entity.entity_id);
+            const statusClass = entity.is_newly_discovered_and_unconfirmed ? 'new' : 
+                               entity.is_configured_in_dashview ? 'configured' : 
+                               entity.is_ignored_in_dashview ? 'ignored' : 'unconfigured';
+            
             return `
-              <label class="entity-checkbox">
-                <input type="checkbox" 
-                       name="${configKey}" 
-                       value="${entity.entity_id}"
-                       ${isConfigured ? 'checked' : ''}>
-                <span class="entity-name">${entity.name}</span>
-                <span class="entity-id">${entity.entity_id}</span>
-              </label>
+              <div class="entity-item ${statusClass}" data-entity-id="${entity.entity_id}">
+                <label class="entity-checkbox">
+                  <input type="checkbox" 
+                         name="${configKey}" 
+                         value="${entity.entity_id}"
+                         data-domain="${entity.domain}"
+                         ${entity.is_configured_in_dashview ? 'checked' : ''}
+                         ${entity.is_ignored_in_dashview ? 'disabled' : ''}>
+                  <span class="entity-name">${entity.name}</span>
+                  <span class="entity-id">${entity.entity_id}</span>
+                  ${entity.is_newly_discovered_and_unconfirmed ? '<span class="status-badge new">New!</span>' : ''}
+                  ${entity.is_configured_in_dashview ? '<span class="status-badge configured">Configured</span>' : ''}
+                  ${entity.is_ignored_in_dashview ? '<span class="status-badge ignored">Ignored</span>' : ''}
+                </label>
+                <div class="entity-actions">
+                  <button class="ignore-btn ${entity.is_ignored_in_dashview ? 'unignore' : 'ignore'}" 
+                          data-entity-id="${entity.entity_id}" 
+                          data-domain="${entity.domain}"
+                          title="${entity.is_ignored_in_dashview ? 'Un-ignore entity' : 'Ignore entity'}">
+                    <i class="mdi ${entity.is_ignored_in_dashview ? 'mdi-close-circle' : 'mdi-close-circle-outline'}"></i>
+                  </button>
+                  <span class="save-indicator" style="display: none;">✓ Saved!</span>
+                </div>
+              </div>
             `;
           }).join('')}
         </div>
@@ -3192,36 +3233,58 @@ async saveMediaPlayerPresets() {
   }
 
   /**
-   * Add event listeners for room configuration
+   * Add event listeners for room configuration with instant persistence
    */
   _addRoomConfigurationListeners(roomKey) {
     const container = this._shadowRoot.getElementById('room-detail-container');
     if (!container) return;
     
-    // Section-level select/clear all buttons
-    container.addEventListener('click', (e) => {
+    // Instant persistence for individual checkboxes
+    container.addEventListener('change', async (e) => {
+      if (e.target.type === 'checkbox' && e.target.name) {
+        await this._handleEntityCheckboxChange(e.target, roomKey);
+      }
+    });
+    
+    // Button click handlers
+    container.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('ignore-btn') || e.target.closest('.ignore-btn')) {
+        const btn = e.target.classList.contains('ignore-btn') ? e.target : e.target.closest('.ignore-btn');
+        await this._handleIgnoreButtonClick(btn, roomKey);
+      }
+      
       if (e.target.classList.contains('select-all-btn')) {
         const section = e.target.dataset.section;
-        const checkboxes = container.querySelectorAll(`input[name="${section}"]`);
-        checkboxes.forEach(cb => cb.checked = true);
+        const checkboxes = container.querySelectorAll(`input[name="${section}"]:not(:disabled)`);
+        for (const cb of checkboxes) {
+          if (!cb.checked) {
+            cb.checked = true;
+            await this._handleEntityCheckboxChange(cb, roomKey);
+          }
+        }
       }
       
       if (e.target.classList.contains('clear-all-btn')) {
         const section = e.target.dataset.section;
-        const checkboxes = container.querySelectorAll(`input[name="${section}"]`);
-        checkboxes.forEach(cb => cb.checked = false);
+        const checkboxes = container.querySelectorAll(`input[name="${section}"]:not(:disabled)`);
+        for (const cb of checkboxes) {
+          if (cb.checked) {
+            cb.checked = false;
+            await this._handleEntityCheckboxChange(cb, roomKey);
+          }
+        }
       }
       
-      if (e.target.id === 'save-room-config') {
-        this._saveRoomConfiguration(roomKey);
+      if (e.target.id === 'confirm-room-setup') {
+        await this._confirmRoomSetup(roomKey);
       }
       
       if (e.target.id === 'bulk-select-room') {
-        this._bulkSelectRoomEntities(roomKey);
+        await this._bulkSelectRoomEntities(roomKey);
       }
       
       if (e.target.id === 'clear-room-config') {
-        this._clearRoomConfiguration(roomKey);
+        await this._clearRoomConfiguration(roomKey);
       }
       
       if (e.target.classList.contains('help-btn')) {
@@ -3271,6 +3334,136 @@ async saveMediaPlayerPresets() {
     } catch (error) {
       console.error('[DashView] Error saving room configuration:', error);
       this._showToast('Failed to save room configuration', 'error');
+    }
+  }
+
+  /**
+   * Handle instant persistence for entity checkbox changes
+   */
+  async _handleEntityCheckboxChange(checkbox, roomKey) {
+    const entityId = checkbox.value;
+    const domain = checkbox.dataset.domain;
+    const statusType = checkbox.checked ? 'assigned' : 'unassigned';
+    
+    try {
+      await this._updateEntityStatus(roomKey, entityId, statusType, domain);
+      this._showSaveIndicator(checkbox.closest('.entity-item'));
+    } catch (error) {
+      console.error('[DashView] Error updating entity status:', error);
+      // Revert checkbox state on error
+      checkbox.checked = !checkbox.checked;
+      this._showToast('Failed to update entity status', 'error');
+    }
+  }
+
+  /**
+   * Handle ignore button clicks
+   */
+  async _handleIgnoreButtonClick(button, roomKey) {
+    const entityId = button.dataset.entityId;
+    const domain = button.dataset.domain;
+    const isCurrentlyIgnored = button.classList.contains('unignore');
+    const statusType = isCurrentlyIgnored ? 'unignored' : 'ignored';
+    
+    try {
+      await this._updateEntityStatus(roomKey, entityId, statusType, domain);
+      
+      // Update UI state
+      const entityItem = button.closest('.entity-item');
+      const checkbox = entityItem.querySelector('input[type="checkbox"]');
+      
+      if (isCurrentlyIgnored) {
+        // Un-ignoring: enable checkbox and update button
+        button.classList.replace('unignore', 'ignore');
+        button.title = 'Ignore entity';
+        button.querySelector('i').className = 'mdi mdi-close-circle-outline';
+        checkbox.disabled = false;
+        entityItem.classList.remove('ignored');
+      } else {
+        // Ignoring: disable checkbox, uncheck it, and update button
+        checkbox.checked = false;
+        checkbox.disabled = true;
+        button.classList.replace('ignore', 'unignore');
+        button.title = 'Un-ignore entity';
+        button.querySelector('i').className = 'mdi mdi-close-circle';
+        entityItem.classList.add('ignored');
+      }
+      
+      this._showSaveIndicator(entityItem);
+    } catch (error) {
+      console.error('[DashView] Error updating entity ignore status:', error);
+      this._showToast('Failed to update entity ignore status', 'error');
+    }
+  }
+
+  /**
+   * Update entity status via API
+   */
+  async _updateEntityStatus(roomId, entityId, statusType, entityDomain, entityLabel = null) {
+    const response = await fetch('/api/dashview/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'entity_status_update',
+        config: {
+          room_id: roomId,
+          entity_id: entityId,
+          status_type: statusType,
+          entity_domain: entityDomain,
+          entity_label: entityLabel
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update entity status');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Confirm room setup to acknowledge new entities
+   */
+  async _confirmRoomSetup(roomKey) {
+    try {
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'confirm_room_setup',
+          config: {
+            room_id: roomKey
+          }
+        })
+      });
+
+      if (response.ok) {
+        this._showToast('Room setup confirmed successfully', 'success');
+        // Reload the room configuration to reflect changes
+        await this.loadRoomConfiguration();
+        await this.refreshRoomOverview();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to confirm room setup');
+      }
+    } catch (error) {
+      console.error('[DashView] Error confirming room setup:', error);
+      this._showToast('Failed to confirm room setup', 'error');
+    }
+  }
+
+  /**
+   * Show save indicator animation
+   */
+  _showSaveIndicator(entityItem) {
+    const indicator = entityItem.querySelector('.save-indicator');
+    if (indicator) {
+      indicator.style.display = 'inline';
+      setTimeout(() => {
+        indicator.style.display = 'none';
+      }, 2000);
     }
   }
 
