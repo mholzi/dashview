@@ -509,6 +509,9 @@ export class PopupManager {
       });
     }
     
+    // Setup action buttons
+    this._setupActionButtons(popup, entityId);
+    
     // Setup keyboard navigation
     this._setupKeyboardNavigation(popup);
     
@@ -616,6 +619,151 @@ export class PopupManager {
       const container = popup.querySelector('.entity-detail-popup-container');
       if (container) {
         container.focus();
+      }
+    }
+  }
+  
+  /**
+   * Setup action buttons for entity popup
+   * @param {HTMLElement} popup - The popup element
+   * @param {string} entityId - The entity ID
+   */
+  _setupActionButtons(popup, entityId) {
+    const hideBtn = popup.querySelector('#entity-action-hide');
+    const favoriteBtn = popup.querySelector('#entity-action-favorite');
+    
+    if (hideBtn) {
+      hideBtn.addEventListener('click', () => {
+        this._hideEntityFromDashboard(entityId);
+      });
+    }
+    
+    if (favoriteBtn) {
+      favoriteBtn.addEventListener('click', () => {
+        this._addEntityToFavorites(entityId);
+      });
+    }
+  }
+  
+  /**
+   * Hide entity from dashboard
+   * @param {string} entityId - The entity ID
+   */
+  async _hideEntityFromDashboard(entityId) {
+    console.log('[PopupManager] Hiding entity from dashboard:', entityId);
+    
+    try {
+      // Call the API to hide the entity
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this._hass.auth.data.access_token}`
+        },
+        body: JSON.stringify({
+          type: 'hide_entity',
+          entity_id: entityId
+        })
+      });
+      
+      if (response.ok) {
+        console.log('[PopupManager] Entity hidden successfully');
+        // Show success message
+        this._showActionMessage('Entity hidden from dashboard', 'success');
+        // Close popup after action
+        setTimeout(() => this.closePopup(), 1000);
+      } else {
+        console.error('[PopupManager] Failed to hide entity:', response.status);
+        this._showActionMessage('Failed to hide entity', 'error');
+      }
+    } catch (error) {
+      console.error('[PopupManager] Error hiding entity:', error);
+      this._showActionMessage('Error hiding entity', 'error');
+    }
+  }
+  
+  /**
+   * Add entity to favorites
+   * @param {string} entityId - The entity ID
+   */
+  async _addEntityToFavorites(entityId) {
+    console.log('[PopupManager] Adding entity to favorites:', entityId);
+    
+    try {
+      // Call the API to add to favorites
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this._hass.auth.data.access_token}`
+        },
+        body: JSON.stringify({
+          type: 'add_favorite',
+          entity_id: entityId
+        })
+      });
+      
+      if (response.ok) {
+        console.log('[PopupManager] Entity added to favorites successfully');
+        // Show success message
+        this._showActionMessage('Entity added to favorites', 'success');
+        // Update button state
+        this._updateFavoriteButtonState(entityId, true);
+      } else {
+        console.error('[PopupManager] Failed to add entity to favorites:', response.status);
+        this._showActionMessage('Failed to add to favorites', 'error');
+      }
+    } catch (error) {
+      console.error('[PopupManager] Error adding entity to favorites:', error);
+      this._showActionMessage('Error adding to favorites', 'error');
+    }
+  }
+  
+  /**
+   * Show action message to user
+   * @param {string} message - The message to show
+   * @param {string} type - The message type ('success' or 'error')
+   */
+  _showActionMessage(message, type) {
+    // Find or create message container
+    let messageContainer = this._shadowRoot.querySelector('.action-message');
+    if (!messageContainer) {
+      messageContainer = document.createElement('div');
+      messageContainer.className = 'action-message';
+      this._shadowRoot.appendChild(messageContainer);
+    }
+    
+    messageContainer.textContent = message;
+    messageContainer.className = `action-message ${type}`;
+    messageContainer.style.display = 'block';
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      messageContainer.style.display = 'none';
+    }, 3000);
+  }
+  
+  /**
+   * Update favorite button state
+   * @param {string} entityId - The entity ID
+   * @param {boolean} isFavorite - Whether the entity is favorited
+   */
+  _updateFavoriteButtonState(entityId, isFavorite) {
+    const favoriteBtn = this._shadowRoot.querySelector('#entity-action-favorite');
+    if (favoriteBtn) {
+      const icon = favoriteBtn.querySelector('i');
+      const span = favoriteBtn.querySelector('span');
+      
+      if (isFavorite) {
+        icon.className = 'mdi mdi-heart';
+        span.textContent = 'Remove from Favorites';
+        favoriteBtn.setAttribute('aria-label', 'Remove entity from favorites');
+        favoriteBtn.setAttribute('title', 'Remove from Favorites');
+      } else {
+        icon.className = 'mdi mdi-heart-outline';
+        span.textContent = 'Add to Favorites';
+        favoriteBtn.setAttribute('aria-label', 'Add entity to favorites');
+        favoriteBtn.setAttribute('title', 'Add to Favorites');
       }
     }
   }
