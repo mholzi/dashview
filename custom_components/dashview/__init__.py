@@ -100,6 +100,15 @@ async def _sync_config_from_ha_registries(hass: HomeAssistant, entry: ConfigEntr
         "media-header-buttons-container": {"visible": True, "order": 6},
         "floor-tabs-container": {"visible": True, "order": 7}
     })
+    house_config.setdefault("notifications", {
+        "enabled": True,
+        "max_persistent": 50,
+        "default_duration": 300,
+        "auto_dismiss": True,
+        "sound_enabled": False,
+        "persistent_notifications": [],
+        "entity_triggers": []
+    })
 
     for floor in floor_registry.floors.values():
         if floor.floor_id not in house_config["floors"]:
@@ -288,6 +297,18 @@ class DashViewConfigView(HomeAssistantView):
                 'show_indicators': True
             })
             return web.json_response(trend_config)
+        elif config_type == 'notifications':
+            house_config = self._entry.options.get('house_config', {})
+            notifications_config = house_config.get('notifications', {
+                'enabled': True,
+                'max_persistent': 50,
+                'default_duration': 300,  # 5 minutes
+                'auto_dismiss': True,
+                'sound_enabled': False,
+                'persistent_notifications': [],
+                'entity_triggers': []
+            })
+            return web.json_response(notifications_config)
 
         return web.json_response({"error": f"Invalid or unhandled config type: {config_type}"}, status=400)
 
@@ -470,6 +491,8 @@ class DashViewConfigView(HomeAssistantView):
                 current_options.setdefault("house_config", {})["main_dashboard_sections"] = config_payload
             elif config_type == "trend_analysis":
                 current_options.setdefault("house_config", {})["trend_analysis"] = config_payload
+            elif config_type == "notifications":
+                current_options.setdefault("house_config", {})["notifications"] = config_payload
             elif config_type == "config_health_fix":
                 return await self._apply_configuration_fix(config_payload)
             else:
