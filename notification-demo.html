@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Animation Test</title>
+    <link rel="stylesheet" href="custom_components/dashview/www/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            --card-background-color: #ffffff;
+            --accent-color: #03a9f4;
+            --primary-text-color: #212121;
+            --secondary-text-color: #757575;
+            --disabled-text-color: #9e9e9e;
+            --highlight: #e0e0e0;
+            --green: #4caf50;
+            --yellow: #ff9800;
+            --red: #f44336;
+            --blue: #2196f3;
+        }
+        
+        .demo-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .demo-controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #03a9f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #0288d1;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>Notification Animation Fix Demo</h1>
+            <p>This demo shows notifications appearing without slide-in animation.</p>
+            <p><strong>Before fix:</strong> Notifications would slide in from the right</p>
+            <p><strong>After fix:</strong> Notifications appear stable on the page</p>
+        </div>
+        
+        <div class="demo-controls">
+            <button onclick="addNotification('info')">Add Info Notification</button>
+            <button onclick="addNotification('warning')">Add Warning</button>
+            <button onclick="addNotification('error')">Add Error</button>
+            <button onclick="addNotification('success')">Add Success</button>
+            <button onclick="addNotification('critical')">Add Critical</button>
+            <button onclick="clearNotifications()">Clear All</button>
+        </div>
+        
+        <div class="notifications-container" id="notifications"></div>
+    </div>
+
+    <script>
+        let notificationCounter = 0;
+        const container = document.getElementById('notifications');
+        
+        function addNotification(type) {
+            notificationCounter++;
+            
+            const priority = type === 'critical' ? 'critical' : 
+                           type === 'error' ? 'high' : 'medium';
+            
+            const titles = {
+                info: 'Information',
+                warning: 'Warning Alert',
+                error: 'Error Occurred',
+                success: 'Action Successful',
+                critical: 'Critical Alert'
+            };
+            
+            const messages = {
+                info: 'This is an informational notification that provides helpful context.',
+                warning: 'This is a warning notification about a potential issue.',
+                error: 'An error has occurred that requires your attention.',
+                success: 'The action was completed successfully.',
+                critical: 'Immediate attention required for this critical issue!'
+            };
+            
+            const icons = {
+                info: 'mdi-information',
+                warning: 'mdi-alert',
+                error: 'mdi-alert-circle',
+                success: 'mdi-check-circle',
+                critical: 'mdi-alert-octagon'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification-card';
+            notification.dataset.notificationId = `demo-${notificationCounter}`;
+            notification.dataset.type = type;
+            notification.dataset.priority = priority;
+            
+            notification.innerHTML = `
+                <div class="notification-icon-cell">
+                    <i class="mdi ${icons[type]}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${titles[type]} #${notificationCounter}</div>
+                    <div class="notification-message">${messages[type]}</div>
+                    <div class="notification-meta">
+                        <span class="notification-time">just now</span>
+                        <span class="notification-entity">demo.entity</span>
+                    </div>
+                </div>
+                <div class="notification-actions">
+                    <button class="notification-action-btn" onclick="acknowledgeNotification(this)">
+                        Acknowledge
+                    </button>
+                    <button class="notification-dismiss-btn" onclick="dismissNotification('demo-${notificationCounter}')">
+                        <i class="mdi mdi-close"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            container.style.display = 'flex';
+            
+            console.log(`Added ${type} notification - should appear without sliding in`);
+        }
+        
+        function dismissNotification(id) {
+            const notification = document.querySelector(`[data-notification-id="${id}"]`);
+            if (notification) {
+                // Apply slide out animation (this should still work)
+                notification.style.animation = 'slideOutRight 0.3s ease-in-out';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                        if (container.children.length === 0) {
+                            container.style.display = 'none';
+                        }
+                    }
+                }, 300);
+            }
+        }
+        
+        function acknowledgeNotification(button) {
+            const notification = button.closest('.notification-card');
+            notification.style.opacity = '0.6';
+            button.textContent = 'Acknowledged';
+            button.disabled = true;
+        }
+        
+        function clearNotifications() {
+            container.innerHTML = '';
+            container.style.display = 'none';
+            notificationCounter = 0;
+        }
+        
+        // Add a demo notification on load to show the fix
+        setTimeout(() => {
+            addNotification('info');
+        }, 500);
+    </script>
+</body>
+</html>
