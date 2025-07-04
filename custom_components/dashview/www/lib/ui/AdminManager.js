@@ -2360,6 +2360,12 @@ async saveMediaPlayerPresets() {
   async loadConfigurationHealthCheck() {
     const tabContent = this._shadowRoot.getElementById('admin-tab-content');
     
+    // Check if tabContent exists
+    if (!tabContent) {
+      console.warn('[DashView] Admin tab content container not found');
+      return;
+    }
+    
     // Show loading state
     tabContent.innerHTML = `
       <div class="config-health-loading">
@@ -2376,7 +2382,8 @@ async saveMediaPlayerPresets() {
       this._renderConfigurationHealthReport(healthData);
     } catch (error) {
       console.error('[DashView] Error loading configuration health check:', error);
-      tabContent.innerHTML = `
+      if (tabContent) {
+        tabContent.innerHTML = `
         <div class="error-message">
           <h3>Fehler beim Laden der Konsistenzprüfung</h3>
           <p>Die Konfigurationsprüfung konnte nicht geladen werden: ${error.message}</p>

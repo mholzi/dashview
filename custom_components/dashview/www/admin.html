@@ -1017,7 +1017,7 @@
 
 <script>
 // Test notification functions for admin panel
-function testNotification(type, priority) {
+window.testNotification = function(type, priority) {
     // Get the panel element to access the notification manager
     const panel = document.querySelector('dashview-panel');
     if (panel && panel._notificationManager) {
@@ -1039,7 +1039,7 @@ function testNotification(type, priority) {
     }
 }
 
-function testPersistentNotification() {
+window.testPersistentNotification = function() {
     const panel = document.querySelector('dashview-panel');
     if (panel && panel._notificationManager) {
         panel._notificationManager.createNotification({
