@@ -25,7 +25,7 @@ export class CalendarManager {
             await this._setupEventListeners(popupElement);
             await this._loadCalendarMetadata();
             await this._loadEventsForCurrentDay(popupElement);
-            this._renderCurrentView(popupElement);
+            // Note: _renderCurrentView is now called inside _loadEventsForCurrentDay after successful loading
         } catch (error) {
             console.error('[DashView] CalendarManager: Error updating calendar:', error);
             this._showError(popupElement, 'Error loading calendar events');
@@ -103,9 +103,10 @@ export class CalendarManager {
                 };
             });
             
-            // Initialize selected calendars if empty
+            // Initialize selected calendars with linked calendars if empty
             if (this._selectedCalendars.length === 0) {
-                this._selectedCalendars = Object.keys(this._calendarsMetadata);
+                const linkedCalendars = this._panel._houseConfig?.linked_calendars || [];
+                this._selectedCalendars = [...linkedCalendars];
             }
         } catch (error) {
             console.error('[DashView] CalendarManager: Error loading calendar metadata:', error);
@@ -154,6 +155,9 @@ export class CalendarManager {
             this._calendarsMetadata = { ...this._calendarsMetadata, ...(data.calendars || {}) };
             
             console.log('[DashView] CalendarManager: Successfully loaded', this._events[this._currentDay].length, 'events for', this._currentDay);
+            
+            // Render the events after successful loading
+            this._renderCurrentView(popupElement);
             
         } catch (error) {
             console.error('[DashView] CalendarManager: Error fetching events:', error);
