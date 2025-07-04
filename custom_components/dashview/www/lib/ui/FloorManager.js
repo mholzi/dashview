@@ -1460,8 +1460,8 @@ export class FloorManager {
       return errorStr !== 'none' && errorStr !== 'no error' && errorStr !== 'ok' && errorStr !== '';
     };
 
-    // Handle error states - only if there is a valid error
-    if (isValidError(error) || isValidError(lastError)) {
+    // Handle error states - only if the entity state is "error" AND there is a valid error message
+    if (state === 'error' && (isValidError(error) || isValidError(lastError))) {
       let errorMessage = 'Fehler';
       // Use actual error value, but exclude "none" values when determining current error
       const validError = isValidError(error) ? error : null;
@@ -1521,6 +1521,9 @@ export class FloorManager {
         return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Pausiert', cardClass: 'is-on' };
       case 'idle':
         return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-outline', label: 'Bereit', cardClass: '' };
+      case 'error':
+        // Generic error state when no specific error message is available
+        return { name: entityState?.attributes.friendly_name || 'Mower', icon: 'mdi:robot-mower-alert', label: 'Fehler', cardClass: 'mower-error' };
       case 'ok':
         // Use activity if available
         if (activity) {
