@@ -448,7 +448,7 @@ export class InfoCardManager {
     // Find any active mower
     const activeMower = mowerEntities.find(entityId => {
       const entity = this._hass.states[entityId];
-      return entity && ['mowing', 'returning', 'error', 'going_home'].includes(entity.state?.toLowerCase());
+      return entity && ['mowing', 'cleaning', 'returning', 'error', 'going_home', 'docked'].includes(entity.state?.toLowerCase());
     });
 
     if (!activeMower) {
@@ -463,14 +463,16 @@ export class InfoCardManager {
       const state = entity.state?.toLowerCase();
       let statusText = '';
       
-      if (state === 'mowing') {
-        statusText = 'mäht 🚜';
+      if (state === 'mowing' || state === 'cleaning') {
+        statusText = 'mäht';
+      } else if (state === 'docked') {
+        statusText = 'parkt';
       } else if (state === 'returning' || state === 'going_home') {
-        statusText = 'kehrt zurück 🚜';
+        statusText = 'kehrt zurück';
       } else if (state === 'error') {
-        statusText = 'hat einen Fehler 🚜';
+        statusText = 'hat einen Fehler';
       } else {
-        statusText = `ist ${entity.state} 🚜`;
+        statusText = `ist ${entity.state}`;
       }
       
       statusElement.textContent = statusText;
