@@ -7,6 +7,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2025-01-04
+
+### 🐛 Bug Fixes
+
+- **Calendar Popup Loading**: Resolved infinite loading spinner issue in calendar popup by ensuring events are rendered after successful data fetch
+- **Kommende Termine Card Redesign**: Fixed navigation controls and implemented improved sensor-style layout (#484)
+  - Added header navigation controls (next/previous arrows) with weather button styling
+  - Implemented sensor-small template pattern for consistent design
+  - Enhanced time display format (HH:MM) with "Ganztägig" for all-day events
+  - Added active event highlighting with active-big background
+  - Improved responsive design with 8px padding and 2-line title wrapping
+
+### 🔧 Technical Improvements
+
+- Fixed selected calendars initialization to use linked calendars from house config
+- Prevented double rendering in calendar popup
+- Enhanced navigation button logic with proper state management
+- Improved event cycling with previous/next navigation support
+
+## [0.9.0] - 2025-01-04
+
+### ✨ Major New Features
+
+#### 📅 Complete Calendar UI/UX Enhancement (#482)
+- **Compact Dashboard Card**: Single event display with cycling capability and "Next Event" button
+- **Agenda-Style Calendar Popup**: Day navigation with "Heute/Morgen/Übermorgen" buttons  
+- **Multi-Calendar Filtering**: Dropdown selector with visual color indicators
+- **Expandable Event Details**: Comprehensive event information with location/description modals
+- **Enhanced Backend API**: New date_filter support (heute, morgen, übermorgen) with metadata
+- **German Localization**: Complete German translations throughout calendar interface
+
+#### 🏠 Room Configuration Overview Redesign (#477, #481)
+- **Expandable Room Containers**: Interactive cards using HTML5 details/summary elements
+- **Real-Time Entity Assignment**: Checkbox-based entity management with instant backend persistence
+- **Smart Auto-Expansion**: Rooms expand when completion < 100%, entities when unallocated
+- **Mark Complete Functionality**: Accept room configuration even with unallocated entities
+- **Select All Operations**: Bulk entity assignment with toggle functionality
+- **Enhanced Color Scheme**: Consistent use of predefined color variables (gray000, gray100, gray800, active-big, red)
+
+### 🔧 Technical Improvements
+
+#### Backend API Enhancements
+- **New Calendar Endpoints**: Enhanced `/api/dashview/config?type=calendar` with date filtering
+- **Room Management APIs**: New endpoints for `mark_room_complete` and `bulk_entity_assignment`  
+- **Calendar Metadata**: Automatic color generation and calendar information retrieval
+- **Improved Error Handling**: Better validation and error messages across all endpoints
+
+#### Frontend Architecture
+- **Event-Driven Design**: Proper event delegation replacing global variables
+- **Component Isolation**: Better separation of concerns and reduced coupling
+- **Performance Optimization**: Efficient entity filtering and real-time updates
+- **Accessibility**: Enhanced keyboard navigation and screen reader support
+
+#### Code Quality & Maintenance
+- **PEP 8 Compliance**: Proper import organization and Python style guidelines
+- **JavaScript Best Practices**: Removed global variables, implemented proper event listeners
+- **Code Deduplication**: Refactored backend logic to reduce redundancy
+- **Error Recovery**: Robust error handling with user-friendly feedback
+
+### 🎨 User Experience Improvements
+
+#### Calendar Experience
+- **Streamlined Navigation**: Quick access to today, tomorrow, and day-after-tomorrow events
+- **Visual Event Hierarchy**: Color-coded calendars with consistent theming
+- **Expandable Details**: Progressive disclosure of event information
+- **Responsive Design**: Optimized for all device sizes and orientations
+
+#### Room Management
+- **Intuitive Interface**: Expandable containers matching existing light entity patterns
+- **Real-Time Feedback**: Immediate visual confirmation of entity assignments
+- **Bulk Operations**: Efficient management of multiple entities simultaneously
+- **Status Clarity**: Clear indication of room completion status and outstanding items
+
+### 🔄 Migration Notes
+
+- **Calendar API**: Backward compatible with existing calendar integrations
+- **Room Configuration**: Existing room setups will automatically benefit from new interface
+- **Color Scheme**: New predefined color variables enhance visual consistency
+- **Event Handling**: Improved JavaScript architecture provides better reliability
+
+### 🐛 Bug Fixes
+
+- **Music Room Display**: Fixed room name removal in media content area
+- **Entity Assignment**: Resolved race conditions in real-time entity updates
+- **Calendar Display**: Improved event sorting and date parsing
+- **Error Handling**: Better recovery from API failures and network issues
+
+### 👥 Contributors
+
+- @mholzi - Complete implementation of calendar enhancement and room configuration redesign
+- @gemini-code-assist - Code review and quality improvements
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.8.0...v0.9.0
+
+## [0.8.0] - 2025-01-04
+
+### ✨ Enhanced Features
+
+- **Calendar Integration**: Enhanced calendar functionality and improved user experience
+- **Room Management**: Advanced room configuration capabilities
+- **Performance Optimizations**: Improved loading times and responsiveness
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.7.0...v0.8.0
+
 ## [0.7.0] - 2025-01-04
 
 ### ✨ New Features
