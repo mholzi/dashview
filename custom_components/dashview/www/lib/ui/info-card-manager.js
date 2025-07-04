@@ -445,10 +445,10 @@ export class InfoCardManager {
       return;
     }
 
-    // Find any active mower
+    // Find any mower in cleaning or error state
     const activeMower = mowerEntities.find(entityId => {
       const entity = this._hass.states[entityId];
-      return entity && ['mowing', 'cleaning', 'returning', 'error', 'going_home', 'docked'].includes(entity.state?.toLowerCase());
+      return entity && ['cleaning', 'error'].includes(entity.state?.toLowerCase());
     });
 
     if (!activeMower) {
@@ -458,24 +458,21 @@ export class InfoCardManager {
 
     const entity = this._hass.states[activeMower];
     const statusElement = section.querySelector('[data-type="mower-status"]');
+    const textElement = section.querySelector('.info-text:last-child');
+    const prefixElement = section.querySelector('.info-text:first-child');
     
     if (statusElement) {
       const state = entity.state?.toLowerCase();
-      let statusText = '';
       
-      if (state === 'mowing' || state === 'cleaning') {
-        statusText = 'mäht';
-      } else if (state === 'docked') {
-        statusText = 'parkt';
-      } else if (state === 'returning' || state === 'going_home') {
-        statusText = 'kehrt zurück';
+      if (state === 'cleaning') {
+        prefixElement.textContent = 'Der Rasenmäher';
+        statusElement.innerHTML = '<i class="mdi mdi-robot-mower"></i> Mäht';
+        textElement.textContent = 'gerade.';
       } else if (state === 'error') {
-        statusText = 'hat einen Fehler';
-      } else {
-        statusText = `ist ${entity.state}`;
+        prefixElement.textContent = 'Der Rasenmäher hat ein';
+        statusElement.innerHTML = '<i class="mdi mdi-robot-mower-alert"></i> Problem';
+        textElement.textContent = '.';
       }
-      
-      statusElement.textContent = statusText;
     }
     
     section.classList.remove('hidden');
