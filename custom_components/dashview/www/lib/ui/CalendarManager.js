@@ -5,8 +5,10 @@ export class CalendarManager {
         this._panel = panel;
         this._hass = panel._hass;
         this._shadowRoot = panel.shadowRoot;
-        this._currentDate = new Date();
-        this._events = [];
+        this._currentDay = 'heute';  // heute, morgen, übermorgen
+        this._events = {};  // Events grouped by day
+        this._calendarsMetadata = {};
+        this._selectedCalendars = [];  // For filtering
         this._isLoading = false;
     }
 
@@ -20,10 +22,416 @@ export class CalendarManager {
         console.log('[DashView] CalendarManager: Updating calendar popup');
         
         try {
-            await this._loadAndRenderEvents(popupElement);
+            await this._setupEventListeners(popupElement);
+            await this._loadCalendarMetadata();
+            await this._loadEventsForCurrentDay(popupElement);
+            this._renderCurrentView(popupElement);
         } catch (error) {
             console.error('[DashView] CalendarManager: Error updating calendar:', error);
             this._showError(popupElement, 'Error loading calendar events');
+        }
+    }
+
+    async _setupEventListeners(popupElement) {
+        // Day navigation buttons
+        const dayButtons = popupElement.querySelectorAll('.calendar-day-btn');
+        dayButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this._switchDay(btn.dataset.day, popupElement);
+            });
+        });
+
+        // Calendar filter dropdown
+        const filterBtn = popupElement.querySelector('.calendar-filter-btn');
+        const filterOptions = popupElement.querySelector('.calendar-filter-options');
+        
+        if (filterBtn && filterOptions) {
+            filterBtn.addEventListener('click', () => {
+                const isVisible = filterOptions.style.display !== 'none';
+                filterOptions.style.display = isVisible ? 'none' : 'block';
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!filterBtn.contains(e.target) && !filterOptions.contains(e.target)) {
+                    filterOptions.style.display = 'none';
+                }
+            });
+        }
+
+        // Event modal close handlers
+        const modalClose = popupElement.querySelector('.calendar-event-modal-close');
+        const modalBackdrop = popupElement.querySelector('.calendar-event-modal-backdrop');
+        
+        if (modalClose) {
+            modalClose.addEventListener('click', () => {
+                this._closeEventModal(popupElement);
+            });
+        }
+        
+        if (modalBackdrop) {
+            modalBackdrop.addEventListener('click', () => {
+                this._closeEventModal(popupElement);
+            });
+        }
+    }
+
+    _switchDay(day, popupElement) {
+        if (this._currentDay === day) return;
+        
+        this._currentDay = day;
+        
+        // Update button states
+        const dayButtons = popupElement.querySelectorAll('.calendar-day-btn');
+        dayButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.day === day);
+        });
+        
+        // Load events for new day
+        this._loadEventsForCurrentDay(popupElement);
+    }
+
+    async _loadCalendarMetadata() {
+        try {
+            const data = await this._hass.callApi('GET', 'dashview/config?type=available_calendars');
+            this._calendarsMetadata = {};
+            
+            data.forEach(calendar => {
+                this._calendarsMetadata[calendar.entity_id] = {
+                    friendly_name: calendar.friendly_name,
+                    color: this._getCalendarColor(calendar.entity_id)
+                };
+            });
+            
+            // Initialize selected calendars if empty
+            if (this._selectedCalendars.length === 0) {
+                this._selectedCalendars = Object.keys(this._calendarsMetadata);
+            }
+        } catch (error) {
+            console.error('[DashView] CalendarManager: Error loading calendar metadata:', error);
+        }
+    }
+
+    async _loadEventsForCurrentDay(popupElement) {
+        this._isLoading = true;
+        
+        // Get linked calendars from house config
+        const linkedCalendars = this._panel._houseConfig?.linked_calendars || [];
+        
+        if (linkedCalendars.length === 0) {
+            this._showNoCalendars(popupElement);
+            this._isLoading = false;
+            return;
+        }
+
+        // Show loading state
+        this._showLoading(popupElement);
+
+        try {
+            // Determine date filter based on current day
+            let dateFilter = this._currentDay;
+            
+            // Fetch events for the current day from backend
+            const entityIds = linkedCalendars.join(',');
+            
+            console.log('[DashView] CalendarManager: Fetching events for day:', this._currentDay, 'calendars:', linkedCalendars);
+            
+            // Use enhanced API with date filter
+            const data = await this._hass.callApi(
+                'GET',
+                `dashview/config?type=calendar_events&calendar_ids=${encodeURIComponent(entityIds)}&date_filter=${dateFilter}`
+            );
+            
+            // Handle backend errors
+            if (data.errors && data.errors.length > 0) {
+                console.warn('[DashView] CalendarManager: Backend reported errors:', data.errors);
+                this._showDetailedError(popupElement, data.errors);
+                return;
+            }
+            
+            // Store events for current day and calendar metadata
+            this._events[this._currentDay] = data.events || [];
+            this._calendarsMetadata = { ...this._calendarsMetadata, ...(data.calendars || {}) };
+            
+            console.log('[DashView] CalendarManager: Successfully loaded', this._events[this._currentDay].length, 'events for', this._currentDay);
+            
+        } catch (error) {
+            console.error('[DashView] CalendarManager: Error fetching events:', error);
+            this._showError(popupElement, 'Fehler beim Laden der Termine', error.message);
+        } finally {
+            this._isLoading = false;
+        }
+    }
+
+    _renderCurrentView(popupElement) {
+        this._setupCalendarFilters(popupElement);
+        this._renderEventsForCurrentDay(popupElement);
+    }
+
+    _setupCalendarFilters(popupElement) {
+        const filterOptions = popupElement.querySelector('.calendar-filter-options');
+        if (!filterOptions) return;
+
+        const linkedCalendars = this._panel._houseConfig?.linked_calendars || [];
+        
+        let html = '';
+        linkedCalendars.forEach(calendarId => {
+            const metadata = this._calendarsMetadata[calendarId] || {};
+            const isSelected = this._selectedCalendars.includes(calendarId);
+            
+            html += `
+                <label class="calendar-filter-option">
+                    <input type="checkbox" value="${calendarId}" ${isSelected ? 'checked' : ''}>
+                    <span class="calendar-indicator" style="background-color: ${metadata.color || '#cccccc'}"></span>
+                    <span class="calendar-filter-name">${metadata.friendly_name || calendarId}</span>
+                </label>
+            `;
+        });
+        
+        filterOptions.innerHTML = html;
+        
+        // Add change listeners
+        filterOptions.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const calendarId = e.target.value;
+                if (e.target.checked) {
+                    if (!this._selectedCalendars.includes(calendarId)) {
+                        this._selectedCalendars.push(calendarId);
+                    }
+                } else {
+                    this._selectedCalendars = this._selectedCalendars.filter(id => id !== calendarId);
+                }
+                
+                this._updateFilterButtonText(popupElement);
+                this._renderEventsForCurrentDay(popupElement);
+            });
+        });
+        
+        this._updateFilterButtonText(popupElement);
+    }
+
+    _updateFilterButtonText(popupElement) {
+        const filterBtn = popupElement.querySelector('.calendar-filter-btn span');
+        const linkedCalendars = this._panel._houseConfig?.linked_calendars || [];
+        
+        if (filterBtn) {
+            if (this._selectedCalendars.length === linkedCalendars.length) {
+                filterBtn.textContent = 'Alle Kalender';
+            } else if (this._selectedCalendars.length === 1) {
+                const calendarId = this._selectedCalendars[0];
+                const metadata = this._calendarsMetadata[calendarId] || {};
+                filterBtn.textContent = metadata.friendly_name || calendarId;
+            } else {
+                filterBtn.textContent = `${this._selectedCalendars.length} Kalender`;
+            }
+        }
+    }
+
+    _renderEventsForCurrentDay(popupElement) {
+        const eventsContainer = popupElement.querySelector('.calendar-events-container');
+        if (!eventsContainer) return;
+
+        const dayEvents = this._events[this._currentDay] || [];
+        
+        // Filter events by selected calendars
+        const filteredEvents = dayEvents.filter(event => 
+            this._selectedCalendars.includes(event.calendar_entity_id)
+        );
+
+        if (filteredEvents.length === 0) {
+            eventsContainer.innerHTML = `
+                <div class="calendar-no-events">
+                    <i class="mdi mdi-calendar-check"></i>
+                    <p>Keine Termine ${this._getDayLabel()}</p>
+                    <p class="help-text">Ihr Kalender ist frei!</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Sort events by time
+        const sortedEvents = filteredEvents.sort((a, b) => {
+            const timeA = this._getEventStartTime(a);
+            const timeB = this._getEventStartTime(b);
+            return timeA - timeB;
+        });
+
+        let html = `<div class="calendar-day-header">${this._getDayLabel()}</div>`;
+        html += '<div class="calendar-events-list">';
+        
+        sortedEvents.forEach(event => {
+            html += this._renderEventItem(event);
+        });
+        
+        html += '</div>';
+        eventsContainer.innerHTML = html;
+        
+        // Add event click listeners
+        this._addEventClickListeners(eventsContainer);
+    }
+
+    _getDayLabel() {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayAfterTomorrow = new Date(today);
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+
+        switch (this._currentDay) {
+            case 'heute':
+                return `Heute, ${today.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+            case 'morgen':
+                return `Morgen, ${tomorrow.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+            case 'übermorgen':
+                return `Übermorgen, ${dayAfterTomorrow.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+            default:
+                return 'Events';
+        }
+    }
+
+    _renderEventItem(event) {
+        const title = event.summary || event.title || 'Untitled Event';
+        const startTime = this._formatEventTime(event);
+        const isAllDay = this._isAllDayEvent(event);
+        const calendarMeta = this._calendarsMetadata[event.calendar_entity_id] || {};
+        const calendarColor = calendarMeta.color || '#cccccc';
+        
+        return `
+            <div class="calendar-event-item" data-event-id="${event.uid || event.id || Math.random()}">
+                <div class="calendar-event-time">
+                    ${isAllDay ? 'Ganztägig' : startTime}
+                </div>
+                <div class="calendar-event-content">
+                    <div class="calendar-event-title">${this._escapeHtml(title)}</div>
+                    <div class="calendar-event-calendar">
+                        <span class="calendar-indicator" style="background-color: ${calendarColor}"></span>
+                        <span class="calendar-name">${calendarMeta.friendly_name || event.calendar_entity_id}</span>
+                    </div>
+                    ${event.location ? `
+                        <div class="calendar-event-details" style="display: none;">
+                            <div class="calendar-event-location">
+                                <i class="mdi mdi-map-marker"></i>
+                                ${this._escapeHtml(event.location)}
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${event.description ? `
+                        <div class="calendar-event-details" style="display: none;">
+                            <div class="calendar-event-description">
+                                <i class="mdi mdi-text"></i>
+                                ${this._escapeHtml(event.description)}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                ${(event.location || event.description) ? `
+                    <button class="calendar-event-expand-btn">
+                        <i class="mdi mdi-chevron-down"></i>
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    _addEventClickListeners(container) {
+        // Event expand/collapse
+        container.querySelectorAll('.calendar-event-expand-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const eventItem = btn.closest('.calendar-event-item');
+                const details = eventItem.querySelectorAll('.calendar-event-details');
+                const icon = btn.querySelector('i');
+                
+                details.forEach(detail => {
+                    const isVisible = detail.style.display !== 'none';
+                    detail.style.display = isVisible ? 'none' : 'block';
+                });
+                
+                icon.classList.toggle('mdi-chevron-down');
+                icon.classList.toggle('mdi-chevron-up');
+            });
+        });
+        
+        // Event click for details modal
+        container.querySelectorAll('.calendar-event-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // Find the event data
+                const eventId = item.dataset.eventId;
+                const dayEvents = this._events[this._currentDay] || [];
+                const event = dayEvents.find(e => (e.uid || e.id || Math.random()) == eventId);
+                
+                if (event) {
+                    this._showEventModal(item.closest('.calendar-content'), event);
+                }
+            });
+        });
+    }
+
+    _showEventModal(popupElement, event) {
+        const modal = popupElement.querySelector('.calendar-event-modal');
+        const modalBody = modal.querySelector('.calendar-event-modal-body');
+        
+        if (!modal || !modalBody) return;
+        
+        const calendarMeta = this._calendarsMetadata[event.calendar_entity_id] || {};
+        const startTime = this._getEventStartTime(event);
+        const endTime = this._getEventEndTime(event);
+        const isAllDay = this._isAllDayEvent(event);
+        
+        let timeDisplay;
+        if (isAllDay) {
+            timeDisplay = 'Ganztägig';
+        } else {
+            const duration = Math.round((endTime - startTime) / (1000 * 60)); // minutes
+            const hours = Math.floor(duration / 60);
+            const minutes = duration % 60;
+            let durationStr = '';
+            if (hours > 0) durationStr += `${hours} Stunde${hours > 1 ? 'n' : ''}`;
+            if (minutes > 0) durationStr += `${hours > 0 ? ' ' : ''}${minutes} Minute${minutes > 1 ? 'n' : ''}`;
+            
+            timeDisplay = `${this._formatEventTime(event)}${endTime ? ` - ${this._formatEventTime({ start: endTime })}` : ''} (${durationStr || '< 1 Minute'})`;
+        }
+        
+        modalBody.innerHTML = `
+            <div class="calendar-event-modal-title">
+                <h4>${this._escapeHtml(event.summary || event.title || 'Untitled Event')}</h4>
+                <div class="calendar-event-modal-calendar">
+                    <span class="calendar-indicator" style="background-color: ${calendarMeta.color || '#cccccc'}"></span>
+                    <span>${calendarMeta.friendly_name || event.calendar_entity_id}</span>
+                </div>
+            </div>
+            
+            <div class="calendar-event-modal-details">
+                <div class="calendar-event-modal-detail">
+                    <i class="mdi mdi-calendar"></i>
+                    <strong>Datum:</strong> ${this._getDayLabel()}
+                </div>
+                <div class="calendar-event-modal-detail">
+                    <i class="mdi mdi-clock"></i>
+                    <strong>Zeit:</strong> ${timeDisplay}
+                </div>
+                ${event.location ? `
+                    <div class="calendar-event-modal-detail">
+                        <i class="mdi mdi-map-marker"></i>
+                        <strong>Ort:</strong> ${this._escapeHtml(event.location)}
+                    </div>
+                ` : ''}
+                ${event.description ? `
+                    <div class="calendar-event-modal-detail">
+                        <i class="mdi mdi-text"></i>
+                        <strong>Beschreibung:</strong> ${this._escapeHtml(event.description)}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        modal.style.display = 'block';
+    }
+
+    _closeEventModal(popupElement) {
+        const modal = popupElement.querySelector('.calendar-event-modal');
+        if (modal) {
+            modal.style.display = 'none';
         }
     }
 

@@ -687,13 +687,37 @@ class DashViewConfigView(HomeAssistantView):
     async def _get_calendar_events(self, request: web.Request) -> web.Response:
         """Get calendar events for specified entities."""
         entity_ids = request.query.get('entity_ids', '').split(',')
+        calendar_ids = request.query.get('calendar_ids', '').split(',')
         start_date = request.query.get('start_date')
         end_date = request.query.get('end_date')
+        date_filter = request.query.get('date_filter')  # heute, morgen, übermorgen
+        
+        # Use calendar_ids if provided, fallback to entity_ids for backward compatibility
+        if calendar_ids and calendar_ids[0]:
+            entity_ids = calendar_ids
         
         if not entity_ids or not entity_ids[0]:
             return web.json_response({"error": "entity_ids parameter is required", "error_type": "missing_parameters"}, status=400)
         
-        if not start_date or not end_date:
+        # Handle date_filter for agenda-style view
+        if date_filter:
+            from datetime import datetime, timedelta
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            if date_filter == 'heute':
+                start_date = today.isoformat()
+                end_date = (today + timedelta(days=1) - timedelta(seconds=1)).isoformat()
+            elif date_filter == 'morgen':
+                tomorrow = today + timedelta(days=1)
+                start_date = tomorrow.isoformat()
+                end_date = (tomorrow + timedelta(days=1) - timedelta(seconds=1)).isoformat()
+            elif date_filter == 'übermorgen':
+                day_after_tomorrow = today + timedelta(days=2)
+                start_date = day_after_tomorrow.isoformat()
+                end_date = (day_after_tomorrow + timedelta(days=1) - timedelta(seconds=1)).isoformat()
+            else:
+                return web.json_response({"error": "Invalid date_filter value", "error_type": "invalid_parameters"}, status=400)
+        elif not start_date or not end_date:
             return web.json_response({"error": "start_date and end_date parameters are required", "error_type": "missing_parameters"}, status=400)
         
         all_events = []
@@ -756,14 +780,43 @@ class DashViewConfigView(HomeAssistantView):
         # Sort events by start time
         all_events.sort(key=lambda x: x.get("start", ""))
         
+        # Build calendar metadata
+        calendars_metadata = {}
+        for entity_id in entity_ids:
+            if entity_id.strip() and self._hass.states.get(entity_id):
+                state = self._hass.states.get(entity_id)
+                calendars_metadata[entity_id] = {
+                    "friendly_name": state.attributes.get("friendly_name", entity_id),
+                    "color": self._getCalendarColor(entity_id)
+                }
+        
         response_data = {
             "events": all_events,
             "errors": errors,
+            "calendars": calendars_metadata,
             "total_events": len(all_events),
             "entity_count": len([e for e in entity_ids if e.strip()])
         }
         
         return web.json_response(response_data)
+
+    def _getCalendarColor(self, entity_id):
+        """Get calendar color from house config or default."""
+        house_config = self._entry.options.get('house_config', {})
+        calendar_colors = house_config.get('calendar_colors', {})
+        
+        # Return configured color or generate a default color based on entity_id
+        if entity_id in calendar_colors:
+            return calendar_colors[entity_id]
+        
+        # Generate a consistent color based on entity_id hash
+        import hashlib
+        hash_object = hashlib.md5(entity_id.encode())
+        hash_hex = hash_object.hexdigest()
+        
+        # Convert first 6 characters to RGB color
+        color = f"#{hash_hex[:6]}"
+        return color
 
     async def post(self, request: web.Request) -> web.Response:
         """Handle POST requests to save configuration."""

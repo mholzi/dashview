@@ -1,7 +1,46 @@
 <div class="calendar-content">
-    <!-- Calendar events will be dynamically loaded here by CalendarManager -->
-    <div class="calendar-loading">
-        <i class="mdi mdi-loading mdi-spin"></i>
-        <p>Loading calendar events...</p>
+    <!-- Calendar Header with Day Navigation -->
+    <div class="calendar-header">
+        <div class="calendar-day-navigation">
+            <button class="calendar-day-btn active" data-day="heute">Heute</button>
+            <button class="calendar-day-btn" data-day="morgen">Morgen</button>
+            <button class="calendar-day-btn" data-day="übermorgen">Übermorgen</button>
+        </div>
+        <div class="calendar-filter-section">
+            <div class="calendar-filter-dropdown">
+                <button class="calendar-filter-btn">
+                    <i class="mdi mdi-filter"></i>
+                    <span>Alle Kalender</span>
+                    <i class="mdi mdi-chevron-down"></i>
+                </button>
+                <div class="calendar-filter-options" style="display: none;">
+                    <!-- Calendar filter options will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Events List -->
+    <div class="calendar-events-container">
+        <div class="calendar-loading">
+            <i class="mdi mdi-loading mdi-spin"></i>
+            <p>Loading calendar events...</p>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div class="calendar-event-modal" style="display: none;">
+        <div class="calendar-event-modal-backdrop"></div>
+        <div class="calendar-event-modal-content">
+            <div class="calendar-event-modal-header">
+                <h3>Event Details</h3>
+                <button class="calendar-event-modal-close">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </div>
+            <div class="calendar-event-modal-body">
+                <!-- Event details will be populated dynamically -->
+            </div>
+        </div>
     </div>
 </div>
