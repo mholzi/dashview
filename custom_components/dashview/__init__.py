@@ -2,6 +2,7 @@
 import os
 import logging
 import json
+import time
 from datetime import timedelta
 
 from aiohttp import web
@@ -583,7 +584,6 @@ class DashViewConfigView(HomeAssistantView):
                 return web.json_response({"error": f"Room {room_id} not found."}, status=404)
 
             # Mark the room as manually completed
-            import time
             rooms[room_id]["marked_complete"] = True
             rooms[room_id]["marked_complete_timestamp"] = int(time.time())
 
@@ -654,25 +654,19 @@ class DashViewConfigView(HomeAssistantView):
                         if entity_id not in header_entities:
                             header_entities.append(entity_id)
                     
-                elif action == "unassign":
-                    # Remove from all domain lists
+                elif action in ["unassign", "ignore"]:
+                    # Remove from all domain lists first
                     for domain_list in ["lights", "covers", "media_players", "header_entities"]:
                         if domain_list in room_config and entity_id in room_config[domain_list]:
                             room_config[domain_list].remove(entity_id)
-                    
-                    # Remove from ignored list if present
-                    if entity_id in ignored_entities:
-                        ignored_entities.remove(entity_id)
-                
-                elif action == "ignore":
-                    # Remove from all domain lists
-                    for domain_list in ["lights", "covers", "media_players", "header_entities"]:
-                        if domain_list in room_config and entity_id in room_config[domain_list]:
-                            room_config[domain_list].remove(entity_id)
-                    
-                    # Add to ignored list
-                    if entity_id not in ignored_entities:
-                        ignored_entities.append(entity_id)
+
+                    # Handle ignored list based on action
+                    if action == "unassign":
+                        if entity_id in ignored_entities:
+                            ignored_entities.remove(entity_id)
+                    elif action == "ignore":
+                        if entity_id not in ignored_entities:
+                            ignored_entities.append(entity_id)
 
                 processed_count += 1
 

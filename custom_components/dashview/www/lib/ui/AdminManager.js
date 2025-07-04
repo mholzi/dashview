@@ -7,9 +7,6 @@ export class AdminManager {
     this._panel = panel;
     this._hass = panel._hass;
     this._shadowRoot = panel.shadowRoot;
-    
-    // Make this instance globally accessible for event handlers
-    window.dashViewAdminManager = this;
 
     this._adminLocalState = {
       houseConfig: null,
@@ -2805,6 +2802,13 @@ async saveMediaPlayerPresets() {
           return;
         }
         
+        // Handle Select All button clicks
+        if (e.target.classList.contains('room-entity-select-all-btn')) {
+          e.stopPropagation();
+          this._handleSelectAllEntities(e.target);
+          return;
+        }
+        
         // Handle configure button clicks specifically
         if (e.target.classList.contains('configure-btn')) {
           e.stopPropagation(); // Prevent room card click handler from firing
@@ -2823,6 +2827,14 @@ async saveMediaPlayerPresets() {
           const roomKey = roomCard.dataset.roomKey;
           this._shadowRoot.getElementById('room-selector').value = roomKey;
           this.loadRoomConfiguration();
+        }
+      });
+
+      // Add change handlers for entity checkboxes
+      overviewGrid.addEventListener('change', (e) => {
+        if (e.target.classList.contains('entity-assign-checkbox')) {
+          e.stopPropagation();
+          this._handleEntityCheckboxChange(e.target);
         }
       });
       
@@ -2902,29 +2914,48 @@ async saveMediaPlayerPresets() {
    * Get unallocated entities for a room (available but not assigned)
    */
   async _getUnallocatedEntitiesForRoom(roomKey, roomData) {
-    // Get all potential entities from HA area
-    const potentialEntities = await this._scanRoomForPotentialEntities(roomKey);
-    
-    // Get configured entities
-    const configuredLights = roomData.lights || [];
-    const configuredCovers = roomData.covers || [];
-    const configuredMediaPlayers = roomData.media_players || [];
-    const configuredSensors = roomData.header_entities || [];
-    const ignoredEntities = roomData.ignored_entities || [];
-    
-    // Find unallocated entities by comparing available vs configured
-    const unallocated = {
-      lights: [],
-      covers: [],
-      media_players: [],
-      sensors: []
-    };
-    
-    // This would need to be implemented to fetch actual entities from HA
-    // For now, return empty arrays as the actual entity fetching logic
-    // would need to be implemented based on the existing room scanning logic
-    
-    return unallocated;
+    try {
+      // Fetch entities by room using the existing endpoint
+      const response = await fetch(`/api/dashview/config?type=entities_by_room&room_id=${roomKey}`);
+      if (!response.ok) {
+        console.warn('[DashView] Failed to fetch room entities:', response.statusText);
+        return { lights: [], covers: [], media_players: [], sensors: [] };
+      }
+      
+      const roomEntitiesData = await response.json();
+      
+      // Get configured entities
+      const configuredLights = roomData.lights || [];
+      const configuredCovers = roomData.covers || [];
+      const configuredMediaPlayers = roomData.media_players || [];
+      const configuredSensors = roomData.header_entities || [];
+      const ignoredEntities = roomData.ignored_entities || [];
+      
+      // Filter out configured and ignored entities to find unallocated ones
+      const unallocated = {
+        lights: (roomEntitiesData.lights || []).filter(entity => 
+          !configuredLights.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        ),
+        covers: (roomEntitiesData.covers || []).filter(entity => 
+          !configuredCovers.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        ),
+        media_players: (roomEntitiesData.media_players || []).filter(entity => 
+          !configuredMediaPlayers.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        ),
+        sensors: (roomEntitiesData.sensors || []).filter(entity => 
+          !configuredSensors.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        )
+      };
+      
+      return unallocated;
+    } catch (error) {
+      console.error('[DashView] Error fetching unallocated entities:', error);
+      return { lights: [], covers: [], media_players: [], sensors: [] };
+    }
   }
 
   /**
@@ -3018,10 +3049,10 @@ async saveMediaPlayerPresets() {
                 <div class="room-entity-item">
                   <label class="room-entity-checkbox">
                     <input type="checkbox" 
+                           class="entity-assign-checkbox"
                            data-entity-id="${entity.entity_id}"
                            data-room-key="${key}"
-                           data-entity-type="${entityType.key}"
-                           onchange="window.dashViewAdminManager._handleEntityCheckboxChange(this)">
+                           data-entity-type="${entityType.key}">
                     <div>
                       <div class="room-entity-name">${entity.name || entity.entity_id}</div>
                       <div class="room-entity-id">${entity.entity_id}</div>
@@ -3033,8 +3064,7 @@ async saveMediaPlayerPresets() {
             <div class="room-entity-select-all">
               <button class="room-entity-select-all-btn" 
                       data-room-key="${key}" 
-                      data-entity-type="${entityType.key}"
-                      onclick="window.dashViewAdminManager._handleSelectAllEntities(this)">
+                      data-entity-type="${entityType.key}">
                 Select All
               </button>
             </div>
