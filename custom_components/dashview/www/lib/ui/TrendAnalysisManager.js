@@ -48,7 +48,16 @@ export class TrendAnalysisManager {
    */
   async _loadConfiguration() {
     try {
-      const response = await fetch('/api/dashview/config?type=trend_analysis');
+      // Add authentication header if hass is available
+      const headers = {};
+      if (this._hass && this._hass.auth && this._hass.auth.accessToken) {
+        headers['Authorization'] = `Bearer ${this._hass.auth.accessToken}`;
+      }
+      
+      const response = await fetch('/api/dashview/config?type=trend_analysis', {
+        headers: headers
+      });
+      
       if (response.ok) {
         const config = await response.json();
         this._config = { ...this._config, ...config };
