@@ -42,11 +42,20 @@ export class UpcomingEventsManager {
      */
     _setupEventListeners() {
         const nextEventBtn = this._shadowRoot.querySelector('#next-event-btn');
+        const prevEventBtn = this._shadowRoot.querySelector('#prev-event-btn');
         const viewAllBtn = this._shadowRoot.querySelector('#view-all-events-btn');
 
         if (nextEventBtn) {
-            nextEventBtn.addEventListener('click', () => {
+            nextEventBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this._cycleToNextEvent();
+            });
+        }
+
+        if (prevEventBtn) {
+            prevEventBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._cycleToPreviousEvent();
             });
         }
 
@@ -56,11 +65,11 @@ export class UpcomingEventsManager {
             });
         }
 
-        // Make the header clickable to open calendar popup
-        const headerElement = this._shadowRoot.querySelector('.upcoming-events-header');
-        if (headerElement) {
-            headerElement.style.cursor = 'pointer';
-            headerElement.addEventListener('click', () => {
+        // Make the header title clickable to open calendar popup
+        const headerTitleSection = this._shadowRoot.querySelector('.upcoming-events-title-section');
+        if (headerTitleSection) {
+            headerTitleSection.style.cursor = 'pointer';
+            headerTitleSection.addEventListener('click', () => {
                 this._openCalendarPopup();
             });
         }
@@ -74,6 +83,20 @@ export class UpcomingEventsManager {
         
         this._currentEventIndex = (this._currentEventIndex + 1) % this._events.length;
         this._renderSingleEvent();
+        this._updateNavigationButtons();
+    }
+
+    /**
+     * Cycle to the previous event in the list
+     */
+    _cycleToPreviousEvent() {
+        if (this._events.length <= 1) return;
+        
+        this._currentEventIndex = this._currentEventIndex === 0 
+            ? this._events.length - 1 
+            : this._currentEventIndex - 1;
+        this._renderSingleEvent();
+        this._updateNavigationButtons();
     }
 
     /**
@@ -279,6 +302,9 @@ export class UpcomingEventsManager {
         
         // Update control button states
         this._updateControlButtons(cardElement);
+        
+        // Update navigation buttons
+        this._updateNavigationButtons();
     }
 
     _showNoEvents(cardElement) {
@@ -303,10 +329,20 @@ export class UpcomingEventsManager {
         if (this._events.length === 0) return;
 
         const event = this._events[this._currentEventIndex];
+        const sensorCard = this._shadowRoot.querySelector('.upcoming-event-sensor-card');
         const timeElement = this._shadowRoot.querySelector('.upcoming-event-time');
         const titleElement = this._shadowRoot.querySelector('.upcoming-event-title');
         const calendarIndicator = this._shadowRoot.querySelector('.calendar-indicator');
         const calendarNameElement = this._shadowRoot.querySelector('.calendar-name');
+
+        // Check if event is currently active and add appropriate class
+        if (sensorCard) {
+            if (this._isEventActive(event)) {
+                sensorCard.classList.add('active');
+            } else {
+                sensorCard.classList.remove('active');
+            }
+        }
 
         if (timeElement) {
             timeElement.textContent = this._getEventTimeDisplay(event);
@@ -326,20 +362,32 @@ export class UpcomingEventsManager {
     }
 
     _updateControlButtons(cardElement) {
-        const controlsDiv = cardElement.querySelector('.upcoming-events-controls');
-        const nextBtn = cardElement.querySelector('#next-event-btn');
+        // Update navigation button states
+        this._updateNavigationButtons();
         
-        if (controlsDiv) {
-            controlsDiv.style.display = this._events.length > 0 ? 'flex' : 'none';
+        // Update footer visibility
+        const footerDiv = cardElement.querySelector('.upcoming-events-footer');
+        if (footerDiv) {
+            footerDiv.style.display = this._events.length > 0 ? 'block' : 'none';
         }
+    }
+
+    _updateNavigationButtons() {
+        const nextBtn = this._shadowRoot.querySelector('#next-event-btn');
+        const prevBtn = this._shadowRoot.querySelector('#prev-event-btn');
         
-        if (nextBtn) {
-            // Show/hide next button based on number of events
-            nextBtn.style.visibility = this._events.length > 1 ? 'visible' : 'hidden';
+        if (nextBtn && prevBtn) {
+            // Show/hide buttons based on number of events
+            const hasMultipleEvents = this._events.length > 1;
+            nextBtn.style.display = hasMultipleEvents ? 'flex' : 'none';
             
-            // Update button text to show current position
-            if (this._events.length > 1) {
+            // Show previous button only if not on first event
+            prevBtn.style.display = hasMultipleEvents && this._currentEventIndex > 0 ? 'flex' : 'none';
+            
+            // Update tooltips with current position
+            if (hasMultipleEvents) {
                 nextBtn.title = `Next Event (${this._currentEventIndex + 1}/${this._events.length})`;
+                prevBtn.title = `Previous Event (${this._currentEventIndex + 1}/${this._events.length})`;
             }
         }
     }
@@ -388,36 +436,16 @@ export class UpcomingEventsManager {
 
     _getEventTimeDisplay(event) {
         const startTime = this._getEventStartTime(event);
-        const now = new Date();
         
         if (this._isAllDayEvent(event)) {
-            if (this._isEventToday(event)) {
-                return 'Heute';
-            } else if (this._isEventTomorrow(event)) {
-                return 'Morgen';
-            } else {
-                return this._formatDateShort(startTime);
-            }
+            return 'Ganztägig';
         } else {
-            if (this._isEventToday(event)) {
-                return startTime.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false
-                });
-            } else if (this._isEventTomorrow(event)) {
-                return `Morgen, ${startTime.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false
-                })}`;
-            } else {
-                return `${this._formatDateShort(startTime)}, ${startTime.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false
-                })}`;
-            }
+            // Always show time in HH:MM format for sensor-card layout
+            return startTime.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false
+            });
         }
     }
 
