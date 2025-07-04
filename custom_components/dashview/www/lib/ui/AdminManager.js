@@ -2779,16 +2779,35 @@ async saveMediaPlayerPresets() {
     console.log('[DashView] Refreshing room overview');
     
     const overviewGrid = this._shadowRoot.getElementById('room-overview-grid');
-    if (!overviewGrid) return;
+    if (!overviewGrid) {
+      console.error('[DashView] Room overview grid element not found');
+      return;
+    }
     
     this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Refreshing overview...', 'loading');
     
     try {
       // Get room configurations and entity counts
+      console.log('[DashView] Starting room analysis...');
       const roomsData = await this._analyzeAllRooms();
+      console.log('[DashView] Room analysis completed, found', roomsData.length, 'rooms');
+      
+      if (roomsData.length === 0) {
+        overviewGrid.innerHTML = `
+          <div class="no-rooms-message">
+            <i class="mdi mdi-home-alert"></i>
+            <p>No rooms found in configuration</p>
+            <p class="help-text">Please check your Home Assistant areas and room setup</p>
+          </div>
+        `;
+        this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'No rooms configured', 'warning');
+        return;
+      }
       
       // Generate overview cards
+      console.log('[DashView] Generating room overview cards...');
       overviewGrid.innerHTML = roomsData.map(roomData => this._generateRoomOverviewCard(roomData)).join('');
+      console.log('[DashView] Room overview cards generated successfully');
       
       // Add click handlers
       overviewGrid.addEventListener('click', (e) => {
@@ -2841,7 +2860,38 @@ async saveMediaPlayerPresets() {
       this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), `${roomsData.length} rooms analyzed`, 'success');
     } catch (error) {
       console.error('[DashView] Room overview refresh error:', error);
-      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Failed to refresh overview', 'error');
+      
+      // Show fallback room cards with basic info if possible
+      if (this._adminLocalState.houseConfig?.rooms) {
+        const rooms = Object.entries(this._adminLocalState.houseConfig.rooms);
+        overviewGrid.innerHTML = rooms.map(([roomKey, roomData]) => `
+          <div class="room-overview-card fallback" data-room-key="${roomKey}">
+            <div class="room-expandable">
+              <summary class="room-expandable-summary">
+                <div class="room-expandable-header">
+                  <div class="room-expandable-icon">
+                    <i class="mdi mdi-home-alert"></i>
+                  </div>
+                  <div class="room-expandable-info">
+                    <h6>${roomData.friendly_name || roomKey}</h6>
+                    <span class="room-expandable-issues">Unable to analyze - API error</span>
+                  </div>
+                </div>
+              </summary>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        overviewGrid.innerHTML = `
+          <div class="error-message">
+            <i class="mdi mdi-alert-circle"></i>
+            <p>Failed to load room overview</p>
+            <p class="help-text">Please check console for detailed error information</p>
+          </div>
+        `;
+      }
+      
+      this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Error loading rooms - check console', 'error');
     }
   }
 
@@ -2852,16 +2902,43 @@ async saveMediaPlayerPresets() {
     const rooms = this._adminLocalState.houseConfig?.rooms || {};
     const roomsData = [];
     
+    console.log('[DashView] Analyzing', Object.keys(rooms).length, 'rooms');
+    
     for (const [roomKey, roomData] of Object.entries(rooms)) {
-      const analysis = await this._analyzeRoomCompleteness(roomKey, roomData);
-      roomsData.push({
-        key: roomKey,
-        name: roomData.friendly_name || roomKey,
-        data: roomData,
-        analysis
-      });
+      try {
+        console.log('[DashView] Analyzing room:', roomKey);
+        const analysis = await this._analyzeRoomCompleteness(roomKey, roomData);
+        roomsData.push({
+          key: roomKey,
+          name: roomData.friendly_name || roomKey,
+          data: roomData,
+          analysis
+        });
+        console.log('[DashView] Successfully analyzed room:', roomKey);
+      } catch (error) {
+        console.error('[DashView] Error analyzing room', roomKey, ':', error);
+        // Add room with error analysis
+        roomsData.push({
+          key: roomKey,
+          name: roomData.friendly_name || roomKey,
+          data: roomData,
+          analysis: {
+            lights: 0,
+            covers: 0,
+            mediaPlayers: 0,
+            headerEntities: 0,
+            totalConfigured: 0,
+            potentialEntities: { lights: 0, covers: 0, mediaPlayers: 0, sensors: 0 },
+            completeness: 0,
+            unallocatedEntities: { lights: [], covers: [], mediaPlayers: [], sensors: [] },
+            issues: ['Error loading room data'],
+            error: true
+          }
+        });
+      }
     }
     
+    console.log('[DashView] Room analysis complete, processed', roomsData.length, 'rooms');
     return roomsData;
   }
 
@@ -2869,17 +2946,34 @@ async saveMediaPlayerPresets() {
    * Analyze room completeness and entity counts
    */
   async _analyzeRoomCompleteness(roomKey, roomData) {
+    console.log('[DashView] Analyzing room completeness for:', roomKey);
+    
     // Count configured entities
     const lights = roomData.lights?.length || 0;
     const covers = roomData.covers?.length || 0;
     const mediaPlayers = roomData.media_players?.length || 0;
     const headerEntities = roomData.header_entities?.length || 0;
     
-    // Analyze potential entities from HA area
-    const potentialEntities = await this._scanRoomForPotentialEntities(roomKey);
+    let potentialEntities, unallocatedEntities;
     
-    // Get unallocated entities
-    const unallocatedEntities = await this._getUnallocatedEntitiesForRoom(roomKey, roomData);
+    try {
+      // Analyze potential entities from HA area
+      potentialEntities = await this._scanRoomForPotentialEntities(roomKey);
+      console.log('[DashView] Potential entities for', roomKey, ':', potentialEntities);
+    } catch (error) {
+      console.error('[DashView] Error scanning potential entities for', roomKey, ':', error);
+      // Fallback with default counts
+      potentialEntities = { lights: 0, covers: 0, mediaPlayers: 0, sensors: 0 };
+    }
+    
+    try {
+      // Get unallocated entities
+      unallocatedEntities = await this._getUnallocatedEntitiesForRoom(roomKey, roomData);
+    } catch (error) {
+      console.error('[DashView] Error getting unallocated entities for', roomKey, ':', error);
+      // Fallback with empty unallocated entities
+      unallocatedEntities = { lights: [], covers: [], mediaPlayers: [], sensors: [] };
+    }
     
     // Calculate completeness score (check if room is marked as complete)
     const totalConfigured = lights + covers + mediaPlayers + headerEntities;
@@ -3231,16 +3325,46 @@ async saveMediaPlayerPresets() {
    * Scan room for potential entities that could be configured
    */
   async _scanRoomForPotentialEntities(roomKey) {
+    console.log('[DashView] Scanning potential entities for room:', roomKey);
+    
     try {
-      // Get entities by room from multiple domains and labels
-      const [lightsData, coversData, mediaPlayersData, motionData, windowData, smokeData] = await Promise.all([
-        fetch(`/api/dashview/config?type=entities_by_room&domain=light`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&domain=cover`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=available_media_players`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=motion`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=fenster`).then(r => r.json()),
-        fetch(`/api/dashview/config?type=entities_by_room&label=rauchmelder`).then(r => r.json())
-      ]);
+      // Get entities by room from multiple domains and labels with error handling
+      const apiCalls = [
+        { name: 'lights', url: `dashview/config?type=entities_by_room&domain=light` },
+        { name: 'covers', url: `dashview/config?type=entities_by_room&domain=cover` },
+        { name: 'media_players', url: `dashview/config?type=available_media_players` },
+        { name: 'motion', url: `dashview/config?type=entities_by_room&label=motion` },
+        { name: 'windows', url: `dashview/config?type=entities_by_room&label=fenster` },
+        { name: 'smoke', url: `dashview/config?type=entities_by_room&label=rauchmelder` }
+      ];
+
+      const results = await Promise.allSettled(
+        apiCalls.map(async ({ name, url }) => {
+          try {
+            console.log('[DashView] Fetching', name, 'for room analysis');
+            const data = await this._hass.callApi('GET', url);
+            console.log('[DashView] Successfully fetched', name, 'data');
+            return { name, data };
+          } catch (error) {
+            console.warn('[DashView] Failed to fetch', name, ':', error.message);
+            return { name, data: name === 'media_players' ? [] : {} };
+          }
+        })
+      );
+
+      // Extract data with fallbacks
+      const dataMap = {};
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          dataMap[result.value.name] = result.value.data;
+        } else {
+          console.warn('[DashView] API call failed for', apiCalls[index].name, ':', result.reason);
+          dataMap[apiCalls[index].name] = apiCalls[index].name === 'media_players' ? [] : {};
+        }
+      });
+
+      const { lights: lightsData, covers: coversData, media_players: mediaPlayersData, 
+              motion: motionData, windows: windowData, smoke: smokeData } = dataMap;
       
       const roomAreaData = lightsData[roomKey] || { entities: [] };
       const issues = [];
