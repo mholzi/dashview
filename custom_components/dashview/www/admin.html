@@ -105,46 +105,6 @@
                 <button id="bulk-room-setup" class="save-button">Quick Setup All Rooms</button>
             </div>
         </div>
-        
-        <!-- Room Detail Configuration Section -->
-        <div class="config-section">
-            <h5>Room Detail Configuration</h5>
-            <p>Configure a specific room with all its entities, discovery status, and bulk operations.</p>
-            
-            <div class="form-row">
-                <select id="room-selector" class="dropdown-selector">
-                    <option value="">Select a room to configure...</option>
-                </select>
-                <button id="load-room-config" class="action-button">Load Room</button>
-            </div>
-            
-            <div id="room-detail-container" class="room-detail-container" style="display: none;">
-                <!-- Room detail configuration will be dynamically loaded here -->
-            </div>
-        </div>
-        
-        <!-- Entity Discovery Assistant Section -->
-        <div class="config-section">
-            <h5>Entity Discovery Assistant</h5>
-            <p>Scan for unlabeled entities and get suggestions for DashView integration. This helps identify entities that could be used in DashView but are missing required labels.</p>
-            
-            <div id="discovery-assistant-status" class="status-display">
-                <span class="status-icon mdi"></span>
-                <span class="status-text">Ready</span>
-            </div>
-            
-            <div class="form-row">
-                <select id="discovery-room-selector" class="dropdown-selector">
-                    <option value="">Select room for discovery...</option>
-                </select>
-                <button id="scan-room-entities" class="action-button">Scan Room</button>
-                <button id="scan-all-rooms" class="save-button">Scan All Rooms</button>
-            </div>
-            
-            <div id="discovery-results" class="discovery-results">
-                <!-- Discovery results will be shown here -->
-            </div>
-        </div>
     </div>
     <div id="calendar-management-tab" class="tab-content">
         <h4>Calendar Management</h4>
