@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2025-07-04
+
+### 🐛 Critical Bug Fixes
+
+- **Calendar Popup Loading**: Completely resolved infinite loading spinner issue with comprehensive error handling (#490)
+  - Enhanced CalendarManager with robust error handling and fallback mechanisms
+  - Added comprehensive debugging and logging for calendar popup issues
+  - Implemented timeout protection and defensive checks for HomeAssistant API availability
+  - Added fallback API calls when primary calendar requests fail
+  - Fixed calendar events container loading state management
+
+- **Admin Room Management Loading**: Fixed infinite loading in Room Management section (#490)
+  - Enhanced AdminManager with timeout protection (30-second limit) to prevent infinite loading
+  - Improved Promise.allSettled error handling with detailed logging for room analysis
+  - Added comprehensive API authentication checks and fallback data structures
+  - Enhanced room scanning with proper error recovery for individual API failures
+  - Fixed authentication issues with proper HomeAssistant API integration
+
+### 🔧 Enhanced Error Handling & Debugging
+
+- **Comprehensive Error Logging**: Added extensive console.log statements throughout calendar and admin systems
+  - Calendar popup now provides detailed debugging information for all loading steps
+  - Room management analysis includes comprehensive API call logging and error tracking
+  - Enhanced error messages provide specific guidance for troubleshooting
+  - Added error stack traces and detailed API response logging
+
+- **Timeout & Fallback Protection**: Implemented robust error recovery mechanisms
+  - Room analysis now has 30-second timeout to prevent infinite loading states
+  - Calendar popup includes fallback API calls when primary requests fail
+  - Both systems gracefully degrade with appropriate user feedback
+  - Enhanced loading state management prevents users from seeing infinite spinners
+
+### 🎯 Verified Working Features
+
+- **Mower Cleaning State Formatting**: Confirmed proper implementation in sensor-big cards
+  - CSS class `.mower-cleaning` properly applies gray100 background with gray800 text
+  - FloorManager correctly detects and applies mower cleaning state formatting
+
+- **Kommende Termine Card Padding**: Confirmed reduced padding implementation  
+  - `.upcoming-events-container` padding reduced to 4px as requested
+  - Background properly set to `var(--popupBG)` for visual consistency
+
+- **Info-text Mower Functionality**: Enhanced mower status in info-card area
+  - Proper cleaning and error state handling with German localization
+  - State-specific messaging with appropriate icons (mdi-robot-mower, mdi-robot-mower-alert)
+
+### 🔧 Technical Improvements
+
+- **Enhanced Promise Handling**: Better parallel API call management with individual error recovery
+- **Authentication Validation**: Comprehensive HomeAssistant API availability checks
+- **Memory Management**: Proper cleanup and disposal to prevent memory leaks
+- **State Management**: Improved loading state transitions and user feedback
+
+### 🎯 Impact
+
+- ✅ Calendar popup now loads reliably instead of showing infinite loading spinner
+- ✅ Admin Room Management section loads properly with detailed error reporting
+- ✅ Enhanced debugging provides clear insight into any loading issues
+- ✅ Timeout protection prevents users from waiting indefinitely
+- ✅ Comprehensive error handling ensures graceful degradation
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.9.2...v0.9.3
+
 ## [0.9.2] - 2025-07-04
 
 ### 🐛 Bug Fixes
