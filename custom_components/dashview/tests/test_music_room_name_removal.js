@@ -20,23 +20,47 @@ class MusicRoomNameRemovalTests {
         const jsPath = path.join(__dirname, '../www/dashview-panel.js');
         const jsContent = fs.readFileSync(jsPath, 'utf8');
         
-        // Find the _generateMusicRoomHTML function
-        const musicRoomHTMLMatch = jsContent.match(/_generateMusicRoomHTML\s*\([^)]+\)\s*{[\s\S]*?return `[\s\S]*?`[\s\S]*?}/);
+        // Find the _generateMusicPopupContent function (updated function name)
+        let start = jsContent.indexOf('_generateMusicPopupContent(popup) {');
+        let musicPopupContentFunction = null;
         
-        if (musicRoomHTMLMatch) {
-            const musicRoomHTMLContent = musicRoomHTMLMatch[0];
+        if (start !== -1) {
+            let braceCount = 0;
+            let inFunction = false;
+            let end = start;
+            
+            for (let i = start; i < jsContent.length; i++) {
+                if (jsContent[i] === '{') {
+                    braceCount++;
+                    inFunction = true;
+                } else if (jsContent[i] === '}') {
+                    braceCount--;
+                    if (inFunction && braceCount === 0) {
+                        end = i + 1;
+                        break;
+                    }
+                }
+            }
+            
+            musicPopupContentFunction = jsContent.substring(start, end);
+        }
+        
+        if (musicPopupContentFunction) {
             
             // Test current state - should NOT contain media-room-header after fix
-            const hasMediaRoomHeader = /media-room-header/.test(musicRoomHTMLContent);
-            const hasMediaRoomTitle = /media-room-title/.test(musicRoomHTMLContent);
-            const hasRoomFriendlyName = /\${room\.friendly_name}/.test(musicRoomHTMLContent);
+            const hasMediaRoomHeader = /media-room-header/.test(musicPopupContentFunction);
+            const hasMediaRoomTitle = /media-room-title/.test(musicPopupContentFunction);
+            
+            // Check for room name in the media content area (ignore tab button friendly name usage)
+            const contentHTMLPart = musicPopupContentFunction.replace(/tabContainer\.innerHTML[\s\S]*?join\('\'\);/, '');
+            const hasRoomNameInContent = /\${.*?friendly_name.*?}/.test(contentHTMLPart);
             
             console.log(`Media room header present: ${hasMediaRoomHeader}`);
             console.log(`Media room title class present: ${hasMediaRoomTitle}`);
-            console.log(`Room friendly name interpolation present: ${hasRoomFriendlyName}`);
+            console.log(`Room friendly name in content area: ${hasRoomNameInContent}`);
             
-            // For the fix, we expect these to be false
-            if (!hasMediaRoomHeader && !hasMediaRoomTitle && !hasRoomFriendlyName) {
+            // For the fix, we expect these to be false (room names should only be in tabs)
+            if (!hasMediaRoomHeader && !hasMediaRoomTitle && !hasRoomNameInContent) {
                 this.testResults.push({ name: 'Room name removed from music display', passed: true });
                 console.log('✓ Room name successfully removed from music room display');
             } else {
@@ -44,8 +68,8 @@ class MusicRoomNameRemovalTests {
                 console.log('❌ Room name still present in music room display');
             }
         } else {
-            this.testResults.push({ name: 'Music room HTML function exists', passed: false });
-            console.log('❌ _generateMusicRoomHTML function not found');
+            this.testResults.push({ name: 'Music popup content function exists', passed: false });
+            console.log('❌ _generateMusicPopupContent function not found');
         }
     }
 
@@ -53,26 +77,53 @@ class MusicRoomNameRemovalTests {
         const jsPath = path.join(__dirname, '../www/dashview-panel.js');
         const jsContent = fs.readFileSync(jsPath, 'utf8');
         
-        // Find the _generateMusicRoomHTML function
-        const musicRoomHTMLMatch = jsContent.match(/_generateMusicRoomHTML\s*\([^)]+\)\s*{[\s\S]*?return `[\s\S]*?`[\s\S]*?}/);
+        // Find the _generateMusicPopupContent function  
+        let start = jsContent.indexOf('_generateMusicPopupContent(popup) {');
+        let musicPopupContentFunction = null;
         
-        if (musicRoomHTMLMatch) {
-            const musicRoomHTMLContent = musicRoomHTMLMatch[0];
+        if (start !== -1) {
+            let braceCount = 0;
+            let inFunction = false;
+            let end = start;
             
-            // Check that the HTML structure is still valid
-            const hasMediaDisplay = /media-display/.test(musicRoomHTMLContent);
-            const hasMediaCover = /media-cover/.test(musicRoomHTMLContent);
-            const hasMediaControls = /media-controls/.test(musicRoomHTMLContent);
-            const hasMediaPresets = /media-presets/.test(musicRoomHTMLContent);
+            for (let i = start; i < jsContent.length; i++) {
+                if (jsContent[i] === '{') {
+                    braceCount++;
+                    inFunction = true;
+                } else if (jsContent[i] === '}') {
+                    braceCount--;
+                    if (inFunction && braceCount === 0) {
+                        end = i + 1;
+                        break;
+                    }
+                }
+            }
             
-            if (hasMediaDisplay && hasMediaCover && hasMediaControls && hasMediaPresets) {
+            musicPopupContentFunction = jsContent.substring(start, end);
+        }
+        
+        if (musicPopupContentFunction) {
+            
+            // Check that the HTML structure contains essential media components
+            // Look for media-player-card and media-player-container which are the core components
+            const hasMediaPlayerCard = /media-player-card/.test(musicPopupContentFunction);
+            const hasMediaPlayerContainer = /media-player-container/.test(musicPopupContentFunction);
+            const hasMusicRoomContent = /music-room-content/.test(musicPopupContentFunction);
+            
+            // Check that media player manager is still initialized
+            const hasMediaPlayerInit = /_mediaPlayerManager/.test(musicPopupContentFunction);
+            
+            if (hasMediaPlayerCard && hasMediaPlayerContainer && hasMusicRoomContent && hasMediaPlayerInit) {
                 this.testResults.push({ name: 'Essential media components preserved', passed: true });
-                console.log('✓ Essential media components (display, cover, controls, presets) are preserved');
+                console.log('✓ Essential media components (player card, container, room content, manager) are preserved');
             } else {
                 this.testResults.push({ name: 'Essential media components preserved', passed: false });
                 console.log('❌ Some essential media components are missing');
-                console.log(`  Media display: ${hasMediaDisplay}, Cover: ${hasMediaCover}, Controls: ${hasMediaControls}, Presets: ${hasMediaPresets}`);
+                console.log(`  Media player card: ${hasMediaPlayerCard}, Container: ${hasMediaPlayerContainer}, Room content: ${hasMusicRoomContent}, Manager init: ${hasMediaPlayerInit}`);
             }
+        } else {
+            this.testResults.push({ name: 'Essential media components preserved', passed: false });
+            console.log('❌ _generateMusicPopupContent function not found');
         }
     }
 
