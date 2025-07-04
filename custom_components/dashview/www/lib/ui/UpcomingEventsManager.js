@@ -8,6 +8,8 @@ export class UpcomingEventsManager {
         this._events = [];
         this._isLoading = false;
         this._updateInterval = null;
+        this._currentEventIndex = 0;  // Track current displayed event
+        this._calendarsMetadata = {};  // Store calendar colors and names
     }
 
     setHass(hass) {
@@ -24,6 +26,7 @@ export class UpcomingEventsManager {
      */
     initialize() {
         this.update();
+        this._setupEventListeners();
         
         // Set up periodic updates every 5 minutes
         if (this._updateInterval) {
@@ -32,6 +35,55 @@ export class UpcomingEventsManager {
         this._updateInterval = setInterval(() => {
             this.update();
         }, 5 * 60 * 1000); // 5 minutes
+    }
+
+    /**
+     * Set up event listeners for the new control buttons
+     */
+    _setupEventListeners() {
+        const nextEventBtn = this._shadowRoot.querySelector('#next-event-btn');
+        const viewAllBtn = this._shadowRoot.querySelector('#view-all-events-btn');
+
+        if (nextEventBtn) {
+            nextEventBtn.addEventListener('click', () => {
+                this._cycleToNextEvent();
+            });
+        }
+
+        if (viewAllBtn) {
+            viewAllBtn.addEventListener('click', () => {
+                this._openCalendarPopup();
+            });
+        }
+
+        // Make the header clickable to open calendar popup
+        const headerElement = this._shadowRoot.querySelector('.upcoming-events-header');
+        if (headerElement) {
+            headerElement.style.cursor = 'pointer';
+            headerElement.addEventListener('click', () => {
+                this._openCalendarPopup();
+            });
+        }
+    }
+
+    /**
+     * Cycle to the next event in the list
+     */
+    _cycleToNextEvent() {
+        if (this._events.length <= 1) return;
+        
+        this._currentEventIndex = (this._currentEventIndex + 1) % this._events.length;
+        this._renderSingleEvent();
+    }
+
+    /**
+     * Open the full calendar popup
+     */
+    _openCalendarPopup() {
+        const calendarButton = this._shadowRoot.querySelector('[data-hash="#calendar"]');
+        if (calendarButton) {
+            calendarButton.click();
+        }
     }
 
     /**
@@ -91,10 +143,10 @@ export class UpcomingEventsManager {
             
             console.log('[DashView] UpcomingEventsManager: Fetching events for calendars:', linkedCalendars);
             
-            // Use hass.callApi for proper authentication
+            // Use hass.callApi for proper authentication with enhanced API
             const data = await this._hass.callApi(
                 'GET',
-                `dashview/config?type=calendar_events&entity_ids=${encodeURIComponent(entityIds)}&start_date=${encodeURIComponent(startDateString)}&end_date=${encodeURIComponent(endDateString)}`
+                `dashview/config?type=calendar_events&calendar_ids=${encodeURIComponent(entityIds)}&start_date=${encodeURIComponent(startDateString)}&end_date=${encodeURIComponent(endDateString)}`
             );
             
             // Handle backend errors
@@ -105,6 +157,7 @@ export class UpcomingEventsManager {
             }
             
             this._events = data.events || [];
+            this._calendarsMetadata = data.calendars || {};
             console.log('[DashView] UpcomingEventsManager: Successfully loaded', this._events.length, 'events');
             
             // Render events
@@ -205,45 +258,90 @@ export class UpcomingEventsManager {
     }
 
     _renderEvents(cardElement) {
-        const contentDiv = cardElement.querySelector('.upcoming-events-content');
-        if (!contentDiv) return;
-
-        if (this._events.length === 0) {
-            contentDiv.innerHTML = `
-                <div class="upcoming-events-empty">
-                    <div class="upcoming-events-empty-text">Keine kommenden Termine</div>
-                    <div class="upcoming-events-help">Ihr Kalender ist frei!</div>
-                </div>
-            `;
-            return;
-        }
-
         // Filter out finished events first
         const activeEvents = this._events.filter(event => !this._isEventFinished(event));
         
         if (activeEvents.length === 0) {
+            this._showNoEvents(cardElement);
+            return;
+        }
+
+        // Sort active events by start time
+        this._events = this._sortEventsByTime(activeEvents);
+        
+        // Reset current index if it's out of bounds
+        if (this._currentEventIndex >= this._events.length) {
+            this._currentEventIndex = 0;
+        }
+
+        // Render the current single event
+        this._renderSingleEvent();
+        
+        // Update control button states
+        this._updateControlButtons(cardElement);
+    }
+
+    _showNoEvents(cardElement) {
+        const contentDiv = cardElement.querySelector('.upcoming-events-content');
+        if (contentDiv) {
             contentDiv.innerHTML = `
                 <div class="upcoming-events-empty">
                     <div class="upcoming-events-empty-text">Keine kommenden Termine</div>
                     <div class="upcoming-events-help">Ihr Kalender ist frei!</div>
                 </div>
             `;
-            return;
+        }
+        
+        // Hide control buttons when no events
+        const controlsDiv = cardElement.querySelector('.upcoming-events-controls');
+        if (controlsDiv) {
+            controlsDiv.style.display = 'none';
+        }
+    }
+
+    _renderSingleEvent() {
+        if (this._events.length === 0) return;
+
+        const event = this._events[this._currentEventIndex];
+        const timeElement = this._shadowRoot.querySelector('.upcoming-event-time');
+        const titleElement = this._shadowRoot.querySelector('.upcoming-event-title');
+        const calendarIndicator = this._shadowRoot.querySelector('.calendar-indicator');
+        const calendarNameElement = this._shadowRoot.querySelector('.calendar-name');
+
+        if (timeElement) {
+            timeElement.textContent = this._getEventTimeDisplay(event);
         }
 
-        // Sort active events by start time and get next 3 events
-        const sortedEvents = this._sortEventsByTime(activeEvents);
-        const upcomingEvents = sortedEvents.slice(0, 3);
+        if (titleElement) {
+            titleElement.textContent = event.summary || event.title || 'Untitled Event';
+        }
 
-        let html = '';
-        upcomingEvents.forEach(event => {
-            html += this._renderEventItem(event);
-        });
+        if (calendarIndicator && calendarNameElement) {
+            const calendarId = event.calendar_entity_id;
+            const calendarMeta = this._calendarsMetadata[calendarId] || {};
+            
+            calendarIndicator.style.backgroundColor = calendarMeta.color || '#1976d2';
+            calendarNameElement.textContent = calendarMeta.friendly_name || calendarId;
+        }
+    }
 
-        contentDiv.innerHTML = html;
-
-        // Add click handlers to open calendar popup
-        this._addEventClickHandlers(contentDiv);
+    _updateControlButtons(cardElement) {
+        const controlsDiv = cardElement.querySelector('.upcoming-events-controls');
+        const nextBtn = cardElement.querySelector('#next-event-btn');
+        
+        if (controlsDiv) {
+            controlsDiv.style.display = this._events.length > 0 ? 'flex' : 'none';
+        }
+        
+        if (nextBtn) {
+            // Show/hide next button based on number of events
+            nextBtn.style.visibility = this._events.length > 1 ? 'visible' : 'hidden';
+            
+            // Update button text to show current position
+            if (this._events.length > 1) {
+                nextBtn.title = `Next Event (${this._currentEventIndex + 1}/${this._events.length})`;
+            }
+        }
     }
 
     _sortEventsByTime(events) {
@@ -287,31 +385,6 @@ export class UpcomingEventsManager {
         return this._getEventStartTime(event);
     }
 
-    _renderEventItem(event) {
-        const title = this._escapeHtml(event.summary || event.title || 'Untitled Event');
-        const timeDisplay = this._getEventTimeDisplay(event);
-        const isActive = this._isEventActive(event);
-        const calendarIcon = this._getCalendarIcon(event.calendar_entity_id);
-        
-        // Use sensor-small template structure
-        const cardClasses = ['sensor-small-card'];
-        if (isActive) {
-            cardClasses.push('is-on', 'is-big');
-        }
-        cardClasses.push('calendar-entity'); // Add entity type for styling
-
-        return `
-            <div class="${cardClasses.join(' ')}" data-type="calendar" data-event-date="${this._getEventDateString(event)}">
-                <div class="sensor-small-grid">
-                    <div class="sensor-small-icon-cell">
-                        <i class="mdi ${calendarIcon}"></i>
-                    </div>
-                    <div class="sensor-small-label">${timeDisplay}</div>
-                    <div class="sensor-small-name">${title}</div>
-                </div>
-            </div>
-        `;
-    }
 
     _getEventTimeDisplay(event) {
         const startTime = this._getEventStartTime(event);
@@ -442,55 +515,9 @@ export class UpcomingEventsManager {
         return date.toLocaleDateString('en-US', options);
     }
 
-    _getCalendarIcon(entityId) {
-        // Default calendar icon
-        let icon = 'mdi-calendar-blank';
-        
-        // Try to get more specific icon based on calendar name
-        if (entityId) {
-            const lowerName = entityId.toLowerCase();
-            if (lowerName.includes('work') || lowerName.includes('office')) {
-                icon = 'mdi-briefcase';
-            } else if (lowerName.includes('family') || lowerName.includes('home')) {
-                icon = 'mdi-home-group';
-            } else if (lowerName.includes('holiday') || lowerName.includes('vacation')) {
-                icon = 'mdi-airplane';
-            } else if (lowerName.includes('birthday')) {
-                icon = 'mdi-cake-variant';
-            }
-        }
-        
-        return icon;
-    }
-
     _escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    _addEventClickHandlers(contentDiv) {
-        const eventItems = contentDiv.querySelectorAll('.sensor-small-card');
-        eventItems.forEach(item => {
-            item.addEventListener('click', () => {
-                // Open calendar popup
-                const calendarButton = this._shadowRoot.querySelector('[data-hash="#calendar"]');
-                if (calendarButton) {
-                    calendarButton.click();
-                }
-            });
-        });
-
-        // Also make the header clickable
-        const headerElement = this._shadowRoot.querySelector('.upcoming-events-header');
-        if (headerElement) {
-            headerElement.style.cursor = 'pointer';
-            headerElement.addEventListener('click', () => {
-                const calendarButton = this._shadowRoot.querySelector('[data-hash="#calendar"]');
-                if (calendarButton) {
-                    calendarButton.click();
-                }
-            });
-        }
     }
 }
