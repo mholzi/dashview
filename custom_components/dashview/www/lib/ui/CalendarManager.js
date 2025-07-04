@@ -233,14 +233,27 @@ export class CalendarManager {
 
     _renderEventsForCurrentDay(popupElement) {
         const eventsContainer = popupElement.querySelector('.calendar-events-container');
-        if (!eventsContainer) return;
+        if (!eventsContainer) {
+            console.error('[DashView] CalendarManager: Calendar events container not found');
+            return;
+        }
 
         const dayEvents = this._events[this._currentDay] || [];
+        console.log('[DashView] CalendarManager: Rendering events for', this._currentDay, '- total events:', dayEvents.length);
+        
+        // Ensure selected calendars is initialized
+        if (this._selectedCalendars.length === 0) {
+            const linkedCalendars = this._panel._houseConfig?.linked_calendars || [];
+            this._selectedCalendars = [...linkedCalendars];
+            console.log('[DashView] CalendarManager: Initialized selected calendars:', this._selectedCalendars);
+        }
         
         // Filter events by selected calendars
         const filteredEvents = dayEvents.filter(event => 
             this._selectedCalendars.includes(event.calendar_entity_id)
         );
+        
+        console.log('[DashView] CalendarManager: Filtered events:', filteredEvents.length, 'from', dayEvents.length, 'total events');
 
         if (filteredEvents.length === 0) {
             eventsContainer.innerHTML = `
@@ -268,7 +281,10 @@ export class CalendarManager {
         });
         
         html += '</div>';
+        
+        console.log('[DashView] CalendarManager: Setting events container HTML, length:', html.length);
         eventsContainer.innerHTML = html;
+        console.log('[DashView] CalendarManager: Events container updated successfully');
         
         // Add event click listeners
         this._addEventClickListeners(eventsContainer);
