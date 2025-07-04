@@ -7,6 +7,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-01-04
+
+### ✨ New Features
+
+#### 🏠 Enhanced Mower Sensor Support (#476)
+- **New mower states**: Added support for `docked` and `cleaning` states in addition to existing `mowing`, `returning`, `error`, and `going_home`
+- **German localization**: Improved German status text for mower entities
+  - `mowing/cleaning`: "mäht" (without emoji)
+  - `docked`: "parkt"
+  - `returning/going_home`: "kehrt zurück"
+  - `error`: "hat einen Fehler"
+- **Enhanced compatibility**: Better support for different mower device types and state variations
+
+### 🐛 Bug Fixes
+
+#### 🔧 Admin Panel Console Errors (#475)
+- **Fixed TrendAnalysisManager authentication**: Resolved 401 Unauthorized errors for trend_analysis API endpoint
+  - Added proper authentication headers to API calls
+  - Implemented graceful fallback to default configuration when authentication is pending
+- **Fixed admin panel test notifications**: Resolved `testNotification` undefined errors
+  - Made notification test functions globally accessible via window object
+  - Enhanced notification system integration with admin panel
+- **Fixed AdminManager null reference errors**: Resolved TypeError in `loadConfigurationHealthCheck`
+  - Added proper null checks for DOM elements before manipulation
+  - Improved error handling and graceful degradation
+
+#### 🎨 Admin Interface Improvements (#477, #478)
+- **Streamlined Room Management tab**: Removed redundant and confusing sections
+  - Removed unused Room Detail Configuration section
+  - Removed Entity Discovery Assistant section
+  - Simplified interface focuses on core Room Configuration Overview
+- **Improved user experience**: Cleaner, more focused admin interface with reduced complexity
+
+### 🔧 Technical Improvements
+
+#### Backend Enhancements
+- **Enhanced authentication handling**: Better API authentication patterns throughout the application
+- **Improved error handling**: More robust error handling in trend analysis and admin components
+- **Code cleanup**: Removed redundant admin interface components for better maintainability
+
+#### Frontend Architecture
+- **Better null safety**: Added comprehensive null checks to prevent runtime errors
+- **Global function accessibility**: Improved admin panel function organization and accessibility
+- **Enhanced admin panel stability**: Better error recovery and graceful degradation
+
+### 🔄 Migration Notes
+
+- **Mower entities**: Existing mower sensors will automatically benefit from new state support and improved German localization
+- **Admin interface**: Room Management tab is now simplified - removed sections were redundant and the core functionality remains intact
+- **API compatibility**: All changes are backward compatible with existing configurations
+- **No breaking changes**: All existing functionality preserved while improving stability and user experience
+
+### 🎯 Quality Improvements
+
+- **Error reduction**: Significant reduction in console errors during normal operation
+- **Better admin experience**: Cleaner, more focused admin interface with improved stability
+- **Enhanced device support**: Better support for various mower device types and states
+- **Improved reliability**: More robust error handling and graceful degradation throughout
+
+### 👥 Contributors
+
+- @mholzi - Complete implementation of mower state enhancements, console error fixes, and admin interface improvements
+
+**Full Changelog**: https://github.com/mholzi/dashview/compare/v0.6.0...v0.7.0
+
 ## [0.6.0] - 2025-07-03
 
 ### ✨ Major Features

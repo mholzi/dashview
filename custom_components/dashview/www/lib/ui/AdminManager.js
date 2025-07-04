@@ -2392,17 +2392,18 @@ async saveMediaPlayerPresets() {
           </button>
         </div>
       `;
+      }
     }
   }
 
   /**
    * Render configuration health report
    */
-  _renderConfigurationHealthReport(healthData) {
+  _renderConfigurationHealthReport(healthData = {}) {
     const tabContent = this._shadowRoot.getElementById('admin-tab-content');
     
-    const hasIssues = healthData.totalIssues > 0;
-    const fixableIssues = healthData.issues.filter(issue => issue.fixable);
+    const hasIssues = (healthData.totalIssues || 0) > 0;
+    const fixableIssues = (healthData.issues || []).filter(issue => issue.fixable);
     
     tabContent.innerHTML = `
       <div class="config-health-container">
@@ -2411,15 +2412,15 @@ async saveMediaPlayerPresets() {
         <div class="config-health-report">
           <div class="config-health-summary">
             <div class="health-stat total">
-              <div class="health-stat-number">${healthData.totalIssues}</div>
+              <div class="health-stat-number">${healthData.totalIssues || 0}</div>
               <div class="health-stat-label">Gesamt Probleme</div>
             </div>
             <div class="health-stat errors">
-              <div class="health-stat-number">${healthData.errors}</div>
+              <div class="health-stat-number">${healthData.errors || 0}</div>
               <div class="health-stat-label">Fehler</div>
             </div>
             <div class="health-stat warnings">
-              <div class="health-stat-number">${healthData.warnings}</div>
+              <div class="health-stat-number">${healthData.warnings || 0}</div>
               <div class="health-stat-label">Warnungen</div>
             </div>
           </div>
