@@ -464,15 +464,15 @@ export class InfoCardManager {
       let statusText = '';
       
       if (state === 'mowing' || state === 'cleaning') {
-        statusText = 'mäht 🚜';
+        statusText = 'mäht';
       } else if (state === 'docked') {
-        statusText = 'parkt 🚜';
+        statusText = 'parkt';
       } else if (state === 'returning' || state === 'going_home') {
-        statusText = 'kehrt zurück 🚜';
+        statusText = 'kehrt zurück';
       } else if (state === 'error') {
-        statusText = 'hat einen Fehler 🚜';
+        statusText = 'hat einen Fehler';
       } else {
-        statusText = `ist ${entity.state} 🚜`;
+        statusText = `ist ${entity.state}`;
       }
       
       statusElement.textContent = statusText;
