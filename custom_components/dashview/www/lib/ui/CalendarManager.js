@@ -119,6 +119,12 @@ export class CalendarManager {
         // Get linked calendars from house config
         const linkedCalendars = this._panel._houseConfig?.linked_calendars || [];
         
+        // Ensure selected calendars is initialized with linked calendars
+        if (this._selectedCalendars.length === 0) {
+            this._selectedCalendars = [...linkedCalendars];
+            console.log('[DashView] CalendarManager: Initialized selected calendars during load:', this._selectedCalendars);
+        }
+        
         if (linkedCalendars.length === 0) {
             this._showNoCalendars(popupElement);
             this._isLoading = false;
@@ -248,12 +254,20 @@ export class CalendarManager {
             console.log('[DashView] CalendarManager: Initialized selected calendars:', this._selectedCalendars);
         }
         
-        // Filter events by selected calendars
-        const filteredEvents = dayEvents.filter(event => 
-            this._selectedCalendars.includes(event.calendar_entity_id)
-        );
+        // Filter events by selected calendars - if no calendars selected, show all events
+        let filteredEvents;
+        if (this._selectedCalendars.length === 0) {
+            filteredEvents = dayEvents;
+            console.log('[DashView] CalendarManager: No selected calendars, showing all events');
+        } else {
+            filteredEvents = dayEvents.filter(event => 
+                this._selectedCalendars.includes(event.calendar_entity_id)
+            );
+        }
         
         console.log('[DashView] CalendarManager: Filtered events:', filteredEvents.length, 'from', dayEvents.length, 'total events');
+        console.log('[DashView] CalendarManager: Selected calendars:', this._selectedCalendars);
+        console.log('[DashView] CalendarManager: Event calendar IDs:', dayEvents.map(e => e.calendar_entity_id));
 
         if (filteredEvents.length === 0) {
             eventsContainer.innerHTML = `
