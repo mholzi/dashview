@@ -1,7 +1,6 @@
 // custom_components/dashview/www/lib/ui/FloorManager.js
 
 import { GestureDetector } from '../utils/GestureDetector.js';
-import { FloorGestureManager } from '../utils/FloorGestureManager.js';
 import { calculateTimeDifferenceShort } from '../utils/time-utils.js';
 import { SimpleYamlParser } from '../utils/yaml-parser.js';
 
@@ -27,8 +26,6 @@ export class FloorManager {
       enableVisualFeedback: true
     });
     
-    // Initialize advanced floor gesture manager for swipe navigation
-    this._floorGestureManager = null; // Initialize after DOM is ready
     
     
     // Template cache for person cards
@@ -125,12 +122,6 @@ export class FloorManager {
     if (this._gestureDetector) {
       this._gestureDetector.dispose();
       this._gestureDetector = null;
-    }
-    
-    // Clean up floor gesture manager
-    if (this._floorGestureManager) {
-      this._floorGestureManager.dispose();
-      this._floorGestureManager = null;
     }
     
     // Clean up context menu manager
@@ -363,14 +354,6 @@ export class FloorManager {
     if (floors.length > 0) {
       this.renderFloorLayout(floors[0][0]);
       
-      // Initialize floor gesture manager after floor tabs are created
-      if (!this._floorGestureManager) {
-        this._floorGestureManager = new FloorGestureManager(this, {
-          enableHapticFeedback: true,
-          swipeThreshold: 50,
-          swipeVelocityThreshold: 0.3
-        });
-      }
       
     }
   }
