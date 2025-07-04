@@ -3756,6 +3756,21 @@ body.popup-open, :host(.popup-open) {
     background: var(--active-big);
 }
 
+/* Mower cleaning state - gray100 background with gray800 text/icon */
+.sensor-small-card.mower-cleaning,
+.sensor-big-card.mower-cleaning {
+    background: var(--gray100);
+}
+
+.sensor-small-card.mower-cleaning .sensor-small-icon-cell i,
+.sensor-small-card.mower-cleaning .sensor-small-label,
+.sensor-small-card.mower-cleaning .sensor-small-name,
+.sensor-big-card.mower-cleaning .sensor-big-icon-cell i,
+.sensor-big-card.mower-cleaning .sensor-big-name,
+.sensor-big-card.mower-cleaning .sensor-big-label {
+    color: var(--gray800);
+}
+
 /* Person and tracker entities */
 .sensor-small-card.person-entity,
 .sensor-small-card.tracker-entity,
@@ -5038,7 +5053,7 @@ body.popup-open, :host(.popup-open) {
 
 .upcoming-events-container {
     border-radius: 20px;
-    padding: 8px;
+    padding: 4px;
     border: 1px solid var(--gray200);
     margin: 2px 0;
     background: var(--popupBG);
@@ -5248,7 +5263,7 @@ body.popup-open, :host(.popup-open) {
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .upcoming-events-container {
-        padding: 12px;
+        padding: 4px;
         margin: 1px 0;
     }
     

@@ -142,12 +142,15 @@ export class CalendarManager {
             const entityIds = linkedCalendars.join(',');
             
             console.log('[DashView] CalendarManager: Fetching events for day:', this._currentDay, 'calendars:', linkedCalendars);
+            console.log('[DashView] CalendarManager: API URL will be:', `dashview/config?type=calendar_events&calendar_ids=${encodeURIComponent(entityIds)}&date_filter=${dateFilter}`);
             
             // Use enhanced API with date filter
             const data = await this._hass.callApi(
                 'GET',
                 `dashview/config?type=calendar_events&calendar_ids=${encodeURIComponent(entityIds)}&date_filter=${dateFilter}`
             );
+            
+            console.log('[DashView] CalendarManager: API response received:', data);
             
             // Handle backend errors
             if (data.errors && data.errors.length > 0) {
@@ -167,7 +170,30 @@ export class CalendarManager {
             
         } catch (error) {
             console.error('[DashView] CalendarManager: Error fetching events:', error);
-            this._showError(popupElement, 'Fehler beim Laden der Termine', error.message);
+            
+            // Try fallback API call without date filter
+            try {
+                console.log('[DashView] CalendarManager: Attempting fallback API call...');
+                const fallbackData = await this._hass.callApi(
+                    'GET',
+                    `dashview/config?type=calendar_events&entity_ids=${encodeURIComponent(entityIds)}`
+                );
+                
+                console.log('[DashView] CalendarManager: Fallback API response:', fallbackData);
+                
+                if (fallbackData && fallbackData.events) {
+                    this._events[this._currentDay] = fallbackData.events || [];
+                    this._calendarsMetadata = { ...this._calendarsMetadata, ...(fallbackData.calendars || {}) };
+                    
+                    console.log('[DashView] CalendarManager: Fallback successful, loaded', this._events[this._currentDay].length, 'events');
+                    this._renderCurrentView(popupElement);
+                } else {
+                    this._showError(popupElement, 'Fehler beim Laden der Termine', error.message);
+                }
+            } catch (fallbackError) {
+                console.error('[DashView] CalendarManager: Fallback also failed:', fallbackError);
+                this._showError(popupElement, 'Fehler beim Laden der Termine', `${error.message} (Fallback: ${fallbackError.message})`);
+            }
         } finally {
             this._isLoading = false;
         }

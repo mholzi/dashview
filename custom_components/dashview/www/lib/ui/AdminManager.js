@@ -2692,7 +2692,10 @@ async saveMediaPlayerPresets() {
       this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Loading room overview...', 'loading');
       
       // Load house configuration
+      console.log('[DashView] AdminManager: Calling house config API...');
       const houseConfig = await this._hass.callApi('GET', 'dashview/config?type=house');
+      console.log('[DashView] AdminManager: House config response:', houseConfig);
+      
       this._adminLocalState.houseConfig = houseConfig || { rooms: {}, floors: {} };
       this._adminLocalState.isLoaded = true;
       
@@ -2700,7 +2703,9 @@ async saveMediaPlayerPresets() {
       this._populateRoomSelectors();
       
       // Load room overview
+      console.log('[DashView] AdminManager: Starting room overview refresh...');
       await this.refreshRoomOverview();
+      console.log('[DashView] AdminManager: Room overview refresh completed');
       
       this._setStatusMessage(this._shadowRoot.getElementById('room-overview-status'), 'Ready', 'success');
     } catch (error) {
@@ -2917,6 +2922,7 @@ async saveMediaPlayerPresets() {
         console.log('[DashView] Successfully analyzed room:', roomKey);
       } catch (error) {
         console.error('[DashView] Error analyzing room', roomKey, ':', error);
+        console.error('[DashView] Error stack:', error.stack);
         // Add room with error analysis
         roomsData.push({
           key: roomKey,
@@ -2931,7 +2937,7 @@ async saveMediaPlayerPresets() {
             potentialEntities: { lights: 0, covers: 0, mediaPlayers: 0, sensors: 0 },
             completeness: 0,
             unallocatedEntities: { lights: [], covers: [], mediaPlayers: [], sensors: [] },
-            issues: ['Error loading room data'],
+            issues: [`Error loading room data: ${error.message}`],
             error: true
           }
         });
@@ -3342,11 +3348,13 @@ async saveMediaPlayerPresets() {
         apiCalls.map(async ({ name, url }) => {
           try {
             console.log('[DashView] Fetching', name, 'for room analysis');
+            console.log('[DashView] API URL:', url);
             const data = await this._hass.callApi('GET', url);
-            console.log('[DashView] Successfully fetched', name, 'data');
+            console.log('[DashView] Successfully fetched', name, 'data:', data);
             return { name, data };
           } catch (error) {
             console.warn('[DashView] Failed to fetch', name, ':', error.message);
+            console.warn('[DashView] Error details:', error);
             return { name, data: name === 'media_players' ? [] : {} };
           }
         })
