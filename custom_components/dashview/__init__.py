@@ -553,7 +553,6 @@ class DashViewConfigView(HomeAssistantView):
                 return web.json_response({"error": f"Room {room_id} not found."}, status=404)
 
             # Update the room's confirmation timestamp
-            import time
             rooms[room_id]["last_confirmed_timestamp"] = int(time.time())
             rooms[room_id]["has_unconfirmed_entities"] = False
 
