@@ -1,4 +1,4 @@
-<div class="upcoming-events-card">
+<div class="upcoming-events-container">
   <div class="upcoming-events-header">
     <div class="upcoming-events-title-section">
       <i class="mdi mdi-calendar-clock"></i>
@@ -14,13 +14,14 @@
     </div>
   </div>
   <div class="upcoming-events-content">
-    <!-- Single event will be dynamically populated here -->
-    <div class="upcoming-event-sensor-card">
-      <div class="upcoming-event-time"></div>
-      <div class="upcoming-event-title"></div>
-      <div class="upcoming-event-calendar">
-        <span class="calendar-indicator"></span>
-        <span class="calendar-name"></span>
+    <!-- Single event will be dynamically populated here using sensor-small template -->
+    <div class="sensor-small-card upcoming-event-card">
+      <div class="sensor-small-grid">
+        <div class="sensor-small-icon-cell">
+          <i class="mdi mdi-calendar"></i>
+        </div>
+        <div class="sensor-small-label upcoming-event-time"></div>
+        <div class="sensor-small-name upcoming-event-title"></div>
       </div>
     </div>
   </div>

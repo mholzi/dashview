@@ -125,7 +125,7 @@ export class UpcomingEventsManager {
     async update() {
         if (!this._hass || this._isLoading) return;
 
-        const cardElement = this._shadowRoot.querySelector('.upcoming-events-card');
+        const cardElement = this._shadowRoot.querySelector('.upcoming-events-container');
         if (!cardElement) return;
 
         console.log('[DashView] UpcomingEventsManager: Updating upcoming events card');
@@ -329,18 +329,16 @@ export class UpcomingEventsManager {
         if (this._events.length === 0) return;
 
         const event = this._events[this._currentEventIndex];
-        const sensorCard = this._shadowRoot.querySelector('.upcoming-event-sensor-card');
+        const sensorCard = this._shadowRoot.querySelector('.upcoming-event-card');
         const timeElement = this._shadowRoot.querySelector('.upcoming-event-time');
         const titleElement = this._shadowRoot.querySelector('.upcoming-event-title');
-        const calendarIndicator = this._shadowRoot.querySelector('.calendar-indicator');
-        const calendarNameElement = this._shadowRoot.querySelector('.calendar-name');
 
         // Check if event is currently active and add appropriate class
         if (sensorCard) {
             if (this._isEventActive(event)) {
-                sensorCard.classList.add('active');
+                sensorCard.classList.add('is-on');
             } else {
-                sensorCard.classList.remove('active');
+                sensorCard.classList.remove('is-on');
             }
         }
 
@@ -352,13 +350,7 @@ export class UpcomingEventsManager {
             titleElement.textContent = event.summary || event.title || 'Untitled Event';
         }
 
-        if (calendarIndicator && calendarNameElement) {
-            const calendarId = event.calendar_entity_id;
-            const calendarMeta = this._calendarsMetadata[calendarId] || {};
-            
-            calendarIndicator.style.backgroundColor = calendarMeta.color || '#1976d2';
-            calendarNameElement.textContent = calendarMeta.friendly_name || calendarId;
-        }
+        // No calendar source indicator needed per requirements
     }
 
     _updateControlButtons(cardElement) {

@@ -37,7 +37,7 @@ class UpcomingEventsCardTests {
       shadowRoot: {
         querySelector: (selector) => {
           // Mock different elements based on selector
-          if (selector === '.upcoming-events-card') {
+          if (selector === '.upcoming-events-container') {
             return {
               querySelector: (innerSelector) => {
                 if (innerSelector === '.upcoming-events-content') {
