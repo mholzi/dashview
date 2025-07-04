@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2025-07-04
+
+### 🐛 Bug Fixes
+
+- **Admin Room Management Loading**: Fixed infinite loading issue in Room Management section (#487, #488)
+  - Replaced direct `fetch()` calls with `_hass.callApi()` for proper Home Assistant authentication
+  - Updated API URLs from absolute to relative paths for compatibility
+  - Enhanced error handling with `Promise.allSettled()` pattern for individual API failures
+  - Added comprehensive logging and fallback data for failed API calls
+
+- **Mower Error Detection Logic**: Improved mower sensor error state validation (#489)
+  - Error messages now only display when entity state is actually `"error"`
+  - Prevents false positive error displays from historical error attributes
+  - Added explicit `case 'error':` handling for generic error states
+  - Maintains all existing error message translations and functionality
+
+### 🔧 Technical Improvements
+
+- **Robust API Authentication**: All admin panel API calls now use proper Home Assistant authentication
+- **Enhanced Error Handling**: Individual API failures no longer break entire room loading process
+- **Better State Management**: Improved mower entity state detection prevents erroneous error displays
+- **Comprehensive Logging**: Added detailed console logging for debugging admin panel issues
+
+### 🎯 Impact
+
+- ✅ Admin Room Management section now loads properly instead of showing infinite spinner
+- ✅ Mower cards only show error messages during actual error conditions
+- ✅ Improved reliability and user experience in admin interface
+- ✅ Better error recovery and graceful degradation
+
 ## [0.9.1] - 2025-01-04
 
 ### 🐛 Bug Fixes
