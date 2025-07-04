@@ -7068,18 +7068,11 @@ body.popup-open, :host(.popup-open) {
 }
 
 .room-overview-card {
-    background: var(--card-background-color);
+    background: var(--gray000);
     border-radius: 15px;
-    padding: 16px;
-    border: 2px solid transparent;
+    border: 2px solid var(--gray100);
     transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.room-overview-card:hover {
-    border-color: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
 .room-overview-card.complete {
@@ -7092,6 +7085,209 @@ body.popup-open, :host(.popup-open) {
 
 .room-overview-card.incomplete {
     border-left: 4px solid var(--red);
+}
+
+/* Room expandable container styles */
+.room-expandable-container {
+    border: none;
+    background: transparent;
+}
+
+.room-expandable-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 16px;
+    background: var(--gray000);
+    transition: background-color 0.3s ease;
+}
+
+.room-expandable-summary::-webkit-details-marker {
+    display: none;
+}
+
+.room-expandable-summary:hover {
+    background: var(--gray100);
+}
+
+.room-expandable-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.room-expandable-icon {
+    color: var(--primary-text-color);
+    font-size: 20px;
+    width: 24px;
+}
+
+.room-expandable-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin: 0;
+}
+
+.room-expandable-badge {
+    background: var(--active-big);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+    min-width: 40px;
+    text-align: center;
+}
+
+.room-expandable-content {
+    padding: 0 16px 16px 16px;
+    background: var(--gray000);
+}
+
+.room-expandable-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-top: 12px;
+}
+
+.room-expandable-issues {
+    font-size: 14px;
+    color: var(--gray800);
+}
+
+.room-expandable-mark-complete {
+    background: var(--gray800);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.room-expandable-mark-complete:hover {
+    background: var(--gray1000);
+}
+
+/* Entity sub-containers */
+.room-entity-subcontainer {
+    border: none;
+    background: transparent;
+    margin-bottom: 12px;
+}
+
+.room-entity-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px;
+    background: var(--gray100);
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.room-entity-summary::-webkit-details-marker {
+    display: none;
+}
+
+.room-entity-summary:hover {
+    background: var(--gray200);
+}
+
+.room-entity-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.room-entity-icon {
+    color: var(--gray800);
+    font-size: 16px;
+    width: 20px;
+}
+
+.room-entity-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin: 0;
+}
+
+.room-entity-count {
+    font-size: 12px;
+    color: var(--gray800);
+    background: var(--gray200);
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.room-entity-content {
+    padding: 12px;
+    background: var(--gray100);
+}
+
+.room-entity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.room-entity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--gray000);
+    border-radius: 6px;
+    border: 1px solid var(--gray200);
+}
+
+.room-entity-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.room-entity-checkbox input[type="checkbox"] {
+    margin: 0;
+}
+
+.room-entity-name {
+    font-size: 13px;
+    color: var(--primary-text-color);
+    font-weight: 500;
+}
+
+.room-entity-id {
+    font-size: 11px;
+    color: var(--gray800);
+}
+
+.room-entity-select-all {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.room-entity-select-all-btn {
+    background: var(--gray800);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.room-entity-select-all-btn:hover {
+    background: var(--gray1000);
 }
 
 .room-card-header {

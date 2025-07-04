@@ -2,6 +2,7 @@
 import os
 import logging
 import json
+import time
 from datetime import timedelta
 
 from aiohttp import web
@@ -552,7 +553,6 @@ class DashViewConfigView(HomeAssistantView):
                 return web.json_response({"error": f"Room {room_id} not found."}, status=404)
 
             # Update the room's confirmation timestamp
-            import time
             rooms[room_id]["last_confirmed_timestamp"] = int(time.time())
             rooms[room_id]["has_unconfirmed_entities"] = False
 
@@ -565,6 +565,123 @@ class DashViewConfigView(HomeAssistantView):
 
         except Exception as e:
             _LOGGER.error("[DashView] Error confirming room setup: %s", e)
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+    async def _handle_mark_room_complete(self, payload: dict) -> web.Response:
+        """Handle marking a room as complete even with unallocated entities."""
+        try:
+            room_id = payload.get("room_id")
+
+            if not room_id:
+                return web.json_response({"error": "room_id is required."}, status=400)
+
+            current_options = dict(self._entry.options)
+            house_config = current_options.setdefault("house_config", {})
+            rooms = house_config.setdefault("rooms", {})
+
+            if room_id not in rooms:
+                return web.json_response({"error": f"Room {room_id} not found."}, status=404)
+
+            # Mark the room as manually completed
+            rooms[room_id]["marked_complete"] = True
+            rooms[room_id]["marked_complete_timestamp"] = int(time.time())
+
+            # Save the updated configuration
+            self._hass.config_entries.async_update_entry(
+                self._entry, options=current_options
+            )
+
+            return web.json_response({"status": "success", "message": f"Room {room_id} marked as complete"})
+
+        except Exception as e:
+            _LOGGER.error("[DashView] Error marking room complete: %s", e)
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+    async def _handle_bulk_entity_assignment(self, payload: dict) -> web.Response:
+        """Handle bulk assignment of entities to a room."""
+        try:
+            room_id = payload.get("room_id")
+            entity_ids = payload.get("entity_ids", [])
+            action = payload.get("action", "assign")  # assign, unassign, ignore
+
+            if not room_id:
+                return web.json_response({"error": "room_id is required."}, status=400)
+
+            if not entity_ids:
+                return web.json_response({"error": "entity_ids is required."}, status=400)
+
+            current_options = dict(self._entry.options)
+            house_config = current_options.setdefault("house_config", {})
+            rooms = house_config.setdefault("rooms", {})
+
+            if room_id not in rooms:
+                return web.json_response({"error": f"Room {room_id} not found."}, status=404)
+
+            room_config = rooms[room_id]
+            ignored_entities = room_config.setdefault("ignored_entities", [])
+            
+            processed_count = 0
+
+            for entity_id in entity_ids:
+                entity_id = entity_id.strip()
+                if not entity_id:
+                    continue
+
+                # Get entity domain for proper assignment
+                domain = entity_id.split('.')[0] if '.' in entity_id else None
+                
+                if action == "assign":
+                    # Remove from ignored list if present
+                    if entity_id in ignored_entities:
+                        ignored_entities.remove(entity_id)
+                    
+                    # Add to appropriate domain list
+                    if domain == "light":
+                        lights = room_config.setdefault("lights", [])
+                        if entity_id not in lights:
+                            lights.append(entity_id)
+                    elif domain == "cover":
+                        covers = room_config.setdefault("covers", [])
+                        if entity_id not in covers:
+                            covers.append(entity_id)
+                    elif domain == "media_player":
+                        media_players = room_config.setdefault("media_players", [])
+                        if entity_id not in media_players:
+                            media_players.append(entity_id)
+                    elif domain in ["binary_sensor", "sensor"]:
+                        header_entities = room_config.setdefault("header_entities", [])
+                        if entity_id not in header_entities:
+                            header_entities.append(entity_id)
+                    
+                elif action in ["unassign", "ignore"]:
+                    # Remove from all domain lists first
+                    for domain_list in ["lights", "covers", "media_players", "header_entities"]:
+                        if domain_list in room_config and entity_id in room_config[domain_list]:
+                            room_config[domain_list].remove(entity_id)
+
+                    # Handle ignored list based on action
+                    if action == "unassign":
+                        if entity_id in ignored_entities:
+                            ignored_entities.remove(entity_id)
+                    elif action == "ignore":
+                        if entity_id not in ignored_entities:
+                            ignored_entities.append(entity_id)
+
+                processed_count += 1
+
+            # Save the updated configuration
+            self._hass.config_entries.async_update_entry(
+                self._entry, options=current_options
+            )
+
+            return web.json_response({
+                "status": "success", 
+                "message": f"Bulk {action} completed for {processed_count} entities in room {room_id}",
+                "processed_count": processed_count
+            })
+
+        except Exception as e:
+            _LOGGER.error("[DashView] Error in bulk entity assignment: %s", e)
             return web.json_response({"status": "error", "message": str(e)}, status=500)
 
     async def _get_calendar_events(self, request: web.Request) -> web.Response:
@@ -694,6 +811,10 @@ class DashViewConfigView(HomeAssistantView):
                 return await self._handle_entity_status_update(config_payload)
             elif config_type == "confirm_room_setup":
                 return await self._handle_room_confirmation(config_payload)
+            elif config_type == "mark_room_complete":
+                return await self._handle_mark_room_complete(config_payload)
+            elif config_type == "bulk_entity_assignment":
+                return await self._handle_bulk_entity_assignment(config_payload)
             else:
                 return web.json_response({"error": f"Invalid config type: {config_type}"}, status=400)
 

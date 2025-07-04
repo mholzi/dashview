@@ -2792,6 +2792,23 @@ async saveMediaPlayerPresets() {
       
       // Add click handlers
       overviewGrid.addEventListener('click', (e) => {
+        // Handle Mark Complete button clicks
+        if (e.target.classList.contains('room-expandable-mark-complete')) {
+          e.stopPropagation();
+          const roomKey = e.target.dataset.roomKey;
+          if (roomKey) {
+            this._markRoomComplete(roomKey);
+          }
+          return;
+        }
+        
+        // Handle Select All button clicks
+        if (e.target.classList.contains('room-entity-select-all-btn')) {
+          e.stopPropagation();
+          this._handleSelectAllEntities(e.target);
+          return;
+        }
+        
         // Handle configure button clicks specifically
         if (e.target.classList.contains('configure-btn')) {
           e.stopPropagation(); // Prevent room card click handler from firing
@@ -2804,12 +2821,20 @@ async saveMediaPlayerPresets() {
           return;
         }
         
-        // Handle room card clicks (but not configure button)
+        // Handle room card clicks (but not buttons)
         const roomCard = e.target.closest('.room-overview-card');
-        if (roomCard && !e.target.classList.contains('configure-btn')) {
+        if (roomCard && !e.target.classList.contains('configure-btn') && !e.target.classList.contains('room-expandable-mark-complete')) {
           const roomKey = roomCard.dataset.roomKey;
           this._shadowRoot.getElementById('room-selector').value = roomKey;
           this.loadRoomConfiguration();
+        }
+      });
+
+      // Add change handlers for entity checkboxes
+      overviewGrid.addEventListener('change', (e) => {
+        if (e.target.classList.contains('entity-assign-checkbox')) {
+          e.stopPropagation();
+          this._handleEntityCheckboxChange(e.target);
         }
       });
       
@@ -2853,12 +2878,24 @@ async saveMediaPlayerPresets() {
     // Analyze potential entities from HA area
     const potentialEntities = await this._scanRoomForPotentialEntities(roomKey);
     
-    // Calculate completeness score
+    // Get unallocated entities
+    const unallocatedEntities = await this._getUnallocatedEntitiesForRoom(roomKey, roomData);
+    
+    // Calculate completeness score (check if room is marked as complete)
     const totalConfigured = lights + covers + mediaPlayers + headerEntities;
     const totalPotential = potentialEntities.lights + potentialEntities.covers + 
                           potentialEntities.mediaPlayers + potentialEntities.sensors;
     
-    const completeness = totalPotential > 0 ? Math.round((totalConfigured / totalPotential) * 100) : 100;
+    let completeness;
+    if (roomData.marked_complete) {
+      // Room was manually marked as complete
+      completeness = 100;
+    } else {
+      completeness = totalPotential > 0 ? Math.round((totalConfigured / totalPotential) * 100) : 100;
+    }
+    
+    // Calculate issues as unallocated entities count
+    const unallocatedCount = Object.values(unallocatedEntities).reduce((sum, entities) => sum + entities.length, 0);
     
     return {
       lights,
@@ -2868,12 +2905,61 @@ async saveMediaPlayerPresets() {
       totalConfigured,
       potentialEntities,
       completeness,
-      issues: potentialEntities.issues || []
+      unallocatedEntities,
+      issues: Array(unallocatedCount).fill(null) // Create issues array for display
     };
   }
 
   /**
-   * Generate room overview card HTML
+   * Get unallocated entities for a room (available but not assigned)
+   */
+  async _getUnallocatedEntitiesForRoom(roomKey, roomData) {
+    try {
+      // Fetch entities by room using the existing endpoint
+      const response = await fetch(`/api/dashview/config?type=entities_by_room&room_id=${roomKey}`);
+      if (!response.ok) {
+        console.warn('[DashView] Failed to fetch room entities:', response.statusText);
+        return { lights: [], covers: [], media_players: [], sensors: [] };
+      }
+      
+      const roomEntitiesData = await response.json();
+      
+      // Get configured entities
+      const configuredLights = roomData.lights || [];
+      const configuredCovers = roomData.covers || [];
+      const configuredMediaPlayers = roomData.media_players || [];
+      const configuredSensors = roomData.header_entities || [];
+      const ignoredEntities = roomData.ignored_entities || [];
+      
+      // Filter out configured and ignored entities to find unallocated ones
+      const unallocated = {
+        lights: (roomEntitiesData.lights || []).filter(entity => 
+          !configuredLights.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        ),
+        covers: (roomEntitiesData.covers || []).filter(entity => 
+          !configuredCovers.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        ),
+        media_players: (roomEntitiesData.media_players || []).filter(entity => 
+          !configuredMediaPlayers.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        ),
+        sensors: (roomEntitiesData.sensors || []).filter(entity => 
+          !configuredSensors.includes(entity.entity_id) && 
+          !ignoredEntities.includes(entity.entity_id)
+        )
+      };
+      
+      return unallocated;
+    } catch (error) {
+      console.error('[DashView] Error fetching unallocated entities:', error);
+      return { lights: [], covers: [], media_players: [], sensors: [] };
+    }
+  }
+
+  /**
+   * Generate room overview card HTML with expandable containers
    */
   _generateRoomOverviewCard(roomData) {
     const { key, name, analysis } = roomData;
@@ -2881,57 +2967,264 @@ async saveMediaPlayerPresets() {
     
     let statusClass = 'complete';
     let statusIcon = 'mdi:check-circle';
-    let statusText = 'Complete';
     
     if (completeness < 50) {
       statusClass = 'incomplete';
       statusIcon = 'mdi:alert-circle';
-      statusText = 'Needs Setup';
     } else if (completeness < 90) {
       statusClass = 'partial';
       statusIcon = 'mdi:progress-check';
-      statusText = 'Partial';
     }
+
+    // Auto-expand only if completion is not 100%
+    const autoExpand = completeness < 100;
     
     return `
       <div class="room-overview-card ${statusClass}" data-room-key="${key}">
-        <div class="room-card-header">
-          <i class="mdi ${statusIcon}"></i>
-          <h6>${name}</h6>
-          <span class="completeness-badge">${completeness}%</span>
-        </div>
-        <div class="room-card-content">
-          <div class="entity-summary">
-            <div class="entity-count">
-              <i class="mdi mdi-lightbulb"></i>
-              <span>${analysis.lights}/${potentialEntities.lights} lights</span>
+        <details class="room-expandable-container" ${autoExpand ? 'open' : ''}>
+          <summary class="room-expandable-summary">
+            <div class="room-expandable-header">
+              <i class="mdi ${statusIcon} room-expandable-icon"></i>
+              <h6 class="room-expandable-title">${name}</h6>
+              <span class="room-expandable-badge">${completeness}%</span>
             </div>
-            <div class="entity-count">
-              <i class="mdi mdi-window-shutter"></i>
-              <span>${analysis.covers}/${potentialEntities.covers} covers</span>
-            </div>
-            <div class="entity-count">
-              <i class="mdi mdi-speaker"></i>
-              <span>${analysis.mediaPlayers}/${potentialEntities.mediaPlayers} media</span>
-            </div>
-            <div class="entity-count">
-              <i class="mdi mdi-motion-sensor"></i>
-              <span>${analysis.headerEntities}/${potentialEntities.sensors} sensors</span>
-            </div>
+          </summary>
+          <div class="room-expandable-content">
+            ${autoExpand ? `
+              <div class="room-expandable-actions">
+                <div class="room-expandable-issues">
+                  ${issues.length} unallocated entit${issues.length !== 1 ? 'ies' : 'y'}
+                </div>
+                <button class="room-expandable-mark-complete" data-room-key="${key}">
+                  Mark Complete
+                </button>
+              </div>
+              ${this._generateEntitySubContainers(roomData)}
+            ` : `
+              <div class="room-expandable-actions">
+                <div class="room-expandable-issues">
+                  Room configuration complete
+                </div>
+              </div>
+            `}
           </div>
-          ${issues.length > 0 ? `
-            <div class="room-issues">
-              <i class="mdi mdi-alert"></i>
-              <span>${issues.length} issue${issues.length !== 1 ? 's' : ''}</span>
-            </div>
-          ` : ''}
-        </div>
-        <div class="room-card-footer">
-          <span class="status-text">${statusText}</span>
-          <button class="configure-btn">Configure</button>
-        </div>
+        </details>
       </div>
     `;
+  }
+
+  /**
+   * Generate entity sub-containers for unallocated entities
+   */
+  _generateEntitySubContainers(roomData) {
+    const { key, analysis } = roomData;
+    const { unallocatedEntities = {} } = analysis;
+    
+    const entityTypes = [
+      { key: 'lights', icon: 'mdi:lightbulb', title: 'Lights' },
+      { key: 'covers', icon: 'mdi:window-shutter', title: 'Covers' },
+      { key: 'media_players', icon: 'mdi:speaker', title: 'Media Players' },
+      { key: 'sensors', icon: 'mdi:motion-sensor', title: 'Sensors' }
+    ];
+
+    return entityTypes.map(entityType => {
+      const entities = unallocatedEntities[entityType.key] || [];
+      if (entities.length === 0) return '';
+
+      // Auto-expand only if there are unallocated entities
+      const autoExpand = entities.length > 0;
+
+      return `
+        <details class="room-entity-subcontainer" ${autoExpand ? 'open' : ''}>
+          <summary class="room-entity-summary">
+            <div class="room-entity-header">
+              <i class="${entityType.icon} room-entity-icon"></i>
+              <h6 class="room-entity-title">${entityType.title}</h6>
+              <span class="room-entity-count">${entities.length}</span>
+            </div>
+          </summary>
+          <div class="room-entity-content">
+            <div class="room-entity-list">
+              ${entities.map(entity => `
+                <div class="room-entity-item">
+                  <label class="room-entity-checkbox">
+                    <input type="checkbox" 
+                           class="entity-assign-checkbox"
+                           data-entity-id="${entity.entity_id}"
+                           data-room-key="${key}"
+                           data-entity-type="${entityType.key}">
+                    <div>
+                      <div class="room-entity-name">${entity.name || entity.entity_id}</div>
+                      <div class="room-entity-id">${entity.entity_id}</div>
+                    </div>
+                  </label>
+                </div>
+              `).join('')}
+            </div>
+            <div class="room-entity-select-all">
+              <button class="room-entity-select-all-btn" 
+                      data-room-key="${key}" 
+                      data-entity-type="${entityType.key}">
+                Select All
+              </button>
+            </div>
+          </div>
+        </details>
+      `;
+    }).filter(html => html !== '').join('');
+  }
+
+  /**
+   * Handle real-time entity checkbox changes (no explicit save)
+   */
+  async _handleEntityCheckboxChange(checkbox) {
+    const entityId = checkbox.dataset.entityId;
+    const roomKey = checkbox.dataset.roomKey;
+    const entityType = checkbox.dataset.entityType;
+    const isChecked = checkbox.checked;
+
+    try {
+      // Show loading state
+      checkbox.disabled = true;
+
+      const action = isChecked ? 'assign' : 'unassign';
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'bulk_entity_assignment',
+          config: {
+            room_id: roomKey,
+            entity_ids: [entityId],
+            action: action
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        // Reload the room overview to reflect changes
+        await this.loadRoomOverview();
+      } else {
+        throw new Error(result.message || 'Unknown error');
+      }
+
+    } catch (error) {
+      console.error('[DashView] Error updating entity assignment:', error);
+      // Revert checkbox state on error
+      checkbox.checked = !isChecked;
+      alert(`Error updating entity assignment: ${error.message}`);
+    } finally {
+      checkbox.disabled = false;
+    }
+  }
+
+  /**
+   * Handle Select All functionality for entities in a room
+   */
+  async _handleSelectAllEntities(button) {
+    const roomKey = button.dataset.roomKey;
+    const entityType = button.dataset.entityType;
+
+    try {
+      // Find all checkboxes in this entity type container
+      const container = button.closest('.room-entity-subcontainer');
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+      const entityIds = Array.from(checkboxes).map(cb => cb.dataset.entityId);
+
+      if (entityIds.length === 0) return;
+
+      // Show loading state
+      button.disabled = true;
+      button.textContent = 'Processing...';
+
+      // Determine if we should select all or unselect all
+      const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+      const action = checkedCount === entityIds.length ? 'unassign' : 'assign';
+
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'bulk_entity_assignment',
+          config: {
+            room_id: roomKey,
+            entity_ids: entityIds,
+            action: action
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        // Reload the room overview to reflect changes
+        await this.loadRoomOverview();
+      } else {
+        throw new Error(result.message || 'Unknown error');
+      }
+
+    } catch (error) {
+      console.error('[DashView] Error in bulk entity assignment:', error);
+      alert(`Error updating entities: ${error.message}`);
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Select All';
+    }
+  }
+
+  /**
+   * Handle Mark Complete functionality
+   */
+  async _markRoomComplete(roomKey) {
+    if (!confirm('Mark this room as complete? This will accept the current configuration even with unallocated entities.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/dashview/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'mark_room_complete',
+          config: {
+            room_id: roomKey
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        // Reload the room overview to reflect changes
+        await this.loadRoomOverview();
+      } else {
+        throw new Error(result.message || 'Unknown error');
+      }
+
+    } catch (error) {
+      console.error('[DashView] Error marking room complete:', error);
+      alert(`Error marking room complete: ${error.message}`);
+    }
   }
 
   /**
