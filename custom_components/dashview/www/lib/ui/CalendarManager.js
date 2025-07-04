@@ -17,18 +17,34 @@ export class CalendarManager {
     }
 
     async update(popupElement) {
-        if (!popupElement || this._isLoading) return;
+        if (!popupElement || this._isLoading) {
+            console.log('[DashView] CalendarManager: Update skipped - popup missing or already loading');
+            return;
+        }
         
-        console.log('[DashView] CalendarManager: Updating calendar popup');
+        console.log('[DashView] CalendarManager: Starting calendar popup update');
+        console.log('[DashView] CalendarManager: Current day:', this._currentDay);
+        console.log('[DashView] CalendarManager: House config:', this._panel._houseConfig);
         
         try {
+            this._isLoading = true;
+            
+            console.log('[DashView] CalendarManager: Setting up event listeners...');
             await this._setupEventListeners(popupElement);
+            
+            console.log('[DashView] CalendarManager: Loading calendar metadata...');
             await this._loadCalendarMetadata();
+            
+            console.log('[DashView] CalendarManager: Loading events for current day...');
             await this._loadEventsForCurrentDay(popupElement);
-            // Note: _renderCurrentView is now called inside _loadEventsForCurrentDay after successful loading
+            
+            console.log('[DashView] CalendarManager: Calendar popup update completed successfully');
         } catch (error) {
             console.error('[DashView] CalendarManager: Error updating calendar:', error);
-            this._showError(popupElement, 'Error loading calendar events');
+            console.error('[DashView] CalendarManager: Error stack:', error.stack);
+            this._showError(popupElement, 'Error loading calendar events', error.message);
+        } finally {
+            this._isLoading = false;
         }
     }
 
@@ -114,10 +130,24 @@ export class CalendarManager {
     }
 
     async _loadEventsForCurrentDay(popupElement) {
+        console.log('[DashView] CalendarManager: Starting to load events for current day');
+        
+        if (!popupElement) {
+            console.error('[DashView] CalendarManager: No popup element provided');
+            return;
+        }
+        
+        if (!this._hass || !this._hass.callApi) {
+            console.error('[DashView] CalendarManager: HomeAssistant API not available');
+            this._showError(popupElement, 'HomeAssistant not available');
+            return;
+        }
+        
         this._isLoading = true;
         
         // Get linked calendars from house config
         const linkedCalendars = this._panel._houseConfig?.linked_calendars || [];
+        console.log('[DashView] CalendarManager: Linked calendars from config:', linkedCalendars);
         
         // Ensure selected calendars is initialized with linked calendars
         if (this._selectedCalendars.length === 0) {
@@ -126,12 +156,14 @@ export class CalendarManager {
         }
         
         if (linkedCalendars.length === 0) {
+            console.log('[DashView] CalendarManager: No linked calendars found');
             this._showNoCalendars(popupElement);
             this._isLoading = false;
             return;
         }
 
         // Show loading state
+        console.log('[DashView] CalendarManager: Showing loading state');
         this._showLoading(popupElement);
 
         try {
@@ -200,8 +232,19 @@ export class CalendarManager {
     }
 
     _renderCurrentView(popupElement) {
-        this._setupCalendarFilters(popupElement);
-        this._renderEventsForCurrentDay(popupElement);
+        console.log('[DashView] CalendarManager: Rendering current view');
+        try {
+            console.log('[DashView] CalendarManager: Setting up calendar filters...');
+            this._setupCalendarFilters(popupElement);
+            
+            console.log('[DashView] CalendarManager: Rendering events for current day...');
+            this._renderEventsForCurrentDay(popupElement);
+            
+            console.log('[DashView] CalendarManager: Current view rendered successfully');
+        } catch (error) {
+            console.error('[DashView] CalendarManager: Error rendering current view:', error);
+            this._showError(popupElement, 'Error rendering calendar view', error.message);
+        }
     }
 
     _setupCalendarFilters(popupElement) {
@@ -558,8 +601,8 @@ export class CalendarManager {
     }
 
     _showLoading(popupElement) {
-        const contentDiv = popupElement.querySelector('.calendar-content') || 
-                          popupElement.querySelector('.popup-content');
+        console.log('[DashView] CalendarManager: Setting loading state');
+        const contentDiv = popupElement.querySelector('.calendar-events-container');
         if (contentDiv) {
             contentDiv.innerHTML = `
                 <div class="calendar-loading">
@@ -567,6 +610,9 @@ export class CalendarManager {
                     <p>Loading calendar events...</p>
                 </div>
             `;
+            console.log('[DashView] CalendarManager: Loading state set successfully');
+        } else {
+            console.error('[DashView] CalendarManager: Could not find calendar events container for loading state');
         }
     }
 

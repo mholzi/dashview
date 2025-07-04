@@ -2909,39 +2909,53 @@ async saveMediaPlayerPresets() {
     
     console.log('[DashView] Analyzing', Object.keys(rooms).length, 'rooms');
     
-    for (const [roomKey, roomData] of Object.entries(rooms)) {
-      try {
-        console.log('[DashView] Analyzing room:', roomKey);
-        const analysis = await this._analyzeRoomCompleteness(roomKey, roomData);
-        roomsData.push({
-          key: roomKey,
-          name: roomData.friendly_name || roomKey,
-          data: roomData,
-          analysis
-        });
-        console.log('[DashView] Successfully analyzed room:', roomKey);
-      } catch (error) {
-        console.error('[DashView] Error analyzing room', roomKey, ':', error);
-        console.error('[DashView] Error stack:', error.stack);
-        // Add room with error analysis
-        roomsData.push({
-          key: roomKey,
-          name: roomData.friendly_name || roomKey,
-          data: roomData,
-          analysis: {
-            lights: 0,
-            covers: 0,
-            mediaPlayers: 0,
-            headerEntities: 0,
-            totalConfigured: 0,
-            potentialEntities: { lights: 0, covers: 0, mediaPlayers: 0, sensors: 0 },
-            completeness: 0,
-            unallocatedEntities: { lights: [], covers: [], mediaPlayers: [], sensors: [] },
-            issues: [`Error loading room data: ${error.message}`],
-            error: true
-          }
-        });
+    if (Object.keys(rooms).length === 0) {
+      console.warn('[DashView] No rooms found in house config');
+      return roomsData;
+    }
+    
+    // Add timeout to prevent infinite loading
+    const analysisTimeout = setTimeout(() => {
+      console.error('[DashView] Room analysis timeout after 30 seconds');
+    }, 30000);
+    
+    try {
+      for (const [roomKey, roomData] of Object.entries(rooms)) {
+        try {
+          console.log('[DashView] Analyzing room:', roomKey);
+          const analysis = await this._analyzeRoomCompleteness(roomKey, roomData);
+          roomsData.push({
+            key: roomKey,
+            name: roomData.friendly_name || roomKey,
+            data: roomData,
+            analysis
+          });
+          console.log('[DashView] Successfully analyzed room:', roomKey);
+        } catch (error) {
+          console.error('[DashView] Error analyzing room', roomKey, ':', error);
+          console.error('[DashView] Error stack:', error.stack);
+          // Add room with error analysis
+          roomsData.push({
+            key: roomKey,
+            name: roomData.friendly_name || roomKey,
+            data: roomData,
+            analysis: {
+              lights: 0,
+              covers: 0,
+              mediaPlayers: 0,
+              headerEntities: 0,
+              totalConfigured: 0,
+              potentialEntities: { lights: 0, covers: 0, mediaPlayers: 0, sensors: 0 },
+              completeness: 0,
+              unallocatedEntities: { lights: [], covers: [], mediaPlayers: [], sensors: [] },
+              issues: [`Error loading room data: ${error.message}`],
+              error: true
+            }
+          });
+        }
       }
+    } finally {
+      clearTimeout(analysisTimeout);
     }
     
     console.log('[DashView] Room analysis complete, processed', roomsData.length, 'rooms');
@@ -3344,32 +3358,51 @@ async saveMediaPlayerPresets() {
         { name: 'smoke', url: `dashview/config?type=entities_by_room&label=rauchmelder` }
       ];
 
+      console.log('[DashView] Making', apiCalls.length, 'API calls for room analysis');
       const results = await Promise.allSettled(
         apiCalls.map(async ({ name, url }) => {
           try {
             console.log('[DashView] Fetching', name, 'for room analysis');
             console.log('[DashView] API URL:', url);
+            
+            if (!this._hass || !this._hass.callApi) {
+              throw new Error('HomeAssistant API not available');
+            }
+            
             const data = await this._hass.callApi('GET', url);
             console.log('[DashView] Successfully fetched', name, 'data:', data);
             return { name, data };
           } catch (error) {
-            console.warn('[DashView] Failed to fetch', name, ':', error.message);
-            console.warn('[DashView] Error details:', error);
-            return { name, data: name === 'media_players' ? [] : {} };
+            console.error('[DashView] Failed to fetch', name, ':', error.message);
+            console.error('[DashView] Error stack:', error.stack);
+            
+            // Return fallback data instead of throwing
+            const fallbackData = name === 'media_players' ? [] : {};
+            console.log('[DashView] Using fallback data for', name, ':', fallbackData);
+            return { name, data: fallbackData };
           }
         })
       );
+      
+      console.log('[DashView] All API calls completed for room analysis');
 
       // Extract data with fallbacks
       const dataMap = {};
       results.forEach((result, index) => {
+        const callName = apiCalls[index].name;
         if (result.status === 'fulfilled') {
           dataMap[result.value.name] = result.value.data;
+          console.log('[DashView] Successfully processed', result.value.name, 'with', 
+                     Array.isArray(result.value.data) ? result.value.data.length : Object.keys(result.value.data).length, 'items');
         } else {
-          console.warn('[DashView] API call failed for', apiCalls[index].name, ':', result.reason);
-          dataMap[apiCalls[index].name] = apiCalls[index].name === 'media_players' ? [] : {};
+          console.error('[DashView] Promise failed for', callName, ':', result.reason);
+          const fallbackData = callName === 'media_players' ? [] : {};
+          dataMap[callName] = fallbackData;
+          console.log('[DashView] Using fallback for', callName);
         }
       });
+      
+      console.log('[DashView] Data map prepared:', Object.keys(dataMap));
 
       const { lights: lightsData, covers: coversData, media_players: mediaPlayersData, 
               motion: motionData, windows: windowData, smoke: smokeData } = dataMap;
