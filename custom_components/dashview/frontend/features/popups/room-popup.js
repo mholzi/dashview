@@ -5,6 +5,79 @@
 
 import { renderPopupHeader } from '../../components/layout/popup-header.js';
 import { renderTemperatureChart } from '../../components/charts/index.js';
+import { openMoreInfo } from '../../utils/helpers.js';
+
+// Long press duration in ms
+const LONG_PRESS_DURATION = 500;
+
+/**
+ * Create long press handlers for an element
+ * @param {Function} onTap - Called on short tap
+ * @param {Function} onLongPress - Called on long press
+ * @returns {Object} Event handlers
+ */
+function createLongPressHandlers(onTap, onLongPress) {
+  let pressTimer = null;
+  let isLongPress = false;
+  let startX = 0;
+  let startY = 0;
+
+  const start = (e) => {
+    isLongPress = false;
+    const touch = e.touches?.[0] || e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    pressTimer = setTimeout(() => {
+      isLongPress = true;
+      onLongPress();
+    }, LONG_PRESS_DURATION);
+  };
+
+  const move = (e) => {
+    if (!pressTimer) return;
+    const touch = e.touches?.[0] || e;
+    const dx = Math.abs(touch.clientX - startX);
+    const dy = Math.abs(touch.clientY - startY);
+    // Cancel if moved more than 10px
+    if (dx > 10 || dy > 10) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  const end = (e) => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+      if (!isLongPress) {
+        onTap();
+      }
+    }
+    // Prevent click event after long press
+    if (isLongPress) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const cancel = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  return {
+    onTouchStart: start,
+    onTouchMove: move,
+    onTouchEnd: end,
+    onTouchCancel: cancel,
+    onMouseDown: start,
+    onMouseMove: move,
+    onMouseUp: end,
+    onMouseLeave: cancel,
+  };
+}
 
 /**
  * Render the complete room popup
@@ -330,6 +403,12 @@ function renderLightSection(component, html, areaId) {
           const brightness = light.brightnessPercent || 0;
           const fillColor = getLightFillColor(light);
 
+          // Create long press handlers for this light
+          const longPress = createLongPressHandlers(
+            () => component._toggleLight(light.entity_id),
+            () => openMoreInfo(component, light.entity_id)
+          );
+
           // For dimmable lights that are on: show slider
           // For non-dimmable or off: show simple toggle button
           if (isDimmable && isOn) {
@@ -338,8 +417,14 @@ function renderLightSection(component, html, areaId) {
                 <div class="popup-light-slider-fill"
                      style="width: ${brightness}%; background: linear-gradient(90deg, rgba(${fillColor}, 0.9) 0%, rgba(${fillColor}, 0.7) 100%);"></div>
                 <div class="popup-light-item-header on"
-                     style="cursor: pointer;"
-                     @click=${() => component._toggleLight(light.entity_id)}>
+                     style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+                     @touchstart=${longPress.onTouchStart}
+                     @touchmove=${longPress.onTouchMove}
+                     @touchend=${longPress.onTouchEnd}
+                     @touchcancel=${longPress.onTouchCancel}
+                     @mousedown=${longPress.onMouseDown}
+                     @mouseup=${longPress.onMouseUp}
+                     @mouseleave=${longPress.onMouseLeave}>
                   <div class="popup-light-item-icon">
                     <ha-icon icon="${light.icon}"></ha-icon>
                   </div>
@@ -404,12 +489,18 @@ function renderLightSection(component, html, areaId) {
               </div>
             `;
           } else {
-            // Non-dimmable or off: simple toggle button
+            // Non-dimmable or off: simple toggle button with long press for more-info
             return html`
               <div class="popup-light-item">
                 <div class="popup-light-item-header ${isOn ? 'on' : 'off'}"
-                     style="${isOn ? `background: linear-gradient(135deg, rgba(${fillColor}, 0.5) 0%, rgba(${fillColor}, 0.3) 100%);` : ''}"
-                     @click=${() => component._toggleLight(light.entity_id)}>
+                     style="${isOn ? `background: linear-gradient(135deg, rgba(${fillColor}, 0.5) 0%, rgba(${fillColor}, 0.3) 100%);` : ''} user-select: none; -webkit-user-select: none;"
+                     @touchstart=${longPress.onTouchStart}
+                     @touchmove=${longPress.onTouchMove}
+                     @touchend=${longPress.onTouchEnd}
+                     @touchcancel=${longPress.onTouchCancel}
+                     @mousedown=${longPress.onMouseDown}
+                     @mouseup=${longPress.onMouseUp}
+                     @mouseleave=${longPress.onMouseLeave}>
                   <div class="popup-light-item-icon">
                     <ha-icon icon="${light.icon}"></ha-icon>
                   </div>
