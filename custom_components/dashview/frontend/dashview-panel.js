@@ -540,6 +540,12 @@
         console.error("Settings store not available");
         return;
       }
+      // Don't save until settings have been loaded from backend
+      // This prevents overwriting saved settings with empty defaults on reload
+      if (!this._settingsLoaded) {
+        console.warn("Dashview: Skipping save - settings not yet loaded");
+        return;
+      }
       // Sync local properties to store and save
       settingsStore.update({
         enabledRooms: this._enabledRooms,
