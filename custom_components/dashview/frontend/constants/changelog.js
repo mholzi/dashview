@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.5';
+export const CURRENT_VERSION = '0.0.6';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,21 @@ export const CURRENT_VERSION = '0.0.5';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.6 - Floor/room activity indicators fix
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.6',
+    page: 1,
+    date: 'November 2025',
+    title: 'Bugfixes',
+    subtitle: 'Aktivitätsanzeige funktioniert wieder',
+    changes: [
+      { type: 'fix', description: 'Etagen- und Raum-Aktivitätsanzeige zeigt aktive Räume' },
+      { type: 'fix', description: 'Chips im Raum-Popup werden korrekt angezeigt' },
+      { type: 'fix', description: 'Lichter-Zählung und Status funktioniert wieder' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.5 - Settings persistence fixes
   // ══════════════════════════════════════════════════════════════

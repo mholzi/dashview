@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.9";
+  const DASHVIEW_VERSION = "1.9.10";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -1561,13 +1561,14 @@
       if (!this.hass) return [];
       const chips = [];
 
-      // Get enabled motion sensors for this room (filter by current label)
-      Object.entries(this._enabledMotionSensors).forEach(([entityId, enabled]) => {
-        if (enabled === false) return;
+      // Get motion sensors for this room (iterate over registry for default-enabled)
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        if (this._enabledMotionSensors[entityId] === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current motion label
-        if (this._motionLabelId && !this._entityHasCurrentLabel(entityId, this._motionLabelId)) return;
+        if (!this._motionLabelId || !entityReg.labels || !entityReg.labels.includes(this._motionLabelId)) return;
 
         const state = this.hass.states[entityId];
         if (!state) return;
@@ -1588,13 +1589,14 @@
         });
       });
 
-      // Get enabled vibration sensors for this room (only show when active, filter by current label)
-      Object.entries(this._enabledVibrationSensors).forEach(([entityId, enabled]) => {
-        if (enabled === false) return;
+      // Get vibration sensors for this room (only show when active, iterate over registry)
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        if (this._enabledVibrationSensors[entityId] === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current vibration label
-        if (this._vibrationLabelId && !this._entityHasCurrentLabel(entityId, this._vibrationLabelId)) return;
+        if (!this._vibrationLabelId || !entityReg.labels || !entityReg.labels.includes(this._vibrationLabelId)) return;
 
         const state = this.hass.states[entityId];
         if (!state) return;
@@ -1617,13 +1619,14 @@
         });
       });
 
-      // Get enabled smoke sensors for this room (only show when active, filter by current label)
-      Object.entries(this._enabledSmokeSensors).forEach(([entityId, enabled]) => {
-        if (enabled === false) return;
+      // Get smoke sensors for this room (only show when active, iterate over registry)
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        if (this._enabledSmokeSensors[entityId] === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current smoke label
-        if (this._smokeLabelId && !this._entityHasCurrentLabel(entityId, this._smokeLabelId)) return;
+        if (!this._smokeLabelId || !entityReg.labels || !entityReg.labels.includes(this._smokeLabelId)) return;
 
         const state = this.hass.states[entityId];
         if (!state) return;
@@ -1646,13 +1649,14 @@
         });
       });
 
-      // Get enabled windows for this room (only show when open, filter by current label)
-      Object.entries(this._enabledWindows).forEach(([entityId, enabled]) => {
-        if (enabled === false) return;
+      // Get windows for this room (only show when open, iterate over registry)
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        if (this._enabledWindows[entityId] === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current window label
-        if (this._windowLabelId && !this._entityHasCurrentLabel(entityId, this._windowLabelId)) return;
+        if (!this._windowLabelId || !entityReg.labels || !entityReg.labels.includes(this._windowLabelId)) return;
 
         const state = this.hass.states[entityId];
         if (!state) return;
@@ -2248,14 +2252,16 @@
     }
 
     // Helper to find rooms with active entities of a given type
-    // Now also filters by current label to ensure only entities with the currently selected label are counted
+    // Iterates over entity registry to support default-enabled behavior
     _getRoomsWithActiveEntities(enabledMap, labelId = null) {
       const rooms = new Set();
-      Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-        // Skip only explicitly disabled entities
-        if (enabled === false) return;
-        // Filter by current label if provided
-        if (labelId && !this._entityHasCurrentLabel(entityId, labelId)) return;
+      // Iterate over registry instead of enabledMap for default-enabled behavior
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        // Skip explicitly disabled entities
+        if (enabledMap[entityId] === false) return;
+        // Filter by label if provided
+        if (labelId && (!entityReg.labels || !entityReg.labels.includes(labelId))) return;
         const state = this.hass?.states[entityId];
         if (!state || state.state !== "on") return;
         const areaId = this._getAreaIdForEntity(entityId);
@@ -2314,19 +2320,21 @@
     _getEnabledActiveLights() {
       if (!this.hass) return [];
 
-      return Object.entries(this._enabledLights)
-        .filter(([entityId, enabled]) => {
-          if (enabled === false) return false;
+      // Iterate over registry for default-enabled behavior
+      return this._entityRegistry
+        .filter((entityReg) => {
+          const entityId = entityReg.entity_id;
+          // Skip explicitly disabled
+          if (this._enabledLights[entityId] === false) return false;
           // Filter by current light label
-          if (this._lightLabelId && !this._entityHasCurrentLabel(entityId, this._lightLabelId)) return false;
+          if (this._lightLabelId && (!entityReg.labels || !entityReg.labels.includes(this._lightLabelId))) return false;
           const state = this.hass.states[entityId];
           return state && state.state === "on";
         })
-        .map(([entityId]) => {
+        .map((entityReg) => {
+          const entityId = entityReg.entity_id;
           const state = this.hass.states[entityId];
-          // Find area from entity registry
-          const entityReg = this._entityRegistry.find(e => e.entity_id === entityId);
-          const areaId = entityReg?.area_id;
+          const areaId = this._getAreaIdForEntity(entityId);
           const area = this._areas.find(a => a.area_id === areaId);
 
           return {
@@ -3067,15 +3075,16 @@
       if (!this.hass) return { total: 0, lights: 0, switches: 0, sensors: 0, unavailable: 0, lightsOn: 0, enabledLights: 0, totalLabeledLights: 0 };
 
       const states = Object.values(this.hass.states);
-      // Filter enabled lights by current label to ensure consistent counts
-      const enabledLightIds = Object.entries(this._enabledLights)
-        .filter(([entityId, enabled]) => {
-          if (enabled === false) return false;
+      // Filter enabled lights by current label (iterate over registry for default-enabled)
+      const enabledLightIds = this._entityRegistry
+        .filter((entityReg) => {
+          const entityId = entityReg.entity_id;
+          if (this._enabledLights[entityId] === false) return false;
           // Only count lights that have the currently selected light label
-          if (this._lightLabelId && !this._entityHasCurrentLabel(entityId, this._lightLabelId)) return false;
+          if (!this._lightLabelId || !entityReg.labels || !entityReg.labels.includes(this._lightLabelId)) return false;
           return true;
         })
-        .map(([id]) => id);
+        .map((e) => e.entity_id);
 
       // Count entities with the "Light" label
       const totalLabeledLights = this._lightLabelId
