@@ -1038,6 +1038,93 @@
       this.requestUpdate();
     }
 
+    /**
+     * Move a floor up or down in the display order
+     * @param {string} floorId - The floor ID to move
+     * @param {number} direction - -1 for up, 1 for down
+     */
+    _moveFloor(floorId, direction) {
+      // Get current floor order or create from existing floors
+      let floorOrder = [...(this._floorOrder || [])];
+
+      // If floorOrder is empty, initialize it from available floors
+      if (floorOrder.length === 0 && this._floors) {
+        floorOrder = this._floors.map(f => f.floor_id);
+      }
+
+      const currentIndex = floorOrder.indexOf(floorId);
+      if (currentIndex === -1) {
+        // Floor not in order yet, add it
+        floorOrder.push(floorId);
+        return;
+      }
+
+      const newIndex = currentIndex + direction;
+
+      // Check bounds
+      if (newIndex < 0 || newIndex >= floorOrder.length) {
+        return;
+      }
+
+      // Swap positions
+      [floorOrder[currentIndex], floorOrder[newIndex]] = [floorOrder[newIndex], floorOrder[currentIndex]];
+
+      this._floorOrder = floorOrder;
+      this._saveSettings();
+      this.requestUpdate();
+    }
+
+    /**
+     * Move a room up or down in the display order within a floor
+     * @param {string|null} floorId - The floor ID (null for unassigned rooms)
+     * @param {string} areaId - The area/room ID to move
+     * @param {number} direction - -1 for up, 1 for down
+     */
+    _moveRoom(floorId, areaId, direction) {
+      const orderKey = floorId || '_unassigned';
+
+      // Get current room order for this floor or create from existing areas
+      let roomOrder = { ...(this._roomOrder || {}) };
+      let floorRoomOrder = [...(roomOrder[orderKey] || [])];
+
+      // If floorRoomOrder is empty, initialize it from available areas for this floor
+      if (floorRoomOrder.length === 0 && this._areas) {
+        const areasForFloor = this._areas.filter(a => {
+          if (floorId === null) {
+            return !a.floor_id;
+          }
+          return a.floor_id === floorId;
+        });
+        floorRoomOrder = areasForFloor.map(a => a.area_id);
+      }
+
+      const currentIndex = floorRoomOrder.indexOf(areaId);
+      if (currentIndex === -1) {
+        // Room not in order yet, add it
+        floorRoomOrder.push(areaId);
+        roomOrder[orderKey] = floorRoomOrder;
+        this._roomOrder = roomOrder;
+        this._saveSettings();
+        this.requestUpdate();
+        return;
+      }
+
+      const newIndex = currentIndex + direction;
+
+      // Check bounds
+      if (newIndex < 0 || newIndex >= floorRoomOrder.length) {
+        return;
+      }
+
+      // Swap positions
+      [floorRoomOrder[currentIndex], floorRoomOrder[newIndex]] = [floorRoomOrder[newIndex], floorRoomOrder[currentIndex]];
+
+      roomOrder[orderKey] = floorRoomOrder;
+      this._roomOrder = roomOrder;
+      this._saveSettings();
+      this.requestUpdate();
+    }
+
     updated(changedProperties) {
       if (changedProperties.has("hass") && this.hass) {
         // Initialize stores with hass instance
