@@ -171,6 +171,9 @@ export const DEFAULT_SETTINGS = {
   // Media presets
   mediaPresets: [],
 
+  // Version tracking for changelog popup
+  lastSeenVersion: null,  // Stores the last version the user has seen changelog for
+
   // Custom labels configuration
   customLabels: {},  // { labelId: { enabled: true } }
   enabledCustomEntities: {},  // { entityId: { enabled: true, childEntities: [] } }

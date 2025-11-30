@@ -1,0 +1,129 @@
+/**
+ * Changelog Data
+ * Manually curated changelog entries for the "What's New" popup
+ *
+ * The popup appears AFTER an update is installed (when CURRENT_VERSION > lastSeenVersion)
+ *
+ * INSTRUCTIONS:
+ * 1. Update CURRENT_VERSION to match your release version
+ * 2. Add a new entry at the TOP of the CHANGELOG array
+ * 3. Each entry can have as many or few items as you want
+ */
+
+/**
+ * Current version of the installed integration
+ * UPDATE THIS with each release - must match manifest.json/const.py
+ */
+export const CURRENT_VERSION = '0.0.2';
+
+/**
+ * Changelog entries - newest first
+ *
+ * Each entry:
+ * - version: Must match the release version
+ * - date: Display date (any format you want)
+ * - title: Release title/name
+ * - changes: Array of { type, description }
+ *   - type: 'feature' | 'improvement' | 'fix' | 'breaking'
+ *   - description: Text to display
+ */
+export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.2 - Split into 3 pages for better onboarding
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.2',
+    page: 1,
+    date: 'Dezember 2024',
+    title: 'Willkommen bei Dashview!',
+    subtitle: 'Dein neues Smart Home Dashboard',
+    changes: [
+      { type: 'feature', description: 'Übersichtliches Dashboard für alle Räume und Etagen' },
+      { type: 'feature', description: 'Schneller Zugriff auf Lichter, Rollos und Klimageräte' },
+      { type: 'feature', description: 'Wetteranzeige mit Vorhersage direkt im Header' },
+    ]
+  },
+  {
+    version: '0.0.2',
+    page: 2,
+    date: 'Dezember 2024',
+    title: 'Einfache Einrichtung',
+    subtitle: 'Alles anpassbar über die Einstellungen',
+    changes: [
+      { type: 'feature', description: 'Räume und Etagen per Drag & Drop sortieren' },
+      { type: 'feature', description: 'Geräte einzeln aktivieren oder deaktivieren' },
+      { type: 'feature', description: 'Labels nutzen um Geräte automatisch zuzuordnen' },
+    ]
+  },
+  {
+    version: '0.0.2',
+    page: 3,
+    date: 'Dezember 2024',
+    title: 'Immer auf dem Laufenden',
+    subtitle: 'Verpasse keine Updates mehr',
+    changes: [
+      { type: 'feature', description: '"Was ist neu?" Popup nach jedem Update' },
+      { type: 'improvement', description: 'Einfache Installation über HACS' },
+      { type: 'improvement', description: 'Regelmäßige Updates mit neuen Features' },
+    ]
+  },
+  // ──────────────────────────────────────────────────────────────
+  // Add new versions ABOVE this line
+  // For multi-page releases, use same version with different page numbers
+  // ──────────────────────────────────────────────────────────────
+];
+
+/**
+ * Compare two version strings (semver-like)
+ * Returns: 1 if a > b, -1 if a < b, 0 if equal
+ */
+export function compareVersions(a, b) {
+  if (!a) return -1;
+  if (!b) return 1;
+
+  const partsA = a.split('.').map(p => parseInt(p, 10) || 0);
+  const partsB = b.split('.').map(p => parseInt(p, 10) || 0);
+
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+    const numA = partsA[i] || 0;
+    const numB = partsB[i] || 0;
+    if (numA > numB) return 1;
+    if (numA < numB) return -1;
+  }
+  return 0;
+}
+
+/**
+ * Check if there are new changes to show
+ * Compares CURRENT_VERSION (installed) with lastSeenVersion (stored)
+ * @param {string|null} lastSeenVersion - The last version the user has seen
+ * @returns {boolean} True if current version is newer than last seen
+ */
+export function hasNewChanges(lastSeenVersion) {
+  return compareVersions(CURRENT_VERSION, lastSeenVersion) > 0;
+}
+
+/**
+ * Get changelog entries newer than a given version
+ * @param {string|null} lastSeenVersion - The last version the user has seen
+ * @returns {Array} Array of changelog entries to show
+ */
+export function getNewChanges(lastSeenVersion) {
+  if (!lastSeenVersion) {
+    // First time user - show only current version
+    return CHANGELOG.filter(entry => entry.version === CURRENT_VERSION);
+  }
+
+  // Return all entries newer than lastSeenVersion
+  return CHANGELOG.filter(entry =>
+    compareVersions(entry.version, lastSeenVersion) > 0
+  );
+}
+
+export default {
+  CURRENT_VERSION,
+  CHANGELOG,
+  compareVersions,
+  hasNewChanges,
+  getNewChanges,
+};

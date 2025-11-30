@@ -523,14 +523,16 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
  * @returns {Array} Array of status objects for active appliances
  */
 export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStatus, getApplianceStatus) {
-  if (!hass) return [];
-  if (!appliancesWithHomeStatus || appliancesWithHomeStatus.length === 0) return [];
-  if (!getApplianceStatus) return [];
+  console.log('[Dashview Debug] getAppliancesStatus called with', appliancesWithHomeStatus?.length, 'appliances');
+  if (!hass) { console.log('[Dashview Debug] getAppliancesStatus: no hass'); return []; }
+  if (!appliancesWithHomeStatus || appliancesWithHomeStatus.length === 0) { console.log('[Dashview Debug] getAppliancesStatus: no appliances'); return []; }
+  if (!getApplianceStatus) { console.log('[Dashview Debug] getAppliancesStatus: no callback'); return []; }
 
   const statusItems = [];
 
   appliancesWithHomeStatus.forEach(appliance => {
     const status = getApplianceStatus(appliance);
+    console.log('[Dashview Debug] getAppliancesStatus - appliance:', appliance.name, 'status:', status);
     if (!status) return;
 
     // Only show if appliance is active, running, or finished

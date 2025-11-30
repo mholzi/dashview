@@ -374,3 +374,12 @@ export {
   formatCount,
   formatOfTotal,
 } from './german-text.js';
+
+// Re-export changelog functions
+export {
+  CURRENT_VERSION,
+  CHANGELOG,
+  compareVersions,
+  hasNewChanges,
+  getNewChanges,
+} from './changelog.js';

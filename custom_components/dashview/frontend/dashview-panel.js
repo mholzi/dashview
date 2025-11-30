@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.8.8";
+  const DASHVIEW_VERSION = "1.9.2";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -95,14 +95,25 @@
   let dashviewRoomPopup = null;
   let dashviewWeatherPopup = null;
   let dashviewMediaPopup = null;
+  let dashviewChangelogPopup = null;
+  let changelogUtils = null;
   try {
     const popupsModule = await import(`./features/popups/index.js?v=${DASHVIEW_VERSION}`);
     dashviewRoomPopup = popupsModule.renderRoomPopup;
     dashviewWeatherPopup = popupsModule.renderWeatherPopup;
     dashviewMediaPopup = popupsModule.renderMediaPopup;
+    dashviewChangelogPopup = popupsModule.renderChangelogPopup;
     debugLog("Loaded popups module");
   } catch (e) {
     console.warn("Dashview: Failed to load popups module", e);
+  }
+
+  // Load changelog utilities
+  try {
+    changelogUtils = await import(`./constants/changelog.js?v=${DASHVIEW_VERSION}`);
+    debugLog("Loaded changelog module");
+  } catch (e) {
+    console.warn("Dashview: Failed to load changelog module", e);
   }
 
   // Load store modules
@@ -267,6 +278,10 @@
         _trainDepartures: { type: Array },
         _trainSearchQuery: { type: String },
         _trainSearchFocused: { type: Boolean },
+        // Changelog popup
+        _changelogPopupOpen: { type: Boolean },
+        _changelogPageIndex: { type: Number },
+        _lastSeenVersion: { type: String },
       };
     }
 
@@ -441,6 +456,10 @@
       this._trainSearchFocused = false;
       // Thermostat swipe index per room
       this._thermostatSwipeIndex = {};
+      // Changelog popup state
+      this._changelogPopupOpen = false;
+      this._changelogPageIndex = 0;
+      this._lastSeenVersion = null;
     }
 
     connectedCallback() {
@@ -1225,6 +1244,7 @@
             this._enabledAppliances = settings.enabledAppliances || {};
             this._trainDepartures = settings.trainDepartures || [];
             this._mediaPresets = settings.mediaPresets || [];
+            this._lastSeenVersion = settings.lastSeenVersion || null;
             // Load category label mappings (user-configured labels for each category)
             // Use 'in' check to properly handle null values (null is a valid setting meaning "no label")
             if (settings.categoryLabels) {
@@ -1243,6 +1263,8 @@
             }
             this._settingsLoaded = true;
             this._settingsError = null;
+            // Check for new version and show changelog popup if needed
+            this._checkForNewVersion();
             // Update RoomDataService with enabled maps
             if (roomDataService) {
               roomDataService.setEnabledMaps({
@@ -2019,6 +2041,42 @@
     _closeBatteryPopup() { this._closePopup('_batteryPopupOpen'); }
     _handleBatteryPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeBatteryPopup()); }
 
+    // Changelog popup methods
+    _checkForNewVersion() {
+      if (!changelogUtils) return;
+
+      // Compare installed version (CURRENT_VERSION) with last seen version
+      if (changelogUtils.hasNewChanges(this._lastSeenVersion)) {
+        this._changelogPageIndex = 0;
+        this._changelogPopupOpen = true;
+        this.requestUpdate();
+      }
+    }
+
+    _closeChangelogPopup() {
+      this._changelogPopupOpen = false;
+      // Save current version as last seen
+      if (changelogUtils && settingsStore) {
+        this._lastSeenVersion = changelogUtils.CURRENT_VERSION;
+        settingsStore.set('lastSeenVersion', changelogUtils.CURRENT_VERSION);
+      }
+      this.requestUpdate();
+    }
+
+    _nextChangelogPage() {
+      const newChanges = changelogUtils ? changelogUtils.getNewChanges(this._lastSeenVersion) : [];
+      if (this._changelogPageIndex < newChanges.length - 1) {
+        this._changelogPageIndex++;
+        this.requestUpdate();
+      }
+    }
+
+    _handleChangelogOverlayClick(e) {
+      if (e.target.classList.contains('popup-overlay')) {
+        this._closeChangelogPopup();
+      }
+    }
+
     _getLowBatteryDevices() {
       if (!this.hass) return [];
 
@@ -2591,7 +2649,10 @@
      * @returns {Array} Array of appliance objects with showInHomeStatus enabled
      */
     _getAppliancesWithHomeStatus() {
-      if (!this._areas || !this._enabledAppliances) return [];
+      if (!this._areas || !this._enabledAppliances) {
+        console.log('[Dashview Debug] _getAppliancesWithHomeStatus: early return - areas:', !!this._areas, 'enabledAppliances:', !!this._enabledAppliances);
+        return [];
+      }
 
       const appliances = [];
       this._areas.forEach(area => {
@@ -2599,7 +2660,10 @@
         areaAppliances.forEach(appliance => {
           if (appliance.enabled) {
             const config = this._enabledAppliances[appliance.device_id];
+            console.log('[Dashview Debug] Checking appliance:', appliance.name, 'device_id:', appliance.device_id, 'config:', config);
             if (config && config.showInHomeStatus) {
+              const status = this._getApplianceStatus(appliance);
+              console.log('[Dashview Debug] Appliance with showInHomeStatus:', appliance.name, 'status:', status);
               appliances.push({
                 ...appliance,
                 areaName: area.name,
@@ -2609,6 +2673,7 @@
           }
         });
       });
+      console.log('[Dashview Debug] _getAppliancesWithHomeStatus returning:', appliances.length, 'appliances');
       return appliances;
     }
 
@@ -3277,6 +3342,11 @@
               </div>
             `
           : ""}
+
+        <!-- CHANGELOG POPUP -->
+        ${this._changelogPopupOpen && dashviewChangelogPopup
+          ? dashviewChangelogPopup(this, html)
+          : ''}
 
         <!-- BOTTOM TAB BAR -->
         <div class="bottom-tab-bar">
