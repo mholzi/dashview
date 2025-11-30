@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.7';
+export const CURRENT_VERSION = '0.0.8';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,20 @@ export const CURRENT_VERSION = '0.0.7';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.8 - Long press for more-info
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.8',
+    page: 1,
+    date: 'Dezember 2025',
+    title: 'Verbesserung',
+    subtitle: 'Mehr Details per Long-Press',
+    changes: [
+      { type: 'feature', description: 'Langer Druck auf Licht öffnet Details-Dialog' },
+      { type: 'improvement', description: 'Kurzes Tippen schaltet weiterhin das Licht' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.7 - Settings and TV fixes
   // ══════════════════════════════════════════════════════════════
