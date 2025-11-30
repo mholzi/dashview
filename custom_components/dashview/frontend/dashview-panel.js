@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.4";
+  const DASHVIEW_VERSION = "1.9.5";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -1672,18 +1672,23 @@
     _togglePopupThermostatExpanded() { this._toggleBoolProp('_popupThermostatExpanded'); }
 
     // Generic helper to get enabled entities for a room with custom attribute mapping
-    // Now also filters by current label to ensure only entities with the currently selected label are shown
+    // Iterates over registry entities (not enabledMap) to support default-enabled behavior
     _getEnabledEntitiesForRoom(areaId, enabledMap, attrMapper, labelId = null) {
-      if (!this.hass) return [];
+      if (!this.hass || !labelId) return [];
       const entities = [];
-      Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-        if (enabled === false) return;
+      // Iterate over registry entities that have the label and are in the area
+      this._entityRegistry.forEach(entityReg => {
+        const entityId = entityReg.entity_id;
+        // Check if entity has the required label
+        if (!entityReg.labels || !entityReg.labels.includes(labelId)) return;
+        // Check if entity is in this area
         if (this._getAreaIdForEntity(entityId) !== areaId) return;
-        // If labelId is provided, check if entity still has this label
-        if (labelId && !this._entityHasCurrentLabel(entityId, labelId)) return;
+        // Check if entity is NOT explicitly disabled (default is enabled)
+        if (enabledMap[entityId] === false) return;
+        // Get state
         const state = this.hass.states[entityId];
         if (!state) return;
-        entities.push({ entity_id: entityId, name: state.attributes?.friendly_name || entityId, ...attrMapper(state) });
+        entities.push({ entity_id: entityId, name: state.attributes?.friendly_name || entityReg.original_name || entityId, ...attrMapper(state) });
       });
       return dashviewUtils.sortByName(entities);
     }
