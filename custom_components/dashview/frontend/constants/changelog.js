@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.6';
+export const CURRENT_VERSION = '0.0.7';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,20 @@ export const CURRENT_VERSION = '0.0.6';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.7 - Settings and TV fixes
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.7',
+    page: 1,
+    date: 'Dezember 2025',
+    title: 'Bugfixes',
+    subtitle: 'Einstellungen und TV-Anzeige',
+    changes: [
+      { type: 'fix', description: 'Einstellungen werden nicht mehr beim Neuladen überschrieben' },
+      { type: 'fix', description: 'TV-Bereich im Raum-Popup wird korrekt dargestellt' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.6 - Floor/room activity indicators fix
   // ══════════════════════════════════════════════════════════════
