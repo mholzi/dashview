@@ -44,6 +44,17 @@ const BINARY_SENSOR_ICONS = {
 };
 
 /**
+ * Lock icons by state
+ */
+const LOCK_ICONS = {
+  locked: 'mdi:lock',
+  unlocked: 'mdi:lock-open',
+  locking: 'mdi:lock-clock',
+  unlocking: 'mdi:lock-clock',
+  default: 'mdi:lock',
+};
+
+/**
  * German state labels for binary sensors
  */
 const BINARY_SENSOR_LABELS = {
@@ -53,6 +64,17 @@ const BINARY_SENSOR_LABELS = {
   vibration: { on: 'Vibration', off: 'Ruhig' },
   smoke: { on: 'Rauch!', off: 'Kein Rauch' },
   default: { on: 'An', off: 'Aus' },
+};
+
+/**
+ * German state labels for locks
+ */
+const LOCK_LABELS = {
+  locked: 'Verriegelt',
+  unlocked: 'Entriegelt',
+  locking: 'Verriegelt...',
+  unlocking: 'Entriegelt...',
+  default: 'Unbekannt',
 };
 
 // ==================== Display Info Getters ====================
@@ -197,6 +219,24 @@ function getClimateDisplayInfo(state) {
 }
 
 /**
+ * Get display info for a lock entity
+ * @param {Object} state - Entity state object
+ * @returns {Object} Display info
+ */
+function getLockDisplayInfo(state) {
+  const lockState = state.state;
+  const icon = state.attributes.icon || LOCK_ICONS[lockState] || LOCK_ICONS.default;
+  const labelText = LOCK_LABELS[lockState] || LOCK_LABELS.default;
+  const isUnlocked = lockState === 'unlocked';
+
+  return {
+    icon,
+    labelText,
+    cardClass: isUnlocked ? 'active-gradient' : 'inactive',
+  };
+}
+
+/**
  * Get display info for a generic binary sensor
  * @param {Object} state - Entity state object
  * @returns {Object} Display info
@@ -330,6 +370,8 @@ export class EntityDisplayService {
       displayInfo = getCoverDisplayInfo(state);
     } else if (this.hasLabel(entityId, 'climate') || entityType === 'climate') {
       displayInfo = getClimateDisplayInfo(state);
+    } else if (this.hasLabel(entityId, 'lock') || entityType === 'lock') {
+      displayInfo = getLockDisplayInfo(state);
     } else {
       // Fall back to entity type
       switch (entityType) {
@@ -338,6 +380,9 @@ export class EntityDisplayService {
           break;
         case 'sensor':
           displayInfo = getSensorDisplayInfo(state);
+          break;
+        case 'lock':
+          displayInfo = getLockDisplayInfo(state);
           break;
         default:
           displayInfo = getDefaultDisplayInfo(state);
@@ -380,12 +425,15 @@ export {
   getLightDisplayInfo,
   getCoverDisplayInfo,
   getClimateDisplayInfo,
+  getLockDisplayInfo,
   getBinarySensorDisplayInfo,
   getSensorDisplayInfo,
   getDefaultDisplayInfo,
   SENSOR_ICONS,
   BINARY_SENSOR_ICONS,
   BINARY_SENSOR_LABELS,
+  LOCK_ICONS,
+  LOCK_LABELS,
 };
 
 export default EntityDisplayService;

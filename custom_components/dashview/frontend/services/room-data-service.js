@@ -104,6 +104,14 @@ const ENTITY_TYPE_CONFIG = {
       mediaTitle: state?.attributes?.media_title,
     }),
   },
+  lock: {
+    labelKey: 'lock',
+    enabledMapKey: 'enabledLocks',
+    extraAttributes: (state) => ({
+      isLocked: state?.state === 'locked',
+      lastChanged: state?.last_changed,
+    }),
+  },
 };
 
 /**
@@ -289,6 +297,10 @@ export class RoomDataService {
 
   getAreaTVs(areaId) {
     return this.getAreaEntities(areaId, 'tv');
+  }
+
+  getAreaLocks(areaId) {
+    return this.getAreaEntities(areaId, 'lock');
   }
 
   // ============================================

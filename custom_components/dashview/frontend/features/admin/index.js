@@ -37,6 +37,7 @@ const LABEL_CATEGORIES = [
   { key: 'climate', icon: 'mdi:thermostat', title: 'Thermostats / Climate', description: 'Climate control entities', prop: '_climateLabelId' },
   { key: 'mediaPlayer', icon: 'mdi:speaker', title: 'Media Players', description: 'Media player entities', prop: '_mediaPlayerLabelId' },
   { key: 'tv', icon: 'mdi:television', title: 'TVs / Fernseher', description: 'TV and display entities', prop: '_tvLabelId' },
+  { key: 'lock', icon: 'mdi:lock', title: 'Locks / Schlösser', description: 'Lock entities for doors and gates', prop: '_lockLabelId' },
 ];
 
 /**

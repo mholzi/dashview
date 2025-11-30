@@ -187,6 +187,7 @@
         _enabledClimates: { type: Object },
         _enabledMediaPlayers: { type: Object },
         _enabledTVs: { type: Object },
+        _enabledLocks: { type: Object },
         _mediaPopupOpen: { type: Boolean },
         _activeMediaTab: { type: String },
         _lastMotionChangeTime: { type: Object },
@@ -328,6 +329,7 @@
       this._enabledCovers = {};
       this._enabledMediaPlayers = {};
       this._enabledTVs = {};
+      this._enabledLocks = {};
       this._mediaPopupOpen = false;
       this._activeMediaTab = null;
       this._enabledGarages = {};
@@ -370,6 +372,7 @@
       this._climateLabelId = null;
       this._roofWindowLabelId = null;
       this._tvLabelId = null;
+      this._lockLabelId = null;
       // Custom labels configuration - labels beyond the predefined ones
       this._customLabels = {};  // { labelId: { enabled: true, icon: 'mdi:...', name: 'Label Name' } }
       this._enabledCustomEntities = {};  // { entityId: { enabled: true, childEntities: ['entity_id1', 'entity_id2'] } }
@@ -546,6 +549,7 @@
         enabledCovers: this._enabledCovers,
         enabledMediaPlayers: this._enabledMediaPlayers,
         enabledTVs: this._enabledTVs,
+        enabledLocks: this._enabledLocks,
         enabledGarages: this._enabledGarages,
         enabledWindows: this._enabledWindows,
         enabledVibrationSensors: this._enabledVibrationSensors,
@@ -597,6 +601,7 @@
           climate: this._climateLabelId,
           mediaPlayer: this._mediaPlayerLabelId,
           tv: this._tvLabelId,
+          lock: this._lockLabelId,
         },
       }, true); // true = save immediately (debounced internally)
     }
@@ -655,6 +660,7 @@
           climate: this._climateLabelId,
           mediaPlayer: this._mediaPlayerLabelId,
           tv: this._tvLabelId,
+          lock: this._lockLabelId,
         });
       }
     }
@@ -1234,6 +1240,7 @@
             this._enabledCovers = settings.enabledCovers;
             this._enabledMediaPlayers = settings.enabledMediaPlayers;
             this._enabledTVs = settings.enabledTVs || {};
+            this._enabledLocks = settings.enabledLocks || {};
             this._enabledGarages = settings.enabledGarages;
             this._enabledWindows = settings.enabledWindows;
             this._enabledVibrationSensors = settings.enabledVibrationSensors;
@@ -1287,6 +1294,7 @@
               this._climateLabelId = 'climate' in settings.categoryLabels ? settings.categoryLabels.climate : this._climateLabelId;
               this._mediaPlayerLabelId = 'mediaPlayer' in settings.categoryLabels ? settings.categoryLabels.mediaPlayer : this._mediaPlayerLabelId;
               this._tvLabelId = 'tv' in settings.categoryLabels ? settings.categoryLabels.tv : this._tvLabelId;
+              this._lockLabelId = 'lock' in settings.categoryLabels ? settings.categoryLabels.lock : this._lockLabelId;
             }
             this._settingsLoaded = true;
             this._settingsError = null;
@@ -1308,6 +1316,7 @@
                 enabledRoofWindows: this._enabledRoofWindows,
                 enabledMediaPlayers: this._enabledMediaPlayers,
                 enabledTVs: this._enabledTVs,
+                enabledLocks: this._enabledLocks,
               });
             }
             // Update roomDataService with user-configured label IDs
@@ -1438,6 +1447,13 @@
       this.hass.callService("media_player", "toggle", { entity_id: entityId });
     }
 
+    _toggleLock(entityId) {
+      if (!this.hass) return;
+      const state = this.hass.states[entityId];
+      const isLocked = state?.state === 'locked';
+      this.hass.callService("lock", isLocked ? "unlock" : "lock", { entity_id: entityId });
+    }
+
     // Generic toggle helper for enabled entity settings
     // Note: Entities are enabled by default (when not in map or undefined)
     // Only explicit false means disabled
@@ -1461,6 +1477,7 @@
           enabledRoofWindows: this._enabledRoofWindows,
           enabledMediaPlayers: this._enabledMediaPlayers,
           enabledTVs: this._enabledTVs,
+          enabledLocks: this._enabledLocks,
         });
       }
       this.requestUpdate();
@@ -1480,6 +1497,7 @@
     _toggleRoofWindowEnabled(entityId) { this._toggleEntityEnabled('_enabledRoofWindows', entityId); }
     _toggleMediaPlayerEnabled(entityId) { this._toggleEntityEnabled('_enabledMediaPlayers', entityId); }
     _toggleTVEnabled(entityId) { this._toggleEntityEnabled('_enabledTVs', entityId); }
+    _toggleLockEnabled(entityId) { this._toggleEntityEnabled('_enabledLocks', entityId); }
 
     // Generic toggle helper for boolean properties
     _toggleBoolProp(key) { this[key] = !this[key]; this.requestUpdate(); }
@@ -1879,6 +1897,15 @@
         volume: s.attributes?.volume_level,
         icon: s.attributes?.icon || 'mdi:television',
       }), this._tvLabelId);
+    }
+
+    _getEnabledLocksForRoom(areaId) {
+      return this._getEnabledEntitiesForRoom(areaId, this._enabledLocks, s => ({
+        state: s.state,
+        isLocked: s.state === 'locked',
+        last_changed: s.last_changed,
+        icon: s.attributes?.icon || (s.state === 'locked' ? 'mdi:lock' : 'mdi:lock-open'),
+      }), this._lockLabelId);
     }
 
     _getRoomClimateNotification(areaId) {
@@ -3206,6 +3233,7 @@
               enabledLights: this._buildEnabledMapFromRegistry(this._lightLabelId, this._enabledLights),
               enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
               enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
+              enabledLocks: this._buildEnabledMapFromRegistry(this._lockLabelId, this._enabledLocks),
             },
             {
               motionLabelId: this._motionLabelId,
@@ -3214,6 +3242,7 @@
               lightLabelId: this._lightLabelId,
               coverLabelId: this._coverLabelId,
               tvLabelId: this._tvLabelId,
+              lockLabelId: this._lockLabelId,
             },
             (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
             appliancesWithHomeStatus,

@@ -35,6 +35,7 @@ export function renderRoomPopup(component, html) {
         ${renderCoverSection(component, html, areaId)}
         ${renderMediaSection(component, html, areaId)}
         ${renderTVSection(component, html, areaId)}
+        ${renderLockSection(component, html, areaId)}
         ${renderGarageSection(component, html, areaId)}
         ${renderApplianceSection(component, html, areaId)}
 
@@ -600,6 +601,42 @@ function renderTVSection(component, html, areaId) {
             <div class="popup-tv-item-content">
               <span class="popup-tv-item-name">${tv.name}</span>
               <span class="popup-tv-item-state">${tv.state === 'on' ? (tv.source || 'An') : 'Aus'}</span>
+            </div>
+          </div>
+        `)}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render lock section
+ */
+function renderLockSection(component, html, areaId) {
+  const locks = component._getEnabledLocksForRoom(areaId);
+  if (locks.length === 0) return '';
+
+  const unlockedCount = locks.filter(l => l.state === 'unlocked').length;
+  const totalCount = locks.length;
+
+  return html`
+    <div class="popup-lock-section">
+      <div class="popup-lock-header">
+        <ha-icon icon="mdi:lock"></ha-icon>
+        <span class="popup-lock-title">Schlösser</span>
+        <span class="popup-lock-count">${unlockedCount > 0 ? `${unlockedCount} offen` : 'Alle verriegelt'}</span>
+      </div>
+
+      <div class="popup-lock-content">
+        ${locks.map(lock => html`
+          <div class="popup-lock-item ${lock.state === 'unlocked' ? 'unlocked' : 'locked'}"
+               @click=${() => component._toggleLock(lock.entity_id)}>
+            <div class="popup-lock-item-icon">
+              <ha-icon icon="${lock.icon}"></ha-icon>
+            </div>
+            <div class="popup-lock-item-content">
+              <span class="popup-lock-item-name">${lock.name}</span>
+              <span class="popup-lock-item-state">${lock.state === 'locked' ? 'Verriegelt' : lock.state === 'unlocked' ? 'Entriegelt' : lock.state}</span>
             </div>
           </div>
         `)}

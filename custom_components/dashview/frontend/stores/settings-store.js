@@ -75,6 +75,7 @@ import { THRESHOLDS, debugLog } from '../constants/index.js';
  * @property {EnabledEntityMap} enabledClimates
  * @property {EnabledEntityMap} enabledRoofWindows
  * @property {EnabledEntityMap} enabledTVs
+ * @property {EnabledEntityMap} enabledLocks
  * @property {number} notificationTempThreshold
  * @property {number} notificationHumidityThreshold
  * @property {string} weatherEntity
@@ -122,6 +123,7 @@ export const DEFAULT_SETTINGS = {
   enabledClimates: {},
   enabledRoofWindows: {},
   enabledTVs: {},
+  enabledLocks: {},
 
   // Notification thresholds
   notificationTempThreshold: THRESHOLDS.DEFAULT_TEMP_NOTIFICATION,
@@ -199,6 +201,7 @@ export const DEFAULT_SETTINGS = {
     climate: null,
     mediaPlayer: null,
     tv: null,
+    lock: null,
   },
 
   // User photos (custom avatar photos per person entity)

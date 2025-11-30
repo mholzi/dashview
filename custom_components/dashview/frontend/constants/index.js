@@ -14,6 +14,7 @@ export const DOMAINS = {
   WEATHER: 'weather',
   SCENE: 'scene',
   SCRIPT: 'script',
+  LOCK: 'lock',
 };
 
 // Entity states
@@ -33,6 +34,10 @@ export const STATES = {
   COOL: 'cool',
   HEATING: 'heating',
   COOLING: 'cooling',
+  LOCKED: 'locked',
+  UNLOCKED: 'unlocked',
+  LOCKING: 'locking',
+  UNLOCKING: 'unlocking',
 };
 
 // Binary sensor device classes
@@ -112,6 +117,12 @@ export const ICONS = {
   TV: 'mdi:television',
   TV_ON: 'mdi:television',
   TV_OFF: 'mdi:television-off',
+
+  // Lock
+  LOCK_LOCKED: 'mdi:lock',
+  LOCK_UNLOCKED: 'mdi:lock-open',
+  LOCK_LOCKING: 'mdi:lock-clock',
+  LOCK_UNLOCKING: 'mdi:lock-clock',
 
   // Vibration
   VIBRATE_ON: 'mdi:vibrate',
@@ -285,6 +296,26 @@ export const ENTITY_CONFIGS = {
     getIcon: (entity) => entity.state === STATES.ON ? ICONS.TV_ON : ICONS.TV_OFF,
     getState: (entity) => entity.source || entity.state,
     isActive: (entity) => entity.state === STATES.ON,
+  },
+  locks: {
+    icon: ICONS.LOCK_LOCKED,
+    title: 'Locks / Schlösser',
+    activeLabel: 'unlocked',
+    getIcon: (entity) => {
+      if (entity.state === STATES.LOCKED) return ICONS.LOCK_LOCKED;
+      if (entity.state === STATES.UNLOCKED) return ICONS.LOCK_UNLOCKED;
+      if (entity.state === STATES.LOCKING) return ICONS.LOCK_LOCKING;
+      if (entity.state === STATES.UNLOCKING) return ICONS.LOCK_UNLOCKING;
+      return ICONS.LOCK_LOCKED;
+    },
+    getState: (entity) => {
+      if (entity.state === STATES.LOCKED) return 'Verriegelt';
+      if (entity.state === STATES.UNLOCKED) return 'Entriegelt';
+      if (entity.state === STATES.LOCKING) return 'Verriegelt...';
+      if (entity.state === STATES.UNLOCKING) return 'Entriegelt...';
+      return entity.state;
+    },
+    isActive: (entity) => entity.state === STATES.UNLOCKED,
   },
 };
 
