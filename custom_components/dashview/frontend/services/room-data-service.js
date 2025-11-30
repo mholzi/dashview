@@ -189,7 +189,10 @@ export class RoomDataService {
    * @returns {Array} Array of entity objects
    */
   getAreaEntities(areaId, entityType) {
-    if (!this._hass) return [];
+    if (!this._hass) {
+      console.log(`[Dashview] getAreaEntities: No hass for ${entityType}`);
+      return [];
+    }
 
     const config = ENTITY_TYPE_CONFIG[entityType];
     if (!config) {
@@ -198,7 +201,10 @@ export class RoomDataService {
     }
 
     const labelId = this._labelIds[config.labelKey];
-    if (!labelId) return [];
+    if (!labelId) {
+      console.log(`[Dashview] getAreaEntities: No labelId for ${entityType}, labelKey=${config.labelKey}, available labelIds:`, Object.keys(this._labelIds));
+      return [];
+    }
 
     const enabledMap = this._enabledMaps[config.enabledMapKey] || {};
 
