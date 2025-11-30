@@ -149,6 +149,7 @@ export class RoomDataService {
    */
   setLabelIds(labelIds) {
     this._labelIds = labelIds || {};
+    console.log('[Dashview] RoomDataService.setLabelIds called:', this._labelIds);
   }
 
   /**

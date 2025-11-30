@@ -639,7 +639,7 @@
      */
     _updateRoomDataServiceLabelIds() {
       if (roomDataService) {
-        roomDataService.setLabelIds({
+        const labelIds = {
           light: this._lightLabelId,
           cover: this._coverLabelId,
           roofWindow: this._roofWindowLabelId,
@@ -653,7 +653,11 @@
           climate: this._climateLabelId,
           mediaPlayer: this._mediaPlayerLabelId,
           tv: this._tvLabelId,
-        });
+        };
+        console.log('[Dashview] _updateRoomDataServiceLabelIds called with:', labelIds);
+        roomDataService.setLabelIds(labelIds);
+      } else {
+        console.log('[Dashview] _updateRoomDataServiceLabelIds: roomDataService not available');
       }
     }
 
@@ -2307,7 +2311,9 @@
     // ============================================
 
     _getAreaLights(areaId) {
-      return roomDataService ? roomDataService.getAreaLights(areaId) : [];
+      const result = roomDataService ? roomDataService.getAreaLights(areaId) : [];
+      console.log(`[Dashview] _getAreaLights(${areaId}): roomDataService=${!!roomDataService}, result.length=${result.length}`);
+      return result;
     }
 
     _getAreaMotionSensors(areaId) {
