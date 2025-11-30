@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.3';
+export const CURRENT_VERSION = '0.0.4';
 
 /**
  * Changelog entries - newest first
@@ -29,12 +29,27 @@ export const CURRENT_VERSION = '0.0.3';
  */
 export const CHANGELOG = [
   // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.4 - Bug fixes for default-enabled behavior
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.4',
+    page: 1,
+    date: 'November 2025',
+    title: 'Bugfixes',
+    subtitle: 'Stabilität und Zuverlässigkeit verbessert',
+    changes: [
+      { type: 'fix', description: 'Geräte werden jetzt korrekt im Raum-Popup angezeigt' },
+      { type: 'fix', description: 'Status-Anzeige im Header funktioniert wieder (Lichter an, etc.)' },
+      { type: 'fix', description: 'Etagen-Übersicht wird korrekt angezeigt' },
+    ]
+  },
+  // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.3 - TV Support, Default enabled & bug fixes
   // ══════════════════════════════════════════════════════════════
   {
     version: '0.0.3',
     page: 1,
-    date: 'Dezember 2024',
+    date: 'November 2025',
     title: 'Neu: Fernseher-Unterstützung',
     subtitle: 'Jetzt auch mit TV-Steuerung',
     changes: [
@@ -46,7 +61,7 @@ export const CHANGELOG = [
   {
     version: '0.0.3',
     page: 2,
-    date: 'Dezember 2024',
+    date: 'November 2025',
     title: 'Einfacherer Start',
     subtitle: 'Alles ist jetzt standardmäßig aktiviert',
     changes: [
@@ -61,7 +76,7 @@ export const CHANGELOG = [
   {
     version: '0.0.2',
     page: 1,
-    date: 'Dezember 2024',
+    date: 'Oktober 2025',
     title: 'Willkommen bei Dashview!',
     subtitle: 'Dein neues Smart Home Dashboard',
     changes: [
@@ -73,7 +88,7 @@ export const CHANGELOG = [
   {
     version: '0.0.2',
     page: 2,
-    date: 'Dezember 2024',
+    date: 'Oktober 2025',
     title: 'Einfache Einrichtung',
     subtitle: 'Alles anpassbar über die Einstellungen',
     changes: [
@@ -85,7 +100,7 @@ export const CHANGELOG = [
   {
     version: '0.0.2',
     page: 3,
-    date: 'Dezember 2024',
+    date: 'Oktober 2025',
     title: 'Immer auf dem Laufenden',
     subtitle: 'Verpasse keine Updates mehr',
     changes: [

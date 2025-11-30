@@ -2,7 +2,7 @@
 
 DOMAIN = "dashview"
 NAME = "Dashview"
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 # Frontend
 URL_BASE = "/dashview_assets"

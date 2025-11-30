@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.7";
+  const DASHVIEW_VERSION = "1.9.8";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -2380,7 +2380,6 @@
      */
     _buildEnabledMapFromRegistry(labelId, existingMap) {
       if (!labelId) {
-        console.log(`[Dashview] _buildEnabledMapFromRegistry: No labelId provided`);
         return existingMap || {};
       }
       const map = {};
@@ -2390,7 +2389,6 @@
           map[e.entity_id] = existingMap[e.entity_id] !== false;
         }
       });
-      console.log(`[Dashview] _buildEnabledMapFromRegistry: labelId=${labelId}, registry=${this._entityRegistry.length}, found=${Object.keys(map).length} entities`);
       return map;
     }
 
