@@ -269,6 +269,8 @@
         _mediaPresets: { type: Array },
         _mediaPresetSearchQuery: { type: String },
         _mediaPresetSearchFocused: { type: Boolean },
+        // User photos (custom photos per person entity)
+        _userPhotos: { type: Object },
         // Thermostat swipe index per room
         _thermostatSwipeIndex: { type: Object },
         // Custom labels configuration
@@ -454,6 +456,8 @@
       this._mediaPresets = [];
       this._mediaPresetSearchQuery = '';
       this._mediaPresetSearchFocused = false;
+      // User photos (custom photos per person entity)
+      this._userPhotos = {};
       // Train departures configuration
       this._trainDepartures = [];
       this._trainSearchQuery = '';
@@ -575,6 +579,7 @@
         enabledAppliances: this._enabledAppliances,
         trainDepartures: this._trainDepartures,
         mediaPresets: this._mediaPresets,
+        userPhotos: this._userPhotos,
         // Category label mappings
         categoryLabels: {
           light: this._lightLabelId,
@@ -1197,6 +1202,7 @@
             if (this._climateLabelId === null) this._climateLabelId = labelIds.climate;
             if (this._roofWindowLabelId === null) this._roofWindowLabelId = labelIds.roofWindow;
             if (this._mediaPlayerLabelId === null) this._mediaPlayerLabelId = labelIds.mediaPlayer;
+            if (this._tvLabelId === null) this._tvLabelId = labelIds.tv;
             this._scenes = registryStore.scenes;
             // Update RoomDataService with registry data
             if (roomDataService) {
@@ -1259,6 +1265,7 @@
             this._enabledAppliances = settings.enabledAppliances || {};
             this._trainDepartures = settings.trainDepartures || [];
             this._mediaPresets = settings.mediaPresets || [];
+            this._userPhotos = settings.userPhotos || {};
             this._lastSeenVersion = settings.lastSeenVersion || null;
             // Load category label mappings (user-configured labels for each category)
             // Use 'in' check to properly handle null values (null is a valid setting meaning "no label")
@@ -2167,7 +2174,36 @@
     }
 
     _getPerson() {
-      return weatherService ? weatherService.getPerson(this.hass) : null;
+      if (!this.hass) return null;
+
+      // Try to find the person entity associated with the current HA user
+      const currentUserId = this.hass.user?.id;
+      let person = null;
+
+      if (currentUserId) {
+        // Look for person entity linked to current user via user_id attribute
+        person = Object.values(this.hass.states).find(
+          (e) => e.entity_id.startsWith("person.") && e.attributes.user_id === currentUserId
+        );
+      }
+
+      // Fallback to first person entity if no user-linked person found
+      if (!person) {
+        person = Object.values(this.hass.states).find((e) =>
+          e.entity_id.startsWith("person.")
+        );
+      }
+
+      if (person) {
+        // Check for custom photo in userPhotos settings
+        const customPhoto = this._userPhotos?.[person.entity_id];
+        return {
+          name: person.attributes.friendly_name || person.entity_id,
+          state: person.state,
+          picture: customPhoto || person.attributes.entity_picture,
+        };
+      }
+      return null;
     }
 
     _getFloorForArea(area) {

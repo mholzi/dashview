@@ -72,6 +72,7 @@ const LABEL_PATTERNS = {
   humidity: ['humidity', 'luftfeuchtigkeit', 'luftfeuchtigkeitssensor'],
   climate: ['climate', 'thermostat'],
   roofWindow: ['roof window', 'dachfenster'],
+  tv: ['tv', 'fernseher', 'television'],
 };
 
 /**

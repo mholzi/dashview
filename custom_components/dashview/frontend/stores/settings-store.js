@@ -99,6 +99,7 @@ import { THRESHOLDS, debugLog } from '../constants/index.js';
  * @property {SceneButton[]} sceneButtons
  * @property {Object<string, SceneButton[]>} roomSceneButtons
  * @property {Object[]} mediaPresets
+ * @property {Object<string, string>} userPhotos - Map of person entity ID to custom photo URL
  */
 
 /**
@@ -199,6 +200,9 @@ export const DEFAULT_SETTINGS = {
     mediaPlayer: null,
     tv: null,
   },
+
+  // User photos (custom avatar photos per person entity)
+  userPhotos: {},  // { 'person.john': 'https://example.com/photo.jpg' }
 };
 
 /**
