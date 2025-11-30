@@ -203,6 +203,7 @@
         _labels: { type: Array },
         _entityRegistry: { type: Array },
         _deviceRegistry: { type: Array },
+        _labelIdsReady: { type: Boolean },
         _scenes: { type: Array },
         _floors: { type: Array },
         _activeFloorTab: { type: String },
@@ -355,6 +356,7 @@
       this._labels = [];
       this._entityRegistry = [];
       this._deviceRegistry = [];
+      this._labelIdsReady = false;
       this._lightLabelId = null;
       this._mediaPlayerLabelId = null;
       this._motionLabelId = null;
@@ -639,7 +641,7 @@
      */
     _updateRoomDataServiceLabelIds() {
       if (roomDataService) {
-        const labelIds = {
+        roomDataService.setLabelIds({
           light: this._lightLabelId,
           cover: this._coverLabelId,
           roofWindow: this._roofWindowLabelId,
@@ -653,11 +655,7 @@
           climate: this._climateLabelId,
           mediaPlayer: this._mediaPlayerLabelId,
           tv: this._tvLabelId,
-        };
-        console.log('[Dashview] _updateRoomDataServiceLabelIds called with:', labelIds);
-        roomDataService.setLabelIds(labelIds);
-      } else {
-        console.log('[Dashview] _updateRoomDataServiceLabelIds: roomDataService not available');
+        });
       }
     }
 
@@ -1215,7 +1213,9 @@
               // Use current label IDs (user-configured take precedence over auto-detected)
               this._updateRoomDataServiceLabelIds();
             }
-            debugLog("Registry data synced from store");
+            // Mark label IDs as ready - this triggers reactive update
+            this._labelIdsReady = true;
+            debugLog("Registry data synced from store, labelIdsReady=true");
             this.requestUpdate();
           });
         }
@@ -2311,9 +2311,7 @@
     // ============================================
 
     _getAreaLights(areaId) {
-      const result = roomDataService ? roomDataService.getAreaLights(areaId) : [];
-      console.log(`[Dashview] _getAreaLights(${areaId}): roomDataService=${!!roomDataService}, result.length=${result.length}`);
-      return result;
+      return roomDataService ? roomDataService.getAreaLights(areaId) : [];
     }
 
     _getAreaMotionSensors(areaId) {
