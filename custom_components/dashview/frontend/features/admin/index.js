@@ -36,6 +36,7 @@ const LABEL_CATEGORIES = [
   { key: 'humidity', icon: 'mdi:water-percent', title: 'Humidity Sensors', description: 'Humidity measurement sensors', prop: '_humidityLabelId' },
   { key: 'climate', icon: 'mdi:thermostat', title: 'Thermostats / Climate', description: 'Climate control entities', prop: '_climateLabelId' },
   { key: 'mediaPlayer', icon: 'mdi:speaker', title: 'Media Players', description: 'Media player entities', prop: '_mediaPlayerLabelId' },
+  { key: 'tv', icon: 'mdi:television', title: 'TVs / Fernseher', description: 'TV and display entities', prop: '_tvLabelId' },
 ];
 
 /**
@@ -631,6 +632,10 @@ export function renderCardConfig(panel, html) {
         <!-- Covers Status -->
         ${renderInfoTextToggle(panel, html, 'covers', 'Rollos', 'mdi:window-shutter',
           'Zeigt offene Rollos an')}
+
+        <!-- TVs Status -->
+        ${renderInfoTextToggle(panel, html, 'tvs', 'Fernseher', 'mdi:television',
+          'Zeigt eingeschaltete Fernseher an')}
 
         <!-- Washer Status -->
         ${renderInfoTextEntityConfig(panel, html, 'washer', 'Waschmaschine', 'mdi:washing-machine',
@@ -1361,7 +1366,7 @@ export function renderSceneButtonItem(panel, html, button, index) {
           >
             <option value="">Main Page (Home)</option>
             ${panel._areas
-              .filter(area => panel._enabledRooms[area.area_id])
+              .filter(area => panel._enabledRooms[area.area_id] !== false)
               .sort((a, b) => a.name.localeCompare(b.name))
               .map(area => html`
                 <option value="${area.area_id}" ?selected=${button.roomId === area.area_id}>
@@ -1511,7 +1516,7 @@ export function renderOrderConfig(panel, html) {
                         <div class="order-item-info">
                           <div class="order-item-name">${area.name}</div>
                           <div class="order-item-subtitle">
-                            ${panel._enabledRooms[area.area_id] ? 'Enabled' : 'Disabled'}
+                            ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
                           </div>
                         </div>
                         <div class="order-item-buttons">
@@ -1563,7 +1568,7 @@ export function renderOrderConfig(panel, html) {
                       <div class="order-item-info">
                         <div class="order-item-name">${area.name}</div>
                         <div class="order-item-subtitle">
-                          ${panel._enabledRooms[area.area_id] ? 'Enabled' : 'Disabled'}
+                          ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
                         </div>
                       </div>
                       <div class="order-item-buttons">
@@ -1610,7 +1615,8 @@ export function renderSecurityPopupContent(panel, html) {
     if (!labelId) return enabledMap;
     const filtered = {};
     Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-      if (!enabled) return;
+      // Skip only explicitly disabled entities (enabled by default)
+      if (enabled === false) return;
       const entityReg = panel._entityRegistry.find(e => e.entity_id === entityId);
       if (entityReg && entityReg.labels && entityReg.labels.includes(labelId)) {
         filtered[entityId] = enabled;
@@ -1843,11 +1849,16 @@ export function renderAreaCard(panel, html, area) {
       entities: panel._getAreaMediaPlayers(area.area_id),
       config: ENTITY_CONFIGS.mediaPlayers,
       onToggle: (id) => panel._toggleMediaPlayerEnabled(id)
+    },
+    tvs: {
+      entities: panel._getAreaTVs(area.area_id),
+      config: ENTITY_CONFIGS.tvs,
+      onToggle: (id) => panel._toggleTVEnabled(id)
     }
   };
 
   const isExpanded = panel._expandedAreas[area.area_id];
-  const isEnabled = panel._enabledRooms[area.area_id];
+  const isEnabled = panel._enabledRooms[area.area_id] !== false;
 
   // Calculate counts for subtitle
   const lightsCount = entityGroups.lights.entities.length;
@@ -2041,7 +2052,7 @@ export function renderEntitiesTab(panel, html) {
   let enabledRooms = 0;
   panel._areas.forEach(area => {
     totalRooms++;
-    if (panel._enabledRooms[area.area_id]) enabledRooms++;
+    if (panel._enabledRooms[area.area_id] !== false) enabledRooms++;
   });
 
   // Filter rooms based on search query
@@ -2348,7 +2359,7 @@ export function renderLayoutTab(panel, html) {
   // Helper to get enabled entities for a floor (only from enabled rooms)
   const getFloorEntities = (floorId) => {
     const areasForFloor = panel._areas.filter(area =>
-      area.floor_id === floorId && panel._enabledRooms[area.area_id]
+      area.floor_id === floorId && panel._enabledRooms[area.area_id] !== false
     );
     const entities = [];
 
@@ -2673,7 +2684,7 @@ export function renderLayoutTab(panel, html) {
                         <div class="order-item-info">
                           <div class="order-item-name">${area.name}</div>
                           <div class="order-item-subtitle">
-                            ${panel._enabledRooms[area.area_id] ? 'Enabled' : 'Disabled'}
+                            ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
                           </div>
                         </div>
                         <div class="order-item-buttons">
@@ -3004,6 +3015,10 @@ export function renderStatusTab(panel, html) {
         <!-- Covers Status -->
         ${renderInfoTextToggle(panel, html, 'covers', 'Rollos', 'mdi:window-shutter',
           'Zeigt offene Rollos an')}
+
+        <!-- TVs Status -->
+        ${renderInfoTextToggle(panel, html, 'tvs', 'Fernseher', 'mdi:television',
+          'Zeigt eingeschaltete Fernseher an')}
 
         <!-- Appliances Status -->
         ${renderAppliancesStatusSection(panel, html, toggleSection, isExpanded)}

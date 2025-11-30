@@ -46,6 +46,7 @@ export {
   getWindowsStatus,
   getLightsOnStatus,
   getCoversStatus,
+  getTVsStatus,
   getDishwasherStatus,
   getDryerStatus,
   getVacuumStatus,

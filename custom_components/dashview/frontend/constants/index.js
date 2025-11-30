@@ -108,6 +108,11 @@ export const ICONS = {
   SPEAKER_PAUSE: 'mdi:speaker-pause',
   SPEAKER_OFF: 'mdi:speaker-off',
 
+  // TV
+  TV: 'mdi:television',
+  TV_ON: 'mdi:television',
+  TV_OFF: 'mdi:television-off',
+
   // Vibration
   VIBRATE_ON: 'mdi:vibrate',
   VIBRATE_OFF: 'mdi:vibrate-off',
@@ -272,6 +277,14 @@ export const ENTITY_CONFIGS = {
     },
     getState: (entity) => entity.state,
     isActive: (entity) => entity.state === STATES.PLAYING,
+  },
+  tvs: {
+    icon: ICONS.TV,
+    title: 'TVs / Fernseher',
+    activeLabel: 'on',
+    getIcon: (entity) => entity.state === STATES.ON ? ICONS.TV_ON : ICONS.TV_OFF,
+    getState: (entity) => entity.source || entity.state,
+    isActive: (entity) => entity.state === STATES.ON,
   },
 };
 

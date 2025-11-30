@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.2";
+  const DASHVIEW_VERSION = "1.9.3";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -141,6 +141,7 @@
       getWindowsStatus: servicesModule.getWindowsStatus,
       getLightsOnStatus: servicesModule.getLightsOnStatus,
       getCoversStatus: servicesModule.getCoversStatus,
+      getTVsStatus: servicesModule.getTVsStatus,
       getDishwasherStatus: servicesModule.getDishwasherStatus,
       getDryerStatus: servicesModule.getDryerStatus,
       getVacuumStatus: servicesModule.getVacuumStatus,
@@ -185,6 +186,7 @@
         _enabledHumiditySensors: { type: Object },
         _enabledClimates: { type: Object },
         _enabledMediaPlayers: { type: Object },
+        _enabledTVs: { type: Object },
         _mediaPopupOpen: { type: Boolean },
         _activeMediaTab: { type: String },
         _lastMotionChangeTime: { type: Object },
@@ -322,6 +324,7 @@
       this._enabledSmokeSensors = {};
       this._enabledCovers = {};
       this._enabledMediaPlayers = {};
+      this._enabledTVs = {};
       this._mediaPopupOpen = false;
       this._activeMediaTab = null;
       this._enabledGarages = {};
@@ -362,6 +365,7 @@
       this._humidityLabelId = null;
       this._climateLabelId = null;
       this._roofWindowLabelId = null;
+      this._tvLabelId = null;
       // Custom labels configuration - labels beyond the predefined ones
       this._customLabels = {};  // { labelId: { enabled: true, icon: 'mdi:...', name: 'Label Name' } }
       this._enabledCustomEntities = {};  // { entityId: { enabled: true, childEntities: ['entity_id1', 'entity_id2'] } }
@@ -535,6 +539,7 @@
         enabledSmokeSensors: this._enabledSmokeSensors,
         enabledCovers: this._enabledCovers,
         enabledMediaPlayers: this._enabledMediaPlayers,
+        enabledTVs: this._enabledTVs,
         enabledGarages: this._enabledGarages,
         enabledWindows: this._enabledWindows,
         enabledVibrationSensors: this._enabledVibrationSensors,
@@ -584,6 +589,7 @@
           humidity: this._humidityLabelId,
           climate: this._climateLabelId,
           mediaPlayer: this._mediaPlayerLabelId,
+          tv: this._tvLabelId,
         },
       }, true); // true = save immediately (debounced internally)
     }
@@ -607,6 +613,7 @@
         humidity: '_humidityLabelId',
         climate: '_climateLabelId',
         mediaPlayer: '_mediaPlayerLabelId',
+        tv: '_tvLabelId',
       };
 
       const prop = propMap[category];
@@ -640,6 +647,7 @@
           humidity: this._humidityLabelId,
           climate: this._climateLabelId,
           mediaPlayer: this._mediaPlayerLabelId,
+          tv: this._tvLabelId,
         });
       }
     }
@@ -1057,6 +1065,12 @@
       this.requestUpdate();
     }
 
+    _setGarbageDisplayFloor(floorId) {
+      this._garbageDisplayFloor = floorId;
+      this._saveSettings();
+      this.requestUpdate();
+    }
+
     /**
      * Move a floor up or down in the display order
      * @param {string} floorId - The floor ID to move
@@ -1209,6 +1223,7 @@
             this._enabledSmokeSensors = settings.enabledSmokeSensors;
             this._enabledCovers = settings.enabledCovers;
             this._enabledMediaPlayers = settings.enabledMediaPlayers;
+            this._enabledTVs = settings.enabledTVs || {};
             this._enabledGarages = settings.enabledGarages;
             this._enabledWindows = settings.enabledWindows;
             this._enabledVibrationSensors = settings.enabledVibrationSensors;
@@ -1260,6 +1275,7 @@
               this._humidityLabelId = 'humidity' in settings.categoryLabels ? settings.categoryLabels.humidity : this._humidityLabelId;
               this._climateLabelId = 'climate' in settings.categoryLabels ? settings.categoryLabels.climate : this._climateLabelId;
               this._mediaPlayerLabelId = 'mediaPlayer' in settings.categoryLabels ? settings.categoryLabels.mediaPlayer : this._mediaPlayerLabelId;
+              this._tvLabelId = 'tv' in settings.categoryLabels ? settings.categoryLabels.tv : this._tvLabelId;
             }
             this._settingsLoaded = true;
             this._settingsError = null;
@@ -1280,6 +1296,7 @@
                 enabledClimates: this._enabledClimates,
                 enabledRoofWindows: this._enabledRoofWindows,
                 enabledMediaPlayers: this._enabledMediaPlayers,
+                enabledTVs: this._enabledTVs,
               });
             }
             // Update roomDataService with user-configured label IDs
@@ -1405,9 +1422,17 @@
       this.hass.callService("light", "toggle", { entity_id: entityId });
     }
 
+    _toggleTV(entityId) {
+      if (!this.hass) return;
+      this.hass.callService("media_player", "toggle", { entity_id: entityId });
+    }
+
     // Generic toggle helper for enabled entity settings
+    // Note: Entities are enabled by default (when not in map or undefined)
+    // Only explicit false means disabled
     _toggleEntityEnabled(settingsKey, entityId) {
-      this[settingsKey] = { ...this[settingsKey], [entityId]: !this[settingsKey][entityId] };
+      const isCurrentlyEnabled = this[settingsKey][entityId] !== false;
+      this[settingsKey] = { ...this[settingsKey], [entityId]: !isCurrentlyEnabled };
       this._saveSettings();
       // Update roomDataService with the new enabled maps
       if (roomDataService) {
@@ -1424,6 +1449,7 @@
           enabledClimates: this._enabledClimates,
           enabledRoofWindows: this._enabledRoofWindows,
           enabledMediaPlayers: this._enabledMediaPlayers,
+          enabledTVs: this._enabledTVs,
         });
       }
       this.requestUpdate();
@@ -1441,6 +1467,8 @@
     _toggleHumiditySensorEnabled(entityId) { this._toggleEntityEnabled('_enabledHumiditySensors', entityId); }
     _toggleClimateEnabled(entityId) { this._toggleEntityEnabled('_enabledClimates', entityId); }
     _toggleRoofWindowEnabled(entityId) { this._toggleEntityEnabled('_enabledRoofWindows', entityId); }
+    _toggleMediaPlayerEnabled(entityId) { this._toggleEntityEnabled('_enabledMediaPlayers', entityId); }
+    _toggleTVEnabled(entityId) { this._toggleEntityEnabled('_enabledTVs', entityId); }
 
     // Generic toggle helper for boolean properties
     _toggleBoolProp(key) { this[key] = !this[key]; this.requestUpdate(); }
@@ -1506,7 +1534,7 @@
 
       // Get enabled motion sensors for this room (filter by current label)
       Object.entries(this._enabledMotionSensors).forEach(([entityId, enabled]) => {
-        if (!enabled) return;
+        if (enabled === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current motion label
@@ -1533,7 +1561,7 @@
 
       // Get enabled vibration sensors for this room (only show when active, filter by current label)
       Object.entries(this._enabledVibrationSensors).forEach(([entityId, enabled]) => {
-        if (!enabled) return;
+        if (enabled === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current vibration label
@@ -1562,7 +1590,7 @@
 
       // Get enabled smoke sensors for this room (only show when active, filter by current label)
       Object.entries(this._enabledSmokeSensors).forEach(([entityId, enabled]) => {
-        if (!enabled) return;
+        if (enabled === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current smoke label
@@ -1591,7 +1619,7 @@
 
       // Get enabled windows for this room (only show when open, filter by current label)
       Object.entries(this._enabledWindows).forEach(([entityId, enabled]) => {
-        if (!enabled) return;
+        if (enabled === false) return;
         const entityAreaId = this._getAreaIdForEntity(entityId);
         if (entityAreaId !== areaId) return;
         // Filter by current window label
@@ -1638,7 +1666,7 @@
       if (!this.hass) return [];
       const entities = [];
       Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-        if (!enabled) return;
+        if (enabled === false) return;
         if (this._getAreaIdForEntity(entityId) !== areaId) return;
         // If labelId is provided, check if entity still has this label
         if (labelId && !this._entityHasCurrentLabel(entityId, labelId)) return;
@@ -1826,6 +1854,15 @@
           rgbColor: rgbColor || null,
         };
       }, this._lightLabelId);
+    }
+
+    _getEnabledTVsForRoom(areaId) {
+      return this._getEnabledEntitiesForRoom(areaId, this._enabledTVs, s => ({
+        state: s.state,
+        source: s.attributes?.source,
+        volume: s.attributes?.volume_level,
+        icon: s.attributes?.icon || 'mdi:television',
+      }), this._tvLabelId);
     }
 
     _getRoomClimateNotification(areaId) {
@@ -2143,13 +2180,14 @@
     _getRoomsWithActiveEntities(enabledMap, labelId = null) {
       const rooms = new Set();
       Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-        if (!enabled) return;
+        // Skip only explicitly disabled entities
+        if (enabled === false) return;
         // Filter by current label if provided
         if (labelId && !this._entityHasCurrentLabel(entityId, labelId)) return;
         const state = this.hass?.states[entityId];
         if (!state || state.state !== "on") return;
         const areaId = this._getAreaIdForEntity(entityId);
-        if (areaId && this._enabledRooms[areaId]) rooms.add(areaId);
+        if (areaId && this._enabledRooms[areaId] !== false) rooms.add(areaId);
       });
       return rooms;
     }
@@ -2206,7 +2244,7 @@
 
       return Object.entries(this._enabledLights)
         .filter(([entityId, enabled]) => {
-          if (!enabled) return false;
+          if (enabled === false) return false;
           // Filter by current light label
           if (this._lightLabelId && !this._entityHasCurrentLabel(entityId, this._lightLabelId)) return false;
           const state = this.hass.states[entityId];
@@ -2278,6 +2316,10 @@
 
     _getAreaMediaPlayers(areaId) {
       return roomDataService ? roomDataService.getAreaMediaPlayers(areaId) : [];
+    }
+
+    _getAreaTVs(areaId) {
+      return roomDataService ? roomDataService.getAreaTVs(areaId) : [];
     }
 
     // ============================================
@@ -2649,10 +2691,7 @@
      * @returns {Array} Array of appliance objects with showInHomeStatus enabled
      */
     _getAppliancesWithHomeStatus() {
-      if (!this._areas || !this._enabledAppliances) {
-        console.log('[Dashview Debug] _getAppliancesWithHomeStatus: early return - areas:', !!this._areas, 'enabledAppliances:', !!this._enabledAppliances);
-        return [];
-      }
+      if (!this._areas || !this._enabledAppliances) return [];
 
       const appliances = [];
       this._areas.forEach(area => {
@@ -2660,10 +2699,7 @@
         areaAppliances.forEach(appliance => {
           if (appliance.enabled) {
             const config = this._enabledAppliances[appliance.device_id];
-            console.log('[Dashview Debug] Checking appliance:', appliance.name, 'device_id:', appliance.device_id, 'config:', config);
             if (config && config.showInHomeStatus) {
-              const status = this._getApplianceStatus(appliance);
-              console.log('[Dashview Debug] Appliance with showInHomeStatus:', appliance.name, 'status:', status);
               appliances.push({
                 ...appliance,
                 areaName: area.name,
@@ -2673,7 +2709,6 @@
           }
         });
       });
-      console.log('[Dashview Debug] _getAppliancesWithHomeStatus returning:', appliances.length, 'appliances');
       return appliances;
     }
 
@@ -2890,7 +2925,7 @@
           entityPicture: entityPicture,
           volumeLevel: volumeLevel,
           source: source,
-          enabled: !!this._enabledMediaPlayers[entityReg.entity_id],
+          enabled: this._enabledMediaPlayers[entityReg.entity_id] !== false,
           areaId: areaId,
           areaName: area?.name || "Unknown",
         };
@@ -2938,7 +2973,7 @@
       // Filter enabled lights by current label to ensure consistent counts
       const enabledLightIds = Object.entries(this._enabledLights)
         .filter(([entityId, enabled]) => {
-          if (!enabled) return false;
+          if (enabled === false) return false;
           // Only count lights that have the currently selected light label
           if (this._lightLabelId && !this._entityHasCurrentLabel(entityId, this._lightLabelId)) return false;
           return true;
@@ -3099,6 +3134,7 @@
               enabledWindows: this._enabledWindows,
               enabledLights: this._enabledLights,
               enabledCovers: this._enabledCovers,
+              enabledTVs: this._enabledTVs,
             },
             {
               motionLabelId: this._motionLabelId,
@@ -3106,6 +3142,7 @@
               windowLabelId: this._windowLabelId,
               lightLabelId: this._lightLabelId,
               coverLabelId: this._coverLabelId,
+              tvLabelId: this._tvLabelId,
             },
             (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
             appliancesWithHomeStatus,

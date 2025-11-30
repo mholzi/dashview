@@ -186,7 +186,8 @@ export function getEnabledEntitiesForArea({
 
   const entities = [];
   Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-    if (!enabled) return;
+    // Skip only explicitly disabled entities (enabled by default)
+    if (enabled === false) return;
 
     const entityAreaId = getAreaIdForEntity(entityId);
     if (entityAreaId !== areaId) return;

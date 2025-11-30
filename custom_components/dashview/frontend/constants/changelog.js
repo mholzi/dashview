@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.2';
+export const CURRENT_VERSION = '0.0.3';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,21 @@ export const CURRENT_VERSION = '0.0.2';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.3 - Default enabled & bug fixes
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.3',
+    page: 1,
+    date: 'Dezember 2024',
+    title: 'Einfacherer Start',
+    subtitle: 'Alles ist jetzt standardmäßig aktiviert',
+    changes: [
+      { type: 'improvement', description: 'Alle Räume und Geräte sind nach der Installation sofort sichtbar' },
+      { type: 'improvement', description: 'Neue Geräte mit Labels werden automatisch aktiviert' },
+      { type: 'fix', description: 'Müllkalender Etagenauswahl funktioniert wieder' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.2 - Split into 3 pages for better onboarding
   // ══════════════════════════════════════════════════════════════

@@ -19,7 +19,8 @@ export function renderSecurityPopupContent(component, html) {
     if (!labelId) return enabledMap;
     const filtered = {};
     Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-      if (!enabled) return;
+      // Skip only explicitly disabled entities (enabled by default)
+      if (enabled === false) return;
       const entityReg = component._entityRegistry.find(e => e.entity_id === entityId);
       if (entityReg && entityReg.labels && entityReg.labels.includes(labelId)) {
         filtered[entityId] = enabled;

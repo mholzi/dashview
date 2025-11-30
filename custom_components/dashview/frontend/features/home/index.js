@@ -177,9 +177,9 @@ export function renderFloorOverviewCard(component, html, floorId) {
     return renderFloorOverviewSkeleton(html);
   }
 
-  // Get all enabled rooms for this floor
+  // Get all enabled rooms for this floor (enabled by default if not explicitly disabled)
   const roomsForFloor = component._getOrderedRoomsForFloor(floorId)
-    .filter(area => component._enabledRooms[area.area_id]);
+    .filter(area => component._enabledRooms[area.area_id] !== false);
 
   if (roomsForFloor.length === 0) {
     return html`

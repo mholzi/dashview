@@ -95,6 +95,15 @@ const ENTITY_TYPE_CONFIG = {
       source: state?.attributes?.source,
     }),
   },
+  tv: {
+    labelKey: 'tv',
+    enabledMapKey: 'enabledTVs',
+    extraAttributes: (state) => ({
+      source: state?.attributes?.source,
+      volumeLevel: state?.attributes?.volume_level,
+      mediaTitle: state?.attributes?.media_title,
+    }),
+  },
 };
 
 /**
@@ -211,7 +220,7 @@ export class RoomDataService {
         entity_id: entityReg.entity_id,
         name: state?.attributes?.friendly_name || entityReg.original_name || entityReg.entity_id,
         state: state?.state || 'unknown',
-        enabled: !!enabledMap[entityReg.entity_id],
+        enabled: enabledMap[entityReg.entity_id] !== false,
       };
 
       // Add type-specific attributes
@@ -272,6 +281,10 @@ export class RoomDataService {
 
   getAreaMediaPlayers(areaId) {
     return this.getAreaEntities(areaId, 'mediaPlayer');
+  }
+
+  getAreaTVs(areaId) {
+    return this.getAreaEntities(areaId, 'tv');
   }
 
   // ============================================

@@ -60,6 +60,12 @@ export const STATUS_TEXT = {
   ROLLO: 'Rollo',
   ROLLOS_OPEN: 'Rollos auf',
   ROLLOS_CLOSE: 'Rollos zu',
+
+  // TVs
+  TV_ON: 'Fernseher an',
+  TV_OFF: 'Fernseher aus',
+  TVS_ARE_ON: 'Es sind gerade',
+  TVS_ON_SUFFIX: 'Fernseher an',
 };
 
 // ==================== UI Labels ====================
@@ -69,6 +75,8 @@ export const UI_LABELS = {
   LIGHT: 'Licht',
   MUSIC: 'Musik',
   GARAGE: 'Garage',
+  TV: 'Fernseher',
+  TVS: 'Fernseher',
   WEATHER: 'Wetter',
   SETTINGS: 'Einstellungen',
   ADMIN: 'Admin',

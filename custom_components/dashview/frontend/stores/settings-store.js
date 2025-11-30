@@ -74,6 +74,7 @@ import { THRESHOLDS, debugLog } from '../constants/index.js';
  * @property {EnabledEntityMap} enabledHumiditySensors
  * @property {EnabledEntityMap} enabledClimates
  * @property {EnabledEntityMap} enabledRoofWindows
+ * @property {EnabledEntityMap} enabledTVs
  * @property {number} notificationTempThreshold
  * @property {number} notificationHumidityThreshold
  * @property {string} weatherEntity
@@ -119,6 +120,7 @@ export const DEFAULT_SETTINGS = {
   enabledHumiditySensors: {},
   enabledClimates: {},
   enabledRoofWindows: {},
+  enabledTVs: {},
 
   // Notification thresholds
   notificationTempThreshold: THRESHOLDS.DEFAULT_TEMP_NOTIFICATION,
@@ -195,6 +197,7 @@ export const DEFAULT_SETTINGS = {
     humidity: null,
     climate: null,
     mediaPlayer: null,
+    tv: null,
   },
 };
 

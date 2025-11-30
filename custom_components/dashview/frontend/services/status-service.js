@@ -299,6 +299,38 @@ export function getCoversStatus(hass, infoTextConfig, enabledCovers, labelId = n
 }
 
 /**
+ * Get TVs status for info text row
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {Object} enabledTVs - Map of enabled TV IDs
+ * @param {string|null} labelId - Optional label ID to filter by
+ * @param {Function|null} entityHasLabel - Optional function to check if entity has label
+ * @returns {Object|null} Status object or null
+ */
+export function getTVsStatus(hass, infoTextConfig, enabledTVs, labelId = null, entityHasLabel = null) {
+  if (!hass || !infoTextConfig.tvs?.enabled) return null;
+
+  let enabledTVIds = getEnabledEntityIds(enabledTVs);
+  // Filter by label if provided
+  if (labelId && entityHasLabel) {
+    enabledTVIds = enabledTVIds.filter(id => entityHasLabel(id, labelId));
+  }
+  if (enabledTVIds.length === 0) return null;
+
+  const tvsOn = filterEntitiesByState(enabledTVIds, hass, 'on');
+  if (tvsOn.length === 0) return null;
+
+  const count = tvsOn.length;
+  return {
+    state: "on",
+    prefixText: "Es sind gerade",
+    badgeText: `${count}`,
+    badgeIcon: "mdi:television",
+    suffixText: `${count === 1 ? 'Fernseher' : 'Fernseher'} an.`,
+  };
+}
+
+/**
  * Get dishwasher status for info text row
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
@@ -523,16 +555,14 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
  * @returns {Array} Array of status objects for active appliances
  */
 export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStatus, getApplianceStatus) {
-  console.log('[Dashview Debug] getAppliancesStatus called with', appliancesWithHomeStatus?.length, 'appliances');
-  if (!hass) { console.log('[Dashview Debug] getAppliancesStatus: no hass'); return []; }
-  if (!appliancesWithHomeStatus || appliancesWithHomeStatus.length === 0) { console.log('[Dashview Debug] getAppliancesStatus: no appliances'); return []; }
-  if (!getApplianceStatus) { console.log('[Dashview Debug] getAppliancesStatus: no callback'); return []; }
+  if (!hass) return [];
+  if (!appliancesWithHomeStatus || appliancesWithHomeStatus.length === 0) return [];
+  if (!getApplianceStatus) return [];
 
   const statusItems = [];
 
   appliancesWithHomeStatus.forEach(appliance => {
     const status = getApplianceStatus(appliance);
-    console.log('[Dashview Debug] getAppliancesStatus - appliance:', appliance.name, 'status:', status);
     if (!status) return;
 
     // Only show if appliance is active, running, or finished
@@ -590,6 +620,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     enabledWindows = {},
     enabledLights = {},
     enabledCovers = {},
+    enabledTVs = {},
   } = enabledEntities;
 
   const {
@@ -598,6 +629,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     windowLabelId = null,
     lightLabelId = null,
     coverLabelId = null,
+    tvLabelId = null,
   } = labelIds;
 
   // Get appliance status items from new system
@@ -609,6 +641,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     getWindowsStatus(hass, infoTextConfig, enabledWindows, windowLabelId, entityHasLabel),
     getLightsOnStatus(hass, infoTextConfig, enabledLights, lightLabelId, entityHasLabel),
     getCoversStatus(hass, infoTextConfig, enabledCovers, coverLabelId, entityHasLabel),
+    getTVsStatus(hass, infoTextConfig, enabledTVs, tvLabelId, entityHasLabel),
     ...applianceStatusItems,
     getBatteryLowStatus(hass, infoTextConfig),
   ].filter(s => s !== null);
@@ -621,6 +654,7 @@ export default {
   getWindowsStatus,
   getLightsOnStatus,
   getCoversStatus,
+  getTVsStatus,
   getDishwasherStatus,
   getDryerStatus,
   getVacuumStatus,

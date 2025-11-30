@@ -41,7 +41,7 @@ export function getEntitiesForAreaByLabel({
       entity_id: entityReg.entity_id,
       name: state?.attributes?.friendly_name || entityReg.original_name || entityReg.entity_id,
       state: state?.state || 'unknown',
-      enabled: !!enabledMap[entityReg.entity_id],
+      enabled: enabledMap[entityReg.entity_id] !== false,
     };
   };
 
@@ -89,7 +89,7 @@ export function getEntitiesForAreaByDomain({
       entity_id: entityReg.entity_id,
       name: state?.attributes?.friendly_name || entityReg.original_name || entityReg.entity_id,
       state: state?.state || 'unknown',
-      enabled: !!enabledMap[entityReg.entity_id],
+      enabled: enabledMap[entityReg.entity_id] !== false,
     };
   };
 
@@ -108,7 +108,7 @@ export function mapCoverEntity(entityReg, hass, enabledMap) {
     name: state?.attributes?.friendly_name || entityReg.original_name || entityReg.entity_id,
     state: state?.state || 'unknown',
     position: state?.attributes?.current_position,
-    enabled: !!enabledMap[entityReg.entity_id],
+    enabled: enabledMap[entityReg.entity_id] !== false,
   };
 }
 
@@ -124,7 +124,7 @@ export function mapClimateEntity(entityReg, hass, enabledMap) {
     currentTemp: state?.attributes?.current_temperature,
     targetTemp: state?.attributes?.temperature,
     hvacAction: state?.attributes?.hvac_action,
-    enabled: !!enabledMap[entityReg.entity_id],
+    enabled: enabledMap[entityReg.entity_id] !== false,
   };
 }
 
@@ -138,7 +138,7 @@ export function mapTemperatureSensorEntity(entityReg, hass, enabledMap) {
     name: state?.attributes?.friendly_name || entityReg.original_name || entityReg.entity_id,
     state: state?.state || 'unknown',
     unit: state?.attributes?.unit_of_measurement || '°C',
-    enabled: !!enabledMap[entityReg.entity_id],
+    enabled: enabledMap[entityReg.entity_id] !== false,
   };
 }
 
@@ -152,7 +152,7 @@ export function mapHumiditySensorEntity(entityReg, hass, enabledMap) {
     name: state?.attributes?.friendly_name || entityReg.original_name || entityReg.entity_id,
     state: state?.state || 'unknown',
     unit: state?.attributes?.unit_of_measurement || '%',
-    enabled: !!enabledMap[entityReg.entity_id],
+    enabled: enabledMap[entityReg.entity_id] !== false,
   };
 }
 
@@ -168,7 +168,7 @@ export function mapMediaPlayerEntity(entityReg, hass, enabledMap) {
     mediaTitle: state?.attributes?.media_title,
     mediaArtist: state?.attributes?.media_artist,
     volume: state?.attributes?.volume_level,
-    enabled: !!enabledMap[entityReg.entity_id],
+    enabled: enabledMap[entityReg.entity_id] !== false,
   };
 }
 
@@ -188,7 +188,7 @@ export function mapLightEntity(entityReg, hass, enabledMap) {
     brightnessPercent: brightness ? Math.round((brightness / 255) * 100) : 0,
     isDimmable: isDimmable,
     icon: state?.attributes?.icon || 'mdi:lightbulb',
-    enabled: !!enabledMap[entityReg.entity_id],
+    enabled: enabledMap[entityReg.entity_id] !== false,
   };
 }
 

@@ -42,13 +42,14 @@ export function createRoomIndicator(roomData, getAreaIcon) {
 export function getRoomsWithActiveEntities(hass, enabledMap, enabledRooms, getAreaIdForEntity, labelId = null, entityHasLabel = null) {
   const rooms = new Set();
   Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-    if (!enabled) return;
+    // Skip only explicitly disabled entities (enabled by default if not in map or true)
+    if (enabled === false) return;
     // Filter by current label if provided
     if (labelId && entityHasLabel && !entityHasLabel(entityId, labelId)) return;
     const state = hass?.states[entityId];
     if (!state || state.state !== 'on') return;
     const areaId = getAreaIdForEntity(entityId);
-    if (areaId && enabledRooms[areaId]) rooms.add(areaId);
+    if (areaId && enabledRooms[areaId] !== false) rooms.add(areaId);
   });
   return rooms;
 }

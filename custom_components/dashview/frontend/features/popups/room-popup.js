@@ -34,6 +34,7 @@ export function renderRoomPopup(component, html) {
         ${renderLightSection(component, html, areaId)}
         ${renderCoverSection(component, html, areaId)}
         ${renderMediaSection(component, html, areaId)}
+        ${renderTVSection(component, html, areaId)}
         ${renderGarageSection(component, html, areaId)}
         ${renderApplianceSection(component, html, areaId)}
 
@@ -567,6 +568,42 @@ function renderMediaPlayer(component, html, player) {
           ${player.state === 'idle' ? 'Bereit' : player.state === 'off' ? 'Ausgeschaltet' : player.state}
         </div>
       `}
+    </div>
+  `;
+}
+
+/**
+ * Render TV section
+ */
+function renderTVSection(component, html, areaId) {
+  const tvs = component._getEnabledTVsForRoom(areaId);
+  if (tvs.length === 0) return '';
+
+  const onCount = tvs.filter(t => t.state === 'on').length;
+  const totalCount = tvs.length;
+
+  return html`
+    <div class="popup-tv-section">
+      <div class="popup-tv-header">
+        <ha-icon icon="mdi:television"></ha-icon>
+        <span class="popup-tv-title">Fernseher</span>
+        <span class="popup-tv-count">${onCount} von ${totalCount} an</span>
+      </div>
+
+      <div class="popup-tv-content">
+        ${tvs.map(tv => html`
+          <div class="popup-tv-item ${tv.state === 'on' ? 'on' : 'off'}"
+               @click=${() => component._toggleTV(tv.entity_id)}>
+            <div class="popup-tv-item-icon">
+              <ha-icon icon="${tv.state === 'on' ? 'mdi:television' : 'mdi:television-off'}"></ha-icon>
+            </div>
+            <div class="popup-tv-item-content">
+              <span class="popup-tv-item-name">${tv.name}</span>
+              <span class="popup-tv-item-state">${tv.state === 'on' ? (tv.source || 'An') : 'Aus'}</span>
+            </div>
+          </div>
+        `)}
+      </div>
     </div>
   `;
 }
