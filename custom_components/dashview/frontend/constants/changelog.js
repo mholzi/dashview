@@ -29,11 +29,23 @@ export const CURRENT_VERSION = '0.0.3';
  */
 export const CHANGELOG = [
   // ══════════════════════════════════════════════════════════════
-  // VERSION 0.0.3 - Default enabled & bug fixes
+  // VERSION 0.0.3 - TV Support, Default enabled & bug fixes
   // ══════════════════════════════════════════════════════════════
   {
     version: '0.0.3',
     page: 1,
+    date: 'Dezember 2024',
+    title: 'Neu: Fernseher-Unterstützung',
+    subtitle: 'Jetzt auch mit TV-Steuerung',
+    changes: [
+      { type: 'feature', description: 'Fernseher in Raum-Popups anzeigen und steuern' },
+      { type: 'feature', description: 'TV-Status in der Übersicht ("X Fernseher an")' },
+      { type: 'feature', description: 'Neues Label "dashview_tv" für Fernseher' },
+    ]
+  },
+  {
+    version: '0.0.3',
+    page: 2,
     date: 'Dezember 2024',
     title: 'Einfacherer Start',
     subtitle: 'Alles ist jetzt standardmäßig aktiviert',
