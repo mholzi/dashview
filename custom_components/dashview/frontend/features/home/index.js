@@ -307,11 +307,12 @@ export function renderRoomCardsGrid(component, html) {
   // Get the floor config for the active floor
   const floorConfig = component._floorCardConfig[component._activeFloorTab] || {};
   const hasConfig = Object.keys(floorConfig).length > 0;
-  const floorOverviewEnabled = component._floorOverviewEnabled[component._activeFloorTab];
+  // Floor overview enabled by default (unless explicitly disabled)
+  const floorOverviewEnabled = component._floorOverviewEnabled[component._activeFloorTab] !== false;
   const garbageEnabled = component._garbageDisplayFloor === component._activeFloorTab && component._garbageSensors.length > 0;
 
-  // If no config and no floor overview and no garbage, show message
-  if (!hasConfig && !floorOverviewEnabled && !garbageEnabled) {
+  // If no config and floor overview explicitly disabled and no garbage, show message
+  if (!hasConfig && component._floorOverviewEnabled[component._activeFloorTab] === false && !garbageEnabled) {
     return html`
       <div style="text-align: center; padding: 24px; color: var(--secondary-text-color);">
         Keine Karten konfiguriert. Konfiguriere Karten im Admin-Bereich unter "Floor Cards".
