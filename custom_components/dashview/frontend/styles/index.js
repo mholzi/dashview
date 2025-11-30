@@ -1713,6 +1713,130 @@ export const dashviewStyles = `
     color: var(--dv-gray800);
   }
 
+  /* ==================== POPUP TV SECTION ==================== */
+  .popup-tv-section {
+    margin: 0 12px 16px 12px;
+    background: var(--dv-gray200);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .popup-tv-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    min-height: 46px;
+  }
+
+  .popup-tv-header ha-icon {
+    width: 22px;
+    padding: 8px 14px;
+    color: var(--dv-gray800, var(--primary-text-color));
+  }
+
+  .popup-tv-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--dv-gray800, var(--primary-text-color));
+  }
+
+  .popup-tv-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--dv-gray600);
+    padding-right: 12px;
+  }
+
+  .popup-tv-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 4px;
+  }
+
+  .popup-tv-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px 8px 4px;
+    gap: 12px;
+    cursor: pointer;
+    transition: background var(--dv-transition-normal) ease;
+  }
+
+  .popup-tv-item.on {
+    background: var(--dv-gradient-active);
+  }
+
+  .popup-tv-item.off {
+    background: var(--dv-gray000);
+  }
+
+  .popup-tv-item:active {
+    transform: scale(0.98);
+  }
+
+  .popup-tv-item-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .popup-tv-item.on .popup-tv-item-icon {
+    background: var(--dv-white);
+  }
+
+  .popup-tv-item.off .popup-tv-item-icon {
+    background: rgba(var(--dv-highlight-rgb), 0.3);
+  }
+
+  .popup-tv-item-icon ha-icon {
+    --mdc-icon-size: 22px;
+  }
+
+  .popup-tv-item.on .popup-tv-item-icon ha-icon {
+    color: var(--dv-black);
+  }
+
+  .popup-tv-item.off .popup-tv-item-icon ha-icon {
+    color: var(--dv-gray800);
+  }
+
+  .popup-tv-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .popup-tv-item-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .popup-tv-item.on .popup-tv-item-name {
+    color: var(--dv-black);
+  }
+
+  .popup-tv-item.off .popup-tv-item-name {
+    color: var(--dv-gray800);
+  }
+
+  .popup-tv-item-state {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .popup-tv-item.on .popup-tv-item-state {
+    color: var(--dv-black);
+  }
+
+  .popup-tv-item.off .popup-tv-item-state {
+    color: var(--dv-gray600);
+  }
+
   /* ==================== POPUP LOCK SECTION ==================== */
   .popup-lock-section {
     margin: 0 12px 16px 12px;
