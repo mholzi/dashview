@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.4';
+export const CURRENT_VERSION = '0.0.5';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,21 @@ export const CURRENT_VERSION = '0.0.4';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.5 - Settings persistence fixes
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.5',
+    page: 1,
+    date: 'November 2025',
+    title: 'Bugfixes',
+    subtitle: 'Einstellungen werden jetzt korrekt gespeichert',
+    changes: [
+      { type: 'fix', description: 'Etagen- und Raum-Reihenfolge bleibt nach Neuladen erhalten' },
+      { type: 'fix', description: 'Alle aktivierten Geräte werden korrekt geladen' },
+      { type: 'fix', description: 'Etagen-Übersicht und Karteneinstellungen bleiben erhalten' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.4 - Bug fixes for default-enabled behavior
   // ══════════════════════════════════════════════════════════════

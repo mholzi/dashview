@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.8";
+  const DASHVIEW_VERSION = "1.9.9";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -1233,21 +1233,21 @@
             settingsStore._loading = false;
             // Sync store data to local properties for backwards compatibility
             const settings = settingsStore.all;
-            this._enabledRooms = settings.enabledRooms;
-            this._enabledLights = settings.enabledLights;
-            this._enabledMotionSensors = settings.enabledMotionSensors;
-            this._enabledSmokeSensors = settings.enabledSmokeSensors;
-            this._enabledCovers = settings.enabledCovers;
-            this._enabledMediaPlayers = settings.enabledMediaPlayers;
+            this._enabledRooms = settings.enabledRooms || {};
+            this._enabledLights = settings.enabledLights || {};
+            this._enabledMotionSensors = settings.enabledMotionSensors || {};
+            this._enabledSmokeSensors = settings.enabledSmokeSensors || {};
+            this._enabledCovers = settings.enabledCovers || {};
+            this._enabledMediaPlayers = settings.enabledMediaPlayers || {};
             this._enabledTVs = settings.enabledTVs || {};
             this._enabledLocks = settings.enabledLocks || {};
-            this._enabledGarages = settings.enabledGarages;
-            this._enabledWindows = settings.enabledWindows;
-            this._enabledVibrationSensors = settings.enabledVibrationSensors;
-            this._enabledTemperatureSensors = settings.enabledTemperatureSensors;
-            this._enabledHumiditySensors = settings.enabledHumiditySensors;
-            this._enabledClimates = settings.enabledClimates;
-            this._enabledRoofWindows = settings.enabledRoofWindows;
+            this._enabledGarages = settings.enabledGarages || {};
+            this._enabledWindows = settings.enabledWindows || {};
+            this._enabledVibrationSensors = settings.enabledVibrationSensors || {};
+            this._enabledTemperatureSensors = settings.enabledTemperatureSensors || {};
+            this._enabledHumiditySensors = settings.enabledHumiditySensors || {};
+            this._enabledClimates = settings.enabledClimates || {};
+            this._enabledRoofWindows = settings.enabledRoofWindows || {};
             this._notificationTempThreshold = settings.notificationTempThreshold;
             this._notificationHumidityThreshold = settings.notificationHumidityThreshold;
             this._weatherEntity = settings.weatherEntity;
@@ -1262,10 +1262,10 @@
             this._weatherPrecipitationEntity = settings.weatherPrecipitationEntity;
             this._hourlyForecastEntity = settings.hourlyForecastEntity;
             this._dwdWarningEntity = settings.dwdWarningEntity;
-            this._floorOrder = settings.floorOrder;
-            this._roomOrder = settings.roomOrder;
-            this._floorCardConfig = settings.floorCardConfig;
-            this._floorOverviewEnabled = settings.floorOverviewEnabled;
+            this._floorOrder = settings.floorOrder || [];
+            this._roomOrder = settings.roomOrder || {};
+            this._floorCardConfig = settings.floorCardConfig || {};
+            this._floorOverviewEnabled = settings.floorOverviewEnabled || {};
             this._garbageSensors = settings.garbageSensors || [];
             this._garbageDisplayFloor = settings.garbageDisplayFloor || null;
             this._infoTextConfig = { ...this._infoTextConfig, ...settings.infoTextConfig };
