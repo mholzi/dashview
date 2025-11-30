@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.5";
+  const DASHVIEW_VERSION = "1.9.6";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -2368,6 +2368,29 @@
     }
 
     // ============================================
+    // Helper Methods for Status Service
+    // ============================================
+
+    /**
+     * Build an enabled map from the registry for default-enabled behavior
+     * Returns a map where all entities with the label are set to true unless explicitly disabled
+     * @param {string} labelId - Label ID to filter by
+     * @param {Object} existingMap - Existing enabled map (may have explicit false values)
+     * @returns {Object} Map of entityId -> boolean
+     */
+    _buildEnabledMapFromRegistry(labelId, existingMap) {
+      if (!labelId) return existingMap || {};
+      const map = {};
+      this._entityRegistry.forEach(e => {
+        if (e.labels && e.labels.includes(labelId)) {
+          // Use existing value if set, otherwise default to true
+          map[e.entity_id] = existingMap[e.entity_id] !== false;
+        }
+      });
+      return map;
+    }
+
+    // ============================================
     // Custom Label Methods
     // ============================================
 
@@ -3169,17 +3192,18 @@
       const appliancesWithHomeStatus = this._getAppliancesWithHomeStatus();
 
       // Get all status items via status service (filtered by current labels)
+      // Build enabled maps from registry to support default-enabled behavior
       const allStatusItems = statusService
         ? statusService.getAllStatusItems(
             this.hass,
             this._infoTextConfig,
             {
-              enabledMotionSensors: this._enabledMotionSensors,
-              enabledGarages: this._enabledGarages,
-              enabledWindows: this._enabledWindows,
-              enabledLights: this._enabledLights,
-              enabledCovers: this._enabledCovers,
-              enabledTVs: this._enabledTVs,
+              enabledMotionSensors: this._buildEnabledMapFromRegistry(this._motionLabelId, this._enabledMotionSensors),
+              enabledGarages: this._buildEnabledMapFromRegistry(this._garageLabelId, this._enabledGarages),
+              enabledWindows: this._buildEnabledMapFromRegistry(this._windowLabelId, this._enabledWindows),
+              enabledLights: this._buildEnabledMapFromRegistry(this._lightLabelId, this._enabledLights),
+              enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
+              enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
             },
             {
               motionLabelId: this._motionLabelId,
