@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.17";
+  const DASHVIEW_VERSION = "1.9.18";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -168,14 +168,26 @@
   let initI18n = null;
   let getCurrentLang = null;
   let isI18nInitialized = null;
+  let t = null;
   try {
     const i18nModule = await import(`./utils/i18n.js?v=${DASHVIEW_VERSION}`);
     initI18n = i18nModule.initI18n;
     getCurrentLang = i18nModule.getCurrentLang;
     isI18nInitialized = i18nModule.isI18nInitialized;
+    // Defensive wrapper for t() to handle edge cases
+    const importedT = i18nModule.t;
+    t = (key, fallbackOrParams) => {
+      try {
+        return importedT(key, fallbackOrParams);
+      } catch (e) {
+        return typeof fallbackOrParams === 'string' ? fallbackOrParams : key;
+      }
+    };
     debugLog("Loaded i18n module");
   } catch (e) {
     console.warn("Dashview: Failed to load i18n module", e);
+    // Fallback t function if i18n fails to load
+    t = (key, fallback) => typeof fallback === 'string' ? fallback : key;
   }
 
   class DashviewPanel extends LitElement {
