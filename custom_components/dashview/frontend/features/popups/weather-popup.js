@@ -4,6 +4,7 @@
  */
 
 import { renderPopupHeader } from '../../components/layout/popup-header.js';
+import { t } from '../../utils/i18n.js';
 
 /**
  * Render the complete weather popup
@@ -19,7 +20,7 @@ export function renderWeatherPopup(component, html) {
       <div class="popup-container">
         ${renderPopupHeader(html, {
           icon: 'mdi:white-balance-sunny',
-          title: 'Wetter',
+          title: t('ui.tabs.weather'),
           onClose: component._closeWeatherPopup,
           iconStyle: 'background: var(--primary-color);'
         })}
@@ -46,11 +47,11 @@ function renderCurrentWeather(component, html) {
   const precipitation = component._getPrecipitation();
   const condition = currentWeather.condition || 'partlycloudy';
   const conditionText = component._translateWeatherCondition(condition);
-  const precipText = precipitation > 0 ? ` – Niederschlag ${precipitation.toFixed(1)} mm` : '';
+  const precipText = precipitation > 0 ? ` – ${t('weather.precipitation')} ${precipitation.toFixed(1)} mm` : '';
 
   return html`
     <div class="weather-current-card">
-      <div class="weather-current-title">Aktuelles Wetter</div>
+      <div class="weather-current-title">${t('weather.current')}</div>
       <div class="weather-current-temp">${currentWeather.temperature !== null ? currentWeather.temperature.toFixed(1) : '--'}°C</div>
       <div class="weather-current-condition">${conditionText}${precipText}</div>
       <div class="weather-current-icon">
@@ -69,7 +70,7 @@ function renderHourlyForecast(component, html) {
   if (hourlyForecast.length === 0) {
     return html`
       <p style="color: var(--secondary-text-color); padding: 16px; text-align: center;">
-        Stündliche Vorhersage wird geladen...
+        ${t('weather.loading_forecast')}
       </p>
     `;
   }
@@ -109,11 +110,11 @@ function renderForecastTabs(component, html) {
   return html`
     <div class="weather-forecast-tabs">
       <button class="weather-forecast-tab ${component._selectedForecastTab === 0 ? 'active' : ''}"
-              @click=${() => { component._selectedForecastTab = 0; component.requestUpdate(); }}>Heute</button>
+              @click=${() => { component._selectedForecastTab = 0; component.requestUpdate(); }}>${t('weather.today')}</button>
       <button class="weather-forecast-tab ${component._selectedForecastTab === 1 ? 'active' : ''}"
-              @click=${() => { component._selectedForecastTab = 1; component.requestUpdate(); }}>Morgen</button>
+              @click=${() => { component._selectedForecastTab = 1; component.requestUpdate(); }}>${t('weather.tomorrow')}</button>
       <button class="weather-forecast-tab ${component._selectedForecastTab === 2 ? 'active' : ''}"
-              @click=${() => { component._selectedForecastTab = 2; component.requestUpdate(); }}>Übermorgen</button>
+              @click=${() => { component._selectedForecastTab = 2; component.requestUpdate(); }}>${t('weather.day_after')}</button>
     </div>
   `;
 }
@@ -123,7 +124,7 @@ function renderForecastTabs(component, html) {
  */
 function renderForecastCard(component, html) {
   const types = ['today', 'tomorrow', 'day2'];
-  const titles = ['Heute', 'Morgen', 'Übermorgen'];
+  const titles = [t('weather.today'), t('weather.tomorrow'), t('weather.day_after')];
   const forecast = component._getForecastData(types[component._selectedForecastTab]);
 
   if (!forecast) {
@@ -131,7 +132,7 @@ function renderForecastCard(component, html) {
       <div class="weather-forecast-card">
         <div class="weather-forecast-title">${titles[component._selectedForecastTab]}</div>
         <div class="weather-forecast-temp">--°C</div>
-        <div class="weather-forecast-condition">Keine Daten verfügbar</div>
+        <div class="weather-forecast-condition">${t('ui.errors.no_data')}</div>
       </div>
     `;
   }
@@ -153,7 +154,7 @@ function renderForecastCard(component, html) {
     conditionSubtitle = `${conditionText} – H: ${Math.round(forecast.tempHigh)}° L: ${Math.round(forecast.tempLow)}°`;
   }
   if (forecast.precipitation_probability !== undefined && forecast.precipitation_probability > 0) {
-    conditionSubtitle += ` – ${Math.round(forecast.precipitation_probability)}% Regen`;
+    conditionSubtitle += ` – ${Math.round(forecast.precipitation_probability)}% ${t('weather.rain')}`;
   }
 
   return html`
@@ -174,7 +175,7 @@ function renderForecastCard(component, html) {
 function renderWeatherRadar(component, html) {
   return html`
     <div class="weather-radar-card">
-      <div class="weather-radar-title">Regenradar</div>
+      <div class="weather-radar-title">${t('weather.rain_radar')}</div>
       <iframe
         class="weather-radar-iframe"
         src="https://embed.windy.com/embed2.html?lat=50.020&lon=8.696&zoom=9&level=surface&overlay=rain&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"

@@ -1,0 +1,170 @@
+[
+  {
+    "device_id": "device_001",
+    "name": "Wohnzimmer Deckenlampe",
+    "manufacturer": "Philips",
+    "model": "Hue White and Color",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_002",
+    "name": "Wohnzimmer Stehlampe",
+    "manufacturer": "Philips",
+    "model": "Hue White",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_003",
+    "name": "Küche Spots",
+    "manufacturer": "Philips",
+    "model": "Hue GU10",
+    "area_id": "kueche"
+  },
+  {
+    "device_id": "device_004",
+    "name": "Schlafzimmer Deckenlampe",
+    "manufacturer": "Philips",
+    "model": "Hue White Ambiance",
+    "area_id": "schlafzimmer"
+  },
+  {
+    "device_id": "device_005",
+    "name": "Kinderzimmer Deckenlampe",
+    "manufacturer": "Philips",
+    "model": "Hue White and Color",
+    "area_id": "kinderzimmer"
+  },
+  {
+    "device_id": "device_006",
+    "name": "Arbeitszimmer Schreibtischlampe",
+    "manufacturer": "IKEA",
+    "model": "TRADFRI LED",
+    "area_id": "arbeitszimmer"
+  },
+  {
+    "device_id": "device_007",
+    "name": "Wohnzimmer Multisensor",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Temperature Humidity Sensor",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_008",
+    "name": "Küche Temperatursensor",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Temperature Sensor",
+    "area_id": "kueche"
+  },
+  {
+    "device_id": "device_009",
+    "name": "Schlafzimmer Temperatursensor",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Temperature Sensor",
+    "area_id": "schlafzimmer"
+  },
+  {
+    "device_id": "device_010",
+    "name": "Bad Feuchtigkeitssensor",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Humidity Sensor",
+    "area_id": "bad"
+  },
+  {
+    "device_id": "device_011",
+    "name": "Wohnzimmer Bewegungsmelder",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Motion Sensor",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_012",
+    "name": "Flur Bewegungsmelder",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Motion Sensor",
+    "area_id": "flur_eg"
+  },
+  {
+    "device_id": "device_013",
+    "name": "Wohnzimmer Fenstersensor",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Door/Window Sensor",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_014",
+    "name": "Schlafzimmer Fenstersensor",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Door/Window Sensor",
+    "area_id": "schlafzimmer"
+  },
+  {
+    "device_id": "device_015",
+    "name": "Haustür Sensor",
+    "manufacturer": "Xiaomi",
+    "model": "Aqara Door/Window Sensor",
+    "area_id": "flur_eg"
+  },
+  {
+    "device_id": "device_016",
+    "name": "Wohnzimmer Rollladen Motor",
+    "manufacturer": "Somfy",
+    "model": "RTS Motor",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_017",
+    "name": "Schlafzimmer Rollladen Motor",
+    "manufacturer": "Somfy",
+    "model": "RTS Motor",
+    "area_id": "schlafzimmer"
+  },
+  {
+    "device_id": "device_018",
+    "name": "Kinderzimmer Rollladen Motor",
+    "manufacturer": "Somfy",
+    "model": "RTS Motor",
+    "area_id": "kinderzimmer"
+  },
+  {
+    "device_id": "device_019",
+    "name": "Wohnzimmer Thermostat",
+    "manufacturer": "eQ-3",
+    "model": "Homematic IP",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_020",
+    "name": "Schlafzimmer Thermostat",
+    "manufacturer": "eQ-3",
+    "model": "Homematic IP",
+    "area_id": "schlafzimmer"
+  },
+  {
+    "device_id": "device_021",
+    "name": "Samsung Smart TV",
+    "manufacturer": "Samsung",
+    "model": "QE55Q80T",
+    "area_id": "wohnzimmer"
+  },
+  {
+    "device_id": "device_099",
+    "name": "Test Unavailable Device",
+    "manufacturer": "Test",
+    "model": "Unavailable",
+    "area_id": "kueche"
+  },
+  {
+    "device_id": "device_100",
+    "name": "Test Device No Area",
+    "manufacturer": "Test",
+    "model": "No Area",
+    "area_id": null
+  },
+  {
+    "device_id": "device_101",
+    "name": "Test Multi-Function Device",
+    "manufacturer": "Test",
+    "model": "Multi-Sensor",
+    "area_id": "arbeitszimmer"
+  }
+]

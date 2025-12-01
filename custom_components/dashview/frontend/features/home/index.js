@@ -9,6 +9,7 @@ import { createSwipeHandlers } from '../../components/controls/swipeable.js';
 import { getFloorIcon } from '../../utils/icons.js';
 import { getEntityDisplayService } from '../../services/entity-display-service.js';
 import { openMoreInfo, toggleLight, getFriendlyName } from '../../utils/helpers.js';
+import { t } from '../../utils/i18n.js';
 
 // Re-export for backwards compatibility
 export { triggerHaptic };
@@ -151,7 +152,7 @@ export function renderRaeumeSection(component, html) {
   return html`
     <div class="raeume-section">
       <div class="raeume-header">
-        <h2 class="raeume-title">Räume</h2>
+        <h2 class="raeume-title">${t('ui.sections.rooms')}</h2>
         <div class="floor-tabs">
           ${sortedFloors.map(floor => html`
             <button
@@ -184,7 +185,7 @@ export function renderFloorOverviewCard(component, html, floorId) {
   if (roomsForFloor.length === 0) {
     return html`
       <div class="floor-overview-card" style="display: flex; align-items: center; justify-content: center; background: var(--dv-gray000);">
-        <span style="color: var(--secondary-text-color); font-size: 12px;">Keine Räume aktiviert</span>
+        <span style="color: var(--secondary-text-color); font-size: 12px;">${t('ui.errors.no_rooms_enabled')}</span>
       </div>
     `;
   }
@@ -315,7 +316,7 @@ export function renderRoomCardsGrid(component, html) {
   if (!hasConfig && component._floorOverviewEnabled[component._activeFloorTab] === false && !garbageEnabled) {
     return html`
       <div style="text-align: center; padding: 24px; color: var(--secondary-text-color);">
-        Keine Karten konfiguriert. Konfiguriere Karten im Admin-Bereich unter "Floor Cards".
+        ${t('ui.errors.no_cards_configured')}
       </div>
     `;
   }
@@ -501,7 +502,7 @@ export function renderGarbageCard(component, html) {
   if (component._garbageSensors.length === 0) {
     return html`
       <div class="garbage-card" style="display: flex; align-items: center; justify-content: center; background: var(--dv-gray000);">
-        <span style="color: var(--secondary-text-color); font-size: 12px;">Keine Sensoren ausgewählt</span>
+        <span style="color: var(--secondary-text-color); font-size: 12px;">${t('ui.errors.no_sensors_selected')}</span>
       </div>
     `;
   }
@@ -512,7 +513,7 @@ export function renderGarbageCard(component, html) {
   if (garbageData.length === 0) {
     return html`
       <div class="garbage-card" style="display: flex; align-items: center; justify-content: center; background: var(--dv-gray000);">
-        <span style="color: var(--secondary-text-color); font-size: 12px;">Keine Daten verfügbar</span>
+        <span style="color: var(--secondary-text-color); font-size: 12px;">${t('ui.errors.no_data')}</span>
       </div>
     `;
   }
@@ -648,7 +649,7 @@ export function renderOtherEntitiesSection(component, html) {
   return html`
     <div class="other-entities-section">
       <div class="other-entities-header">
-        <h2 class="other-entities-title">Andere Geräte</h2>
+        <h2 class="other-entities-title">${t('ui.sections.other_devices')}</h2>
         ${labelsWithEntities.length > 1 ? html`
           <div class="other-entities-tabs">
             ${labelsWithEntities.map(label => html`
@@ -682,7 +683,7 @@ function renderOtherEntitiesGrid(component, html, entities) {
   if (entities.length === 0) {
     return html`
       <div style="text-align: center; padding: 24px; color: var(--secondary-text-color);">
-        Keine Geräte aktiviert.
+        ${t('ui.errors.no_devices_enabled')}
       </div>
     `;
   }
@@ -734,24 +735,23 @@ function renderOtherEntitiesGrid(component, html, entities) {
     };
   };
 
-  // German state translations
+  // State translations
   const getGermanState = (state) => {
-    const translations = {
-      'on': 'An',
-      'off': 'Aus',
-      'playing': 'Läuft',
-      'paused': 'Pausiert',
-      'idle': 'Bereit',
-      'standby': 'Standby',
-      'active': 'Aktiv',
-      'inactive': 'Inaktiv',
-      'running': 'Läuft',
-      'washing': 'Wäscht',
-      'drying': 'Trocknet',
-      'unavailable': 'Nicht verfügbar',
-      'unknown': 'Unbekannt',
-    };
-    return translations[state.toLowerCase()] || state;
+    const lowerState = state.toLowerCase();
+    if (lowerState === 'on') return t('common.status.on');
+    if (lowerState === 'off') return t('common.status.off');
+    if (lowerState === 'playing') return t('media.playing');
+    if (lowerState === 'paused') return t('media.paused');
+    if (lowerState === 'idle') return t('media.idle');
+    if (lowerState === 'standby') return t('status.appliances.generic.standby');
+    if (lowerState === 'active') return t('common.status.active');
+    if (lowerState === 'inactive') return t('common.status.inactive');
+    if (lowerState === 'running') return t('common.status.running');
+    if (lowerState === 'washing') return t('status.appliances.generic.washing');
+    if (lowerState === 'drying') return t('status.appliances.generic.drying');
+    if (lowerState === 'unavailable') return t('common.status.unavailable');
+    if (lowerState === 'unknown') return t('common.status.unknown');
+    return state;
   };
 
   // Handle card click - open more-info dialog

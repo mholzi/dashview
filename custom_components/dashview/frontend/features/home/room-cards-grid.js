@@ -7,6 +7,7 @@
  */
 
 import { renderEntityCard, renderEmptyCard } from '../../components/cards/entity-card.js';
+import { t } from '../../utils/i18n.js';
 
 /**
  * Grid layout configuration
@@ -42,7 +43,7 @@ const GRID_LAYOUT = {
 export function renderNoCardsMessage(html) {
   return html`
     <div style="text-align: center; padding: 24px; color: var(--secondary-text-color);">
-      Keine Karten konfiguriert. Konfiguriere Karten im Admin-Bereich unter "Floor Cards".
+      ${t('ui.errors.no_cards_configured')}
     </div>
   `;
 }

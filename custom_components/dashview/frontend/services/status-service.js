@@ -10,6 +10,7 @@ import {
   filterEntitiesByState,
   formatRemainingTime,
 } from '../utils/helpers.js';
+import { t } from '../utils/i18n.js';
 
 /**
  * Get washer status for info text row
@@ -32,11 +33,11 @@ export function getWasherStatus(hass, infoTextConfig) {
 
   if (state === "run") {
     // Calculate remaining time from finish time
-    const timeText = finishTime ? formatRemainingTime(finishTime.state, "Ready") : "";
+    const timeText = finishTime ? formatRemainingTime(finishTime.state, t('common.status.ready')) : "";
 
     return {
       state: "running",
-      prefixText: "Die Waschmaschine läuft noch",
+      prefixText: t('status.appliances.washer.running'),
       badgeText: timeText || "...",
       emoji: "👕",
       suffixText: ".",
@@ -44,8 +45,8 @@ export function getWasherStatus(hass, infoTextConfig) {
   } else if (state === "finished") {
     return {
       state: "finished",
-      prefixText: "Die Waschmaschine ist",
-      badgeText: "fertig",
+      prefixText: t('status.appliances.washer.finished'),
+      badgeText: t('status.appliances.washer.ready'),
       emoji: "👕",
       suffixText: ".",
     };
@@ -103,21 +104,21 @@ export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labe
     const { days, hours, minutes } = calculateTimeDifference(diffMs);
 
     if (days > 0) {
-      timeText = `${days} Tagen`;
+      timeText = t('common.time.ago_days', { days });
     } else if (hours > 0) {
-      timeText = `${hours} Stunden`;
+      timeText = t('common.time.ago_hours', { hours });
     } else if (minutes > 0) {
-      timeText = `${minutes} Minuten`;
+      timeText = t('common.time.ago_minutes', { minutes });
     } else {
-      timeText = "Jetzt";
+      timeText = t('common.time.now');
     }
 
     return {
       state: "motion",
-      prefixText: "Im Haus ist seit",
+      prefixText: t('status.motion.in_house_since'),
       badgeText: timeText,
       emoji: "🏡",
-      suffixText: "Bewegung.",
+      suffixText: t('status.motion.motion') + ".",
     };
   } else {
     // No motion - find when the last motion sensor turned off (most recent last_changed among "off" sensors)
@@ -145,22 +146,22 @@ export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labe
       const { days, hours, minutes } = calculateTimeDifference(diffMs);
 
       if (days > 0) {
-        timeText = `${days} Tagen`;
+        timeText = t('common.time.ago_days', { days });
       } else if (hours > 0) {
-        timeText = `${hours} Stunden`;
+        timeText = t('common.time.ago_hours', { hours });
       } else if (minutes > 0) {
-        timeText = `${minutes} Minuten`;
+        timeText = t('common.time.ago_minutes', { minutes });
       } else {
-        timeText = "Jetzt";
+        timeText = t('common.time.now');
       }
     }
 
     return {
       state: "no_motion",
-      prefixText: "Die letzte Bewegung im Haus war vor",
+      prefixText: t('status.motion.last_motion_was'),
       badgeText: timeText || "...",
       emoji: "🏡",
-      suffixText: ".",
+      suffixText: t('status.motion.suffix'),
     };
   }
 }
@@ -189,10 +190,10 @@ export function getGarageStatus(hass, infoTextConfig, enabledGarages, labelId = 
 
   return {
     state: "open",
-    prefixText: "Aktuell sind",
+    prefixText: t('status.general.currently_are'),
     badgeText: `${openGarages.length}`,
     badgeIcon: "mdi:garage-open",
-    suffixText: "offen.",
+    suffixText: t('status.general.open_suffix'),
   };
 }
 
@@ -221,10 +222,10 @@ export function getWindowsStatus(hass, infoTextConfig, enabledWindows, labelId =
   const count = openWindows.length;
   return {
     state: "open",
-    prefixText: "Aktuell sind",
+    prefixText: t('status.general.currently_are'),
     badgeText: `${count}`,
     emoji: "🪟",
-    suffixText: "offen.",
+    suffixText: t('status.general.open_suffix'),
     clickAction: "security",
   };
 }
@@ -254,10 +255,10 @@ export function getLightsOnStatus(hass, infoTextConfig, enabledLights, labelId =
   const count = lightsOn.length;
   return {
     state: "on",
-    prefixText: "Es sind gerade",
+    prefixText: t('status.lights.are_on'),
     badgeText: `${count}`,
     emoji: "💡",
-    suffixText: "Lichter an.",
+    suffixText: t('status.lights.suffix'),
   };
 }
 
@@ -291,10 +292,10 @@ export function getCoversStatus(hass, infoTextConfig, enabledCovers, labelId = n
   const count = openCovers.length;
   return {
     state: "open",
-    prefixText: "Aktuell sind",
-    badgeText: `${count} ${count === 1 ? 'Rollo' : 'Rollos'}`,
+    prefixText: t('status.general.currently_are'),
+    badgeText: `${count} ${count === 1 ? t('status.covers.label_singular') : t('status.covers.label_plural')}`,
     badgeIcon: "mdi:window-shutter-open",
-    suffixText: "offen.",
+    suffixText: t('status.general.open_suffix'),
   };
 }
 
@@ -323,10 +324,10 @@ export function getTVsStatus(hass, infoTextConfig, enabledTVs, labelId = null, e
   const count = tvsOn.length;
   return {
     state: "on",
-    prefixText: "Es sind gerade",
+    prefixText: t('status.tvs.are_on'),
     badgeText: `${count}`,
     badgeIcon: "mdi:television",
-    suffixText: `${count === 1 ? 'Fernseher' : 'Fernseher'} an.`,
+    suffixText: t('status.tvs.suffix'),
   };
 }
 
@@ -355,7 +356,7 @@ export function getDishwasherStatus(hass, infoTextConfig) {
     const timeText = finishTime ? formatRemainingTime(finishTime.state) : "";
     return {
       state: "running",
-      prefixText: "Die Spülmaschine läuft noch",
+      prefixText: t('status.appliances.dishwasher.running'),
       badgeText: timeText || "...",
       badgeIcon: "mdi:dishwasher",
       suffixText: ".",
@@ -363,8 +364,8 @@ export function getDishwasherStatus(hass, infoTextConfig) {
   } else if (state === "finished" || state === "ready") {
     return {
       state: "finished",
-      prefixText: "Die Spülmaschine ist",
-      badgeText: "fertig",
+      prefixText: t('status.appliances.dishwasher.finished'),
+      badgeText: t('status.appliances.dishwasher.ready'),
       badgeIcon: "mdi:dishwasher",
       suffixText: ".",
     };
@@ -398,18 +399,18 @@ export function getDryerStatus(hass, infoTextConfig) {
     // const timeText = finishTime ? formatRemainingTime(finishTime.state) : "";
     return {
       state: "running",
-      prefixText: "Der",
-      badgeText: "Trockner",
+      prefixText: t('status.appliances.dryer.prefix'),
+      badgeText: t('status.appliances.dryer.label'),
       badgeIcon: "mdi:tumble-dryer",
-      suffixText: "läuft gerade.",
+      suffixText: t('status.appliances.dryer.running') + ".",
     };
   } else if (state === "finished" || state === "ready") {
     return {
       state: "finished",
-      prefixText: "Der",
-      badgeText: "Trockner",
+      prefixText: t('status.appliances.dryer.prefix'),
+      badgeText: t('status.appliances.dryer.label'),
       badgeIcon: "mdi:tumble-dryer",
-      suffixText: "ist fertig.",
+      suffixText: t('status.appliances.dryer.finished') + ".",
     };
   }
   return null;
@@ -461,7 +462,7 @@ export function getVacuumStatus(hass, infoTextConfig) {
   };
 
   // Get current room name
-  let roomName = "Reinigung läuft";
+  let roomName = t('status.appliances.vacuum.cleaning_in_progress');
   if (selectedMap && currentSegment && roomDict[selectedMap] && roomDict[selectedMap][currentSegment]) {
     roomName = roomDict[selectedMap][currentSegment];
   }
@@ -469,24 +470,24 @@ export function getVacuumStatus(hass, infoTextConfig) {
   if (state === "cleaning") {
     return {
       state: "cleaning",
-      prefixText: "Im",
+      prefixText: t('status.appliances.vacuum.prefix'),
       badgeText: roomName,
       badgeIcon: "mdi:robot-vacuum",
-      suffixText: "wird gesaugt.",
+      suffixText: t('status.appliances.vacuum.cleaning') + ".",
     };
   } else if (state === "returning") {
     return {
       state: "returning",
-      prefixText: "Der Staubsauger",
-      badgeText: "kehrt zurück",
+      prefixText: t('status.appliances.vacuum.prefix_vacuum'),
+      badgeText: t('status.appliances.vacuum.returning'),
       badgeIcon: "mdi:robot-vacuum",
       suffixText: ".",
     };
   } else if (state === "error") {
     return {
       state: "error",
-      prefixText: "Der Staubsauger",
-      badgeText: "hat ein Problem",
+      prefixText: t('status.appliances.vacuum.prefix_vacuum'),
+      badgeText: t('status.appliances.vacuum.has_problem'),
       badgeIcon: "mdi:robot-vacuum-alert",
       suffixText: "!",
       isWarning: true,
@@ -538,9 +539,9 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
   return {
     state: "low",
     prefixText: "",
-    badgeText: count === 1 ? `${lowestDevice.name} (${lowestDevice.value}%)` : `${count} Geräte`,
+    badgeText: count === 1 ? `${lowestDevice.name} (${lowestDevice.value}%)` : t('status.battery.devices_low', { count }),
     badgeIcon: "mdi:battery-low",
-    suffixText: count === 1 ? "hat niedrigen Akku." : "haben niedrigen Akku.",
+    suffixText: count === 1 ? t('status.battery.has_low') : t('status.battery.have_low'),
     isWarning: true,
     clickAction: "battery",
   };
@@ -573,20 +574,20 @@ export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStat
 
       if (status.isActive) {
         // If we have remaining time from the timer entity, show it
-        if (status.text && status.text !== 'Läuft' && status.text !== 'Aktiv') {
+        if (status.text && status.text !== t('status.appliances.generic.running') && status.text !== t('status.appliances.generic.active')) {
           // status.text contains the formatted remaining time
-          prefixText = `${appliance.name} läuft noch`;
+          prefixText = `${appliance.name} ${t('status.appliances.generic.running')}`;
           badgeText = status.text;
           suffixText = '.';
         } else {
           prefixText = '';
           badgeText = appliance.name;
-          suffixText = 'läuft gerade.';
+          suffixText = t('status.appliances.generic.running_now') + '.';
         }
       } else if (status.isFinished) {
         prefixText = '';
         badgeText = appliance.name;
-        suffixText = 'ist fertig.';
+        suffixText = t('status.appliances.generic.finished') + '.';
       }
 
       statusItems.push({

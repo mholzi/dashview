@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.10';
+export const CURRENT_VERSION = '0.0.11';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,21 @@ export const CURRENT_VERSION = '0.0.10';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.11 - Internationalization (i18n) support
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.11',
+    page: 1,
+    date: 'Dezember 2025',
+    title: 'Mehrsprachigkeit',
+    subtitle: 'Jetzt auch auf Englisch',
+    changes: [
+      { type: 'feature', description: 'Vollständige englische Übersetzung hinzugefügt' },
+      { type: 'feature', description: 'Sprache wird automatisch von Home Assistant übernommen' },
+      { type: 'improvement', description: 'Alle Texte können jetzt einfach übersetzt werden' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.10 - UI improvements & caching fix
   // ══════════════════════════════════════════════════════════════

@@ -164,6 +164,18 @@
     console.warn("Dashview: Failed to load services module", e);
   }
 
+  // Load i18n module
+  let initI18n = null;
+  let getCurrentLang = null;
+  try {
+    const i18nModule = await import(`./utils/i18n.js?v=${DASHVIEW_VERSION}`);
+    initI18n = i18nModule.initI18n;
+    getCurrentLang = i18nModule.getCurrentLang;
+    debugLog("Loaded i18n module");
+  } catch (e) {
+    console.warn("Dashview: Failed to load i18n module", e);
+  }
+
   class DashviewPanel extends LitElement {
     static get properties() {
       return {
@@ -1179,6 +1191,23 @@
 
     updated(changedProperties) {
       if (changedProperties.has("hass") && this.hass) {
+        // Language detection and i18n initialization
+        if (this.hass?.language && initI18n && getCurrentLang) {
+          const rawLang = this.hass.language;
+          const baseLang = rawLang.split('-')[0]; // 'de-DE' -> 'de'
+          const supportedLangs = ['en', 'de'];
+          const targetLang = supportedLangs.includes(baseLang) ? baseLang : 'en';
+
+          // Only re-initialize if language changed
+          if (targetLang !== getCurrentLang()) {
+            initI18n(targetLang).then(() => {
+              this.requestUpdate();
+            }).catch(err => {
+              console.warn('[Dashview] i18n initialization failed:', err);
+            });
+          }
+        }
+
         // Initialize stores with hass instance
         if (settingsStore && !settingsStore._hass) {
           settingsStore.setHass(this.hass);
@@ -1949,7 +1978,7 @@
         messages.push(`Luftfeuchtigkeit: ${avg}%`);
       }
 
-      return { title: 'Bitte Raum lüften', subtitle: messages.join(' · ') };
+      return { title: t('ui.notifications.ventilate_room', 'Bitte Raum lüften'), subtitle: messages.join(' · ') };
     }
 
     _setLightBrightness(entityId, brightnessPercent) {
@@ -2897,12 +2926,12 @@
 
         // Unavailable/unknown states
         if (state === 'unavailable' || state === 'unknown') {
-          return { text: 'Nicht verfügbar', icon: appliance.icon, isActive: false, isUnavailable: true };
+          return { text: t('common.status.unavailable'), icon: appliance.icon, isActive: false, isUnavailable: true };
         }
 
         // Error states
         if (state === 'error' || state === 'fault' || state === 'failure') {
-          return { text: 'Fehler', icon: appliance.icon, isActive: false, isError: true };
+          return { text: t('ui.errors.error'), icon: appliance.icon, isActive: false, isError: true };
         }
 
         // Running states - calculate remaining time if timer entity is available
@@ -2919,17 +2948,17 @@
             return { text: remainingTime, icon: appliance.icon, isActive: true };
           }
 
-          return { text: 'Läuft', icon: appliance.icon, isActive: true };
+          return { text: t('common.status.running'), icon: appliance.icon, isActive: true };
         }
 
         // Finished states
         if (['finished', 'complete', 'done'].includes(state)) {
-          return { text: 'Fertig', icon: appliance.icon, isActive: false, isFinished: true };
+          return { text: t('common.status.ready'), icon: appliance.icon, isActive: false, isFinished: true };
         }
 
         // Ready/idle/off states
         if (['idle', 'off', 'standby', 'ready'].includes(state)) {
-          return { text: 'Bereit', icon: appliance.icon, isActive: false };
+          return { text: t('common.status.ready'), icon: appliance.icon, isActive: false };
         }
 
         // Default: show the state as-is
@@ -2945,20 +2974,20 @@
 
         // Check for unavailable states
         if (state === 'unavailable' || state === 'unknown') {
-          return { text: 'Nicht verfügbar', icon: appliance.icon, isActive: false, isUnavailable: true };
+          return { text: t('common.status.unavailable'), icon: appliance.icon, isActive: false, isUnavailable: true };
         }
 
         // Check for error states
         if (state === 'error' || state === 'fault' || state === 'failure') {
-          return { text: 'Fehler', icon: appliance.icon, isActive: false, isError: true };
+          return { text: t('ui.errors.error'), icon: appliance.icon, isActive: false, isError: true };
         }
 
         // Check for common active/on states
         if (state === 'on' || state === 'playing' || state === 'active') {
-          return { text: 'Aktiv', icon: appliance.icon, isActive: true };
+          return { text: t('common.status.active'), icon: appliance.icon, isActive: true };
         }
         if (state === 'off' || state === 'idle' || state === 'standby') {
-          return { text: 'Bereit', icon: appliance.icon, isActive: false };
+          return { text: t('common.status.ready'), icon: appliance.icon, isActive: false };
         }
 
         // Show entity count as subtitle

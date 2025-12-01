@@ -1,0 +1,42 @@
+[
+  {
+    "label_id": "motion",
+    "name": "Motion",
+    "icon": "mdi:motion-sensor"
+  },
+  {
+    "label_id": "window",
+    "name": "Window",
+    "icon": "mdi:window-open"
+  },
+  {
+    "label_id": "light",
+    "name": "Light",
+    "icon": "mdi:lightbulb"
+  },
+  {
+    "label_id": "temperature",
+    "name": "Temperature",
+    "icon": "mdi:thermometer"
+  },
+  {
+    "label_id": "humidity",
+    "name": "Humidity",
+    "icon": "mdi:water-percent"
+  },
+  {
+    "label_id": "climate",
+    "name": "Climate",
+    "icon": "mdi:thermostat"
+  },
+  {
+    "label_id": "cover",
+    "name": "Cover",
+    "icon": "mdi:window-shutter"
+  },
+  {
+    "label_id": "tv",
+    "name": "TV",
+    "icon": "mdi:television"
+  }
+]

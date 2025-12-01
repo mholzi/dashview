@@ -5,6 +5,7 @@
 
 import { renderPopupHeader } from '../../components/layout/popup-header.js';
 import { getNewChanges } from '../../constants/changelog.js';
+import { t } from '../../utils/i18n.js';
 
 /**
  * Get icon for change type
@@ -23,11 +24,13 @@ function getChangeTypeIcon(type) {
  * Get label for change type
  */
 function getChangeTypeLabel(type) {
+  // These labels are part of the changelog content which is already in the translations
+  // We'll keep them as-is since they're displayed in the changelog popup
   switch (type) {
-    case 'feature': return 'Neu';
-    case 'improvement': return 'Verbessert';
-    case 'fix': return 'Behoben';
-    case 'breaking': return 'Achtung';
+    case 'feature': return t('common.options.new', 'Neu');
+    case 'improvement': return t('common.options.improved', 'Verbessert');
+    case 'fix': return t('common.options.fixed', 'Behoben');
+    case 'breaking': return t('common.options.attention', 'Achtung');
     default: return 'Info';
   }
 }
@@ -57,7 +60,7 @@ export function renderChangelogPopup(component, html) {
       <div class="popup-container changelog-popup" @click=${(e) => e.stopPropagation()}>
         ${renderPopupHeader(html, {
           icon: 'mdi:party-popper',
-          title: 'Was ist neu?',
+          title: t('ui.sections.whats_new', 'Was ist neu?'),
           onClose: component._closeChangelogPopup,
           iconStyle: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);'
         })}
@@ -107,7 +110,7 @@ export function renderChangelogPopup(component, html) {
           <!-- Skip button (always visible except on last page) -->
           ${!isLastPage ? html`
             <button class="changelog-button secondary" @click=${component._closeChangelogPopup}>
-              <span>Überspringen</span>
+              <span>${t('common.actions.skip', 'Überspringen')}</span>
             </button>
           ` : ''}
 
@@ -118,11 +121,11 @@ export function renderChangelogPopup(component, html) {
           ${isLastPage ? html`
             <button class="changelog-button primary" @click=${component._closeChangelogPopup}>
               <ha-icon icon="mdi:check"></ha-icon>
-              <span>Los geht's!</span>
+              <span>${t('common.actions.lets_go', "Los geht's!")}</span>
             </button>
           ` : html`
             <button class="changelog-button primary" @click=${component._nextChangelogPage}>
-              <span>Weiter</span>
+              <span>${t('common.actions.continue', 'Weiter')}</span>
               <ha-icon icon="mdi:chevron-right"></ha-icon>
             </button>
           `}

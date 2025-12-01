@@ -4,6 +4,7 @@
  */
 
 import { renderPopupHeader } from '../../components/layout/popup-header.js';
+import { t } from '../../utils/i18n.js';
 
 // Cache for Spotify artwork URLs (media_content_id -> image_url)
 const spotifyArtworkCache = new Map();
@@ -71,7 +72,7 @@ export function renderMediaPopup(component, html) {
       <div class="popup-container" @click=${(e) => e.stopPropagation()}>
         ${renderPopupHeader(html, {
           icon: 'mdi:music',
-          title: 'Musik',
+          title: t('ui.sections.music'),
           onClose: component._closeMediaPopup,
           iconStyle: 'background: var(--dv-gradient-media);'
         })}
@@ -94,8 +95,8 @@ function renderMediaContent(component, html) {
       <div class="popup-content">
         <div class="media-popup-empty">
           <ha-icon icon="mdi:speaker-off"></ha-icon>
-          <div class="media-popup-empty-text">Keine Media Player konfiguriert</div>
-          <div class="media-popup-empty-subtext">Aktiviere Media Player im Admin-Bereich</div>
+          <div class="media-popup-empty-text">${t('ui.errors.no_media_players')}</div>
+          <div class="media-popup-empty-subtext">${t('ui.errors.activate_in_admin')}</div>
         </div>
       </div>
     `;
@@ -205,8 +206,8 @@ function renderMediaPlayer(component, html, player) {
 
         <!-- Title and Artist -->
         <div class="popup-media-info">
-          <div class="popup-media-track-title">${state.attributes?.media_title || 'Unbekannter Titel'}</div>
-          <div class="popup-media-track-artist">${state.attributes?.media_artist || 'Unbekannter Künstler'}</div>
+          <div class="popup-media-track-title">${state.attributes?.media_title || t('media.unknown_title')}</div>
+          <div class="popup-media-track-artist">${state.attributes?.media_artist || t('media.unknown_artist')}</div>
         </div>
 
         <!-- Controls -->
@@ -246,7 +247,7 @@ function renderMediaPlayer(component, html, player) {
         </div>
       ` : html`
         <div class="popup-media-idle">
-          ${state.state === 'idle' ? 'Bereit' : state.state === 'off' ? 'Ausgeschaltet' : state.state}
+          ${state.state === 'idle' ? t('media.idle') : state.state === 'off' ? t('media.off') : state.state}
         </div>
       `}
     </div>

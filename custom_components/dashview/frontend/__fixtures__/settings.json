@@ -1,0 +1,26 @@
+{
+  "enabledRooms": {
+    "wohnzimmer": true,
+    "kueche": true,
+    "schlafzimmer": true,
+    "kinderzimmer": true,
+    "arbeitszimmer": true,
+    "bad": false,
+    "flur_eg": false,
+    "gaestewc": false
+  },
+  "enabledLights": {
+    "light.wohnzimmer_decke": true,
+    "light.wohnzimmer_stehlampe": true,
+    "light.kueche_spots": true,
+    "light.schlafzimmer_decke": true,
+    "light.kinderzimmer_decke": true,
+    "light.arbeitszimmer_schreibtisch": true,
+    "light.no_area_light": false
+  },
+  "weatherEntity": "weather.home",
+  "floorOrder": [
+    "erdgeschoss",
+    "obergeschoss"
+  ]
+}

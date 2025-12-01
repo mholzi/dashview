@@ -1,0 +1,50 @@
+[
+  {
+    "area_id": "wohnzimmer",
+    "name": "Wohnzimmer",
+    "floor_id": "erdgeschoss",
+    "aliases": []
+  },
+  {
+    "area_id": "kueche",
+    "name": "Küche",
+    "floor_id": "erdgeschoss",
+    "aliases": []
+  },
+  {
+    "area_id": "flur_eg",
+    "name": "Flur EG",
+    "floor_id": "erdgeschoss",
+    "aliases": []
+  },
+  {
+    "area_id": "gaestewc",
+    "name": "Gäste-WC",
+    "floor_id": "erdgeschoss",
+    "aliases": []
+  },
+  {
+    "area_id": "schlafzimmer",
+    "name": "Schlafzimmer",
+    "floor_id": "obergeschoss",
+    "aliases": []
+  },
+  {
+    "area_id": "bad",
+    "name": "Bad",
+    "floor_id": "obergeschoss",
+    "aliases": []
+  },
+  {
+    "area_id": "kinderzimmer",
+    "name": "Kinderzimmer",
+    "floor_id": "obergeschoss",
+    "aliases": []
+  },
+  {
+    "area_id": "arbeitszimmer",
+    "name": "Arbeitszimmer",
+    "floor_id": "obergeschoss",
+    "aliases": []
+  }
+]

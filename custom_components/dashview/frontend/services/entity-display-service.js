@@ -6,6 +6,8 @@
  * into a centralized, testable service.
  */
 
+import { t } from '../utils/i18n.js';
+
 // ==================== Icon Maps ====================
 
 /**
@@ -55,26 +57,28 @@ const LOCK_ICONS = {
 };
 
 /**
- * German state labels for binary sensors
+ * State labels for binary sensors
+ * Now uses i18n translation system
  */
 const BINARY_SENSOR_LABELS = {
-  motion: { on: 'Bewegung', off: 'Keine Bewegung' },
-  window: { on: 'Offen', off: 'Geschlossen' },
-  garage: { on: 'Offen', off: 'Geschlossen' },
-  vibration: { on: 'Vibration', off: 'Ruhig' },
-  smoke: { on: 'Rauch!', off: 'Kein Rauch' },
-  default: { on: 'An', off: 'Aus' },
+  motion: { on: () => t('sensor.motion.detected'), off: () => t('sensor.motion.no_motion') },
+  window: { on: () => t('sensor.window.on'), off: () => t('sensor.window.off') },
+  garage: { on: () => t('sensor.garage.on'), off: () => t('sensor.garage.off') },
+  vibration: { on: () => t('sensor.vibration.on'), off: () => t('sensor.vibration.off') },
+  smoke: { on: () => t('sensor.smoke.on'), off: () => t('sensor.smoke.off') },
+  default: { on: () => t('common.status.on'), off: () => t('common.status.off') },
 };
 
 /**
- * German state labels for locks
+ * State labels for locks
+ * Now uses i18n translation system
  */
 const LOCK_LABELS = {
-  locked: 'Verriegelt',
-  unlocked: 'Entriegelt',
-  locking: 'Verriegelt...',
-  unlocking: 'Entriegelt...',
-  default: 'Unbekannt',
+  locked: () => t('lock.locked'),
+  unlocked: () => t('lock.unlocked'),
+  locking: () => t('lock.locking'),
+  unlocking: () => t('lock.unlocking'),
+  default: () => t('common.status.unknown'),
 };
 
 // ==================== Display Info Getters ====================
@@ -92,7 +96,7 @@ function getBinarySensorDisplayInfoByType(sensorType, state) {
   const labels = BINARY_SENSOR_LABELS[sensorType] || BINARY_SENSOR_LABELS.default;
   return {
     icon: isOn ? icons.on : icons.off,
-    labelText: isOn ? labels.on : labels.off,
+    labelText: isOn ? labels.on() : labels.off(),
     cardClass: isOn ? 'active-gradient' : 'inactive',
   };
 }
@@ -157,15 +161,15 @@ function getLightDisplayInfo(state) {
 
   if (isOn) {
     const brightness = state.attributes.brightness;
-    let labelText = 'An';
+    let labelText = t('common.status.on');
     if (brightness) {
       const brightnessPercent = Math.round((brightness / 255) * 100);
-      labelText = `An (${brightnessPercent}%)`;
+      labelText = `${t('common.status.on')} (${brightnessPercent}%)`;
     }
     return { icon, labelText, cardClass: 'active-light' };
   }
 
-  return { icon, labelText: 'Aus', cardClass: 'inactive' };
+  return { icon, labelText: t('common.status.off'), cardClass: 'inactive' };
 }
 
 /**
@@ -182,7 +186,7 @@ function getCoverDisplayInfo(state) {
   if (position !== undefined) {
     labelText = `${position}%`;
   } else {
-    labelText = isOpen ? 'Offen' : state.state === 'closed' ? 'Geschlossen' : state.state;
+    labelText = isOpen ? t('common.status.open') : state.state === 'closed' ? t('common.status.closed') : state.state;
   }
 
   return {
@@ -226,7 +230,8 @@ function getClimateDisplayInfo(state) {
 function getLockDisplayInfo(state) {
   const lockState = state.state;
   const icon = state.attributes.icon || LOCK_ICONS[lockState] || LOCK_ICONS.default;
-  const labelText = LOCK_LABELS[lockState] || LOCK_LABELS.default;
+  const labelGetter = LOCK_LABELS[lockState] || LOCK_LABELS.default;
+  const labelText = labelGetter();
   const isUnlocked = lockState === 'unlocked';
 
   return {
@@ -248,7 +253,7 @@ function getBinarySensorDisplayInfo(state) {
 
   return {
     icon,
-    labelText: isOn ? 'An' : 'Aus',
+    labelText: isOn ? t('common.status.on') : t('common.status.off'),
     cardClass: isOn ? 'active-gradient' : 'inactive',
   };
 }

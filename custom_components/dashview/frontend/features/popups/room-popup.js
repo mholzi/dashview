@@ -6,6 +6,7 @@
 import { renderPopupHeader } from '../../components/layout/popup-header.js';
 import { renderTemperatureChart } from '../../components/charts/index.js';
 import { openMoreInfo } from '../../utils/helpers.js';
+import { t } from '../../utils/i18n.js';
 
 // Long press duration in ms
 const LONG_PRESS_DURATION = 500;
@@ -199,7 +200,7 @@ function renderQuickActions(component, html, areaId) {
           @click=${() => component._toggleAllRoomLights(areaId, !anyLightsOn)}
         >
           <ha-icon icon="${anyLightsOn ? 'mdi:lightbulb-off' : 'mdi:lightbulb-group'}"></ha-icon>
-          <span>${anyLightsOn ? 'Lichter aus' : 'Lichter an'}</span>
+          <span>${anyLightsOn ? t('popup.actions.lights_off') : t('popup.actions.lights_on')}</span>
         </button>
       ` : ''}
       ${covers.length > 0 ? html`
@@ -208,7 +209,7 @@ function renderQuickActions(component, html, areaId) {
           @click=${() => component._toggleAllRoomCovers(areaId, anyCoversOpen)}
         >
           <ha-icon icon="${anyCoversOpen ? 'mdi:window-shutter' : 'mdi:window-shutter-open'}"></ha-icon>
-          <span>${anyCoversOpen ? 'Rollos zu' : 'Rollos auf'}</span>
+          <span>${anyCoversOpen ? t('popup.actions.covers_close') : t('popup.actions.covers_open')}</span>
         </button>
       ` : ''}
       ${roomSceneButtons.map(button => html`
@@ -392,8 +393,8 @@ function renderLightSection(component, html, areaId) {
     <div class="popup-light-section">
       <div class="popup-light-header" @click=${component._togglePopupLightExpanded}>
         <ha-icon icon="mdi:lightbulb"></ha-icon>
-        <span class="popup-light-title">Licht</span>
-        <span class="popup-light-count">${onCount} von ${totalCount} Lichter an</span>
+        <span class="popup-light-title">${t('ui.sections.light')}</span>
+        <span class="popup-light-count">${t('popup.room.lights_count', { on: onCount, total: totalCount })}</span>
       </div>
 
       <div class="popup-light-content ${component._popupLightExpanded ? 'expanded' : ''}">
@@ -505,7 +506,7 @@ function renderLightSection(component, html, areaId) {
                     <ha-icon icon="${light.icon}"></ha-icon>
                   </div>
                   <div class="popup-light-item-content">
-                    <span class="popup-light-item-label">${isOn ? (isDimmable && brightness ? `${brightness}%` : 'An') : 'Aus'}</span>
+                    <span class="popup-light-item-label">${isOn ? (isDimmable && brightness ? `${brightness}%` : t('common.status.on')) : t('common.status.off')}</span>
                     <span class="popup-light-item-name">${light.name}</span>
                   </div>
                 </div>
@@ -530,7 +531,7 @@ function renderCoverSection(component, html, areaId) {
   return html`
     <div class="popup-cover-section">
       <div class="popup-cover-header">
-        <span class="popup-cover-title" @click=${component._togglePopupCoverExpanded}>Rollos</span>
+        <span class="popup-cover-title" @click=${component._togglePopupCoverExpanded}>${t('ui.sections.covers')}</span>
         <div class="popup-cover-slider" @click=${(e) => component._handleAllCoversSliderClick(e, areaId)}>
           <div class="popup-cover-slider-fill" style="width: ${100 - avgPosition}%"></div>
           <div class="popup-cover-slider-thumb" style="left: ${100 - avgPosition}%"></div>
@@ -578,8 +579,8 @@ function renderMediaSection(component, html, areaId) {
     <div class="popup-media-section">
       <div class="popup-media-header" @click=${component._togglePopupMediaExpanded}>
         <ha-icon icon="mdi:music"></ha-icon>
-        <span class="popup-media-title">Musik</span>
-        <span class="popup-media-count">${playingCount} von ${totalCount} aktiv</span>
+        <span class="popup-media-title">${t('ui.sections.music')}</span>
+        <span class="popup-media-count">${t('popup.room.media_count', { playing: playingCount, total: totalCount })}</span>
       </div>
 
       <div class="popup-media-content ${component._popupMediaExpanded ? 'expanded' : ''}">
@@ -616,8 +617,8 @@ function renderMediaPlayer(component, html, player) {
 
         <!-- Title and Artist -->
         <div class="popup-media-info">
-          <div class="popup-media-track-title">${player.media_title || 'Unbekannter Titel'}</div>
-          <div class="popup-media-track-artist">${player.media_artist || 'Unbekannter Künstler'}</div>
+          <div class="popup-media-track-title">${player.media_title || t('media.unknown_title')}</div>
+          <div class="popup-media-track-artist">${player.media_artist || t('media.unknown_artist')}</div>
         </div>
 
         <!-- Controls -->
@@ -657,7 +658,7 @@ function renderMediaPlayer(component, html, player) {
         </div>
       ` : html`
         <div class="popup-media-idle">
-          ${player.state === 'idle' ? 'Bereit' : player.state === 'off' ? 'Ausgeschaltet' : player.state}
+          ${player.state === 'idle' ? t('media.idle') : player.state === 'off' ? t('media.off') : player.state}
         </div>
       `}
     </div>
@@ -678,8 +679,8 @@ function renderTVSection(component, html, areaId) {
     <div class="popup-tv-section">
       <div class="popup-tv-header">
         <ha-icon icon="mdi:television"></ha-icon>
-        <span class="popup-tv-title">Fernseher</span>
-        <span class="popup-tv-count">${onCount} von ${totalCount} an</span>
+        <span class="popup-tv-title">${t('ui.sections.tvs')}</span>
+        <span class="popup-tv-count">${t('popup.room.tv_count', { on: onCount, total: totalCount })}</span>
       </div>
 
       <div class="popup-tv-content">
@@ -691,7 +692,7 @@ function renderTVSection(component, html, areaId) {
             </div>
             <div class="popup-tv-item-content">
               <span class="popup-tv-item-name">${tv.name}</span>
-              <span class="popup-tv-item-state">${tv.state === 'on' ? (tv.source || 'An') : 'Aus'}</span>
+              <span class="popup-tv-item-state">${tv.state === 'on' ? (tv.source || t('common.status.on')) : t('common.status.off')}</span>
             </div>
           </div>
         `)}
@@ -714,8 +715,8 @@ function renderLockSection(component, html, areaId) {
     <div class="popup-lock-section">
       <div class="popup-lock-header">
         <ha-icon icon="mdi:lock"></ha-icon>
-        <span class="popup-lock-title">Schlösser</span>
-        <span class="popup-lock-count">${unlockedCount > 0 ? `${unlockedCount} offen` : 'Alle verriegelt'}</span>
+        <span class="popup-lock-title">${t('ui.sections.locks')}</span>
+        <span class="popup-lock-count">${unlockedCount > 0 ? t('lock.count_unlocked', { count: unlockedCount }) : t('lock.all_locked')}</span>
       </div>
 
       <div class="popup-lock-content">
@@ -727,7 +728,7 @@ function renderLockSection(component, html, areaId) {
             </div>
             <div class="popup-lock-item-content">
               <span class="popup-lock-item-name">${lock.name}</span>
-              <span class="popup-lock-item-state">${lock.state === 'locked' ? 'Verriegelt' : lock.state === 'unlocked' ? 'Entriegelt' : lock.state}</span>
+              <span class="popup-lock-item-state">${lock.state === 'locked' ? t('lock.locked') : lock.state === 'unlocked' ? t('lock.unlocked') : lock.state}</span>
             </div>
           </div>
         `)}
@@ -750,8 +751,8 @@ function renderGarageSection(component, html, areaId) {
     <div class="popup-garage-section">
       <div class="popup-garage-header" @click=${component._togglePopupGarageExpanded}>
         <ha-icon icon="mdi:garage"></ha-icon>
-        <span class="popup-garage-title">Garage</span>
-        <span class="popup-garage-count">${openCount} von ${totalCount} offen</span>
+        <span class="popup-garage-title">${t('ui.sections.garage')}</span>
+        <span class="popup-garage-count">${t('popup.room.garage_count', { open: openCount, total: totalCount })}</span>
       </div>
 
       <div class="popup-garage-content ${component._popupGarageExpanded ? 'expanded' : ''}">
@@ -801,8 +802,8 @@ function renderApplianceSection(component, html, areaId) {
     <div class="popup-devices-section">
       <div class="popup-devices-header" @click=${component._togglePopupDevicesExpanded}>
         <ha-icon icon="mdi:devices"></ha-icon>
-        <span class="popup-devices-title">Geräte</span>
-        <span class="popup-devices-count">${activeCount > 0 ? `${activeCount} aktiv` : `${appliances.length} Geräte`}</span>
+        <span class="popup-devices-title">${t('ui.sections.devices')}</span>
+        <span class="popup-devices-count">${activeCount > 0 ? `${activeCount} ${t('common.status.active')}` : `${appliances.length} ${t('ui.sections.devices')}`}</span>
       </div>
 
       <div class="popup-devices-content ${component._popupDevicesExpanded ? 'expanded' : ''}">

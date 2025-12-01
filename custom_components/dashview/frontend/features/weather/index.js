@@ -4,6 +4,7 @@
  */
 
 import { getWeatherIcon, translateWeatherCondition } from '../../utils/icons.js';
+import { t } from '../../utils/i18n.js';
 
 /**
  * Render weather header summary
@@ -42,7 +43,7 @@ export function renderWeatherPopup(component, html) {
     return html`
       <div class="weather-popup-empty">
         <ha-icon icon="mdi:weather-cloudy-alert"></ha-icon>
-        <p>Keine Wetterdaten verfügbar</p>
+        <p>${t('weather.no_data')}</p>
       </div>
     `;
   }
@@ -96,7 +97,7 @@ export function renderWeatherPopup(component, html) {
       <!-- Hourly Forecast -->
       ${component._weatherHourlyForecasts?.length > 0 ? html`
         <div class="weather-forecast-section">
-          <h3 class="weather-forecast-title">Stündlich</h3>
+          <h3 class="weather-forecast-title">${t('weather.hourly_forecast')}</h3>
           <div class="weather-hourly-scroll">
             ${component._weatherHourlyForecasts.slice(0, 12).map(forecast => {
               const time = new Date(forecast.datetime);
@@ -116,7 +117,7 @@ export function renderWeatherPopup(component, html) {
       <!-- Daily Forecast -->
       ${component._weatherForecasts?.length > 0 ? html`
         <div class="weather-forecast-section">
-          <h3 class="weather-forecast-title">7-Tage Vorhersage</h3>
+          <h3 class="weather-forecast-title">${t('weather.daily_forecast')}</h3>
           <div class="weather-daily-list">
             ${component._weatherForecasts.slice(0, 7).map(forecast => {
               const date = new Date(forecast.datetime);

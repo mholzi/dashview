@@ -1,0 +1,202 @@
+[
+  {
+    "entity_id": "light.wohnzimmer_decke",
+    "name": "Wohnzimmer Deckenlampe",
+    "device_id": "device_001",
+    "area_id": "wohnzimmer",
+    "labels": ["light"],
+    "platform": "hue"
+  },
+  {
+    "entity_id": "light.wohnzimmer_stehlampe",
+    "name": "Wohnzimmer Stehlampe",
+    "device_id": "device_002",
+    "area_id": "wohnzimmer",
+    "labels": ["light"],
+    "platform": "hue"
+  },
+  {
+    "entity_id": "light.kueche_spots",
+    "name": "Küche Spots",
+    "device_id": "device_003",
+    "area_id": "kueche",
+    "labels": ["light"],
+    "platform": "hue"
+  },
+  {
+    "entity_id": "light.schlafzimmer_decke",
+    "name": "Schlafzimmer Deckenlampe",
+    "device_id": "device_004",
+    "area_id": "schlafzimmer",
+    "labels": ["light"],
+    "platform": "hue"
+  },
+  {
+    "entity_id": "light.kinderzimmer_decke",
+    "name": "Kinderzimmer Deckenlampe",
+    "device_id": "device_005",
+    "area_id": "kinderzimmer",
+    "labels": ["light"],
+    "platform": "hue"
+  },
+  {
+    "entity_id": "light.arbeitszimmer_schreibtisch",
+    "name": "Arbeitszimmer Schreibtischlampe",
+    "device_id": "device_006",
+    "area_id": "arbeitszimmer",
+    "labels": ["light"],
+    "platform": "ikea_tradfri"
+  },
+  {
+    "entity_id": "sensor.wohnzimmer_temperatur",
+    "name": "Wohnzimmer Temperatur",
+    "device_id": "device_007",
+    "area_id": "wohnzimmer",
+    "labels": ["temperature"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "sensor.wohnzimmer_luftfeuchtigkeit",
+    "name": "Wohnzimmer Luftfeuchtigkeit",
+    "device_id": "device_007",
+    "area_id": "wohnzimmer",
+    "labels": ["humidity"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "sensor.kueche_temperatur",
+    "name": "Küche Temperatur",
+    "device_id": "device_008",
+    "area_id": "kueche",
+    "labels": ["temperature"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "sensor.schlafzimmer_temperatur",
+    "name": "Schlafzimmer Temperatur",
+    "device_id": "device_009",
+    "area_id": "schlafzimmer",
+    "labels": ["temperature"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "sensor.bad_luftfeuchtigkeit",
+    "name": "Bad Luftfeuchtigkeit",
+    "device_id": "device_010",
+    "area_id": "bad",
+    "labels": ["humidity"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "binary_sensor.wohnzimmer_bewegung",
+    "name": "Wohnzimmer Bewegungsmelder",
+    "device_id": "device_011",
+    "area_id": "wohnzimmer",
+    "labels": ["motion"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "binary_sensor.flur_eg_bewegung",
+    "name": "Flur EG Bewegungsmelder",
+    "device_id": "device_012",
+    "area_id": "flur_eg",
+    "labels": ["motion"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "binary_sensor.wohnzimmer_fenster",
+    "name": "Wohnzimmer Fenster",
+    "device_id": "device_013",
+    "area_id": "wohnzimmer",
+    "labels": ["window"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "binary_sensor.schlafzimmer_fenster",
+    "name": "Schlafzimmer Fenster",
+    "device_id": "device_014",
+    "area_id": "schlafzimmer",
+    "labels": ["window"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "binary_sensor.haustuer",
+    "name": "Haustür",
+    "device_id": "device_015",
+    "area_id": "flur_eg",
+    "labels": ["window"],
+    "platform": "xiaomi_aqara"
+  },
+  {
+    "entity_id": "cover.wohnzimmer_rollladen",
+    "name": "Wohnzimmer Rollladen",
+    "device_id": "device_016",
+    "area_id": "wohnzimmer",
+    "labels": ["cover"],
+    "platform": "somfy"
+  },
+  {
+    "entity_id": "cover.schlafzimmer_rollladen",
+    "name": "Schlafzimmer Rollladen",
+    "device_id": "device_017",
+    "area_id": "schlafzimmer",
+    "labels": ["cover"],
+    "platform": "somfy"
+  },
+  {
+    "entity_id": "cover.kinderzimmer_rollladen",
+    "name": "Kinderzimmer Rollladen",
+    "device_id": "device_018",
+    "area_id": "kinderzimmer",
+    "labels": ["cover"],
+    "platform": "somfy"
+  },
+  {
+    "entity_id": "climate.wohnzimmer",
+    "name": "Wohnzimmer Heizung",
+    "device_id": "device_019",
+    "area_id": "wohnzimmer",
+    "labels": ["climate"],
+    "platform": "homematic"
+  },
+  {
+    "entity_id": "climate.schlafzimmer",
+    "name": "Schlafzimmer Heizung",
+    "device_id": "device_020",
+    "area_id": "schlafzimmer",
+    "labels": ["climate"],
+    "platform": "homematic"
+  },
+  {
+    "entity_id": "media_player.wohnzimmer_tv",
+    "name": "Wohnzimmer TV",
+    "device_id": "device_021",
+    "area_id": "wohnzimmer",
+    "labels": ["tv"],
+    "platform": "samsungtv"
+  },
+  {
+    "entity_id": "sensor.unavailable_sensor",
+    "name": "Unavailable Sensor",
+    "device_id": "device_099",
+    "area_id": "kueche",
+    "labels": ["temperature"],
+    "platform": "test"
+  },
+  {
+    "entity_id": "light.no_area_light",
+    "name": "Light Without Area",
+    "device_id": "device_100",
+    "area_id": null,
+    "labels": ["light"],
+    "platform": "test"
+  },
+  {
+    "entity_id": "sensor.multi_label_sensor",
+    "name": "Multi-Label Sensor",
+    "device_id": "device_101",
+    "area_id": "arbeitszimmer",
+    "labels": ["temperature", "humidity", "motion"],
+    "platform": "test"
+  }
+]

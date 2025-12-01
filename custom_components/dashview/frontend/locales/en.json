@@ -1,0 +1,347 @@
+{
+  "common": {
+    "status": {
+      "currently_are": "Currently",
+      "open": "open",
+      "closed": "closed",
+      "on": "on",
+      "off": "off",
+      "active": "active",
+      "inactive": "inactive",
+      "ready": "ready",
+      "running": "running",
+      "unknown": "Unknown",
+      "unavailable": "Unavailable"
+    },
+    "time": {
+      "just_now": "Just now",
+      "now": "Now",
+      "yesterday": "Yesterday",
+      "days": "days",
+      "hours": "hours",
+      "minutes": "minutes",
+      "ago_days": "{{days}} days ago",
+      "ago_hours": "{{hours}}h ago",
+      "ago_minutes": "{{minutes}}min ago",
+      "in_days": "in {{days}} days",
+      "duration_hours": "{{hours}}h",
+      "duration_minutes": "{{minutes}}min",
+      "until_time": "until {{time}}",
+      "until_tomorrow": "until tomorrow {{time}}",
+      "until_date": "until {{date}} {{time}}"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add",
+      "search": "Search",
+      "filter": "Filter",
+      "close": "Close"
+    },
+    "options": {
+      "all": "All",
+      "none": "None",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "of": "of"
+    }
+  },
+  "sensor": {
+    "motion": {
+      "on": "Motion detected",
+      "off": "No motion",
+      "detected": "Motion",
+      "no_motion": "No motion"
+    },
+    "window": {
+      "on": "Open",
+      "off": "Closed",
+      "tilted": "Tilted"
+    },
+    "door": {
+      "on": "Open",
+      "off": "Closed"
+    },
+    "garage": {
+      "on": "Open",
+      "off": "Closed",
+      "label": "Garage"
+    },
+    "vibration": {
+      "on": "Vibration",
+      "off": "Quiet"
+    },
+    "smoke": {
+      "on": "Smoke!",
+      "off": "No smoke"
+    },
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "battery": "Battery",
+    "battery_low": "has low battery"
+  },
+  "ui": {
+    "tabs": {
+      "home": "Home",
+      "weather": "Weather",
+      "admin": "Admin",
+      "settings": "Settings"
+    },
+    "sections": {
+      "light": "Light",
+      "lights": "Lights",
+      "music": "Music",
+      "garage": "Garage",
+      "tv": "TV",
+      "tvs": "TVs",
+      "covers": "Covers",
+      "cover": "Cover",
+      "rooms": "Rooms",
+      "other_devices": "Other Devices",
+      "devices": "Devices",
+      "locks": "Locks"
+    },
+    "errors": {
+      "no_data": "No data available",
+      "loading": "Loading...",
+      "error": "Error",
+      "invalid_date": "Invalid date",
+      "not_configured": "Not configured",
+      "no_media_players": "No media players configured",
+      "activate_in_admin": "Enable media players in admin area",
+      "no_rooms_enabled": "No rooms enabled",
+      "no_cards_configured": "No cards configured. Configure cards in the admin area under \"Floor Cards\".",
+      "no_sensors_selected": "No sensors selected",
+      "no_devices_enabled": "No devices enabled."
+    }
+  },
+  "rooms": {
+    "labels": {
+      "light": "Light",
+      "lights": "Lights",
+      "off": "Off",
+      "temperature": "Temperature"
+    },
+    "specific": {
+      "ground_floor": "Ground Floor",
+      "basement": "Basement",
+      "attic": "Attic",
+      "office": "Office",
+      "guest_toilet": "Guest Toilet",
+      "kitchen": "Kitchen",
+      "living_room": "Living Room",
+      "dining_room": "Dining Room",
+      "hallway": "Hallway",
+      "party_basement": "Party Basement",
+      "basement_hallway": "Basement Hallway",
+      "room_3": "Room 3",
+      "laundry_room": "Laundry Room",
+      "master_bedroom": "Master Bedroom",
+      "toilet": "Toilet",
+      "dressing_room": "Dressing Room",
+      "bathroom": "Bathroom"
+    }
+  },
+  "weather": {
+    "current": "Current Weather",
+    "hourly_forecast": "Hourly Forecast",
+    "daily_forecast": "Daily Forecast",
+    "loading_forecast": "Loading hourly forecast...",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "day_after": "Day after tomorrow",
+    "rain": "Rain",
+    "rain_radar": "Rain Radar",
+    "precipitation": "Precipitation",
+    "no_data": "No data available",
+    "warnings": {
+      "information": "Information",
+      "warning": "Warning of",
+      "warning_marked": "Warning of significant",
+      "severe_warning": "Severe weather warning",
+      "extreme_warning": "Extreme weather"
+    }
+  },
+  "media": {
+    "unknown_title": "Unknown Title",
+    "unknown_artist": "Unknown Artist",
+    "ready": "Ready",
+    "off": "Off",
+    "idle": "Ready",
+    "playing": "Playing",
+    "paused": "Paused"
+  },
+  "status": {
+    "motion": {
+      "in_house_since": "Motion in house since",
+      "motion": "Motion",
+      "last_motion_was": "Last motion in the house was",
+      "suffix": "ago."
+    },
+    "lights": {
+      "on": "Lights on",
+      "off": "Lights off",
+      "are_on": "Currently",
+      "count_on": "{{count}} lights on",
+      "suffix": "lights on."
+    },
+    "covers": {
+      "open": "covers open",
+      "close": "covers closed",
+      "label_singular": "cover",
+      "label_plural": "covers"
+    },
+    "tvs": {
+      "on": "TV on",
+      "off": "TV off",
+      "are_on": "Currently",
+      "count_on": "{{count}} TVs on",
+      "suffix": "TVs on."
+    },
+    "appliances": {
+      "washer": {
+        "running": "Washer is still running",
+        "finished": "Washer is",
+        "ready": "ready"
+      },
+      "dishwasher": {
+        "running": "Dishwasher is still running",
+        "finished": "Dishwasher is",
+        "ready": "ready"
+      },
+      "dryer": {
+        "label": "Dryer",
+        "running": "is running",
+        "finished": "is ready",
+        "prefix": "The"
+      },
+      "vacuum": {
+        "cleaning": "is being vacuumed",
+        "returning": "is returning",
+        "has_problem": "has a problem",
+        "cleaning_in_progress": "Cleaning in progress",
+        "prefix": "In the",
+        "prefix_vacuum": "The vacuum cleaner"
+      },
+      "generic": {
+        "running": "is still running",
+        "running_now": "is running",
+        "finished": "is ready",
+        "active": "Active",
+        "washing": "Washing",
+        "drying": "Drying",
+        "standby": "Standby"
+      }
+    },
+    "battery": {
+      "low": "low battery",
+      "devices_low": "{{count}} devices",
+      "has_low": "has low battery.",
+      "have_low": "have low battery."
+    },
+    "general": {
+      "currently_are": "Currently",
+      "open_suffix": "open.",
+      "it_is": "It is"
+    }
+  },
+  "lock": {
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "locking": "Locking...",
+    "unlocking": "Unlocking...",
+    "all_locked": "All locked",
+    "count_unlocked": "{{count}} unlocked"
+  },
+  "popup": {
+    "room": {
+      "lights_count": "{{on}} of {{total}} lights on",
+      "covers_position": "{{position}}%",
+      "media_count": "{{playing}} of {{total}} active",
+      "tv_count": "{{on}} of {{total}} on",
+      "garage_count": "{{open}} of {{total}} open"
+    },
+    "actions": {
+      "lights_on": "Lights on",
+      "lights_off": "Lights off",
+      "covers_open": "Covers open",
+      "covers_close": "Covers close",
+      "all_lights": "All lights",
+      "all_covers": "All covers"
+    }
+  },
+  "admin": {
+    "settings": {
+      "room_config": "Room Configuration",
+      "floor_config": "Floor Configuration",
+      "weather_entity": "Weather Entity",
+      "lights_config": "Lights Configuration",
+      "floor_cards": "Floor Cards",
+      "entity_name": "Entity Name",
+      "device_name": "Device Name",
+      "room_name": "Room Name",
+      "shown_under": "shown under"
+    }
+  },
+  "changelog": {
+    "titles": {
+      "welcome": "Welcome to Dashview!",
+      "new_subtitle": "Your new Smart Home Dashboard",
+      "easy_setup": "Easy Setup",
+      "setup_subtitle": "Everything customizable via settings",
+      "stay_updated": "Stay Updated",
+      "updates_subtitle": "Never miss an update",
+      "improvements": "Improvements",
+      "bugfixes": "Bug Fixes",
+      "tv_support": "New: TV Support",
+      "tv_subtitle": "Now with TV controls",
+      "easier_start": "Easier Start",
+      "default_enabled": "Everything enabled by default",
+      "ui_optimized": "UI optimized",
+      "admin_optimized": "Admin area optimized",
+      "stability": "Stability and reliability improved",
+      "activity_fixed": "Activity indicators working again",
+      "settings_saved": "Settings are now correctly saved",
+      "long_press": "Improvement",
+      "more_details": "More details via long press",
+      "settings_tv": "Settings and TV display"
+    },
+    "changes": {
+      "dashboard": "Clear dashboard for all rooms and floors",
+      "quick_access": "Quick access to lights, covers and climate devices",
+      "weather_header": "Weather display with forecast in header",
+      "drag_drop": "Sort rooms and floors via drag & drop",
+      "enable_devices": "Enable or disable devices individually",
+      "use_labels": "Use labels to automatically assign devices",
+      "whats_new": "\"What's New\" popup after each update",
+      "easy_install": "Easy installation via HACS",
+      "regular_updates": "Regular updates with new features",
+      "tv_room_popup": "Show and control TVs in room popups",
+      "tv_status": "TV status in overview (\"X TVs on\")",
+      "new_tv_label": "New label \"dashview_tv\" for TVs",
+      "rooms_visible": "All rooms and devices visible immediately after installation",
+      "new_devices_auto": "New devices with labels are automatically enabled",
+      "garbage_floor_fixed": "Garbage calendar floor selection works again",
+      "devices_popup": "Devices are now displayed correctly in room popup",
+      "status_header": "Status display in header works again (lights on, etc.)",
+      "floor_overview": "Floor overview is displayed correctly",
+      "floor_order": "Floor and room order is retained after reload",
+      "devices_loaded": "All enabled devices are loaded correctly",
+      "overview_settings": "Floor overview and card settings are retained",
+      "activity_indicators": "Floor and room activity indicators show active rooms",
+      "chips_popup": "Chips in room popup are displayed correctly",
+      "lights_counting": "Lights counting and status works again",
+      "entity_id": "Entity ID is shown in room configuration",
+      "cache_update": "Browser cache is automatically updated after updates",
+      "tv_layout": "TV section in room popup now has same layout as lights",
+      "device_name": "Device name is shown under entity name in room configuration",
+      "security_tab": "Security tab now shows all windows, garages and motion sensors",
+      "long_press_details": "Long press on light opens details dialog",
+      "short_tap": "Short tap still toggles the light",
+      "settings_reload": "Settings are no longer overwritten on reload",
+      "tv_display": "TV section in room popup is displayed correctly"
+    }
+  }
+}

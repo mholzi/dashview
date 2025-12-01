@@ -1,6 +1,18 @@
 /**
  * German Text Constants
- * Centralized German language strings to eliminate duplication
+ *
+ * ⚠️ DEPRECATED ⚠️
+ * This file is deprecated and will be removed in a future version.
+ * All hardcoded German strings have been replaced with the i18n translation system.
+ *
+ * Please use: import { t } from '../utils/i18n.js';
+ *
+ * Translation files:
+ * - /locales/de.json (German translations)
+ * - /locales/en.json (English translations)
+ *
+ * DO NOT import or use this file in new code.
+ * Existing imports should be replaced with t() calls.
  */
 
 // ==================== Status Messages ====================

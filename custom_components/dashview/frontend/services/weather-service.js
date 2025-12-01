@@ -4,6 +4,7 @@
  */
 
 import { WEATHER_CONDITIONS, WEATHER_ICONS as IMPORTED_WEATHER_ICONS } from '../constants/index.js';
+import { t } from '../utils/i18n.js';
 
 // Use centralized constants - WEATHER_CONDITIONS maps to German translations
 export const WEATHER_TRANSLATIONS = WEATHER_CONDITIONS;
@@ -13,13 +14,14 @@ export const WEATHER_ICONS = IMPORTED_WEATHER_ICONS;
 
 /**
  * DWD warning level labels
+ * Now uses i18n translation system
  */
 export const DWD_WARNING_LABELS = {
-  0: 'Information',
-  1: 'Warnung vor',
-  2: 'Warnung vor markantem',
-  3: 'Unwetterwarnung vor',
-  4: 'Extremes Unwetter',
+  0: () => t('weather.warnings.information'),
+  1: () => t('weather.warnings.warning'),
+  2: () => t('weather.warnings.warning_marked'),
+  3: () => t('weather.warnings.severe_warning'),
+  4: () => t('weather.warnings.extreme_warning'),
 };
 
 /**
@@ -276,18 +278,19 @@ export function getDwdWarnings(hass, dwdWarningEntity) {
         const endTimeStr = endDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
         if (diffDays === 0) {
-          endLabel = `bis ${endTimeStr} Uhr`;
+          endLabel = t('common.time.until_time', { time: endTimeStr });
         } else if (diffDays === 1) {
-          endLabel = `bis morgen ${endTimeStr} Uhr`;
+          endLabel = t('common.time.until_tomorrow', { time: endTimeStr });
         } else {
           const endDateStr = endDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-          endLabel = `bis ${endDateStr} ${endTimeStr} Uhr`;
+          endLabel = t('common.time.until_date', { date: endDateStr, time: endTimeStr });
         }
       }
 
+      const labelGetter = DWD_WARNING_LABELS[level] || DWD_WARNING_LABELS[1];
       warnings.push({
         level: level,
-        levelLabel: DWD_WARNING_LABELS[level] || 'Warnung',
+        levelLabel: labelGetter(),
         name: name,
         endTime: endTime,
         endLabel: endLabel,

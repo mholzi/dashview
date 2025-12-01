@@ -1,0 +1,347 @@
+{
+  "common": {
+    "status": {
+      "currently_are": "Aktuell sind",
+      "open": "offen",
+      "closed": "geschlossen",
+      "on": "an",
+      "off": "aus",
+      "active": "aktiv",
+      "inactive": "inaktiv",
+      "ready": "fertig",
+      "running": "läuft",
+      "unknown": "Unbekannt",
+      "unavailable": "Nicht verfügbar"
+    },
+    "time": {
+      "just_now": "Gerade eben",
+      "now": "Jetzt",
+      "yesterday": "Gestern",
+      "days": "Tagen",
+      "hours": "Stunden",
+      "minutes": "Minuten",
+      "ago_days": "vor {{days}} Tagen",
+      "ago_hours": "vor {{hours}}h",
+      "ago_minutes": "vor {{minutes}}min",
+      "in_days": "in {{days}} Tagen",
+      "duration_hours": "{{hours}}h",
+      "duration_minutes": "{{minutes}}min",
+      "until_time": "bis {{time}}",
+      "until_tomorrow": "bis morgen {{time}}",
+      "until_date": "bis {{date}} {{time}}"
+    },
+    "actions": {
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "delete": "Löschen",
+      "edit": "Bearbeiten",
+      "add": "Hinzufügen",
+      "search": "Suchen",
+      "filter": "Filter",
+      "close": "Schließen"
+    },
+    "options": {
+      "all": "Alle",
+      "none": "Keine",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "of": "von"
+    }
+  },
+  "sensor": {
+    "motion": {
+      "on": "Bewegung erkannt",
+      "off": "Keine Bewegung",
+      "detected": "Bewegung",
+      "no_motion": "Keine Bewegung"
+    },
+    "window": {
+      "on": "Offen",
+      "off": "Geschlossen",
+      "tilted": "Gekippt"
+    },
+    "door": {
+      "on": "Offen",
+      "off": "Geschlossen"
+    },
+    "garage": {
+      "on": "Offen",
+      "off": "Geschlossen",
+      "label": "Garage"
+    },
+    "vibration": {
+      "on": "Vibration",
+      "off": "Ruhig"
+    },
+    "smoke": {
+      "on": "Rauch!",
+      "off": "Kein Rauch"
+    },
+    "temperature": "Temperatur",
+    "humidity": "Luftfeuchtigkeit",
+    "battery": "Akku",
+    "battery_low": "hat niedrigen Akku"
+  },
+  "ui": {
+    "tabs": {
+      "home": "Home",
+      "weather": "Wetter",
+      "admin": "Admin",
+      "settings": "Einstellungen"
+    },
+    "sections": {
+      "light": "Licht",
+      "lights": "Lichter",
+      "music": "Musik",
+      "garage": "Garage",
+      "tv": "Fernseher",
+      "tvs": "Fernseher",
+      "covers": "Rollos",
+      "cover": "Rollo",
+      "rooms": "Räume",
+      "other_devices": "Weitere Geräte",
+      "devices": "Geräte",
+      "locks": "Schlösser"
+    },
+    "errors": {
+      "no_data": "Keine Daten verfügbar",
+      "loading": "Wird geladen...",
+      "error": "Fehler",
+      "invalid_date": "Ungültiges Datum",
+      "not_configured": "Nicht konfiguriert",
+      "no_media_players": "Keine Media Player konfiguriert",
+      "activate_in_admin": "Aktiviere Media Player im Admin-Bereich",
+      "no_rooms_enabled": "Keine Räume aktiviert",
+      "no_cards_configured": "Keine Karten konfiguriert. Konfiguriere Karten im Admin-Bereich unter \"Etagen-Karten\".",
+      "no_sensors_selected": "Keine Sensoren ausgewählt",
+      "no_devices_enabled": "Keine Geräte aktiviert."
+    }
+  },
+  "rooms": {
+    "labels": {
+      "light": "Licht",
+      "lights": "Lichter",
+      "off": "Aus",
+      "temperature": "Temperatur"
+    },
+    "specific": {
+      "ground_floor": "Erdgeschoss",
+      "basement": "Keller",
+      "attic": "Dachgeschoss",
+      "office": "Büro",
+      "guest_toilet": "Gäste-WC",
+      "kitchen": "Küche",
+      "living_room": "Wohnzimmer",
+      "dining_room": "Esszimmer",
+      "hallway": "Flur",
+      "party_basement": "Partykeller",
+      "basement_hallway": "Kellerflur",
+      "room_3": "Raum 3",
+      "laundry_room": "Waschraum",
+      "master_bedroom": "Schlafzimmer",
+      "toilet": "WC",
+      "dressing_room": "Ankleidezimmer",
+      "bathroom": "Badezimmer"
+    }
+  },
+  "weather": {
+    "current": "Aktuelles Wetter",
+    "hourly_forecast": "Stündliche Vorhersage",
+    "daily_forecast": "Tägliche Vorhersage",
+    "loading_forecast": "Stündliche Vorhersage wird geladen...",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "day_after": "Übermorgen",
+    "rain": "Regen",
+    "rain_radar": "Regenradar",
+    "precipitation": "Niederschlag",
+    "no_data": "Keine Daten verfügbar",
+    "warnings": {
+      "information": "Information",
+      "warning": "Warnung vor",
+      "warning_marked": "Warnung vor markantem",
+      "severe_warning": "Unwetterwarnung vor",
+      "extreme_warning": "Extremes Unwetter"
+    }
+  },
+  "media": {
+    "unknown_title": "Unbekannter Titel",
+    "unknown_artist": "Unbekannter Künstler",
+    "ready": "Bereit",
+    "off": "Ausgeschaltet",
+    "idle": "Bereit",
+    "playing": "Spielt",
+    "paused": "Pausiert"
+  },
+  "status": {
+    "motion": {
+      "in_house_since": "Im Haus ist seit",
+      "motion": "Bewegung",
+      "last_motion_was": "Die letzte Bewegung im Haus war vor",
+      "suffix": "."
+    },
+    "lights": {
+      "on": "Lichter an",
+      "off": "Lichter aus",
+      "are_on": "Es sind gerade",
+      "count_on": "{{count}} Lichter an",
+      "suffix": "Lichter an."
+    },
+    "covers": {
+      "open": "Rollos auf",
+      "close": "Rollos zu",
+      "label_singular": "Rollo",
+      "label_plural": "Rollos"
+    },
+    "tvs": {
+      "on": "Fernseher an",
+      "off": "Fernseher aus",
+      "are_on": "Es sind gerade",
+      "count_on": "{{count}} Fernseher an",
+      "suffix": "Fernseher an."
+    },
+    "appliances": {
+      "washer": {
+        "running": "Die Waschmaschine läuft noch",
+        "finished": "Die Waschmaschine ist",
+        "ready": "fertig"
+      },
+      "dishwasher": {
+        "running": "Die Spülmaschine läuft noch",
+        "finished": "Die Spülmaschine ist",
+        "ready": "fertig"
+      },
+      "dryer": {
+        "label": "Trockner",
+        "running": "läuft gerade",
+        "finished": "ist fertig",
+        "prefix": "Der"
+      },
+      "vacuum": {
+        "cleaning": "wird gesaugt",
+        "returning": "kehrt zurück",
+        "has_problem": "hat ein Problem",
+        "cleaning_in_progress": "Reinigung läuft",
+        "prefix": "Im",
+        "prefix_vacuum": "Der Staubsauger"
+      },
+      "generic": {
+        "running": "läuft noch",
+        "running_now": "läuft gerade",
+        "finished": "ist fertig",
+        "active": "Aktiv",
+        "washing": "Wäscht",
+        "drying": "Trocknet",
+        "standby": "Bereitschaft"
+      }
+    },
+    "battery": {
+      "low": "niedriger Akku",
+      "devices_low": "{{count}} Geräte",
+      "has_low": "hat niedrigen Akku.",
+      "have_low": "haben niedrigen Akku."
+    },
+    "general": {
+      "currently_are": "Aktuell sind",
+      "open_suffix": "offen.",
+      "it_is": "Es ist"
+    }
+  },
+  "lock": {
+    "locked": "Verschlossen",
+    "unlocked": "Offen",
+    "locking": "Wird verschlossen...",
+    "unlocking": "Wird geöffnet...",
+    "all_locked": "Alle verschlossen",
+    "count_unlocked": "{{count}} offen"
+  },
+  "popup": {
+    "room": {
+      "lights_count": "{{on}} von {{total}} Lichter an",
+      "covers_position": "{{position}}%",
+      "media_count": "{{playing}} von {{total}} aktiv",
+      "tv_count": "{{on}} von {{total}} an",
+      "garage_count": "{{open}} von {{total}} offen"
+    },
+    "actions": {
+      "lights_on": "Lichter an",
+      "lights_off": "Lichter aus",
+      "covers_open": "Rollos auf",
+      "covers_close": "Rollos zu",
+      "all_lights": "Alle Lichter",
+      "all_covers": "Alle Rollos"
+    }
+  },
+  "admin": {
+    "settings": {
+      "room_config": "Raum-Konfiguration",
+      "floor_config": "Etagen-Konfiguration",
+      "weather_entity": "Wetter-Entität",
+      "lights_config": "Licht-Konfiguration",
+      "floor_cards": "Etagen-Karten",
+      "entity_name": "Entitätsname",
+      "device_name": "Gerätename",
+      "room_name": "Raumname",
+      "shown_under": "angezeigt unter"
+    }
+  },
+  "changelog": {
+    "titles": {
+      "welcome": "Willkommen bei Dashview!",
+      "new_subtitle": "Dein neues Smart Home Dashboard",
+      "easy_setup": "Einfache Einrichtung",
+      "setup_subtitle": "Alles anpassbar über die Einstellungen",
+      "stay_updated": "Bleib auf dem Laufenden",
+      "updates_subtitle": "Verpasse kein Update mehr",
+      "improvements": "Verbesserungen",
+      "bugfixes": "Fehlerbehebungen",
+      "tv_support": "Neu: TV-Unterstützung",
+      "tv_subtitle": "Jetzt mit TV-Steuerung",
+      "easier_start": "Einfacherer Einstieg",
+      "default_enabled": "Alles standardmäßig aktiviert",
+      "ui_optimized": "UI optimiert",
+      "admin_optimized": "Admin-Bereich optimiert",
+      "stability": "Stabilität und Zuverlässigkeit verbessert",
+      "activity_fixed": "Aktivitätsanzeigen funktionieren wieder",
+      "settings_saved": "Einstellungen werden nun korrekt gespeichert",
+      "long_press": "Verbesserung",
+      "more_details": "Mehr Details via Langes Drücken",
+      "settings_tv": "Einstellungen und TV-Anzeige"
+    },
+    "changes": {
+      "dashboard": "Übersichtliches Dashboard für alle Räume und Etagen",
+      "quick_access": "Schneller Zugriff auf Lichter, Rollläden und Klimageräte",
+      "weather_header": "Wetteranzeige mit Vorhersage im Header",
+      "drag_drop": "Räume und Etagen per Drag & Drop sortieren",
+      "enable_devices": "Geräte einzeln aktivieren oder deaktivieren",
+      "use_labels": "Labels verwenden für automatische Gerätezuordnung",
+      "whats_new": "\"Was ist neu\" Popup nach jedem Update",
+      "easy_install": "Einfache Installation über HACS",
+      "regular_updates": "Regelmäßige Updates mit neuen Funktionen",
+      "tv_room_popup": "TVs in Raum-Popups anzeigen und steuern",
+      "tv_status": "TV-Status in der Übersicht (\"X Fernseher an\")",
+      "new_tv_label": "Neues Label \"dashview_tv\" für Fernseher",
+      "rooms_visible": "Alle Räume und Geräte direkt nach Installation sichtbar",
+      "new_devices_auto": "Neue Geräte mit Labels werden automatisch aktiviert",
+      "garbage_floor_fixed": "Müllkalender Etagen-Auswahl funktioniert wieder",
+      "devices_popup": "Geräte werden nun korrekt im Raum-Popup angezeigt",
+      "status_header": "Statusanzeige im Header funktioniert wieder (Lichter an, etc.)",
+      "floor_overview": "Etagenübersicht wird korrekt angezeigt",
+      "floor_order": "Etagen- und Raumreihenfolge bleibt nach Neuladen erhalten",
+      "devices_loaded": "Alle aktivierten Geräte werden korrekt geladen",
+      "overview_settings": "Etagenübersicht und Karteneinstellungen bleiben erhalten",
+      "activity_indicators": "Etagen- und Raumaktivitätsanzeigen zeigen aktive Räume",
+      "chips_popup": "Chips im Raum-Popup werden korrekt angezeigt",
+      "lights_counting": "Lichter zählen und Status funktioniert wieder",
+      "entity_id": "Entitäts-ID wird in Raum-Konfiguration angezeigt",
+      "cache_update": "Browser-Cache wird nach Updates automatisch aktualisiert",
+      "tv_layout": "TV-Bereich im Raum-Popup hat nun gleiches Layout wie Lichter",
+      "device_name": "Gerätename wird unter Entitätsname in Raum-Konfiguration angezeigt",
+      "security_tab": "Sicherheits-Tab zeigt nun alle Fenster, Garagen und Bewegungsmelder",
+      "long_press_details": "Langes Drücken auf Licht öffnet Details-Dialog",
+      "short_tap": "Kurzes Tippen schaltet Licht weiterhin um",
+      "settings_reload": "Einstellungen werden beim Neuladen nicht mehr überschrieben",
+      "tv_display": "TV-Bereich im Raum-Popup wird korrekt angezeigt"
+    }
+  }
+}
