@@ -18,26 +18,27 @@ import {
 import { renderEntitySection, renderCustomLabelSection } from '../../components/cards/entity-item.js';
 import { ENTITY_CONFIGS } from '../../constants/index.js';
 import { renderEntityPicker } from '../../components/controls/entity-picker.js';
+import { t } from '../../utils/i18n.js';
 
 /**
  * Category definitions for label mapping
  * Each category has an icon, title, description and the property name used in the panel
  */
 const LABEL_CATEGORIES = [
-  { key: 'light', icon: 'mdi:lightbulb-group', title: 'Lights', description: 'Light entities to control', prop: '_lightLabelId' },
-  { key: 'cover', icon: 'mdi:window-shutter', title: 'Covers / Blinds', description: 'Cover and blind entities', prop: '_coverLabelId' },
-  { key: 'roofWindow', icon: 'mdi:window-open', title: 'Roof Windows', description: 'Roof window entities', prop: '_roofWindowLabelId' },
-  { key: 'window', icon: 'mdi:window-closed-variant', title: 'Windows', description: 'Window sensor entities', prop: '_windowLabelId' },
-  { key: 'garage', icon: 'mdi:garage', title: 'Garage Doors', description: 'Garage door entities', prop: '_garageLabelId' },
-  { key: 'motion', icon: 'mdi:motion-sensor', title: 'Motion Sensors', description: 'Motion detection sensors', prop: '_motionLabelId' },
-  { key: 'smoke', icon: 'mdi:smoke-detector', title: 'Smoke Detectors', description: 'Smoke and fire detectors', prop: '_smokeLabelId' },
-  { key: 'vibration', icon: 'mdi:vibrate', title: 'Vibration Sensors', description: 'Vibration detection sensors', prop: '_vibrationLabelId' },
-  { key: 'temperature', icon: 'mdi:thermometer', title: 'Temperature Sensors', description: 'Temperature measurement sensors', prop: '_temperatureLabelId' },
-  { key: 'humidity', icon: 'mdi:water-percent', title: 'Humidity Sensors', description: 'Humidity measurement sensors', prop: '_humidityLabelId' },
-  { key: 'climate', icon: 'mdi:thermostat', title: 'Thermostats / Climate', description: 'Climate control entities', prop: '_climateLabelId' },
-  { key: 'mediaPlayer', icon: 'mdi:speaker', title: 'Media Players', description: 'Media player entities', prop: '_mediaPlayerLabelId' },
-  { key: 'tv', icon: 'mdi:television', title: 'TVs / Fernseher', description: 'TV and display entities', prop: '_tvLabelId' },
-  { key: 'lock', icon: 'mdi:lock', title: 'Locks / Schlösser', description: 'Lock entities for doors and gates', prop: '_lockLabelId' },
+  { key: 'light', icon: 'mdi:lightbulb-group', titleKey: 'admin.entityTypes.lights', descKey: 'admin.entityTypes.lightDesc', prop: '_lightLabelId' },
+  { key: 'cover', icon: 'mdi:window-shutter', titleKey: 'admin.entityTypes.covers', descKey: 'admin.entityTypes.coverDesc', prop: '_coverLabelId' },
+  { key: 'roofWindow', icon: 'mdi:window-open', titleKey: 'admin.entityTypes.roofWindows', descKey: 'admin.entityTypes.roofWindowDesc', prop: '_roofWindowLabelId' },
+  { key: 'window', icon: 'mdi:window-closed-variant', titleKey: 'admin.entityTypes.windows', descKey: 'admin.entityTypes.windowDesc', prop: '_windowLabelId' },
+  { key: 'garage', icon: 'mdi:garage', titleKey: 'admin.entityTypes.garages', descKey: 'admin.entityTypes.garageDesc', prop: '_garageLabelId' },
+  { key: 'motion', icon: 'mdi:motion-sensor', titleKey: 'admin.entityTypes.motionSensors', descKey: 'admin.entityTypes.motionDesc', prop: '_motionLabelId' },
+  { key: 'smoke', icon: 'mdi:smoke-detector', titleKey: 'admin.entityTypes.smokeSensors', descKey: 'admin.entityTypes.smokeDesc', prop: '_smokeLabelId' },
+  { key: 'vibration', icon: 'mdi:vibrate', titleKey: 'admin.entityTypes.vibrationSensors', descKey: 'admin.entityTypes.vibrationDesc', prop: '_vibrationLabelId' },
+  { key: 'temperature', icon: 'mdi:thermometer', titleKey: 'admin.entityTypes.temperatureSensors', descKey: 'admin.entityTypes.temperatureDesc', prop: '_temperatureLabelId' },
+  { key: 'humidity', icon: 'mdi:water-percent', titleKey: 'admin.entityTypes.humiditySensors', descKey: 'admin.entityTypes.humidityDesc', prop: '_humidityLabelId' },
+  { key: 'climate', icon: 'mdi:thermostat', titleKey: 'admin.entityTypes.climates', descKey: 'admin.entityTypes.climateDesc', prop: '_climateLabelId' },
+  { key: 'mediaPlayer', icon: 'mdi:speaker', titleKey: 'admin.entityTypes.mediaPlayers', descKey: 'admin.entityTypes.mediaPlayerDesc', prop: '_mediaPlayerLabelId' },
+  { key: 'tv', icon: 'mdi:television', titleKey: 'admin.entityTypes.tvs', descKey: 'admin.entityTypes.tvDesc', prop: '_tvLabelId' },
+  { key: 'lock', icon: 'mdi:lock', titleKey: 'admin.entityTypes.locks', descKey: 'admin.entityTypes.lockDesc', prop: '_lockLabelId' },
 ];
 
 /**
@@ -70,8 +71,8 @@ export function renderLabelMappingConfig(panel, html) {
             <ha-icon icon="${category.icon}"></ha-icon>
           </div>
           <div class="label-mapping-info">
-            <span class="label-mapping-title">${category.title}</span>
-            <span class="label-mapping-description">${category.description}</span>
+            <span class="label-mapping-title">${t(category.titleKey)}</span>
+            <span class="label-mapping-description">${t(category.descKey)}</span>
           </div>
         </div>
         <div class="label-mapping-selector">
@@ -87,7 +88,7 @@ export function renderLabelMappingConfig(panel, html) {
               panel._setCategoryLabel(category.key, newLabelId);
             }}
           >
-            <option value="">-- Select Label --</option>
+            <option value="">${t('admin.entities.selectLabel')}</option>
             ${availableLabels.map(label => html`
               <option value="${label.label_id}" ?selected=${currentLabelId === label.label_id}>
                 ${label.name}
@@ -102,16 +103,16 @@ export function renderLabelMappingConfig(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:tag-multiple"></ha-icon>
-      Label Configuration
+      ${t('admin.entities.labelConfig')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Map your Home Assistant labels to DashView categories. Entities with these labels will appear in the corresponding sections throughout the dashboard.
+      ${t('admin.entities.labelConfigDesc')}
     </p>
 
     ${availableLabels.length === 0 ? html`
       <div class="label-mapping-empty-state">
         <ha-icon icon="mdi:tag-off-outline"></ha-icon>
-        <h3>No Labels Found</h3>
+        <h3>${t('admin.entities.noLabels')}</h3>
         <p>Create labels in Home Assistant first:</p>
         <p style="font-size: 13px; opacity: 0.8;">Settings → Labels → Create Label</p>
         <p style="font-size: 13px; margin-top: 12px;">Then assign labels to your entities and come back here to configure the mapping.</p>
@@ -152,42 +153,42 @@ export function renderAdminTab(panel, html) {
           @click=${() => panel._adminSubTab = 'entities'}
         >
           <ha-icon icon="mdi:home-group"></ha-icon>
-          Entities
+          ${t('admin.tabs.entities')}
         </button>
         <button
           class="admin-sub-tab ${panel._adminSubTab === 'layout' ? 'active' : ''}"
           @click=${() => panel._adminSubTab = 'layout'}
         >
           <ha-icon icon="mdi:view-grid-plus"></ha-icon>
-          Layout
+          ${t('admin.tabs.layout')}
         </button>
         <button
           class="admin-sub-tab ${panel._adminSubTab === 'weather' ? 'active' : ''}"
           @click=${() => panel._adminSubTab = 'weather'}
         >
           <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
-          Weather
+          ${t('admin.tabs.weather')}
         </button>
         <button
           class="admin-sub-tab ${panel._adminSubTab === 'status' ? 'active' : ''}"
           @click=${() => panel._adminSubTab = 'status'}
         >
           <ha-icon icon="mdi:information-outline"></ha-icon>
-          Status
+          ${t('admin.tabs.status')}
         </button>
         <button
           class="admin-sub-tab ${panel._adminSubTab === 'scenes' ? 'active' : ''}"
           @click=${() => panel._adminSubTab = 'scenes'}
         >
           <ha-icon icon="mdi:play-box-multiple"></ha-icon>
-          Scenes
+          ${t('admin.tabs.scenes')}
         </button>
         <button
           class="admin-sub-tab ${panel._adminSubTab === 'users' ? 'active' : ''}"
           @click=${() => panel._adminSubTab = 'users'}
         >
           <ha-icon icon="mdi:account-group"></ha-icon>
-          Users
+          ${t('admin.tabs.users')}
         </button>
       </div>
 
@@ -219,10 +220,10 @@ export function renderRoomConfig(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:floor-plan"></ha-icon>
-      Room Configuration
+      ${t('admin.entities.roomConfig')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Enable rooms, lights, motion sensors, and smoke detectors to show them on the Home dashboard. Click on a room to expand and configure individual devices.
+      ${t('admin.entities.roomConfigDesc')}
     </p>
 
     ${panel._areas.length > 0
@@ -255,8 +256,8 @@ export function renderRoomConfig(panel, html) {
       : html`
           <div class="no-areas">
             <ha-icon icon="mdi:home-alert" style="--mdc-icon-size: 64px; margin-bottom: 16px;"></ha-icon>
-            <p>No areas configured in Home Assistant.</p>
-            <p>Go to Settings → Areas & Zones to create areas.</p>
+            <p>${t('admin.entities.noAreas')}</p>
+            <p>${t('admin.entities.noAreasHint')}</p>
           </div>
         `}
   `;
@@ -364,7 +365,7 @@ export function renderCardConfig(panel, html) {
 
         <div class="card-config-row">
           <div class="card-config-label">
-            <span class="card-config-label-title">Weather Entity</span>
+            <span class="card-config-label-title">${t('admin.weather.weatherEntity')}</span>
             <span class="card-config-label-subtitle">Select your weather integration</span>
           </div>
           <div class="card-config-input" style="flex: 1;">
@@ -624,44 +625,44 @@ export function renderCardConfig(panel, html) {
         </p>
 
         <!-- Motion Status -->
-        ${renderInfoTextToggle(panel, html, 'motion', 'Bewegung', 'mdi:motion-sensor',
-          'Zeigt die letzte erkannte Bewegung an')}
+        ${renderInfoTextToggle(panel, html, 'motion', t('admin.infoTextToggles.motion'), 'mdi:motion-sensor',
+          t('admin.infoTextToggles.motionDesc'))}
 
         <!-- Garage Status -->
-        ${renderInfoTextToggle(panel, html, 'garage', 'Garagentore', 'mdi:garage',
-          'Zeigt offene Garagentore an')}
+        ${renderInfoTextToggle(panel, html, 'garage', t('admin.infoTextToggles.garage'), 'mdi:garage',
+          t('admin.infoTextToggles.garageDesc'))}
 
         <!-- Windows Status -->
-        ${renderInfoTextToggle(panel, html, 'windows', 'Fenster', 'mdi:window-open',
-          'Zeigt offene Fenster an (aus aktivierten Fenstern)')}
+        ${renderInfoTextToggle(panel, html, 'windows', t('admin.infoTextToggles.windows'), 'mdi:window-open',
+          t('admin.infoTextToggles.windowsDesc'))}
 
         <!-- Lights Status -->
-        ${renderInfoTextToggle(panel, html, 'lights', 'Lichter', 'mdi:lightbulb',
-          'Zeigt Anzahl der eingeschalteten Lichter an')}
+        ${renderInfoTextToggle(panel, html, 'lights', t('admin.infoTextToggles.lights'), 'mdi:lightbulb',
+          t('admin.infoTextToggles.lightsDesc'))}
 
         <!-- Covers Status -->
-        ${renderInfoTextToggle(panel, html, 'covers', 'Rollos', 'mdi:window-shutter',
-          'Zeigt offene Rollos an')}
+        ${renderInfoTextToggle(panel, html, 'covers', t('admin.infoTextToggles.covers'), 'mdi:window-shutter',
+          t('admin.infoTextToggles.coversDesc'))}
 
         <!-- TVs Status -->
-        ${renderInfoTextToggle(panel, html, 'tvs', 'Fernseher', 'mdi:television',
-          'Zeigt eingeschaltete Fernseher an')}
+        ${renderInfoTextToggle(panel, html, 'tvs', t('admin.infoTextToggles.tvs'), 'mdi:television',
+          t('admin.infoTextToggles.tvsDesc'))}
 
         <!-- Washer Status -->
-        ${renderInfoTextEntityConfig(panel, html, 'washer', 'Waschmaschine', 'mdi:washing-machine',
-          'Zeigt Status der Waschmaschine an', true)}
+        ${renderInfoTextEntityConfig(panel, html, 'washer', t('admin.infoTextToggles.washer'), 'mdi:washing-machine',
+          t('admin.infoTextToggles.washerDesc'), true)}
 
         <!-- Dishwasher Status -->
-        ${renderInfoTextEntityConfig(panel, html, 'dishwasher', 'Geschirrspüler', 'mdi:dishwasher',
-          'Zeigt Status des Geschirrspülers an', true)}
+        ${renderInfoTextEntityConfig(panel, html, 'dishwasher', t('admin.infoTextToggles.dishwasher'), 'mdi:dishwasher',
+          t('admin.infoTextToggles.dishwasherDesc'), true)}
 
         <!-- Dryer Status -->
-        ${renderInfoTextEntityConfig(panel, html, 'dryer', 'Trockner', 'mdi:tumble-dryer',
-          'Zeigt Status des Trockners an', true)}
+        ${renderInfoTextEntityConfig(panel, html, 'dryer', t('admin.infoTextToggles.dryer'), 'mdi:tumble-dryer',
+          t('admin.infoTextToggles.dryerDesc'), true)}
 
         <!-- Vacuum Status -->
-        ${renderInfoTextEntityConfig(panel, html, 'vacuum', 'Staubsauger', 'mdi:robot-vacuum',
-          'Zeigt Status des Staubsauger-Roboters an', false)}
+        ${renderInfoTextEntityConfig(panel, html, 'vacuum', t('admin.infoTextToggles.vacuum'), 'mdi:robot-vacuum',
+          t('admin.infoTextToggles.vacuumDesc'), false)}
 
         <!-- Battery Low Status -->
         ${renderInfoTextBatteryConfig(panel, html)}
@@ -673,7 +674,7 @@ export function renderCardConfig(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('sceneButtons')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:play-box-multiple"></ha-icon>
-          Scene Buttons
+          ${t('admin.scenes.sceneButtons')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('sceneButtons') ? 'expanded' : ''}"
@@ -1135,7 +1136,9 @@ export function renderSceneButtonItem(panel, html, button, index) {
       entityQuery: '',
       entityFocused: false,
       iconQuery: '',
-      iconFocused: false
+      iconFocused: false,
+      iconValid: true,
+      iconPreview: null
     };
   }
   const searchState = panel._sceneButtonSearchState[index];
@@ -1229,22 +1232,66 @@ export function renderSceneButtonItem(panel, html, button, index) {
               <input
                 type="text"
                 class="entity-picker-input"
-                placeholder="Search icons (e.g. lightbulb, home)..."
+                placeholder="Enter icon name (e.g., mdi:coffee) or search..."
                 .value=${searchState.iconFocused ? searchState.iconQuery : (button.icon || '')}
                 @input=${(e) => {
-                  searchState.iconQuery = e.target.value;
+                  let value = e.target.value.trim();
+                  searchState.iconQuery = value;
+
+                  // Auto-prepend "mdi:" if user enters just icon name (has letters/numbers/hyphens but no colon)
+                  if (value && !value.includes(':') && value.match(/^[a-z0-9-]+$/i)) {
+                    value = 'mdi:' + value;
+                  }
+
+                  // Validate icon format
+                  const lowerValue = value.toLowerCase();
+                  if (value && lowerValue.match(/^mdi:[a-z0-9-]+$/)) {
+                    searchState.iconValid = true;
+                    searchState.iconPreview = lowerValue;
+                  } else if (!value) {
+                    searchState.iconValid = true;
+                    searchState.iconPreview = null;
+                  } else {
+                    searchState.iconValid = false;
+                    searchState.iconPreview = null;
+                  }
+
                   panel.requestUpdate();
                 }}
                 @focus=${() => {
                   searchState.iconFocused = true;
                   searchState.iconQuery = button.icon || '';
+                  searchState.iconValid = true;
+                  searchState.iconPreview = null;
                   panel.requestUpdate();
                 }}
                 @blur=${() => setTimeout(() => {
+                  let value = searchState.iconQuery.trim();
+
+                  // Auto-prepend "mdi:" if user enters just icon name
+                  if (value && !value.includes(':') && value.match(/^[a-z0-9-]+$/i)) {
+                    value = 'mdi:' + value;
+                  }
+
+                  const lowerValue = value.toLowerCase();
+                  // Update button if valid icon format
+                  if (value && lowerValue.match(/^mdi:[a-z0-9-]+$/)) {
+                    updateButton('icon', lowerValue);
+                  }
+
                   searchState.iconFocused = false;
+                  searchState.iconValid = true;
+                  searchState.iconPreview = null;
                   panel.requestUpdate();
                 }, 200)}
               />
+              ${searchState.iconPreview ? html`
+                <ha-icon
+                  icon="${searchState.iconPreview}"
+                  style="--mdc-icon-size: 18px; margin-right: 8px; color: var(--dv-blue);"
+                  title="Preview"
+                ></ha-icon>
+              ` : ''}
               ${button.icon ? html`
                 <ha-icon
                   icon="mdi:close"
@@ -1252,14 +1299,25 @@ export function renderSceneButtonItem(panel, html, button, index) {
                   @click=${() => {
                     updateButton('icon', '');
                     searchState.iconQuery = '';
+                    searchState.iconValid = true;
+                    searchState.iconPreview = null;
                   }}
                 ></ha-icon>
               ` : ''}
             </div>
+
+            <!-- Validation error message -->
+            ${searchState.iconQuery && !searchState.iconValid ? html`
+              <div style="color: var(--dv-red); font-size: 12px; margin-top: 4px; padding-left: 4px;">
+                Invalid icon format. Use "mdi:icon-name" (e.g., mdi:coffee)
+              </div>
+            ` : ''}
+
+            <!-- Quick select icons (show when focused) -->
             ${searchState.iconFocused ? html`
               <div class="entity-picker-suggestions">
                 ${getFilteredIcons().length === 0 ? html`
-                  <div class="entity-picker-no-results">No matching icons found</div>
+                  <div class="entity-picker-no-results">No matching icons found in quick select list</div>
                 ` : getFilteredIcons().map(icon => html`
                   <div
                     class="entity-picker-suggestion ${button.icon === icon ? 'selected' : ''}"
@@ -1268,6 +1326,8 @@ export function renderSceneButtonItem(panel, html, button, index) {
                       updateButton('icon', icon);
                       searchState.iconQuery = '';
                       searchState.iconFocused = false;
+                      searchState.iconValid = true;
+                      searchState.iconPreview = null;
                     }}
                   >
                     <ha-icon icon="${icon}"></ha-icon>
@@ -1281,6 +1341,9 @@ export function renderSceneButtonItem(panel, html, button, index) {
                 `)}
               </div>
             ` : ''}
+          </div>
+          <div style="font-size: 11px; color: var(--dv-gray500); margin-top: 4px;">
+            Find icons at <a href="https://pictogrammers.com/library/mdi/" target="_blank" style="color: var(--dv-blue); text-decoration: none;">pictogrammers.com/library/mdi</a>
           </div>
         </div>
 
@@ -1417,10 +1480,10 @@ export function renderOrderConfig(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:sort"></ha-icon>
-      Floor & Room Order
+      ${t('admin.layout.floorOrder')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Set the display order of floors and rooms. Use the arrow buttons to reorder items.
+      ${t('admin.layout.floorOrderDesc')}
     </p>
 
     <!-- Floors Section -->
@@ -1564,7 +1627,7 @@ export function renderOrderConfig(panel, html) {
             <div class="order-floor-section">
               <div class="order-floor-header" style="background: var(--dv-gray600);">
                 <ha-icon icon="mdi:help-circle"></ha-icon>
-                <span class="order-floor-name">Unassigned Rooms</span>
+                <span class="order-floor-name">${t('admin.entities.unassignedRooms')}</span>
                 <span style="opacity: 0.8; font-size: 13px;">${unassignedRooms.length} rooms</span>
               </div>
               <div class="order-rooms-list">
@@ -1800,6 +1863,16 @@ export function renderSecurityPopupContent(panel, html) {
  * @returns {TemplateResult} Area card HTML
  */
 export function renderAreaCard(panel, html, area) {
+  // Initialize _expandedEntityTypes if not exists
+  if (!panel._expandedEntityTypes) {
+    panel._expandedEntityTypes = {};
+  }
+
+  // Initialize this area's expanded types if not exists (default to empty Set = all collapsed)
+  if (!panel._expandedEntityTypes[area.area_id]) {
+    panel._expandedEntityTypes[area.area_id] = new Set();
+  }
+
   // Collect all entity types for this area
   const entityGroups = {
     lights: {
@@ -1872,10 +1945,19 @@ export function renderAreaCard(panel, html, area) {
   const isExpanded = panel._expandedAreas[area.area_id];
   const isEnabled = panel._enabledRooms[area.area_id] !== false;
 
+  // Get search term for this room
+  const searchTerm = panel._entitySearchTermsByRoom?.[area.area_id] || '';
+
   // Calculate counts for subtitle
   const lightsCount = entityGroups.lights.entities.length;
   const coversCount = entityGroups.covers.entities.length;
   const windowsCount = entityGroups.windows.entities.length;
+
+  // Count non-empty entity groups for expand/collapse all
+  const nonEmptyGroups = Object.entries(entityGroups).filter(([_, group]) => group.entities.length > 0);
+  const allExpanded = nonEmptyGroups.length > 0 && nonEmptyGroups.every(([key]) =>
+    panel._expandedEntityTypes[area.area_id].has(key)
+  );
 
   return html`
     <div class="area-card">
@@ -1896,38 +1978,151 @@ export function renderAreaCard(panel, html, area) {
       </div>
 
       ${isExpanded ? html`
-        ${Object.entries(entityGroups).map(([key, group]) => {
-          if (group.entities.length === 0) return '';
+        <!-- Entity Search Input -->
+        <div class="entity-search-wrapper" style="margin-bottom: 16px; padding: 0 16px;">
+          <div class="garbage-search-input-wrapper">
+            <ha-icon icon="mdi:magnify" class="garbage-search-icon"></ha-icon>
+            <input
+              type="text"
+              class="garbage-search-input"
+              placeholder="Search entities..."
+              .value=${searchTerm}
+              @input=${(e) => {
+                e.stopPropagation();
+                panel._handleEntitySearch(area.area_id, e.target.value);
+              }}
+              @click=${(e) => e.stopPropagation()}
+            />
+            ${searchTerm ? html`
+              <ha-icon
+                icon="mdi:close"
+                class="garbage-search-clear"
+                @click=${(e) => {
+                  e.stopPropagation();
+                  panel._clearEntitySearch(area.area_id);
+                }}
+              ></ha-icon>
+            ` : ''}
+          </div>
+        </div>
 
-          const enabledCount = group.entities.filter(e => e.enabled).length;
-          const activeCount = group.entities.filter(e => group.config.isActive(e)).length;
+        ${nonEmptyGroups.length > 1 ? html`
+          <div class="entity-expand-controls">
+            <button
+              class="entity-expand-button"
+              @click=${(e) => {
+                e.stopPropagation();
+                if (allExpanded) {
+                  // Collapse all
+                  panel._expandedEntityTypes[area.area_id] = new Set();
+                } else {
+                  // Expand all
+                  panel._expandedEntityTypes[area.area_id] = new Set(nonEmptyGroups.map(([key]) => key));
+                }
+                panel.requestUpdate();
+              }}
+            >
+              <ha-icon icon="${allExpanded ? 'mdi:unfold-less-horizontal' : 'mdi:unfold-more-horizontal'}"></ha-icon>
+              ${allExpanded ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
+        ` : ''}
 
-          return renderEntitySection(html, {
-            icon: group.config.icon,
-            title: group.config.title,
-            enabledCount,
-            totalCount: group.entities.length,
-            activeLabel: group.config.activeLabel,
-            activeCount: group.config.activeLabel ? activeCount : undefined,
-            entities: group.entities,
-            getIcon: group.config.getIcon,
-            getState: group.config.getState,
-            isActive: group.config.isActive,
-            onToggle: group.onToggle
+        ${(() => {
+          // Apply search filter to all entity groups
+          const filteredGroups = Object.entries(entityGroups).map(([key, group]) => {
+            if (group.entities.length === 0) return [key, { ...group, filteredEntities: [] }];
+
+            const filteredEntities = panel._filterEntities(group.entities, searchTerm);
+            return [key, { ...group, filteredEntities }];
           });
-        })}
 
-        ${/* Render appliances section */ ''}
-        ${renderAppliancesSection(panel, html, area)}
+          // Check if any groups have matches
+          const hasMatches = filteredGroups.some(([_, group]) => group.filteredEntities.length > 0);
 
-        ${/* Render custom label sections */ ''}
+          // If searching and no matches, show message
+          if (searchTerm && !hasMatches) {
+            return html`
+              <div style="padding: 24px; text-align: center; color: var(--dv-gray600);">
+                <ha-icon icon="mdi:magnify" style="font-size: 48px; opacity: 0.3; margin-bottom: 8px;"></ha-icon>
+                <div>No entities match "${searchTerm}"</div>
+              </div>
+            `;
+          }
+
+          // Render filtered entity sections
+          return filteredGroups.map(([key, group]) => {
+            if (group.filteredEntities.length === 0) return '';
+
+            const enabledCount = group.filteredEntities.filter(e => e.enabled).length;
+            const activeCount = group.filteredEntities.filter(e => group.config.isActive(e)).length;
+            const isTypeExpanded = panel._expandedEntityTypes[area.area_id].has(key);
+
+            // Auto-expand sections with matches when searching
+            const shouldExpand = searchTerm ? true : isTypeExpanded;
+
+            // Map entity type keys to settings keys for bulk operations
+            const settingsKeyMap = {
+              lights: '_enabledLights',
+              motionSensors: '_enabledMotionSensors',
+              smokeSensors: '_enabledSmokeSensors',
+              covers: '_enabledCovers',
+              roofWindows: '_enabledRoofWindows',
+              garages: '_enabledGarages',
+              windows: '_enabledWindows',
+              vibrationSensors: '_enabledVibrationSensors',
+              temperatureSensors: '_enabledTemperatureSensors',
+              humiditySensors: '_enabledHumiditySensors',
+              climates: '_enabledClimates',
+              mediaPlayers: '_enabledMediaPlayers',
+              tvs: '_enabledTVs'
+            };
+
+            const settingsKey = settingsKeyMap[key];
+
+            return renderEntitySection(html, {
+              icon: group.config.icon,
+              title: group.config.title,
+              enabledCount,
+              totalCount: group.filteredEntities.length,
+              activeLabel: group.config.activeLabel,
+              activeCount: group.config.activeLabel ? activeCount : undefined,
+              entities: group.filteredEntities,
+              getIcon: group.config.getIcon,
+              getState: group.config.getState,
+              isActive: group.config.isActive,
+              onToggle: group.onToggle,
+              isExpanded: shouldExpand,
+              onToggleExpand: () => panel._toggleEntityTypeSection(area.area_id, key),
+              typeKey: key,
+              onSelectAll: settingsKey ? () => panel._bulkToggleEntities(area.area_id, settingsKey, group.filteredEntities, true) : undefined,
+              onSelectNone: settingsKey ? () => panel._bulkToggleEntities(area.area_id, settingsKey, group.filteredEntities, false) : undefined
+            });
+          });
+        })()}
+
+        ${/* Render appliances section (filtered) */ ''}
+        ${(() => {
+          if (searchTerm) {
+            // When searching, hide appliances section to focus on entities only
+            // (appliances are device-based, not entity-based)
+            return '';
+          }
+          return renderAppliancesSection(panel, html, area);
+        })()}
+
+        ${/* Render custom label sections (filtered) */ ''}
         ${panel._getEnabledCustomLabels().map(label => {
           const entities = panel._getAreaCustomLabelEntities(area.area_id, label.label_id);
           if (entities.length === 0) return '';
 
+          // Filter custom label entities if searching
+          const filteredCustomEntities = searchTerm ? panel._filterEntities(entities, searchTerm) : entities;
+          if (filteredCustomEntities.length === 0) return '';
+
           return renderCustomLabelSection(html, {
             label,
-            entities,
+            entities: filteredCustomEntities,
             panel,
             expandedEntities: panel._expandedCustomLabels,
             onToggleEntityExpanded: (entityId) => panel._toggleCustomLabelExpanded(entityId)
@@ -2100,8 +2295,8 @@ export function renderEntitiesTab(panel, html) {
             <ha-icon icon="${category.icon}"></ha-icon>
           </div>
           <div class="label-mapping-info">
-            <span class="label-mapping-title">${category.title}</span>
-            <span class="label-mapping-description">${category.description}</span>
+            <span class="label-mapping-title">${t(category.titleKey)}</span>
+            <span class="label-mapping-description">${t(category.descKey)}</span>
           </div>
         </div>
         <div class="label-mapping-selector">
@@ -2117,7 +2312,7 @@ export function renderEntitiesTab(panel, html) {
               panel._setCategoryLabel(category.key, newLabelId);
             }}
           >
-            <option value="">-- Select Label --</option>
+            <option value="">${t('admin.entities.selectLabel')}</option>
             ${availableLabels.map(label => html`
               <option value="${label.label_id}" ?selected=${currentLabelId === label.label_id}>
                 ${label.name}
@@ -2152,13 +2347,13 @@ export function renderEntitiesTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('labelConfig') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Map your Home Assistant labels to DashView categories. Entities with these labels will appear in the corresponding sections throughout the dashboard.
+          ${t('admin.entities.labelConfigDesc')}
         </p>
 
         ${availableLabels.length === 0 ? html`
           <div class="label-mapping-empty-state">
             <ha-icon icon="mdi:tag-off-outline"></ha-icon>
-            <h3>No Labels Found</h3>
+            <h3>${t('admin.entities.noLabels')}</h3>
             <p>Create labels in Home Assistant first:</p>
             <p style="font-size: 13px; opacity: 0.8;">Settings → Labels → Create Label</p>
             <p style="font-size: 13px; margin-top: 12px;">Then assign labels to your entities and come back here to configure the mapping.</p>
@@ -2198,7 +2393,7 @@ export function renderEntitiesTab(panel, html) {
             <input
               type="text"
               class="garbage-search-input"
-              placeholder="Search rooms..."
+              placeholder="${t('admin.entities.searchRooms')}"
               .value=${panel._entitySearchQuery || ''}
               @input=${(e) => {
                 panel._entitySearchQuery = e.target.value;
@@ -2253,8 +2448,8 @@ export function renderEntitiesTab(panel, html) {
           : html`
               <div class="no-areas">
                 <ha-icon icon="mdi:home-alert" style="--mdc-icon-size: 64px; margin-bottom: 16px;"></ha-icon>
-                <p>No areas configured in Home Assistant.</p>
-                <p>Go to Settings → Areas & Zones to create areas.</p>
+                <p>${t('admin.entities.noAreas')}</p>
+                <p>${t('admin.entities.noAreasHint')}</p>
               </div>
             `}
       </div>
@@ -2840,7 +3035,7 @@ export function renderWeatherTab(panel, html) {
 
         <div style="margin-bottom: 8px;">
           <div class="card-config-label">
-            <span class="card-config-label-title">Weather Entity</span>
+            <span class="card-config-label-title">${t('admin.weather.weatherEntity')}</span>
             <span class="card-config-label-subtitle">Select your weather integration</span>
           </div>
         </div>
@@ -3009,28 +3204,28 @@ export function renderStatusTab(panel, html) {
         </p>
 
         <!-- Motion Status -->
-        ${renderInfoTextToggle(panel, html, 'motion', 'Bewegung', 'mdi:motion-sensor',
-          'Zeigt die letzte erkannte Bewegung an')}
+        ${renderInfoTextToggle(panel, html, 'motion', t('admin.infoTextToggles.motion'), 'mdi:motion-sensor',
+          t('admin.infoTextToggles.motionDesc'))}
 
         <!-- Garage Status -->
-        ${renderInfoTextToggle(panel, html, 'garage', 'Garagentore', 'mdi:garage',
-          'Zeigt offene Garagentore an')}
+        ${renderInfoTextToggle(panel, html, 'garage', t('admin.infoTextToggles.garage'), 'mdi:garage',
+          t('admin.infoTextToggles.garageDesc'))}
 
         <!-- Windows Status -->
-        ${renderInfoTextToggle(panel, html, 'windows', 'Fenster', 'mdi:window-open',
-          'Zeigt offene Fenster an (aus aktivierten Fenstern)')}
+        ${renderInfoTextToggle(panel, html, 'windows', t('admin.infoTextToggles.windows'), 'mdi:window-open',
+          t('admin.infoTextToggles.windowsDesc'))}
 
         <!-- Lights Status -->
-        ${renderInfoTextToggle(panel, html, 'lights', 'Lichter', 'mdi:lightbulb',
-          'Zeigt Anzahl der eingeschalteten Lichter an')}
+        ${renderInfoTextToggle(panel, html, 'lights', t('admin.infoTextToggles.lights'), 'mdi:lightbulb',
+          t('admin.infoTextToggles.lightsDesc'))}
 
         <!-- Covers Status -->
-        ${renderInfoTextToggle(panel, html, 'covers', 'Rollos', 'mdi:window-shutter',
-          'Zeigt offene Rollos an')}
+        ${renderInfoTextToggle(panel, html, 'covers', t('admin.infoTextToggles.covers'), 'mdi:window-shutter',
+          t('admin.infoTextToggles.coversDesc'))}
 
         <!-- TVs Status -->
-        ${renderInfoTextToggle(panel, html, 'tvs', 'Fernseher', 'mdi:television',
-          'Zeigt eingeschaltete Fernseher an')}
+        ${renderInfoTextToggle(panel, html, 'tvs', t('admin.infoTextToggles.tvs'), 'mdi:television',
+          t('admin.infoTextToggles.tvsDesc'))}
 
         <!-- Appliances Status -->
         ${renderAppliancesStatusSection(panel, html, toggleSection, isExpanded)}
@@ -3660,8 +3855,8 @@ export function renderScenesTab(panel, html) {
         ${panel._sceneButtons.length === 0 ? html`
           <div class="garbage-empty-state">
             <ha-icon icon="mdi:gesture-tap-button"></ha-icon>
-            <div>No scene buttons configured</div>
-            <div class="garbage-empty-hint">Add buttons to quickly trigger scenes, scripts, or services</div>
+            <div>${t('admin.scenes.noButtons')}</div>
+            <div class="garbage-empty-hint">${t('admin.scenes.noButtonsHint')}</div>
           </div>
         ` : ''}
 
@@ -3717,10 +3912,10 @@ export function renderUsersTab(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:account-group"></ha-icon>
-      User Photos
+      ${t('admin.users.title')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure custom profile photos for each person. These photos will be shown on the main dashboard based on which Home Assistant user is viewing.
+      ${t('admin.users.description')}
     </p>
 
     ${personEntities.length > 0 ? html`
@@ -3798,8 +3993,8 @@ export function renderUsersTab(panel, html) {
     ` : html`
       <div class="garbage-empty-state">
         <ha-icon icon="mdi:account-off"></ha-icon>
-        <div>No person entities found</div>
-        <div class="garbage-empty-hint">Add person entities in Home Assistant to configure their photos here.</div>
+        <div>${t('admin.users.noUsers')}</div>
+        <div class="garbage-empty-hint">${t('admin.users.noUsersHint')}</div>
       </div>
     `}
   `;

@@ -6562,6 +6562,98 @@ export const dashviewStyles = `
     gap: 8px;
   }
 
+  .lights-title.collapsible {
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .lights-title.collapsible:hover {
+    opacity: 0.7;
+  }
+
+  .entity-section-chevron {
+    --mdc-icon-size: 20px;
+    transition: transform 200ms ease;
+  }
+
+  .entity-section-chevron.expanded {
+    transform: rotate(180deg);
+  }
+
+  .entity-section-entities {
+    overflow: hidden;
+    transition: max-height 200ms ease, opacity 200ms ease;
+  }
+
+  .entity-section-entities.collapsed {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .entity-section-entities.expanded {
+    max-height: 2000px;
+    opacity: 1;
+  }
+
+  /* Bulk Action Buttons */
+  .bulk-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .bulk-action-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid var(--dv-gray400);
+    background: transparent;
+    color: var(--secondary-text-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .bulk-action-btn:hover {
+    background: var(--dv-gray200);
+    border-color: var(--dv-gray500);
+  }
+
+  .bulk-action-btn:active {
+    transform: scale(0.95);
+  }
+
+  .entity-expand-controls {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px 12px;
+    border-bottom: 1px solid var(--divider-color);
+  }
+
+  .entity-expand-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--primary-background-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 6px;
+    color: var(--primary-text-color);
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .entity-expand-button:hover {
+    background: var(--secondary-background-color);
+    border-color: var(--primary-color);
+  }
+
+  .entity-expand-button ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
   .light-item {
     display: flex;
     align-items: center;

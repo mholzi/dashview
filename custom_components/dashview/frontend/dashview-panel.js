@@ -481,6 +481,9 @@
       this._trainDepartures = [];
       this._trainSearchQuery = '';
       this._trainSearchFocused = false;
+      // Entity search within rooms (not persisted)
+      this._entitySearchTermsByRoom = {};
+      this._entitySearchDebounceTimers = {};
       // Thermostat swipe index per room
       this._thermostatSwipeIndex = {};
       // Changelog popup state
@@ -1055,6 +1058,49 @@
       });
     }
 
+    // Entity search within room methods
+    _handleEntitySearch(roomId, query) {
+      // Initialize state if not exists
+      if (!this._entitySearchTermsByRoom) {
+        this._entitySearchTermsByRoom = {};
+      }
+      if (!this._entitySearchDebounceTimers) {
+        this._entitySearchDebounceTimers = {};
+      }
+
+      // Clear existing debounce timer for this room
+      if (this._entitySearchDebounceTimers[roomId]) {
+        clearTimeout(this._entitySearchDebounceTimers[roomId]);
+      }
+
+      // Set the search term immediately for input responsiveness
+      this._entitySearchTermsByRoom[roomId] = query;
+      this.requestUpdate();
+
+      // Debounce the filtering (150ms)
+      this._entitySearchDebounceTimers[roomId] = setTimeout(() => {
+        this.requestUpdate();
+      }, 150);
+    }
+
+    _clearEntitySearch(roomId) {
+      if (!this._entitySearchTermsByRoom) {
+        this._entitySearchTermsByRoom = {};
+      }
+      this._entitySearchTermsByRoom[roomId] = '';
+      this.requestUpdate();
+    }
+
+    _filterEntities(entities, searchTerm) {
+      if (!searchTerm || !searchTerm.trim()) return entities;
+
+      const term = searchTerm.toLowerCase().trim();
+      return entities.filter(entity => {
+        const name = (entity.name || entity.friendly_name || '').toLowerCase();
+        return name.includes(term);
+      });
+    }
+
     _addSceneButton() {
       this._sceneButtons = [...this._sceneButtons, { label: '', icon: 'mdi:lightbulb', actionType: 'service', entity: '' }];
       this._saveSettings();
@@ -1540,6 +1586,51 @@
     _toggleTVEnabled(entityId) { this._toggleEntityEnabled('_enabledTVs', entityId); }
     _toggleLockEnabled(entityId) { this._toggleEntityEnabled('_enabledLocks', entityId); }
 
+    /**
+     * Bulk toggle entities of a specific type in an area
+     * @param {string} areaId - The area ID
+     * @param {string} settingsKey - The settings map key (e.g., '_enabledLights')
+     * @param {Array} entities - Array of entity objects for that type
+     * @param {boolean} enabled - Whether to enable or disable all entities
+     */
+    _bulkToggleEntities(areaId, settingsKey, entities, enabled) {
+      if (!entities || entities.length === 0) return;
+
+      // Only toggle entities that need state change to avoid duplicate calls
+      const newMap = { ...this[settingsKey] };
+      entities.forEach(entity => {
+        const currentEnabled = newMap[entity.entity_id] !== false;
+        if (currentEnabled !== enabled) {
+          newMap[entity.entity_id] = enabled;
+        }
+      });
+
+      this[settingsKey] = newMap;
+      this._saveSettings();
+
+      // Update roomDataService with the new enabled maps
+      if (roomDataService) {
+        roomDataService.setEnabledMaps({
+          enabledLights: this._enabledLights,
+          enabledMotionSensors: this._enabledMotionSensors,
+          enabledSmokeSensors: this._enabledSmokeSensors,
+          enabledCovers: this._enabledCovers,
+          enabledGarages: this._enabledGarages,
+          enabledWindows: this._enabledWindows,
+          enabledVibrationSensors: this._enabledVibrationSensors,
+          enabledTemperatureSensors: this._enabledTemperatureSensors,
+          enabledHumiditySensors: this._enabledHumiditySensors,
+          enabledClimates: this._enabledClimates,
+          enabledRoofWindows: this._enabledRoofWindows,
+          enabledMediaPlayers: this._enabledMediaPlayers,
+          enabledTVs: this._enabledTVs,
+          enabledLocks: this._enabledLocks,
+        });
+      }
+
+      this.requestUpdate();
+    }
+
     // Generic toggle helper for boolean properties
     _toggleBoolProp(key) { this[key] = !this[key]; this.requestUpdate(); }
 
@@ -1550,6 +1641,25 @@
         ...this._expandedAreas,
         [areaId]: !this._expandedAreas[areaId],
       };
+      this.requestUpdate();
+    }
+
+    _toggleEntityTypeSection(areaId, typeKey) {
+      // Initialize if not exists
+      if (!this._expandedEntityTypes) {
+        this._expandedEntityTypes = {};
+      }
+      if (!this._expandedEntityTypes[areaId]) {
+        this._expandedEntityTypes[areaId] = new Set();
+      }
+
+      // Toggle the typeKey in the Set
+      if (this._expandedEntityTypes[areaId].has(typeKey)) {
+        this._expandedEntityTypes[areaId].delete(typeKey);
+      } else {
+        this._expandedEntityTypes[areaId].add(typeKey);
+      }
+
       this.requestUpdate();
     }
 

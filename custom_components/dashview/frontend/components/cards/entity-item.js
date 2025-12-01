@@ -50,6 +50,11 @@ export function renderEntityItem(html, { icon, name, subtitle, state, isActive, 
  * @param {Function} options.getState - Function to get state text for entity (entity) => stateString
  * @param {Function} options.isActive - Function to check if entity is active (entity) => boolean
  * @param {Function} options.onToggle - Function to toggle entity enabled (entityId) => void
+ * @param {boolean} [options.isExpanded] - Whether the section is expanded (default: false)
+ * @param {Function} [options.onToggleExpand] - Callback to toggle section expansion
+ * @param {string} [options.typeKey] - Entity type key for tracking expansion state
+ * @param {Function} [options.onSelectAll] - Optional callback to enable all entities
+ * @param {Function} [options.onSelectNone] - Optional callback to disable all entities
  * @returns {TemplateResult} Entity section HTML
  */
 export function renderEntitySection(html, {
@@ -63,7 +68,12 @@ export function renderEntitySection(html, {
   getIcon,
   getState,
   isActive,
-  onToggle
+  onToggle,
+  isExpanded = false,
+  onToggleExpand,
+  typeKey,
+  onSelectAll,
+  onSelectNone
 }) {
   if (entities.length === 0) return '';
 
@@ -71,21 +81,59 @@ export function renderEntitySection(html, {
     ? `${enabledCount} enabled, ${activeCount} ${activeLabel}`
     : `${enabledCount} enabled`;
 
+  // If collapsible functionality is provided, render with expand/collapse
+  const isCollapsible = onToggleExpand && typeKey;
+
+  // Check if bulk actions should be shown
+  const showBulkActions = onSelectAll && onSelectNone;
+
   return html`
     <div class="lights-section">
-      <div class="lights-title">
-        <ha-icon icon="${icon}"></ha-icon>
-        ${title} (${subtitle})
+      <div
+        class="lights-title ${isCollapsible ? 'collapsible' : ''}"
+        role="${isCollapsible ? 'button' : ''}"
+        tabindex="${isCollapsible ? '0' : ''}"
+        aria-expanded="${isCollapsible ? isExpanded : ''}"
+        style="${showBulkActions ? 'display: flex; justify-content: space-between; align-items: center;' : ''}"
+        @click=${isCollapsible ? (e) => { e.stopPropagation(); onToggleExpand(); } : null}
+        @keydown=${isCollapsible ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleExpand(); } } : null}
+      >
+        <div style="display: flex; align-items: center; gap: 8px;">
+          ${isCollapsible ? html`
+            <ha-icon
+              class="entity-section-chevron ${isExpanded ? 'expanded' : ''}"
+              icon="mdi:chevron-down"
+            ></ha-icon>
+          ` : ''}
+          <ha-icon icon="${icon}"></ha-icon>
+          <span>${title} (${subtitle})</span>
+        </div>
+        ${showBulkActions ? html`
+          <div class="bulk-actions" style="display: flex; gap: 6px;">
+            <button
+              class="bulk-action-btn"
+              @click=${(e) => { e.stopPropagation(); onSelectAll(); }}
+              title="Select All"
+            >All</button>
+            <button
+              class="bulk-action-btn"
+              @click=${(e) => { e.stopPropagation(); onSelectNone(); }}
+              title="Select None"
+            >None</button>
+          </div>
+        ` : ''}
       </div>
-      ${entities.map(entity => renderEntityItem(html, {
-        icon: getIcon(entity),
-        name: entity.name,
-        subtitle: entity.entity_id,
-        state: getState(entity),
-        isActive: isActive(entity),
-        enabled: entity.enabled,
-        onToggle: () => onToggle(entity.entity_id)
-      }))}
+      <div class="entity-section-entities ${isCollapsible ? (isExpanded ? 'expanded' : 'collapsed') : ''}">
+        ${entities.map(entity => renderEntityItem(html, {
+          icon: getIcon(entity),
+          name: entity.name,
+          subtitle: entity.entity_id,
+          state: getState(entity),
+          isActive: isActive(entity),
+          enabled: entity.enabled,
+          onToggle: () => onToggle(entity.entity_id)
+        }))}
+      </div>
     </div>
   `;
 }
