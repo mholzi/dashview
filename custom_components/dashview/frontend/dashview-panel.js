@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.14";
+  const DASHVIEW_VERSION = "1.9.15";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -167,10 +167,12 @@
   // Load i18n module
   let initI18n = null;
   let getCurrentLang = null;
+  let isI18nInitialized = null;
   try {
     const i18nModule = await import(`./utils/i18n.js?v=${DASHVIEW_VERSION}`);
     initI18n = i18nModule.initI18n;
     getCurrentLang = i18nModule.getCurrentLang;
+    isI18nInitialized = i18nModule.isI18nInitialized;
     debugLog("Loaded i18n module");
   } catch (e) {
     console.warn("Dashview: Failed to load i18n module", e);
@@ -1192,18 +1194,17 @@
     updated(changedProperties) {
       if (changedProperties.has("hass") && this.hass) {
         // Language detection and i18n initialization
-        if (this.hass?.language && initI18n && getCurrentLang) {
+        if (this.hass?.language && initI18n && getCurrentLang && isI18nInitialized) {
           const rawLang = this.hass.language;
           const baseLang = rawLang.split('-')[0]; // 'de-DE' -> 'de'
           const supportedLangs = ['en', 'de'];
           const targetLang = supportedLangs.includes(baseLang) ? baseLang : 'en';
           const currentLang = getCurrentLang();
+          const alreadyInitialized = isI18nInitialized();
 
-          console.log(`[Dashview] Language check: HA=${rawLang}, target=${targetLang}, current=${currentLang}`);
-
-          // Only re-initialize if language changed
-          if (targetLang !== currentLang) {
-            console.log(`[Dashview] Initializing i18n for language: ${targetLang}`);
+          // Initialize if not yet initialized OR if language changed
+          if (!alreadyInitialized || targetLang !== currentLang) {
+            console.log(`[Dashview] Initializing i18n: target=${targetLang}, current=${currentLang}, initialized=${alreadyInitialized}`);
             initI18n(targetLang).then(() => {
               console.log('[Dashview] i18n loaded, requesting update');
               this.requestUpdate();
@@ -1211,8 +1212,6 @@
               console.warn('[Dashview] i18n initialization failed:', err);
             });
           }
-        } else {
-          console.log(`[Dashview] i18n not initialized: language=${this.hass?.language}, initI18n=${!!initI18n}, getCurrentLang=${!!getCurrentLang}`);
         }
 
         // Initialize stores with hass instance
