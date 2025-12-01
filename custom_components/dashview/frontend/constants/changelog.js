@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.9';
+export const CURRENT_VERSION = '0.0.10';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,21 @@ export const CURRENT_VERSION = '0.0.9';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.10 - UI improvements & caching fix
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.10',
+    page: 1,
+    date: 'Dezember 2025',
+    title: 'Verbesserungen',
+    subtitle: 'UI und Caching optimiert',
+    changes: [
+      { type: 'improvement', description: 'Entity-ID wird in Raumkonfiguration angezeigt' },
+      { type: 'fix', description: 'Browser-Cache wird nach Updates automatisch aktualisiert' },
+      { type: 'fix', description: 'TV-Bereich im Raum-Popup hat jetzt gleiches Layout wie Lichter' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.9 - Device names & Security fix
   // ══════════════════════════════════════════════════════════════
