@@ -18,7 +18,18 @@ import {
 import { renderEntitySection, renderCustomLabelSection } from '../../components/cards/entity-item.js';
 import { ENTITY_CONFIGS } from '../../constants/index.js';
 import { renderEntityPicker } from '../../components/controls/entity-picker.js';
-import { t } from '../../utils/i18n.js';
+import { t as importedT } from '../../utils/i18n.js';
+
+// Defensive wrapper for t() to handle edge cases with card-mod and other invasive components
+// Falls back to returning the key if the translation function fails
+const t = (key, fallbackOrParams) => {
+  try {
+    return importedT(key, fallbackOrParams);
+  } catch (e) {
+    // If t fails for any reason, return the key as fallback
+    return typeof fallbackOrParams === 'string' ? fallbackOrParams : key;
+  }
+};
 
 /**
  * Category definitions for label mapping

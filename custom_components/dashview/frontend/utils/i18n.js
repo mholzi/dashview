@@ -14,6 +14,9 @@ if (!window.__dashviewI18n) {
   };
 }
 
+// IMPORTANT: Do NOT expose t on window to avoid conflicts with other components
+// Some components (like card-mod) may have their own 't' variable that would be overwritten
+
 // Reference the shared state
 const state = window.__dashviewI18n;
 
