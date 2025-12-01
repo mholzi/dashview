@@ -17,7 +17,8 @@ let initialized = false;
 export async function initI18n(lang = 'en') {
   try {
     // Get the base URL from the current script location
-    const scriptUrl = import.meta.url;
+    // Remove query params first, then find the utils folder
+    const scriptUrl = import.meta.url.split('?')[0];
     const baseUrl = scriptUrl.substring(0, scriptUrl.lastIndexOf('/utils/'));
     const localeUrl = `${baseUrl}/locales/${lang}.json`;
 
@@ -75,9 +76,9 @@ export function t(key, fallbackOrParams = null) {
     return fallback;
   }
 
-  // Parameter substitution: replace {paramName} with params.paramName
+  // Parameter substitution: replace {paramName} or {{paramName}} with params.paramName
   if (params && typeof params === 'object' && Object.keys(params).length > 0) {
-    return value.replace(/\{(\w+)\}/g, (match, paramName) => {
+    return value.replace(/\{\{?(\w+)\}?\}/g, (match, paramName) => {
       return paramName in params ? String(params[paramName]) : match;
     });
   }
