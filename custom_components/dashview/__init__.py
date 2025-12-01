@@ -117,12 +117,13 @@ async def async_setup_frontend(hass: HomeAssistant) -> None:
     frontend_path = Path(__file__).parent / "frontend"
 
     # Register static path for frontend assets
+    # cache_headers=False ensures browser always loads fresh JS after updates
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(
                 URL_BASE,
                 str(frontend_path),
-                cache_headers=True,
+                cache_headers=False,
             )
         ]
     )
