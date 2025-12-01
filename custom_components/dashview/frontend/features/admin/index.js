@@ -1621,15 +1621,17 @@ export function renderSecurityPopupContent(panel, html) {
   if (!panel.hass) return html``;
 
   // Helper to filter enabled entities by current label
+  // Iterates over entity registry (not enabledMap) to support default-enabled behavior
   const filterByCurrentLabel = (enabledMap, labelId) => {
-    if (!labelId) return enabledMap;
+    if (!labelId) return {};
     const filtered = {};
-    Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-      // Skip only explicitly disabled entities (enabled by default)
-      if (enabled === false) return;
-      const entityReg = panel._entityRegistry.find(e => e.entity_id === entityId);
-      if (entityReg && entityReg.labels && entityReg.labels.includes(labelId)) {
-        filtered[entityId] = enabled;
+    panel._entityRegistry.forEach((entityReg) => {
+      const entityId = entityReg.entity_id;
+      // Skip explicitly disabled entities (enabled by default)
+      if (enabledMap[entityId] === false) return;
+      // Check if entity has the required label
+      if (entityReg.labels && entityReg.labels.includes(labelId)) {
+        filtered[entityId] = true;
       }
     });
     return filtered;
