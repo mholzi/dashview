@@ -18,4 +18,5 @@ Thumbs.db
 
 # Local development
 bmad/
+.bmad/
 .claude/
