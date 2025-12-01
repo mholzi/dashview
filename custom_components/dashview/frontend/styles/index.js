@@ -1751,15 +1751,18 @@ export const dashviewStyles = `
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding-bottom: 4px;
+    padding: 10px 8px 8px 8px;
   }
 
   .popup-tv-item {
     display: flex;
     align-items: center;
-    padding: 8px 12px 8px 4px;
+    padding: 4px 20px 4px 4px;
+    height: 68px;
     gap: 12px;
+    border-radius: 12px;
     cursor: pointer;
+    box-sizing: border-box;
     transition: background var(--dv-transition-normal) ease;
   }
 
@@ -1776,12 +1779,13 @@ export const dashviewStyles = `
   }
 
   .popup-tv-item-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .popup-tv-item.on .popup-tv-item-icon {
