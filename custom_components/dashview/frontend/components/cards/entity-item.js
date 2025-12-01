@@ -11,7 +11,7 @@ import { renderToggleSwitch } from '../controls/toggle-switch.js';
  * @param {Object} options - Entity card options
  * @param {string} options.icon - MDI icon name
  * @param {string} options.name - Entity friendly name
- * @param {string} [options.deviceName] - Device name (shown below entity name)
+ * @param {string} [options.subtitle] - Subtitle text (shown below entity name, e.g. entity_id)
  * @param {string} options.state - Entity state text
  * @param {boolean} options.isActive - Whether entity is in active state (on, open, etc)
  * @param {boolean} options.enabled - Whether entity is enabled in config
@@ -19,14 +19,14 @@ import { renderToggleSwitch } from '../controls/toggle-switch.js';
  * @param {Function} [options.onClick] - Optional callback when card is clicked
  * @returns {TemplateResult} Entity card HTML
  */
-export function renderEntityItem(html, { icon, name, deviceName, state, isActive, enabled, onToggle, onClick }) {
+export function renderEntityItem(html, { icon, name, subtitle, state, isActive, enabled, onToggle, onClick }) {
   return html`
     <div class="entity-item" @click=${onClick}>
       <div class="entity-item-info ${isActive ? 'active' : ''}">
         <ha-icon icon="${icon}"></ha-icon>
         <div class="entity-item-text">
           <span class="entity-item-name">${name}</span>
-          ${deviceName ? html`<span class="entity-item-device">${deviceName}</span>` : ''}
+          ${subtitle ? html`<span class="entity-item-subtitle">${subtitle}</span>` : ''}
         </div>
         <span class="entity-item-state ${isActive ? 'active' : ''}">${state}</span>
       </div>
@@ -80,7 +80,7 @@ export function renderEntitySection(html, {
       ${entities.map(entity => renderEntityItem(html, {
         icon: getIcon(entity),
         name: entity.name,
-        deviceName: entity.deviceName,
+        subtitle: entity.entity_id,
         state: getState(entity),
         isActive: isActive(entity),
         enabled: entity.enabled,

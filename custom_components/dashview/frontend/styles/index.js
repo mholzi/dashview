@@ -6271,7 +6271,7 @@ export const dashviewStyles = `
     white-space: nowrap;
   }
 
-  .entity-item-device {
+  .entity-item-subtitle {
     font-size: 11px;
     color: var(--dv-gray500);
     overflow: hidden;
