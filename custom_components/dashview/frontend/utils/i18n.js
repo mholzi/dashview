@@ -64,6 +64,14 @@ export function t(key, fallbackOrParams = null) {
   const keys = key.split('.');
   let value = translations;
 
+  // Debug: log first few translation lookups
+  if (!window._dashviewI18nDebugCount) window._dashviewI18nDebugCount = 0;
+  const shouldLog = window._dashviewI18nDebugCount < 5;
+  if (shouldLog) {
+    console.log(`[Dashview t()] key="${key}", translations has ${Object.keys(translations).length} keys`);
+    window._dashviewI18nDebugCount++;
+  }
+
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
