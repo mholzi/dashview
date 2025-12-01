@@ -1,12 +1,21 @@
 /**
  * Lightweight i18n utility for Dashview
- * Singleton pattern with module-scoped state
+ * Uses window-scoped state to ensure singleton across module instances
+ * (Different import URLs can create separate module instances)
  */
 
-// Module-scoped state
-let translations = {};
-let currentLang = 'en';
-let initialized = false;
+// Use window-scoped state to ensure singleton pattern works across module instances
+// This is needed because ?v=xxx query params create separate module instances
+if (!window.__dashviewI18n) {
+  window.__dashviewI18n = {
+    translations: {},
+    currentLang: 'en',
+    initialized: false
+  };
+}
+
+// Reference the shared state
+const state = window.__dashviewI18n;
 
 /**
  * Initialize the i18n system with a language code
@@ -28,10 +37,10 @@ export async function initI18n(lang = 'en') {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    translations = await response.json();
-    currentLang = lang;
-    initialized = true;
-    console.log(`[Dashview i18n] Initialized with language: ${lang}, loaded ${Object.keys(translations).length} top-level keys`);
+    state.translations = await response.json();
+    state.currentLang = lang;
+    state.initialized = true;
+    console.log(`[Dashview i18n] Initialized with language: ${lang}, loaded ${Object.keys(state.translations).length} top-level keys`);
     return true;
   } catch (error) {
     console.warn(`[Dashview i18n] Translation file for ${lang} not found: ${error.message}`);
@@ -39,7 +48,7 @@ export async function initI18n(lang = 'en') {
     if (lang !== 'en') {
       return initI18n('en');
     }
-    initialized = true; // Mark as initialized even on failure to prevent loops
+    state.initialized = true; // Mark as initialized even on failure to prevent loops
     return false;
   }
 }
@@ -62,13 +71,13 @@ export function t(key, fallbackOrParams = null) {
 
   // Navigate to nested key
   const keys = key.split('.');
-  let value = translations;
+  let value = state.translations;
 
   // Debug: log first few translation lookups
   if (!window._dashviewI18nDebugCount) window._dashviewI18nDebugCount = 0;
   const shouldLog = window._dashviewI18nDebugCount < 5;
   if (shouldLog) {
-    console.log(`[Dashview t()] key="${key}", translations has ${Object.keys(translations).length} keys`);
+    console.log(`[Dashview t()] key="${key}", translations has ${Object.keys(state.translations).length} keys`);
     window._dashviewI18nDebugCount++;
   }
 
@@ -101,7 +110,7 @@ export function t(key, fallbackOrParams = null) {
  * @returns {boolean} True if initialized
  */
 export function isI18nInitialized() {
-  return initialized;
+  return state.initialized;
 }
 
 /**
@@ -109,5 +118,5 @@ export function isI18nInitialized() {
  * @returns {string} Language code ('en' or 'de')
  */
 export function getCurrentLang() {
-  return currentLang;
+  return state.currentLang;
 }

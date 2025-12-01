@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.15';
+export const CURRENT_VERSION = '0.0.16';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,19 @@ export const CURRENT_VERSION = '0.0.15';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.16 - i18n module singleton fix
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.16',
+    page: 1,
+    date: 'Dezember 2025',
+    title: 'Bugfix',
+    subtitle: 'Übersetzungen funktionieren jetzt zuverlässig',
+    changes: [
+      { type: 'fix', description: 'i18n-Modul teilt jetzt den Status über alle Instanzen' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.12 - Safari compatibility fix
   // ══════════════════════════════════════════════════════════════
