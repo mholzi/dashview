@@ -228,9 +228,20 @@ export class RoomDataService {
     // Map to entity objects with state info
     const entities = matches.map((entityReg) => {
       const state = this._hass.states[entityReg.entity_id];
+
+      // Get device name if available
+      let deviceName = null;
+      if (entityReg.device_id) {
+        const device = this._deviceRegistry.find(d => d.id === entityReg.device_id);
+        if (device) {
+          deviceName = device.name_by_user || device.name || null;
+        }
+      }
+
       const baseEntity = {
         entity_id: entityReg.entity_id,
         name: state?.attributes?.friendly_name || entityReg.original_name || entityReg.entity_id,
+        deviceName,
         state: state?.state || 'unknown',
         enabled: enabledMap[entityReg.entity_id] !== false,
       };

@@ -6254,12 +6254,26 @@ export const dashviewStyles = `
     color: var(--dv-highlight);
   }
 
+  .entity-item-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+  }
+
   .entity-item-name {
     font-size: 14px;
     font-weight: 500;
     color: var(--dv-gray800);
-    flex: 1;
-    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .entity-item-device {
+    font-size: 11px;
+    color: var(--dv-gray500);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
