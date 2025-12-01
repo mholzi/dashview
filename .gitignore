@@ -15,3 +15,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local development
+bmad/
+.claude/
