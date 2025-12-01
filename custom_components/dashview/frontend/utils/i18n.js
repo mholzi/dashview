@@ -22,6 +22,8 @@ export async function initI18n(lang = 'en') {
     const baseUrl = scriptUrl.substring(0, scriptUrl.lastIndexOf('/utils/'));
     const localeUrl = `${baseUrl}/locales/${lang}.json`;
 
+    console.log(`[Dashview i18n] Loading translations from: ${localeUrl}`);
+
     const response = await fetch(localeUrl);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -29,7 +31,7 @@ export async function initI18n(lang = 'en') {
     translations = await response.json();
     currentLang = lang;
     initialized = true;
-    console.log(`[Dashview i18n] Initialized with language: ${lang}`);
+    console.log(`[Dashview i18n] Initialized with language: ${lang}, loaded ${Object.keys(translations).length} top-level keys`);
     return true;
   } catch (error) {
     console.warn(`[Dashview i18n] Translation file for ${lang} not found: ${error.message}`);

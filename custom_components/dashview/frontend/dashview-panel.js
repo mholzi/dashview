@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.13";
+  const DASHVIEW_VERSION = "1.9.14";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -1197,15 +1197,22 @@
           const baseLang = rawLang.split('-')[0]; // 'de-DE' -> 'de'
           const supportedLangs = ['en', 'de'];
           const targetLang = supportedLangs.includes(baseLang) ? baseLang : 'en';
+          const currentLang = getCurrentLang();
+
+          console.log(`[Dashview] Language check: HA=${rawLang}, target=${targetLang}, current=${currentLang}`);
 
           // Only re-initialize if language changed
-          if (targetLang !== getCurrentLang()) {
+          if (targetLang !== currentLang) {
+            console.log(`[Dashview] Initializing i18n for language: ${targetLang}`);
             initI18n(targetLang).then(() => {
+              console.log('[Dashview] i18n loaded, requesting update');
               this.requestUpdate();
             }).catch(err => {
               console.warn('[Dashview] i18n initialization failed:', err);
             });
           }
+        } else {
+          console.log(`[Dashview] i18n not initialized: language=${this.hass?.language}, initI18n=${!!initI18n}, getCurrentLang=${!!getCurrentLang}`);
         }
 
         // Initialize stores with hass instance

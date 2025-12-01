@@ -258,7 +258,8 @@ describe('UIStateStore', () => {
       store.setInMap('expandedAreas', 'room1', true);
       expect(listener).toHaveBeenCalledWith(
         'expandedAreas',
-        expect.objectContaining({ room1: true })
+        expect.objectContaining({ room1: true }),
+        undefined
       );
     });
 
@@ -310,7 +311,8 @@ describe('UIStateStore', () => {
       store.toggleInMap('expandedAreas', 'room1');
       expect(listener).toHaveBeenCalledWith(
         'expandedAreas',
-        expect.objectContaining({ room1: true })
+        expect.objectContaining({ room1: true }),
+        undefined
       );
     });
   });
@@ -505,7 +507,8 @@ describe('UIStateStore', () => {
       store.setFloorOverviewIndex('floor1', 2);
       expect(listener).toHaveBeenCalledWith(
         'floorOverviewIndex',
-        expect.objectContaining({ floor1: 2 })
+        expect.objectContaining({ floor1: 2 }),
+        undefined
       );
     });
   });
@@ -838,9 +841,9 @@ describe('UIStateStore', () => {
     });
 
     it('should return a UIStateStore instance', async () => {
-      const { getUIStateStore: getStore } = await import('./ui-state-store.js');
-      const instance = getStore();
-      expect(instance).toBeInstanceOf(UIStateStore);
+      const module = await import('./ui-state-store.js');
+      const instance = module.getUIStateStore();
+      expect(instance).toBeInstanceOf(module.UIStateStore);
     });
 
     it('should share state across singleton calls', async () => {

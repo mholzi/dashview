@@ -387,6 +387,7 @@ export function createMockHass(overrides = {}) {
    * - dashview/get_settings: Returns settings fixture
    * - dashview/save_settings: Returns success confirmation
    * - config/area_registry/list: Returns areas fixture
+   * - config/floor_registry/list: Returns floors fixture (derived from areas)
    * - config/entity_registry/list: Returns entities fixture
    * - config/device_registry/list: Returns devices fixture
    * - config/label_registry/list: Returns labels fixture
@@ -405,6 +406,17 @@ export function createMockHass(overrides = {}) {
       // Home Assistant registry messages
       case 'config/area_registry/list':
         return areasFixture;
+      case 'config/floor_registry/list':
+        // Extract unique floors from areas
+        const floors = [...new Set(areasFixture.map(a => a.floor_id))]
+          .filter(Boolean)
+          .map((floor_id, index) => ({
+            floor_id,
+            name: floor_id.charAt(0).toUpperCase() + floor_id.slice(1),
+            level: index,
+            icon: null
+          }));
+        return floors;
       case 'config/entity_registry/list':
         return entitiesFixture;
       case 'config/device_registry/list':

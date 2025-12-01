@@ -738,7 +738,7 @@ describe('RoomDataService', () => {
       expect(temp).toBe('22'); // First sensor: 21.5
     });
 
-    it('should return null when parseNumericState returns null', () => {
+    it('should return null when parseNumericState returns null', async () => {
       // Mock parseNumericState to return null
       const { parseNumericState } = await import('../utils/helpers.js');
       parseNumericState.mockReturnValueOnce(null);
@@ -778,7 +778,7 @@ describe('RoomDataService', () => {
       expect(humidity).toBe(null);
     });
 
-    it('should return null when parseNumericState returns null', () => {
+    it('should return null when parseNumericState returns null', async () => {
       const { parseNumericState } = await import('../utils/helpers.js');
       parseNumericState.mockReturnValueOnce(null);
 

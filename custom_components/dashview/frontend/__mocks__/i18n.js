@@ -11,7 +11,10 @@ import { vi } from 'vitest';
  * @param {string} key - Translation key
  * @returns {string} The key itself
  */
-export const t = vi.fn((key) => key);
+export const t = vi.fn((key) => {
+  // Return the key as-is for testing
+  return key;
+});
 
 /**
  * Mock i18n initialization function
