@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.11';
+export const CURRENT_VERSION = '0.0.12';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,19 @@ export const CURRENT_VERSION = '0.0.11';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.12 - Safari compatibility fix
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.12',
+    page: 1,
+    date: 'Dezember 2025',
+    title: 'Bugfix',
+    subtitle: 'Safari-Kompatibilität',
+    changes: [
+      { type: 'fix', description: 'i18n funktioniert jetzt auch in Safari' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.11 - Internationalization (i18n) support
   // ══════════════════════════════════════════════════════════════
