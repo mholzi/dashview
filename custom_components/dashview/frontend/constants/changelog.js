@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '0.0.8';
+export const CURRENT_VERSION = '0.0.9';
 
 /**
  * Changelog entries - newest first
@@ -28,6 +28,20 @@ export const CURRENT_VERSION = '0.0.8';
  *   - description: Text to display
  */
 export const CHANGELOG = [
+  // ══════════════════════════════════════════════════════════════
+  // VERSION 0.0.9 - Device names & Security fix
+  // ══════════════════════════════════════════════════════════════
+  {
+    version: '0.0.9',
+    page: 1,
+    date: 'Dezember 2025',
+    title: 'Verbesserungen',
+    subtitle: 'Admin-Bereich optimiert',
+    changes: [
+      { type: 'feature', description: 'Gerätename wird unter Entity-Name in Raumkonfiguration angezeigt' },
+      { type: 'fix', description: 'Sicherheits-Tab zeigt jetzt alle Fenster, Garagen und Bewegungsmelder' },
+    ]
+  },
   // ══════════════════════════════════════════════════════════════
   // VERSION 0.0.8 - Long press for more-info
   // ══════════════════════════════════════════════════════════════
