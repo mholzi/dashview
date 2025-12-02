@@ -1280,6 +1280,132 @@
       this.requestUpdate();
     }
 
+    /**
+     * Handle floor reorder from drag-and-drop
+     * @param {Object} detail - Reorder event detail from sortable-list
+     * @param {string[]} detail.order - New floor order (floor_ids)
+     * @param {number} detail.oldIndex - Original position
+     * @param {number} detail.newIndex - New position
+     * @param {string} detail.itemId - Moved floor's floor_id
+     */
+    _handleFloorReorder(detail) {
+      const { order, oldIndex, newIndex } = detail;
+      const oldFloorOrder = [...(this._floorOrder || [])];
+
+      // If floorOrder is empty, initialize from available floors
+      if (oldFloorOrder.length === 0 && this._floors) {
+        this._floorOrder = this._floors.map(f => f.floor_id);
+      }
+
+      // Apply new order
+      this._floorOrder = order;
+
+      // Record change for undo/redo (Epic 6 integration)
+      if (this._settingsStore && this._settingsStore._recordChange) {
+        const movedFloor = this._floors?.find(f => f.floor_id === detail.itemId);
+        const floorName = movedFloor?.name || `Floor ${oldIndex + 1}`;
+        this._settingsStore._recordChange({
+          type: 'reorder',
+          key: 'floorOrder',
+          oldValue: oldFloorOrder.length > 0 ? oldFloorOrder : null,
+          newValue: order,
+          description: `Reorder floor: ${floorName}`
+        });
+      }
+
+      this._saveSettings();
+      this.requestUpdate();
+    }
+
+    /**
+     * Handle room reorder from drag-and-drop within a floor
+     * @param {string|null} floorId - The floor ID (null for unassigned rooms)
+     * @param {Object} detail - Reorder event detail from sortable-list
+     * @param {string[]} detail.order - New room order (area_ids)
+     * @param {number} detail.oldIndex - Original position
+     * @param {number} detail.newIndex - New position
+     * @param {string} detail.itemId - Moved room's area_id
+     */
+    _handleRoomReorder(floorId, detail) {
+      const { order, oldIndex } = detail;
+      const orderKey = floorId || '_unassigned';
+
+      // Get current room order
+      const roomOrder = { ...(this._roomOrder || {}) };
+      const oldRoomOrder = [...(roomOrder[orderKey] || [])];
+
+      // If room order is empty, initialize from available areas
+      if (oldRoomOrder.length === 0 && this._areas) {
+        const areasForFloor = this._areas.filter(a => {
+          if (floorId === null) {
+            return !a.floor_id;
+          }
+          return a.floor_id === floorId;
+        });
+        roomOrder[orderKey] = areasForFloor.map(a => a.area_id);
+      }
+
+      // Apply new order
+      roomOrder[orderKey] = order;
+      this._roomOrder = roomOrder;
+
+      // Record change for undo/redo (Epic 6 integration)
+      if (this._settingsStore && this._settingsStore._recordChange) {
+        const movedRoom = this._areas?.find(a => a.area_id === detail.itemId);
+        const roomName = movedRoom?.name || `Room ${oldIndex + 1}`;
+        const floor = this._floors?.find(f => f.floor_id === floorId);
+        const floorName = floor?.name || 'Unassigned';
+        this._settingsStore._recordChange({
+          type: 'reorder',
+          key: `roomOrder.${orderKey}`,
+          oldValue: oldRoomOrder.length > 0 ? oldRoomOrder : null,
+          newValue: order,
+          description: `Reorder room: ${roomName} in ${floorName}`
+        });
+      }
+
+      this._saveSettings();
+      this.requestUpdate();
+    }
+
+    /**
+     * Handle media preset reorder from drag-and-drop
+     * @param {Object} detail - Reorder event detail from sortable-list
+     * @param {string[]} detail.order - New preset order (by index)
+     * @param {number} detail.oldIndex - Original position
+     * @param {number} detail.newIndex - New position
+     * @param {string} detail.itemId - Moved preset's index (as string)
+     */
+    _handleMediaPresetReorder(detail) {
+      const { order, oldIndex, newIndex } = detail;
+      const oldPresets = [...(this._mediaPresets || [])];
+
+      // Reorder presets based on new order (order contains indices as strings)
+      const newPresets = order.map(indexStr => {
+        const index = parseInt(indexStr, 10);
+        return oldPresets[index];
+      }).filter(Boolean);
+
+      // Apply new order
+      this._mediaPresets = newPresets;
+
+      // Record change for undo/redo (Epic 6 integration)
+      if (this._settingsStore && this._settingsStore._recordChange) {
+        const movedPreset = oldPresets[oldIndex];
+        const presetName = movedPreset?.name || `Playlist ${oldIndex + 1}`;
+        this._settingsStore._recordChange({
+          type: 'reorder',
+          key: 'mediaPresets',
+          oldValue: oldPresets,
+          newValue: newPresets,
+          description: `Reorder playlist: ${presetName}`
+        });
+      }
+
+      this._saveSettings();
+      this.requestUpdate();
+    }
+
     updated(changedProperties) {
       if (changedProperties.has("hass") && this.hass) {
         // Language detection and i18n initialization

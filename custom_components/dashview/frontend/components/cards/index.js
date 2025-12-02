@@ -16,3 +16,4 @@ export {
   EntityCardFactory,
   createEntityCardFactory,
 } from './entity-card.js';
+export { FloorCardPreview } from './floor-card-preview.js';

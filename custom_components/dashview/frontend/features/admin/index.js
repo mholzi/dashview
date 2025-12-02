@@ -20,6 +20,8 @@ import { ENTITY_CONFIGS } from '../../constants/index.js';
 import { renderEntityPicker } from '../../components/controls/entity-picker.js';
 import { t as importedT } from '../../utils/i18n.js';
 import '../../components/controls/confirmation-dialog.js';
+import '../../components/controls/sortable-list.js';
+import '../../components/cards/floor-card-preview.js';
 
 // Defensive wrapper for t() to handle edge cases with card-mod and other invasive components
 // Falls back to returning the key if the translation function fails
@@ -1602,40 +1604,49 @@ export function renderOrderConfig(panel, html) {
             <p style="font-size: 12px; margin-top: 8px;">Go to Settings → Areas & Zones → Floors to create floors.</p>
           </div>
         ` : html`
-          <div class="order-list">
-            ${sortedFloors.map((floor, index) => html`
-              <div class="order-item">
-                <div class="order-item-index">${index + 1}</div>
-                <div class="order-item-icon">
-                  <ha-icon icon="${getFloorIcon(floor)}"></ha-icon>
-                </div>
-                <div class="order-item-info">
-                  <div class="order-item-name">${floor.name}</div>
-                  <div class="order-item-subtitle">
-                    ${panel._getAreasForFloor(floor.floor_id).length} rooms
+          <sortable-list
+            item-key="floor_id"
+            handle-selector=".sortable-handle"
+            @reorder=${(e) => panel._handleFloorReorder(e.detail)}
+          >
+            <div class="order-list">
+              ${sortedFloors.map((floor, index) => html`
+                <div class="order-item sortable-item" data-id="${floor.floor_id}">
+                  <div class="sortable-handle" title="${t('admin.layout.dragToReorder')}">
+                    <ha-icon icon="mdi:drag-horizontal"></ha-icon>
+                  </div>
+                  <div class="order-item-index">${index + 1}</div>
+                  <div class="order-item-icon">
+                    <ha-icon icon="${getFloorIcon(floor)}"></ha-icon>
+                  </div>
+                  <div class="order-item-info">
+                    <div class="order-item-name">${floor.name}</div>
+                    <div class="order-item-subtitle">
+                      ${panel._getAreasForFloor(floor.floor_id).length} rooms
+                    </div>
+                  </div>
+                  <div class="order-item-buttons">
+                    <button
+                      class="order-btn"
+                      ?disabled=${index === 0}
+                      @click=${() => panel._moveFloor(floor.floor_id, -1)}
+                      title="${t('admin.layout.moveUp')}"
+                    >
+                      <ha-icon icon="mdi:chevron-up"></ha-icon>
+                    </button>
+                    <button
+                      class="order-btn"
+                      ?disabled=${index === sortedFloors.length - 1}
+                      @click=${() => panel._moveFloor(floor.floor_id, 1)}
+                      title="${t('admin.layout.moveDown')}"
+                    >
+                      <ha-icon icon="mdi:chevron-down"></ha-icon>
+                    </button>
                   </div>
                 </div>
-                <div class="order-item-buttons">
-                  <button
-                    class="order-btn"
-                    ?disabled=${index === 0}
-                    @click=${() => panel._moveFloor(floor.floor_id, -1)}
-                    title="Move up"
-                  >
-                    <ha-icon icon="mdi:chevron-up"></ha-icon>
-                  </button>
-                  <button
-                    class="order-btn"
-                    ?disabled=${index === sortedFloors.length - 1}
-                    @click=${() => panel._moveFloor(floor.floor_id, 1)}
-                    title="Move down"
-                  >
-                    <ha-icon icon="mdi:chevron-down"></ha-icon>
-                  </button>
-                </div>
-              </div>
-            `)}
-          </div>
+              `)}
+            </div>
+          </sortable-list>
         `}
       </div>
     </div>
@@ -1674,40 +1685,49 @@ export function renderOrderConfig(panel, html) {
                 </p>
               ` : html`
                 <div class="order-rooms-list">
-                  <div class="order-list">
-                    ${rooms.map((area, index) => html`
-                      <div class="order-item">
-                        <div class="order-item-index">${index + 1}</div>
-                        <div class="order-item-icon">
-                          <ha-icon icon="${panel._getAreaIcon(area)}"></ha-icon>
-                        </div>
-                        <div class="order-item-info">
-                          <div class="order-item-name">${area.name}</div>
-                          <div class="order-item-subtitle">
-                            ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
+                  <sortable-list
+                    item-key="area_id"
+                    handle-selector=".sortable-handle"
+                    @reorder=${(e) => panel._handleRoomReorder(floor.floor_id, e.detail)}
+                  >
+                    <div class="order-list">
+                      ${rooms.map((area, index) => html`
+                        <div class="order-item sortable-item" data-id="${area.area_id}">
+                          <div class="sortable-handle" title="${t('admin.layout.dragToReorder')}">
+                            <ha-icon icon="mdi:drag-horizontal"></ha-icon>
+                          </div>
+                          <div class="order-item-index">${index + 1}</div>
+                          <div class="order-item-icon">
+                            <ha-icon icon="${panel._getAreaIcon(area)}"></ha-icon>
+                          </div>
+                          <div class="order-item-info">
+                            <div class="order-item-name">${area.name}</div>
+                            <div class="order-item-subtitle">
+                              ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
+                            </div>
+                          </div>
+                          <div class="order-item-buttons">
+                            <button
+                              class="order-btn"
+                              ?disabled=${index === 0}
+                              @click=${() => panel._moveRoom(floor.floor_id, area.area_id, -1)}
+                              title="${t('admin.layout.moveUp')}"
+                            >
+                              <ha-icon icon="mdi:chevron-up"></ha-icon>
+                            </button>
+                            <button
+                              class="order-btn"
+                              ?disabled=${index === rooms.length - 1}
+                              @click=${() => panel._moveRoom(floor.floor_id, area.area_id, 1)}
+                              title="${t('admin.layout.moveDown')}"
+                            >
+                              <ha-icon icon="mdi:chevron-down"></ha-icon>
+                            </button>
                           </div>
                         </div>
-                        <div class="order-item-buttons">
-                          <button
-                            class="order-btn"
-                            ?disabled=${index === 0}
-                            @click=${() => panel._moveRoom(floor.floor_id, area.area_id, -1)}
-                            title="Move up"
-                          >
-                            <ha-icon icon="mdi:chevron-up"></ha-icon>
-                          </button>
-                          <button
-                            class="order-btn"
-                            ?disabled=${index === rooms.length - 1}
-                            @click=${() => panel._moveRoom(floor.floor_id, area.area_id, 1)}
-                            title="Move down"
-                          >
-                            <ha-icon icon="mdi:chevron-down"></ha-icon>
-                          </button>
-                        </div>
-                      </div>
-                    `)}
-                  </div>
+                      `)}
+                    </div>
+                  </sortable-list>
                 </div>
               `}
             </div>
@@ -2976,40 +2996,49 @@ export function renderLayoutTab(panel, html) {
                 </p>
               ` : html`
                 <div class="order-rooms-list">
-                  <div class="order-list">
-                    ${rooms.map((area, index) => html`
-                      <div class="order-item">
-                        <div class="order-item-index">${index + 1}</div>
-                        <div class="order-item-icon">
-                          <ha-icon icon="${panel._getAreaIcon(area)}"></ha-icon>
-                        </div>
-                        <div class="order-item-info">
-                          <div class="order-item-name">${area.name}</div>
-                          <div class="order-item-subtitle">
-                            ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
+                  <sortable-list
+                    item-key="area_id"
+                    handle-selector=".sortable-handle"
+                    @reorder=${(e) => panel._handleRoomReorder(floor.floor_id, e.detail)}
+                  >
+                    <div class="order-list">
+                      ${rooms.map((area, index) => html`
+                        <div class="order-item sortable-item" data-id="${area.area_id}">
+                          <div class="sortable-handle" title="${t('admin.layout.dragToReorder')}">
+                            <ha-icon icon="mdi:drag-horizontal"></ha-icon>
+                          </div>
+                          <div class="order-item-index">${index + 1}</div>
+                          <div class="order-item-icon">
+                            <ha-icon icon="${panel._getAreaIcon(area)}"></ha-icon>
+                          </div>
+                          <div class="order-item-info">
+                            <div class="order-item-name">${area.name}</div>
+                            <div class="order-item-subtitle">
+                              ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
+                            </div>
+                          </div>
+                          <div class="order-item-buttons">
+                            <button
+                              class="order-btn"
+                              ?disabled=${index === 0}
+                              @click=${() => panel._moveRoom(floor.floor_id, area.area_id, -1)}
+                              title="${t('admin.layout.moveUp')}"
+                            >
+                              <ha-icon icon="mdi:chevron-up"></ha-icon>
+                            </button>
+                            <button
+                              class="order-btn"
+                              ?disabled=${index === rooms.length - 1}
+                              @click=${() => panel._moveRoom(floor.floor_id, area.area_id, 1)}
+                              title="${t('admin.layout.moveDown')}"
+                            >
+                              <ha-icon icon="mdi:chevron-down"></ha-icon>
+                            </button>
                           </div>
                         </div>
-                        <div class="order-item-buttons">
-                          <button
-                            class="order-btn"
-                            ?disabled=${index === 0}
-                            @click=${() => panel._moveRoom(floor.floor_id, area.area_id, -1)}
-                            title="Move up"
-                          >
-                            <ha-icon icon="mdi:chevron-up"></ha-icon>
-                          </button>
-                          <button
-                            class="order-btn"
-                            ?disabled=${index === rooms.length - 1}
-                            @click=${() => panel._moveRoom(floor.floor_id, area.area_id, 1)}
-                            title="Move down"
-                          >
-                            <ha-icon icon="mdi:chevron-down"></ha-icon>
-                          </button>
-                        </div>
-                      </div>
-                    `)}
-                  </div>
+                      `)}
+                    </div>
+                  </sortable-list>
                 </div>
               `}
             </div>
@@ -3057,22 +3086,32 @@ export function renderLayoutTab(panel, html) {
               ></div>
             </div>
 
-            <!-- Visual Grid -->
-            <div class="floor-cards-config-grid">
-              ${renderVisualSlot(floor.floor_id, 0, false, 'small1', false)}
-              ${renderVisualSlot(
-                floor.floor_id, 1, true, 'big1',
-                panel._floorOverviewEnabled[floor.floor_id],
-                'mdi:view-carousel', 'Floor Overview'
-              )}
-              ${renderVisualSlot(
-                floor.floor_id, 2, true, 'big2',
-                panel._garbageDisplayFloor === floor.floor_id && panel._garbageSensors.length > 0,
-                'mdi:trash-can', 'Garbage Card'
-              )}
-              ${renderVisualSlot(floor.floor_id, 3, false, 'small2', false)}
-              ${renderVisualSlot(floor.floor_id, 4, false, 'small3', false)}
-              ${renderVisualSlot(floor.floor_id, 5, false, 'small4', false)}
+            <!-- Visual Grid with Live Preview -->
+            <div class="floor-cards-config-layout">
+              <div class="floor-cards-config-grid">
+                ${renderVisualSlot(floor.floor_id, 0, false, 'small1', false)}
+                ${renderVisualSlot(
+                  floor.floor_id, 1, true, 'big1',
+                  panel._floorOverviewEnabled[floor.floor_id],
+                  'mdi:view-carousel', 'Floor Overview'
+                )}
+                ${renderVisualSlot(
+                  floor.floor_id, 2, true, 'big2',
+                  panel._garbageDisplayFloor === floor.floor_id && panel._garbageSensors.length > 0,
+                  'mdi:trash-can', 'Garbage Card'
+                )}
+                ${renderVisualSlot(floor.floor_id, 3, false, 'small2', false)}
+                ${renderVisualSlot(floor.floor_id, 4, false, 'small3', false)}
+                ${renderVisualSlot(floor.floor_id, 5, false, 'small4', false)}
+              </div>
+              <floor-card-preview
+                .hass=${panel.hass}
+                .floorId=${floor.floor_id}
+                .slotConfig=${panel._floorCardConfig?.[floor.floor_id] || {}}
+                .floor=${floor}
+                .entityDisplayService=${panel._entityDisplayService}
+                scale="0.6"
+              ></floor-card-preview>
             </div>
 
             <!-- Entity Picker (shown when a slot is selected) -->
@@ -3714,20 +3753,32 @@ export function renderStatusTab(panel, html) {
         <!-- Existing Playlists -->
         ${panel._mediaPresets.length > 0 ? html`
           <div class="media-preset-list">
+            <div class="section-header-hint">
+              <ha-icon icon="mdi:gesture-swipe-horizontal"></ha-icon>
+              <span>${t('admin.layout.dragToReorder')}</span>
+            </div>
+            <sortable-list
+              item-key="id"
+              handle-selector=".sortable-handle"
+              @reorder=${(e) => panel._handleMediaPresetReorder(e.detail)}
+            >
             ${panel._mediaPresets.map((preset, index) => html`
-              <div class="media-preset-item">
+              <div class="media-preset-item sortable-item" data-id="${index}">
                 <div class="media-preset-header">
+                  <div class="sortable-handle" title="${t('admin.layout.dragToReorder')}">
+                    <ha-icon icon="mdi:drag-horizontal"></ha-icon>
+                  </div>
                   <div class="media-preset-index">${index + 1}</div>
                   <div class="media-preset-info">
-                    <div class="media-preset-name">${preset.name || 'Unnamed Playlist'}</div>
-                    <div class="media-preset-uri">${preset.media_content_id || 'No URI set'}</div>
+                    <div class="media-preset-name">${preset.name || t('admin.status.unnamedPlaylist')}</div>
+                    <div class="media-preset-uri">${preset.media_content_id || t('admin.status.noUriSet')}</div>
                   </div>
                   <div class="media-preset-actions">
                     <button
                       class="order-btn"
                       ?disabled=${index === 0}
                       @click=${() => panel._moveMediaPreset(index, -1)}
-                      title="Move up"
+                      title="${t('admin.layout.moveUp')}"
                     >
                       <ha-icon icon="mdi:chevron-up"></ha-icon>
                     </button>
@@ -3735,7 +3786,7 @@ export function renderStatusTab(panel, html) {
                       class="order-btn"
                       ?disabled=${index === panel._mediaPresets.length - 1}
                       @click=${() => panel._moveMediaPreset(index, 1)}
-                      title="Move down"
+                      title="${t('admin.layout.moveDown')}"
                     >
                       <ha-icon icon="mdi:chevron-down"></ha-icon>
                     </button>
@@ -3787,19 +3838,20 @@ export function renderStatusTab(panel, html) {
                 </div>
               </div>
             `)}
+            </sortable-list>
           </div>
         ` : html`
           <div class="garbage-empty-state">
             <ha-icon icon="mdi:playlist-music-outline"></ha-icon>
-            <div>No playlists configured</div>
-            <div class="garbage-empty-hint">Add playlists to show quick-select buttons in the media player</div>
+            <div>${t('admin.status.noPlaylistsConfigured')}</div>
+            <div class="garbage-empty-hint">${t('admin.status.playlistsHint')}</div>
           </div>
         `}
 
         <!-- Add New Playlist Button -->
         <button class="scene-button-add" @click=${() => panel._addMediaPreset()}>
           <ha-icon icon="mdi:plus"></ha-icon>
-          Add Playlist
+          ${t('admin.status.addPlaylist')}
         </button>
       </div>
     </div>

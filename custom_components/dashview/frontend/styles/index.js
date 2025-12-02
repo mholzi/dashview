@@ -4812,6 +4812,33 @@ export const dashviewStyles = `
     color: var(--dv-gray800);
   }
 
+  .floor-cards-config-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .floor-cards-config-layout .floor-cards-config-grid {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  .floor-cards-config-layout floor-card-preview {
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  @media (max-width: 600px) {
+    .floor-cards-config-layout {
+      flex-direction: column;
+    }
+
+    .floor-cards-config-layout floor-card-preview {
+      margin-top: 16px;
+    }
+  }
+
   .floor-cards-config-grid {
     display: grid;
     grid-template-columns: 50% 50%;
@@ -6137,6 +6164,72 @@ export const dashviewStyles = `
 
   .order-btn ha-icon {
     --mdc-icon-size: 18px;
+  }
+
+  /* Sortable list drag-and-drop styles */
+  .sortable-handle {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    border-radius: 6px;
+    background: var(--card-background-color);
+    color: var(--secondary-text-color);
+    transition: all var(--dv-transition-normal) ease;
+    flex-shrink: 0;
+  }
+
+  .sortable-handle:hover {
+    background: var(--primary-color);
+    color: var(--text-primary-color, #fff);
+  }
+
+  .sortable-handle:active {
+    cursor: grabbing;
+  }
+
+  .sortable-handle ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
+  /* Ghost element (placeholder) during drag */
+  .sortable-ghost {
+    opacity: 0.4;
+    background: var(--primary-color) !important;
+  }
+
+  /* Currently dragged element */
+  .sortable-chosen {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
+  }
+
+  /* Element being dragged over */
+  .sortable-drag {
+    opacity: 1;
+  }
+
+  /* Sortable item base styling */
+  .sortable-item {
+    touch-action: none;
+  }
+
+  /* Section header hint for drag-and-drop */
+  .section-header-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--secondary-text-color);
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+
+  .section-header-hint ha-icon {
+    --mdc-icon-size: 14px;
   }
 
   .order-floor-section {

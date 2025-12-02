@@ -310,7 +310,15 @@
       "floorCards": "Etagen-Karten",
       "floorCardsDesc": "Lege fest, welche Karten auf der Übersichtsseite jeder Etage angezeigt werden.",
       "noFloors": "Keine Etagen konfiguriert.",
-      "noFloorsHint": "Erstelle Bereiche in Home Assistant und weise sie in der Raum-Konfiguration Etagen zu."
+      "noFloorsHint": "Erstelle Bereiche in Home Assistant und weise sie in der Raum-Konfiguration Etagen zu.",
+      "dragToReorder": "Ziehen zum Sortieren",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "floorCardPreview": "Vorschau",
+      "floor": "Etage",
+      "selectEntity": "Entität auswählen",
+      "clearSlot": "Slot leeren",
+      "slot": "Slot"
     },
     "weather": {
       "title": "Wetter",
@@ -340,7 +348,12 @@
       "addSensor": "Sensor hinzufügen",
       "selectFloor": "Etage zum Anzeigen des Kalenders auswählen",
       "allFloors": "Alle Etagen",
-      "noSensorsConfigured": "Keine Sensoren konfiguriert"
+      "noSensorsConfigured": "Keine Sensoren konfiguriert",
+      "unnamedPlaylist": "Unbenannte Playlist",
+      "noUriSet": "Keine URI festgelegt",
+      "noPlaylistsConfigured": "Keine Playlists konfiguriert",
+      "playlistsHint": "Playlists hinzufügen für Schnellauswahl-Buttons im Media Player",
+      "addPlaylist": "Playlist hinzufügen"
     },
     "scenes": {
       "title": "Szenen & Aktionen",

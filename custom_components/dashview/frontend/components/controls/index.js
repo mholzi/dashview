@@ -13,3 +13,7 @@ export {
   getEntitySuggestions,
   createEntityPickerState
 } from './entity-picker.js';
+
+// Import sortable-list to ensure it registers as custom element
+import './sortable-list.js';
+export { SortableList } from './sortable-list.js';

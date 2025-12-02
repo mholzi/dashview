@@ -310,7 +310,15 @@
       "floorCards": "Floor Cards",
       "floorCardsDesc": "Configure which cards appear on each floor's overview page.",
       "noFloors": "No floors configured.",
-      "noFloorsHint": "Create areas in Home Assistant and assign them to floors in room configuration."
+      "noFloorsHint": "Create areas in Home Assistant and assign them to floors in room configuration.",
+      "dragToReorder": "Drag to reorder",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "floorCardPreview": "Preview",
+      "floor": "Floor",
+      "selectEntity": "Select entity",
+      "clearSlot": "Clear slot",
+      "slot": "Slot"
     },
     "weather": {
       "title": "Weather",
@@ -340,7 +348,12 @@
       "addSensor": "Add Sensor",
       "selectFloor": "Select floor to display calendar",
       "allFloors": "All Floors",
-      "noSensorsConfigured": "No sensors configured"
+      "noSensorsConfigured": "No sensors configured",
+      "unnamedPlaylist": "Unnamed Playlist",
+      "noUriSet": "No URI set",
+      "noPlaylistsConfigured": "No playlists configured",
+      "playlistsHint": "Add playlists to show quick-select buttons in the media player",
+      "addPlaylist": "Add Playlist"
     },
     "scenes": {
       "title": "Scenes & Actions",
