@@ -603,7 +603,7 @@
       // Don't save until settings have been loaded from backend
       // This prevents overwriting saved settings with empty defaults on reload
       if (!this._settingsLoaded) {
-        console.warn("Dashview: Skipping save - settings not yet loaded");
+        debugLog('panel', 'Skipping save - settings not yet loaded');
         return;
       }
       // Sync local properties to store and save
