@@ -38,7 +38,8 @@
       "add": "Add",
       "search": "Search",
       "filter": "Filter",
-      "close": "Close"
+      "close": "Close",
+      "confirm": "Confirm"
     },
     "options": {
       "all": "All",
@@ -367,6 +368,14 @@
       "statusAway": "Away",
       "enterPhotoUrl": "Enter photo URL..."
     },
+    "confirmation": {
+      "deleteScene": "Delete Scene Button",
+      "deleteSceneMessage": "Are you sure you want to delete the scene button \"{name}\"? This action cannot be undone.",
+      "disableAll": "Disable All Entities",
+      "disableAllMessage": "This will disable {count} entities in this room. You can re-enable them individually.",
+      "resetDefaults": "Reset to Defaults",
+      "resetDefaultsMessage": "This will reset all settings to their default values. Your current configuration will be lost."
+    },
     "common": {
       "save": "Save",
       "cancel": "Cancel",
@@ -449,7 +458,20 @@
       "device_name": "Device Name",
       "room_name": "Room Name",
       "shown_under": "shown under"
-    }
+    },
+    "draft": {
+      "unsavedChanges": "Unsaved changes",
+      "discardChanges": "Discard changes?",
+      "discardMessage": "You have unsaved changes. Are you sure you want to discard them?",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "undo": "Undo",
+    "redo": "Redo",
+    "undoAction": "Undo: {action}",
+    "redoAction": "Redo: {action}",
+    "noUndo": "Nothing to undo",
+    "noRedo": "Nothing to redo"
   },
   "changelog": {
     "titles": {

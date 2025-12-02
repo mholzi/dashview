@@ -517,9 +517,37 @@
       };
       document.addEventListener('click', this._closeDropdownHandler);
 
+      // Add keyboard shortcuts for undo/redo
+      this._keydownHandler = (e) => {
+        if (e.ctrlKey && e.key === 'z') {
+          if (e.shiftKey) {
+            // Ctrl+Shift+Z = Redo
+            if (this._settingsStore?.canRedo()) {
+              this._settingsStore.redo();
+              e.preventDefault();
+            }
+          } else {
+            // Ctrl+Z = Undo
+            if (this._settingsStore?.canUndo()) {
+              this._settingsStore.undo();
+              e.preventDefault();
+            }
+          }
+        }
+      };
+      document.addEventListener('keydown', this._keydownHandler);
+
       // Subscribe to store changes for reactive updates
       if (settingsStore) {
-        this._unsubscribeSettings = settingsStore.subscribe(() => this.requestUpdate());
+        this._unsubscribeSettings = settingsStore.subscribe(() => {
+          // Update undo/redo counts when settings change
+          if (this._settingsStore) {
+            // Count the stacks by checking if we can undo/redo
+            this._undoCount = this._settingsStore._undoStack?.length || 0;
+            this._redoCount = this._settingsStore._redoStack?.length || 0;
+          }
+          this.requestUpdate();
+        });
       }
       if (uiStateStore) {
         this._unsubscribeUIState = uiStateStore.subscribe(() => this.requestUpdate());
@@ -539,6 +567,9 @@
       }
       if (this._closeDropdownHandler) {
         document.removeEventListener('click', this._closeDropdownHandler);
+      }
+      if (this._keydownHandler) {
+        document.removeEventListener('keydown', this._keydownHandler);
       }
       // Unsubscribe from weather forecasts
       if (this._dailyForecastUnsubscribe) {
@@ -1608,6 +1639,60 @@
     _bulkToggleEntities(areaId, settingsKey, entities, enabled) {
       if (!entities || entities.length === 0) return;
 
+      // Count entities that will actually change
+      const entitiesToChange = entities.filter(entity => {
+        const currentEnabled = this[settingsKey][entity.entity_id] !== false;
+        return currentEnabled !== enabled;
+      });
+
+      // Show confirmation for disabling multiple entities
+      if (!enabled && entitiesToChange.length > 0) {
+        this._showBulkDisableConfirmation(areaId, settingsKey, entities, entitiesToChange.length);
+        return;
+      }
+
+      // Proceed with enabling without confirmation
+      this._performBulkToggle(settingsKey, entities, enabled);
+    }
+
+    /**
+     * Show confirmation dialog for bulk disabling entities
+     */
+    _showBulkDisableConfirmation(areaId, settingsKey, entities, count) {
+      // Get area name for context
+      const area = this._areas?.find(a => a.area_id === areaId);
+      const areaName = area?.name || 'this room';
+
+      // Dynamically import i18n
+      import('./utils/i18n.js').then(({ t }) => {
+        // Dynamically import the confirmation dialog
+        import('./components/controls/confirmation-dialog.js').then(() => {
+          const dialog = document.createElement('confirmation-dialog');
+          dialog.title = t('admin.confirmation.disableAll');
+          dialog.message = t('admin.confirmation.disableAllMessage', { count });
+          dialog.confirmText = t('common.actions.confirm');
+          dialog.cancelText = t('common.actions.cancel');
+          dialog.destructive = true;
+
+          dialog.addEventListener('confirm', () => {
+            this._performBulkToggle(settingsKey, entities, false);
+            dialog.remove();
+          });
+
+          dialog.addEventListener('cancel', () => {
+            dialog.remove();
+          });
+
+          dialog.open = true;
+          this.renderRoot.appendChild(dialog);
+        });
+      });
+    }
+
+    /**
+     * Perform the actual bulk toggle without confirmation
+     */
+    _performBulkToggle(settingsKey, entities, enabled) {
       // Only toggle entities that need state change to avoid duplicate calls
       const newMap = { ...this[settingsKey] };
       entities.forEach(entity => {

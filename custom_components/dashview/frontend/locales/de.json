@@ -38,7 +38,8 @@
       "add": "Hinzufügen",
       "search": "Suchen",
       "filter": "Filter",
-      "close": "Schließen"
+      "close": "Schließen",
+      "confirm": "Bestätigen"
     },
     "options": {
       "all": "Alle",
@@ -367,6 +368,14 @@
       "statusAway": "Abwesend",
       "enterPhotoUrl": "Foto-URL eingeben..."
     },
+    "confirmation": {
+      "deleteScene": "Szenen-Button löschen",
+      "deleteSceneMessage": "Möchten Sie den Szenen-Button \"{name}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "disableAll": "Alle Entitäten deaktivieren",
+      "disableAllMessage": "Dies wird {count} Entitäten in diesem Raum deaktivieren. Sie können sie einzeln wieder aktivieren.",
+      "resetDefaults": "Auf Standardwerte zurücksetzen",
+      "resetDefaultsMessage": "Dies setzt alle Einstellungen auf ihre Standardwerte zurück. Ihre aktuelle Konfiguration geht verloren."
+    },
     "common": {
       "save": "Speichern",
       "cancel": "Abbrechen",
@@ -449,7 +458,20 @@
       "device_name": "Gerätename",
       "room_name": "Raumname",
       "shown_under": "angezeigt unter"
-    }
+    },
+    "draft": {
+      "unsavedChanges": "Nicht gespeicherte Änderungen",
+      "discardChanges": "Änderungen verwerfen?",
+      "discardMessage": "Sie haben nicht gespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?",
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    },
+    "undo": "Rückgängig",
+    "redo": "Wiederherstellen",
+    "undoAction": "Rückgängig: {action}",
+    "redoAction": "Wiederherstellen: {action}",
+    "noUndo": "Nichts rückgängig zu machen",
+    "noRedo": "Nichts wiederherzustellen"
   },
   "changelog": {
     "titles": {

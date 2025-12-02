@@ -19,6 +19,7 @@ import { renderEntitySection, renderCustomLabelSection } from '../../components/
 import { ENTITY_CONFIGS } from '../../constants/index.js';
 import { renderEntityPicker } from '../../components/controls/entity-picker.js';
 import { t as importedT } from '../../utils/i18n.js';
+import '../../components/controls/confirmation-dialog.js';
 
 // Defensive wrapper for t() to handle edge cases with card-mod and other invasive components
 // Falls back to returning the key if the translation function fails
@@ -30,6 +31,36 @@ const t = (key, fallbackOrParams) => {
     return typeof fallbackOrParams === 'string' ? fallbackOrParams : key;
   }
 };
+
+/**
+ * Show a confirmation dialog for destructive actions
+ * @param {Object} panel - The DashviewPanel instance
+ * @param {Object} options - Dialog configuration
+ * @param {string} options.title - The dialog title
+ * @param {string} options.message - The confirmation message
+ * @param {Function} options.onConfirm - Callback to execute on confirmation
+ * @param {boolean} options.destructive - Whether this is a destructive action (default: true)
+ */
+function showConfirmation(panel, { title, message, onConfirm, destructive = true }) {
+  const dialog = document.createElement('confirmation-dialog');
+  dialog.title = title;
+  dialog.message = message;
+  dialog.confirmText = t('common.actions.confirm');
+  dialog.cancelText = t('common.actions.cancel');
+  dialog.destructive = destructive;
+
+  dialog.addEventListener('confirm', () => {
+    onConfirm();
+    dialog.remove();
+  });
+
+  dialog.addEventListener('cancel', () => {
+    dialog.remove();
+  });
+
+  dialog.open = true;
+  panel.renderRoot.appendChild(dialog);
+}
 
 /**
  * Category definitions for label mapping
@@ -142,6 +173,48 @@ export function renderLabelMappingConfig(panel, html) {
 }
 
 /**
+ * Render undo/redo controls for the admin panel
+ * @param {Object} panel - The DashviewPanel instance
+ * @param {Function} html - lit-html template function
+ * @returns {TemplateResult} Undo/redo controls HTML
+ */
+export function renderUndoRedoControls(panel, html) {
+  const canUndo = panel._settingsStore?.canUndo() || false;
+  const canRedo = panel._settingsStore?.canRedo() || false;
+  const undoDesc = panel._settingsStore?.getUndoDescription() || '';
+  const redoDesc = panel._settingsStore?.getRedoDescription() || '';
+
+  // Get undo/redo counts
+  const undoCount = panel._undoCount || 0;
+  const redoCount = panel._redoCount || 0;
+
+  return html`
+    <div class="undo-redo-controls">
+      <button class="icon-button" ?disabled=${!canUndo}
+        title=${undoDesc ? t('admin.undoAction', { action: undoDesc }) : t('admin.noUndo')}
+        @click=${() => {
+          if (panel._settingsStore?.undo) {
+            panel._settingsStore.undo();
+          }
+        }}>
+        <ha-icon icon="mdi:arrow-u-left-top"></ha-icon>
+        ${canUndo && undoCount > 0 ? html`<span class="count">(${undoCount})</span>` : ''}
+      </button>
+      <button class="icon-button" ?disabled=${!canRedo}
+        title=${redoDesc ? t('admin.redoAction', { action: redoDesc }) : t('admin.noRedo')}
+        @click=${() => {
+          if (panel._settingsStore?.redo) {
+            panel._settingsStore.redo();
+          }
+        }}>
+        <ha-icon icon="mdi:arrow-u-right-top"></ha-icon>
+        ${canRedo && redoCount > 0 ? html`<span class="count">(${redoCount})</span>` : ''}
+      </button>
+    </div>
+  `;
+}
+
+/**
  * Render the admin tab container with sub-tabs
  * New 5-tab structure: Entities | Layout | Weather | Status | Scenes
  * @param {Object} panel - The DashviewPanel instance
@@ -157,50 +230,53 @@ export function renderAdminTab(panel, html) {
 
   return html`
     <div class="container">
-      <!-- Admin Sub-Tabs (5 tabs) -->
-      <div class="admin-sub-tabs">
-        <button
-          class="admin-sub-tab ${panel._adminSubTab === 'entities' ? 'active' : ''}"
-          @click=${() => panel._adminSubTab = 'entities'}
-        >
-          <ha-icon icon="mdi:home-group"></ha-icon>
-          ${t('admin.tabs.entities')}
-        </button>
-        <button
-          class="admin-sub-tab ${panel._adminSubTab === 'layout' ? 'active' : ''}"
-          @click=${() => panel._adminSubTab = 'layout'}
-        >
-          <ha-icon icon="mdi:view-grid-plus"></ha-icon>
-          ${t('admin.tabs.layout')}
-        </button>
-        <button
-          class="admin-sub-tab ${panel._adminSubTab === 'weather' ? 'active' : ''}"
-          @click=${() => panel._adminSubTab = 'weather'}
-        >
-          <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
-          ${t('admin.tabs.weather')}
-        </button>
-        <button
-          class="admin-sub-tab ${panel._adminSubTab === 'status' ? 'active' : ''}"
-          @click=${() => panel._adminSubTab = 'status'}
-        >
-          <ha-icon icon="mdi:information-outline"></ha-icon>
-          ${t('admin.tabs.status')}
-        </button>
-        <button
-          class="admin-sub-tab ${panel._adminSubTab === 'scenes' ? 'active' : ''}"
-          @click=${() => panel._adminSubTab = 'scenes'}
-        >
-          <ha-icon icon="mdi:play-box-multiple"></ha-icon>
-          ${t('admin.tabs.scenes')}
-        </button>
-        <button
-          class="admin-sub-tab ${panel._adminSubTab === 'users' ? 'active' : ''}"
-          @click=${() => panel._adminSubTab = 'users'}
-        >
-          <ha-icon icon="mdi:account-group"></ha-icon>
-          ${t('admin.tabs.users')}
-        </button>
+      <!-- Admin Header with Sub-Tabs and Undo/Redo Controls -->
+      <div class="admin-header-bar">
+        <div class="admin-sub-tabs">
+          <button
+            class="admin-sub-tab ${panel._adminSubTab === 'entities' ? 'active' : ''}"
+            @click=${() => panel._adminSubTab = 'entities'}
+          >
+            <ha-icon icon="mdi:home-group"></ha-icon>
+            ${t('admin.tabs.entities')}
+          </button>
+          <button
+            class="admin-sub-tab ${panel._adminSubTab === 'layout' ? 'active' : ''}"
+            @click=${() => panel._adminSubTab = 'layout'}
+          >
+            <ha-icon icon="mdi:view-grid-plus"></ha-icon>
+            ${t('admin.tabs.layout')}
+          </button>
+          <button
+            class="admin-sub-tab ${panel._adminSubTab === 'weather' ? 'active' : ''}"
+            @click=${() => panel._adminSubTab = 'weather'}
+          >
+            <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
+            ${t('admin.tabs.weather')}
+          </button>
+          <button
+            class="admin-sub-tab ${panel._adminSubTab === 'status' ? 'active' : ''}"
+            @click=${() => panel._adminSubTab = 'status'}
+          >
+            <ha-icon icon="mdi:information-outline"></ha-icon>
+            ${t('admin.tabs.status')}
+          </button>
+          <button
+            class="admin-sub-tab ${panel._adminSubTab === 'scenes' ? 'active' : ''}"
+            @click=${() => panel._adminSubTab = 'scenes'}
+          >
+            <ha-icon icon="mdi:play-box-multiple"></ha-icon>
+            ${t('admin.tabs.scenes')}
+          </button>
+          <button
+            class="admin-sub-tab ${panel._adminSubTab === 'users' ? 'active' : ''}"
+            @click=${() => panel._adminSubTab = 'users'}
+          >
+            <ha-icon icon="mdi:account-group"></ha-icon>
+            ${t('admin.tabs.users')}
+          </button>
+        </div>
+        ${renderUndoRedoControls(panel, html)}
       </div>
 
       ${panel._adminSubTab === 'entities'
@@ -1163,11 +1239,19 @@ export function renderSceneButtonItem(panel, html, button, index) {
   };
 
   const removeButton = () => {
-    panel._sceneButtons = panel._sceneButtons.filter((_, i) => i !== index);
-    // Clean up search state
-    delete panel._sceneButtonSearchState[index];
-    panel._saveSettings();
-    panel.requestUpdate();
+    // Show confirmation dialog before deleting
+    const buttonName = button.label || 'New Button';
+    showConfirmation(panel, {
+      title: t('admin.confirmation.deleteScene'),
+      message: t('admin.confirmation.deleteSceneMessage', { name: buttonName }),
+      onConfirm: () => {
+        panel._sceneButtons = panel._sceneButtons.filter((_, i) => i !== index);
+        // Clean up search state
+        delete panel._sceneButtonSearchState[index];
+        panel._saveSettings();
+        panel.requestUpdate();
+      }
+    });
   };
 
   // Determine domain filter based on action type

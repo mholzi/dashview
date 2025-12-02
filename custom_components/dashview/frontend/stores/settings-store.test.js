@@ -960,6 +960,437 @@ describe('SettingsStore', () => {
     });
   });
 
+  describe('undo/redo functionality', () => {
+    describe('canUndo() and canRedo()', () => {
+      it('should return false initially', () => {
+        expect(store.canUndo()).toBe(false);
+        expect(store.canRedo()).toBe(false);
+      });
+
+      it('should return true after a change', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        expect(store.canUndo()).toBe(true);
+        expect(store.canRedo()).toBe(false);
+      });
+
+      it('should return correct values after undo', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        store.undo();
+        expect(store.canUndo()).toBe(false);
+        expect(store.canRedo()).toBe(true);
+      });
+
+      it('should return correct values after redo', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        store.undo();
+        store.redo();
+        expect(store.canUndo()).toBe(true);
+        expect(store.canRedo()).toBe(false);
+      });
+    });
+
+    describe('getUndoDescription() and getRedoDescription()', () => {
+      it('should return null when no history', () => {
+        expect(store.getUndoDescription()).toBe(null);
+        expect(store.getRedoDescription()).toBe(null);
+      });
+
+      it('should return default description for set operation', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        const desc = store.getUndoDescription();
+        expect(desc).toContain('set');
+        expect(desc).toContain('weatherEntity');
+      });
+
+      it('should return custom description for toggle', () => {
+        store.setHass(mockHass);
+        store.toggleEnabled('enabledRooms', 'room.test');
+        vi.advanceTimersByTime(150);
+        const desc = store.getUndoDescription();
+        expect(desc).toContain('room.test');
+      });
+
+      it('should return description for redo after undo', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        store.undo();
+        const desc = store.getRedoDescription();
+        expect(desc).toContain('set');
+        expect(desc).toContain('weatherEntity');
+      });
+    });
+
+    describe('undo()', () => {
+      it('should return false when undo stack is empty', () => {
+        expect(store.undo()).toBe(false);
+      });
+
+      it('should restore previous value on set()', () => {
+        store.setHass(mockHass);
+        const originalValue = store.get('weatherEntity');
+        store.set('weatherEntity', 'weather.modified', false);
+        vi.advanceTimersByTime(150);
+
+        store.undo();
+        expect(store.get('weatherEntity')).toBe(originalValue);
+      });
+
+      it('should move change to redo stack', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+
+        expect(store.canUndo()).toBe(true);
+        expect(store.canRedo()).toBe(false);
+
+        store.undo();
+
+        expect(store.canUndo()).toBe(false);
+        expect(store.canRedo()).toBe(true);
+      });
+
+      it('should trigger save after undo', async () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+
+        mockHass.callWS.mockClear();
+        store.undo();
+
+        vi.advanceTimersByTime(500);
+        await vi.runAllTimersAsync();
+
+        expect(mockHass.callWS).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'dashview/save_settings'
+          })
+        );
+      });
+
+      it('should notify listeners on undo', () => {
+        store.setHass(mockHass);
+        const listener = vi.fn();
+        store.subscribe(listener);
+
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        listener.mockClear();
+
+        store.undo();
+
+        expect(listener).toHaveBeenCalledWith('weatherEntity', expect.any(String));
+      });
+
+      it('should restore complex object values correctly', () => {
+        store.setHass(mockHass);
+        const originalConfig = store.get('infoTextConfig');
+        const newConfig = { motion: { enabled: false }, garage: { enabled: true } };
+
+        store.set('infoTextConfig', newConfig, false);
+        vi.advanceTimersByTime(150);
+
+        store.undo();
+
+        expect(store.get('infoTextConfig')).toEqual(originalConfig);
+      });
+    });
+
+    describe('redo()', () => {
+      it('should return false when redo stack is empty', () => {
+        expect(store.redo()).toBe(false);
+      });
+
+      it('should restore undone value', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.modified', false);
+        vi.advanceTimersByTime(150);
+
+        store.undo();
+        store.redo();
+
+        expect(store.get('weatherEntity')).toBe('weather.modified');
+      });
+
+      it('should move change back to undo stack', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+
+        store.undo();
+        expect(store.canUndo()).toBe(false);
+        expect(store.canRedo()).toBe(true);
+
+        store.redo();
+        expect(store.canUndo()).toBe(true);
+        expect(store.canRedo()).toBe(false);
+      });
+
+      it('should trigger save after redo', async () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        store.undo();
+
+        mockHass.callWS.mockClear();
+        store.redo();
+
+        vi.advanceTimersByTime(500);
+        await vi.runAllTimersAsync();
+
+        expect(mockHass.callWS).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'dashview/save_settings'
+          })
+        );
+      });
+    });
+
+    describe('clearHistory()', () => {
+      it('should empty both undo and redo stacks', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test1', false);
+        vi.advanceTimersByTime(150);
+        store.set('weatherEntity', 'weather.test2', false);
+        vi.advanceTimersByTime(150);
+        store.undo();
+
+        expect(store.canUndo()).toBe(true);
+        expect(store.canRedo()).toBe(true);
+
+        store.clearHistory();
+
+        expect(store.canUndo()).toBe(false);
+        expect(store.canRedo()).toBe(false);
+      });
+
+      it('should clear pending changes', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        // Don't advance timer - changes still pending
+
+        store.clearHistory();
+
+        vi.advanceTimersByTime(150);
+        expect(store.canUndo()).toBe(false);
+      });
+    });
+
+    describe('change tracking', () => {
+      it('should push changes to undo stack on set()', () => {
+        store.setHass(mockHass);
+        expect(store.canUndo()).toBe(false);
+
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+
+        expect(store.canUndo()).toBe(true);
+      });
+
+      it('should track toggleEnabled() changes', () => {
+        store.setHass(mockHass);
+        store.toggleEnabled('enabledRooms', 'room.test');
+        vi.advanceTimersByTime(150);
+
+        expect(store.canUndo()).toBe(true);
+
+        store.undo();
+        expect(store.get('enabledRooms')['room.test']).toBeFalsy();
+      });
+
+      it('should track setEnabled() changes', () => {
+        store.setHass(mockHass);
+        store.setEnabled('enabledLights', 'light.test', true);
+        vi.advanceTimersByTime(150);
+
+        expect(store.canUndo()).toBe(true);
+
+        store.undo();
+        expect(store.get('enabledLights')['light.test']).toBeFalsy();
+      });
+
+      it('should track update() changes for each key', () => {
+        store.setHass(mockHass);
+        store.update({
+          weatherEntity: 'weather.new',
+          notificationTempThreshold: 25
+        }, false);
+        vi.advanceTimersByTime(150);
+
+        expect(store.canUndo()).toBe(true);
+      });
+
+      it('should not track changes during undo operation', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test1', false);
+        vi.advanceTimersByTime(150);
+        store.set('weatherEntity', 'weather.test2', false);
+        vi.advanceTimersByTime(150);
+
+        // Should have 2 changes in undo stack
+        const undoCount = store._undoStack.length;
+        expect(undoCount).toBe(2);
+
+        // Undo should not add to stack
+        store.undo();
+        expect(store._undoStack.length).toBe(undoCount - 1);
+      });
+
+      it('should not track changes during redo operation', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(150);
+        store.undo();
+
+        const undoCount = store._undoStack.length;
+
+        // Redo should not add new changes
+        store.redo();
+        expect(store._undoStack.length).toBe(undoCount + 1);
+      });
+
+      it('should clear redo stack on new change', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test1', false);
+        vi.advanceTimersByTime(150);
+        store.undo();
+
+        expect(store.canRedo()).toBe(true);
+
+        store.set('weatherEntity', 'weather.test2', false);
+        vi.advanceTimersByTime(150);
+
+        expect(store.canRedo()).toBe(false);
+      });
+
+      it('should limit undo stack to 20 items', () => {
+        store.setHass(mockHass);
+
+        // Add 25 changes
+        for (let i = 0; i < 25; i++) {
+          store.set('weatherEntity', `weather.test${i}`, false);
+          vi.advanceTimersByTime(150);
+        }
+
+        // Should only keep last 20
+        expect(store._undoStack.length).toBe(20);
+
+        // Oldest changes should be removed (FIFO)
+        store.undo();
+        expect(store.get('weatherEntity')).toBe('weather.test23');
+      });
+    });
+
+    describe('debounce grouping', () => {
+      it('should group rapid successive changes into single undo unit', () => {
+        store.setHass(mockHass);
+
+        // Make rapid changes (within 100ms)
+        store.set('weatherEntity', 'weather.test1', false);
+        vi.advanceTimersByTime(50);
+        store.set('weatherEntity', 'weather.test2', false);
+        vi.advanceTimersByTime(50);
+        store.set('weatherEntity', 'weather.test3', false);
+
+        // Wait for debounce to complete
+        vi.advanceTimersByTime(150);
+
+        // Should only have 1 change in undo stack (last value)
+        expect(store._undoStack.length).toBe(1);
+
+        // Undo should restore to original value
+        store.undo();
+        expect(store.get('weatherEntity')).toBe('weather.forecast_home');
+      });
+
+      it('should create separate undo units for changes with gaps', () => {
+        store.setHass(mockHass);
+
+        store.set('weatherEntity', 'weather.test1', false);
+        vi.advanceTimersByTime(150); // Wait for debounce
+
+        store.set('weatherEntity', 'weather.test2', false);
+        vi.advanceTimersByTime(150); // Wait for debounce
+
+        // Should have 2 separate changes
+        expect(store._undoStack.length).toBe(2);
+      });
+
+      it('should group changes to different keys separately', () => {
+        store.setHass(mockHass);
+
+        // Rapid changes to different keys
+        store.set('weatherEntity', 'weather.test', false);
+        vi.advanceTimersByTime(50);
+        store.set('notificationTempThreshold', 25, false);
+
+        // Wait for debounce
+        vi.advanceTimersByTime(150);
+
+        // Should have 2 changes (one per key)
+        expect(store._undoStack.length).toBe(2);
+      });
+    });
+
+    describe('deep cloning', () => {
+      it('should deep clone oldValue to prevent mutation', () => {
+        store.setHass(mockHass);
+        const originalConfig = { motion: { enabled: true }, garage: { enabled: true } };
+        store.set('infoTextConfig', originalConfig, false);
+        vi.advanceTimersByTime(150);
+
+        const newConfig = { motion: { enabled: false }, garage: { enabled: false } };
+        store.set('infoTextConfig', newConfig, false);
+        vi.advanceTimersByTime(150);
+
+        // Mutate the original object
+        originalConfig.motion.enabled = 'mutated';
+
+        // Undo should restore the original value, not the mutated one
+        store.undo();
+        expect(store.get('infoTextConfig').motion.enabled).toBe(true);
+      });
+
+      it('should deep clone newValue to prevent mutation', () => {
+        store.setHass(mockHass);
+        const newConfig = { motion: { enabled: false }, garage: { enabled: false } };
+        store.set('infoTextConfig', newConfig, false);
+        vi.advanceTimersByTime(150);
+
+        store.undo();
+
+        // Mutate the object
+        newConfig.motion.enabled = 'mutated';
+
+        // Redo should restore the original new value
+        store.redo();
+        expect(store.get('infoTextConfig').motion.enabled).toBe(false);
+      });
+    });
+
+    describe('destroy() cleanup', () => {
+      it('should clear debounce group timer on destroy', () => {
+        store.setHass(mockHass);
+        store.set('weatherEntity', 'weather.test', false);
+        // Don't wait for debounce
+
+        store.destroy();
+
+        // Advance timers - pending changes should not be committed
+        vi.advanceTimersByTime(150);
+        expect(store._undoStack.length).toBe(0);
+      });
+    });
+  });
+
   describe('integration scenarios', () => {
     it('should handle typical user flow: load -> modify -> save', async () => {
       store.setHass(mockHass);
@@ -1079,6 +1510,161 @@ describe('SettingsStore', () => {
 
       // Listener should not be called
       expect(listener).toHaveBeenCalledTimes(1); // Only the first call
+    });
+  });
+
+  describe('Draft Mode', () => {
+    beforeEach(() => {
+      store.setHass(mockHass);
+    });
+
+    it('should start draft with snapshot of current values', () => {
+      store.set('weatherEntity', 'weather.test', false);
+      store.set('notificationTempThreshold', 25, false);
+
+      store.startDraft('test-form', ['weatherEntity', 'notificationTempThreshold']);
+
+      expect(store.isDraftActive()).toBe(true);
+      expect(store.getDraftValue('weatherEntity')).toBe('weather.test');
+      expect(store.getDraftValue('notificationTempThreshold')).toBe(25);
+      expect(store.hasDraftChanges()).toBe(false);
+    });
+
+    it('should update draft values without saving', () => {
+      store.startDraft('test-form', ['weatherEntity']);
+
+      store.setDraftValue('weatherEntity', 'weather.modified');
+
+      expect(store.getDraftValue('weatherEntity')).toBe('weather.modified');
+      expect(store.get('weatherEntity')).toBe('weather.forecast_home'); // Original unchanged
+      expect(store.hasDraftChanges()).toBe(true);
+    });
+
+    it('should commit draft and apply changes to settings', async () => {
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.startDraft('test-form', ['weatherEntity', 'notificationTempThreshold']);
+      store.setDraftValue('weatherEntity', 'weather.committed');
+      store.setDraftValue('notificationTempThreshold', 30);
+
+      store.commitDraft();
+
+      expect(store.get('weatherEntity')).toBe('weather.committed');
+      expect(store.get('notificationTempThreshold')).toBe(30);
+      expect(store.isDraftActive()).toBe(false);
+
+      // Should have triggered listeners
+      expect(listener).toHaveBeenCalledWith('weatherEntity', 'weather.committed');
+      expect(listener).toHaveBeenCalledWith('notificationTempThreshold', 30);
+
+      // Should have triggered save
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+      expect(mockHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings'
+        })
+      );
+    });
+
+    it('should discard draft and restore original values', () => {
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.set('weatherEntity', 'weather.original', false);
+      store.startDraft('test-form', ['weatherEntity']);
+      store.setDraftValue('weatherEntity', 'weather.modified');
+
+      store.discardDraft();
+
+      expect(store.get('weatherEntity')).toBe('weather.original');
+      expect(store.isDraftActive()).toBe(false);
+      expect(listener).toHaveBeenCalledWith('_draftDiscarded', true);
+    });
+
+    it('should detect changes correctly', () => {
+      store.startDraft('test-form', ['weatherEntity']);
+
+      expect(store.hasDraftChanges()).toBe(false);
+
+      store.setDraftValue('weatherEntity', 'weather.changed');
+      expect(store.hasDraftChanges()).toBe(true);
+
+      // Change back to original
+      store.setDraftValue('weatherEntity', 'weather.forecast_home');
+      expect(store.hasDraftChanges()).toBe(false);
+    });
+
+    it('should handle complex object values in draft', () => {
+      const complexValue = {
+        motion: { enabled: true },
+        garage: { enabled: false }
+      };
+
+      store.set('infoTextConfig', complexValue, false);
+      store.startDraft('test-form', ['infoTextConfig']);
+
+      const modifiedValue = {
+        motion: { enabled: false },
+        garage: { enabled: true }
+      };
+      store.setDraftValue('infoTextConfig', modifiedValue);
+
+      expect(store.hasDraftChanges()).toBe(true);
+      expect(store.getDraftValue('infoTextConfig')).toEqual(modifiedValue);
+      expect(store.get('infoTextConfig')).toEqual(complexValue);
+    });
+
+    it('should notify listeners on draft changes', () => {
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.startDraft('test-form', ['weatherEntity']);
+      listener.mockClear();
+
+      store.setDraftValue('weatherEntity', 'weather.test');
+
+      expect(listener).toHaveBeenCalledWith('_draft', expect.objectContaining({
+        hasChanges: true
+      }));
+    });
+
+    it('should do nothing when setting draft value without active draft', () => {
+      expect(() => {
+        store.setDraftValue('weatherEntity', 'weather.test');
+      }).not.toThrow();
+
+      expect(store.get('weatherEntity')).toBe('weather.forecast_home');
+    });
+
+    it('should return null for getDraftValue when no draft active', () => {
+      expect(store.getDraftValue('weatherEntity')).toBe(null);
+    });
+
+    it('should handle array values in draft', () => {
+      const arrayValue = ['floor1', 'floor2', 'floor3'];
+      store.set('floorOrder', arrayValue, false);
+      store.startDraft('test-form', ['floorOrder']);
+
+      const modifiedArray = ['floor3', 'floor1', 'floor2'];
+      store.setDraftValue('floorOrder', modifiedArray);
+
+      expect(store.getDraftValue('floorOrder')).toEqual(modifiedArray);
+      expect(store.get('floorOrder')).toEqual(arrayValue);
+      expect(store.hasDraftChanges()).toBe(true);
+    });
+
+    it('should use structuredClone to avoid mutation', () => {
+      const originalValue = { test: { nested: 'value' } };
+      store.set('customConfig', originalValue, false);
+      store.startDraft('test-form', ['customConfig']);
+
+      const draftValue = store.getDraftValue('customConfig');
+      draftValue.test.nested = 'modified';
+
+      // Original should not be affected
+      expect(store.get('customConfig').test.nested).toBe('value');
     });
   });
 });
