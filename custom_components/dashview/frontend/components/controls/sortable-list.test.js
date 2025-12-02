@@ -5,8 +5,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
  * Tests the reusable drag-and-drop sortable list wrapper using SortableJS
  */
 
-// Mock SortableJS (CDN URL used in production)
-vi.mock('https://esm.sh/sortablejs@1.15.6/modular/sortable.core.esm.js', () => ({
+// Mock SortableJS (local vendor copy)
+vi.mock('../../vendor/sortable.core.esm.js', () => ({
   default: {
     create: vi.fn((element, options) => {
       // Store options for later verification
@@ -138,7 +138,7 @@ describe('Story 7.1: Sortable List Component', () => {
 
   describe('SortableJS Integration', () => {
     it('should initialize SortableJS on connectedCallback', async () => {
-      const Sortable = (await import('https://esm.sh/sortablejs@1.15.6/modular/sortable.core.esm.js')).default;
+      const Sortable = (await import('../../vendor/sortable.core.esm.js')).default;
       await import('./sortable-list.js');
 
       const element = document.createElement('sortable-list');
@@ -304,7 +304,7 @@ describe('Story 7.1: Sortable List Component', () => {
     });
 
     it('should reinitialize on refresh() call', async () => {
-      const Sortable = (await import('https://esm.sh/sortablejs@1.15.6/modular/sortable.core.esm.js')).default;
+      const Sortable = (await import('../../vendor/sortable.core.esm.js')).default;
       await import('./sortable-list.js');
 
       const element = document.createElement('sortable-list');
@@ -403,7 +403,7 @@ describe('Story 7.1: Sortable List Component', () => {
     });
 
     it('should not call refresh when not connected', async () => {
-      const Sortable = (await import('https://esm.sh/sortablejs@1.15.6/modular/sortable.core.esm.js')).default;
+      const Sortable = (await import('../../vendor/sortable.core.esm.js')).default;
       await import('./sortable-list.js');
 
       const element = document.createElement('sortable-list');
@@ -448,10 +448,10 @@ describe('Story 7.1: Sortable List Component', () => {
       const spec = {
         maxBundleSize: '15KB',
         expectedSize: '~10KB',
-        library: 'https://esm.sh/sortablejs@1.15.6/modular/sortable.core.esm.js'
+        library: 'vendor/sortable.core.esm.js'
       };
 
-      expect(spec.library).toBe('https://esm.sh/sortablejs@1.15.6/modular/sortable.core.esm.js');
+      expect(spec.library).toBe('vendor/sortable.core.esm.js');
       expect(spec.maxBundleSize).toBe('15KB');
     });
   });

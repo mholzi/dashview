@@ -39,8 +39,8 @@
  * }
  */
 
-// Use CDN for browser ES module compatibility (Home Assistant doesn't use a bundler)
-import Sortable from 'https://esm.sh/sortablejs@1.15.6/modular/sortable.core.esm.js';
+// Local vendor copy for Home Assistant compatibility (no external CDN dependency)
+import Sortable from '../../vendor/sortable.core.esm.js';
 
 export class SortableList extends HTMLElement {
   static get observedAttributes() {
