@@ -15,16 +15,17 @@ import { t } from '../../utils/i18n.js';
 export function renderSecurityPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to filter enabled entities by current label
+  // Helper to get all entities with a label, respecting explicit enable/disable in enabledMap
   const filterByCurrentLabel = (enabledMap, labelId) => {
     if (!labelId) return enabledMap;
     const filtered = {};
-    Object.entries(enabledMap).forEach(([entityId, enabled]) => {
-      // Skip only explicitly disabled entities (enabled by default)
-      if (enabled === false) return;
-      const entityReg = component._entityRegistry.find(e => e.entity_id === entityId);
-      if (entityReg && entityReg.labels && entityReg.labels.includes(labelId)) {
-        filtered[entityId] = enabled;
+    // Look at ALL entities in registry with the matching label (not just enabledMap)
+    component._entityRegistry.forEach(entityReg => {
+      if (entityReg.labels && entityReg.labels.includes(labelId)) {
+        const entityId = entityReg.entity_id;
+        // Skip only explicitly disabled entities (enabled by default)
+        if (enabledMap[entityId] === false) return;
+        filtered[entityId] = enabledMap[entityId] !== undefined ? enabledMap[entityId] : true;
       }
     });
     return filtered;
