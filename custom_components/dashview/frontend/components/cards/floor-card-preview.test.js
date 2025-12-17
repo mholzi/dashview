@@ -184,7 +184,8 @@ describe('FloorCardPreview', () => {
       expect(grid).toBeDefined();
 
       // Should have slots 0-3 directly in grid, and 4-5 in lower-row
-      const directSlots = grid.querySelectorAll(':scope > .slot');
+      // Note: Using Array.from + filter instead of :scope > .slot for jsdom compatibility
+      const directSlots = Array.from(grid.children).filter(el => el.classList.contains('slot'));
       const lowerRow = grid.querySelector('.lower-row');
 
       expect(directSlots.length).toBe(4); // slots 0, 1, 2, 3
