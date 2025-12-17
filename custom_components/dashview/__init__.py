@@ -112,21 +112,62 @@ async def websocket_save_settings(
     connection.send_result(msg["id"], {"success": True})
 
 
+def _get_asset_manifest(frontend_path: Path) -> dict | None:
+    """Read asset manifest for content-hashed filenames.
+
+    Returns the manifest dict if found, None otherwise (dev mode).
+    """
+    manifest_path = frontend_path / "dist" / "asset-manifest.json"
+    try:
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text())
+            _LOGGER.debug("Loaded asset manifest: %s", manifest)
+            return manifest
+    except (json.JSONDecodeError, OSError) as err:
+        _LOGGER.warning("Failed to read asset manifest: %s", err)
+    return None
+
+
 async def async_setup_frontend(hass: HomeAssistant) -> None:
     """Set up the frontend panel."""
     frontend_path = Path(__file__).parent / "frontend"
+    dist_path = frontend_path / "dist"
 
-    # Register static path for frontend assets
-    # cache_headers=False ensures browser always loads fresh JS after updates
-    await hass.http.async_register_static_paths(
-        [
+    # Check for bundled assets (production mode)
+    manifest = _get_asset_manifest(frontend_path)
+
+    static_paths = [
+        # Always register base frontend path for unbundled development
+        StaticPathConfig(
+            URL_BASE,
+            str(frontend_path),
+            cache_headers=False,
+        )
+    ]
+
+    # If dist exists, register it for bundled assets
+    if dist_path.exists():
+        static_paths.append(
             StaticPathConfig(
-                URL_BASE,
-                str(frontend_path),
-                cache_headers=False,
+                f"{URL_BASE}/dist",
+                str(dist_path),
+                # Enable caching for hashed files (filename changes on content change)
+                cache_headers=True,
             )
-        ]
-    )
+        )
+
+    await hass.http.async_register_static_paths(static_paths)
+
+    # Determine JS URL based on manifest availability
+    if manifest and "dashview-panel.js" in manifest:
+        # Production mode: use content-hashed bundle
+        hashed_filename = manifest["dashview-panel.js"]
+        js_url = f"{URL_BASE}/dist/{hashed_filename}"
+        _LOGGER.info("Using bundled frontend: %s", hashed_filename)
+    else:
+        # Development mode: use unbundled source with version query param
+        js_url = f"{URL_BASE}/dashview-panel.js?v={VERSION}"
+        _LOGGER.info("Using unbundled frontend (dev mode)")
 
     # Register the panel (only if not already registered)
     panel_url = PANEL_URL.lstrip("/")
@@ -141,7 +182,7 @@ async def async_setup_frontend(hass: HomeAssistant) -> None:
             config={
                 "_panel_custom": {
                     "name": PANEL_NAME,
-                    "js_url": f"{URL_BASE}/dashview-panel.js?v={VERSION}",
+                    "js_url": js_url,
                     "embed_iframe": False,
                 }
             },

@@ -20,6 +20,9 @@ Thumbs.db
 node_modules/
 coverage/
 
+# Build output
+custom_components/dashview/frontend/dist/
+
 # Local development
 bmad/
 .bmad/
