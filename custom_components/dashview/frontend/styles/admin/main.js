@@ -1,0 +1,289 @@
+/**
+ * Admin Main Styles
+ * Admin tab main styles - area cards, toggles, lights section, bulk actions
+ */
+
+export const mainStyles = `
+  /* ==================== ADMIN TAB ==================== */
+  .area-card {
+    background: var(--card-background-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--ha-card-box-shadow, 0 2px 8px var(--dv-shadow-light));
+  }
+
+  .area-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .area-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary-color, #fff);
+  }
+
+  .area-icon.disabled {
+    background: var(--secondary-background-color);
+    color: var(--secondary-text-color);
+  }
+
+  .area-title {
+    flex: 1;
+  }
+
+  .area-name {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+  }
+
+  .area-subtitle {
+    font-size: 0.85em;
+    color: var(--secondary-text-color);
+  }
+
+  .area-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    background: var(--secondary-background-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .toggle-switch.on {
+    background: var(--primary-color);
+  }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform var(--dv-transition-slow) ease;
+  }
+
+  .toggle-switch.on::after {
+    transform: translateX(24px);
+  }
+
+  .expand-icon {
+    --mdc-icon-size: 24px;
+    color: var(--secondary-text-color);
+    transition: transform var(--dv-transition-slow) ease;
+  }
+
+  .expand-icon.expanded {
+    transform: rotate(180deg);
+  }
+
+  .lights-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--divider-color);
+  }
+
+  .lights-title {
+    font-size: 1em;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lights-title.collapsible {
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .lights-title.collapsible:hover {
+    opacity: 0.7;
+  }
+
+  .entity-section-chevron {
+    --mdc-icon-size: 20px;
+    transition: transform 200ms ease;
+  }
+
+  .entity-section-chevron.expanded {
+    transform: rotate(180deg);
+  }
+
+  .entity-section-entities {
+    overflow: hidden;
+    transition: max-height 200ms ease, opacity 200ms ease;
+  }
+
+  .entity-section-entities.collapsed {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .entity-section-entities.expanded {
+    max-height: 2000px;
+    opacity: 1;
+  }
+
+  /* Bulk Action Buttons */
+  .bulk-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .bulk-action-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid var(--dv-gray400);
+    background: transparent;
+    color: var(--secondary-text-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .bulk-action-btn:hover {
+    background: var(--dv-gray200);
+    border-color: var(--dv-gray500);
+  }
+
+  .bulk-action-btn:active {
+    transform: scale(0.95);
+  }
+
+  .entity-expand-controls {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px 12px;
+    border-bottom: 1px solid var(--divider-color);
+  }
+
+  .entity-expand-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--primary-background-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 6px;
+    color: var(--primary-text-color);
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .entity-expand-button:hover {
+    background: var(--secondary-background-color);
+    border-color: var(--primary-color);
+  }
+
+  .entity-expand-button ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
+  .light-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--primary-background-color);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .light-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .light-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .light-info ha-icon {
+    --mdc-icon-size: 20px;
+    color: var(--secondary-text-color);
+  }
+
+  .light-info.light-on ha-icon {
+    color: var(--warning-color, #ff9800);
+  }
+
+  .light-name {
+    color: var(--primary-text-color);
+    font-size: 0.95em;
+  }
+
+  .light-state {
+    font-size: 0.8em;
+    color: var(--secondary-text-color);
+    margin-left: 4px;
+  }
+
+  .light-state.on {
+    color: var(--success-color, #4caf50);
+  }
+
+  .no-lights {
+    color: var(--secondary-text-color);
+    font-style: italic;
+    padding: 8px 0;
+  }
+
+  .no-areas {
+    text-align: center;
+    padding: 48px;
+    color: var(--secondary-text-color);
+  }
+
+  .section-title {
+    font-size: 1.5em;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin: 0 0 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title ha-icon {
+    color: var(--primary-color);
+  }
+
+  .no-selected-lights {
+    text-align: center;
+    padding: 32px;
+    color: var(--secondary-text-color);
+  }
+
+  .no-selected-lights ha-icon {
+    --mdc-icon-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+  }
+`;
