@@ -164,6 +164,15 @@
     console.warn("Dashview: Failed to load services module", e);
   }
 
+  // Load core utilities module
+  let coreUtils = null;
+  try {
+    coreUtils = await import(`./core/index.js?v=${DASHVIEW_VERSION}`);
+    debugLog("Loaded core utilities module");
+  } catch (e) {
+    console.warn("Dashview: Failed to load core utilities module", e);
+  }
+
   // Load i18n module
   let initI18n = null;
   let getCurrentLang = null;
@@ -596,80 +605,9 @@
     }
 
     _saveSettings() {
-      if (!settingsStore) {
-        console.error("Settings store not available");
-        return;
+      if (coreUtils) {
+        coreUtils.saveSettings(this, settingsStore, debugLog);
       }
-      // Don't save until settings have been loaded from backend
-      // This prevents overwriting saved settings with empty defaults on reload
-      if (!this._settingsLoaded) {
-        debugLog('panel', 'Skipping save - settings not yet loaded');
-        return;
-      }
-      // Sync local properties to store and save
-      settingsStore.update({
-        enabledRooms: this._enabledRooms,
-        enabledLights: this._enabledLights,
-        enabledMotionSensors: this._enabledMotionSensors,
-        enabledSmokeSensors: this._enabledSmokeSensors,
-        enabledCovers: this._enabledCovers,
-        enabledMediaPlayers: this._enabledMediaPlayers,
-        enabledTVs: this._enabledTVs,
-        enabledLocks: this._enabledLocks,
-        enabledGarages: this._enabledGarages,
-        enabledWindows: this._enabledWindows,
-        enabledVibrationSensors: this._enabledVibrationSensors,
-        enabledTemperatureSensors: this._enabledTemperatureSensors,
-        enabledHumiditySensors: this._enabledHumiditySensors,
-        enabledClimates: this._enabledClimates,
-        enabledRoofWindows: this._enabledRoofWindows,
-        notificationTempThreshold: this._notificationTempThreshold,
-        notificationHumidityThreshold: this._notificationHumidityThreshold,
-        weatherEntity: this._weatherEntity,
-        weatherCurrentTempEntity: this._weatherCurrentTempEntity,
-        weatherCurrentStateEntity: this._weatherCurrentStateEntity,
-        weatherTodayTempEntity: this._weatherTodayTempEntity,
-        weatherTodayStateEntity: this._weatherTodayStateEntity,
-        weatherTomorrowTempEntity: this._weatherTomorrowTempEntity,
-        weatherTomorrowStateEntity: this._weatherTomorrowStateEntity,
-        weatherDay2TempEntity: this._weatherDay2TempEntity,
-        weatherDay2StateEntity: this._weatherDay2StateEntity,
-        weatherPrecipitationEntity: this._weatherPrecipitationEntity,
-        hourlyForecastEntity: this._hourlyForecastEntity,
-        dwdWarningEntity: this._dwdWarningEntity,
-        floorOrder: this._floorOrder,
-        roomOrder: this._roomOrder,
-        floorCardConfig: this._floorCardConfig,
-        floorOverviewEnabled: this._floorOverviewEnabled,
-        garbageSensors: this._garbageSensors,
-        garbageDisplayFloor: this._garbageDisplayFloor,
-        infoTextConfig: this._infoTextConfig,
-        sceneButtons: this._sceneButtons,
-        roomSceneButtons: this._roomSceneButtons,
-        customLabels: this._customLabels,
-        enabledCustomEntities: this._enabledCustomEntities,
-        enabledAppliances: this._enabledAppliances,
-        trainDepartures: this._trainDepartures,
-        mediaPresets: this._mediaPresets,
-        userPhotos: this._userPhotos,
-        // Category label mappings
-        categoryLabels: {
-          light: this._lightLabelId,
-          cover: this._coverLabelId,
-          roofWindow: this._roofWindowLabelId,
-          window: this._windowLabelId,
-          garage: this._garageLabelId,
-          motion: this._motionLabelId,
-          smoke: this._smokeLabelId,
-          vibration: this._vibrationLabelId,
-          temperature: this._temperatureLabelId,
-          humidity: this._humidityLabelId,
-          climate: this._climateLabelId,
-          mediaPlayer: this._mediaPlayerLabelId,
-          tv: this._tvLabelId,
-          lock: this._lockLabelId,
-        },
-      }, true); // true = save immediately (debounced internally)
     }
 
     /**
@@ -678,32 +616,8 @@
      * @param {string|null} labelId - Label ID to map, or null to clear
      */
     _setCategoryLabel(category, labelId) {
-      const propMap = {
-        light: '_lightLabelId',
-        cover: '_coverLabelId',
-        roofWindow: '_roofWindowLabelId',
-        window: '_windowLabelId',
-        garage: '_garageLabelId',
-        motion: '_motionLabelId',
-        smoke: '_smokeLabelId',
-        vibration: '_vibrationLabelId',
-        temperature: '_temperatureLabelId',
-        humidity: '_humidityLabelId',
-        climate: '_climateLabelId',
-        mediaPlayer: '_mediaPlayerLabelId',
-        tv: '_tvLabelId',
-      };
-
-      const prop = propMap[category];
-      if (prop) {
-        this[prop] = labelId;
-        this._saveSettings();
-
-        // Update roomDataService with new label IDs
-        this._updateRoomDataServiceLabelIds();
-
-        this.requestUpdate();
-        console.log(`Dashview: Set ${category} label to "${labelId}"`);
+      if (coreUtils) {
+        coreUtils.setCategoryLabel(this, category, labelId, () => this._saveSettings(), () => this._updateRoomDataServiceLabelIds());
       }
     }
 
@@ -711,23 +625,8 @@
      * Update roomDataService with current label ID mappings
      */
     _updateRoomDataServiceLabelIds() {
-      if (roomDataService) {
-        roomDataService.setLabelIds({
-          light: this._lightLabelId,
-          cover: this._coverLabelId,
-          roofWindow: this._roofWindowLabelId,
-          window: this._windowLabelId,
-          garage: this._garageLabelId,
-          motion: this._motionLabelId,
-          smoke: this._smokeLabelId,
-          vibration: this._vibrationLabelId,
-          temperature: this._temperatureLabelId,
-          humidity: this._humidityLabelId,
-          climate: this._climateLabelId,
-          mediaPlayer: this._mediaPlayerLabelId,
-          tv: this._tvLabelId,
-          lock: this._lockLabelId,
-        });
+      if (coreUtils) {
+        coreUtils.updateRoomDataServiceLabelIds(this, roomDataService);
       }
     }
 
@@ -1855,35 +1754,16 @@
     }
 
     // Generic toggle helper for boolean properties
-    _toggleBoolProp(key) { this[key] = !this[key]; this.requestUpdate(); }
+    _toggleBoolProp(key) { coreUtils ? coreUtils.toggleBoolProp(this, key) : (this[key] = !this[key], this.requestUpdate()); }
 
     _togglePopupRoofWindowExpanded() { this._toggleBoolProp('_popupRoofWindowExpanded'); }
 
     _toggleAreaExpanded(areaId) {
-      this._expandedAreas = {
-        ...this._expandedAreas,
-        [areaId]: !this._expandedAreas[areaId],
-      };
-      this.requestUpdate();
+      coreUtils ? coreUtils.toggleAreaExpanded(this, areaId) : (this._expandedAreas = { ...this._expandedAreas, [areaId]: !this._expandedAreas[areaId] }, this.requestUpdate());
     }
 
     _toggleEntityTypeSection(areaId, typeKey) {
-      // Initialize if not exists
-      if (!this._expandedEntityTypes) {
-        this._expandedEntityTypes = {};
-      }
-      if (!this._expandedEntityTypes[areaId]) {
-        this._expandedEntityTypes[areaId] = new Set();
-      }
-
-      // Toggle the typeKey in the Set
-      if (this._expandedEntityTypes[areaId].has(typeKey)) {
-        this._expandedEntityTypes[areaId].delete(typeKey);
-      } else {
-        this._expandedEntityTypes[areaId].add(typeKey);
-      }
-
-      this.requestUpdate();
+      coreUtils ? coreUtils.toggleEntityTypeSection(this, areaId, typeKey) : this.requestUpdate();
     }
 
     _openRoomPopup(areaId) {
@@ -1921,14 +1801,7 @@
     }
 
     _formatTimeAgo(lastChanged) {
-      if (!lastChanged) return '';
-      const lastChangedDate = new Date(lastChanged);
-      const now = new Date();
-      const diffSec = Math.floor((now - lastChangedDate) / 1000);
-      if (diffSec < 60) return `${diffSec}s ago`;
-      if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-      if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-      return `${Math.floor(diffSec / 86400)}d ago`;
+      return coreUtils ? coreUtils.formatTimeAgo(lastChanged) : '';
     }
 
     _getRoomPopupChips(areaId) {
@@ -2118,8 +1991,7 @@
 
     // Slider position helper (inverted: left=100%, right=0%)
     _getInvertedSliderPosition(e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      return 100 - Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+      return coreUtils ? coreUtils.getInvertedSliderPosition(e) : 0;
     }
 
     _handleRoofWindowSliderClick(e, entityId) { this._setRoofWindowPosition(entityId, this._getInvertedSliderPosition(e)); }
@@ -2133,16 +2005,7 @@
     _setAllCoversPosition(areaId, position) { this._getEnabledCoversForRoom(areaId).forEach(c => this._setCoverPosition(c.entity_id, position)); }
 
     _formatGarageLastChanged(lastChanged) {
-      if (!lastChanged) return '';
-      const last = new Date(lastChanged);
-      if (isNaN(last.getTime())) return '';
-      const diff = Date.now() - last.getTime();
-      const mins = Math.floor(diff / 60000), hrs = Math.floor(mins / 60), days = Math.floor(hrs / 24);
-      if (days >= 2) return `vor ${days} Tagen`;
-      if (days >= 1) return `Gestern`;
-      if (hrs >= 1) return `vor ${hrs}h`;
-      if (mins >= 1) return `vor ${mins}min`;
-      return 'Gerade eben';
+      return coreUtils ? coreUtils.formatGarageLastChanged(lastChanged) : '';
     }
 
     _toggleAllRoomLights(areaId, turnOn) {
@@ -3342,36 +3205,7 @@
      * @returns {string|null} Formatted time string
      */
     _formatRemainingTime(value) {
-      if (!value || value === 'unknown' || value === 'unavailable') return null;
-
-      // Try parsing as ISO timestamp
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        const now = new Date();
-        const diffMs = date - now;
-        if (diffMs > 0) {
-          const minutes = Math.round(diffMs / 60000);
-          if (minutes >= 60) {
-            const hours = Math.floor(minutes / 60);
-            const mins = minutes % 60;
-            return `${hours}h ${mins}min`;
-          }
-          return `${minutes} min`;
-        }
-      }
-
-      // Try parsing as number (minutes)
-      const num = parseFloat(value);
-      if (!isNaN(num) && num > 0) {
-        if (num >= 60) {
-          const hours = Math.floor(num / 60);
-          const mins = Math.round(num % 60);
-          return `${hours}h ${mins}min`;
-        }
-        return `${Math.round(num)} min`;
-      }
-
-      return null;
+      return coreUtils ? coreUtils.formatRemainingTime(value) : null;
     }
 
     // ============================================
@@ -3478,13 +3312,7 @@
     }
 
     _formatDate() {
-      const now = new Date();
-      return now.toLocaleDateString("de-DE", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+      return coreUtils ? coreUtils.formatDate() : '';
     }
 
     _setTab(tab) {

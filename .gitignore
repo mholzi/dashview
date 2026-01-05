@@ -26,5 +26,7 @@ custom_components/dashview/frontend/dist/
 # Local development
 bmad/
 .bmad/
+_bmad/
+_bmad-output/
 .claude/
 docs/
