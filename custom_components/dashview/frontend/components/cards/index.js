@@ -3,7 +3,12 @@
  * Re-exports all card components for easy importing
  */
 
-export { renderEntityItem, renderEntitySection } from './entity-item.js';
+export {
+  renderEntityItem,
+  renderEntitySection,
+  renderCustomEntityItem,
+  renderCustomLabelSection
+} from './entity-item.js';
 export {
   renderFloorOverviewSkeleton,
   renderGarbageCardSkeleton,

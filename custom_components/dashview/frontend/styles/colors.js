@@ -60,6 +60,11 @@ export const colorStyles = `
     --dv-shadow-light: rgba(0, 0, 0, 0.1);
     --dv-shadow-medium: rgba(0, 0, 0, 0.15);
     --dv-shadow-heavy: rgba(0, 0, 0, 0.2);
+    --dv-shadow-interactive: 0 2px 8px rgba(0, 0, 0, 0.12);
+    --dv-shadow-pressed: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+    /* Animation */
+    --dv-animation-press: 0.1s ease-out;
 
     /* Border Radius Scale */
     --dv-radius-sm: 8px;
@@ -137,10 +142,12 @@ export const colorStyles = `
       /* Highlight for transparent overlays - matches mysmarthome dark theme */
       --dv-highlight-rgb: 250, 251, 252;
 
-      /* Shadow - lighter for dark mode */
+      /* Shadow - increased opacity for dark mode visibility */
       --dv-shadow-light: rgba(0, 0, 0, 0.3);
       --dv-shadow-medium: rgba(0, 0, 0, 0.4);
       --dv-shadow-heavy: rgba(0, 0, 0, 0.5);
+      --dv-shadow-interactive: 0 2px 8px rgba(0, 0, 0, 0.25);
+      --dv-shadow-pressed: 0 1px 3px rgba(0, 0, 0, 0.15);
     }
   }
 
@@ -180,6 +187,8 @@ export const colorStyles = `
     --dv-shadow-light: rgba(0, 0, 0, 0.3);
     --dv-shadow-medium: rgba(0, 0, 0, 0.4);
     --dv-shadow-heavy: rgba(0, 0, 0, 0.5);
+    --dv-shadow-interactive: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --dv-shadow-pressed: 0 1px 3px rgba(0, 0, 0, 0.15);
   }
 
   @media (max-width: 500px) {

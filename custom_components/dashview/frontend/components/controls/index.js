@@ -17,3 +17,7 @@ export {
 // Import sortable-list to ensure it registers as custom element
 import './sortable-list.js';
 export { SortableList } from './sortable-list.js';
+
+// Import confirmation-dialog to ensure it registers as custom element
+// Note: Class cannot be exported (async definition), use via document.createElement('confirmation-dialog')
+import './confirmation-dialog.js';

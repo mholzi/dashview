@@ -4,9 +4,9 @@
  */
 
 import { getFloorIcon } from '../../utils/index.js';
-import { renderEntitySection, renderCustomLabelSection } from '../../components/cards/entity-item.js';
+import { renderEntitySection, renderCustomLabelSection } from '../../components/cards/index.js';
 import { ENTITY_CONFIGS } from '../../constants/index.js';
-import { renderEntityPicker } from '../../components/controls/entity-picker.js';
+import { renderEntityPicker } from '../../components/controls/index.js';
 import { t, showConfirmation } from './shared.js';
 import '../../components/controls/sortable-list.js';
 import '../../components/cards/floor-card-preview.js';

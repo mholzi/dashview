@@ -3,7 +3,7 @@
  * Renders the global media player popup with area tabs and player controls
  */
 
-import { renderPopupHeader } from '../../components/layout/popup-header.js';
+import { renderPopupHeader } from '../../components/layout/index.js';
 import { t } from '../../utils/i18n.js';
 
 // Cache for Spotify artwork URLs (media_content_id -> image_url)

@@ -45,6 +45,7 @@ export const TRANSITION = {
   fast: '0.15s',
   normal: '0.2s',
   slow: '0.3s',
+  press: '0.1s',
 };
 
 // Z-index scale
@@ -102,6 +103,8 @@ export const SHADOWS = {
   light: 'var(--dv-shadow-light)',
   medium: 'var(--dv-shadow-medium)',
   heavy: 'var(--dv-shadow-heavy)',
+  interactive: 'var(--dv-shadow-interactive)',
+  pressed: 'var(--dv-shadow-pressed)',
 };
 
 // Card dimensions

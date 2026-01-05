@@ -3,7 +3,7 @@
  * Weather entity selection and DWD warning configuration
  */
 
-import { renderEntityPicker } from '../../components/controls/entity-picker.js';
+import { renderEntityPicker } from '../../components/controls/index.js';
 import { t } from './shared.js';
 
 /**

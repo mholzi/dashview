@@ -3,7 +3,7 @@
  * Renders the "What's New" popup showing version updates
  */
 
-import { renderPopupHeader } from '../../components/layout/popup-header.js';
+import { renderPopupHeader } from '../../components/layout/index.js';
 import { getNewChanges } from '../../constants/changelog.js';
 import { t } from '../../utils/i18n.js';
 

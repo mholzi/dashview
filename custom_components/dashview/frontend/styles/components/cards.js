@@ -15,8 +15,25 @@ export const cardStyles = `
     height: calc(100% - 8px);
     background: var(--dv-gray300);
     border-radius: var(--dv-radius-md);
-    transition: background var(--dv-transition-normal) ease;
+    transition: box-shadow var(--dv-animation-press), transform var(--dv-animation-press);
     overflow: hidden;
+    /*
+     * Interactive shadow always visible for discoverability (touch-first design).
+     * Shadow indicates this card supports long-press to reveal details.
+     */
+    box-shadow: var(--dv-shadow-interactive);
+  }
+
+  /* Pressed state for tactile feedback on long-press */
+  .floor-device-card:active:not(.unavailable) {
+    box-shadow: var(--dv-shadow-pressed);
+    transform: scale(0.98);
+  }
+
+  /* Keyboard accessibility - visible focus indicator */
+  .floor-device-card:focus-visible:not(.unavailable) {
+    outline: 2px solid var(--dv-blue);
+    outline-offset: 2px;
   }
 
   .floor-device-card.big {
@@ -38,6 +55,8 @@ export const cardStyles = `
   .floor-device-card.unavailable {
     background: var(--dv-gray300);
     opacity: 0.6;
+    /* Unavailable cards are not interactive - no shadow */
+    box-shadow: none;
   }
 
   /* Icon in top-right corner */
@@ -142,7 +161,7 @@ export const cardStyles = `
   .garbage-card {
     position: relative;
     height: 147px;
-    overflow: hidden;
+    overflow: clip;
     border-radius: var(--dv-radius-md);
     cursor: grab;
     user-select: none;
@@ -161,7 +180,7 @@ export const cardStyles = `
   }
 
   .garbage-slide {
-    min-width: 100%;
+    min-width: calc(100% - 20px);
     height: 143px;
     box-sizing: border-box;
     padding: 20px;
@@ -171,6 +190,29 @@ export const cardStyles = `
     background: var(--dv-gray000);
     border-radius: var(--dv-radius-md);
     cursor: pointer;
+    /*
+     * Interactive shadow always visible for discoverability (touch-first design).
+     * Shadow indicates this card supports long-press to reveal details.
+     */
+    box-shadow: var(--dv-shadow-interactive);
+    transition: box-shadow var(--dv-animation-press), transform var(--dv-animation-press);
+  }
+
+  /* Pressed state for tactile feedback on long-press */
+  .garbage-slide:active {
+    box-shadow: var(--dv-shadow-pressed);
+    transform: scale(0.98);
+  }
+
+  /* Keyboard accessibility - visible focus indicator */
+  .garbage-slide:focus-visible {
+    outline: 2px solid var(--dv-blue);
+    outline-offset: 2px;
+  }
+
+  /* Last slide should be full width - no peek beyond the last card */
+  .garbage-slide:last-child {
+    min-width: 100%;
   }
 
   .garbage-slide.urgent {

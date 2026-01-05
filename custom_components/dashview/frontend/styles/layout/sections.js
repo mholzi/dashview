@@ -64,8 +64,15 @@ export const sectionsStyles = `
   }
 
   /* ==================== ROOM CARDS GRID ==================== */
+  /*
+   * Note: Room cards intentionally do NOT have interactive shadows (--dv-shadow-interactive).
+   * These cards use tap-to-toggle with color change feedback (gradient backgrounds).
+   * Interactive shadows are reserved for cards that reveal additional content on long-press
+   * (floor overview slides, garbage slides, floor device cards).
+   * See UX Design Specification: "toggle feedback via color change is sufficient"
+   */
   .room-card {
-    border-radius: 12px;
+    border-radius: var(--dv-radius-md);
     cursor: pointer;
     transition: all var(--dv-transition-normal) ease;
     display: flex;

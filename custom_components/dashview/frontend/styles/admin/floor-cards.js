@@ -371,7 +371,7 @@ export const floorCardsStyles = `
   .floor-overview-card {
     position: relative;
     height: 147px;
-    overflow: hidden;
+    overflow: clip;
     border-radius: var(--dv-radius-md);
     cursor: grab;
     user-select: none;
@@ -390,7 +390,7 @@ export const floorCardsStyles = `
   }
 
   .floor-overview-slide {
-    min-width: 100%;
+    min-width: calc(100% - 20px);
     height: 143px;
     box-sizing: border-box;
     padding: 8px;
@@ -401,6 +401,30 @@ export const floorCardsStyles = `
     background: var(--dv-gray000);
     border-radius: var(--dv-radius-md);
     cursor: pointer;
+    /*
+     * Interactive shadow always visible for discoverability (touch-first design).
+     * Shadow indicates this card supports long-press to reveal room popup.
+     * On press, shadow reduces and card scales for tactile feedback.
+     */
+    box-shadow: var(--dv-shadow-interactive);
+    transition: box-shadow var(--dv-animation-press), transform var(--dv-animation-press);
+  }
+
+  /* Pressed state for tactile feedback on long-press */
+  .floor-overview-slide:active {
+    box-shadow: var(--dv-shadow-pressed);
+    transform: scale(0.98);
+  }
+
+  /* Keyboard accessibility - visible focus indicator */
+  .floor-overview-slide:focus-visible {
+    outline: 2px solid var(--dv-blue);
+    outline-offset: 2px;
+  }
+
+  /* Last slide should be full width - no peek beyond the last card */
+  .floor-overview-slide:last-child {
+    min-width: 100%;
   }
 
   .floor-overview-slide-name {

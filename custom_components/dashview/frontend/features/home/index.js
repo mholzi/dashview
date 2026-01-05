@@ -5,7 +5,7 @@
 
 // Import utilities from shared modules
 import { triggerHaptic } from '../../utils/haptic.js';
-import { createSwipeHandlers } from '../../components/controls/swipeable.js';
+import { createSwipeHandlers } from '../../components/controls/index.js';
 import { getFloorIcon } from '../../utils/icons.js';
 import { getEntityDisplayService } from '../../services/entity-display-service.js';
 import { openMoreInfo, toggleLight, getFriendlyName } from '../../utils/helpers.js';
@@ -267,7 +267,7 @@ export function renderFloorOverviewCard(component, html, floorId) {
     >
       <div
         class="floor-overview-slides"
-        style="transform: translateX(-${currentIndex * 100}%);"
+        style="transform: translateX(calc(-${currentIndex * 100}% + ${currentIndex * 20}px));"
       >
         ${roomsForFloor.map((room, idx) => {
           const data = getRoomData(room);
@@ -547,7 +547,7 @@ export function renderGarbageCard(component, html) {
     >
       <div
         class="garbage-slides"
-        style="transform: translateX(-${currentIndex * 100}%);"
+        style="transform: translateX(calc(-${currentIndex * 100}% + ${currentIndex * 20}px));"
       >
         ${garbageData.map((item, idx) => {
           let slideClass = '';

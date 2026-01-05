@@ -6,7 +6,7 @@
  * into smaller, focused components.
  */
 
-import { renderEntityCard, renderEmptyCard } from '../../components/cards/entity-card.js';
+import { renderEntityCard, renderEmptyCard } from '../../components/cards/index.js';
 import { t } from '../../utils/i18n.js';
 
 /**

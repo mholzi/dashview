@@ -3,7 +3,7 @@
  * Renders the weather detail popup with current conditions, hourly forecast, and daily forecast
  */
 
-import { renderPopupHeader } from '../../components/layout/popup-header.js';
+import { renderPopupHeader } from '../../components/layout/index.js';
 import { t } from '../../utils/i18n.js';
 
 /**

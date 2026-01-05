@@ -3,7 +3,7 @@
  * Renders the room detail popup with climate controls, lights, covers, media players, and garages
  */
 
-import { renderPopupHeader } from '../../components/layout/popup-header.js';
+import { renderPopupHeader } from '../../components/layout/index.js';
 import { renderTemperatureChart } from '../../components/charts/index.js';
 import { openMoreInfo } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
