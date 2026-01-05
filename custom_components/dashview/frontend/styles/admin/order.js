@@ -259,18 +259,6 @@ export const orderStyles = `
     margin-left: 20px;
   }
 
-  .order-empty-state {
-    text-align: center;
-    padding: 32px;
-    color: var(--secondary-text-color);
-  }
-
-  .order-empty-state ha-icon {
-    --mdc-icon-size: 48px;
-    margin-bottom: 12px;
-    opacity: 0.5;
-  }
-
   /* ==================== INFO HEADER ==================== */
   .info-header {
     text-align: center;

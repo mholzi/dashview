@@ -478,13 +478,7 @@
       "discardMessage": "Sie haben nicht gespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?",
       "save": "Speichern",
       "cancel": "Abbrechen"
-    },
-    "undo": "Rückgängig",
-    "redo": "Wiederherstellen",
-    "undoAction": "Rückgängig: {action}",
-    "redoAction": "Wiederherstellen: {action}",
-    "noUndo": "Nichts rückgängig zu machen",
-    "noRedo": "Nichts wiederherzustellen"
+    }
   },
   "changelog": {
     "titles": {

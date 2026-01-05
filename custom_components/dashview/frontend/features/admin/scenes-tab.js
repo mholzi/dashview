@@ -3,8 +3,9 @@
  * Scene button configuration for main page and room popups
  */
 
-import { t } from './shared.js';
+import { t, createSectionHelpers } from './shared.js';
 import { renderSceneButtonItem } from './layout-tab.js';
+import { renderEmptyState } from '../../components/layout/empty-state.js';
 
 /**
  * Render the Scenes tab (extracted from Cards)
@@ -14,15 +15,8 @@ import { renderSceneButtonItem } from './layout-tab.js';
  * @returns {TemplateResult} Scenes tab HTML
  */
 export function renderScenesTab(panel, html) {
-  const toggleSection = (sectionId) => {
-    panel._expandedCardSections = {
-      ...panel._expandedCardSections,
-      [sectionId]: !panel._expandedCardSections[sectionId]
-    };
-    panel.requestUpdate();
-  };
-
-  const isExpanded = (sectionId) => panel._expandedCardSections[sectionId] || false;
+  // Section toggle helpers with localStorage persistence
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
 
   // Separate global vs room-specific buttons
   const globalButtons = panel._sceneButtons.filter(b => !b.roomId);
@@ -87,13 +81,11 @@ export function renderScenesTab(panel, html) {
           </div>
         ` : ''}
 
-        ${panel._sceneButtons.length === 0 ? html`
-          <div class="garbage-empty-state">
-            <ha-icon icon="mdi:gesture-tap-button"></ha-icon>
-            <div>${t('admin.scenes.noButtons')}</div>
-            <div class="garbage-empty-hint">${t('admin.scenes.noButtonsHint')}</div>
-          </div>
-        ` : ''}
+        ${panel._sceneButtons.length === 0 ? renderEmptyState(html, {
+          icon: 'mdi:gesture-tap-button',
+          title: t('admin.scenes.noButtons'),
+          hint: t('admin.scenes.noButtonsHint')
+        }) : ''}
 
         <!-- Add New Scene Button -->
         <button class="scene-button-add" @click=${() => panel._addSceneButton()}>

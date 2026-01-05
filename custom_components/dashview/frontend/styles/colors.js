@@ -65,6 +65,14 @@ export const colorStyles = `
 
     /* Animation */
     --dv-animation-press: 0.1s ease-out;
+    --dv-animation-expand: 0.2s ease-in-out;
+    --dv-animation-coach: 2s ease-in-out;
+
+    /* Focus */
+    --dv-focus-ring: 0 0 0 3px var(--dv-blue);
+
+    /* Overlay */
+    --dv-overlay-bg: rgba(0, 0, 0, 0.7);
 
     /* Border Radius Scale */
     --dv-radius-sm: 8px;
@@ -93,7 +101,8 @@ export const colorStyles = `
     --dv-z-modal: 1000;
     --dv-z-popup: 9000;
     --dv-z-tooltip: 9500;
-    --dv-z-max: 9999;
+    --dv-z-coach: 10000;
+    --dv-z-max: 10001;
 
     /* Layout */
     display: block;

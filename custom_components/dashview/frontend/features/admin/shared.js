@@ -15,6 +15,137 @@ import {
 import { t as importedT } from '../../utils/i18n.js';
 import '../../components/controls/confirmation-dialog.js';
 
+// ============================================================================
+// Section State Persistence
+// ============================================================================
+
+const SECTION_STORAGE_KEY = 'dashview_admin_expanded_sections';
+let sectionSaveTimeout = null;
+let cachedSectionStates = null;
+
+/**
+ * Get all saved admin section states from localStorage
+ * @returns {Object} Section states object { sectionId: boolean }
+ */
+export function getAdminSectionStates() {
+  if (cachedSectionStates !== null) return cachedSectionStates;
+  try {
+    const stored = localStorage.getItem(SECTION_STORAGE_KEY);
+    cachedSectionStates = stored ? JSON.parse(stored) : {};
+    return cachedSectionStates;
+  } catch (e) {
+    console.warn('Failed to load admin section states:', e);
+    cachedSectionStates = {};
+    return cachedSectionStates;
+  }
+}
+
+/**
+ * Save a section's expanded state to localStorage (debounced)
+ * @param {string} sectionId - The section identifier
+ * @param {boolean} isExpanded - Whether the section is expanded
+ */
+export function saveAdminSectionState(sectionId, isExpanded) {
+  const states = getAdminSectionStates();
+  states[sectionId] = isExpanded;
+  // Note: states === cachedSectionStates, so cache is already updated
+
+  // Debounced save to avoid excessive localStorage writes
+  clearTimeout(sectionSaveTimeout);
+  sectionSaveTimeout = setTimeout(() => {
+    try {
+      localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify(states));
+    } catch (e) {
+      console.warn('Failed to save admin section states:', e);
+    }
+  }, 500);
+}
+
+/**
+ * Check if a section is expanded, with fallback to default state
+ * @param {string} sectionId - The section identifier
+ * @param {boolean} defaultState - Default state if no saved state exists (default: false)
+ * @returns {boolean} Whether the section is expanded
+ */
+export function isSectionExpanded(sectionId, defaultState = false) {
+  const states = getAdminSectionStates();
+  return sectionId in states ? states[sectionId] : defaultState;
+}
+
+/**
+ * Clear the cached section states (useful for testing)
+ */
+export function clearSectionStatesCache() {
+  cachedSectionStates = null;
+}
+
+/**
+ * Create section toggle and isExpanded helpers for an admin tab
+ * @param {Object} panel - The DashviewPanel instance
+ * @returns {Object} { toggleSection, isExpanded } helper functions
+ */
+export function createSectionHelpers(panel) {
+  const toggleSection = (sectionId) => {
+    const newState = !panel._expandedCardSections[sectionId];
+    panel._expandedCardSections = {
+      ...panel._expandedCardSections,
+      [sectionId]: newState
+    };
+    saveAdminSectionState(sectionId, newState);
+    panel.requestUpdate();
+  };
+
+  const isExpanded = (sectionId, defaultState = false) => {
+    // First check panel state (for reactivity)
+    if (sectionId in panel._expandedCardSections) {
+      return panel._expandedCardSections[sectionId];
+    }
+    // Fall back to persisted state with default
+    return isSectionExpanded(sectionId, defaultState);
+  };
+
+  return { toggleSection, isExpanded };
+}
+
+/**
+ * Initialize panel section states from localStorage
+ * Call this once when the admin panel first loads
+ * @param {Object} panel - The DashviewPanel instance
+ */
+export function initializeSectionStates(panel) {
+  const savedStates = getAdminSectionStates();
+  panel._expandedCardSections = { ...panel._expandedCardSections, ...savedStates };
+}
+
+// ============================================================================
+// Tab Scroll Indicators
+// ============================================================================
+
+/**
+ * Update admin tab scroll indicators based on scroll position
+ * Shows left/right gradients when more tabs are available in that direction
+ * @param {Object} panel - The DashviewPanel instance
+ */
+export function updateAdminTabScrollIndicators(panel) {
+  if (!panel.renderRoot) return;
+
+  const container = panel.renderRoot.querySelector('.admin-sub-tabs');
+  const leftIndicator = panel.renderRoot.querySelector('.admin-sub-tabs-indicator-left');
+  const rightIndicator = panel.renderRoot.querySelector('.admin-sub-tabs-indicator-right');
+
+  if (!container || !leftIndicator || !rightIndicator) return;
+
+  const { scrollLeft, scrollWidth, clientWidth } = container;
+
+  // Show left indicator if scrolled right (more tabs on left)
+  const hasMoreLeft = scrollLeft > 0;
+  leftIndicator.classList.toggle('visible', hasMoreLeft);
+
+  // Show right indicator if more content on right (-1 for rounding tolerance)
+  const hasMoreRight = scrollLeft + clientWidth < scrollWidth - 1;
+  rightIndicator.classList.toggle('visible', hasMoreRight);
+}
+
 // Defensive wrapper for t() to handle edge cases with card-mod and other invasive components
 // Falls back to returning the key if the translation function fails
 export const t = (key, fallbackOrParams) => {
@@ -76,48 +207,6 @@ export const LABEL_CATEGORIES = [
   { key: 'tv', icon: 'mdi:television', titleKey: 'admin.entityTypes.tvs', descKey: 'admin.entityTypes.tvDesc', prop: '_tvLabelId' },
   { key: 'lock', icon: 'mdi:lock', titleKey: 'admin.entityTypes.locks', descKey: 'admin.entityTypes.lockDesc', prop: '_lockLabelId' },
 ];
-
-/**
- * Render undo/redo controls for the admin panel
- * @param {Object} panel - The DashviewPanel instance
- * @param {Function} html - lit-html template function
- * @returns {TemplateResult} Undo/redo controls HTML
- */
-export function renderUndoRedoControls(panel, html) {
-  const canUndo = panel._settingsStore?.canUndo() || false;
-  const canRedo = panel._settingsStore?.canRedo() || false;
-  const undoDesc = panel._settingsStore?.getUndoDescription() || '';
-  const redoDesc = panel._settingsStore?.getRedoDescription() || '';
-
-  // Get undo/redo counts
-  const undoCount = panel._undoCount || 0;
-  const redoCount = panel._redoCount || 0;
-
-  return html`
-    <div class="undo-redo-controls">
-      <button class="icon-button" ?disabled=${!canUndo}
-        title=${undoDesc ? t('admin.undoAction', { action: undoDesc }) : t('admin.noUndo')}
-        @click=${() => {
-          if (panel._settingsStore?.undo) {
-            panel._settingsStore.undo();
-          }
-        }}>
-        <ha-icon icon="mdi:arrow-u-left-top"></ha-icon>
-        ${canUndo && undoCount > 0 ? html`<span class="count">(${undoCount})</span>` : ''}
-      </button>
-      <button class="icon-button" ?disabled=${!canRedo}
-        title=${redoDesc ? t('admin.redoAction', { action: redoDesc }) : t('admin.noRedo')}
-        @click=${() => {
-          if (panel._settingsStore?.redo) {
-            panel._settingsStore.redo();
-          }
-        }}>
-        <ha-icon icon="mdi:arrow-u-right-top"></ha-icon>
-        ${canRedo && redoCount > 0 ? html`<span class="count">(${redoCount})</span>` : ''}
-      </button>
-    </div>
-  `;
-}
 
 /**
  * Render security popup content (windows, garages, motion sensors)

@@ -10,9 +10,13 @@ import { getFloorIcon } from '../../utils/icons.js';
 import { getEntityDisplayService } from '../../services/entity-display-service.js';
 import { openMoreInfo, toggleLight, getFriendlyName } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
+import { renderCoachMark, shouldShowCoachMark, dismissCoachMark } from '../../components/onboarding/index.js';
 
 // Re-export for backwards compatibility
 export { triggerHaptic };
+
+// Re-export coach mark functions for external use
+export { shouldShowCoachMark, dismissCoachMark };
 
 /**
  * Render skeleton loading state for floor overview card
@@ -103,12 +107,24 @@ export function renderDwdWarnings(component, html) {
 }
 
 export function renderHomeTab(component, html) {
+  // Handle coach mark dismiss
+  const handleCoachMarkDismiss = () => {
+    component._showCoachMark = false;
+    component.requestUpdate();
+  };
+
+  // Check if coach mark should be shown (only on first load check)
+  if (component._showCoachMark === undefined) {
+    component._showCoachMark = shouldShowCoachMark();
+  }
+
   return html`
     <div class="container">
       ${renderDwdWarnings(component, html)}
       ${renderTrainDepartures(component, html)}
       ${renderRaeumeSection(component, html)}
     </div>
+    ${component._showCoachMark ? renderCoachMark(component, html, handleCoachMarkDismiss) : ''}
   `;
 }
 

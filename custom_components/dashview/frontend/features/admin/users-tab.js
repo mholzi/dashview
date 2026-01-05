@@ -4,6 +4,7 @@
  */
 
 import { t } from './shared.js';
+import { renderEmptyState } from '../../components/layout/empty-state.js';
 
 /**
  * Render the Users tab
@@ -125,12 +126,11 @@ export function renderUsersTab(panel, html) {
           })}
         </div>
       </div>
-    ` : html`
-      <div class="garbage-empty-state">
-        <ha-icon icon="mdi:account-off"></ha-icon>
-        <div>${t('admin.users.noUsers')}</div>
-        <div class="garbage-empty-hint">${t('admin.users.noUsersHint')}</div>
-      </div>
-    `}
+    ` : renderEmptyState(html, {
+      icon: 'mdi:account-off',
+      title: t('admin.users.noUsers'),
+      description: 'Add person entities in Home Assistant to display user status',
+      hint: t('admin.users.noUsersHint')
+    })}
   `;
 }

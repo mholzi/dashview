@@ -215,15 +215,6 @@ export const DEFAULT_SETTINGS = {
  */
 
 /**
- * @typedef {Object} ChangeRecord
- * @property {string} type - Type of change ('set', 'toggle', 'update')
- * @property {string} key - Setting key that was changed
- * @property {*} oldValue - Previous value (deep cloned)
- * @property {*} newValue - New value (deep cloned)
- * @property {string} [description] - Optional description of the change
- */
-
-/**
  * Settings Store class
  * Manages loading, saving, and updating persisted settings
  */
@@ -243,22 +234,6 @@ export class SettingsStore {
     this._listeners = new Set();
     /** @type {Object|null} */
     this._hass = null;
-
-    // Undo/Redo state
-    /** @type {ChangeRecord[]} */
-    this._undoStack = [];
-    /** @type {ChangeRecord[]} */
-    this._redoStack = [];
-    /** @type {boolean} */
-    this._isUndoing = false;
-    /** @type {boolean} */
-    this._isRedoing = false;
-    /** @type {number|null} */
-    this._debounceGroupTimer = null;
-    /** @type {ChangeRecord[]} */
-    this._pendingChanges = [];
-    /** @type {number} */
-    this._maxHistorySize = 20;
 
     // Draft Mode state
     /** @type {Object|null} */
@@ -321,8 +296,6 @@ export class SettingsStore {
    * @param {boolean} [save=true] - Whether to save immediately
    */
   set(key, value, save = true) {
-    const oldValue = this._settings[key];
-    this._recordChange('set', key, oldValue, value);
     this._settings[key] = value;
     this._notifyListeners(key, value);
     if (save) {
@@ -337,8 +310,6 @@ export class SettingsStore {
    */
   update(updates, save = true) {
     Object.entries(updates).forEach(([key, value]) => {
-      const oldValue = this._settings[key];
-      this._recordChange('update', key, oldValue, value);
       this._settings[key] = value;
       this._notifyListeners(key, value);
     });
@@ -354,13 +325,10 @@ export class SettingsStore {
    */
   toggleEnabled(mapKey, entityId) {
     const map = this._settings[mapKey] || {};
-    const oldValue = { ...map };
-    const newValue = {
+    this._settings[mapKey] = {
       ...map,
       [entityId]: !map[entityId],
     };
-    this._recordChange('toggle', mapKey, oldValue, newValue, `Toggle ${entityId}`);
-    this._settings[mapKey] = newValue;
     this._notifyListeners(mapKey, this._settings[mapKey]);
     this.save();
   }
@@ -373,13 +341,10 @@ export class SettingsStore {
    */
   setEnabled(mapKey, entityId, enabled) {
     const map = this._settings[mapKey] || {};
-    const oldValue = { ...map };
-    const newValue = {
+    this._settings[mapKey] = {
       ...map,
       [entityId]: enabled,
     };
-    this._recordChange('toggle', mapKey, oldValue, newValue, `Set ${entityId} to ${enabled}`);
-    this._settings[mapKey] = newValue;
     this._notifyListeners(mapKey, this._settings[mapKey]);
     this.save();
   }
@@ -524,185 +489,6 @@ export class SettingsStore {
   }
 
   /**
-   * Check if undo is available
-   * @returns {boolean}
-   */
-  canUndo() {
-    return this._undoStack.length > 0;
-  }
-
-  /**
-   * Check if redo is available
-   * @returns {boolean}
-   */
-  canRedo() {
-    return this._redoStack.length > 0;
-  }
-
-  /**
-   * Get description of the next undo action
-   * @returns {string|null}
-   */
-  getUndoDescription() {
-    if (this._undoStack.length === 0) return null;
-    const change = this._undoStack[this._undoStack.length - 1];
-    return change.description || `Undo ${change.type} on ${change.key}`;
-  }
-
-  /**
-   * Get description of the next redo action
-   * @returns {string|null}
-   */
-  getRedoDescription() {
-    if (this._redoStack.length === 0) return null;
-    const change = this._redoStack[this._redoStack.length - 1];
-    return change.description || `Redo ${change.type} on ${change.key}`;
-  }
-
-  /**
-   * Undo the last change
-   * @returns {boolean} - True if undo was successful
-   */
-  undo() {
-    if (this._undoStack.length === 0) return false;
-
-    this._isUndoing = true;
-    const change = this._undoStack.pop();
-
-    debugLog('settings', `Undo: reverted ${change.key}`);
-
-    // Restore old value
-    this._settings[change.key] = structuredClone(change.oldValue);
-    this._notifyListeners(change.key, this._settings[change.key]);
-
-    // Move to redo stack
-    this._redoStack.push(change);
-
-    // Trigger save
-    this.save();
-
-    this._isUndoing = false;
-    return true;
-  }
-
-  /**
-   * Redo the last undone change
-   * @returns {boolean} - True if redo was successful
-   */
-  redo() {
-    if (this._redoStack.length === 0) return false;
-
-    this._isRedoing = true;
-    const change = this._redoStack.pop();
-
-    debugLog('settings', `Redo: applied ${change.key}`);
-
-    // Restore new value
-    this._settings[change.key] = structuredClone(change.newValue);
-    this._notifyListeners(change.key, this._settings[change.key]);
-
-    // Move back to undo stack
-    this._undoStack.push(change);
-
-    // Trigger save
-    this.save();
-
-    this._isRedoing = false;
-    return true;
-  }
-
-  /**
-   * Clear undo/redo history
-   */
-  clearHistory() {
-    this._undoStack = [];
-    this._redoStack = [];
-    this._pendingChanges = [];
-    if (this._debounceGroupTimer) {
-      clearTimeout(this._debounceGroupTimer);
-      this._debounceGroupTimer = null;
-    }
-  }
-
-  /**
-   * Record a change for undo/redo (private)
-   * @param {string} type - Type of change
-   * @param {string} key - Setting key
-   * @param {*} oldValue - Previous value
-   * @param {*} newValue - New value
-   * @param {string} [description] - Optional description
-   * @private
-   */
-  _recordChange(type, key, oldValue, newValue, description) {
-    // Don't record changes during undo/redo
-    if (this._isUndoing || this._isRedoing) return;
-
-    // Create change record with deep clones
-    const change = {
-      type,
-      key,
-      oldValue: structuredClone(oldValue),
-      newValue: structuredClone(newValue),
-      description,
-    };
-
-    // Add to pending changes
-    this._pendingChanges.push(change);
-
-    // Clear redo stack on new change
-    this._redoStack = [];
-
-    // Debounce grouping - commit after 100ms of inactivity
-    if (this._debounceGroupTimer) {
-      clearTimeout(this._debounceGroupTimer);
-    }
-
-    this._debounceGroupTimer = setTimeout(() => {
-      this._commitPendingChanges();
-    }, 100);
-  }
-
-  /**
-   * Commit pending changes to undo stack (private)
-   * @private
-   */
-  _commitPendingChanges() {
-    if (this._pendingChanges.length === 0) return;
-
-    // For single change, add it directly
-    if (this._pendingChanges.length === 1) {
-      this._undoStack.push(this._pendingChanges[0]);
-    } else {
-      // For multiple changes, group them by key
-      // Keep first oldValue and last newValue for each key
-      const changeMap = new Map();
-      for (const change of this._pendingChanges) {
-        if (changeMap.has(change.key)) {
-          // Update newValue but keep original oldValue
-          const existing = changeMap.get(change.key);
-          existing.newValue = change.newValue;
-        } else {
-          changeMap.set(change.key, change);
-        }
-      }
-
-      // Add grouped changes to undo stack
-      for (const change of changeMap.values()) {
-        this._undoStack.push(change);
-      }
-    }
-
-    // Enforce max history size (FIFO)
-    while (this._undoStack.length > this._maxHistorySize) {
-      this._undoStack.shift();
-    }
-
-    // Clear pending changes
-    this._pendingChanges = [];
-    this._debounceGroupTimer = null;
-  }
-
-  /**
    * Start draft mode for complex forms
    * @param {string} formId - Identifier for the form (e.g., 'scene-button-0', 'floor-card-eg')
    * @param {string[]} keys - Array of setting keys to snapshot
@@ -755,8 +541,6 @@ export class SettingsStore {
 
     // Apply draft values to settings
     Object.entries(this._draftState.draftValues).forEach(([key, value]) => {
-      const oldValue = this._draftState.originalValues[key];
-      this._recordChange('set', key, oldValue, value, `Draft: ${this._draftState.formId}`);
       this._settings[key] = value;
       this._notifyListeners(key, value);
     });
@@ -799,9 +583,6 @@ export class SettingsStore {
   destroy() {
     if (this._saveDebounceTimer) {
       clearTimeout(this._saveDebounceTimer);
-    }
-    if (this._debounceGroupTimer) {
-      clearTimeout(this._debounceGroupTimer);
     }
     this._listeners.clear();
   }

@@ -3,8 +3,9 @@
  * House info, garbage card, train departures, media playlists, and notifications
  */
 
-import { t } from './shared.js';
+import { t, createSectionHelpers } from './shared.js';
 import { renderInfoTextToggle, renderInfoTextBatteryConfig } from './layout-tab.js';
+import { renderEmptyState } from '../../components/layout/empty-state.js';
 
 /**
  * Helper: Render appliances status section for house info
@@ -86,15 +87,8 @@ function renderAppliancesStatusSection(panel, html, toggleSection, isExpanded) {
 export function renderStatusTab(panel, html) {
   const orderedFloors = panel._getOrderedFloors();
 
-  const toggleSection = (sectionId) => {
-    panel._expandedCardSections = {
-      ...panel._expandedCardSections,
-      [sectionId]: !panel._expandedCardSections[sectionId]
-    };
-    panel.requestUpdate();
-  };
-
-  const isExpanded = (sectionId) => panel._expandedCardSections[sectionId] || false;
+  // Section toggle helpers with localStorage persistence
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
 
   return html`
     <!-- ==================== A. HOUSE INFO ==================== -->
@@ -263,13 +257,11 @@ export function renderStatusTab(panel, html) {
               })}
             </div>
           </div>
-        ` : html`
-          <div class="garbage-empty-state">
-            <ha-icon icon="mdi:trash-can-outline"></ha-icon>
-            <div>No sensors added yet</div>
-            <div class="garbage-empty-hint">Use the search above to find and add garbage pickup sensors</div>
-          </div>
-        `}
+        ` : renderEmptyState(html, {
+          icon: 'mdi:trash-can-outline',
+          title: 'No sensors added yet',
+          hint: 'Use the search above to find and add garbage pickup sensors'
+        })}
 
         <!-- Floor Selection -->
         <div class="garbage-floor-selector">
@@ -500,13 +492,11 @@ export function renderStatusTab(panel, html) {
               })}
             </div>
           </div>
-        ` : html`
-          <div class="garbage-empty-state">
-            <ha-icon icon="mdi:train"></ha-icon>
-            <div>No train departures configured</div>
-            <div class="garbage-empty-hint">Use the search above to find and add departure sensors</div>
-          </div>
-        `}
+        ` : renderEmptyState(html, {
+          icon: 'mdi:train',
+          title: 'No train departures configured',
+          hint: 'Use the search above to find and add departure sensors'
+        })}
       </div>
     </div>
 
@@ -626,13 +616,11 @@ export function renderStatusTab(panel, html) {
             `)}
             </sortable-list>
           </div>
-        ` : html`
-          <div class="garbage-empty-state">
-            <ha-icon icon="mdi:playlist-music-outline"></ha-icon>
-            <div>${t('admin.status.noPlaylistsConfigured')}</div>
-            <div class="garbage-empty-hint">${t('admin.status.playlistsHint')}</div>
-          </div>
-        `}
+        ` : renderEmptyState(html, {
+          icon: 'mdi:playlist-music-outline',
+          title: t('admin.status.noPlaylistsConfigured'),
+          hint: t('admin.status.playlistsHint')
+        })}
 
         <!-- Add New Playlist Button -->
         <button class="scene-button-add" @click=${() => panel._addMediaPreset()}>

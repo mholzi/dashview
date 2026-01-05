@@ -537,23 +537,4 @@ export const cardStyles = `
     background: rgba(240, 169, 148, 0.2);
   }
 
-  .garbage-empty-state {
-    padding: 24px;
-    text-align: center;
-    color: var(--dv-gray600);
-    background: var(--dv-gray200);
-    border-radius: var(--dv-radius-sm);
-  }
-
-  .garbage-empty-state ha-icon {
-    --mdc-icon-size: 48px;
-    margin-bottom: 12px;
-    opacity: 0.5;
-  }
-
-  .garbage-empty-hint {
-    font-size: 12px;
-    margin-top: 4px;
-    opacity: 0.7;
-  }
 `;

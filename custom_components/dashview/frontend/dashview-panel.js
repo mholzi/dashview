@@ -526,35 +526,9 @@
       };
       document.addEventListener('click', this._closeDropdownHandler);
 
-      // Add keyboard shortcuts for undo/redo
-      this._keydownHandler = (e) => {
-        if (e.ctrlKey && e.key === 'z') {
-          if (e.shiftKey) {
-            // Ctrl+Shift+Z = Redo
-            if (this._settingsStore?.canRedo()) {
-              this._settingsStore.redo();
-              e.preventDefault();
-            }
-          } else {
-            // Ctrl+Z = Undo
-            if (this._settingsStore?.canUndo()) {
-              this._settingsStore.undo();
-              e.preventDefault();
-            }
-          }
-        }
-      };
-      document.addEventListener('keydown', this._keydownHandler);
-
       // Subscribe to store changes for reactive updates
       if (settingsStore) {
         this._unsubscribeSettings = settingsStore.subscribe(() => {
-          // Update undo/redo counts when settings change
-          if (this._settingsStore) {
-            // Count the stacks by checking if we can undo/redo
-            this._undoCount = this._settingsStore._undoStack?.length || 0;
-            this._redoCount = this._settingsStore._redoStack?.length || 0;
-          }
           this.requestUpdate();
         });
       }
@@ -576,9 +550,6 @@
       }
       if (this._closeDropdownHandler) {
         document.removeEventListener('click', this._closeDropdownHandler);
-      }
-      if (this._keydownHandler) {
-        document.removeEventListener('keydown', this._keydownHandler);
       }
       // Unsubscribe from weather forecasts
       if (this._dailyForecastUnsubscribe) {
@@ -1199,19 +1170,6 @@
       // Apply new order
       this._floorOrder = order;
 
-      // Record change for undo/redo (Epic 6 integration)
-      if (this._settingsStore && this._settingsStore._recordChange) {
-        const movedFloor = this._floors?.find(f => f.floor_id === detail.itemId);
-        const floorName = movedFloor?.name || `Floor ${oldIndex + 1}`;
-        this._settingsStore._recordChange({
-          type: 'reorder',
-          key: 'floorOrder',
-          oldValue: oldFloorOrder.length > 0 ? oldFloorOrder : null,
-          newValue: order,
-          description: `Reorder floor: ${floorName}`
-        });
-      }
-
       this._saveSettings();
       this.requestUpdate();
     }
@@ -1248,21 +1206,6 @@
       roomOrder[orderKey] = order;
       this._roomOrder = roomOrder;
 
-      // Record change for undo/redo (Epic 6 integration)
-      if (this._settingsStore && this._settingsStore._recordChange) {
-        const movedRoom = this._areas?.find(a => a.area_id === detail.itemId);
-        const roomName = movedRoom?.name || `Room ${oldIndex + 1}`;
-        const floor = this._floors?.find(f => f.floor_id === floorId);
-        const floorName = floor?.name || 'Unassigned';
-        this._settingsStore._recordChange({
-          type: 'reorder',
-          key: `roomOrder.${orderKey}`,
-          oldValue: oldRoomOrder.length > 0 ? oldRoomOrder : null,
-          newValue: order,
-          description: `Reorder room: ${roomName} in ${floorName}`
-        });
-      }
-
       this._saveSettings();
       this.requestUpdate();
     }
@@ -1287,19 +1230,6 @@
 
       // Apply new order
       this._mediaPresets = newPresets;
-
-      // Record change for undo/redo (Epic 6 integration)
-      if (this._settingsStore && this._settingsStore._recordChange) {
-        const movedPreset = oldPresets[oldIndex];
-        const presetName = movedPreset?.name || `Playlist ${oldIndex + 1}`;
-        this._settingsStore._recordChange({
-          type: 'reorder',
-          key: 'mediaPresets',
-          oldValue: oldPresets,
-          newValue: newPresets,
-          description: `Reorder playlist: ${presetName}`
-        });
-      }
 
       this._saveSettings();
       this.requestUpdate();

@@ -490,11 +490,17 @@ export const floorCardsStyles = `
   .garbage-pagination {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    /* Gap accounts for touch target size to prevent overlap:
+       Each dot has 44px touch width, so gap should separate them clearly */
+    gap: 4px;
     position: absolute;
     bottom: 8px;
     left: 0;
     right: 0;
+    /* Ensure 44px touch target height */
+    min-height: 44px;
+    align-items: center;
+    padding: 0 16px;
   }
 
   .pagination-dot,
@@ -503,17 +509,71 @@ export const floorCardsStyles = `
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--dv-gray300);
+    background: var(--dv-gray400);
     border: none;
     margin: 0;
-    padding: 0;
+    /* Touch target padding: (44px - 8px) / 2 = 18px */
+    padding: 18px;
     cursor: pointer;
-    transition: background var(--dv-transition-normal) ease;
+    opacity: 0.6;
+    transform: scale(1);
+    /* Separate transitions: transform/opacity fast, background slightly slower */
+    transition: transform var(--dv-transition-fast) ease-out,
+                opacity var(--dv-transition-fast) ease-out,
+                background var(--dv-transition-normal) ease;
+    /* Visual rendering only the 8px dot */
+    background-clip: content-box;
+    box-sizing: content-box;
   }
 
   .pagination-dot.active,
   .floor-overview-dot.active,
   .garbage-dot.active {
-    background: var(--dv-gray600);
+    background: var(--dv-gray700);
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  /* Dark mode adjustments for better visibility */
+  @media (prefers-color-scheme: dark) {
+    .pagination-dot,
+    .floor-overview-dot,
+    .garbage-dot {
+      background: var(--dv-gray500);
+      opacity: 0.6;
+    }
+
+    .pagination-dot.active,
+    .floor-overview-dot.active,
+    .garbage-dot.active {
+      background: var(--dv-gray300);
+      opacity: 1;
+    }
+  }
+
+  :host-context(html.dark-mode) .pagination-dot,
+  :host-context(body.dark-mode) .pagination-dot,
+  :host-context([data-theme="dark"]) .pagination-dot,
+  :host-context(html.dark-mode) .floor-overview-dot,
+  :host-context(body.dark-mode) .floor-overview-dot,
+  :host-context([data-theme="dark"]) .floor-overview-dot,
+  :host-context(html.dark-mode) .garbage-dot,
+  :host-context(body.dark-mode) .garbage-dot,
+  :host-context([data-theme="dark"]) .garbage-dot {
+    background: var(--dv-gray500);
+    opacity: 0.6;
+  }
+
+  :host-context(html.dark-mode) .pagination-dot.active,
+  :host-context(body.dark-mode) .pagination-dot.active,
+  :host-context([data-theme="dark"]) .pagination-dot.active,
+  :host-context(html.dark-mode) .floor-overview-dot.active,
+  :host-context(body.dark-mode) .floor-overview-dot.active,
+  :host-context([data-theme="dark"]) .floor-overview-dot.active,
+  :host-context(html.dark-mode) .garbage-dot.active,
+  :host-context(body.dark-mode) .garbage-dot.active,
+  :host-context([data-theme="dark"]) .garbage-dot.active {
+    background: var(--dv-gray300);
+    opacity: 1;
   }
 `;

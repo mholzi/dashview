@@ -48,6 +48,23 @@ export const TRANSITION = {
   press: '0.1s',
 };
 
+// Animation durations
+export const ANIMATION = {
+  press: '0.1s ease-out',
+  expand: '0.2s ease-in-out',
+  coach: '2s ease-in-out',
+};
+
+// Focus styles
+export const FOCUS = {
+  ring: 'var(--dv-focus-ring)',
+};
+
+// Overlay colors
+export const OVERLAY = {
+  bg: 'rgba(0, 0, 0, 0.7)',
+};
+
 // Z-index scale
 export const Z_INDEX = {
   dropdown: 100,
@@ -55,7 +72,8 @@ export const Z_INDEX = {
   modal: 1000,
   popup: 9000,
   tooltip: 9500,
-  max: 9999,
+  coach: 10000,
+  max: 10001,
 };
 
 // Colors (CSS variable references)
@@ -167,6 +185,9 @@ export default {
   RADIUS,
   ICON_SIZE,
   TRANSITION,
+  ANIMATION,
+  FOCUS,
+  OVERLAY,
   Z_INDEX,
   COLORS,
   GRADIENTS,

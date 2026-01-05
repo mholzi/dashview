@@ -348,19 +348,6 @@ export function handleFloorReorder(panel, detail, saveSettings) {
   // Apply new order
   panel._floorOrder = order;
 
-  // Record change for undo/redo (Epic 6 integration)
-  if (panel._settingsStore && panel._settingsStore._recordChange) {
-    const movedFloor = panel._floors?.find(f => f.floor_id === detail.itemId);
-    const floorName = movedFloor?.name || `Floor ${detail.oldIndex + 1}`;
-    panel._settingsStore._recordChange({
-      type: 'reorder',
-      key: 'floorOrder',
-      oldValue: oldFloorOrder.length > 0 ? oldFloorOrder : null,
-      newValue: order,
-      description: `Reorder floor: ${floorName}`
-    });
-  }
-
   saveSettings();
   panel.requestUpdate();
 }
@@ -395,21 +382,6 @@ export function handleRoomReorder(panel, floorId, detail, saveSettings) {
   roomOrder[orderKey] = order;
   panel._roomOrder = roomOrder;
 
-  // Record change for undo/redo
-  if (panel._settingsStore && panel._settingsStore._recordChange) {
-    const movedRoom = panel._areas?.find(a => a.area_id === detail.itemId);
-    const roomName = movedRoom?.name || `Room ${detail.oldIndex + 1}`;
-    const floor = panel._floors?.find(f => f.floor_id === floorId);
-    const floorName = floor?.name || 'Unassigned';
-    panel._settingsStore._recordChange({
-      type: 'reorder',
-      key: `roomOrder.${orderKey}`,
-      oldValue: oldRoomOrder.length > 0 ? oldRoomOrder : null,
-      newValue: order,
-      description: `Reorder room: ${roomName} in ${floorName}`
-    });
-  }
-
   saveSettings();
   panel.requestUpdate();
 }
@@ -432,19 +404,6 @@ export function handleMediaPresetReorder(panel, detail, saveSettings) {
 
   // Apply new order
   panel._mediaPresets = newPresets;
-
-  // Record change for undo/redo
-  if (panel._settingsStore && panel._settingsStore._recordChange) {
-    const movedPreset = oldPresets[oldIndex];
-    const presetName = movedPreset?.name || `Playlist ${oldIndex + 1}`;
-    panel._settingsStore._recordChange({
-      type: 'reorder',
-      key: 'mediaPresets',
-      oldValue: oldPresets,
-      newValue: newPresets,
-      description: `Reorder playlist: ${presetName}`
-    });
-  }
 
   saveSettings();
   panel.requestUpdate();

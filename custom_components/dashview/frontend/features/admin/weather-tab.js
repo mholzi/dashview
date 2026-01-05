@@ -4,7 +4,8 @@
  */
 
 import { renderEntityPicker } from '../../components/controls/index.js';
-import { t } from './shared.js';
+import { t, createSectionHelpers } from './shared.js';
+import { renderEmptyState } from '../../components/layout/empty-state.js';
 
 /**
  * Render the Weather tab
@@ -14,15 +15,8 @@ import { t } from './shared.js';
  * @returns {TemplateResult} Weather tab HTML
  */
 export function renderWeatherTab(panel, html) {
-  const toggleSection = (sectionId) => {
-    panel._expandedCardSections = {
-      ...panel._expandedCardSections,
-      [sectionId]: !panel._expandedCardSections[sectionId]
-    };
-    panel.requestUpdate();
-  };
-
-  const isExpanded = (sectionId) => panel._expandedCardSections[sectionId] || false;
+  // Section toggle helpers with localStorage persistence
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
 
   return html`
     <h2 class="section-title">
@@ -46,39 +40,48 @@ export function renderWeatherTab(panel, html) {
         ></ha-icon>
       </div>
       <div class="card-config-section-content ${isExpanded('weatherEntity') ? 'expanded' : ''}">
-        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Select the weather entity for the header and weather popup. All forecast data will be fetched from this entity.
-        </p>
+        ${panel._availableWeatherEntities.length === 0 && panel._weatherEntitiesLoaded
+          ? renderEmptyState(html, {
+              icon: 'mdi:weather-cloudy-alert',
+              title: t('admin.weather.noWeatherEntities') || 'No Weather Entities Found',
+              description: 'Install a weather integration in Home Assistant to display forecasts',
+              hint: 'Supported integrations: OpenWeatherMap, Met.no, AccuWeather, etc.'
+            })
+          : html`
+            <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+              Select the weather entity for the header and weather popup. All forecast data will be fetched from this entity.
+            </p>
 
-        <div style="margin-bottom: 8px;">
-          <div class="card-config-label">
-            <span class="card-config-label-title">${t('admin.weather.weatherEntity')}</span>
-            <span class="card-config-label-subtitle">Select your weather integration</span>
-          </div>
-        </div>
-        <div>
-          <select
-            .value=${panel._weatherEntity}
-            @change=${(e) => {
-              panel._weatherEntity = e.target.value;
-              panel._weatherForecasts = [];
-              panel._weatherHourlyForecasts = [];
-              panel._fetchWeatherForecasts();
-              panel._saveSettings();
-              panel.requestUpdate();
-            }}
-            style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
-          >
-            ${panel._availableWeatherEntities.length === 0
-              ? html`<option value="">Loading weather entities...</option>`
-              : panel._availableWeatherEntities.map(entity => html`
-                  <option value="${entity.entity_id}" ?selected=${panel._weatherEntity === entity.entity_id}>
-                    ${entity.name} (${entity.entity_id})
-                  </option>
-                `)
-            }
-          </select>
-        </div>
+            <div style="margin-bottom: 8px;">
+              <div class="card-config-label">
+                <span class="card-config-label-title">${t('admin.weather.weatherEntity')}</span>
+                <span class="card-config-label-subtitle">Select your weather integration</span>
+              </div>
+            </div>
+            <div>
+              <select
+                .value=${panel._weatherEntity}
+                @change=${(e) => {
+                  panel._weatherEntity = e.target.value;
+                  panel._weatherForecasts = [];
+                  panel._weatherHourlyForecasts = [];
+                  panel._fetchWeatherForecasts();
+                  panel._saveSettings();
+                  panel.requestUpdate();
+                }}
+                style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
+              >
+                ${panel._availableWeatherEntities.length === 0
+                  ? html`<option value="">Loading weather entities...</option>`
+                  : panel._availableWeatherEntities.map(entity => html`
+                      <option value="${entity.entity_id}" ?selected=${panel._weatherEntity === entity.entity_id}>
+                        ${entity.name} (${entity.entity_id})
+                      </option>
+                    `)
+                }
+              </select>
+            </div>
+          `}
       </div>
     </div>
 

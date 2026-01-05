@@ -255,12 +255,6 @@ export const mainStyles = `
     padding: 8px 0;
   }
 
-  .no-areas {
-    text-align: center;
-    padding: 48px;
-    color: var(--secondary-text-color);
-  }
-
   .section-title {
     font-size: 1.5em;
     font-weight: 500;
@@ -285,5 +279,48 @@ export const mainStyles = `
     --mdc-icon-size: 48px;
     margin-bottom: 12px;
     display: block;
+  }
+
+  /* ==================== UNIFIED ADMIN EMPTY STATE ==================== */
+  .admin-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    text-align: center;
+    min-height: 180px;
+    background: var(--dv-gray100);
+    border-radius: var(--dv-radius-md);
+  }
+
+  .admin-empty-state-icon {
+    --mdc-icon-size: 48px;
+    color: var(--dv-gray400);
+    margin-bottom: 16px;
+    opacity: 0.7;
+  }
+
+  .admin-empty-state-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dv-gray700);
+    margin: 0 0 8px;
+  }
+
+  .admin-empty-state-description {
+    font-size: 0.875rem;
+    color: var(--dv-gray500);
+    margin: 0 0 8px;
+    max-width: 280px;
+    line-height: 1.4;
+  }
+
+  .admin-empty-state-hint {
+    font-size: 0.75rem;
+    color: var(--dv-gray400);
+    font-style: italic;
+    margin: 0;
+    max-width: 280px;
   }
 `;

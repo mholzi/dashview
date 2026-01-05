@@ -5,6 +5,15 @@
 
 export const tabsStyles = `
   /* ==================== ADMIN SUB-TABS ==================== */
+
+  /* Container for tabs and scroll indicators */
+  .admin-sub-tabs-container {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .admin-sub-tabs {
     display: flex;
     gap: 8px;
@@ -14,10 +23,48 @@ export const tabsStyles = `
     -ms-overflow-style: none;
     scrollbar-width: none;
     flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
   }
 
   .admin-sub-tabs::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Scroll indicators - gradient overlays showing more tabs available */
+  .admin-sub-tabs-indicator {
+    position: absolute;
+    top: 0;
+    bottom: 16px; /* Match margin-bottom of tabs */
+    width: 24px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dv-transition-fast) ease-out;
+    z-index: 1;
+  }
+
+  .admin-sub-tabs-indicator.visible {
+    opacity: 1;
+  }
+
+  .admin-sub-tabs-indicator-left {
+    left: 0;
+    background: linear-gradient(to right, var(--dv-popup-bg, var(--dv-gray000)) 0%, transparent 100%);
+  }
+
+  .admin-sub-tabs-indicator-right {
+    right: 0;
+    background: linear-gradient(to left, var(--dv-popup-bg, var(--dv-gray000)) 0%, transparent 100%);
+  }
+
+  /* Dark mode gradient colors - fallback to dark gray if --dv-popup-bg not defined */
+  :host-context([data-theme="dark"]) .admin-sub-tabs-indicator-left,
+  :host([dark]) .admin-sub-tabs-indicator-left {
+    background: linear-gradient(to right, var(--dv-popup-bg, var(--dv-gray800)) 0%, transparent 100%);
+  }
+
+  :host-context([data-theme="dark"]) .admin-sub-tabs-indicator-right,
+  :host([dark]) .admin-sub-tabs-indicator-right {
+    background: linear-gradient(to left, var(--dv-popup-bg, var(--dv-gray800)) 0%, transparent 100%);
   }
 
   .admin-sub-tab {
@@ -51,54 +98,4 @@ export const tabsStyles = `
     --mdc-icon-size: 16px;
   }
 
-  /* ==================== ADMIN HEADER BAR ==================== */
-  .admin-header-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    gap: 16px;
-  }
-
-  .undo-redo-controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    padding: 0 12px;
-    flex-shrink: 0;
-  }
-
-  .undo-redo-controls .icon-button {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 12px;
-    border-radius: 4px;
-    background: var(--primary-color);
-    color: var(--text-primary-color);
-    border: none;
-    cursor: pointer;
-    transition: all var(--dv-transition-normal) ease;
-    font-size: 0.85em;
-    font-weight: 500;
-  }
-
-  .undo-redo-controls .icon-button:hover:not(:disabled) {
-    opacity: 0.9;
-    transform: scale(1.05);
-  }
-
-  .undo-redo-controls .icon-button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .undo-redo-controls .icon-button ha-icon {
-    --mdc-icon-size: 18px;
-  }
-
-  .undo-redo-controls .icon-button .count {
-    font-size: 0.9em;
-    opacity: 0.9;
-  }
 `;

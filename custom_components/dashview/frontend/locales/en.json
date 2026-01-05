@@ -478,13 +478,7 @@
       "discardMessage": "You have unsaved changes. Are you sure you want to discard them?",
       "save": "Save",
       "cancel": "Cancel"
-    },
-    "undo": "Undo",
-    "redo": "Redo",
-    "undoAction": "Undo: {action}",
-    "redoAction": "Redo: {action}",
-    "noUndo": "Nothing to undo",
-    "noRedo": "Nothing to redo"
+    }
   },
   "changelog": {
     "titles": {

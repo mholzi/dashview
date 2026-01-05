@@ -43,6 +43,9 @@ import { orderStyles } from './admin/order.js';
 import { presetsStyles } from './admin/presets.js';
 import { mainStyles } from './admin/main.js';
 
+// Onboarding
+import { coachMarkStyles } from './onboarding/index.js';
+
 /**
  * Combined CSS styles string (backward compatible export name)
  * Concatenates all modular styles in proper order
@@ -71,6 +74,7 @@ ${scenesStyles}
 ${orderStyles}
 ${presetsStyles}
 ${mainStyles}
+${coachMarkStyles}
 `;
 
 // Alias for new code
@@ -106,4 +110,6 @@ export {
   orderStyles,
   presetsStyles,
   mainStyles,
+  // Onboarding
+  coachMarkStyles,
 };

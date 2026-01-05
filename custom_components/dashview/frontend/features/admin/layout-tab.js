@@ -7,7 +7,8 @@ import { getFloorIcon } from '../../utils/index.js';
 import { renderEntitySection, renderCustomLabelSection } from '../../components/cards/index.js';
 import { ENTITY_CONFIGS } from '../../constants/index.js';
 import { renderEntityPicker } from '../../components/controls/index.js';
-import { t, showConfirmation } from './shared.js';
+import { t, showConfirmation, createSectionHelpers } from './shared.js';
+import { renderEmptyState } from '../../components/layout/empty-state.js';
 import '../../components/controls/sortable-list.js';
 import '../../components/cards/floor-card-preview.js';
 
@@ -57,13 +58,11 @@ export function renderRoomConfig(panel, html) {
             `;
           })()}
         `
-      : html`
-          <div class="no-areas">
-            <ha-icon icon="mdi:home-alert" style="--mdc-icon-size: 64px; margin-bottom: 16px;"></ha-icon>
-            <p>${t('admin.entities.noAreas')}</p>
-            <p>${t('admin.entities.noAreasHint')}</p>
-          </div>
-        `}
+      : renderEmptyState(html, {
+          icon: 'mdi:home-alert',
+          title: t('admin.entities.noAreas'),
+          description: t('admin.entities.noAreasHint')
+        })}
   `;
 }
 
@@ -376,15 +375,8 @@ export function renderInfoTextBatteryConfig(panel, html) {
 export function renderCardConfig(panel, html) {
   const orderedFloors = panel._getOrderedFloors();
 
-  const toggleSection = (sectionId) => {
-    panel._expandedCardSections = {
-      ...panel._expandedCardSections,
-      [sectionId]: !panel._expandedCardSections[sectionId]
-    };
-    panel.requestUpdate();
-  };
-
-  const isExpanded = (sectionId) => panel._expandedCardSections[sectionId] || false;
+  // Section toggle helpers with localStorage persistence
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
 
   return html`
     <h2 class="section-title">
@@ -670,13 +662,11 @@ export function renderCardConfig(panel, html) {
               })}
             </div>
           </div>
-        ` : html`
-          <div class="garbage-empty-state">
-            <ha-icon icon="mdi:trash-can-outline"></ha-icon>
-            <div>No sensors added yet</div>
-            <div class="garbage-empty-hint">Use the search above to find and add garbage pickup sensors</div>
-          </div>
-        `}
+        ` : renderEmptyState(html, {
+          icon: 'mdi:trash-can-outline',
+          title: 'No sensors added yet',
+          hint: 'Use the search above to find and add garbage pickup sensors'
+        })}
 
         <!-- Floor Selection -->
         <div class="garbage-floor-selector">
@@ -1209,15 +1199,8 @@ export function renderOrderConfig(panel, html) {
   // Get sorted floors
   const sortedFloors = panel._getOrderedFloors();
 
-  const toggleSection = (sectionId) => {
-    panel._expandedCardSections = {
-      ...panel._expandedCardSections,
-      [sectionId]: !panel._expandedCardSections[sectionId]
-    };
-    panel.requestUpdate();
-  };
-
-  const isExpanded = (sectionId) => panel._expandedCardSections[sectionId] || false;
+  // Section toggle helpers with localStorage persistence
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
 
   return html`
     <h2 class="section-title">
@@ -1242,13 +1225,11 @@ export function renderOrderConfig(panel, html) {
         ></ha-icon>
       </div>
       <div class="order-config-section-content ${isExpanded('floorOrder') ? 'expanded' : ''}">
-        ${sortedFloors.length === 0 ? html`
-          <div class="order-empty-state">
-            <ha-icon icon="mdi:floor-plan"></ha-icon>
-            <p>No floors configured in Home Assistant.</p>
-            <p style="font-size: 12px; margin-top: 8px;">Go to Settings → Areas & Zones → Floors to create floors.</p>
-          </div>
-        ` : html`
+        ${sortedFloors.length === 0 ? renderEmptyState(html, {
+          icon: 'mdi:floor-plan',
+          title: 'No floors configured in Home Assistant',
+          hint: 'Go to Settings → Areas & Zones → Floors to create floors'
+        }) : html`
           <sortable-list
             item-key="floor_id"
             handle-selector=".sortable-handle"
@@ -1309,12 +1290,10 @@ export function renderOrderConfig(panel, html) {
         ></ha-icon>
       </div>
       <div class="order-config-section-content ${isExpanded('roomOrder') ? 'expanded' : ''}">
-        ${sortedFloors.length === 0 ? html`
-          <div class="order-empty-state">
-            <ha-icon icon="mdi:home-alert"></ha-icon>
-            <p>Configure floors first to order rooms.</p>
-          </div>
-        ` : sortedFloors.map(floor => {
+        ${sortedFloors.length === 0 ? renderEmptyState(html, {
+          icon: 'mdi:home-alert',
+          title: 'Configure floors first to order rooms'
+        }) : sortedFloors.map(floor => {
           const rooms = panel._getOrderedRoomsForFloor(floor.floor_id);
           return html`
             <div class="order-floor-section">
@@ -1823,15 +1802,8 @@ export function renderLayoutTab(panel, html) {
     panel._floorCardSearchState = {};
   }
 
-  const toggleSection = (sectionId) => {
-    panel._expandedCardSections = {
-      ...panel._expandedCardSections,
-      [sectionId]: !panel._expandedCardSections[sectionId]
-    };
-    panel.requestUpdate();
-  };
-
-  const isExpanded = (sectionId) => panel._expandedCardSections[sectionId] || false;
+  // Section toggle helpers with localStorage persistence
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
 
   const slotLabels = {
     0: { name: 'Top Left', desc: 'Small slot' },
@@ -2153,13 +2125,11 @@ export function renderLayoutTab(panel, html) {
         ></ha-icon>
       </div>
       <div class="card-config-section-content ${isExpanded('floorOrder') ? 'expanded' : ''}">
-        ${orderedFloors.length === 0 ? html`
-          <div class="order-empty-state">
-            <ha-icon icon="mdi:floor-plan"></ha-icon>
-            <p>No floors configured in Home Assistant.</p>
-            <p style="font-size: 12px; margin-top: 8px;">Go to Settings → Areas & Zones → Floors to create floors.</p>
-          </div>
-        ` : html`
+        ${orderedFloors.length === 0 ? renderEmptyState(html, {
+          icon: 'mdi:floor-plan',
+          title: 'No floors configured in Home Assistant',
+          hint: 'Go to Settings → Areas & Zones → Floors to create floors'
+        }) : html`
           <div class="order-list">
             ${orderedFloors.map((floor, index) => html`
               <div class="order-item">
@@ -2211,12 +2181,10 @@ export function renderLayoutTab(panel, html) {
         ></ha-icon>
       </div>
       <div class="card-config-section-content ${isExpanded('roomOrder') ? 'expanded' : ''}">
-        ${orderedFloors.length === 0 ? html`
-          <div class="order-empty-state">
-            <ha-icon icon="mdi:home-alert"></ha-icon>
-            <p>Configure floors first to order rooms.</p>
-          </div>
-        ` : orderedFloors.map(floor => {
+        ${orderedFloors.length === 0 ? renderEmptyState(html, {
+          icon: 'mdi:home-alert',
+          title: 'Configure floors first to order rooms'
+        }) : orderedFloors.map(floor => {
           const rooms = panel._getOrderedRoomsForFloor(floor.floor_id);
           return html`
             <div class="order-floor-section">

@@ -12,7 +12,7 @@ import '../../components/controls/sortable-list.js';
 import '../../components/cards/floor-card-preview.js';
 
 // Shared utilities
-export { t, showConfirmation, LABEL_CATEGORIES, renderUndoRedoControls, renderSecurityPopupContent } from './shared.js';
+export { t, showConfirmation, LABEL_CATEGORIES, renderSecurityPopupContent } from './shared.js';
 
 // Entity tab exports
 export { renderLabelMappingConfig, renderEntitiesTab } from './entities-tab.js';
@@ -42,7 +42,7 @@ export { renderScenesTab } from './scenes-tab.js';
 export { renderUsersTab } from './users-tab.js';
 
 // Local imports for renderAdminTab
-import { t, renderUndoRedoControls } from './shared.js';
+import { t, initializeSectionStates, updateAdminTabScrollIndicators } from './shared.js';
 import { renderEntitiesTab } from './entities-tab.js';
 import { renderLayoutTab } from './layout-tab.js';
 import { renderWeatherTab } from './weather-tab.js';
@@ -58,17 +58,27 @@ import { renderUsersTab } from './users-tab.js';
  * @returns {TemplateResult} Admin panel HTML
  */
 export function renderAdminTab(panel, html) {
+  // Initialize section states from localStorage on first render
+  if (!panel._sectionStatesInitialized) {
+    initializeSectionStates(panel);
+    panel._sectionStatesInitialized = true;
+  }
+
   // Migrate old tab names to new ones
   if (panel._adminSubTab === 'rooms') panel._adminSubTab = 'entities';
   if (panel._adminSubTab === 'labels') panel._adminSubTab = 'entities';
   if (panel._adminSubTab === 'order' || panel._adminSubTab === 'floorcards') panel._adminSubTab = 'layout';
   if (panel._adminSubTab === 'cards') panel._adminSubTab = 'status';
 
+  // Update scroll indicators after render
+  requestAnimationFrame(() => updateAdminTabScrollIndicators(panel));
+
   return html`
     <div class="container">
-      <!-- Admin Header with Sub-Tabs and Undo/Redo Controls -->
-      <div class="admin-header-bar">
-        <div class="admin-sub-tabs">
+      <!-- Admin Header with Sub-Tabs -->
+      <div class="admin-sub-tabs-container">
+        <div class="admin-sub-tabs-indicator admin-sub-tabs-indicator-left"></div>
+        <div class="admin-sub-tabs" @scroll=${() => updateAdminTabScrollIndicators(panel)}>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'entities' ? 'active' : ''}"
             @click=${() => panel._adminSubTab = 'entities'}
@@ -112,7 +122,7 @@ export function renderAdminTab(panel, html) {
             ${t('admin.tabs.users')}
           </button>
         </div>
-        ${renderUndoRedoControls(panel, html)}
+        <div class="admin-sub-tabs-indicator admin-sub-tabs-indicator-right"></div>
       </div>
 
       ${panel._adminSubTab === 'entities'

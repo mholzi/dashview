@@ -124,36 +124,6 @@ export const configStyles = `
     opacity: 0.6;
   }
 
-  .label-mapping-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    background: var(--card-background-color);
-    border-radius: 12px;
-    text-align: center;
-    color: var(--dv-gray600);
-  }
-
-  .label-mapping-empty-state ha-icon {
-    --mdc-icon-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.4;
-  }
-
-  .label-mapping-empty-state h3 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--primary-text-color);
-  }
-
-  .label-mapping-empty-state p {
-    margin: 0;
-    font-size: 14px;
-  }
-
   .label-mapping-hint {
     display: flex;
     align-items: flex-start;

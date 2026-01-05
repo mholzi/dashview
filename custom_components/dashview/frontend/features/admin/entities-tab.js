@@ -4,9 +4,10 @@
  */
 
 import { getFloorIcon } from '../../utils/index.js';
-import { t, LABEL_CATEGORIES } from './shared.js';
+import { t, LABEL_CATEGORIES, createSectionHelpers } from './shared.js';
 // renderAreaCard imported from barrel - circular import safe via re-export
 import { renderAreaCard } from './index.js';
+import { renderEmptyState } from '../../components/layout/empty-state.js';
 
 /**
  * Render label mapping configuration section
@@ -76,15 +77,12 @@ export function renderLabelMappingConfig(panel, html) {
       ${t('admin.entities.labelConfigDesc')}
     </p>
 
-    ${availableLabels.length === 0 ? html`
-      <div class="label-mapping-empty-state">
-        <ha-icon icon="mdi:tag-off-outline"></ha-icon>
-        <h3>${t('admin.entities.noLabels')}</h3>
-        <p>Create labels in Home Assistant first:</p>
-        <p style="font-size: 13px; opacity: 0.8;">Settings → Labels → Create Label</p>
-        <p style="font-size: 13px; margin-top: 12px;">Then assign labels to your entities and come back here to configure the mapping.</p>
-      </div>
-    ` : html`
+    ${availableLabels.length === 0 ? renderEmptyState(html, {
+      icon: 'mdi:tag-off-outline',
+      title: t('admin.entities.noLabels'),
+      description: 'Create labels in Home Assistant first: Settings → Labels → Create Label',
+      hint: 'Then assign labels to your entities and come back here to configure the mapping'
+    }) : html`
       <div class="label-mapping-list">
         ${LABEL_CATEGORIES.map(category => renderCategoryRow(category))}
       </div>
@@ -125,16 +123,8 @@ export function renderEntitiesTab(panel, html) {
     return rooms.filter(room => room.name.toLowerCase().includes(searchQuery));
   };
 
-  // Toggle section expansion
-  const toggleSection = (sectionId) => {
-    panel._expandedCardSections = {
-      ...panel._expandedCardSections,
-      [sectionId]: !panel._expandedCardSections[sectionId]
-    };
-    panel.requestUpdate();
-  };
-
-  const isExpanded = (sectionId) => panel._expandedCardSections[sectionId] || false;
+  // Section toggle helpers with localStorage persistence
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
 
   // Get all available labels from HA for label configuration
   const availableLabels = panel._labels || [];
@@ -206,15 +196,12 @@ export function renderEntitiesTab(panel, html) {
           ${t('admin.entities.labelConfigDesc')}
         </p>
 
-        ${availableLabels.length === 0 ? html`
-          <div class="label-mapping-empty-state">
-            <ha-icon icon="mdi:tag-off-outline"></ha-icon>
-            <h3>${t('admin.entities.noLabels')}</h3>
-            <p>Create labels in Home Assistant first:</p>
-            <p style="font-size: 13px; opacity: 0.8;">Settings → Labels → Create Label</p>
-            <p style="font-size: 13px; margin-top: 12px;">Then assign labels to your entities and come back here to configure the mapping.</p>
-          </div>
-        ` : html`
+        ${availableLabels.length === 0 ? renderEmptyState(html, {
+          icon: 'mdi:tag-off-outline',
+          title: t('admin.entities.noLabels'),
+          description: 'Create labels in Home Assistant first: Settings → Labels → Create Label',
+          hint: 'Then assign labels to your entities and come back here to configure the mapping'
+        }) : html`
           <div class="label-mapping-list">
             ${LABEL_CATEGORIES.map(category => renderCategoryRow(category))}
           </div>
@@ -301,13 +288,11 @@ export function renderEntitiesTab(panel, html) {
                 `;
               })()}
             `
-          : html`
-              <div class="no-areas">
-                <ha-icon icon="mdi:home-alert" style="--mdc-icon-size: 64px; margin-bottom: 16px;"></ha-icon>
-                <p>${t('admin.entities.noAreas')}</p>
-                <p>${t('admin.entities.noAreasHint')}</p>
-              </div>
-            `}
+          : renderEmptyState(html, {
+              icon: 'mdi:home-alert',
+              title: t('admin.entities.noAreas'),
+              description: t('admin.entities.noAreasHint')
+            })}
       </div>
     </div>
   `;
