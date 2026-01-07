@@ -283,7 +283,7 @@ export function renderFloorOverviewCard(component, html, floorId) {
     >
       <div
         class="floor-overview-slides"
-        style="transform: translateX(calc(-${currentIndex * 100}% + ${currentIndex * 20}px));"
+        style="transform: translateX(-${currentIndex * 100}%);"
       >
         ${roomsForFloor.map((room, idx) => {
           const data = getRoomData(room);
@@ -563,7 +563,7 @@ export function renderGarbageCard(component, html) {
     >
       <div
         class="garbage-slides"
-        style="transform: translateX(calc(-${currentIndex * 100}% + ${currentIndex * 20}px));"
+        style="transform: translateX(-${currentIndex * 100}%);"
       >
         ${garbageData.map((item, idx) => {
           let slideClass = '';

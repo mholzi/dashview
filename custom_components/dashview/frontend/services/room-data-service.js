@@ -19,6 +19,7 @@ const ENTITY_TYPE_CONFIG = {
     labelKey: 'light',
     enabledMapKey: 'enabledLights',
     extraAttributes: () => ({}),
+    excludeDomains: ['automation', 'script', 'scene'],
   },
   motion: {
     labelKey: 'motion',
@@ -219,6 +220,14 @@ export class RoomDataService {
       // Check if entity has the label
       const hasLabel = entityReg.labels && entityReg.labels.includes(labelId);
       if (!hasLabel) return false;
+
+      // Check excluded domains (e.g., automation/script/scene for lights)
+      if (config.excludeDomains && config.excludeDomains.length > 0) {
+        const domain = entityReg.entity_id.split('.')[0];
+        if (config.excludeDomains.includes(domain)) {
+          return false;
+        }
+      }
 
       // Check if entity is in this area
       const entityAreaId = this.getAreaIdForEntity(entityReg.entity_id);

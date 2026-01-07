@@ -390,7 +390,7 @@ export const floorCardsStyles = `
   }
 
   .floor-overview-slide {
-    min-width: calc(100% - 20px);
+    min-width: 100%;
     height: 143px;
     box-sizing: border-box;
     padding: 8px;
@@ -506,14 +506,14 @@ export const floorCardsStyles = `
   .pagination-dot,
   .floor-overview-dot,
   .garbage-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--dv-gray400);
     border: none;
     margin: 0;
-    /* Touch target padding: (44px - 8px) / 2 = 18px */
-    padding: 18px;
+    /* Touch target padding: (30px - 6px) / 2 = 12px */
+    padding: 12px;
     cursor: pointer;
     opacity: 0.6;
     transform: scale(1);

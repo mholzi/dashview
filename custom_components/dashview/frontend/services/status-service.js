@@ -247,6 +247,14 @@ export function getLightsOnStatus(hass, infoTextConfig, enabledLights, labelId =
   if (labelId && entityHasLabel) {
     enabledLightIds = enabledLightIds.filter(id => entityHasLabel(id, labelId));
   }
+
+  // Exclude non-light domains (automation, script, scene with light label)
+  const excludedDomains = ['automation', 'script', 'scene'];
+  enabledLightIds = enabledLightIds.filter(id => {
+    const domain = id.split('.')[0];
+    return !excludedDomains.includes(domain);
+  });
+
   if (enabledLightIds.length === 0) return null;
 
   const lightsOn = filterEntitiesByState(enabledLightIds, hass, 'on');

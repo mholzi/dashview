@@ -180,7 +180,7 @@ export const cardStyles = `
   }
 
   .garbage-slide {
-    min-width: calc(100% - 20px);
+    min-width: 100%;
     height: 143px;
     box-sizing: border-box;
     padding: 20px;
@@ -288,6 +288,17 @@ export const cardStyles = `
 
   .garbage-slide.soon .garbage-slide-label {
     color: var(--dv-black);
+  }
+
+  /* Dark mode: Force dark text on green "tomorrow" background */
+  /* --dv-black inverts to white in dark mode, so we force literal dark color */
+  :host-context(html.dark-mode) .garbage-slide.soon .garbage-slide-name,
+  :host-context(body.dark-mode) .garbage-slide.soon .garbage-slide-name,
+  :host-context([data-theme="dark"]) .garbage-slide.soon .garbage-slide-name,
+  :host-context(html.dark-mode) .garbage-slide.soon .garbage-slide-label,
+  :host-context(body.dark-mode) .garbage-slide.soon .garbage-slide-label,
+  :host-context([data-theme="dark"]) .garbage-slide.soon .garbage-slide-label {
+    color: #28282A;
   }
 
   /* Garbage pagination uses unified styles above */

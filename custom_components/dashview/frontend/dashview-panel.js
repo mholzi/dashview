@@ -3214,12 +3214,16 @@
 
       const states = Object.values(this.hass.states);
       // Filter enabled lights by current label (iterate over registry for default-enabled)
+      const excludedDomains = ['automation', 'script', 'scene'];
       const enabledLightIds = this._entityRegistry
         .filter((entityReg) => {
           const entityId = entityReg.entity_id;
           if (this._enabledLights[entityId] === false) return false;
           // Only count lights that have the currently selected light label
           if (!this._lightLabelId || !entityReg.labels || !entityReg.labels.includes(this._lightLabelId)) return false;
+          // Exclude non-light domains (automation, script, scene with light label)
+          const domain = entityId.split('.')[0];
+          if (excludedDomains.includes(domain)) return false;
           return true;
         })
         .map((e) => e.entity_id);
@@ -3630,7 +3634,7 @@
         <div class="bottom-tab-bar">
           <div class="bottom-tab-bar-inner">
             <button
-              class="tab ${this._activeTab === "home" ? "active" : ""}"
+              class="tab ${this._activeTab === "home" && !this._securityPopupOpen && !this._mediaPopupOpen && !this._adminPopupOpen ? "active" : ""}"
               @click=${() => this._setTab("home")}
             >
               <ha-icon icon="mdi:home"></ha-icon>
