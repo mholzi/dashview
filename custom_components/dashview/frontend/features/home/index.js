@@ -18,6 +18,114 @@ export { triggerHaptic };
 // Re-export coach mark functions for external use
 export { shouldShowCoachMark, dismissCoachMark };
 
+// Long press duration in ms (matches room-popup)
+const LONG_PRESS_DURATION = 500;
+
+/**
+ * Create long press handlers for an element
+ * @param {Function} onTap - Called on short tap
+ * @param {Function} onLongPress - Called on long press
+ * @returns {Object} Event handlers
+ */
+function createLongPressHandlers(onTap, onLongPress) {
+  let pressTimer = null;
+  let isLongPress = false;
+  let startX = 0;
+  let startY = 0;
+
+  const start = (e) => {
+    isLongPress = false;
+    const touch = e.touches?.[0] || e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    pressTimer = setTimeout(() => {
+      isLongPress = true;
+      onLongPress();
+    }, LONG_PRESS_DURATION);
+  };
+
+  const move = (e) => {
+    if (!pressTimer) return;
+    const touch = e.touches?.[0] || e;
+    const dx = Math.abs(touch.clientX - startX);
+    const dy = Math.abs(touch.clientY - startY);
+    if (dx > 10 || dy > 10) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  const end = (e) => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+      if (!isLongPress) {
+        onTap();
+      }
+    }
+    if (isLongPress) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const cancel = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  return {
+    onTouchStart: start,
+    onTouchMove: move,
+    onTouchEnd: end,
+    onTouchCancel: cancel,
+    onMouseDown: start,
+    onMouseMove: move,
+    onMouseUp: end,
+    onMouseLeave: cancel,
+  };
+}
+
+/**
+ * Get the fill color for a light slider based on RGB color or default warm white
+ * @param {Object} state - Light entity state
+ * @returns {string} RGB color string for CSS
+ */
+function getLightFillColor(state) {
+  const rgbColor = state?.attributes?.rgb_color;
+  const [r, g, b] = rgbColor || [255, 180, 107]; // Default warm white
+  return `${r}, ${g}, ${b}`;
+}
+
+/**
+ * Get light info from state for floor card display
+ * @param {Object} hass - Home Assistant instance
+ * @param {string} entityId - Light entity ID
+ * @returns {Object} Light display info
+ */
+function getLightInfo(hass, entityId) {
+  const state = hass?.states[entityId];
+  if (!state) return null;
+
+  const isOn = state.state === 'on';
+  const brightness = state.attributes?.brightness;
+  const brightnessPercent = brightness ? Math.round((brightness / 255) * 100) : 0;
+  const isDimmable = state.attributes?.supported_color_modes?.some(
+    mode => !['onoff'].includes(mode)
+  ) ?? (brightness !== undefined);
+
+  return {
+    isOn,
+    brightness,
+    brightnessPercent,
+    isDimmable,
+    rgbColor: state.attributes?.rgb_color,
+    fillColor: getLightFillColor(state),
+  };
+}
+
 /**
  * Render skeleton loading state for floor overview card
  * @param {Function} html - lit-html template function
@@ -438,10 +546,158 @@ export function renderRoomCardsGrid(component, html) {
     }
 
     const { labelText, cardClass, icon, friendlyName, state } = entityInfo;
+    const entityType = slotConfig.entity_id.split('.')[0];
+
+    // Special handling for light entities - interactive slider like room popup
+    if (entityType === 'light') {
+      const lightInfo = getLightInfo(component.hass, slotConfig.entity_id);
+      if (!lightInfo) {
+        return html`<div class="room-card ${isBig ? 'big' : 'small'} inactive" style="grid-area: ${gridArea}; visibility: hidden;"></div>`;
+      }
+
+      const { isOn, brightnessPercent, isDimmable, fillColor } = lightInfo;
+
+      // Create long press handlers for tap vs long-press
+      const longPress = createLongPressHandlers(
+        () => toggleLight(component.hass, slotConfig.entity_id),
+        () => openMoreInfo(component, slotConfig.entity_id)
+      );
+
+      // Handle slider interaction
+      const handleSliderInteraction = (e, isDrag = false) => {
+        const sliderArea = e.currentTarget;
+        const rect = sliderArea.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const percentage = Math.max(1, Math.min(100, Math.round(((clientX - rect.left) / rect.width) * 100)));
+
+        // Update visual immediately
+        const card = sliderArea.closest('.floor-light-card');
+        const fill = card?.querySelector('.floor-light-slider-fill');
+        const label = card?.querySelector('.floor-light-label');
+
+        if (fill) fill.style.width = `${percentage}%`;
+        if (label) label.textContent = `${percentage}%`;
+
+        // Only call service on final interaction (not during drag)
+        if (!isDrag) {
+          component._setLightBrightness(slotConfig.entity_id, percentage);
+        }
+
+        return percentage;
+      };
+
+      // For dimmable lights that are ON: show slider
+      if (isDimmable && isOn) {
+        return html`
+          <div
+            class="floor-light-card ${isBig ? 'big' : 'small'} on has-slider"
+            style="grid-area: ${gridArea};"
+          >
+            <div class="floor-light-slider-fill"
+                 style="width: ${brightnessPercent}%; background: linear-gradient(90deg, rgba(${fillColor}, 0.9) 0%, rgba(${fillColor}, 0.7) 100%);"></div>
+            <div class="floor-light-header"
+                 style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+                 @touchstart=${longPress.onTouchStart}
+                 @touchmove=${longPress.onTouchMove}
+                 @touchend=${longPress.onTouchEnd}
+                 @touchcancel=${longPress.onTouchCancel}
+                 @mousedown=${longPress.onMouseDown}
+                 @mouseup=${longPress.onMouseUp}
+                 @mouseleave=${longPress.onMouseLeave}>
+              <div class="floor-light-icon">
+                <ha-icon icon="${icon}"></ha-icon>
+              </div>
+              <div class="floor-light-content">
+                <div class="floor-light-label">${brightnessPercent}%</div>
+                <div class="floor-light-name">${friendlyName}</div>
+              </div>
+            </div>
+            <div class="floor-light-slider-area"
+                 @click=${(e) => {
+                   e.stopPropagation();
+                   handleSliderInteraction(e);
+                 }}
+                 @touchstart=${(e) => {
+                   const card = e.currentTarget.closest('.floor-light-card');
+                   card?.classList.add('dragging');
+                   card._dragValue = null;
+                 }}
+                 @touchmove=${(e) => {
+                   e.preventDefault();
+                   const card = e.currentTarget.closest('.floor-light-card');
+                   card._dragValue = handleSliderInteraction(e, true);
+                 }}
+                 @touchend=${(e) => {
+                   const card = e.currentTarget.closest('.floor-light-card');
+                   card?.classList.remove('dragging');
+                   if (card?._dragValue !== null && card?._dragValue !== undefined) {
+                     component._setLightBrightness(slotConfig.entity_id, card._dragValue);
+                   }
+                 }}
+                 @mousedown=${(e) => {
+                   e.preventDefault();
+                   e.stopPropagation();
+                   const card = e.currentTarget.closest('.floor-light-card');
+                   const sliderArea = e.currentTarget;
+                   card?.classList.add('dragging');
+                   let dragValue = null;
+
+                   const onMouseMove = (moveE) => {
+                     const rect = sliderArea.getBoundingClientRect();
+                     const percentage = Math.max(1, Math.min(100, Math.round(((moveE.clientX - rect.left) / rect.width) * 100)));
+                     const fill = card?.querySelector('.floor-light-slider-fill');
+                     const label = card?.querySelector('.floor-light-label');
+                     if (fill) fill.style.width = `${percentage}%`;
+                     if (label) label.textContent = `${percentage}%`;
+                     dragValue = percentage;
+                   };
+
+                   const onMouseUp = () => {
+                     card?.classList.remove('dragging');
+                     if (dragValue !== null) {
+                       component._setLightBrightness(slotConfig.entity_id, dragValue);
+                     }
+                     document.removeEventListener('mousemove', onMouseMove);
+                     document.removeEventListener('mouseup', onMouseUp);
+                   };
+
+                   document.addEventListener('mousemove', onMouseMove);
+                   document.addEventListener('mouseup', onMouseUp);
+                 }}>
+            </div>
+          </div>
+        `;
+      } else {
+        // Non-dimmable or off: simple toggle with long press for more-info
+        return html`
+          <div
+            class="floor-light-card ${isBig ? 'big' : 'small'} ${isOn ? 'on' : 'off'}"
+            style="grid-area: ${gridArea}; ${isOn ? `background: linear-gradient(135deg, rgba(${fillColor}, 0.5) 0%, rgba(${fillColor}, 0.3) 100%);` : ''}"
+          >
+            <div class="floor-light-header"
+                 style="user-select: none; -webkit-user-select: none;"
+                 @touchstart=${longPress.onTouchStart}
+                 @touchmove=${longPress.onTouchMove}
+                 @touchend=${longPress.onTouchEnd}
+                 @touchcancel=${longPress.onTouchCancel}
+                 @mousedown=${longPress.onMouseDown}
+                 @mouseup=${longPress.onMouseUp}
+                 @mouseleave=${longPress.onMouseLeave}>
+              <div class="floor-light-icon">
+                <ha-icon icon="${icon}"></ha-icon>
+              </div>
+              <div class="floor-light-content">
+                <div class="floor-light-label">${isOn ? (isDimmable && brightnessPercent ? `${brightnessPercent}%` : t('common.status.on')) : t('common.status.off')}</div>
+                <div class="floor-light-name">${friendlyName}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
 
     // Handle click - toggle for lights, more-info for others
     const handleClick = () => {
-      const entityType = slotConfig.entity_id.split('.')[0];
       if (entityType === 'light') {
         toggleLight(component.hass, slotConfig.entity_id);
       } else {

@@ -115,7 +115,15 @@
       "no_rooms_enabled": "No rooms enabled",
       "no_cards_configured": "No cards configured. Configure cards in the admin area under \"Floor Cards\".",
       "no_sensors_selected": "No sensors selected",
-      "no_devices_enabled": "No devices enabled."
+      "no_devices_enabled": "No devices enabled.",
+      "no_lights_enabled": "No lights enabled in admin configuration."
+    },
+    "popups": {
+      "lights": {
+        "title": "Lights",
+        "on_section": "Lights on",
+        "off_section": "Lights off"
+      }
     }
   },
   "rooms": {

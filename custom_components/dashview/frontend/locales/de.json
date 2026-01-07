@@ -115,7 +115,15 @@
       "no_rooms_enabled": "Keine Räume aktiviert",
       "no_cards_configured": "Keine Karten konfiguriert. Konfiguriere Karten im Admin-Bereich unter \"Etagen-Karten\".",
       "no_sensors_selected": "Keine Sensoren ausgewählt",
-      "no_devices_enabled": "Keine Geräte aktiviert."
+      "no_devices_enabled": "Keine Geräte aktiviert.",
+      "no_lights_enabled": "Keine Lichter in der Admin-Konfiguration aktiviert."
+    },
+    "popups": {
+      "lights": {
+        "title": "Lichter",
+        "on_section": "Lichter an",
+        "off_section": "Lichter aus"
+      }
     }
   },
   "rooms": {

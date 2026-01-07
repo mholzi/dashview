@@ -87,7 +87,7 @@ export const weatherPopupStyles = `
     background: var(--dv-popup-bg-color);
     border-radius: 24px;
     padding: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 32px;
     display: grid;
     grid-template-areas:
       "title icon"
@@ -142,7 +142,7 @@ export const weatherPopupStyles = `
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
-    margin: 16px 0;
+    margin: 32px 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
@@ -190,7 +190,7 @@ export const weatherPopupStyles = `
   }
 
   .weather-forecast-swiper {
-    margin: 16px 0;
+    margin: 32px 0;
   }
 
   .weather-forecast-card {
@@ -250,7 +250,7 @@ export const weatherPopupStyles = `
   .weather-forecast-tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 32px;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -280,7 +280,7 @@ export const weatherPopupStyles = `
     background: var(--dv-popup-bg-color);
     border-radius: 24px;
     padding: 12px;
-    margin: 16px 0;
+    margin: 32px 0;
   }
 
   .weather-radar-title {

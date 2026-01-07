@@ -264,4 +264,173 @@ export const sectionsStyles = `
   .room-card.big .room-card-label {
     font-size: 1.5em;
   }
+
+  /* ==================== FLOOR LIGHT CARD (with slider) ==================== */
+  .floor-light-card {
+    position: relative;
+    border-radius: var(--dv-radius-md);
+    cursor: pointer;
+    transition: all var(--dv-transition-normal) ease;
+    overflow: hidden;
+    box-sizing: border-box;
+    margin: 4px;
+    background: var(--dv-gray000);
+  }
+
+  .floor-light-card:hover {
+    transform: scale(0.98);
+  }
+
+  .floor-light-card.on {
+    background: var(--active-light, linear-gradient(145deg, rgba(255,243,219,1) 0%, rgba(255,234,178,1) 100%));
+  }
+
+  .floor-light-card.off {
+    background: var(--dv-gray000);
+  }
+
+  .floor-light-card.has-slider {
+    background: var(--dv-gray000);
+  }
+
+  /* Slider fill background */
+  .floor-light-slider-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    border-radius: var(--dv-radius-md);
+    pointer-events: none;
+    transition: width var(--dv-transition-fast) ease;
+    z-index: 0;
+  }
+
+  .floor-light-card.dragging .floor-light-slider-fill {
+    transition: none;
+  }
+
+  /* Header contains icon and content */
+  .floor-light-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+  }
+
+  /* Small card layout (horizontal) */
+  .floor-light-card.small {
+    height: calc(100% - 8px);
+  }
+
+  .floor-light-card.small .floor-light-header {
+    flex-direction: row;
+    gap: 12px;
+    padding: 4px 20px 4px 4px;
+  }
+
+  .floor-light-card.small .floor-light-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(var(--dv-highlight-rgb), 0.08);
+  }
+
+  .floor-light-card.small.on .floor-light-icon {
+    background: var(--dv-white);
+  }
+
+  .floor-light-card.small .floor-light-icon ha-icon {
+    --mdc-icon-size: 22px;
+    color: var(--dv-gray800);
+  }
+
+  .floor-light-card.small .floor-light-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .floor-light-card.small .floor-light-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--dv-gray800);
+  }
+
+  .floor-light-card.small .floor-light-name {
+    font-size: 14px;
+    opacity: 0.7;
+    color: var(--dv-gray800);
+  }
+
+  /* Big card layout (vertical) */
+  .floor-light-card.big {
+    height: calc(100% - 8px);
+  }
+
+  .floor-light-card.big .floor-light-header {
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+  }
+
+  .floor-light-card.big .floor-light-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-end;
+    margin: -16px -16px 0 0;
+    background: rgba(var(--dv-highlight-rgb), 0.08);
+  }
+
+  .floor-light-card.big.on .floor-light-icon {
+    background: var(--dv-white);
+  }
+
+  .floor-light-card.big .floor-light-icon ha-icon {
+    --mdc-icon-size: 30px;
+    color: var(--dv-gray800);
+  }
+
+  .floor-light-card.big .floor-light-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .floor-light-card.big .floor-light-label {
+    font-size: 1.5em;
+    font-weight: 300;
+    color: var(--dv-gray800);
+  }
+
+  .floor-light-card.big .floor-light-name {
+    font-size: 14px;
+    opacity: 0.7;
+    color: var(--dv-gray800);
+  }
+
+  /* Slider area - invisible touch target at bottom of card */
+  .floor-light-slider-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    z-index: 2;
+    cursor: ew-resize;
+  }
+
+  .floor-light-card.small .floor-light-slider-area {
+    height: 100%;
+  }
 `;

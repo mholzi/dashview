@@ -220,6 +220,308 @@ export function renderSecurityPopupContent(component, html) {
 }
 
 
+// Long press duration in ms (matches room-popup)
+const LONG_PRESS_DURATION = 500;
+
+/**
+ * Create long press handlers for an element
+ */
+function createLongPressHandlers(onTap, onLongPress) {
+  let pressTimer = null;
+  let isLongPress = false;
+  let startX = 0;
+  let startY = 0;
+
+  const start = (e) => {
+    isLongPress = false;
+    const touch = e.touches?.[0] || e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    pressTimer = setTimeout(() => {
+      isLongPress = true;
+      onLongPress();
+    }, LONG_PRESS_DURATION);
+  };
+
+  const move = (e) => {
+    if (!pressTimer) return;
+    const touch = e.touches?.[0] || e;
+    const dx = Math.abs(touch.clientX - startX);
+    const dy = Math.abs(touch.clientY - startY);
+    if (dx > 10 || dy > 10) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  const end = (e) => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+      if (!isLongPress) {
+        onTap();
+      }
+    }
+    if (isLongPress) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const cancel = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  return {
+    onTouchStart: start,
+    onTouchMove: move,
+    onTouchEnd: end,
+    onTouchCancel: cancel,
+    onMouseDown: start,
+    onMouseUp: end,
+    onMouseLeave: cancel,
+  };
+}
+
+/**
+ * Get the fill color for a light based on RGB color or default warm white
+ */
+function getLightFillColor(state) {
+  const rgbColor = state?.attributes?.rgb_color;
+  const [r, g, b] = rgbColor || [255, 180, 107]; // Default warm white
+  return `${r}, ${g}, ${b}`;
+}
+
+export function renderLightsPopupContent(component, html) {
+  if (!component.hass) return html``;
+
+  // Helper to get all entities with the light label, respecting explicit enable/disable
+  const filterByLightLabel = () => {
+    const filtered = {};
+    const labelId = component._lightLabelId;
+    if (!labelId) return filtered;
+
+    // Exclude non-light domains
+    const excludedDomains = ['automation', 'script', 'scene'];
+
+    component._entityRegistry.forEach(entityReg => {
+      if (entityReg.labels && entityReg.labels.includes(labelId)) {
+        const entityId = entityReg.entity_id;
+        const domain = entityId.split('.')[0];
+
+        // Skip excluded domains
+        if (excludedDomains.includes(domain)) return;
+
+        // Skip only explicitly disabled entities (enabled by default)
+        if (component._enabledLights[entityId] === false) return;
+        filtered[entityId] = component._enabledLights[entityId] !== undefined ? component._enabledLights[entityId] : true;
+      }
+    });
+    return filtered;
+  };
+
+  const enabledLightsMap = filterByLightLabel();
+  const enabledLightIds = Object.keys(enabledLightsMap).filter(id => enabledLightsMap[id] !== false);
+
+  // Get light states and info
+  const lights = enabledLightIds.map(entityId => {
+    const state = component.hass.states[entityId];
+    if (!state) return null;
+
+    const isOn = state.state === 'on';
+    const brightness = state.attributes?.brightness;
+    const brightnessPercent = brightness ? Math.round((brightness / 255) * 100) : 0;
+    const isDimmable = state.attributes?.supported_color_modes?.some(
+      mode => !['onoff'].includes(mode)
+    ) ?? (brightness !== undefined);
+    const friendlyName = state.attributes?.friendly_name || entityId;
+
+    return {
+      entityId,
+      state,
+      isOn,
+      brightness,
+      brightnessPercent,
+      isDimmable,
+      friendlyName,
+      fillColor: getLightFillColor(state),
+      lastChanged: state.last_changed ? new Date(state.last_changed).getTime() : 0,
+    };
+  }).filter(l => l !== null);
+
+  // Sort by last changed (most recent first)
+  lights.sort((a, b) => b.lastChanged - a.lastChanged);
+
+  const lightsOn = lights.filter(l => l.isOn);
+  const lightsOff = lights.filter(l => !l.isOn);
+
+  // Render a single light card with interactive slider
+  const renderLightCard = (light) => {
+    const { entityId, isOn, brightnessPercent, isDimmable, friendlyName, fillColor } = light;
+
+    // Create long press handlers
+    const longPress = createLongPressHandlers(
+      () => component._toggleLight(entityId),
+      () => component._showMoreInfo(entityId)
+    );
+
+    // Handle slider interaction
+    const handleSliderInteraction = (e, isDrag = false) => {
+      const sliderArea = e.currentTarget;
+      const rect = sliderArea.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const percentage = Math.max(1, Math.min(100, Math.round(((clientX - rect.left) / rect.width) * 100)));
+
+      // Update visual immediately
+      const card = sliderArea.closest('.lights-popup-card');
+      const fill = card?.querySelector('.lights-popup-slider-fill');
+      const label = card?.querySelector('.lights-popup-label');
+
+      if (fill) fill.style.width = `${percentage}%`;
+      if (label) label.textContent = `${percentage}%`;
+
+      if (!isDrag) {
+        component._setLightBrightness(entityId, percentage);
+      }
+
+      return percentage;
+    };
+
+    // For dimmable lights that are ON: show slider
+    if (isDimmable && isOn) {
+      return html`
+        <div class="lights-popup-card on has-slider">
+          <div class="lights-popup-slider-fill"
+               style="width: ${brightnessPercent}%; background: linear-gradient(90deg, rgba(${fillColor}, 0.9) 0%, rgba(${fillColor}, 0.7) 100%);"></div>
+          <div class="lights-popup-header"
+               style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+               @touchstart=${longPress.onTouchStart}
+               @touchmove=${longPress.onTouchMove}
+               @touchend=${longPress.onTouchEnd}
+               @touchcancel=${longPress.onTouchCancel}
+               @mousedown=${longPress.onMouseDown}
+               @mouseup=${longPress.onMouseUp}
+               @mouseleave=${longPress.onMouseLeave}>
+            <div class="lights-popup-icon">
+              <ha-icon icon="mdi:lightbulb"></ha-icon>
+            </div>
+            <div class="lights-popup-content">
+              <div class="lights-popup-label">${brightnessPercent}%</div>
+              <div class="lights-popup-name">${friendlyName}</div>
+            </div>
+          </div>
+          <div class="lights-popup-slider-area"
+               @click=${(e) => {
+                 e.stopPropagation();
+                 handleSliderInteraction(e);
+               }}
+               @touchstart=${(e) => {
+                 const card = e.currentTarget.closest('.lights-popup-card');
+                 card?.classList.add('dragging');
+                 card._dragValue = null;
+               }}
+               @touchmove=${(e) => {
+                 e.preventDefault();
+                 const card = e.currentTarget.closest('.lights-popup-card');
+                 card._dragValue = handleSliderInteraction(e, true);
+               }}
+               @touchend=${(e) => {
+                 const card = e.currentTarget.closest('.lights-popup-card');
+                 card?.classList.remove('dragging');
+                 if (card?._dragValue !== null && card?._dragValue !== undefined) {
+                   component._setLightBrightness(entityId, card._dragValue);
+                 }
+               }}
+               @mousedown=${(e) => {
+                 e.preventDefault();
+                 e.stopPropagation();
+                 const card = e.currentTarget.closest('.lights-popup-card');
+                 const sliderArea = e.currentTarget;
+                 card?.classList.add('dragging');
+                 let dragValue = null;
+
+                 const onMouseMove = (moveE) => {
+                   const rect = sliderArea.getBoundingClientRect();
+                   const percentage = Math.max(1, Math.min(100, Math.round(((moveE.clientX - rect.left) / rect.width) * 100)));
+                   const fill = card?.querySelector('.lights-popup-slider-fill');
+                   const label = card?.querySelector('.lights-popup-label');
+                   if (fill) fill.style.width = `${percentage}%`;
+                   if (label) label.textContent = `${percentage}%`;
+                   dragValue = percentage;
+                 };
+
+                 const onMouseUp = () => {
+                   card?.classList.remove('dragging');
+                   if (dragValue !== null) {
+                     component._setLightBrightness(entityId, dragValue);
+                   }
+                   document.removeEventListener('mousemove', onMouseMove);
+                   document.removeEventListener('mouseup', onMouseUp);
+                 };
+
+                 document.addEventListener('mousemove', onMouseMove);
+                 document.addEventListener('mouseup', onMouseUp);
+               }}>
+          </div>
+        </div>
+      `;
+    } else {
+      // Non-dimmable or off: simple toggle with long press for more-info
+      return html`
+        <div class="lights-popup-card ${isOn ? 'on' : 'off'}"
+             style="${isOn ? `background: linear-gradient(135deg, rgba(${fillColor}, 0.5) 0%, rgba(${fillColor}, 0.3) 100%);` : ''}">
+          <div class="lights-popup-header"
+               style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+               @touchstart=${longPress.onTouchStart}
+               @touchmove=${longPress.onTouchMove}
+               @touchend=${longPress.onTouchEnd}
+               @touchcancel=${longPress.onTouchCancel}
+               @mousedown=${longPress.onMouseDown}
+               @mouseup=${longPress.onMouseUp}
+               @mouseleave=${longPress.onMouseLeave}>
+            <div class="lights-popup-icon">
+              <ha-icon icon="${isOn ? 'mdi:lightbulb' : 'mdi:lightbulb-outline'}"></ha-icon>
+            </div>
+            <div class="lights-popup-content">
+              <div class="lights-popup-label">${isOn ? (isDimmable && brightnessPercent ? `${brightnessPercent}%` : t('common.status.on')) : t('common.status.off')}</div>
+              <div class="lights-popup-name">${friendlyName}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  };
+
+  return html`
+    <!-- Lights On Section -->
+    ${lightsOn.length > 0 ? html`
+      <h3 class="lights-popup-section-title">${t('ui.popups.lights.on_section')} (${lightsOn.length})</h3>
+      <div class="lights-popup-list">
+        ${lightsOn.map(l => renderLightCard(l))}
+      </div>
+    ` : ''}
+
+    <!-- Lights Off Section -->
+    ${lightsOff.length > 0 ? html`
+      <h3 class="lights-popup-section-title">${t('ui.popups.lights.off_section')} (${lightsOff.length})</h3>
+      <div class="lights-popup-list">
+        ${lightsOff.map(l => renderLightCard(l))}
+      </div>
+    ` : ''}
+
+    <!-- Empty State -->
+    ${lights.length === 0 ? html`
+      <div class="lights-popup-empty">
+        <ha-icon icon="mdi:lightbulb-off-outline" style="--mdc-icon-size: 48px; color: var(--secondary-text-color);"></ha-icon>
+        <div class="lights-popup-empty-text">${t('ui.errors.no_lights_enabled')}</div>
+      </div>
+    ` : ''}
+  `;
+}
+
 export function renderBatteryPopupContent(component, html) {
   if (!component.hass) return html``;
 

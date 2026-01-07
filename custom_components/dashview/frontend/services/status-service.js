@@ -267,6 +267,7 @@ export function getLightsOnStatus(hass, infoTextConfig, enabledLights, labelId =
     badgeText: `${count}`,
     emoji: "💡",
     suffixText: t('status.lights.suffix'),
+    clickAction: "lights",
   };
 }
 

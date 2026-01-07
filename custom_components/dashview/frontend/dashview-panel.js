@@ -245,6 +245,7 @@
         _activeFloorTab: { type: String },
         _activeSecurityTab: { type: String },
         _securityPopupOpen: { type: Boolean },
+        _lightsPopupOpen: { type: Boolean },
         _batteryPopupOpen: { type: Boolean },
         _adminPopupOpen: { type: Boolean },
         _notificationTempThreshold: { type: Number },
@@ -420,6 +421,7 @@
       this._activeFloorTab = null;
       this._activeSecurityTab = 'windows';
       this._securityPopupOpen = false;
+      this._lightsPopupOpen = false;
       this._batteryPopupOpen = false;
       this._adminPopupOpen = false;
       this._notificationTempThreshold = 23;
@@ -2286,8 +2288,12 @@
 
     _handleInfoTextClick(action) {
       if (action === 'security') this._openPopup('_securityPopupOpen');
+      else if (action === 'lights') this._openPopup('_lightsPopupOpen');
       else if (action === 'battery') this._openPopup('_batteryPopupOpen');
     }
+
+    _closeLightsPopup() { this._closePopup('_lightsPopupOpen'); }
+    _handleLightsPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeLightsPopup()); }
 
     _closeBatteryPopup() { this._closePopup('_batteryPopupOpen'); }
     _handleBatteryPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeBatteryPopup()); }
@@ -3256,6 +3262,7 @@
 
     _closeAllPopups() {
       this._securityPopupOpen = false;
+      this._lightsPopupOpen = false;
       this._batteryPopupOpen = false;
       this._mediaPopupOpen = false;
       this._weatherPopupOpen = false;
@@ -3570,6 +3577,30 @@
             `
           : ""}
 
+        <!-- LIGHTS POPUP -->
+        ${this._lightsPopupOpen
+          ? html`
+              <div class="popup-overlay" @click=${this._handleLightsPopupOverlayClick}>
+                <div class="popup-container">
+                  <div class="popup-header">
+                    <div class="popup-icon" style="background: var(--dv-gradient-active, linear-gradient(135deg, #ffd54f 0%, #ffb300 100%));">
+                      <ha-icon icon="mdi:lightbulb-group"></ha-icon>
+                    </div>
+                    <div class="popup-title">
+                      <h2>${t('ui.popups.lights.title')}</h2>
+                    </div>
+                    <button class="popup-close" @click=${this._closeLightsPopup}>
+                      <ha-icon icon="mdi:close"></ha-icon>
+                    </button>
+                  </div>
+                  <div class="popup-content">
+                    ${this._renderLightsPopupContent()}
+                  </div>
+                </div>
+              </div>
+            `
+          : ""}
+
         <!-- BATTERY POPUP -->
         ${this._batteryPopupOpen
           ? html`
@@ -3706,6 +3737,15 @@
       }
       // Fallback: return empty if module not loaded
       return html`<div class="security-empty-state">Security module not loaded</div>`;
+    }
+
+    _renderLightsPopupContent() {
+      // Use external module if available, fallback to inline
+      if (dashviewPopups?.renderLightsPopupContent) {
+        return dashviewPopups.renderLightsPopupContent(this, html);
+      }
+      // Fallback: return empty if module not loaded
+      return html`<div class="lights-empty-state">Lights module not loaded</div>`;
     }
 
     _handleSecurityPopupOverlayClick(e) { this._handlePopupOverlay(e, () => { this._securityPopupOpen = false; }); }

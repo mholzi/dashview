@@ -512,8 +512,8 @@ export const floorCardsStyles = `
     background: var(--dv-gray400);
     border: none;
     margin: 0;
-    /* Touch target padding: (30px - 6px) / 2 = 12px */
-    padding: 12px;
+    /* Touch target padding: (10px - 6px) / 2 = 2px */
+    padding: 2px;
     cursor: pointer;
     opacity: 0.6;
     transform: scale(1);
