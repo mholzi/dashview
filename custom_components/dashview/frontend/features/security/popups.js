@@ -8,7 +8,8 @@ import {
   isStateOn,
   isStateOpen,
   calculateTimeDifference,
-  getFriendlyName
+  getFriendlyName,
+  formatLastChanged
 } from '../../utils/index.js';
 import { t } from '../../utils/i18n.js';
 
@@ -349,6 +350,7 @@ export function renderLightsPopupContent(component, html) {
       friendlyName,
       fillColor: getLightFillColor(state),
       lastChanged: state.last_changed ? new Date(state.last_changed).getTime() : 0,
+      lastChangedText: formatLastChanged(state.last_changed),
     };
   }).filter(l => l !== null);
 
@@ -360,7 +362,7 @@ export function renderLightsPopupContent(component, html) {
 
   // Render a single light card with interactive slider
   const renderLightCard = (light) => {
-    const { entityId, isOn, brightnessPercent, isDimmable, friendlyName, fillColor } = light;
+    const { entityId, isOn, brightnessPercent, isDimmable, friendlyName, fillColor, lastChangedText } = light;
 
     // Create long press handlers
     const longPress = createLongPressHandlers(
@@ -378,10 +380,10 @@ export function renderLightsPopupContent(component, html) {
       // Update visual immediately
       const card = sliderArea.closest('.lights-popup-card');
       const fill = card?.querySelector('.lights-popup-slider-fill');
-      const label = card?.querySelector('.lights-popup-label');
+      const labelValue = card?.querySelector('.lights-popup-label-value');
 
       if (fill) fill.style.width = `${percentage}%`;
-      if (label) label.textContent = `${percentage}%`;
+      if (labelValue) labelValue.textContent = `${percentage}%`;
 
       if (!isDrag) {
         component._setLightBrightness(entityId, percentage);
@@ -409,7 +411,7 @@ export function renderLightsPopupContent(component, html) {
               <ha-icon icon="mdi:lightbulb"></ha-icon>
             </div>
             <div class="lights-popup-content">
-              <div class="lights-popup-label">${brightnessPercent}%</div>
+              <div class="lights-popup-label"><span class="lights-popup-label-value">${brightnessPercent}%</span>${lastChangedText ? html` <span class="lights-popup-label-time">- ${lastChangedText}</span>` : ''}</div>
               <div class="lights-popup-name">${friendlyName}</div>
             </div>
           </div>
@@ -447,9 +449,9 @@ export function renderLightsPopupContent(component, html) {
                    const rect = sliderArea.getBoundingClientRect();
                    const percentage = Math.max(1, Math.min(100, Math.round(((moveE.clientX - rect.left) / rect.width) * 100)));
                    const fill = card?.querySelector('.lights-popup-slider-fill');
-                   const label = card?.querySelector('.lights-popup-label');
+                   const labelValue = card?.querySelector('.lights-popup-label-value');
                    if (fill) fill.style.width = `${percentage}%`;
-                   if (label) label.textContent = `${percentage}%`;
+                   if (labelValue) labelValue.textContent = `${percentage}%`;
                    dragValue = percentage;
                  };
 
@@ -486,7 +488,7 @@ export function renderLightsPopupContent(component, html) {
               <ha-icon icon="${isOn ? 'mdi:lightbulb' : 'mdi:lightbulb-outline'}"></ha-icon>
             </div>
             <div class="lights-popup-content">
-              <div class="lights-popup-label">${isOn ? (isDimmable && brightnessPercent ? `${brightnessPercent}%` : t('common.status.on')) : t('common.status.off')}</div>
+              <div class="lights-popup-label">${isOn ? (isDimmable && brightnessPercent ? `${brightnessPercent}%` : t('common.status.on')) : t('common.status.off')}${lastChangedText ? html` <span class="lights-popup-label-time">- ${lastChangedText}</span>` : ''}</div>
               <div class="lights-popup-name">${friendlyName}</div>
             </div>
           </div>

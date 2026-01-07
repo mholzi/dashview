@@ -362,6 +362,11 @@ export const securityStyles = `
     color: var(--dv-gray800);
   }
 
+  .lights-popup-label-time {
+    font-weight: 400;
+    opacity: 0.7;
+  }
+
   .lights-popup-name {
     font-size: 14px;
     color: var(--dv-gray800);
