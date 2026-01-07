@@ -6,7 +6,7 @@
 export const roomPopupStyles = `
   /* ==================== POPUP COVER SECTION ==================== */
   .popup-cover-section {
-    margin: 0 12px 16px 12px;
+    margin: 0 12px 32px 12px;
     background: var(--dv-gray200);
     border-radius: 12px;
     overflow: hidden;
@@ -117,7 +117,7 @@ export const roomPopupStyles = `
 
   /* ==================== POPUP THERMOSTAT SECTION ==================== */
   .popup-thermostat-section {
-    margin: 0 12px 16px 12px;
+    margin: 0 12px 32px 12px;
     display: flex;
     gap: 8px;
     overflow-x: auto;
@@ -338,7 +338,7 @@ export const roomPopupStyles = `
   /* ==================== POPUP TEMPERATURE SECTION (no climate) ==================== */
   .popup-temperature-section {
     margin: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 32px;
     display: flex;
     gap: 8px;
     overflow-x: auto;
@@ -397,7 +397,7 @@ export const roomPopupStyles = `
 
   /* ==================== POPUP LIGHT SECTION ==================== */
   .popup-light-section {
-    margin: 8px 12px 16px 12px;
+    margin: 8px 12px 32px 12px;
     background: var(--dv-gray200);
     border-radius: 12px;
     overflow: hidden;
@@ -580,7 +580,7 @@ export const roomPopupStyles = `
 
   /* ==================== POPUP GARAGE SECTION ==================== */
   .popup-garage-section {
-    margin: 0 12px 16px 12px;
+    margin: 0 12px 32px 12px;
     background: var(--dv-gray200);
     border-radius: 12px;
     overflow: hidden;
@@ -735,7 +735,7 @@ export const roomPopupStyles = `
 
   /* ==================== POPUP LOCK SECTION ==================== */
   .popup-lock-section {
-    margin: 0 12px 16px 12px;
+    margin: 0 12px 32px 12px;
     background: var(--dv-gray200);
     border-radius: 12px;
     overflow: hidden;
