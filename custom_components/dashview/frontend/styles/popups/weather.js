@@ -250,7 +250,7 @@ export const weatherPopupStyles = `
   .weather-forecast-tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 32px;
+    margin-bottom: 10px;
     overflow-x: auto;
     scrollbar-width: none;
   }
