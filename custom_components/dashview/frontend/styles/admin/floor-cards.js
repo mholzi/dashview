@@ -497,8 +497,8 @@ export const floorCardsStyles = `
     bottom: 0;
     left: 0;
     right: 0;
-    /* Ensure 44px touch target height */
-    min-height: 44px;
+    /* Minimal height for compact dots */
+    min-height: 10px;
     align-items: center;
     padding: 0 16px;
   }

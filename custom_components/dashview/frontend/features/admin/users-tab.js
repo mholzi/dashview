@@ -99,7 +99,7 @@ export function renderUsersTab(panel, html) {
                     <div style="display: flex; gap: 8px;">
                       <input
                         type="text"
-                        placeholder="https://example.com/photo.jpg"
+                        placeholder="/local/photos/user.jpg"
                         .value=${customPhoto}
                         @change=${(e) => updateUserPhoto(personId, e.target.value)}
                         style="flex: 1; padding: 8px 12px; border: 1px solid var(--dv-gray300); border-radius: 8px; font-size: 14px;"
@@ -117,7 +117,7 @@ export function renderUsersTab(panel, html) {
                     <span style="display: block; font-size: 11px; color: var(--dv-gray500); margin-top: 4px;">
                       ${person.attributes.entity_picture
                         ? 'Leave empty to use the photo from Home Assistant.'
-                        : 'No photo set in Home Assistant. Add a URL to set a custom photo.'}
+                        : 'Local file: /local/filename.jpg (from www folder) or URL: https://...'}
                     </span>
                   </div>
                 </div>
