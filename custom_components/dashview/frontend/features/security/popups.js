@@ -593,10 +593,24 @@ export function renderBatteryPopupContent(component, html) {
 export function renderCoversPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Get all enabled covers
-  const enabledCoverIds = Object.keys(component._enabledCovers || {}).filter(
-    id => component._enabledCovers[id] !== false
-  );
+  // Helper to get all entities with the cover label, respecting explicit enable/disable
+  const filterByCoverLabel = () => {
+    const filtered = [];
+    const labelId = component._coverLabelId;
+    if (!labelId) return filtered;
+
+    component._entityRegistry.forEach(entityReg => {
+      if (entityReg.labels && entityReg.labels.includes(labelId)) {
+        const entityId = entityReg.entity_id;
+        // Skip only explicitly disabled entities (enabled by default)
+        if (component._enabledCovers[entityId] === false) return;
+        filtered.push(entityId);
+      }
+    });
+    return filtered;
+  };
+
+  const enabledCoverIds = filterByCoverLabel();
 
   if (enabledCoverIds.length === 0) {
     return html`
@@ -683,10 +697,24 @@ export function renderCoversPopupContent(component, html) {
 export function renderTVsPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Get all enabled TVs
-  const enabledTVIds = Object.keys(component._enabledTVs || {}).filter(
-    id => component._enabledTVs[id] !== false
-  );
+  // Helper to get all entities with the TV label, respecting explicit enable/disable
+  const filterByTVLabel = () => {
+    const filtered = [];
+    const labelId = component._tvLabelId;
+    if (!labelId) return filtered;
+
+    component._entityRegistry.forEach(entityReg => {
+      if (entityReg.labels && entityReg.labels.includes(labelId)) {
+        const entityId = entityReg.entity_id;
+        // Skip only explicitly disabled entities (enabled by default)
+        if (component._enabledTVs[entityId] === false) return;
+        filtered.push(entityId);
+      }
+    });
+    return filtered;
+  };
+
+  const enabledTVIds = filterByTVLabel();
 
   if (enabledTVIds.length === 0) {
     return html`

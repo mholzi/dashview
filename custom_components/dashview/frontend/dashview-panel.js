@@ -1600,7 +1600,7 @@
 
     _turnOffAllTVs() {
       if (!this.hass) return;
-      const enabledTVIds = Object.keys(this._enabledTVs || {}).filter(id => this._enabledTVs[id] !== false);
+      const enabledTVIds = this._getEnabledEntityIdsFromRegistry(this._tvLabelId, this._enabledTVs);
       enabledTVIds.forEach(entityId => {
         const state = this.hass.states[entityId];
         if (state?.state === 'on') {
@@ -2044,11 +2044,11 @@
       }
     }
     _openAllCovers() {
-      const enabledCoverIds = Object.keys(this._enabledCovers || {}).filter(id => this._enabledCovers[id] !== false);
+      const enabledCoverIds = this._getEnabledEntityIdsFromRegistry(this._coverLabelId, this._enabledCovers);
       enabledCoverIds.forEach(entityId => this._coverService(entityId, 'open_cover'));
     }
     _closeAllCovers() {
-      const enabledCoverIds = Object.keys(this._enabledCovers || {}).filter(id => this._enabledCovers[id] !== false);
+      const enabledCoverIds = this._getEnabledEntityIdsFromRegistry(this._coverLabelId, this._enabledCovers);
       enabledCoverIds.forEach(entityId => this._coverService(entityId, 'close_cover'));
     }
 
@@ -2729,6 +2729,26 @@
         }
       });
       return map;
+    }
+
+    /**
+     * Get all enabled entity IDs from the registry for a given label
+     * Uses opt-out model: entities are enabled unless explicitly disabled (set to false)
+     * @param {string} labelId - Label ID to filter by
+     * @param {Object} enabledMap - Map of entityId -> enabled state
+     * @returns {Array<string>} Array of enabled entity IDs
+     */
+    _getEnabledEntityIdsFromRegistry(labelId, enabledMap) {
+      if (!labelId) return [];
+      const filtered = [];
+      this._entityRegistry.forEach(e => {
+        if (e.labels && e.labels.includes(labelId)) {
+          // Skip only explicitly disabled entities (enabled by default)
+          if (enabledMap[e.entity_id] === false) return;
+          filtered.push(e.entity_id);
+        }
+      });
+      return filtered;
     }
 
     // ============================================
