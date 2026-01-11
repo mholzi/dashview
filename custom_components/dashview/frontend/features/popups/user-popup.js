@@ -163,23 +163,25 @@ function renderPresenceHistory(component, html, history) {
       </div>
 
       <div class="user-popup-history-content ${component._presenceHistoryExpanded ? 'expanded' : ''}">
-        ${history.map(item => html`
-          <div class="user-popup-history-card ${item.state === 'home' ? 'arrived' : 'left'}">
-            <div class="user-popup-history-icon">
-              <ha-icon icon="${item.state === 'home' ? 'mdi:home' : 'mdi:map-marker-outline'}"></ha-icon>
-            </div>
-            <div class="user-popup-history-info">
-              <div class="user-popup-history-action">
-                ${item.state === 'home'
-                  ? t('user.arrived_home', 'Arrived home')
-                  : t('user.left_home', 'Left home')}
+        <div class="user-popup-history-list">
+          ${history.map(item => html`
+            <div class="user-popup-history-card ${item.state === 'home' ? 'active' : 'inactive'}">
+              <div class="user-popup-history-icon">
+                <ha-icon icon="${item.state === 'home' ? 'mdi:home' : 'mdi:map-marker-outline'}"></ha-icon>
               </div>
-              <div class="user-popup-history-time">
-                ${formatHistoryTime(item.last_changed)}
+              <div class="user-popup-history-info">
+                <div class="user-popup-history-action">
+                  ${item.state === 'home'
+                    ? t('user.arrived_home', 'Arrived home')
+                    : t('user.left_home', 'Left home')}
+                </div>
+                <div class="user-popup-history-time">
+                  ${formatHistoryTime(item.last_changed)}
+                </div>
               </div>
             </div>
-          </div>
-        `)}
+          `)}
+        </div>
       </div>
     </div>
   `;

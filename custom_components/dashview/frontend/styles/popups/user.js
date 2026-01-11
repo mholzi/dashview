@@ -1,6 +1,7 @@
 /**
  * User Popup Styles
  * Styles for profile card, status chip, and presence history
+ * History cards match security-entity-card format
  */
 
 export const userPopupStyles = `
@@ -153,76 +154,89 @@ export const userPopupStyles = `
     display: block;
   }
 
-  /* History card - matches security-entity-card pattern */
+  .user-popup-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* History card - matches security-entity-card exactly */
   .user-popup-history-card {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    padding: 12px 16px;
-    margin: 4px 8px;
+    gap: 12px;
+    padding: 4px 20px 4px 4px;
     border-radius: 12px;
-    background: var(--card-background-color);
-    transition: all 0.2s ease;
     cursor: pointer;
+    transition: all var(--dv-transition-normal) ease;
   }
 
-  .user-popup-history-card:hover {
-    background: var(--dv-gray100);
+  .user-popup-history-card.active {
+    background: var(--dv-gradient-active);
   }
 
-  .user-popup-history-card.arrived {
-    border-left: 3px solid var(--success-color, var(--dv-green500));
-  }
-
-  .user-popup-history-card.left {
-    border-left: 3px solid var(--dv-gray400);
+  .user-popup-history-card.inactive {
+    background: var(--dv-gray000);
   }
 
   .user-popup-history-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 12px;
     flex-shrink: 0;
   }
 
-  .user-popup-history-card.arrived .user-popup-history-icon {
-    background: rgba(76, 175, 80, 0.15);
+  .user-popup-history-card.active .user-popup-history-icon {
+    background: var(--dv-white);
   }
 
-  .user-popup-history-card.left .user-popup-history-icon {
-    background: var(--dv-gray200);
+  .user-popup-history-card.inactive .user-popup-history-icon {
+    background: rgba(var(--dv-highlight-rgb), 0.08);
   }
 
   .user-popup-history-icon ha-icon {
     --mdc-icon-size: 22px;
-  }
-
-  .user-popup-history-card.arrived .user-popup-history-icon ha-icon {
-    color: var(--success-color, var(--dv-green600));
-  }
-
-  .user-popup-history-card.left .user-popup-history-icon ha-icon {
-    color: var(--dv-gray500);
+    color: var(--dv-gray800);
   }
 
   .user-popup-history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     flex: 1;
-    min-width: 0;
   }
 
   .user-popup-history-action {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
-    margin-bottom: 2px;
+    color: var(--dv-gray800);
+  }
+
+  .user-popup-history-card.active .user-popup-history-action {
+    color: var(--dv-gray000);
+  }
+
+  .user-popup-history-card.inactive .user-popup-history-action {
+    color: var(--dv-gray800);
   }
 
   .user-popup-history-time {
-    font-size: 13px;
-    color: var(--secondary-text-color);
+    font-size: 14px;
+    color: var(--dv-gray800);
+    opacity: 0.7;
+  }
+
+  .user-popup-history-card.active .user-popup-history-time {
+    color: var(--dv-gray000);
+    opacity: 0.7;
+  }
+
+  .user-popup-history-card.inactive .user-popup-history-time {
+    color: var(--dv-gray800);
   }
 
   /* ==================== RESPONSIVE ADJUSTMENTS ==================== */

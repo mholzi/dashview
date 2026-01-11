@@ -134,7 +134,9 @@
       },
       "tvs": {
         "title": "TVs",
-        "empty": "No TVs configured"
+        "empty": "No TVs configured",
+        "on_section": "TVs on",
+        "off_section": "TVs off"
       }
     }
   },

@@ -728,7 +728,7 @@ export function renderTVsPopupContent(component, html) {
     `;
   }
 
-  // Get TV states and sort by on/off status
+  // Get TV states
   const tvs = enabledTVIds
     .map(entityId => {
       const state = component.hass.states[entityId];
@@ -745,61 +745,67 @@ export function renderTVsPopupContent(component, html) {
         volume: state.attributes?.volume_level,
       };
     })
-    .filter(tv => tv !== null)
-    .sort((a, b) => {
-      // TVs that are on first
-      if (a.isOn !== b.isOn) return b.isOn - a.isOn;
-      return a.name.localeCompare(b.name);
-    });
+    .filter(tv => tv !== null);
 
-  const onCount = tvs.filter(tv => tv.isOn).length;
-  const offCount = tvs.length - onCount;
+  // Sort by name within each group
+  const tvsOn = tvs.filter(tv => tv.isOn).sort((a, b) => a.name.localeCompare(b.name));
+  const tvsOff = tvs.filter(tv => !tv.isOn).sort((a, b) => a.name.localeCompare(b.name));
+
+  // Render a single TV card
+  const renderTVCard = (tv) => html`
+    <div class="tvs-popup-card ${tv.isOn ? 'on' : 'off'}">
+      <div class="tvs-popup-header" @click=${() => component._toggleTV(tv.entityId)}>
+        <div class="tvs-popup-icon ${tv.entityPicture ? 'has-image' : ''}">
+          ${tv.entityPicture ? html`
+            <img class="tvs-popup-image" src="${tv.entityPicture}" alt="">
+          ` : html`
+            <ha-icon icon="${tv.isOn ? 'mdi:television' : 'mdi:television-off'}"></ha-icon>
+          `}
+        </div>
+        <div class="tvs-popup-content">
+          <div class="tvs-popup-title">${tv.isOn ? (tv.mediaTitle || tv.source || t('common.status.on', 'On')) : t('common.status.off', 'Off')}</div>
+          <div class="tvs-popup-name">${tv.name}</div>
+        </div>
+      </div>
+      ${tv.isOn && tv.volume !== undefined ? html`
+        <div class="tvs-popup-volume">
+          <ha-icon icon="mdi:volume-high"></ha-icon>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            .value=${Math.round(tv.volume * 100)}
+            @change=${(e) => component._setTVVolume(tv.entityId, parseInt(e.target.value) / 100)}
+          />
+          <span class="tvs-popup-volume-text">${Math.round(tv.volume * 100)}%</span>
+        </div>
+      ` : ''}
+    </div>
+  `;
 
   return html`
-    <div class="tvs-popup-summary">
-      <span class="tvs-popup-count on">${onCount} ${t('common.status.on', 'on')}</span>
-      <span class="tvs-popup-separator">·</span>
-      <span class="tvs-popup-count off">${offCount} ${t('common.status.off', 'off')}</span>
-    </div>
+    <!-- TVs On Section -->
+    ${tvsOn.length > 0 ? html`
+      <h3 class="lights-popup-section-title">${t('ui.popups.tvs.on_section', 'TVs on')} (${tvsOn.length})</h3>
+      <div class="tvs-popup-list">
+        ${tvsOn.map(tv => renderTVCard(tv))}
+      </div>
+    ` : ''}
 
-    <div class="tvs-popup-actions">
-      <button class="tvs-popup-action-btn" @click=${() => component._turnOffAllTVs()}>
+    <!-- TVs Off Section -->
+    ${tvsOff.length > 0 ? html`
+      <h3 class="lights-popup-section-title">${t('ui.popups.tvs.off_section', 'TVs off')} (${tvsOff.length})</h3>
+      <div class="tvs-popup-list">
+        ${tvsOff.map(tv => renderTVCard(tv))}
+      </div>
+    ` : ''}
+
+    <!-- Empty State -->
+    ${tvs.length === 0 ? html`
+      <div class="tvs-empty-state">
         <ha-icon icon="mdi:television-off"></ha-icon>
-        <span>${t('popup.actions.turn_off_all', 'Turn off all')}</span>
-      </button>
-    </div>
-
-    <div class="tvs-popup-list">
-      ${tvs.map(tv => html`
-        <div class="tvs-popup-card ${tv.isOn ? 'on' : 'off'}">
-          <div class="tvs-popup-header" @click=${() => component._toggleTV(tv.entityId)}>
-            <div class="tvs-popup-icon ${tv.entityPicture ? 'has-image' : ''}">
-              ${tv.entityPicture ? html`
-                <img class="tvs-popup-image" src="${tv.entityPicture}" alt="">
-              ` : html`
-                <ha-icon icon="${tv.isOn ? 'mdi:television' : 'mdi:television-off'}"></ha-icon>
-              `}
-            </div>
-            <div class="tvs-popup-content">
-              <div class="tvs-popup-title">${tv.isOn ? (tv.mediaTitle || tv.source || t('common.status.on', 'On')) : t('common.status.off', 'Off')}</div>
-              <div class="tvs-popup-name">${tv.name}</div>
-            </div>
-          </div>
-          ${tv.isOn && tv.volume !== undefined ? html`
-            <div class="tvs-popup-volume">
-              <ha-icon icon="mdi:volume-high"></ha-icon>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                .value=${Math.round(tv.volume * 100)}
-                @change=${(e) => component._setTVVolume(tv.entityId, parseInt(e.target.value) / 100)}
-              />
-              <span class="tvs-popup-volume-text">${Math.round(tv.volume * 100)}%</span>
-            </div>
-          ` : ''}
-        </div>
-      `)}
-    </div>
+        <p>${t('ui.popups.tvs.empty', 'No TVs configured')}</p>
+      </div>
+    ` : ''}
   `;
 }

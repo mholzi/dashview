@@ -134,7 +134,9 @@
       },
       "tvs": {
         "title": "Fernseher",
-        "empty": "Keine Fernseher konfiguriert"
+        "empty": "Keine Fernseher konfiguriert",
+        "on_section": "Fernseher an",
+        "off_section": "Fernseher aus"
       }
     }
   },
