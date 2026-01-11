@@ -24,6 +24,13 @@ export const tabsStyles = `
     scrollbar-width: none;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .admin-sub-tabs.dragging {
+    cursor: grabbing;
   }
 
   .admin-sub-tabs::-webkit-scrollbar {

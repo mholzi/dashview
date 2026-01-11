@@ -80,7 +80,7 @@ export const roomPopupStyles = `
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 12px;
   }
 
   .popup-cover-preset {

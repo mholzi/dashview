@@ -146,6 +146,124 @@ export function updateAdminTabScrollIndicators(panel) {
   rightIndicator.classList.toggle('visible', hasMoreRight);
 }
 
+// ============================================================================
+// Tab Drag Scroll (Mouse Drag Scrolling)
+// ============================================================================
+
+/**
+ * Initialize drag scroll state on the panel
+ * Call this once during admin tab setup
+ * @param {Object} panel - The DashviewPanel instance
+ */
+export function initAdminTabDragScroll(panel) {
+  // Initialize drag scroll state if not already present
+  if (panel._adminTabDragState) return;
+
+  panel._adminTabDragState = {
+    isDragging: false,
+    startX: 0,
+    scrollLeft: 0,
+  };
+
+  // Bind handlers to panel for proper cleanup
+  panel._handleAdminTabDragMove = (e) => {
+    if (!panel._adminTabDragState) return;
+    const container = panel.renderRoot?.querySelector('.admin-sub-tabs');
+    if (!container) return;
+
+    const dx = e.pageX - panel._adminTabDragState.startX;
+    // Use 5px threshold to distinguish click from drag
+    if (Math.abs(dx) > 5) {
+      panel._adminTabDragState.isDragging = true;
+      container.classList.add('dragging');
+    }
+    if (panel._adminTabDragState.isDragging) {
+      e.preventDefault();
+      container.scrollLeft = panel._adminTabDragState.scrollLeft - dx;
+      updateAdminTabScrollIndicators(panel);
+    }
+  };
+
+  panel._handleAdminTabDragEnd = () => {
+    const container = panel.renderRoot?.querySelector('.admin-sub-tabs');
+    if (container) {
+      container.classList.remove('dragging');
+    }
+    document.removeEventListener('mousemove', panel._handleAdminTabDragMove);
+    document.removeEventListener('mouseup', panel._handleAdminTabDragEnd);
+    // Reset isDragging after a short delay to allow click events to check it
+    setTimeout(() => {
+      if (panel._adminTabDragState) {
+        panel._adminTabDragState.isDragging = false;
+      }
+    }, 0);
+  };
+}
+
+/**
+ * Handle mousedown on admin tab container to start drag scroll
+ * @param {Object} panel - The DashviewPanel instance
+ * @param {MouseEvent} e - The mousedown event
+ */
+export function handleAdminTabDragStart(panel, e) {
+  // Initialize if needed
+  initAdminTabDragScroll(panel);
+
+  const container = panel.renderRoot?.querySelector('.admin-sub-tabs');
+  if (!container) return;
+
+  panel._adminTabDragState.isDragging = false;
+  panel._adminTabDragState.startX = e.pageX;
+  panel._adminTabDragState.scrollLeft = container.scrollLeft;
+
+  document.addEventListener('mousemove', panel._handleAdminTabDragMove);
+  document.addEventListener('mouseup', panel._handleAdminTabDragEnd);
+}
+
+/**
+ * Handle wheel event on admin tab container for horizontal scroll
+ * Supports both horizontal wheel and Shift + vertical scroll
+ * @param {Object} panel - The DashviewPanel instance
+ * @param {WheelEvent} e - The wheel event
+ */
+export function handleAdminTabWheel(panel, e) {
+  const container = panel.renderRoot?.querySelector('.admin-sub-tabs');
+  if (!container) return;
+
+  // Check if this is a horizontal scroll (horizontal wheel or Shift + vertical)
+  const deltaX = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+
+  if (deltaX !== 0) {
+    e.preventDefault();
+    container.scrollLeft += deltaX;
+    updateAdminTabScrollIndicators(panel);
+  }
+}
+
+/**
+ * Check if a tab click should be blocked due to active drag
+ * Call this at the start of tab click handlers
+ * @param {Object} panel - The DashviewPanel instance
+ * @returns {boolean} True if click should be blocked
+ */
+export function isAdminTabDragging(panel) {
+  return panel._adminTabDragState?.isDragging === true;
+}
+
+/**
+ * Cleanup drag scroll listeners (call in disconnectedCallback)
+ * @param {Object} panel - The DashviewPanel instance
+ */
+export function cleanupAdminTabDragScroll(panel) {
+  if (panel._handleAdminTabDragMove) {
+    document.removeEventListener('mousemove', panel._handleAdminTabDragMove);
+  }
+  if (panel._handleAdminTabDragEnd) {
+    document.removeEventListener('mouseup', panel._handleAdminTabDragEnd);
+  }
+  panel._adminTabDragState = null;
+}
+
 // Defensive wrapper for t() to handle edge cases with card-mod and other invasive components
 // Falls back to returning the key if the translation function fails
 export const t = (key, fallbackOrParams) => {

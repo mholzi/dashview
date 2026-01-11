@@ -17,11 +17,15 @@ import { renderToggleSwitch } from '../controls/toggle-switch.js';
  * @param {boolean} options.enabled - Whether entity is enabled in config
  * @param {Function} options.onToggle - Callback when enable toggle is clicked
  * @param {Function} [options.onClick] - Optional callback when card is clicked
+ * @param {Object} [options.extraToggle] - Optional extra toggle configuration
+ * @param {string} options.extraToggle.label - Label for the extra toggle
+ * @param {boolean} options.extraToggle.checked - Whether the extra toggle is checked
+ * @param {Function} options.extraToggle.onChange - Callback when extra toggle is clicked
  * @returns {TemplateResult} Entity card HTML
  */
-export function renderEntityItem(html, { icon, name, subtitle, state, isActive, enabled, onToggle, onClick }) {
+export function renderEntityItem(html, { icon, name, subtitle, state, isActive, enabled, onToggle, onClick, extraToggle }) {
   return html`
-    <div class="entity-item" @click=${onClick}>
+    <div class="entity-item ${extraToggle ? 'with-extra-toggle' : ''}" @click=${onClick}>
       <div class="entity-item-info ${isActive ? 'active' : ''}">
         <ha-icon icon="${icon}"></ha-icon>
         <div class="entity-item-text">
@@ -30,7 +34,15 @@ export function renderEntityItem(html, { icon, name, subtitle, state, isActive, 
         </div>
         <span class="entity-item-state ${isActive ? 'active' : ''}">${state}</span>
       </div>
-      ${renderToggleSwitch(html, { checked: enabled, onChange: onToggle })}
+      <div class="entity-item-toggles">
+        ${extraToggle ? html`
+          <div class="entity-item-extra-toggle" @click=${(e) => e.stopPropagation()}>
+            <span class="extra-toggle-label">${extraToggle.label}</span>
+            ${renderToggleSwitch(html, { checked: extraToggle.checked, onChange: extraToggle.onChange, small: true })}
+          </div>
+        ` : ''}
+        ${renderToggleSwitch(html, { checked: enabled, onChange: onToggle })}
+      </div>
     </div>
   `;
 }
@@ -55,6 +67,7 @@ export function renderEntityItem(html, { icon, name, subtitle, state, isActive, 
  * @param {string} [options.typeKey] - Entity type key for tracking expansion state
  * @param {Function} [options.onSelectAll] - Optional callback to enable all entities
  * @param {Function} [options.onSelectNone] - Optional callback to disable all entities
+ * @param {Function} [options.getExtraToggle] - Optional function to get extra toggle config for entity (entity) => { label, checked, onChange }
  * @returns {TemplateResult} Entity section HTML
  */
 export function renderEntitySection(html, {
@@ -73,7 +86,8 @@ export function renderEntitySection(html, {
   onToggleExpand,
   typeKey,
   onSelectAll,
-  onSelectNone
+  onSelectNone,
+  getExtraToggle
 }) {
   if (entities.length === 0) return '';
 
@@ -131,7 +145,8 @@ export function renderEntitySection(html, {
           state: getState(entity),
           isActive: isActive(entity),
           enabled: entity.enabled,
-          onToggle: () => onToggle(entity.entity_id)
+          onToggle: () => onToggle(entity.entity_id),
+          extraToggle: getExtraToggle ? getExtraToggle(entity) : undefined
         }))}
       </div>
     </div>

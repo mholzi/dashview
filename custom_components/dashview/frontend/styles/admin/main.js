@@ -87,6 +87,50 @@ export const mainStyles = `
     transform: translateX(24px);
   }
 
+  /* Small toggle variant */
+  .toggle-switch.small {
+    width: 36px;
+    height: 18px;
+    border-radius: 9px;
+  }
+
+  .toggle-switch.small::after {
+    width: 14px;
+    height: 14px;
+    top: 2px;
+    left: 2px;
+  }
+
+  .toggle-switch.small.on::after {
+    transform: translateX(18px);
+  }
+
+  /* Entity item with extra toggle */
+  .entity-item.with-extra-toggle {
+    flex-wrap: wrap;
+  }
+
+  .entity-item-toggles {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .entity-item-extra-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--secondary-background-color);
+    border-radius: 8px;
+  }
+
+  .extra-toggle-label {
+    font-size: 11px;
+    color: var(--secondary-text-color);
+    white-space: nowrap;
+  }
+
   .expand-icon {
     --mdc-icon-size: 24px;
     color: var(--secondary-text-color);
@@ -95,6 +139,14 @@ export const mainStyles = `
 
   .expand-icon.expanded {
     transform: rotate(180deg);
+  }
+
+  /* ==================== ROOM CONFIG SPACING ==================== */
+  /* Gap between room header and search box */
+  .entity-search-wrapper {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    padding: 0 16px;
   }
 
   .lights-section {
@@ -178,8 +230,8 @@ export const mainStyles = `
   .entity-expand-controls {
     display: flex;
     justify-content: flex-end;
-    padding: 8px 12px 12px;
-    border-bottom: 1px solid var(--divider-color);
+    padding: 8px 16px 16px;
+    margin-bottom: 0;
   }
 
   .entity-expand-button {

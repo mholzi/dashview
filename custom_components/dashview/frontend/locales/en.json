@@ -184,10 +184,10 @@
   },
   "status": {
     "motion": {
-      "in_house_since": "Motion in house since",
-      "motion": "Motion",
-      "last_motion_was": "Last motion in the house was",
-      "suffix": "ago."
+      "prefix": "Motion in house",
+      "prefix_last": "Last motion",
+      "suffix_active": ".",
+      "suffix_inactive": "."
     },
     "lights": {
       "on": "Lights on",
@@ -282,6 +282,7 @@
     }
   },
   "admin": {
+    "invertPosition": "Invert",
     "tabs": {
       "entities": "Entities",
       "layout": "Layout",

@@ -42,7 +42,14 @@ export { renderScenesTab } from './scenes-tab.js';
 export { renderUsersTab } from './users-tab.js';
 
 // Local imports for renderAdminTab
-import { t, initializeSectionStates, updateAdminTabScrollIndicators } from './shared.js';
+import {
+  t,
+  initializeSectionStates,
+  updateAdminTabScrollIndicators,
+  handleAdminTabDragStart,
+  handleAdminTabWheel,
+  isAdminTabDragging
+} from './shared.js';
 import { renderEntitiesTab } from './entities-tab.js';
 import { renderLayoutTab } from './layout-tab.js';
 import { renderWeatherTab } from './weather-tab.js';
@@ -73,50 +80,60 @@ export function renderAdminTab(panel, html) {
   // Update scroll indicators after render
   requestAnimationFrame(() => updateAdminTabScrollIndicators(panel));
 
+  // Helper to handle tab click with drag check
+  const handleTabClick = (tab) => {
+    if (isAdminTabDragging(panel)) return;
+    panel._adminSubTab = tab;
+  };
+
   return html`
     <div class="container">
       <!-- Admin Header with Sub-Tabs -->
       <div class="admin-sub-tabs-container">
         <div class="admin-sub-tabs-indicator admin-sub-tabs-indicator-left"></div>
-        <div class="admin-sub-tabs" @scroll=${() => updateAdminTabScrollIndicators(panel)}>
+        <div class="admin-sub-tabs"
+          @scroll=${() => updateAdminTabScrollIndicators(panel)}
+          @mousedown=${(e) => handleAdminTabDragStart(panel, e)}
+          @wheel=${(e) => handleAdminTabWheel(panel, e)}
+        >
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'entities' ? 'active' : ''}"
-            @click=${() => panel._adminSubTab = 'entities'}
+            @click=${() => handleTabClick('entities')}
           >
             <ha-icon icon="mdi:home-group"></ha-icon>
             ${t('admin.tabs.entities')}
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'layout' ? 'active' : ''}"
-            @click=${() => panel._adminSubTab = 'layout'}
+            @click=${() => handleTabClick('layout')}
           >
             <ha-icon icon="mdi:view-grid-plus"></ha-icon>
             ${t('admin.tabs.layout')}
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'weather' ? 'active' : ''}"
-            @click=${() => panel._adminSubTab = 'weather'}
+            @click=${() => handleTabClick('weather')}
           >
             <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
             ${t('admin.tabs.weather')}
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'status' ? 'active' : ''}"
-            @click=${() => panel._adminSubTab = 'status'}
+            @click=${() => handleTabClick('status')}
           >
             <ha-icon icon="mdi:information-outline"></ha-icon>
             ${t('admin.tabs.status')}
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'scenes' ? 'active' : ''}"
-            @click=${() => panel._adminSubTab = 'scenes'}
+            @click=${() => handleTabClick('scenes')}
           >
             <ha-icon icon="mdi:play-box-multiple"></ha-icon>
             ${t('admin.tabs.scenes')}
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'users' ? 'active' : ''}"
-            @click=${() => panel._adminSubTab = 'users'}
+            @click=${() => handleTabClick('users')}
           >
             <ha-icon icon="mdi:account-group"></ha-icon>
             ${t('admin.tabs.users')}

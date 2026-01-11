@@ -1547,7 +1547,12 @@ export function renderAreaCard(panel, html, area) {
     covers: {
       entities: panel._getAreaCovers(area.area_id),
       config: ENTITY_CONFIGS.covers,
-      onToggle: (id) => panel._toggleCoverEnabled(id)
+      onToggle: (id) => panel._toggleCoverEnabled(id),
+      getExtraToggle: (entity) => ({
+        label: t('admin.invertPosition'),
+        checked: panel._isCoverInverted(entity.entity_id),
+        onChange: () => panel._toggleCoverInvertPosition(entity.entity_id)
+      })
     },
     roofWindows: {
       entities: panel._getAreaRoofWindows(area.area_id),
@@ -1633,7 +1638,7 @@ export function renderAreaCard(panel, html, area) {
 
       ${isExpanded ? html`
         <!-- Entity Search Input -->
-        <div class="entity-search-wrapper" style="margin-bottom: 16px; padding: 0 16px;">
+        <div class="entity-search-wrapper">
           <div class="garbage-search-input-wrapper">
             <ha-icon icon="mdi:magnify" class="garbage-search-icon"></ha-icon>
             <input
@@ -1750,7 +1755,8 @@ export function renderAreaCard(panel, html, area) {
               onToggleExpand: () => panel._toggleEntityTypeSection(area.area_id, key),
               typeKey: key,
               onSelectAll: settingsKey ? () => panel._bulkToggleEntities(area.area_id, settingsKey, group.filteredEntities, true) : undefined,
-              onSelectNone: settingsKey ? () => panel._bulkToggleEntities(area.area_id, settingsKey, group.filteredEntities, false) : undefined
+              onSelectNone: settingsKey ? () => panel._bulkToggleEntities(area.area_id, settingsKey, group.filteredEntities, false) : undefined,
+              getExtraToggle: group.getExtraToggle
             });
           });
         })()}

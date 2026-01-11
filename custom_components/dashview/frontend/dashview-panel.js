@@ -214,6 +214,7 @@
         _enabledMotionSensors: { type: Object },
         _enabledSmokeSensors: { type: Object },
         _enabledCovers: { type: Object },
+        _coverInvertPosition: { type: Object },
         _enabledGarages: { type: Object },
         _enabledWindows: { type: Object },
         _enabledVibrationSensors: { type: Object },
@@ -363,6 +364,7 @@
       this._enabledMotionSensors = {};
       this._enabledSmokeSensors = {};
       this._enabledCovers = {};
+      this._coverInvertPosition = {};
       this._enabledMediaPlayers = {};
       this._enabledTVs = {};
       this._enabledLocks = {};
@@ -575,11 +577,41 @@
         this._unsubscribeRegistry();
         this._unsubscribeRegistry = null;
       }
+      // Cleanup admin tab drag scroll listeners
+      if (dashviewAdmin?.cleanupAdminTabDragScroll) {
+        dashviewAdmin.cleanupAdminTabDragScroll(this);
+      }
     }
 
     _saveSettings() {
       if (coreUtils) {
         coreUtils.saveSettings(this, settingsStore, debugLog);
+      }
+    }
+
+    /**
+     * Handle temperature threshold change from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleTempThresholdChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 0 && value <= 50) {
+        this._notificationTempThreshold = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle humidity threshold change from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleHumidityThresholdChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 0 && value <= 100) {
+        this._notificationHumidityThreshold = value;
+        this._saveSettings();
+        this.requestUpdate();
       }
     }
 
@@ -1325,6 +1357,7 @@
             this._enabledMotionSensors = settings.enabledMotionSensors || {};
             this._enabledSmokeSensors = settings.enabledSmokeSensors || {};
             this._enabledCovers = settings.enabledCovers || {};
+            this._coverInvertPosition = settings.coverInvertPosition || {};
             this._enabledMediaPlayers = settings.enabledMediaPlayers || {};
             this._enabledTVs = settings.enabledTVs || {};
             this._enabledLocks = settings.enabledLocks || {};
@@ -1335,8 +1368,8 @@
             this._enabledHumiditySensors = settings.enabledHumiditySensors || {};
             this._enabledClimates = settings.enabledClimates || {};
             this._enabledRoofWindows = settings.enabledRoofWindows || {};
-            this._notificationTempThreshold = settings.notificationTempThreshold;
-            this._notificationHumidityThreshold = settings.notificationHumidityThreshold;
+            this._notificationTempThreshold = settings.notificationTempThreshold ?? 23;
+            this._notificationHumidityThreshold = settings.notificationHumidityThreshold ?? 60;
             this._weatherEntity = settings.weatherEntity;
             this._weatherCurrentTempEntity = settings.weatherCurrentTempEntity;
             this._weatherCurrentStateEntity = settings.weatherCurrentStateEntity;
@@ -1394,6 +1427,7 @@
                 enabledMotionSensors: this._enabledMotionSensors,
                 enabledSmokeSensors: this._enabledSmokeSensors,
                 enabledCovers: this._enabledCovers,
+                coverInvertPosition: this._coverInvertPosition,
                 enabledGarages: this._enabledGarages,
                 enabledWindows: this._enabledWindows,
                 enabledVibrationSensors: this._enabledVibrationSensors,
@@ -1555,6 +1589,7 @@
           enabledMotionSensors: this._enabledMotionSensors,
           enabledSmokeSensors: this._enabledSmokeSensors,
           enabledCovers: this._enabledCovers,
+          coverInvertPosition: this._coverInvertPosition,
           enabledGarages: this._enabledGarages,
           enabledWindows: this._enabledWindows,
           enabledVibrationSensors: this._enabledVibrationSensors,
@@ -1575,6 +1610,11 @@
     _toggleMotionSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledMotionSensors', entityId); }
     _toggleSmokeSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledSmokeSensors', entityId); }
     _toggleCoverEnabled(entityId) { this._toggleEntityEnabled('_enabledCovers', entityId); }
+    _toggleCoverInvertPosition(entityId) {
+      this._coverInvertPosition = { ...this._coverInvertPosition, [entityId]: !this._coverInvertPosition[entityId] };
+      this._saveSettings();
+    }
+    _isCoverInverted(entityId) { return !!this._coverInvertPosition[entityId]; }
     _toggleGarageEnabled(entityId) { this._toggleEntityEnabled('_enabledGarages', entityId); }
     _toggleWindowEnabled(entityId) { this._toggleEntityEnabled('_enabledWindows', entityId); }
     _toggleVibrationSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledVibrationSensors', entityId); }
@@ -1669,6 +1709,7 @@
           enabledMotionSensors: this._enabledMotionSensors,
           enabledSmokeSensors: this._enabledSmokeSensors,
           enabledCovers: this._enabledCovers,
+          coverInvertPosition: this._coverInvertPosition,
           enabledGarages: this._enabledGarages,
           enabledWindows: this._enabledWindows,
           enabledVibrationSensors: this._enabledVibrationSensors,
@@ -1889,13 +1930,17 @@
         // Get state
         const state = this.hass.states[entityId];
         if (!state) return;
-        entities.push({ entity_id: entityId, name: state.attributes?.friendly_name || entityReg.original_name || entityId, ...attrMapper(state) });
+        entities.push({ entity_id: entityId, name: state.attributes?.friendly_name || entityReg.original_name || entityId, ...attrMapper(state, entityId) });
       });
       return dashviewUtils.sortByName(entities);
     }
 
     _getEnabledCoversForRoom(areaId) {
-      return this._getEnabledEntitiesForRoom(areaId, this._enabledCovers, s => ({ position: s.attributes?.current_position ?? 0, state: s.state }), this._coverLabelId);
+      return this._getEnabledEntitiesForRoom(areaId, this._enabledCovers, (s, entityId) => ({
+        position: s.attributes?.current_position ?? 0,
+        state: s.state,
+        invertPosition: !!this._coverInvertPosition[entityId]
+      }), this._coverLabelId);
     }
 
     _getEnabledGaragesForRoom(areaId) {
@@ -1934,7 +1979,13 @@
     _openGarage(entityId) { this._coverService(entityId, 'open_cover'); }
     _closeGarage(entityId) { this._coverService(entityId, 'close_cover'); }
     _setCoverPosition(entityId, position) { this._coverService(entityId, 'set_cover_position', { position }); }
-    _setAllCoversPosition(areaId, position) { this._getEnabledCoversForRoom(areaId).forEach(c => this._setCoverPosition(c.entity_id, position)); }
+    _setCoverPositionWithInversion(entityId, position) {
+      const actualPosition = this._isCoverInverted(entityId) ? (100 - position) : position;
+      this._setCoverPosition(entityId, actualPosition);
+    }
+    _setAllCoversPosition(areaId, position) {
+      this._getEnabledCoversForRoom(areaId).forEach(c => this._setCoverPositionWithInversion(c.entity_id, position));
+    }
 
     _formatGarageLastChanged(lastChanged) {
       return coreUtils ? coreUtils.formatGarageLastChanged(lastChanged) : '';
@@ -2290,6 +2341,10 @@
       if (action === 'security') this._openPopup('_securityPopupOpen');
       else if (action === 'lights') this._openPopup('_lightsPopupOpen');
       else if (action === 'battery') this._openPopup('_batteryPopupOpen');
+      else if (action === 'motion') {
+        this._activeSecurityTab = 'motion';
+        this._openPopup('_securityPopupOpen');
+      }
     }
 
     _closeLightsPopup() { this._closePopup('_lightsPopupOpen'); }

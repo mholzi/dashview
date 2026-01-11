@@ -371,7 +371,7 @@ export const floorCardsStyles = `
   .floor-overview-card {
     position: relative;
     height: 147px;
-    overflow: clip;
+    overflow: visible;
     border-radius: var(--dv-radius-md);
     cursor: grab;
     user-select: none;
@@ -494,7 +494,7 @@ export const floorCardsStyles = `
        Each dot has 44px touch width, so gap should separate them clearly */
     gap: 4px;
     position: absolute;
-    bottom: 0;
+    bottom: -4px;
     left: 0;
     right: 0;
     /* Minimal height for compact dots */

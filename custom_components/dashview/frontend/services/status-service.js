@@ -115,10 +115,11 @@ export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labe
 
     return {
       state: "motion",
-      prefixText: t('status.motion.in_house_since'),
+      prefixText: t('status.motion.prefix'),
       badgeText: timeText,
       emoji: "🏡",
-      suffixText: t('status.motion.motion') + ".",
+      suffixText: t('status.motion.suffix_active'),
+      clickAction: "motion",
     };
   } else {
     // No motion - find when the last motion sensor turned off (most recent last_changed among "off" sensors)
@@ -158,10 +159,11 @@ export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labe
 
     return {
       state: "no_motion",
-      prefixText: t('status.motion.last_motion_was'),
+      prefixText: t('status.motion.prefix_last'),
       badgeText: timeText || "...",
       emoji: "🏡",
-      suffixText: t('status.motion.suffix'),
+      suffixText: t('status.motion.suffix_inactive'),
+      clickAction: "motion",
     };
   }
 }

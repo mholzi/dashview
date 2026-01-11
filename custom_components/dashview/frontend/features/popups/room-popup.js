@@ -526,17 +526,21 @@ function renderCoverSection(component, html, areaId) {
   const covers = component._getEnabledCoversForRoom(areaId);
   if (covers.length === 0) return '';
 
-  const avgPosition = Math.round(covers.reduce((sum, c) => sum + (c.position || 0), 0) / covers.length);
+  // Calculate average display position (accounting for inversion per cover)
+  const avgDisplayPosition = Math.round(covers.reduce((sum, c) => {
+    const displayPos = c.invertPosition ? (100 - (c.position || 0)) : (c.position || 0);
+    return sum + displayPos;
+  }, 0) / covers.length);
 
   return html`
     <div class="popup-cover-section">
       <div class="popup-cover-header">
         <span class="popup-cover-title" @click=${component._togglePopupCoverExpanded}>${t('ui.sections.covers')}</span>
         <div class="popup-cover-slider" @click=${(e) => component._handleAllCoversSliderClick(e, areaId)}>
-          <div class="popup-cover-slider-fill" style="width: ${100 - avgPosition}%"></div>
-          <div class="popup-cover-slider-thumb" style="left: ${100 - avgPosition}%"></div>
+          <div class="popup-cover-slider-fill" style="width: ${avgDisplayPosition}%"></div>
+          <div class="popup-cover-slider-thumb" style="left: ${avgDisplayPosition}%"></div>
         </div>
-        <span class="popup-cover-position" @click=${component._togglePopupCoverExpanded}>${avgPosition}%</span>
+        <span class="popup-cover-position" @click=${component._togglePopupCoverExpanded}>${avgDisplayPosition}%</span>
       </div>
 
       <div class="popup-cover-content ${component._popupCoverExpanded ? 'expanded' : ''}">
@@ -550,16 +554,18 @@ function renderCoverSection(component, html, areaId) {
         </div>
 
         <!-- Individual covers -->
-        ${covers.map(cover => html`
+        ${covers.map(cover => {
+          const displayPosition = cover.invertPosition ? (100 - (cover.position || 0)) : (cover.position || 0);
+          return html`
           <div class="popup-cover-item">
             <span class="popup-cover-item-name">${cover.name}</span>
             <div class="popup-cover-slider" @click=${(e) => component._handleCoverSliderClick(e, cover.entity_id)}>
-              <div class="popup-cover-slider-fill" style="width: ${100 - (cover.position || 0)}%"></div>
-              <div class="popup-cover-slider-thumb" style="left: ${100 - (cover.position || 0)}%"></div>
+              <div class="popup-cover-slider-fill" style="width: ${displayPosition}%"></div>
+              <div class="popup-cover-slider-thumb" style="left: ${displayPosition}%"></div>
             </div>
-            <span class="popup-cover-position">${cover.position || 0}%</span>
+            <span class="popup-cover-position">${displayPosition}%</span>
           </div>
-        `)}
+        `})}
       </div>
     </div>
   `;
