@@ -109,6 +109,17 @@ export const mediaPopupStyles = `
     color: var(--dv-gray800);
   }
 
+  .popup-tv-item-icon.has-image {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .popup-tv-item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   .popup-tv-item-content {
     flex: 1;
     display: flex;

@@ -2147,6 +2147,8 @@
         source: s.attributes?.source,
         volume: s.attributes?.volume_level,
         icon: s.attributes?.icon || 'mdi:television',
+        entityPicture: s.attributes?.entity_picture,
+        mediaTitle: s.attributes?.media_title,
       }), this._tvLabelId);
     }
 

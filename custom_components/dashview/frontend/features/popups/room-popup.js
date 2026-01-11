@@ -693,12 +693,16 @@ function renderTVSection(component, html, areaId) {
         ${tvs.map(tv => html`
           <div class="popup-tv-item ${tv.state === 'on' ? 'on' : 'off'}"
                @click=${() => component._toggleTV(tv.entity_id)}>
-            <div class="popup-tv-item-icon">
-              <ha-icon icon="${tv.state === 'on' ? 'mdi:television' : 'mdi:television-off'}"></ha-icon>
+            <div class="popup-tv-item-icon ${tv.entityPicture ? 'has-image' : ''}">
+              ${tv.entityPicture ? html`
+                <img class="popup-tv-item-image" src="${tv.entityPicture}" alt="">
+              ` : html`
+                <ha-icon icon="${tv.state === 'on' ? 'mdi:television' : 'mdi:television-off'}"></ha-icon>
+              `}
             </div>
             <div class="popup-tv-item-content">
               <span class="popup-tv-item-name">${tv.name}</span>
-              <span class="popup-tv-item-state">${tv.state === 'on' ? (tv.source || t('common.status.on')) : t('common.status.off')}</span>
+              <span class="popup-tv-item-state">${tv.state === 'on' ? (tv.mediaTitle || tv.source || t('common.status.on')) : t('common.status.off')}</span>
             </div>
           </div>
         `)}
