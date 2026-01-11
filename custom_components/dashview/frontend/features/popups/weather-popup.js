@@ -5,6 +5,7 @@
 
 import { renderPopupHeader } from '../../components/layout/index.js';
 import { t } from '../../utils/i18n.js';
+import { getWeatherIconUrl } from '../../assets/weather-icons.js';
 
 /**
  * Render the complete weather popup
@@ -55,7 +56,7 @@ function renderCurrentWeather(component, html) {
       <div class="weather-current-temp">${currentWeather.temperature !== null ? currentWeather.temperature.toFixed(1) : '--'}°C</div>
       <div class="weather-current-condition">${conditionText}${precipText}</div>
       <div class="weather-current-icon">
-        <img src="/local/weather_icons/${condition}.svg" alt="${condition}" onerror="this.style.display='none'">
+        <img src="${getWeatherIconUrl(condition)}" alt="${condition}" onerror="this.style.display='none'">
       </div>
     </div>
   `;
@@ -90,7 +91,7 @@ function renderHourlyForecast(component, html) {
             <div class="weather-hourly-item">
               <div class="weather-hourly-time">${time}</div>
               <div class="weather-hourly-icon">
-                <img src="/local/weather_icons/${condition}.svg" alt="${condition}" onerror="this.style.display='none'">
+                <img src="${getWeatherIconUrl(condition)}" alt="${condition}" onerror="this.style.display='none'">
               </div>
               <div class="weather-hourly-temp">${temp}</div>
               ${wind ? html`<div class="weather-hourly-wind">${wind}</div>` : ''}
@@ -163,7 +164,7 @@ function renderForecastCard(component, html) {
       <div class="weather-forecast-temp">${tempDisplay}C</div>
       <div class="weather-forecast-condition">${conditionSubtitle}</div>
       <div class="weather-forecast-icon">
-        <img src="/local/weather_icons/${condition}.svg" alt="${condition}" onerror="this.style.display='none'">
+        <img src="${getWeatherIconUrl(condition)}" alt="${condition}" onerror="this.style.display='none'">
       </div>
     </div>
   `;
