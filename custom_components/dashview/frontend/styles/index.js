@@ -32,6 +32,7 @@ import { mediaPopupStyles } from './popups/media.js';
 import { weatherPopupStyles } from './popups/weather.js';
 import { devicesPopupStyles } from './popups/devices.js';
 import { changelogPopupStyles } from './popups/changelog.js';
+import { userPopupStyles } from './popups/user.js';
 
 // Admin
 import { tabsStyles } from './admin/tabs.js';
@@ -66,6 +67,7 @@ ${mediaPopupStyles}
 ${weatherPopupStyles}
 ${devicesPopupStyles}
 ${changelogPopupStyles}
+${userPopupStyles}
 ${tabsStyles}
 ${configStyles}
 ${entitiesStyles}
@@ -101,6 +103,7 @@ export {
   weatherPopupStyles,
   devicesPopupStyles,
   changelogPopupStyles,
+  userPopupStyles,
   // Admin
   tabsStyles,
   configStyles,

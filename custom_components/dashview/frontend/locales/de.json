@@ -13,9 +13,11 @@
       "unknown": "Unbekannt",
       "unavailable": "Nicht verfügbar"
     },
+    "events": "Ereignisse",
     "time": {
       "just_now": "Gerade eben",
       "now": "Jetzt",
+      "today": "Heute",
       "yesterday": "Gestern",
       "days": "Tagen",
       "hours": "Stunden",
@@ -262,7 +264,24 @@
       "currently_are": "Aktuell sind",
       "open_suffix": "offen.",
       "it_is": "Es ist"
-    }
+    },
+    "home": "Zuhause",
+    "away": "Abwesend",
+    "since": "seit"
+  },
+  "user": {
+    "presence_history": "Anwesenheitsverlauf",
+    "arrived_home": "Angekommen",
+    "left_home": "Verlassen",
+    "no_history": "Keine Aktivität"
+  },
+  "time": {
+    "days_ago": "vor {{count}} Tagen",
+    "hours_ago": "vor {{count}}h",
+    "minutes_ago": "vor {{count}}m",
+    "just_now": "Gerade eben",
+    "today": "Heute",
+    "yesterday": "Gestern"
   },
   "lock": {
     "locked": "Verschlossen",

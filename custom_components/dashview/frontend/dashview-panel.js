@@ -16,7 +16,7 @@
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.9.18";
+  const DASHVIEW_VERSION = "1.9.19";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
@@ -96,6 +96,7 @@
   let dashviewWeatherPopup = null;
   let dashviewMediaPopup = null;
   let dashviewChangelogPopup = null;
+  let dashviewUserPopup = null;
   let changelogUtils = null;
   try {
     const popupsModule = await import(`./features/popups/index.js?v=${DASHVIEW_VERSION}`);
@@ -103,6 +104,7 @@
     dashviewWeatherPopup = popupsModule.renderWeatherPopup;
     dashviewMediaPopup = popupsModule.renderMediaPopup;
     dashviewChangelogPopup = popupsModule.renderChangelogPopup;
+    dashviewUserPopup = popupsModule.renderUserPopup;
     debugLog("Loaded popups module");
   } catch (e) {
     console.warn("Dashview: Failed to load popups module", e);
@@ -251,6 +253,9 @@
         _coversPopupOpen: { type: Boolean },
         _tvsPopupOpen: { type: Boolean },
         _batteryPopupOpen: { type: Boolean },
+        _userPopupOpen: { type: Boolean },
+        _presenceHistory: { type: Array },
+        _presenceHistoryExpanded: { type: Boolean },
         _adminPopupOpen: { type: Boolean },
         _notificationTempThreshold: { type: Number },
         _notificationHumidityThreshold: { type: Number },
@@ -438,6 +443,9 @@
       this._coversPopupOpen = false;
       this._tvsPopupOpen = false;
       this._batteryPopupOpen = false;
+      this._userPopupOpen = false;
+      this._presenceHistory = [];
+      this._presenceHistoryExpanded = false;
       this._adminPopupOpen = false;
       this._notificationTempThreshold = 23;
       this._notificationHumidityThreshold = 60;
@@ -2429,6 +2437,114 @@
     _closeBatteryPopup() { this._closePopup('_batteryPopupOpen'); }
     _handleBatteryPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeBatteryPopup()); }
 
+    // User popup methods
+    _openUserPopup() {
+      this._closeAllPopups();
+      this._userPopupOpen = true;
+      this._presenceHistoryExpanded = false;
+      this._fetchPresenceHistory();
+      this.requestUpdate();
+    }
+
+    _closeUserPopup() {
+      this._userPopupOpen = false;
+      this._presenceHistory = [];
+      this.requestUpdate();
+    }
+
+    _handleUserPopupOverlayClick(e) {
+      this._handlePopupOverlay(e, () => this._closeUserPopup());
+    }
+
+    _togglePresenceHistoryExpanded() {
+      this._presenceHistoryExpanded = !this._presenceHistoryExpanded;
+      this.requestUpdate();
+    }
+
+    /**
+     * Get extended user data for the popup
+     */
+    _getUserPopupData() {
+      if (!this.hass) return null;
+
+      const currentUserId = this.hass.user?.id;
+      let person = null;
+
+      if (currentUserId) {
+        person = Object.values(this.hass.states).find(
+          (e) => e.entity_id.startsWith("person.") && e.attributes.user_id === currentUserId
+        );
+      }
+
+      if (!person) {
+        person = Object.values(this.hass.states).find((e) =>
+          e.entity_id.startsWith("person.")
+        );
+      }
+
+      if (person) {
+        const customPhoto = this._userPhotos?.[person.entity_id];
+        return {
+          entityId: person.entity_id,
+          name: person.attributes.friendly_name || person.entity_id,
+          state: person.state,
+          picture: customPhoto || person.attributes.entity_picture,
+          lastChanged: person.last_changed,
+        };
+      }
+      return null;
+    }
+
+    /**
+     * Fetch presence history from Home Assistant
+     */
+    async _fetchPresenceHistory() {
+      if (!this.hass) return;
+
+      const person = this._getUserPopupData();
+      if (!person) return;
+
+      try {
+        // Get history for the last 7 days
+        const endTime = new Date();
+        const startTime = new Date();
+        startTime.setDate(startTime.getDate() - 7);
+
+        const history = await this.hass.callWS({
+          type: 'history/history_during_period',
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          entity_ids: [person.entityId],
+          minimal_response: true,
+          significant_changes_only: true,
+        });
+
+        if (history && history[person.entityId]) {
+          // Process history to get state changes
+          const states = history[person.entityId];
+          const changes = [];
+          let lastState = null;
+
+          for (const state of states) {
+            if (state.s !== lastState && (state.s === 'home' || state.s === 'not_home')) {
+              changes.push({
+                state: state.s,
+                last_changed: state.lu ? new Date(state.lu * 1000).toISOString() : state.lc,
+              });
+              lastState = state.s;
+            }
+          }
+
+          // Reverse to show most recent first and limit to 10 items
+          this._presenceHistory = changes.reverse().slice(0, 10);
+          this.requestUpdate();
+        }
+      } catch (error) {
+        console.warn('Dashview: Failed to fetch presence history', error);
+        this._presenceHistory = [];
+      }
+    }
+
     // Changelog popup methods
     _checkForNewVersion() {
       if (!changelogUtils) return;
@@ -3417,6 +3533,7 @@
       this._coversPopupOpen = false;
       this._tvsPopupOpen = false;
       this._batteryPopupOpen = false;
+      this._userPopupOpen = false;
       this._mediaPopupOpen = false;
       this._weatherPopupOpen = false;
       this._adminPopupOpen = false;
@@ -3614,7 +3731,7 @@
               : ""}
             ${person
               ? html`
-                  <div class="person-avatar ${person.state === "home" ? "home" : ""}">
+                  <div class="person-avatar ${person.state === "home" ? "home" : ""}" @click=${this._openUserPopup}>
                     ${person.picture
                       ? html`<img src="${person.picture}" alt="${person.name}" />`
                       : html`<ha-icon icon="mdi:account"></ha-icon>`}
@@ -3825,6 +3942,13 @@
               </div>
             `
           : ""}
+
+        <!-- USER POPUP -->
+        ${this._userPopupOpen && dashviewUserPopup
+          ? dashviewUserPopup(this, html)
+          : this._userPopupOpen
+            ? html`<div class="popup-overlay"><div class="popup-container"><p>User popup module not loaded</p></div></div>`
+            : ''}
 
         <!-- MEDIA POPUP -->
         ${this._mediaPopupOpen && dashviewMediaPopup
