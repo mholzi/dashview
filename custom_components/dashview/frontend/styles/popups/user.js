@@ -108,56 +108,52 @@ export const userPopupStyles = `
   }
 
   /* ==================== USER POPUP HISTORY SECTION ==================== */
+  /* Matches popup-light-section format from room popup */
   .user-popup-history-section {
-    margin-top: 8px;
-    border-top: 1px solid var(--dv-gray200);
-    padding-top: 8px;
+    margin: 8px 12px 32px 12px;
+    background: var(--dv-gray200);
+    border-radius: 12px;
+    overflow: hidden;
   }
 
   .user-popup-history-header {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 6px 0;
+    min-height: 46px;
     cursor: pointer;
-    transition: background 0.2s ease;
-    border-radius: 12px;
-  }
-
-  .user-popup-history-header:hover {
-    background: var(--dv-gray100);
   }
 
   .user-popup-history-header ha-icon {
-    --mdc-icon-size: 22px;
-    color: var(--dv-gray600);
-    margin-right: 12px;
+    width: 22px;
+    padding: 8px 14px;
+    color: var(--dv-gray800, var(--primary-text-color));
   }
 
   .user-popup-history-title {
-    flex: 1;
     font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800, var(--primary-text-color));
+    flex: 1;
   }
 
   .user-popup-history-count {
     font-size: 14px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
+    padding-right: 20px;
+    margin-right: 10px;
   }
 
   .user-popup-history-content {
+    padding: 10px 8px 8px 8px;
+    margin-top: 10px;
     display: none;
-    padding: 8px 0;
   }
 
   .user-popup-history-content.expanded {
-    display: block;
-  }
-
-  .user-popup-history-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
   }
 
   /* History card - matches security-entity-card exactly */
