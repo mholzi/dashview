@@ -621,13 +621,14 @@ export function renderCoversPopupContent(component, html) {
     `;
   }
 
-  // Get cover states and sort by open/closed status
+  // Get cover states - open means position < 80%
   const covers = enabledCoverIds
     .map(entityId => {
       const state = component.hass.states[entityId];
       if (!state) return null;
-      const position = state.attributes?.current_position ?? (state.state === 'open' ? 100 : 0);
-      const isOpen = state.state !== 'closed' && position > 0;
+      const position = state.attributes?.current_position ?? (state.state === 'open' ? 0 : 100);
+      // Open = position < 80 (cover is not fully closed)
+      const isOpen = position < 80;
       return {
         entityId,
         name: state.attributes?.friendly_name || entityId.split('.')[1],
@@ -636,58 +637,60 @@ export function renderCoversPopupContent(component, html) {
         isOpen,
       };
     })
-    .filter(c => c !== null)
-    .sort((a, b) => {
-      // Open covers first, then by position (higher first)
-      if (a.isOpen !== b.isOpen) return b.isOpen - a.isOpen;
-      return b.position - a.position;
-    });
+    .filter(c => c !== null);
 
-  const openCount = covers.filter(c => c.isOpen).length;
-  const closedCount = covers.length - openCount;
+  // Sort by position (lower/more open first for open covers, higher first for closed)
+  const coversOpen = covers.filter(c => c.isOpen).sort((a, b) => a.position - b.position);
+  const coversClosed = covers.filter(c => !c.isOpen).sort((a, b) => b.position - a.position);
+
+  // Render a single cover card
+  const renderCoverCard = (cover) => html`
+    <div class="covers-popup-card ${cover.isOpen ? 'open' : 'closed'}">
+      <div class="covers-popup-header" @click=${() => component._toggleCover(cover.entityId)}>
+        <div class="covers-popup-icon">
+          <ha-icon icon="${cover.isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter'}"></ha-icon>
+        </div>
+        <div class="covers-popup-content">
+          <div class="covers-popup-name">${cover.name}</div>
+          <div class="covers-popup-position">${cover.position}%</div>
+        </div>
+      </div>
+      <div class="covers-popup-slider">
+        <input
+          type="range"
+          min="0"
+          max="100"
+          .value=${cover.position}
+          @change=${(e) => component._setCoverPosition(cover.entityId, parseInt(e.target.value))}
+        />
+      </div>
+    </div>
+  `;
 
   return html`
-    <div class="covers-popup-summary">
-      <span class="covers-popup-count open">${openCount} ${t('status.covers.open', 'open')}</span>
-      <span class="covers-popup-separator">·</span>
-      <span class="covers-popup-count closed">${closedCount} ${t('status.covers.close', 'closed')}</span>
-    </div>
+    <!-- Covers Open Section -->
+    ${coversOpen.length > 0 ? html`
+      <h3 class="lights-popup-section-title">${t('ui.popups.covers.open_section', 'Covers open')} (${coversOpen.length})</h3>
+      <div class="covers-popup-list">
+        ${coversOpen.map(c => renderCoverCard(c))}
+      </div>
+    ` : ''}
 
-    <div class="covers-popup-actions">
-      <button class="covers-popup-action-btn" @click=${() => component._closeAllCovers()}>
-        <ha-icon icon="mdi:window-shutter"></ha-icon>
-        <span>${t('popup.actions.close_all', 'Close all')}</span>
-      </button>
-      <button class="covers-popup-action-btn" @click=${() => component._openAllCovers()}>
-        <ha-icon icon="mdi:window-shutter-open"></ha-icon>
-        <span>${t('popup.actions.open_all', 'Open all')}</span>
-      </button>
-    </div>
+    <!-- Covers Closed Section -->
+    ${coversClosed.length > 0 ? html`
+      <h3 class="lights-popup-section-title">${t('ui.popups.covers.closed_section', 'Covers closed')} (${coversClosed.length})</h3>
+      <div class="covers-popup-list">
+        ${coversClosed.map(c => renderCoverCard(c))}
+      </div>
+    ` : ''}
 
-    <div class="covers-popup-list">
-      ${covers.map(cover => html`
-        <div class="covers-popup-card ${cover.isOpen ? 'open' : 'closed'}">
-          <div class="covers-popup-header" @click=${() => component._toggleCover(cover.entityId)}>
-            <div class="covers-popup-icon">
-              <ha-icon icon="${cover.isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter'}"></ha-icon>
-            </div>
-            <div class="covers-popup-content">
-              <div class="covers-popup-name">${cover.name}</div>
-              <div class="covers-popup-position">${cover.position}%</div>
-            </div>
-          </div>
-          <div class="covers-popup-slider">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              .value=${cover.position}
-              @change=${(e) => component._setCoverPosition(cover.entityId, parseInt(e.target.value))}
-            />
-          </div>
-        </div>
-      `)}
-    </div>
+    <!-- Empty State -->
+    ${covers.length === 0 ? html`
+      <div class="covers-empty-state">
+        <ha-icon icon="mdi:window-shutter-alert"></ha-icon>
+        <p>${t('ui.popups.covers.empty', 'No covers configured')}</p>
+      </div>
+    ` : ''}
   `;
 }
 

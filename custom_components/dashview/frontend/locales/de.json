@@ -128,7 +128,9 @@
       },
       "covers": {
         "title": "Rollos",
-        "empty": "Keine Rollos konfiguriert"
+        "empty": "Keine Rollos konfiguriert",
+        "open_section": "Rollos offen",
+        "closed_section": "Rollos geschlossen"
       },
       "tvs": {
         "title": "Fernseher",

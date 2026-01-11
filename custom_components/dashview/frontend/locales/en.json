@@ -128,7 +128,9 @@
       },
       "covers": {
         "title": "Covers",
-        "empty": "No covers configured"
+        "empty": "No covers configured",
+        "open_section": "Covers open",
+        "closed_section": "Covers closed"
       },
       "tvs": {
         "title": "TVs",
