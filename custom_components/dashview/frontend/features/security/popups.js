@@ -24,8 +24,8 @@ export function renderSecurityPopupContent(component, html) {
     component._entityRegistry.forEach(entityReg => {
       if (entityReg.labels && entityReg.labels.includes(labelId)) {
         const entityId = entityReg.entity_id;
-        // Only include explicitly enabled entities (disabled by default)
-        if (enabledMap[entityId] !== true) return;
+        // Include entities unless explicitly disabled (enabled by default)
+        if (enabledMap[entityId] === false) return;
         filtered[entityId] = true;
       }
     });
