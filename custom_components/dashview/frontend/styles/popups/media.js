@@ -17,6 +17,7 @@ export const mediaPopupStyles = `
     align-items: center;
     padding: 6px 0;
     min-height: 46px;
+    cursor: pointer;
   }
 
   .popup-tv-header ha-icon {
@@ -33,15 +34,24 @@ export const mediaPopupStyles = `
 
   .popup-tv-count {
     margin-left: auto;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--dv-gray600);
-    padding-right: 12px;
+    padding-right: 20px;
+    margin-right: 10px;
   }
 
   .popup-tv-content {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--dv-transition-slow) ease, padding var(--dv-transition-slow) ease;
+    padding: 0 8px;
+  }
+
+  .popup-tv-content.expanded {
+    max-height: 500px;
     padding: 10px 8px 8px 8px;
   }
 

@@ -233,6 +233,7 @@
         _popupCoverExpanded: { type: Boolean },
         _popupGarageExpanded: { type: Boolean },
         _popupLightExpanded: { type: Boolean },
+        _popupTVExpanded: { type: Boolean },
         _popupMediaExpanded: { type: Boolean },
         _popupThermostatExpanded: { type: Boolean },
         _popupDevicesExpanded: { type: Boolean },
@@ -396,6 +397,7 @@
       this._popupThermostatExpanded = true;
       this._popupRoofWindowExpanded = true;
       this._popupDevicesExpanded = true;
+      this._popupTVExpanded = true;
       this._adminSubTab = "labels";  // Start with Labels tab for initial setup
       this._settingsLoaded = false;
       this._settingsError = null;  // Error message if settings fail to load
@@ -2032,6 +2034,7 @@
 
     _togglePopupLightExpanded() { this._toggleBoolProp('_popupLightExpanded'); }
     _togglePopupDevicesExpanded() { this._toggleBoolProp('_popupDevicesExpanded'); }
+    _togglePopupTVExpanded() { this._toggleBoolProp('_popupTVExpanded'); }
 
     _getEnabledClimatesForRoom(areaId) {
       return this._getEnabledEntitiesForRoom(areaId, this._enabledClimates, s => ({

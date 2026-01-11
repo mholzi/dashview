@@ -672,7 +672,7 @@ function renderMediaPlayer(component, html, player) {
 }
 
 /**
- * Render TV section
+ * Render TV section (collapsible like lights)
  */
 function renderTVSection(component, html, areaId) {
   const tvs = component._getEnabledTVsForRoom(areaId);
@@ -683,13 +683,13 @@ function renderTVSection(component, html, areaId) {
 
   return html`
     <div class="popup-tv-section">
-      <div class="popup-tv-header">
+      <div class="popup-tv-header" @click=${component._togglePopupTVExpanded}>
         <ha-icon icon="mdi:television"></ha-icon>
         <span class="popup-tv-title">${t('ui.sections.tvs')}</span>
         <span class="popup-tv-count">${t('popup.room.tv_count', { on: onCount, total: totalCount })}</span>
       </div>
 
-      <div class="popup-tv-content">
+      <div class="popup-tv-content ${component._popupTVExpanded ? 'expanded' : ''}">
         ${tvs.map(tv => html`
           <div class="popup-tv-item ${tv.state === 'on' ? 'on' : 'off'}"
                @click=${() => component._toggleTV(tv.entity_id)}>
