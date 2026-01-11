@@ -127,6 +127,10 @@
       "covers": {
         "title": "Covers",
         "empty": "No covers configured"
+      },
+      "tvs": {
+        "title": "TVs",
+        "empty": "No TVs configured"
       }
     }
   },
@@ -284,7 +288,8 @@
       "all_lights": "All lights",
       "all_covers": "All covers",
       "close_all": "Close all",
-      "open_all": "Open all"
+      "open_all": "Open all",
+      "turn_off_all": "Turn off all"
     }
   },
   "admin": {

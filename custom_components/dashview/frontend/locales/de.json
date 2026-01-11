@@ -127,6 +127,10 @@
       "covers": {
         "title": "Rollos",
         "empty": "Keine Rollos konfiguriert"
+      },
+      "tvs": {
+        "title": "Fernseher",
+        "empty": "Keine Fernseher konfiguriert"
       }
     }
   },
@@ -284,7 +288,8 @@
       "all_lights": "Alle Lichter",
       "all_covers": "Alle Rollos",
       "close_all": "Alle schließen",
-      "open_all": "Alle öffnen"
+      "open_all": "Alle öffnen",
+      "turn_off_all": "Alle ausschalten"
     }
   },
   "admin": {

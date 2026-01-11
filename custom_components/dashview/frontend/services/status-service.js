@@ -340,6 +340,7 @@ export function getTVsStatus(hass, infoTextConfig, enabledTVs, labelId = null, e
     badgeText: `${count}`,
     badgeIcon: "mdi:television",
     suffixText: t('status.tvs.suffix'),
+    clickAction: "tvs",
   };
 }
 

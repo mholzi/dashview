@@ -249,6 +249,7 @@
         _securityPopupOpen: { type: Boolean },
         _lightsPopupOpen: { type: Boolean },
         _coversPopupOpen: { type: Boolean },
+        _tvsPopupOpen: { type: Boolean },
         _batteryPopupOpen: { type: Boolean },
         _adminPopupOpen: { type: Boolean },
         _notificationTempThreshold: { type: Number },
@@ -435,6 +436,7 @@
       this._securityPopupOpen = false;
       this._lightsPopupOpen = false;
       this._coversPopupOpen = false;
+      this._tvsPopupOpen = false;
       this._batteryPopupOpen = false;
       this._adminPopupOpen = false;
       this._notificationTempThreshold = 23;
@@ -1596,6 +1598,25 @@
       this.hass.callService("media_player", "toggle", { entity_id: entityId });
     }
 
+    _turnOffAllTVs() {
+      if (!this.hass) return;
+      const enabledTVIds = Object.keys(this._enabledTVs || {}).filter(id => this._enabledTVs[id] !== false);
+      enabledTVIds.forEach(entityId => {
+        const state = this.hass.states[entityId];
+        if (state?.state === 'on') {
+          this.hass.callService("media_player", "turn_off", { entity_id: entityId });
+        }
+      });
+    }
+
+    _setTVVolume(entityId, volume) {
+      if (!this.hass) return;
+      this.hass.callService("media_player", "volume_set", {
+        entity_id: entityId,
+        volume_level: volume
+      });
+    }
+
     _toggleLock(entityId) {
       if (!this.hass) return;
       const state = this.hass.states[entityId];
@@ -2388,6 +2409,7 @@
       if (action === 'security') this._openPopup('_securityPopupOpen');
       else if (action === 'lights') this._openPopup('_lightsPopupOpen');
       else if (action === 'covers') this._openPopup('_coversPopupOpen');
+      else if (action === 'tvs') this._openPopup('_tvsPopupOpen');
       else if (action === 'battery') this._openPopup('_batteryPopupOpen');
       else if (action === 'motion') {
         this._activeSecurityTab = 'motion';
@@ -2400,6 +2422,9 @@
 
     _closeCoversPopup() { this._closePopup('_coversPopupOpen'); }
     _handleCoversPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeCoversPopup()); }
+
+    _closeTVsPopup() { this._closePopup('_tvsPopupOpen'); }
+    _handleTVsPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeTVsPopup()); }
 
     _closeBatteryPopup() { this._closePopup('_batteryPopupOpen'); }
     _handleBatteryPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeBatteryPopup()); }
@@ -3370,6 +3395,7 @@
       this._securityPopupOpen = false;
       this._lightsPopupOpen = false;
       this._coversPopupOpen = false;
+      this._tvsPopupOpen = false;
       this._batteryPopupOpen = false;
       this._mediaPopupOpen = false;
       this._weatherPopupOpen = false;
@@ -3732,6 +3758,30 @@
             `
           : ""}
 
+        <!-- TVS POPUP -->
+        ${this._tvsPopupOpen
+          ? html`
+              <div class="popup-overlay" @click=${this._handleTVsPopupOverlayClick}>
+                <div class="popup-container">
+                  <div class="popup-header">
+                    <div class="popup-icon" style="background: var(--dv-gradient-media, linear-gradient(135deg, #ce93d8 0%, #ab47bc 100%));">
+                      <ha-icon icon="mdi:television"></ha-icon>
+                    </div>
+                    <div class="popup-title">
+                      <h2>${t('ui.popups.tvs.title', 'TVs')}</h2>
+                    </div>
+                    <button class="popup-close" @click=${this._closeTVsPopup}>
+                      <ha-icon icon="mdi:close"></ha-icon>
+                    </button>
+                  </div>
+                  <div class="popup-content">
+                    ${this._renderTVsPopupContent()}
+                  </div>
+                </div>
+              </div>
+            `
+          : ""}
+
         <!-- BATTERY POPUP -->
         ${this._batteryPopupOpen
           ? html`
@@ -3886,6 +3936,15 @@
       }
       // Fallback: return empty if module not loaded
       return html`<div class="covers-empty-state">Covers module not loaded</div>`;
+    }
+
+    _renderTVsPopupContent() {
+      // Use external module if available, fallback to inline
+      if (dashviewPopups?.renderTVsPopupContent) {
+        return dashviewPopups.renderTVsPopupContent(this, html);
+      }
+      // Fallback: return empty if module not loaded
+      return html`<div class="tvs-empty-state">TVs module not loaded</div>`;
     }
 
     _handleSecurityPopupOverlayClick(e) { this._handlePopupOverlay(e, () => { this._securityPopupOpen = false; }); }
