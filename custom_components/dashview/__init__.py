@@ -1,8 +1,11 @@
 """Dashview - Custom Home Assistant Dashboard Integration."""
 from __future__ import annotations
 
+import base64
 import json
 import logging
+import os
+import time
 from pathlib import Path
 
 from homeassistant.components.frontend import async_register_built_in_panel
@@ -27,6 +30,12 @@ _LOGGER = logging.getLogger(__name__)
 
 STORAGE_KEY = f"{DOMAIN}.settings"
 STORAGE_VERSION = 1
+
+# Photo upload configuration
+PHOTO_UPLOAD_DIR = "www/dashview/user_photos"
+PHOTO_URL_PREFIX = "/local/dashview/user_photos"
+MAX_PHOTO_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -69,6 +78,8 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
     """Register WebSocket commands."""
     websocket_api.async_register_command(hass, websocket_get_settings)
     websocket_api.async_register_command(hass, websocket_save_settings)
+    websocket_api.async_register_command(hass, websocket_upload_photo)
+    websocket_api.async_register_command(hass, websocket_delete_photo)
 
 
 @websocket_api.websocket_command({
@@ -110,6 +121,122 @@ async def websocket_save_settings(
 
     _LOGGER.debug("Dashview settings saved: %s", settings)
     connection.send_result(msg["id"], {"success": True})
+
+
+@websocket_api.websocket_command({
+    vol.Required("type"): f"{DOMAIN}/upload_photo",
+    vol.Required("filename"): str,
+    vol.Required("data"): str,  # Base64 encoded image data
+})
+@websocket_api.async_response
+async def websocket_upload_photo(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Handle photo upload request."""
+    filename = msg["filename"]
+    data = msg["data"]
+
+    # Validate file extension
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        connection.send_error(
+            msg["id"],
+            "invalid_format",
+            f"Invalid file format. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+        return
+
+    # Decode base64 data
+    try:
+        # Handle data URL format (data:image/jpeg;base64,...)
+        if "," in data:
+            data = data.split(",", 1)[1]
+        image_data = base64.b64decode(data)
+    except Exception as err:
+        _LOGGER.error("Failed to decode image data: %s", err)
+        connection.send_error(msg["id"], "decode_error", "Failed to decode image data")
+        return
+
+    # Check file size
+    if len(image_data) > MAX_PHOTO_SIZE:
+        connection.send_error(
+            msg["id"],
+            "file_too_large",
+            f"File too large. Maximum size: {MAX_PHOTO_SIZE // (1024 * 1024)}MB"
+        )
+        return
+
+    # Create upload directory if it doesn't exist
+    upload_dir = Path(hass.config.path(PHOTO_UPLOAD_DIR))
+    try:
+        upload_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as err:
+        _LOGGER.error("Failed to create upload directory: %s", err)
+        connection.send_error(msg["id"], "directory_error", "Failed to create upload directory")
+        return
+
+    # Generate unique filename with timestamp
+    timestamp = int(time.time() * 1000)
+    safe_name = "".join(c for c in os.path.splitext(filename)[0] if c.isalnum() or c in "-_")[:32]
+    new_filename = f"{safe_name}_{timestamp}{ext}"
+    file_path = upload_dir / new_filename
+
+    # Save the file
+    try:
+        await hass.async_add_executor_job(file_path.write_bytes, image_data)
+    except OSError as err:
+        _LOGGER.error("Failed to save photo: %s", err)
+        connection.send_error(msg["id"], "save_error", "Failed to save photo")
+        return
+
+    # Return the public URL path
+    public_path = f"{PHOTO_URL_PREFIX}/{new_filename}"
+    _LOGGER.info("Photo uploaded: %s", public_path)
+    connection.send_result(msg["id"], {"success": True, "path": public_path})
+
+
+@websocket_api.websocket_command({
+    vol.Required("type"): f"{DOMAIN}/delete_photo",
+    vol.Required("path"): str,
+})
+@websocket_api.async_response
+async def websocket_delete_photo(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Handle photo delete request."""
+    path = msg["path"]
+
+    # Validate path is within our upload directory
+    if not path.startswith(PHOTO_URL_PREFIX):
+        connection.send_error(
+            msg["id"],
+            "invalid_path",
+            "Can only delete photos from Dashview upload directory"
+        )
+        return
+
+    # Convert public URL to file path
+    filename = path.replace(PHOTO_URL_PREFIX + "/", "")
+    # Prevent directory traversal
+    if "/" in filename or "\\" in filename or ".." in filename:
+        connection.send_error(msg["id"], "invalid_path", "Invalid file path")
+        return
+
+    file_path = Path(hass.config.path(PHOTO_UPLOAD_DIR)) / filename
+
+    # Delete the file if it exists
+    try:
+        if file_path.exists():
+            await hass.async_add_executor_job(file_path.unlink)
+            _LOGGER.info("Photo deleted: %s", path)
+        connection.send_result(msg["id"], {"success": True})
+    except OSError as err:
+        _LOGGER.error("Failed to delete photo: %s", err)
+        connection.send_error(msg["id"], "delete_error", "Failed to delete photo")
 
 
 def _get_asset_manifest(frontend_path: Path) -> dict | None:
