@@ -586,3 +586,93 @@ export function renderBatteryPopupContent(component, html) {
     </div>
   `;
 }
+
+/**
+ * Render covers popup content - shows all enabled covers with position control
+ */
+export function renderCoversPopupContent(component, html) {
+  if (!component.hass) return html``;
+
+  // Get all enabled covers
+  const enabledCoverIds = Object.keys(component._enabledCovers || {}).filter(
+    id => component._enabledCovers[id] !== false
+  );
+
+  if (enabledCoverIds.length === 0) {
+    return html`
+      <div class="covers-empty-state">
+        <ha-icon icon="mdi:window-shutter-alert"></ha-icon>
+        <p>${t('ui.popups.covers.empty', 'No covers configured')}</p>
+      </div>
+    `;
+  }
+
+  // Get cover states and sort by open/closed status
+  const covers = enabledCoverIds
+    .map(entityId => {
+      const state = component.hass.states[entityId];
+      if (!state) return null;
+      const position = state.attributes?.current_position ?? (state.state === 'open' ? 100 : 0);
+      const isOpen = state.state !== 'closed' && position > 0;
+      return {
+        entityId,
+        name: state.attributes?.friendly_name || entityId.split('.')[1],
+        state: state.state,
+        position,
+        isOpen,
+      };
+    })
+    .filter(c => c !== null)
+    .sort((a, b) => {
+      // Open covers first, then by position (higher first)
+      if (a.isOpen !== b.isOpen) return b.isOpen - a.isOpen;
+      return b.position - a.position;
+    });
+
+  const openCount = covers.filter(c => c.isOpen).length;
+  const closedCount = covers.length - openCount;
+
+  return html`
+    <div class="covers-popup-summary">
+      <span class="covers-popup-count open">${openCount} ${t('status.covers.open', 'open')}</span>
+      <span class="covers-popup-separator">·</span>
+      <span class="covers-popup-count closed">${closedCount} ${t('status.covers.close', 'closed')}</span>
+    </div>
+
+    <div class="covers-popup-actions">
+      <button class="covers-popup-action-btn" @click=${() => component._closeAllCovers()}>
+        <ha-icon icon="mdi:window-shutter"></ha-icon>
+        <span>${t('popup.actions.close_all', 'Close all')}</span>
+      </button>
+      <button class="covers-popup-action-btn" @click=${() => component._openAllCovers()}>
+        <ha-icon icon="mdi:window-shutter-open"></ha-icon>
+        <span>${t('popup.actions.open_all', 'Open all')}</span>
+      </button>
+    </div>
+
+    <div class="covers-popup-list">
+      ${covers.map(cover => html`
+        <div class="covers-popup-card ${cover.isOpen ? 'open' : 'closed'}">
+          <div class="covers-popup-header" @click=${() => component._toggleCover(cover.entityId)}>
+            <div class="covers-popup-icon">
+              <ha-icon icon="${cover.isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter'}"></ha-icon>
+            </div>
+            <div class="covers-popup-content">
+              <div class="covers-popup-name">${cover.name}</div>
+              <div class="covers-popup-position">${cover.position}%</div>
+            </div>
+          </div>
+          <div class="covers-popup-slider">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              .value=${cover.position}
+              @change=${(e) => component._setCoverPosition(cover.entityId, parseInt(e.target.value))}
+            />
+          </div>
+        </div>
+      `)}
+    </div>
+  `;
+}

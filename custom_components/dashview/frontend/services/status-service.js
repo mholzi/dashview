@@ -307,6 +307,7 @@ export function getCoversStatus(hass, infoTextConfig, enabledCovers, labelId = n
     badgeText: `${count} ${count === 1 ? t('status.covers.label_singular') : t('status.covers.label_plural')}`,
     badgeIcon: "mdi:window-shutter-open",
     suffixText: t('status.general.open_suffix'),
+    clickAction: "covers",
   };
 }
 

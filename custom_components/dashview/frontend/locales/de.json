@@ -123,6 +123,10 @@
         "title": "Lichter",
         "on_section": "Lichter an",
         "off_section": "Lichter aus"
+      },
+      "covers": {
+        "title": "Rollos",
+        "empty": "Keine Rollos konfiguriert"
       }
     }
   },
@@ -278,7 +282,9 @@
       "covers_open": "Rollos auf",
       "covers_close": "Rollos zu",
       "all_lights": "Alle Lichter",
-      "all_covers": "Alle Rollos"
+      "all_covers": "Alle Rollos",
+      "close_all": "Alle schließen",
+      "open_all": "Alle öffnen"
     }
   },
   "admin": {

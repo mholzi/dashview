@@ -248,6 +248,7 @@
         _activeSecurityTab: { type: String },
         _securityPopupOpen: { type: Boolean },
         _lightsPopupOpen: { type: Boolean },
+        _coversPopupOpen: { type: Boolean },
         _batteryPopupOpen: { type: Boolean },
         _adminPopupOpen: { type: Boolean },
         _notificationTempThreshold: { type: Number },
@@ -433,6 +434,7 @@
       this._activeSecurityTab = 'windows';
       this._securityPopupOpen = false;
       this._lightsPopupOpen = false;
+      this._coversPopupOpen = false;
       this._batteryPopupOpen = false;
       this._adminPopupOpen = false;
       this._notificationTempThreshold = 23;
@@ -2012,6 +2014,22 @@
     _setAllCoversPosition(areaId, position) {
       this._getEnabledCoversForRoom(areaId).forEach(c => this._setCoverPositionWithInversion(c.entity_id, position));
     }
+    _toggleCover(entityId) {
+      const state = this.hass?.states[entityId];
+      if (state?.state === 'closed') {
+        this._coverService(entityId, 'open_cover');
+      } else {
+        this._coverService(entityId, 'close_cover');
+      }
+    }
+    _openAllCovers() {
+      const enabledCoverIds = Object.keys(this._enabledCovers || {}).filter(id => this._enabledCovers[id] !== false);
+      enabledCoverIds.forEach(entityId => this._coverService(entityId, 'open_cover'));
+    }
+    _closeAllCovers() {
+      const enabledCoverIds = Object.keys(this._enabledCovers || {}).filter(id => this._enabledCovers[id] !== false);
+      enabledCoverIds.forEach(entityId => this._coverService(entityId, 'close_cover'));
+    }
 
     _formatGarageLastChanged(lastChanged) {
       return coreUtils ? coreUtils.formatGarageLastChanged(lastChanged) : '';
@@ -2369,6 +2387,7 @@
     _handleInfoTextClick(action) {
       if (action === 'security') this._openPopup('_securityPopupOpen');
       else if (action === 'lights') this._openPopup('_lightsPopupOpen');
+      else if (action === 'covers') this._openPopup('_coversPopupOpen');
       else if (action === 'battery') this._openPopup('_batteryPopupOpen');
       else if (action === 'motion') {
         this._activeSecurityTab = 'motion';
@@ -2378,6 +2397,9 @@
 
     _closeLightsPopup() { this._closePopup('_lightsPopupOpen'); }
     _handleLightsPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeLightsPopup()); }
+
+    _closeCoversPopup() { this._closePopup('_coversPopupOpen'); }
+    _handleCoversPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeCoversPopup()); }
 
     _closeBatteryPopup() { this._closePopup('_batteryPopupOpen'); }
     _handleBatteryPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeBatteryPopup()); }
@@ -3347,6 +3369,7 @@
     _closeAllPopups() {
       this._securityPopupOpen = false;
       this._lightsPopupOpen = false;
+      this._coversPopupOpen = false;
       this._batteryPopupOpen = false;
       this._mediaPopupOpen = false;
       this._weatherPopupOpen = false;
@@ -3685,6 +3708,30 @@
             `
           : ""}
 
+        <!-- COVERS POPUP -->
+        ${this._coversPopupOpen
+          ? html`
+              <div class="popup-overlay" @click=${this._handleCoversPopupOverlayClick}>
+                <div class="popup-container">
+                  <div class="popup-header">
+                    <div class="popup-icon" style="background: var(--dv-gradient-cover, linear-gradient(135deg, #90caf9 0%, #42a5f5 100%));">
+                      <ha-icon icon="mdi:window-shutter"></ha-icon>
+                    </div>
+                    <div class="popup-title">
+                      <h2>${t('ui.popups.covers.title', 'Covers')}</h2>
+                    </div>
+                    <button class="popup-close" @click=${this._closeCoversPopup}>
+                      <ha-icon icon="mdi:close"></ha-icon>
+                    </button>
+                  </div>
+                  <div class="popup-content">
+                    ${this._renderCoversPopupContent()}
+                  </div>
+                </div>
+              </div>
+            `
+          : ""}
+
         <!-- BATTERY POPUP -->
         ${this._batteryPopupOpen
           ? html`
@@ -3830,6 +3877,15 @@
       }
       // Fallback: return empty if module not loaded
       return html`<div class="lights-empty-state">Lights module not loaded</div>`;
+    }
+
+    _renderCoversPopupContent() {
+      // Use external module if available, fallback to inline
+      if (dashviewPopups?.renderCoversPopupContent) {
+        return dashviewPopups.renderCoversPopupContent(this, html);
+      }
+      // Fallback: return empty if module not loaded
+      return html`<div class="covers-empty-state">Covers module not loaded</div>`;
     }
 
     _handleSecurityPopupOverlayClick(e) { this._handlePopupOverlay(e, () => { this._securityPopupOpen = false; }); }

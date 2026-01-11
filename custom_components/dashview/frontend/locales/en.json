@@ -123,6 +123,10 @@
         "title": "Lights",
         "on_section": "Lights on",
         "off_section": "Lights off"
+      },
+      "covers": {
+        "title": "Covers",
+        "empty": "No covers configured"
       }
     }
   },
@@ -278,7 +282,9 @@
       "covers_open": "Covers open",
       "covers_close": "Covers close",
       "all_lights": "All lights",
-      "all_covers": "All covers"
+      "all_covers": "All covers",
+      "close_all": "Close all",
+      "open_all": "Open all"
     }
   },
   "admin": {
