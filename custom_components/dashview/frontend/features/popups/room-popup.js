@@ -701,8 +701,8 @@ function renderTVSection(component, html, areaId) {
               `}
             </div>
             <div class="popup-tv-item-content">
-              <span class="popup-tv-item-name">${tv.name}</span>
-              <span class="popup-tv-item-state">${tv.state === 'on' ? (tv.mediaTitle || tv.source || t('common.status.on')) : t('common.status.off')}</span>
+              <span class="popup-tv-item-name">${tv.state === 'on' ? (tv.mediaTitle || tv.source || t('common.status.on')) : t('common.status.off')}</span>
+              <span class="popup-tv-item-state">${tv.name}</span>
             </div>
           </div>
         `)}

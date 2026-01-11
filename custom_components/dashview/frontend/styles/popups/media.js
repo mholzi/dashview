@@ -128,7 +128,7 @@ export const mediaPopupStyles = `
   }
 
   .popup-tv-item-name {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
   }
 
@@ -141,7 +141,7 @@ export const mediaPopupStyles = `
   }
 
   .popup-tv-item-state {
-    font-size: 12px;
+    font-size: 14px;
     opacity: 0.7;
   }
 
