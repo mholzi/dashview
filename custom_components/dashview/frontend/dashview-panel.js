@@ -264,6 +264,11 @@
         _weatherDay2StateEntity: { type: String },
         _weatherPrecipitationEntity: { type: String },
         _hourlyForecastEntity: { type: String },
+        _weatherRadarLat: { type: Number },
+        _weatherRadarLon: { type: Number },
+        _weatherRadarZoom: { type: Number },
+        _weatherRadarTempUnit: { type: String },
+        _weatherRadarWindUnit: { type: String },
         _weatherForecasts: { type: Array },
         _weatherHourlyForecasts: { type: Array },
         _availableWeatherEntities: { type: Array },
@@ -442,6 +447,12 @@
       this._weatherPrecipitationEntity = "";
       this._hourlyForecastEntity = "";
       this._dwdWarningEntity = "";
+      // Weather radar settings (Windy embed)
+      this._weatherRadarLat = 50.0;
+      this._weatherRadarLon = 8.7;
+      this._weatherRadarZoom = 9;
+      this._weatherRadarTempUnit = "°C";
+      this._weatherRadarWindUnit = "km/h";
       this._weatherForecasts = [];
       this._weatherHourlyForecasts = [];
       this._availableWeatherEntities = [];
@@ -1382,6 +1393,12 @@
             this._weatherPrecipitationEntity = settings.weatherPrecipitationEntity;
             this._hourlyForecastEntity = settings.hourlyForecastEntity;
             this._dwdWarningEntity = settings.dwdWarningEntity;
+            // Weather radar settings
+            this._weatherRadarLat = settings.weatherRadarLat ?? 50.0;
+            this._weatherRadarLon = settings.weatherRadarLon ?? 8.7;
+            this._weatherRadarZoom = settings.weatherRadarZoom ?? 9;
+            this._weatherRadarTempUnit = settings.weatherRadarTempUnit || "°C";
+            this._weatherRadarWindUnit = settings.weatherRadarWindUnit || "km/h";
             this._floorOrder = settings.floorOrder || [];
             this._roomOrder = settings.roomOrder || {};
             this._floorCardConfig = settings.floorCardConfig || {};

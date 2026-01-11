@@ -173,5 +173,130 @@ export function renderWeatherTab(panel, html) {
         ` : ''}
       </div>
     </div>
+
+    <!-- Weather Radar Section -->
+    <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px; margin-bottom: 16px;">
+      <div class="card-config-section-header" @click=${() => toggleSection('weatherRadar')}>
+        <div class="card-config-section-title">
+          <ha-icon icon="mdi:radar"></ha-icon>
+          Weather Radar (Windy)
+        </div>
+        <ha-icon
+          class="card-config-section-chevron ${isExpanded('weatherRadar') ? 'expanded' : ''}"
+          icon="mdi:chevron-down"
+        ></ha-icon>
+      </div>
+      <div class="card-config-section-content ${isExpanded('weatherRadar') ? 'expanded' : ''}">
+        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+          Configure the weather radar map displayed in the weather popup. Uses Windy.com embed.
+        </p>
+
+        <!-- Location -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div>
+            <div class="card-config-label" style="margin-bottom: 8px;">
+              <span class="card-config-label-title">Latitude</span>
+              <span class="card-config-label-subtitle">e.g., 50.0 for Frankfurt</span>
+            </div>
+            <input
+              type="number"
+              step="0.001"
+              .value=${panel._weatherRadarLat}
+              @change=${(e) => {
+                panel._weatherRadarLat = parseFloat(e.target.value) || 50.0;
+                panel._saveSettings();
+                panel.requestUpdate();
+              }}
+              style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
+            />
+          </div>
+          <div>
+            <div class="card-config-label" style="margin-bottom: 8px;">
+              <span class="card-config-label-title">Longitude</span>
+              <span class="card-config-label-subtitle">e.g., 8.7 for Frankfurt</span>
+            </div>
+            <input
+              type="number"
+              step="0.001"
+              .value=${panel._weatherRadarLon}
+              @change=${(e) => {
+                panel._weatherRadarLon = parseFloat(e.target.value) || 8.7;
+                panel._saveSettings();
+                panel.requestUpdate();
+              }}
+              style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
+            />
+          </div>
+        </div>
+
+        <!-- Zoom Level -->
+        <div style="margin-bottom: 16px;">
+          <div class="card-config-label" style="margin-bottom: 8px;">
+            <span class="card-config-label-title">Zoom Level</span>
+            <span class="card-config-label-subtitle">3 (continent) to 11 (city)</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <input
+              type="range"
+              min="3"
+              max="11"
+              .value=${panel._weatherRadarZoom}
+              @input=${(e) => {
+                panel._weatherRadarZoom = parseInt(e.target.value);
+                panel.requestUpdate();
+              }}
+              @change=${(e) => {
+                panel._weatherRadarZoom = parseInt(e.target.value);
+                panel._saveSettings();
+                panel.requestUpdate();
+              }}
+              style="flex: 1;"
+            />
+            <span style="min-width: 30px; text-align: center; font-weight: 500; color: var(--dv-gray800);">${panel._weatherRadarZoom}</span>
+          </div>
+        </div>
+
+        <!-- Units -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <div class="card-config-label" style="margin-bottom: 8px;">
+              <span class="card-config-label-title">Temperature Unit</span>
+            </div>
+            <select
+              .value=${panel._weatherRadarTempUnit}
+              @change=${(e) => {
+                panel._weatherRadarTempUnit = e.target.value;
+                panel._saveSettings();
+                panel.requestUpdate();
+              }}
+              style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
+            >
+              <option value="°C" ?selected=${panel._weatherRadarTempUnit === "°C"}>Celsius (°C)</option>
+              <option value="°F" ?selected=${panel._weatherRadarTempUnit === "°F"}>Fahrenheit (°F)</option>
+            </select>
+          </div>
+          <div>
+            <div class="card-config-label" style="margin-bottom: 8px;">
+              <span class="card-config-label-title">Wind Unit</span>
+            </div>
+            <select
+              .value=${panel._weatherRadarWindUnit}
+              @change=${(e) => {
+                panel._weatherRadarWindUnit = e.target.value;
+                panel._saveSettings();
+                panel.requestUpdate();
+              }}
+              style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
+            >
+              <option value="km/h" ?selected=${panel._weatherRadarWindUnit === "km/h"}>km/h</option>
+              <option value="m/s" ?selected=${panel._weatherRadarWindUnit === "m/s"}>m/s</option>
+              <option value="mph" ?selected=${panel._weatherRadarWindUnit === "mph"}>mph</option>
+              <option value="kt" ?selected=${panel._weatherRadarWindUnit === "kt"}>Knots</option>
+              <option value="bft" ?selected=${panel._weatherRadarWindUnit === "bft"}>Beaufort</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 }

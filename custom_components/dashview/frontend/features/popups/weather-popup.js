@@ -172,14 +172,25 @@ function renderForecastCard(component, html) {
 
 /**
  * Render weather radar iframe
+ * Uses configurable settings for location, zoom, and units
  */
 function renderWeatherRadar(component, html) {
+  // Get radar settings from component (with fallbacks)
+  const lat = component._weatherRadarLat ?? 50.0;
+  const lon = component._weatherRadarLon ?? 8.7;
+  const zoom = component._weatherRadarZoom ?? 9;
+  const tempUnit = component._weatherRadarTempUnit || "°C";
+  const windUnit = component._weatherRadarWindUnit || "km/h";
+
+  // Build the Windy embed URL with configured settings
+  const windyUrl = `https://embed.windy.com/embed2.html?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}&zoom=${zoom}&level=surface&overlay=rain&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=${windUnit}&metricTemp=${tempUnit}&radarRange=-1`;
+
   return html`
     <div class="weather-radar-card">
       <div class="weather-radar-title">${t('weather.rain_radar')}</div>
       <iframe
         class="weather-radar-iframe"
-        src="https://embed.windy.com/embed2.html?lat=50.020&lon=8.696&zoom=9&level=surface&overlay=rain&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"
+        src="${windyUrl}"
         frameborder="0">
       </iframe>
     </div>
