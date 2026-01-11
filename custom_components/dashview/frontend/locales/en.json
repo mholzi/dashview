@@ -381,14 +381,24 @@
       "noCustomLabels": "No custom labels configured"
     },
     "users": {
-      "title": "User Photos",
-      "description": "Configure custom profile photos for each person.",
+      "title": "Users & Settings",
+      "description": "Configure user photos and language preferences.",
       "noUsers": "No person entities found",
       "noUsersHint": "Add person entities in Home Assistant to configure their photos here.",
       "customPhotoUrl": "Custom Photo URL",
       "statusHome": "Home",
       "statusAway": "Away",
-      "enterPhotoUrl": "Enter photo URL..."
+      "enterPhotoUrl": "Enter photo URL...",
+      "language": "Language",
+      "languageDesc": "Choose the display language for Dashview. By default, it follows your Home Assistant language setting.",
+      "autoLanguage": "Automatic",
+      "autoLanguageDesc": "Follow Home Assistant language",
+      "photosTitle": "User Photos",
+      "photosDesc": "Upload custom profile photos for each person entity.",
+      "uploadPhoto": "Upload",
+      "changePhoto": "Change",
+      "removePhoto": "Remove",
+      "uploadSuccess": "Photo uploaded!"
     },
     "confirmation": {
       "deleteScene": "Delete Scene Button",

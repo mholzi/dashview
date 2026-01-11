@@ -381,14 +381,24 @@
       "noCustomLabels": "Keine benutzerdefinierten Labels konfiguriert"
     },
     "users": {
-      "title": "Benutzerfotos",
-      "description": "Konfiguriere benutzerdefinierte Profilfotos für jede Person.",
+      "title": "Benutzer & Einstellungen",
+      "description": "Benutzerfotos und Spracheinstellungen konfigurieren.",
       "noUsers": "Keine Personen-Entitäten gefunden",
       "noUsersHint": "Füge Personen-Entitäten in Home Assistant hinzu, um hier ihre Fotos zu konfigurieren.",
       "customPhotoUrl": "Benutzerdefinierte Foto-URL",
       "statusHome": "Zuhause",
       "statusAway": "Abwesend",
-      "enterPhotoUrl": "Foto-URL eingeben..."
+      "enterPhotoUrl": "Foto-URL eingeben...",
+      "language": "Sprache",
+      "languageDesc": "Wähle die Anzeigesprache für Dashview. Standardmäßig folgt sie der Home Assistant Spracheinstellung.",
+      "autoLanguage": "Automatisch",
+      "autoLanguageDesc": "Home Assistant Sprache verwenden",
+      "photosTitle": "Benutzerfotos",
+      "photosDesc": "Lade benutzerdefinierte Profilfotos für jede Person hoch.",
+      "uploadPhoto": "Hochladen",
+      "changePhoto": "Ändern",
+      "removePhoto": "Entfernen",
+      "uploadSuccess": "Foto hochgeladen!"
     },
     "confirmation": {
       "deleteScene": "Szenen-Button löschen",

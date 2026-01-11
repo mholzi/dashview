@@ -315,6 +315,8 @@
         _mediaPresetSearchFocused: { type: Boolean },
         // User photos (custom photos per person entity)
         _userPhotos: { type: Object },
+        // Manual language override (null = follow HA, 'en'/'de' = override)
+        _manualLanguage: { type: String },
         // Thermostat swipe index per room
         _thermostatSwipeIndex: { type: Object },
         // Custom labels configuration
@@ -513,6 +515,8 @@
       this._mediaPresetSearchFocused = false;
       // User photos (custom photos per person entity)
       this._userPhotos = {};
+      // Manual language override
+      this._manualLanguage = null;
       // Train departures configuration
       this._trainDepartures = [];
       this._trainSearchQuery = '';
@@ -1287,13 +1291,15 @@
           const rawLang = this.hass.language;
           const baseLang = rawLang.split('-')[0]; // 'de-DE' -> 'de'
           const supportedLangs = ['en', 'de'];
-          const targetLang = supportedLangs.includes(baseLang) ? baseLang : 'en';
+          // Use manual override if set, otherwise follow HA language
+          const haLang = supportedLangs.includes(baseLang) ? baseLang : 'en';
+          const targetLang = this._manualLanguage || haLang;
           const currentLang = getCurrentLang();
           const alreadyInitialized = isI18nInitialized();
 
           // Initialize if not yet initialized OR if language changed
           if (!alreadyInitialized || targetLang !== currentLang) {
-            console.log(`[Dashview] Initializing i18n: target=${targetLang}, current=${currentLang}, initialized=${alreadyInitialized}`);
+            console.log(`[Dashview] Initializing i18n: target=${targetLang}, current=${currentLang}, initialized=${alreadyInitialized}, manual=${this._manualLanguage || 'auto'}`);
             initI18n(targetLang).then(() => {
               console.log('[Dashview] i18n loaded, requesting update');
               this.requestUpdate();
@@ -1414,6 +1420,7 @@
             this._trainDepartures = settings.trainDepartures || [];
             this._mediaPresets = settings.mediaPresets || [];
             this._userPhotos = settings.userPhotos || {};
+            this._manualLanguage = settings.manualLanguage || null;
             this._lastSeenVersion = settings.lastSeenVersion || null;
             // Load category label mappings (user-configured labels for each category)
             // Use 'in' check to properly handle null values (null is a valid setting meaning "no label")

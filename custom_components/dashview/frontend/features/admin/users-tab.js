@@ -1,15 +1,22 @@
 /**
  * Dashview Admin - Users Tab
- * User photo configuration per person entity with drag-and-drop upload
+ * User photo configuration and language settings
  */
 
-import { t } from './shared.js';
+import { t, createSectionHelpers } from './shared.js';
 import { renderEmptyState } from '../../components/layout/empty-state.js';
+import { initI18n, getCurrentLang } from '../../utils/i18n.js';
 
 // Upload configuration (must match backend)
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const PHOTO_URL_PREFIX = '/local/dashview/user_photos';
+
+// Supported languages
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' }
+];
 
 /**
  * Convert a file to base64 data URL
@@ -85,12 +92,14 @@ function validateFile(file) {
 
 /**
  * Render the Users tab
- * Features: User photo configuration per person entity with drag-and-drop upload
+ * Features: User photo configuration and language settings
  * @param {Object} panel - The DashviewPanel instance
  * @param {Function} html - lit-html template function
  * @returns {TemplateResult} Users tab HTML
  */
 export function renderUsersTab(panel, html) {
+  const { toggleSection, isExpanded } = createSectionHelpers(panel);
+
   // Get all person entities from Home Assistant
   const personEntities = Object.values(panel.hass?.states || {})
     .filter(entity => entity.entity_id.startsWith('person.'))
@@ -105,11 +114,19 @@ export function renderUsersTab(panel, html) {
     panel._photoUploadStates = {};
   }
 
+  // Get current language
+  const currentLang = getCurrentLang() || 'en';
+  const haLang = panel.hass?.language?.split('-')[0] || 'en';
+
+  // Check if using manual override
+  const manualLangOverride = panel._manualLanguage;
+  const effectiveLang = manualLangOverride || currentLang;
+
   // Helper to get the display photo for a person
   const getDisplayPhoto = (personEntity) => {
     const customPhoto = panel._userPhotos?.[personEntity.entity_id];
     if (customPhoto) return customPhoto;
-    return null; // Don't fallback to HA entity_picture
+    return null;
   };
 
   // Helper to update user photo in settings
@@ -118,7 +135,6 @@ export function renderUsersTab(panel, html) {
       ...panel._userPhotos,
       [personId]: photoUrl || ''
     };
-    // Remove empty entries
     if (!photoUrl) {
       delete panel._userPhotos[personId];
       panel._userPhotos = { ...panel._userPhotos };
@@ -146,19 +162,16 @@ export function renderUsersTab(panel, html) {
 
     setUploadState(personId, { uploading: true });
 
-    // Delete old photo if it's from our upload directory
     const oldPhoto = panel._userPhotos?.[personId];
     if (oldPhoto && oldPhoto.startsWith(PHOTO_URL_PREFIX)) {
       await deletePhoto(panel.hass, oldPhoto);
     }
 
-    // Upload new photo
     const result = await uploadPhoto(panel.hass, file);
 
     if (result.success && result.path) {
       updateUserPhoto(personId, result.path);
       setUploadState(personId, { success: true });
-      // Clear success state after 2 seconds
       setTimeout(() => setUploadState(personId, {}), 2000);
     } else {
       setUploadState(personId, { error: result.error || 'Upload failed' });
@@ -166,28 +179,24 @@ export function renderUsersTab(panel, html) {
   };
 
   // Handle drag over
-  const handleDragOver = (e, personId) => {
+  const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const dropZone = e.currentTarget;
-    dropZone.classList.add('dragover');
+    e.currentTarget.classList.add('dragover');
   };
 
   // Handle drag leave
-  const handleDragLeave = (e, personId) => {
+  const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const dropZone = e.currentTarget;
-    dropZone.classList.remove('dragover');
+    e.currentTarget.classList.remove('dragover');
   };
 
   // Handle drop
   const handleDrop = (e, personId) => {
     e.preventDefault();
     e.stopPropagation();
-    const dropZone = e.currentTarget;
-    dropZone.classList.remove('dragover');
-
+    e.currentTarget.classList.remove('dragover');
     const file = e.dataTransfer?.files?.[0];
     if (file) {
       handleFileSelect(personId, file);
@@ -215,28 +224,148 @@ export function renderUsersTab(panel, html) {
 
     setUploadState(personId, { deleting: true });
 
-    // Delete from server if it's from our upload directory
     if (currentPhoto.startsWith(PHOTO_URL_PREFIX)) {
       await deletePhoto(panel.hass, currentPhoto);
     }
 
-    // Remove from settings
     updateUserPhoto(personId, '');
     setUploadState(personId, {});
   };
 
+  // Handle language change
+  const handleLanguageChange = async (langCode) => {
+    if (langCode === 'auto') {
+      // Use Home Assistant language
+      panel._manualLanguage = null;
+      delete panel._manualLanguage;
+      await initI18n(haLang);
+    } else {
+      // Manual override
+      panel._manualLanguage = langCode;
+      await initI18n(langCode);
+    }
+    panel._saveSettings();
+    panel.requestUpdate();
+  };
+
   return html`
     <h2 class="section-title">
-      <ha-icon icon="mdi:account-group"></ha-icon>
-      ${t('admin.users.title')}
+      <ha-icon icon="mdi:account-cog"></ha-icon>
+      ${t('admin.users.title', 'Users & Settings')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      ${t('admin.users.description')}
+      ${t('admin.users.description', 'Configure user photos and language preferences.')}
     </p>
 
-    ${personEntities.length > 0 ? html`
-      <div class="card-config-section">
-        <div class="card-config-section-content expanded">
+    <!-- Language Section -->
+    <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px; margin-bottom: 16px;">
+      <div class="card-config-section-header" @click=${() => toggleSection('language')}>
+        <div class="card-config-section-title">
+          <ha-icon icon="mdi:translate"></ha-icon>
+          ${t('admin.users.language', 'Language')}
+        </div>
+        <ha-icon
+          class="card-config-section-chevron ${isExpanded('language') ? 'expanded' : ''}"
+          icon="mdi:chevron-down"
+        ></ha-icon>
+      </div>
+      <div class="card-config-section-content ${isExpanded('language') ? 'expanded' : ''}">
+        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+          ${t('admin.users.languageDesc', 'Choose the display language for Dashview. By default, it follows your Home Assistant language setting.')}
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Auto (follow HA) option -->
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 12px 16px;
+              border: 2px solid ${!manualLangOverride ? 'var(--dv-blue500)' : 'var(--dv-gray300)'};
+              border-radius: 10px;
+              cursor: pointer;
+              background: ${!manualLangOverride ? 'var(--dv-blue50)' : 'transparent'};
+              transition: all 0.2s ease;
+            "
+            @click=${() => handleLanguageChange('auto')}
+          >
+            <input
+              type="radio"
+              name="language"
+              .checked=${!manualLangOverride}
+              style="width: 18px; height: 18px; accent-color: var(--dv-blue500);"
+            />
+            <span style="font-size: 20px;">🌐</span>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 14px; color: var(--dv-gray800);">
+                ${t('admin.users.autoLanguage', 'Automatic')}
+              </div>
+              <div style="font-size: 12px; color: var(--dv-gray500);">
+                ${t('admin.users.autoLanguageDesc', 'Follow Home Assistant language')} (${haLang.toUpperCase()})
+              </div>
+            </div>
+            ${!manualLangOverride ? html`
+              <ha-icon icon="mdi:check-circle" style="--mdc-icon-size: 20px; color: var(--dv-blue500);"></ha-icon>
+            ` : ''}
+          </label>
+
+          <!-- Manual language options -->
+          ${SUPPORTED_LANGUAGES.map(lang => html`
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+                border: 2px solid ${manualLangOverride === lang.code ? 'var(--dv-blue500)' : 'var(--dv-gray300)'};
+                border-radius: 10px;
+                cursor: pointer;
+                background: ${manualLangOverride === lang.code ? 'var(--dv-blue50)' : 'transparent'};
+                transition: all 0.2s ease;
+              "
+              @click=${() => handleLanguageChange(lang.code)}
+            >
+              <input
+                type="radio"
+                name="language"
+                .checked=${manualLangOverride === lang.code}
+                style="width: 18px; height: 18px; accent-color: var(--dv-blue500);"
+              />
+              <span style="font-size: 20px;">${lang.flag}</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 14px; color: var(--dv-gray800);">${lang.name}</div>
+              </div>
+              ${manualLangOverride === lang.code ? html`
+                <ha-icon icon="mdi:check-circle" style="--mdc-icon-size: 20px; color: var(--dv-blue500);"></ha-icon>
+              ` : ''}
+            </label>
+          `)}
+        </div>
+      </div>
+    </div>
+
+    <!-- User Photos Section -->
+    <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px; margin-bottom: 16px;">
+      <div class="card-config-section-header" @click=${() => toggleSection('userPhotos')}>
+        <div class="card-config-section-title">
+          <ha-icon icon="mdi:account-group"></ha-icon>
+          ${t('admin.users.photosTitle', 'User Photos')}
+          <span style="font-size: 12px; color: var(--dv-gray500); font-weight: normal; margin-left: 8px;">
+            (${personEntities.length})
+          </span>
+        </div>
+        <ha-icon
+          class="card-config-section-chevron ${isExpanded('userPhotos') ? 'expanded' : ''}"
+          icon="mdi:chevron-down"
+        ></ha-icon>
+      </div>
+      <div class="card-config-section-content ${isExpanded('userPhotos') ? 'expanded' : ''}">
+        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+          ${t('admin.users.photosDesc', 'Upload custom profile photos for each person entity.')}
+        </p>
+
+        ${personEntities.length > 0 ? html`
           ${personEntities.map(person => {
             const personId = person.entity_id;
             const personName = person.attributes.friendly_name || personId;
@@ -249,14 +378,14 @@ export function renderUsersTab(panel, html) {
                 <!-- Photo Drop Zone -->
                 <div
                   class="photo-drop-zone ${uploadState.uploading ? 'uploading' : ''}"
-                  @dragover=${(e) => handleDragOver(e, personId)}
-                  @dragleave=${(e) => handleDragLeave(e, personId)}
+                  @dragover=${handleDragOver}
+                  @dragleave=${handleDragLeave}
                   @drop=${(e) => handleDrop(e, personId)}
                   @click=${() => !uploadState.uploading && handleClick(personId)}
                   style="
                     flex-shrink: 0;
-                    width: 100px;
-                    height: 100px;
+                    width: 80px;
+                    height: 80px;
                     border-radius: 50%;
                     overflow: hidden;
                     background: var(--dv-gray200);
@@ -270,79 +399,72 @@ export function renderUsersTab(panel, html) {
                   "
                 >
                   ${uploadState.uploading ? html`
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                      <ha-icon icon="mdi:loading" style="--mdc-icon-size: 32px; color: var(--dv-blue500); animation: spin 1s linear infinite;"></ha-icon>
-                    </div>
+                    <ha-icon icon="mdi:loading" style="--mdc-icon-size: 28px; color: var(--dv-blue500); animation: spin 1s linear infinite;"></ha-icon>
                   ` : displayPhoto ? html`
                     <img src="${displayPhoto}" alt="${personName}" style="width: 100%; height: 100%; object-fit: cover;" />
                   ` : html`
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; text-align: center;">
-                      <ha-icon icon="mdi:cloud-upload" style="--mdc-icon-size: 28px; color: var(--dv-gray500);"></ha-icon>
-                      <span style="font-size: 10px; color: var(--dv-gray500); line-height: 1.2;">Drop or<br>Click</span>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px; text-align: center;">
+                      <ha-icon icon="mdi:cloud-upload" style="--mdc-icon-size: 24px; color: var(--dv-gray500);"></ha-icon>
+                      <span style="font-size: 9px; color: var(--dv-gray500); line-height: 1.2;">Drop/Click</span>
                     </div>
                   `}
                 </div>
 
                 <!-- Person Info -->
                 <div style="flex: 1; min-width: 0;">
-                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <span style="font-weight: 600; font-size: 16px;">${personName}</span>
-                    <span style="font-size: 12px; color: var(--dv-gray500);">${personId}</span>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                    <span style="font-weight: 600; font-size: 15px;">${personName}</span>
                     ${hasCustomPhoto ? html`
-                      <span style="font-size: 11px; background: var(--dv-blue100); color: var(--dv-blue600); padding: 2px 8px; border-radius: 12px;">Custom</span>
+                      <span style="font-size: 10px; background: var(--dv-blue100); color: var(--dv-blue600); padding: 2px 6px; border-radius: 10px;">Custom</span>
                     ` : ''}
                   </div>
+                  <div style="font-size: 11px; color: var(--dv-gray500); margin-bottom: 8px;">${personId}</div>
 
-                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                    <span style="font-size: 13px; color: var(--dv-gray500);">
-                      Status: <strong style="color: ${person.state === 'home' ? 'var(--dv-green600)' : 'var(--dv-gray600)'};">
-                        ${person.state === 'home' ? 'Home' : person.state === 'not_home' ? 'Away' : person.state}
-                      </strong>
-                    </span>
+                  <!-- Status -->
+                  <div style="font-size: 12px; color: var(--dv-gray500); margin-bottom: 8px;">
+                    Status: <strong style="color: ${person.state === 'home' ? 'var(--dv-green600)' : 'var(--dv-gray600)'};">
+                      ${person.state === 'home' ? t('admin.users.statusHome', 'Home') : person.state === 'not_home' ? t('admin.users.statusAway', 'Away') : person.state}
+                    </strong>
                   </div>
 
                   <!-- Upload Status Messages -->
                   ${uploadState.error ? html`
-                    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--dv-red100); border-radius: 8px; margin-bottom: 8px;">
-                      <ha-icon icon="mdi:alert-circle" style="--mdc-icon-size: 18px; color: var(--dv-red600);"></ha-icon>
-                      <span style="font-size: 13px; color: var(--dv-red600);">${uploadState.error}</span>
-                      <button
-                        @click=${() => setUploadState(personId, {})}
-                        style="margin-left: auto; background: none; border: none; cursor: pointer; padding: 4px;"
-                      >
-                        <ha-icon icon="mdi:close" style="--mdc-icon-size: 16px; color: var(--dv-red600);"></ha-icon>
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--dv-red100); border-radius: 6px; margin-bottom: 8px; font-size: 12px;">
+                      <ha-icon icon="mdi:alert-circle" style="--mdc-icon-size: 16px; color: var(--dv-red600);"></ha-icon>
+                      <span style="color: var(--dv-red600); flex: 1;">${uploadState.error}</span>
+                      <button @click=${() => setUploadState(personId, {})} style="background: none; border: none; cursor: pointer; padding: 2px;">
+                        <ha-icon icon="mdi:close" style="--mdc-icon-size: 14px; color: var(--dv-red600);"></ha-icon>
                       </button>
                     </div>
                   ` : ''}
 
                   ${uploadState.success ? html`
-                    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--dv-green100); border-radius: 8px; margin-bottom: 8px;">
-                      <ha-icon icon="mdi:check-circle" style="--mdc-icon-size: 18px; color: var(--dv-green600);"></ha-icon>
-                      <span style="font-size: 13px; color: var(--dv-green600);">Photo uploaded successfully!</span>
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--dv-green100); border-radius: 6px; margin-bottom: 8px; font-size: 12px;">
+                      <ha-icon icon="mdi:check-circle" style="--mdc-icon-size: 16px; color: var(--dv-green600);"></ha-icon>
+                      <span style="color: var(--dv-green600);">${t('admin.users.uploadSuccess', 'Photo uploaded!')}</span>
                     </div>
                   ` : ''}
 
                   <!-- Actions -->
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     <button
                       @click=${() => handleClick(personId)}
                       ?disabled=${uploadState.uploading || uploadState.deleting}
                       style="
-                        padding: 8px 16px;
+                        padding: 6px 12px;
                         border: 1px solid var(--dv-gray300);
-                        border-radius: 8px;
+                        border-radius: 6px;
                         background: var(--dv-gray50);
                         cursor: pointer;
                         display: flex;
                         align-items: center;
-                        gap: 6px;
-                        font-size: 13px;
+                        gap: 4px;
+                        font-size: 12px;
                         color: var(--dv-gray700);
-                        transition: all 0.2s ease;
                       "
                     >
-                      <ha-icon icon="mdi:upload" style="--mdc-icon-size: 18px;"></ha-icon>
-                      ${hasCustomPhoto ? 'Change Photo' : 'Upload Photo'}
+                      <ha-icon icon="mdi:upload" style="--mdc-icon-size: 16px;"></ha-icon>
+                      ${hasCustomPhoto ? t('admin.users.changePhoto', 'Change') : t('admin.users.uploadPhoto', 'Upload')}
                     </button>
 
                     ${hasCustomPhoto ? html`
@@ -350,41 +472,34 @@ export function renderUsersTab(panel, html) {
                         @click=${() => handleDelete(personId)}
                         ?disabled=${uploadState.uploading || uploadState.deleting}
                         style="
-                          padding: 8px 16px;
+                          padding: 6px 12px;
                           border: 1px solid var(--dv-red200);
-                          border-radius: 8px;
+                          border-radius: 6px;
                           background: var(--dv-red50);
                           cursor: pointer;
                           display: flex;
                           align-items: center;
-                          gap: 6px;
-                          font-size: 13px;
+                          gap: 4px;
+                          font-size: 12px;
                           color: var(--dv-red600);
-                          transition: all 0.2s ease;
                         "
-                        title="Remove photo"
                       >
-                        <ha-icon icon="mdi:delete" style="--mdc-icon-size: 18px;"></ha-icon>
-                        ${uploadState.deleting ? 'Removing...' : 'Remove'}
+                        <ha-icon icon="mdi:delete" style="--mdc-icon-size: 16px;"></ha-icon>
+                        ${uploadState.deleting ? '...' : t('admin.users.removePhoto', 'Remove')}
                       </button>
                     ` : ''}
                   </div>
-
-                  <span style="display: block; font-size: 11px; color: var(--dv-gray500); margin-top: 8px;">
-                    Drag and drop an image or click to upload. Max size: 5MB. Formats: JPG, PNG, GIF, WebP.
-                  </span>
                 </div>
               </div>
             `;
           })}
-        </div>
+        ` : renderEmptyState(html, {
+          icon: 'mdi:account-off',
+          title: t('admin.users.noUsers'),
+          description: t('admin.users.noUsersHint', 'Add person entities in Home Assistant to configure their photos.')
+        })}
       </div>
-    ` : renderEmptyState(html, {
-      icon: 'mdi:account-off',
-      title: t('admin.users.noUsers'),
-      description: 'Add person entities in Home Assistant to display user status',
-      hint: t('admin.users.noUsersHint')
-    })}
+    </div>
 
     <style>
       @keyframes spin {

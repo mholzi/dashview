@@ -494,7 +494,7 @@ export const floorCardsStyles = `
        Each dot has 44px touch width, so gap should separate them clearly */
     gap: 4px;
     position: absolute;
-    bottom: 6px;
+    bottom: 8px;
     left: 0;
     right: 0;
     /* Minimal height for compact dots */

@@ -73,6 +73,7 @@ export function saveSettings(panel, settingsStore, debugLog) {
     trainDepartures: panel._trainDepartures,
     mediaPresets: panel._mediaPresets,
     userPhotos: panel._userPhotos,
+    manualLanguage: panel._manualLanguage,
     // Category label mappings
     categoryLabels: {
       light: panel._lightLabelId,
