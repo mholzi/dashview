@@ -153,7 +153,27 @@ export const userPopupStyles = `
   .user-popup-history-content.expanded {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+  }
+
+  /* Zone section title - matches lights-popup-section-title */
+  .user-popup-zone-section-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    margin: 0;
+    padding: 12px 0 8px 0;
+  }
+
+  .user-popup-zone-section-title:first-child {
+    padding-top: 0;
+  }
+
+  /* Zone cards list */
+  .user-popup-zone-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   /* History card - matches security-entity-card exactly */

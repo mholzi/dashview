@@ -288,6 +288,29 @@ function getDefaultDisplayInfo(state) {
   };
 }
 
+/**
+ * Check if entity state is unavailable or unknown
+ * @param {Object} state - Entity state object
+ * @returns {boolean}
+ */
+function isUnavailableState(state) {
+  return state.state === 'unavailable' || state.state === 'unknown';
+}
+
+/**
+ * Get display info for an unavailable entity
+ * @param {Object} state - Entity state object
+ * @returns {Object} Display info
+ */
+function getUnavailableDisplayInfo(state) {
+  return {
+    icon: state.attributes.icon || 'mdi:help-circle',
+    labelText: t('common.status.unavailable'),
+    cardClass: 'unavailable',
+    isUnavailable: true,
+  };
+}
+
 // ==================== Main Service ====================
 
 /**
@@ -350,6 +373,16 @@ export class EntityDisplayService {
 
     const entityType = entityId.split('.')[0];
     const friendlyName = state.attributes.friendly_name || entityId;
+
+    // Check for unavailable/unknown state first
+    if (isUnavailableState(state)) {
+      return {
+        ...getUnavailableDisplayInfo(state),
+        friendlyName,
+        state,
+        entityId,
+      };
+    }
 
     // Determine display info based on labels first, then entity type
     let displayInfo;
@@ -434,6 +467,8 @@ export {
   getBinarySensorDisplayInfo,
   getSensorDisplayInfo,
   getDefaultDisplayInfo,
+  isUnavailableState,
+  getUnavailableDisplayInfo,
   SENSOR_ICONS,
   BINARY_SENSOR_ICONS,
   BINARY_SENSOR_LABELS,

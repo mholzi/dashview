@@ -2526,7 +2526,9 @@
           let lastState = null;
 
           for (const state of states) {
-            if (state.s !== lastState && (state.s === 'home' || state.s === 'not_home')) {
+            // Capture all zone states (home, not_home, work, school, etc.)
+            // Skip unavailable/unknown states
+            if (state.s !== lastState && state.s && state.s !== 'unavailable' && state.s !== 'unknown') {
               changes.push({
                 state: state.s,
                 last_changed: state.lu ? new Date(state.lu * 1000).toISOString() : state.lc,

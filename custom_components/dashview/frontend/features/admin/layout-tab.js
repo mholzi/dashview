@@ -10,7 +10,6 @@ import { renderEntityPicker } from '../../components/controls/index.js';
 import { t, showConfirmation, createSectionHelpers } from './shared.js';
 import { renderEmptyState } from '../../components/layout/empty-state.js';
 import '../../components/controls/sortable-list.js';
-import '../../components/cards/floor-card-preview.js';
 
 /**
  * Render room configuration section
@@ -2296,32 +2295,22 @@ export function renderLayoutTab(panel, html) {
               ></div>
             </div>
 
-            <!-- Visual Grid with Live Preview -->
-            <div class="floor-cards-config-layout">
-              <div class="floor-cards-config-grid">
-                ${renderVisualSlot(floor.floor_id, 0, false, 'small1', false)}
-                ${renderVisualSlot(
-                  floor.floor_id, 1, true, 'big1',
-                  panel._floorOverviewEnabled[floor.floor_id],
-                  'mdi:view-carousel', 'Floor Overview'
-                )}
-                ${renderVisualSlot(
-                  floor.floor_id, 2, true, 'big2',
-                  panel._garbageDisplayFloor === floor.floor_id && panel._garbageSensors.length > 0,
-                  'mdi:trash-can', 'Garbage Card'
-                )}
-                ${renderVisualSlot(floor.floor_id, 3, false, 'small2', false)}
-                ${renderVisualSlot(floor.floor_id, 4, false, 'small3', false)}
-                ${renderVisualSlot(floor.floor_id, 5, false, 'small4', false)}
-              </div>
-              <floor-card-preview
-                .hass=${panel.hass}
-                .floorId=${floor.floor_id}
-                .slotConfig=${panel._floorCardConfig?.[floor.floor_id] || {}}
-                .floor=${floor}
-                .entityDisplayService=${panel._entityDisplayService}
-                scale="0.6"
-              ></floor-card-preview>
+            <!-- Visual Grid -->
+            <div class="floor-cards-config-grid">
+              ${renderVisualSlot(floor.floor_id, 0, false, 'small1', false)}
+              ${renderVisualSlot(
+                floor.floor_id, 1, true, 'big1',
+                panel._floorOverviewEnabled[floor.floor_id],
+                'mdi:view-carousel', 'Floor Overview'
+              )}
+              ${renderVisualSlot(
+                floor.floor_id, 2, true, 'big2',
+                panel._garbageDisplayFloor === floor.floor_id && panel._garbageSensors.length > 0,
+                'mdi:trash-can', 'Garbage Card'
+              )}
+              ${renderVisualSlot(floor.floor_id, 3, false, 'small2', false)}
+              ${renderVisualSlot(floor.floor_id, 4, false, 'small3', false)}
+              ${renderVisualSlot(floor.floor_id, 5, false, 'small4', false)}
             </div>
 
             <!-- Entity Picker (shown when a slot is selected) -->

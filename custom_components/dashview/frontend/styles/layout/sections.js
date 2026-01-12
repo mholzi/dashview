@@ -112,7 +112,8 @@ export const sectionsStyles = `
     background: var(--dv-red);
   }
 
-  .room-card.appliance-unavailable {
+  .room-card.appliance-unavailable,
+  .room-card.unavailable {
     background: var(--dv-gray300);
     opacity: 0.6;
   }
@@ -140,7 +141,8 @@ export const sectionsStyles = `
     background: var(--dv-gray800);
   }
 
-  .room-card.appliance-unavailable .room-card-icon {
+  .room-card.appliance-unavailable .room-card-icon,
+  .room-card.unavailable .room-card-icon {
     background: rgba(var(--dv-highlight-rgb), 0.3);
   }
 
@@ -159,7 +161,8 @@ export const sectionsStyles = `
     color: var(--dv-gray000);
   }
 
-  .room-card.appliance-unavailable .room-card-icon ha-icon {
+  .room-card.appliance-unavailable .room-card-icon ha-icon,
+  .room-card.unavailable .room-card-icon ha-icon {
     color: var(--dv-gray800);
   }
 
@@ -188,7 +191,8 @@ export const sectionsStyles = `
     color: var(--dv-gray000);
   }
 
-  .room-card.appliance-unavailable .room-card-label {
+  .room-card.appliance-unavailable .room-card-label,
+  .room-card.unavailable .room-card-label {
     color: var(--dv-gray800);
   }
 
@@ -213,7 +217,8 @@ export const sectionsStyles = `
     opacity: 0.7;
   }
 
-  .room-card.appliance-unavailable .room-card-name {
+  .room-card.appliance-unavailable .room-card-name,
+  .room-card.unavailable .room-card-name {
     color: var(--dv-gray800);
   }
 
@@ -221,6 +226,7 @@ export const sectionsStyles = `
   .room-card.small {
     flex-direction: row;
     align-items: center;
+    justify-content: flex-start;
     gap: 12px;
     padding: 4px 20px 4px 4px;
     height: calc(100% - 8px);
@@ -263,6 +269,41 @@ export const sectionsStyles = `
 
   .room-card.big .room-card-label {
     font-size: 1.5em;
+  }
+
+  /* Unavailable badge - small alert icon in top right corner */
+  .room-card {
+    position: relative;
+  }
+
+  .room-card-unavailable-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--dv-gray600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .room-card-unavailable-badge ha-icon {
+    --mdc-icon-size: 12px;
+    color: var(--dv-gray000);
+  }
+
+  .room-card.small .room-card-unavailable-badge {
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .room-card.small .room-card-unavailable-badge ha-icon {
+    --mdc-icon-size: 10px;
   }
 
   /* ==================== FLOOR LIGHT CARD (with slider) ==================== */

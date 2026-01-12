@@ -277,7 +277,16 @@
     "presence_history": "Presence History",
     "arrived_home": "Arrived home",
     "left_home": "Left home",
+    "arrived_at": "Arrived at {{zone}}",
+    "left": "Left {{zone}}",
     "no_history": "No recent activity"
+  },
+  "zones": {
+    "home": "Home",
+    "away": "Away",
+    "work": "Work",
+    "school": "School",
+    "gym": "Gym"
   },
   "time": {
     "days_ago": "{{count}} days ago",

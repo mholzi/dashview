@@ -277,7 +277,16 @@
     "presence_history": "Anwesenheitsverlauf",
     "arrived_home": "Angekommen",
     "left_home": "Verlassen",
+    "arrived_at": "Angekommen bei {{zone}}",
+    "left": "{{zone}} verlassen",
     "no_history": "Keine Aktivität"
+  },
+  "zones": {
+    "home": "Zuhause",
+    "away": "Abwesend",
+    "work": "Arbeit",
+    "school": "Schule",
+    "gym": "Fitnessstudio"
   },
   "time": {
     "days_ago": "vor {{count}} Tagen",

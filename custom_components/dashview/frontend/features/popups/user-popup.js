@@ -138,6 +138,70 @@ function renderProfileCard(component, html, person) {
 }
 
 /**
+ * Get zone display info (icon, label, action text)
+ * @param {string} state - Zone state (home, not_home, work, etc.)
+ * @returns {Object} Zone display info
+ */
+function getZoneDisplayInfo(state) {
+  // Normalize state for comparison
+  const normalizedState = state?.toLowerCase() || '';
+
+  // Map common zone states to display info
+  const zoneMap = {
+    'home': {
+      icon: 'mdi:home',
+      label: t('status.home', 'Home'),
+      actionEnter: t('user.arrived_home', 'Arrived home'),
+      actionLeave: t('user.left_home', 'Left home'),
+      isHome: true
+    },
+    'not_home': {
+      icon: 'mdi:map-marker-outline',
+      label: t('status.away', 'Away'),
+      actionEnter: t('user.left_home', 'Left home'),
+      actionLeave: null,
+      isHome: false
+    },
+    'work': {
+      icon: 'mdi:briefcase',
+      label: t('zones.work', 'Work'),
+      actionEnter: t('user.arrived_at', { zone: t('zones.work', 'Work') }, 'Arrived at Work'),
+      actionLeave: t('user.left', { zone: t('zones.work', 'Work') }, 'Left Work'),
+      isHome: false
+    },
+    'school': {
+      icon: 'mdi:school',
+      label: t('zones.school', 'School'),
+      actionEnter: t('user.arrived_at', { zone: t('zones.school', 'School') }, 'Arrived at School'),
+      actionLeave: t('user.left', { zone: t('zones.school', 'School') }, 'Left School'),
+      isHome: false
+    },
+    'gym': {
+      icon: 'mdi:dumbbell',
+      label: t('zones.gym', 'Gym'),
+      actionEnter: t('user.arrived_at', { zone: t('zones.gym', 'Gym') }, 'Arrived at Gym'),
+      actionLeave: t('user.left', { zone: t('zones.gym', 'Gym') }, 'Left Gym'),
+      isHome: false
+    }
+  };
+
+  // Return known zone info or create a default for custom zones
+  if (zoneMap[normalizedState]) {
+    return zoneMap[normalizedState];
+  }
+
+  // For custom zones, capitalize and use generic icon
+  const zoneName = state.charAt(0).toUpperCase() + state.slice(1).replace(/_/g, ' ');
+  return {
+    icon: 'mdi:map-marker',
+    label: zoneName,
+    actionEnter: t('user.arrived_at', { zone: zoneName }, `Arrived at ${zoneName}`),
+    actionLeave: t('user.left', { zone: zoneName }, `Left ${zoneName}`),
+    isHome: false
+  };
+}
+
+/**
  * Render the presence history section (Item 5)
  */
 function renderPresenceHistory(component, html, history) {
@@ -154,6 +218,23 @@ function renderPresenceHistory(component, html, history) {
     `;
   }
 
+  // Group history by zone
+  const zones = new Map();
+  for (const item of history) {
+    const zone = item.state;
+    if (!zones.has(zone)) {
+      zones.set(zone, []);
+    }
+    zones.get(zone).push(item);
+  }
+
+  // Sort zones: home first, then alphabetically
+  const sortedZones = Array.from(zones.keys()).sort((a, b) => {
+    if (a === 'home') return -1;
+    if (b === 'home') return 1;
+    return a.localeCompare(b);
+  });
+
   return html`
     <div class="user-popup-history-section">
       <div class="user-popup-history-header" @click=${component._togglePresenceHistoryExpanded}>
@@ -163,23 +244,30 @@ function renderPresenceHistory(component, html, history) {
       </div>
 
       <div class="user-popup-history-content ${component._presenceHistoryExpanded ? 'expanded' : ''}">
-        ${history.map(item => html`
-          <div class="user-popup-history-card ${item.state === 'home' ? 'active' : 'inactive'}">
-            <div class="user-popup-history-icon">
-              <ha-icon icon="${item.state === 'home' ? 'mdi:home' : 'mdi:map-marker-outline'}"></ha-icon>
+        ${sortedZones.map(zone => {
+          const items = zones.get(zone);
+          const zoneInfo = getZoneDisplayInfo(zone);
+          return html`
+            <h3 class="user-popup-zone-section-title">${zoneInfo.label} (${items.length})</h3>
+            <div class="user-popup-zone-list">
+              ${items.map(item => html`
+                <div class="user-popup-history-card ${zoneInfo.isHome ? 'active' : 'inactive'}">
+                  <div class="user-popup-history-icon">
+                    <ha-icon icon="${zoneInfo.icon}"></ha-icon>
+                  </div>
+                  <div class="user-popup-history-info">
+                    <div class="user-popup-history-action">
+                      ${zoneInfo.actionEnter}
+                    </div>
+                    <div class="user-popup-history-time">
+                      ${formatHistoryTime(item.last_changed)}
+                    </div>
+                  </div>
+                </div>
+              `)}
             </div>
-            <div class="user-popup-history-info">
-              <div class="user-popup-history-action">
-                ${item.state === 'home'
-                  ? t('user.arrived_home', 'Arrived home')
-                  : t('user.left_home', 'Left home')}
-              </div>
-              <div class="user-popup-history-time">
-                ${formatHistoryTime(item.last_changed)}
-              </div>
-            </div>
-          </div>
-        `)}
+          `;
+        })}
       </div>
     </div>
   `;

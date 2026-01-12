@@ -397,7 +397,7 @@ export const floorCardsStyles = `
     display: grid;
     grid-template-areas: "n i" "temp temp";
     grid-template-rows: 1fr min-content;
-    grid-template-columns: min-content 1fr;
+    grid-template-columns: 1fr min-content;
     background: var(--dv-gray000);
     border-radius: var(--dv-radius-md);
     cursor: pointer;
@@ -436,6 +436,9 @@ export const floorCardsStyles = `
     justify-self: start;
     align-self: start;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .floor-overview-slide-icon {

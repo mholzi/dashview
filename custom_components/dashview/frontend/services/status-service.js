@@ -290,6 +290,10 @@ export function getCoversStatus(hass, infoTextConfig, enabledCovers, labelId = n
   if (labelId && entityHasLabel) {
     enabledCoverIds = enabledCoverIds.filter(id => entityHasLabel(id, labelId));
   }
+
+  // Only include actual cover domain entities (not automations, etc.)
+  enabledCoverIds = enabledCoverIds.filter(id => id.startsWith('cover.'));
+
   if (enabledCoverIds.length === 0) return null;
 
   const openCovers = enabledCoverIds

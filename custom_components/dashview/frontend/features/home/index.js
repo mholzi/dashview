@@ -476,6 +476,7 @@ export function renderRoomCardsGrid(component, html) {
       icon: displayInfo.icon,
       friendlyName: displayInfo.friendlyName,
       state: displayInfo.state,
+      isUnavailable: displayInfo.isUnavailable || false,
     };
   };
 
@@ -545,11 +546,12 @@ export function renderRoomCardsGrid(component, html) {
       return html`<div class="room-card ${isBig ? 'big' : 'small'} inactive" style="grid-area: ${gridArea}; visibility: hidden;"></div>`;
     }
 
-    const { labelText, cardClass, icon, friendlyName, state } = entityInfo;
+    const { labelText, cardClass, icon, friendlyName, state, isUnavailable } = entityInfo;
     const entityType = slotConfig.entity_id.split('.')[0];
 
     // Special handling for light entities - interactive slider like room popup
-    if (entityType === 'light') {
+    // Skip special handling if light is unavailable
+    if (entityType === 'light' && !isUnavailable) {
       const lightInfo = getLightInfo(component.hass, slotConfig.entity_id);
       if (!lightInfo) {
         return html`<div class="room-card ${isBig ? 'big' : 'small'} inactive" style="grid-area: ${gridArea}; visibility: hidden;"></div>`;
@@ -711,6 +713,11 @@ export function renderRoomCardsGrid(component, html) {
         style="grid-area: ${gridArea};"
         @click=${handleClick}
       >
+        ${isUnavailable ? html`
+          <div class="room-card-unavailable-badge">
+            <ha-icon icon="mdi:alert-circle"></ha-icon>
+          </div>
+        ` : ''}
         ${isBig ? html`
           <!-- Big card: vertical layout with icon top-right -->
           <div class="room-card-icon">
