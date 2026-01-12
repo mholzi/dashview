@@ -2836,10 +2836,10 @@
     // ============================================
 
     /**
-     * Build an enabled map from the registry for entities explicitly enabled in admin
-     * Returns a map where only entities explicitly set to true in existingMap are included
+     * Build an enabled map from the registry for entities not explicitly disabled
+     * Uses sparse map pattern: missing/undefined = enabled, false = disabled
      * @param {string} labelId - Label ID to filter by
-     * @param {Object} existingMap - Existing enabled map (only true values are included)
+     * @param {Object} existingMap - Existing enabled map (sparse: only configured entries exist)
      * @returns {Object} Map of entityId -> boolean
      */
     _buildEnabledMapFromRegistry(labelId, existingMap) {
@@ -2849,8 +2849,8 @@
       const map = {};
       this._entityRegistry.forEach(e => {
         if (e.labels && e.labels.includes(labelId)) {
-          // Only include entities that are explicitly enabled in admin
-          if (existingMap[e.entity_id] === true) {
+          // Skip explicitly disabled entities (false), include all others (undefined/true)
+          if (existingMap[e.entity_id] !== false) {
             map[e.entity_id] = true;
           }
         }

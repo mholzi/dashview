@@ -6,7 +6,7 @@
 export const weatherPopupStyles = `
   /* ==================== TRAIN DEPARTURES ==================== */
   .train-departures-section {
-    margin: 0 0 16px 0;
+    margin: 0 0 24px 0;
     padding: 0;
   }
 
@@ -20,7 +20,7 @@ export const weatherPopupStyles = `
 
   /* ==================== DWD WEATHER WARNINGS ==================== */
   .dwd-warnings {
-    margin: 0 0 16px 0;
+    margin: 0 0 24px 0;
     padding: 0;
   }
 

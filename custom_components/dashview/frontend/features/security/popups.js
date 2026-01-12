@@ -16,7 +16,8 @@ import { t } from '../../utils/i18n.js';
 export function renderSecurityPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to get all entities with a label that are explicitly enabled in admin
+  // Helper to get all entities with a label that are not explicitly disabled
+  // Uses sparse map pattern: missing/undefined = enabled, false = disabled
   const filterByCurrentLabel = (enabledMap, labelId) => {
     if (!labelId) return enabledMap;
     const filtered = {};
@@ -24,10 +25,9 @@ export function renderSecurityPopupContent(component, html) {
     component._entityRegistry.forEach(entityReg => {
       if (entityReg.labels && entityReg.labels.includes(labelId)) {
         const entityId = entityReg.entity_id;
-        // Only include entities that are explicitly enabled in admin
-        if (enabledMap[entityId] === true) {
-          filtered[entityId] = true;
-        }
+        // Skip explicitly disabled entities (false), include all others (undefined/true)
+        if (enabledMap[entityId] === false) return;
+        filtered[entityId] = true;
       }
     });
     return filtered;
@@ -622,7 +622,8 @@ export function renderBatteryPopupContent(component, html) {
 export function renderCoversPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to get all cover entities with the cover label that are explicitly enabled
+  // Helper to get all cover entities with the cover label that are not explicitly disabled
+  // Uses sparse map pattern: missing/undefined = enabled, false = disabled
   const filterByCoverLabel = () => {
     const filtered = [];
     const labelId = component._coverLabelId;
@@ -633,10 +634,9 @@ export function renderCoversPopupContent(component, html) {
         const entityId = entityReg.entity_id;
         // Only include cover domain entities
         if (!entityId.startsWith('cover.')) return;
-        // Only include entities that are explicitly enabled in admin
-        if (component._enabledCovers[entityId] === true) {
-          filtered.push(entityId);
-        }
+        // Skip explicitly disabled entities (false), include all others (undefined/true)
+        if (component._enabledCovers[entityId] === false) return;
+        filtered.push(entityId);
       }
     });
     return filtered;

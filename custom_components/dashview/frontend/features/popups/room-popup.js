@@ -410,7 +410,10 @@ function renderLightSection(component, html, areaId) {
             () => {
               // Close popup first so more-info dialog appears on top
               component._closeRoomPopup();
-              openMoreInfo(component, light.entity_id);
+              // Small delay to ensure popup is hidden before more-info opens
+              requestAnimationFrame(() => {
+                openMoreInfo(component, light.entity_id);
+              });
             }
           );
 
