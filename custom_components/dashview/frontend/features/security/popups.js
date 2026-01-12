@@ -16,17 +16,18 @@ import { t } from '../../utils/i18n.js';
 export function renderSecurityPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to get all entities with a label, respecting explicit enable/disable in enabledMap
+  // Helper to get all entities with a label that are explicitly enabled in admin
   const filterByCurrentLabel = (enabledMap, labelId) => {
     if (!labelId) return enabledMap;
     const filtered = {};
-    // Look at ALL entities in registry with the matching label (not just enabledMap)
+    // Look at ALL entities in registry with the matching label
     component._entityRegistry.forEach(entityReg => {
       if (entityReg.labels && entityReg.labels.includes(labelId)) {
         const entityId = entityReg.entity_id;
-        // Include entities unless explicitly disabled (enabled by default)
-        if (enabledMap[entityId] === false) return;
-        filtered[entityId] = true;
+        // Only include entities that are explicitly enabled in admin
+        if (enabledMap[entityId] === true) {
+          filtered[entityId] = true;
+        }
       }
     });
     return filtered;
@@ -593,7 +594,7 @@ export function renderBatteryPopupContent(component, html) {
 export function renderCoversPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to get all cover entities with the cover label, respecting explicit enable/disable
+  // Helper to get all cover entities with the cover label that are explicitly enabled
   const filterByCoverLabel = () => {
     const filtered = [];
     const labelId = component._coverLabelId;
@@ -604,9 +605,10 @@ export function renderCoversPopupContent(component, html) {
         const entityId = entityReg.entity_id;
         // Only include cover domain entities
         if (!entityId.startsWith('cover.')) return;
-        // Skip only explicitly disabled entities (enabled by default)
-        if (component._enabledCovers[entityId] === false) return;
-        filtered.push(entityId);
+        // Only include entities that are explicitly enabled in admin
+        if (component._enabledCovers[entityId] === true) {
+          filtered.push(entityId);
+        }
       }
     });
     return filtered;

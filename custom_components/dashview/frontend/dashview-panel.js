@@ -2833,10 +2833,10 @@
     // ============================================
 
     /**
-     * Build an enabled map from the registry for default-enabled behavior
-     * Returns a map where all entities with the label are set to true unless explicitly disabled
+     * Build an enabled map from the registry for entities explicitly enabled in admin
+     * Returns a map where only entities explicitly set to true in existingMap are included
      * @param {string} labelId - Label ID to filter by
-     * @param {Object} existingMap - Existing enabled map (may have explicit false values)
+     * @param {Object} existingMap - Existing enabled map (only true values are included)
      * @returns {Object} Map of entityId -> boolean
      */
     _buildEnabledMapFromRegistry(labelId, existingMap) {
@@ -2846,8 +2846,10 @@
       const map = {};
       this._entityRegistry.forEach(e => {
         if (e.labels && e.labels.includes(labelId)) {
-          // Use existing value if set, otherwise default to true
-          map[e.entity_id] = existingMap[e.entity_id] !== false;
+          // Only include entities that are explicitly enabled in admin
+          if (existingMap[e.entity_id] === true) {
+            map[e.entity_id] = true;
+          }
         }
       });
       return map;
