@@ -81,6 +81,8 @@ export const securityStyles = `
   .security-garage-list {
     display: flex;
     flex-direction: column;
+    gap: 4px;
+    padding: 10px 8px 8px 8px;
     background: var(--dv-gray200);
     border-radius: 12px;
     overflow: hidden;
