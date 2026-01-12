@@ -16,7 +16,7 @@ import { t } from '../../utils/i18n.js';
 export function renderSecurityPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to get all entities with a label that are not explicitly disabled
+  // Helper to get all entities with a label that are not explicitly disabled and allocated to a room
   // Uses sparse map pattern: missing/undefined = enabled, false = disabled
   const filterByCurrentLabel = (enabledMap, labelId) => {
     if (!labelId) return enabledMap;
@@ -27,6 +27,9 @@ export function renderSecurityPopupContent(component, html) {
         const entityId = entityReg.entity_id;
         // Skip explicitly disabled entities (false), include all others (undefined/true)
         if (enabledMap[entityId] === false) return;
+        // Skip entities not allocated to a room
+        const areaId = component._getAreaIdForEntity(entityId);
+        if (!areaId) return;
         filtered[entityId] = true;
       }
     });
@@ -622,7 +625,7 @@ export function renderBatteryPopupContent(component, html) {
 export function renderCoversPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to get all cover entities with the cover label that are not explicitly disabled
+  // Helper to get all cover entities with the cover label that are not explicitly disabled and allocated to a room
   // Uses sparse map pattern: missing/undefined = enabled, false = disabled
   const filterByCoverLabel = () => {
     const filtered = [];
@@ -636,6 +639,9 @@ export function renderCoversPopupContent(component, html) {
         if (!entityId.startsWith('cover.')) return;
         // Skip explicitly disabled entities (false), include all others (undefined/true)
         if (component._enabledCovers[entityId] === false) return;
+        // Skip entities not allocated to a room
+        const areaId = component._getAreaIdForEntity(entityId);
+        if (!areaId) return;
         filtered.push(entityId);
       }
     });

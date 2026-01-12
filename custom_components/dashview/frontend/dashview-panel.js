@@ -2836,7 +2836,7 @@
     // ============================================
 
     /**
-     * Build an enabled map from the registry for entities not explicitly disabled
+     * Build an enabled map from the registry for entities not explicitly disabled and allocated to a room
      * Uses sparse map pattern: missing/undefined = enabled, false = disabled
      * @param {string} labelId - Label ID to filter by
      * @param {Object} existingMap - Existing enabled map (sparse: only configured entries exist)
@@ -2850,9 +2850,11 @@
       this._entityRegistry.forEach(e => {
         if (e.labels && e.labels.includes(labelId)) {
           // Skip explicitly disabled entities (false), include all others (undefined/true)
-          if (existingMap[e.entity_id] !== false) {
-            map[e.entity_id] = true;
-          }
+          if (existingMap[e.entity_id] === false) return;
+          // Skip entities not allocated to a room
+          const areaId = this._getAreaIdForEntity(e.entity_id);
+          if (!areaId) return;
+          map[e.entity_id] = true;
         }
       });
       return map;
