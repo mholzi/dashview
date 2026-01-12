@@ -78,6 +78,14 @@ export const securityStyles = `
     gap: 8px;
   }
 
+  .security-garage-list {
+    display: flex;
+    flex-direction: column;
+    background: var(--dv-gray200);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
   .security-entity-card {
     display: flex;
     flex-direction: row;

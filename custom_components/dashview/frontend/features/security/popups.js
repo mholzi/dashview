@@ -118,6 +118,34 @@ export function renderSecurityPopupContent(component, html) {
     `;
   };
 
+  // Render garage card with controls (matching room popup style)
+  const renderGarageCard = (garage) => {
+    const isOpen = garage.isOpen;
+    const icon = isOpen ? 'mdi:garage-open' : 'mdi:garage';
+
+    return html`
+      <div class="popup-garage-item">
+        <div class="popup-garage-item-header ${isOpen ? 'open' : 'closed'}">
+          <div class="popup-garage-item-icon">
+            <ha-icon icon="${icon}"></ha-icon>
+          </div>
+          <div class="popup-garage-item-info">
+            <span class="popup-garage-item-name">${getFriendlyName(garage.state, garage.entityId)}</span>
+            <span class="popup-garage-item-last-changed">${formatLastChanged(garage.state.last_changed)}</span>
+          </div>
+          <div class="popup-garage-item-controls">
+            <button class="popup-garage-control-btn" @click=${(e) => { e.stopPropagation(); component._openGarage(garage.entityId); }}>
+              <ha-icon icon="mdi:arrow-up"></ha-icon>
+            </button>
+            <button class="popup-garage-control-btn" @click=${(e) => { e.stopPropagation(); component._closeGarage(garage.entityId); }}>
+              <ha-icon icon="mdi:arrow-down"></ha-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
   return html`
     <!-- Security Tabs -->
     <div class="security-tabs">
@@ -179,16 +207,16 @@ export function renderSecurityPopupContent(component, html) {
         <!-- Open Garages -->
         ${enabledGarages.filter(g => g.isOpen).length > 0 ? html`
           <h3 class="security-subsection-title">${t('ui.sections.open_garages', 'Offene Garagentore')}</h3>
-          <div class="security-entity-list">
-            ${sortByLastChangedTime(enabledGarages.filter(g => g.isOpen)).map(g => renderEntityCard(g, 'garage'))}
+          <div class="security-garage-list">
+            ${sortByLastChangedTime(enabledGarages.filter(g => g.isOpen)).map(g => renderGarageCard(g))}
           </div>
         ` : ''}
 
         <!-- Closed Garages -->
         ${enabledGarages.filter(g => !g.isOpen).length > 0 ? html`
           <h3 class="security-subsection-title">${t('ui.sections.closed_garages', 'Geschlossene Garagentore')}</h3>
-          <div class="security-entity-list">
-            ${sortByLastChangedTime(enabledGarages.filter(g => !g.isOpen)).map(g => renderEntityCard(g, 'garage'))}
+          <div class="security-garage-list">
+            ${sortByLastChangedTime(enabledGarages.filter(g => !g.isOpen)).map(g => renderGarageCard(g))}
           </div>
         ` : ''}
       `}

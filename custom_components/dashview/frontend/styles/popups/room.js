@@ -630,9 +630,11 @@ export const roomPopupStyles = `
   .popup-garage-item-header {
     display: flex;
     align-items: center;
-    padding: 4px 12px 4px 4px;
+    height: 68px;
+    padding: 4px 20px 4px 4px;
     gap: 12px;
     cursor: pointer;
+    box-sizing: border-box;
     transition: background var(--dv-transition-normal) ease;
   }
 
@@ -645,12 +647,13 @@ export const roomPopupStyles = `
   }
 
   .popup-garage-item-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .popup-garage-item-header.open .popup-garage-item-icon {
