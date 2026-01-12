@@ -593,21 +593,26 @@ export function renderBatteryPopupContent(component, html) {
 export function renderCoversPopupContent(component, html) {
   if (!component.hass) return html``;
 
-  // Helper to get all cover entities that are enabled in admin config
-  const getEnabledCovers = () => {
+  // Helper to get all cover entities with the cover label, respecting explicit enable/disable
+  const filterByCoverLabel = () => {
     const filtered = [];
+    const labelId = component._coverLabelId;
+    if (!labelId) return filtered;
 
-    // Only include entities that are explicitly enabled in _enabledCovers
-    // and are actually cover domain entities (not automations, etc.)
-    Object.entries(component._enabledCovers || {}).forEach(([entityId, enabled]) => {
-      if (enabled && entityId.startsWith('cover.')) {
+    component._entityRegistry.forEach(entityReg => {
+      if (entityReg.labels && entityReg.labels.includes(labelId)) {
+        const entityId = entityReg.entity_id;
+        // Only include cover domain entities
+        if (!entityId.startsWith('cover.')) return;
+        // Skip only explicitly disabled entities (enabled by default)
+        if (component._enabledCovers[entityId] === false) return;
         filtered.push(entityId);
       }
     });
     return filtered;
   };
 
-  const enabledCoverIds = getEnabledCovers();
+  const enabledCoverIds = filterByCoverLabel();
 
   if (enabledCoverIds.length === 0) {
     return html`

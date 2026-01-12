@@ -83,7 +83,6 @@ export const devicesPopupStyles = `
 
   .popup-device-card.unavailable {
     background: var(--dv-gray300);
-    opacity: 0.6;
   }
 
   /* Icon in top-right corner */
@@ -113,7 +112,7 @@ export const devicesPopupStyles = `
   }
 
   .popup-device-card.unavailable .popup-device-card-icon {
-    background: rgba(var(--dv-highlight-rgb), 0.3);
+    background: var(--dv-red);
   }
 
   .popup-device-card-icon ha-icon {
@@ -134,7 +133,7 @@ export const devicesPopupStyles = `
   }
 
   .popup-device-card.unavailable .popup-device-card-icon ha-icon {
-    color: var(--dv-gray800);
+    color: var(--dv-gray000);
   }
 
   /* Status text - large */

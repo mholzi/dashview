@@ -607,12 +607,17 @@ export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStat
         suffixText = t('status.appliances.generic.finished') + '.';
       }
 
+      // Get the entity ID for click action (state entity or timer entity)
+      const entityId = appliance.stateEntity || appliance.timerEntity;
+
       statusItems.push({
         state: status.isFinished ? 'finished' : 'running',
         prefixText,
         badgeText,
         badgeIcon: appliance.icon,
         suffixText,
+        // Add entity ID as click action to open more-info dialog
+        clickAction: entityId ? `entity:${entityId}` : null,
       });
     }
   });

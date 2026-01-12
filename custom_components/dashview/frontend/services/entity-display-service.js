@@ -57,6 +57,34 @@ const LOCK_ICONS = {
 };
 
 /**
+ * Default icons by entity domain (used for unavailable entities)
+ */
+const DOMAIN_ICONS = {
+  light: 'mdi:lightbulb',
+  switch: 'mdi:toggle-switch',
+  cover: 'mdi:window-shutter',
+  climate: 'mdi:thermostat',
+  lock: 'mdi:lock',
+  fan: 'mdi:fan',
+  vacuum: 'mdi:robot-vacuum',
+  media_player: 'mdi:cast',
+  sensor: 'mdi:eye',
+  binary_sensor: 'mdi:checkbox-blank-circle-outline',
+  automation: 'mdi:robot',
+  script: 'mdi:script-text',
+  scene: 'mdi:palette',
+  input_boolean: 'mdi:toggle-switch',
+  input_number: 'mdi:ray-vertex',
+  input_select: 'mdi:form-select',
+  input_text: 'mdi:form-textbox',
+  person: 'mdi:account',
+  device_tracker: 'mdi:account',
+  camera: 'mdi:video',
+  weather: 'mdi:weather-partly-cloudy',
+  default: 'mdi:help-circle',
+};
+
+/**
  * State labels for binary sensors
  * Now uses i18n translation system
  */
@@ -299,12 +327,18 @@ function isUnavailableState(state) {
 
 /**
  * Get display info for an unavailable entity
+ * @param {string} entityId - Entity ID to determine domain icon
  * @param {Object} state - Entity state object
  * @returns {Object} Display info
  */
-function getUnavailableDisplayInfo(state) {
+function getUnavailableDisplayInfo(entityId, state) {
+  // Get domain from entity ID for fallback icon
+  const domain = entityId ? entityId.split('.')[0] : 'default';
+  const domainIcon = DOMAIN_ICONS[domain] || DOMAIN_ICONS.default;
+
   return {
-    icon: state.attributes.icon || 'mdi:help-circle',
+    // Priority: entity's custom icon > domain default icon > help-circle
+    icon: state.attributes.icon || domainIcon,
     labelText: t('common.status.unavailable'),
     cardClass: 'unavailable',
     isUnavailable: true,
@@ -377,7 +411,7 @@ export class EntityDisplayService {
     // Check for unavailable/unknown state first
     if (isUnavailableState(state)) {
       return {
-        ...getUnavailableDisplayInfo(state),
+        ...getUnavailableDisplayInfo(entityId, state),
         friendlyName,
         state,
         entityId,

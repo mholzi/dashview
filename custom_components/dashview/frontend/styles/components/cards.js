@@ -54,7 +54,6 @@ export const cardStyles = `
 
   .floor-device-card.unavailable {
     background: var(--dv-gray300);
-    opacity: 0.6;
     /* Unavailable cards are not interactive - no shadow */
     box-shadow: none;
   }
@@ -84,6 +83,10 @@ export const cardStyles = `
     background: var(--dv-gray800);
   }
 
+  .floor-device-card.unavailable .floor-device-card-icon {
+    background: var(--dv-red);
+  }
+
   .floor-device-card-icon ha-icon {
     --mdc-icon-size: 18px;
     color: var(--dv-gray800);
@@ -96,6 +99,10 @@ export const cardStyles = `
   .floor-device-card.active .floor-device-card-icon ha-icon,
   .floor-device-card.finished .floor-device-card-icon ha-icon,
   .floor-device-card.error .floor-device-card-icon ha-icon {
+    color: var(--dv-gray000);
+  }
+
+  .floor-device-card.unavailable .floor-device-card-icon ha-icon {
     color: var(--dv-gray000);
   }
 

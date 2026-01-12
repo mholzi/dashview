@@ -218,21 +218,11 @@ function renderPresenceHistory(component, html, history) {
     `;
   }
 
-  // Group history by zone
-  const zones = new Map();
-  for (const item of history) {
-    const zone = item.state;
-    if (!zones.has(zone)) {
-      zones.set(zone, []);
-    }
-    zones.get(zone).push(item);
-  }
-
-  // Sort zones: home first, then alphabetically
-  const sortedZones = Array.from(zones.keys()).sort((a, b) => {
-    if (a === 'home') return -1;
-    if (b === 'home') return 1;
-    return a.localeCompare(b);
+  // Sort history chronologically (most recent first)
+  const sortedHistory = [...history].sort((a, b) => {
+    const dateA = new Date(a.last_changed);
+    const dateB = new Date(b.last_changed);
+    return dateB - dateA;
   });
 
   return html`
@@ -244,30 +234,26 @@ function renderPresenceHistory(component, html, history) {
       </div>
 
       <div class="user-popup-history-content ${component._presenceHistoryExpanded ? 'expanded' : ''}">
-        ${sortedZones.map(zone => {
-          const items = zones.get(zone);
-          const zoneInfo = getZoneDisplayInfo(zone);
-          return html`
-            <h3 class="user-popup-zone-section-title">${zoneInfo.label} (${items.length})</h3>
-            <div class="user-popup-zone-list">
-              ${items.map(item => html`
-                <div class="user-popup-history-card ${zoneInfo.isHome ? 'active' : 'inactive'}">
-                  <div class="user-popup-history-icon">
-                    <ha-icon icon="${zoneInfo.icon}"></ha-icon>
+        <div class="user-popup-zone-list">
+          ${sortedHistory.map(item => {
+            const zoneInfo = getZoneDisplayInfo(item.state);
+            return html`
+              <div class="user-popup-history-card ${zoneInfo.isHome ? 'active' : 'inactive'}">
+                <div class="user-popup-history-icon">
+                  <ha-icon icon="${zoneInfo.icon}"></ha-icon>
+                </div>
+                <div class="user-popup-history-info">
+                  <div class="user-popup-history-action">
+                    ${zoneInfo.actionEnter}
                   </div>
-                  <div class="user-popup-history-info">
-                    <div class="user-popup-history-action">
-                      ${zoneInfo.actionEnter}
-                    </div>
-                    <div class="user-popup-history-time">
-                      ${formatHistoryTime(item.last_changed)}
-                    </div>
+                  <div class="user-popup-history-time">
+                    ${formatHistoryTime(item.last_changed)}
                   </div>
                 </div>
-              `)}
-            </div>
-          `;
-        })}
+              </div>
+            `;
+          })}
+        </div>
       </div>
     </div>
   `;

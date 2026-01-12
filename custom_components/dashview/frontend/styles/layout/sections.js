@@ -115,7 +115,6 @@ export const sectionsStyles = `
   .room-card.appliance-unavailable,
   .room-card.unavailable {
     background: var(--dv-gray300);
-    opacity: 0.6;
   }
 
   .room-card-icon {
@@ -143,7 +142,7 @@ export const sectionsStyles = `
 
   .room-card.appliance-unavailable .room-card-icon,
   .room-card.unavailable .room-card-icon {
-    background: rgba(var(--dv-highlight-rgb), 0.3);
+    background: var(--dv-red);
   }
 
   .room-card.inactive .room-card-icon ha-icon {
@@ -163,7 +162,7 @@ export const sectionsStyles = `
 
   .room-card.appliance-unavailable .room-card-icon ha-icon,
   .room-card.unavailable .room-card-icon ha-icon {
-    color: var(--dv-gray800);
+    color: var(--dv-gray000);
   }
 
   .room-card-content {
@@ -288,11 +287,15 @@ export const sectionsStyles = `
     align-items: center;
     justify-content: center;
     z-index: 1;
+    line-height: 0;
   }
 
   .room-card-unavailable-badge ha-icon {
     --mdc-icon-size: 12px;
     color: var(--dv-gray000);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .room-card.small .room-card-unavailable-badge {
