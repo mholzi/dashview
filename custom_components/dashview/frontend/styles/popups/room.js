@@ -608,9 +608,10 @@ export const roomPopupStyles = `
 
   .popup-garage-count {
     margin-left: auto;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--dv-gray600);
-    padding-right: 12px;
+    padding-right: 20px;
+    margin-right: 10px;
   }
 
   .popup-garage-content {
@@ -621,10 +622,16 @@ export const roomPopupStyles = `
 
   .popup-garage-content.expanded {
     max-height: 500px;
+    padding: 10px 8px 8px 8px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .popup-garage-item {
     overflow: hidden;
+    border-radius: 12px;
   }
 
   .popup-garage-item-header {
@@ -765,9 +772,10 @@ export const roomPopupStyles = `
 
   .popup-lock-count {
     margin-left: auto;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--dv-gray600);
-    padding-right: 12px;
+    padding-right: 20px;
+    margin-right: 10px;
   }
 
   .popup-lock-content {

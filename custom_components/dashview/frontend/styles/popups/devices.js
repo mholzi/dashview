@@ -36,6 +36,8 @@ export const devicesPopupStyles = `
     margin-left: auto;
     font-size: 14px;
     color: var(--dv-gray600);
+    padding-right: 20px;
+    margin-right: 10px;
   }
 
   .popup-devices-content {

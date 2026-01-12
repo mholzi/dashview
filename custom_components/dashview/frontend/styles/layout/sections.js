@@ -48,7 +48,7 @@ export const sectionsStyles = `
 
   .floor-tab ha-icon {
     --mdc-icon-size: 22px;
-    color: var(--dv-gray000);
+    color: var(--dv-white);
   }
 
   .floor-tab:hover {
@@ -60,7 +60,7 @@ export const sectionsStyles = `
   }
 
   .floor-tab.active ha-icon {
-    color: var(--dv-gray000);
+    color: var(--dv-white);
   }
 
   /* ==================== ROOM CARDS GRID ==================== */
@@ -413,26 +413,30 @@ export const sectionsStyles = `
     color: var(--dv-gray800);
   }
 
-  /* Big card layout (vertical) */
+  /* Big card layout (grid - matches garbage card) */
   .floor-light-card.big {
     height: calc(100% - 8px);
-  }
-
-  .floor-light-card.big .floor-light-header {
-    flex-direction: column;
-    justify-content: space-between;
+    display: grid;
+    grid-template-areas: "i" "label" "n";
+    grid-template-rows: auto 1fr auto;
     padding: 20px;
   }
 
+  .floor-light-card.big .floor-light-header {
+    display: contents;
+  }
+
   .floor-light-card.big .floor-light-icon {
-    width: 58px;
-    height: 58px;
+    grid-area: i;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    align-self: flex-end;
-    margin: -16px -16px 0 0;
+    justify-self: end;
+    align-self: start;
+    margin: -6px -6px 0 0;
     background: rgba(var(--dv-highlight-rgb), 0.08);
   }
 
@@ -446,21 +450,25 @@ export const sectionsStyles = `
   }
 
   .floor-light-card.big .floor-light-content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: contents;
   }
 
   .floor-light-card.big .floor-light-label {
+    grid-area: label;
     font-size: 1.5em;
     font-weight: 300;
     color: var(--dv-gray800);
+    justify-self: start;
+    align-self: end;
   }
 
   .floor-light-card.big .floor-light-name {
+    grid-area: n;
     font-size: 14px;
     opacity: 0.7;
     color: var(--dv-gray800);
+    justify-self: start;
+    align-self: end;
   }
 
   /* Slider area - invisible touch target at bottom of card */
