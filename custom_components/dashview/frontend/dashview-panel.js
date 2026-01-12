@@ -2422,6 +2422,9 @@
       else if (action === 'motion') {
         this._activeSecurityTab = 'motion';
         this._openPopup('_securityPopupOpen');
+      } else if (action === 'garage') {
+        this._activeSecurityTab = 'garage';
+        this._openPopup('_securityPopupOpen');
       } else if (action?.startsWith('entity:')) {
         // Open more-info dialog for specific entity
         const entityId = action.substring(7);

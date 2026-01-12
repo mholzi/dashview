@@ -196,6 +196,7 @@ export function getGarageStatus(hass, infoTextConfig, enabledGarages, labelId = 
     badgeText: `${openGarages.length}`,
     badgeIcon: "mdi:garage-open",
     suffixText: t('status.general.open_suffix'),
+    clickAction: "garage",
   };
 }
 

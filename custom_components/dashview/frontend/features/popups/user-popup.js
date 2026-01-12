@@ -91,7 +91,7 @@ export function renderUserPopup(component, html) {
         })}
 
         <div class="popup-content">
-          ${renderProfileCard(component, html, person)}
+          ${renderProfileCard(component, html, person, presenceHistory)}
           ${renderPresenceHistory(component, html, presenceHistory)}
         </div>
       </div>
@@ -102,8 +102,14 @@ export function renderUserPopup(component, html) {
 /**
  * Render the profile card section (Items 1-4: Photo, Name, Status, Time)
  */
-function renderProfileCard(component, html, person) {
-  const timeAgo = formatTimeAgo(person.lastChanged);
+function renderProfileCard(component, html, person, presenceHistory = []) {
+  // Find when the user entered the current zone from presence history
+  // History is sorted most recent first, so find the first entry matching current state
+  const currentZoneEntry = presenceHistory.find(entry => entry.state === person.state);
+
+  // Use presence history timestamp if available, otherwise fall back to entity last_changed
+  const sinceTime = currentZoneEntry?.last_changed || person.lastChanged;
+  const timeAgo = formatTimeAgo(sinceTime);
 
   return html`
     <div class="user-popup-profile-card">
