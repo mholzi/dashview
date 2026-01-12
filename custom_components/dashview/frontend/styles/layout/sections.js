@@ -142,7 +142,7 @@ export const sectionsStyles = `
 
   .room-card.appliance-unavailable .room-card-icon,
   .room-card.unavailable .room-card-icon {
-    background: var(--dv-red);
+    background: rgba(var(--dv-highlight-rgb), 0.3);
   }
 
   .room-card.inactive .room-card-icon ha-icon {
@@ -162,7 +162,7 @@ export const sectionsStyles = `
 
   .room-card.appliance-unavailable .room-card-icon ha-icon,
   .room-card.unavailable .room-card-icon ha-icon {
-    color: var(--dv-gray000);
+    color: var(--dv-gray800);
   }
 
   .room-card-content {
@@ -282,7 +282,7 @@ export const sectionsStyles = `
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: var(--dv-gray600);
+    background: var(--dv-red);
     display: flex;
     align-items: center;
     justify-content: center;

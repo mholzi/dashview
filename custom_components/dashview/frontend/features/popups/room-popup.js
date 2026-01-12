@@ -407,7 +407,11 @@ function renderLightSection(component, html, areaId) {
           // Create long press handlers for this light
           const longPress = createLongPressHandlers(
             () => component._toggleLight(light.entity_id),
-            () => openMoreInfo(component, light.entity_id)
+            () => {
+              // Close popup first so more-info dialog appears on top
+              component._closeRoomPopup();
+              openMoreInfo(component, light.entity_id);
+            }
           );
 
           // For dimmable lights that are on: show slider

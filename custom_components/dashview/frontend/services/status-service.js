@@ -104,11 +104,11 @@ export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labe
     const { days, hours, minutes } = calculateTimeDifference(diffMs);
 
     if (days > 0) {
-      timeText = t('common.time.ago_days', { days });
+      timeText = t('common.time.since_days', { days });
     } else if (hours > 0) {
-      timeText = t('common.time.ago_hours', { hours });
+      timeText = t('common.time.since_hours', { hours });
     } else if (minutes > 0) {
-      timeText = t('common.time.ago_minutes', { minutes });
+      timeText = t('common.time.since_minutes', { minutes });
     } else {
       timeText = t('common.time.now');
     }

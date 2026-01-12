@@ -112,7 +112,7 @@ export const devicesPopupStyles = `
   }
 
   .popup-device-card.unavailable .popup-device-card-icon {
-    background: var(--dv-red);
+    background: rgba(var(--dv-highlight-rgb), 0.3);
   }
 
   .popup-device-card-icon ha-icon {
@@ -133,7 +133,7 @@ export const devicesPopupStyles = `
   }
 
   .popup-device-card.unavailable .popup-device-card-icon ha-icon {
-    color: var(--dv-gray000);
+    color: var(--dv-gray800);
   }
 
   /* Status text - large */
