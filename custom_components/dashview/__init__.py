@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import logging
 import os
@@ -35,7 +36,108 @@ STORAGE_VERSION = 1
 PHOTO_UPLOAD_DIR = "www/dashview/user_photos"
 PHOTO_URL_PREFIX = "/local/dashview/user_photos"
 MAX_PHOTO_SIZE = 5 * 1024 * 1024  # 5MB
+# Security: Only raster image formats with magic byte signatures.
+# Explicitly excluded: SVG (XML-based, XSS risk), HTML, PDF (can contain scripts)
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+
+# Magic byte signatures for content validation
+# Maps extension to list of valid magic byte prefixes
+MAGIC_BYTES = {
+    '.jpg': [b'\xff\xd8\xff'],
+    '.jpeg': [b'\xff\xd8\xff'],
+    '.png': [b'\x89PNG\r\n\x1a\n'],
+    '.gif': [b'GIF87a', b'GIF89a'],
+    '.webp': None,  # Special handling: RIFF....WEBP
+}
+
+
+def detect_file_type(data: bytes) -> str:
+    """Attempt to identify file type from magic bytes.
+
+    Uses format-aware minimum lengths consistent with validate_magic_bytes().
+
+    Args:
+        data: Raw file bytes to analyze
+
+    Returns:
+        Detected type string or 'unknown'
+    """
+    data_len = len(data)
+
+    # Minimum 2 bytes needed for any detection
+    if data_len < 2:
+        return "unknown (too short)"
+
+    # Check signatures in order of minimum length required
+    # 2-byte signatures
+    if data[:2] == b'BM':
+        return "BMP"
+    if data[:2] == b'MZ':
+        return "executable"
+
+    # 3-byte signatures
+    if data_len >= 3 and data[:3] == b'\xff\xd8\xff':
+        return "JPEG"
+
+    # 4-byte signatures
+    if data_len >= 4:
+        if data[:4] == b'%PDF':
+            return "PDF"
+        if data[:4] == b'PK\x03\x04':
+            return "ZIP/archive"
+
+    # 5-byte signatures
+    if data_len >= 5 and data[:5] == b'<?xml':
+        return "XML/HTML"
+
+    # 6-byte signatures
+    if data_len >= 6 and data[:6] in (b'GIF87a', b'GIF89a'):
+        return "GIF"
+
+    # 8-byte signatures
+    if data_len >= 8 and data[:8] == b'\x89PNG\r\n\x1a\n':
+        return "PNG"
+
+    # 12-byte signatures (WebP requires checking two locations)
+    if data_len >= 12 and data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        return "WebP"
+
+    # 14-byte signatures
+    if data_len >= 14 and data[:14] == b'<!DOCTYPE html':
+        return "XML/HTML"
+
+    return "unknown"
+
+
+def validate_magic_bytes(data: bytes, extension: str) -> bool:
+    """Validate file content matches expected magic bytes for the given extension.
+
+    Args:
+        data: Raw file bytes to validate
+        extension: File extension including dot (e.g., '.jpg')
+
+    Returns:
+        True if content matches expected magic bytes, False otherwise
+    """
+    ext = extension.lower()
+
+    # Minimum length requirements per format
+    min_lengths = {'.jpg': 3, '.jpeg': 3, '.png': 8, '.gif': 6, '.webp': 12}
+    min_len = min_lengths.get(ext, 3)
+    if len(data) < min_len:
+        return False
+
+    # WebP: RIFF....WEBP (bytes 0-3 = RIFF, bytes 8-11 = WEBP)
+    if ext == '.webp':
+        return data[:4] == b'RIFF' and data[8:12] == b'WEBP'
+
+    # Get signatures for this extension
+    signatures = MAGIC_BYTES.get(ext)
+    if not signatures:
+        return False
+
+    # Check if data starts with any valid signature
+    return any(data.startswith(sig) for sig in signatures)
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -157,6 +259,22 @@ async def websocket_upload_photo(
     except Exception as err:
         _LOGGER.error("Failed to decode image data: %s", err)
         connection.send_error(msg["id"], "decode_error", "Failed to decode image data")
+        return
+
+    # Validate magic bytes match expected format for extension
+    if not validate_magic_bytes(image_data, ext):
+        file_hash = hashlib.sha256(image_data).hexdigest()[:16]
+        detected_type = detect_file_type(image_data)
+        _LOGGER.warning(
+            "SECURITY: Photo upload rejected - magic bytes mismatch | "
+            "claimed=%s | detected=%s | hash=%s | filename=%s | size=%d",
+            ext, detected_type, file_hash, filename, len(image_data)
+        )
+        connection.send_error(
+            msg["id"],
+            "invalid_file_content",
+            "File content does not match the expected format"
+        )
         return
 
     # Check file size

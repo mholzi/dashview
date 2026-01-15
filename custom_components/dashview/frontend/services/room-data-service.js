@@ -31,6 +31,11 @@ const ENTITY_TYPE_CONFIG = {
     enabledMapKey: 'enabledSmokeSensors',
     extraAttributes: () => ({}),
   },
+  waterLeak: {
+    labelKey: 'waterLeak',
+    enabledMapKey: 'enabledWaterLeakSensors',
+    extraAttributes: () => ({}),
+  },
   cover: {
     labelKey: 'cover',
     enabledMapKey: 'enabledCovers',
@@ -277,6 +282,10 @@ export class RoomDataService {
 
   getAreaSmokeSensors(areaId) {
     return this.getAreaEntities(areaId, 'smoke');
+  }
+
+  getAreaWaterLeakSensors(areaId) {
+    return this.getAreaEntities(areaId, 'waterLeak');
   }
 
   getAreaCovers(areaId) {

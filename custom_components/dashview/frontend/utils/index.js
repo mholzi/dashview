@@ -4,7 +4,14 @@
  *
  * Usage:
  *   import { formatDate, getAreaIcon, triggerHaptic } from './utils/index.js';
+ *
+ * Polyfills:
+ *   structuredClone polyfill is INLINED in dashview-panel.js for load-order safety.
+ *   The polyfills.js module provides the same implementation for testing.
  */
+
+// Polyfills (for testing - actual polyfill is inlined in dashview-panel.js)
+export { structuredClonePolyfill, initPolyfills } from './polyfills.js';
 
 // Haptic feedback
 export { triggerHaptic } from './haptic.js';

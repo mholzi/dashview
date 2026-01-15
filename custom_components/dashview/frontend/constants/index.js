@@ -49,6 +49,7 @@ export const BINARY_SENSOR_CLASSES = {
   VIBRATION: 'vibration',
   OCCUPANCY: 'occupancy',
   GARAGE_DOOR: 'garage_door',
+  MOISTURE: 'moisture',
 };
 
 // Sensor device classes
@@ -82,6 +83,10 @@ export const ICONS = {
   // Smoke
   SMOKE_ON: 'mdi:smoke-detector-alert',
   SMOKE_OFF: 'mdi:smoke-detector',
+
+  // Water Leak
+  WATER_ALERT: 'mdi:water-alert',
+  WATER_CHECK: 'mdi:water-check',
 
   // Covers
   SHUTTER_OPEN: 'mdi:window-shutter-open',
@@ -209,6 +214,14 @@ export const ENTITY_CONFIGS = {
     title: 'Smoke Detectors',
     activeLabel: 'detecting',
     getIcon: (entity) => entity.state === STATES.ON ? ICONS.SMOKE_ON : ICONS.SMOKE_OFF,
+    getState: (entity) => entity.state,
+    isActive: (entity) => entity.state === STATES.ON,
+  },
+  waterLeakSensors: {
+    icon: ICONS.WATER_CHECK,
+    title: 'Water Leak Sensors',
+    activeLabel: 'wet',
+    getIcon: (entity) => entity.state === STATES.ON ? ICONS.WATER_ALERT : ICONS.WATER_CHECK,
     getState: (entity) => entity.state,
     isActive: (entity) => entity.state === STATES.ON,
   },

@@ -141,6 +141,10 @@ export function renderStatusTab(panel, html) {
         ${renderInfoTextToggle(panel, html, 'tvs', t('admin.infoTextToggles.tvs'), 'mdi:television',
           t('admin.infoTextToggles.tvsDesc'))}
 
+        <!-- Water Leak Status -->
+        ${renderInfoTextToggle(panel, html, 'water', t('admin.infoTextToggles.water'), 'mdi:water-alert',
+          t('admin.infoTextToggles.waterDesc'))}
+
         <!-- Appliances Status -->
         ${renderAppliancesStatusSection(panel, html, toggleSection, isExpanded)}
 

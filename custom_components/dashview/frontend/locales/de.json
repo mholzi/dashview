@@ -83,10 +83,21 @@
       "on": "Rauch!",
       "off": "Kein Rauch"
     },
+    "water": {
+      "on": "Nass",
+      "off": "Trocken"
+    },
     "temperature": "Temperatur",
     "humidity": "Luftfeuchtigkeit",
     "battery": "Akku",
     "battery_low": "hat niedrigen Akku"
+  },
+  "water": {
+    "title": "Wasserleck-Sensoren",
+    "wet": "NASS",
+    "dry": "Trocken",
+    "noSensors": "Keine Wasserleck-Sensoren konfiguriert",
+    "unknownArea": "Unbekannter Bereich"
   },
   "ui": {
     "tabs": {
@@ -200,6 +211,11 @@
     "paused": "Pausiert"
   },
   "status": {
+    "water": {
+      "noLeaks": "Keine Lecks erkannt",
+      "leakDetected": "LECK ERKANNT",
+      "leaksDetected": "Lecks erkannt"
+    },
     "motion": {
       "prefix": "Bewegung im Haus",
       "prefix_last": "Letzte Bewegung",
@@ -479,6 +495,8 @@
       "motionDesc": "Bewegungserkennungssensoren",
       "smokeSensors": "Rauchmelder",
       "smokeDesc": "Rauch- und Feuermelder",
+      "waterLeakSensors": "Wasserleck-Sensoren",
+      "waterLeakDesc": "Wasserleck- und Feuchtigkeitssensoren",
       "covers": "Rollos / Jalousien",
       "coverDesc": "Rollladen- und Jalousie-Entitäten",
       "roofWindows": "Dachfenster",
@@ -517,6 +535,8 @@
       "coversDesc": "Zeigt offene Rollos an",
       "tvs": "Fernseher",
       "tvsDesc": "Zeigt eingeschaltete Fernseher an",
+      "water": "Wasserleck",
+      "waterDesc": "Zeigt Status der Wasserleck-Sensoren an",
       "washer": "Waschmaschine",
       "washerDesc": "Zeigt Status der Waschmaschine an",
       "dishwasher": "Geschirrspüler",

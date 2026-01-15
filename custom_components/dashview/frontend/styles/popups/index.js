@@ -10,3 +10,4 @@ export { weatherPopupStyles } from './weather.js';
 export { devicesPopupStyles } from './devices.js';
 export { changelogPopupStyles } from './changelog.js';
 export { userPopupStyles } from './user.js';
+export { waterPopupStyles } from './water.js';

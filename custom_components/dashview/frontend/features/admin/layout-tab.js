@@ -1543,6 +1543,11 @@ export function renderAreaCard(panel, html, area) {
       config: ENTITY_CONFIGS.smokeSensors,
       onToggle: (id) => panel._toggleSmokeSensorEnabled(id)
     },
+    waterLeakSensors: {
+      entities: panel._getAreaWaterLeakSensors(area.area_id),
+      config: ENTITY_CONFIGS.waterLeakSensors,
+      onToggle: (id) => panel._toggleWaterLeakSensorEnabled(id)
+    },
     covers: {
       entities: panel._getAreaCovers(area.area_id),
       config: ENTITY_CONFIGS.covers,
@@ -1724,6 +1729,7 @@ export function renderAreaCard(panel, html, area) {
               lights: '_enabledLights',
               motionSensors: '_enabledMotionSensors',
               smokeSensors: '_enabledSmokeSensors',
+              waterLeakSensors: '_enabledWaterLeakSensors',
               covers: '_enabledCovers',
               roofWindows: '_enabledRoofWindows',
               garages: '_enabledGarages',

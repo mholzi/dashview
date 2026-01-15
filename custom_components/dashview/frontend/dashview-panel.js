@@ -13,6 +13,42 @@
  * - stores/           : State management (settings, UI state, registry)
  */
 
+// ============================================================================
+// structuredClone Polyfill (Safari <15.4, Chrome <98, Firefox <94)
+// MUST run synchronously before any other code
+// ============================================================================
+if (typeof structuredClone === 'undefined') {
+  globalThis.structuredClone = function(obj, seen = new WeakSet()) {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (seen.has(obj)) {
+      throw new DOMException('Circular reference detected', 'DataCloneError');
+    }
+    seen.add(obj);
+    if (obj instanceof Date) return new Date(obj);
+    if (obj instanceof RegExp) return new RegExp(obj);
+    if (obj instanceof Map) {
+      const clone = new Map();
+      obj.forEach((v, k) => clone.set(structuredClone(k, seen), structuredClone(v, seen)));
+      return clone;
+    }
+    if (obj instanceof Set) {
+      const clone = new Set();
+      obj.forEach(v => clone.add(structuredClone(v, seen)));
+      return clone;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => structuredClone(item, seen));
+    }
+    const clone = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        clone[key] = structuredClone(obj[key], seen);
+      }
+    }
+    return clone;
+  };
+}
+
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
@@ -95,6 +131,7 @@
   let dashviewRoomPopup = null;
   let dashviewWeatherPopup = null;
   let dashviewMediaPopup = null;
+  let dashviewWaterPopup = null;
   let dashviewChangelogPopup = null;
   let dashviewUserPopup = null;
   let changelogUtils = null;
@@ -103,6 +140,7 @@
     dashviewRoomPopup = popupsModule.renderRoomPopup;
     dashviewWeatherPopup = popupsModule.renderWeatherPopup;
     dashviewMediaPopup = popupsModule.renderMediaPopup;
+    dashviewWaterPopup = popupsModule.renderWaterPopup;
     dashviewChangelogPopup = popupsModule.renderChangelogPopup;
     dashviewUserPopup = popupsModule.renderUserPopup;
     debugLog("Loaded popups module");
@@ -226,7 +264,10 @@
         _enabledMediaPlayers: { type: Object },
         _enabledTVs: { type: Object },
         _enabledLocks: { type: Object },
+        _enabledWaterLeakSensors: { type: Object },
+        _waterLeakLabelId: { type: String },
         _mediaPopupOpen: { type: Boolean },
+        _waterPopupOpen: { type: Boolean },
         _activeMediaTab: { type: String },
         _lastMotionChangeTime: { type: Object },
         _motionDetected: { type: Boolean },
@@ -383,7 +424,10 @@
       this._enabledMediaPlayers = {};
       this._enabledTVs = {};
       this._enabledLocks = {};
+      this._enabledWaterLeakSensors = {};
+      this._waterLeakLabelId = null;
       this._mediaPopupOpen = false;
+      this._waterPopupOpen = false;
       this._activeMediaTab = null;
       this._enabledGarages = {};
       this._enabledWindows = {};
@@ -1387,6 +1431,7 @@
             this._enabledLights = settings.enabledLights || {};
             this._enabledMotionSensors = settings.enabledMotionSensors || {};
             this._enabledSmokeSensors = settings.enabledSmokeSensors || {};
+            this._enabledWaterLeakSensors = settings.enabledWaterLeakSensors || {};
             this._enabledCovers = settings.enabledCovers || {};
             this._coverInvertPosition = settings.coverInvertPosition || {};
             this._enabledMediaPlayers = settings.enabledMediaPlayers || {};
@@ -1464,6 +1509,7 @@
                 enabledLights: this._enabledLights,
                 enabledMotionSensors: this._enabledMotionSensors,
                 enabledSmokeSensors: this._enabledSmokeSensors,
+                enabledWaterLeakSensors: this._enabledWaterLeakSensors,
                 enabledCovers: this._enabledCovers,
                 coverInvertPosition: this._coverInvertPosition,
                 enabledGarages: this._enabledGarages,
@@ -1645,6 +1691,7 @@
           enabledLights: this._enabledLights,
           enabledMotionSensors: this._enabledMotionSensors,
           enabledSmokeSensors: this._enabledSmokeSensors,
+          enabledWaterLeakSensors: this._enabledWaterLeakSensors,
           enabledCovers: this._enabledCovers,
           coverInvertPosition: this._coverInvertPosition,
           enabledGarages: this._enabledGarages,
@@ -1666,6 +1713,7 @@
     _toggleLightEnabled(entityId) { this._toggleEntityEnabled('_enabledLights', entityId); }
     _toggleMotionSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledMotionSensors', entityId); }
     _toggleSmokeSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledSmokeSensors', entityId); }
+    _toggleWaterLeakSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledWaterLeakSensors', entityId); }
     _toggleCoverEnabled(entityId) { this._toggleEntityEnabled('_enabledCovers', entityId); }
     _toggleCoverInvertPosition(entityId) {
       this._coverInvertPosition = { ...this._coverInvertPosition, [entityId]: !this._coverInvertPosition[entityId] };
@@ -1765,6 +1813,7 @@
           enabledLights: this._enabledLights,
           enabledMotionSensors: this._enabledMotionSensors,
           enabledSmokeSensors: this._enabledSmokeSensors,
+          enabledWaterLeakSensors: this._enabledWaterLeakSensors,
           enabledCovers: this._enabledCovers,
           coverInvertPosition: this._coverInvertPosition,
           enabledGarages: this._enabledGarages,
@@ -1952,6 +2001,34 @@
           timeAgo,
           icon: 'mdi:window-open',
           isActive: true,
+          state: state.state,
+        });
+      });
+
+      // Get water leak sensors for this room (show wet/dry state per AC5)
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        if (this._enabledWaterLeakSensors[entityId] === false) return;
+        const entityAreaId = this._getAreaIdForEntity(entityId);
+        if (entityAreaId !== areaId) return;
+        // Filter by current water leak label (if configured)
+        if (this._waterLeakLabelId && (!entityReg.labels || !entityReg.labels.includes(this._waterLeakLabelId))) return;
+        // Must be a moisture sensor
+        const state = this.hass.states[entityId];
+        if (!state || state.attributes?.device_class !== 'moisture') return;
+
+        const isWet = state.state === 'on';
+        const friendlyName = state.attributes?.friendly_name || entityId;
+        const timeAgo = this._formatTimeAgo(state.last_changed);
+
+        chips.push({
+          type: isWet ? 'water-alert' : 'water',
+          entityId,
+          name: friendlyName,
+          stateText: isWet ? t('water.wet') : t('water.dry'),
+          timeAgo,
+          icon: isWet ? 'mdi:water-alert' : 'mdi:water-check',
+          isActive: isWet,
           state: state.state,
         });
       });
@@ -2419,6 +2496,7 @@
       else if (action === 'covers') this._openPopup('_coversPopupOpen');
       else if (action === 'tvs') this._openPopup('_tvsPopupOpen');
       else if (action === 'battery') this._openPopup('_batteryPopupOpen');
+      else if (action === 'water') this._openPopup('_waterPopupOpen');
       else if (action === 'motion') {
         this._activeSecurityTab = 'motion';
         this._openPopup('_securityPopupOpen');
@@ -2443,6 +2521,9 @@
 
     _closeBatteryPopup() { this._closePopup('_batteryPopupOpen'); }
     _handleBatteryPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeBatteryPopup()); }
+
+    _closeWaterPopup() { this._closePopup('_waterPopupOpen'); }
+    _handleWaterPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeWaterPopup()); }
 
     // User popup methods
     _openUserPopup() {
@@ -2789,6 +2870,10 @@
 
     _getAreaSmokeSensors(areaId) {
       return roomDataService ? roomDataService.getAreaSmokeSensors(areaId) : [];
+    }
+
+    _getAreaWaterLeakSensors(areaId) {
+      return roomDataService ? roomDataService.getAreaWaterLeakSensors(areaId) : [];
     }
 
     _getAreaCovers(areaId) {
@@ -3546,6 +3631,7 @@
       this._coversPopupOpen = false;
       this._tvsPopupOpen = false;
       this._batteryPopupOpen = false;
+      this._waterPopupOpen = false;
       this._userPopupOpen = false;
       this._mediaPopupOpen = false;
       this._weatherPopupOpen = false;
@@ -3669,6 +3755,7 @@
               enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
               enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
               enabledLocks: this._buildEnabledMapFromRegistry(this._lockLabelId, this._enabledLocks),
+              enabledWaterLeakSensors: this._buildEnabledMapFromRegistry(this._waterLeakLabelId, this._enabledWaterLeakSensors),
             },
             {
               motionLabelId: this._motionLabelId,
@@ -3678,6 +3765,7 @@
               coverLabelId: this._coverLabelId,
               tvLabelId: this._tvLabelId,
               lockLabelId: this._lockLabelId,
+              waterLeakLabelId: this._waterLeakLabelId,
             },
             (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
             appliancesWithHomeStatus,
@@ -3968,6 +4056,13 @@
           ? dashviewMediaPopup(this, html)
           : this._mediaPopupOpen
             ? html`<div class="popup-overlay"><div class="popup-container"><p>Media popup module not loaded</p></div></div>`
+            : ''}
+
+        <!-- WATER POPUP -->
+        ${this._waterPopupOpen && dashviewWaterPopup
+          ? dashviewWaterPopup(this, html)
+          : this._waterPopupOpen
+            ? html`<div class="popup-overlay"><div class="popup-container"><p>Water popup module not loaded</p></div></div>`
             : ''}
 
         <!-- ADMIN POPUP -->

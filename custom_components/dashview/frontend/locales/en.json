@@ -83,10 +83,21 @@
       "on": "Smoke!",
       "off": "No smoke"
     },
+    "water": {
+      "on": "Wet",
+      "off": "Dry"
+    },
     "temperature": "Temperature",
     "humidity": "Humidity",
     "battery": "Battery",
     "battery_low": "has low battery"
+  },
+  "water": {
+    "title": "Water Leak Sensors",
+    "wet": "WET",
+    "dry": "Dry",
+    "noSensors": "No water leak sensors configured",
+    "unknownArea": "Unknown area"
   },
   "ui": {
     "tabs": {
@@ -200,6 +211,11 @@
     "paused": "Paused"
   },
   "status": {
+    "water": {
+      "noLeaks": "No leaks detected",
+      "leakDetected": "LEAK DETECTED",
+      "leaksDetected": "leaks detected"
+    },
     "motion": {
       "prefix": "Motion in house",
       "prefix_last": "Last motion",
@@ -479,6 +495,8 @@
       "motionDesc": "Motion detection sensors",
       "smokeSensors": "Smoke Detectors",
       "smokeDesc": "Smoke and fire detectors",
+      "waterLeakSensors": "Water Leak Sensors",
+      "waterLeakDesc": "Water leak and moisture sensors",
       "covers": "Covers / Blinds",
       "coverDesc": "Cover and blind entities",
       "roofWindows": "Roof Windows",
@@ -517,6 +535,8 @@
       "coversDesc": "Shows open covers",
       "tvs": "TVs",
       "tvsDesc": "Shows TVs turned on",
+      "water": "Water Leak",
+      "waterDesc": "Shows water leak sensor status",
       "washer": "Washing Machine",
       "washerDesc": "Shows washing machine status",
       "dishwasher": "Dishwasher",

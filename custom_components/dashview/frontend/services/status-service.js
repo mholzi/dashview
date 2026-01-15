@@ -56,6 +56,87 @@ export function getWasherStatus(hass, infoTextConfig) {
 }
 
 /**
+ * Get water leak status for info text row
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {Object} enabledWaterLeakSensors - Map of enabled water leak sensor IDs
+ * @param {string|null} labelId - Optional label ID to filter by
+ * @param {Function|null} entityHasLabel - Optional function to check if entity has label
+ * @returns {Object|null} Status object or null
+ */
+export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors, labelId = null, entityHasLabel = null) {
+  if (!hass || !infoTextConfig.water?.enabled) return null;
+
+  // Get enabled water leak sensor IDs
+  let enabledWaterLeakSensorIds = getEnabledEntityIds(enabledWaterLeakSensors);
+
+  // Filter by label if provided
+  if (labelId && entityHasLabel) {
+    enabledWaterLeakSensorIds = enabledWaterLeakSensorIds.filter(id => entityHasLabel(id, labelId));
+  }
+
+  if (enabledWaterLeakSensorIds.length === 0) return null;
+
+  // Find all sensors that are currently detecting water (state 'on')
+  const wetSensors = enabledWaterLeakSensorIds
+    .map(entityId => {
+      const state = hass.states[entityId];
+      if (state && state.state === 'on') {
+        return {
+          entityId,
+          name: state.attributes?.friendly_name || entityId,
+          lastChanged: state.last_changed ? new Date(state.last_changed) : null,
+        };
+      }
+      return null;
+    })
+    .filter(s => s !== null);
+
+  const leakDetected = wetSensors.length > 0;
+
+  if (leakDetected) {
+    // Alert state - water leak detected
+    const count = wetSensors.length;
+
+    if (count === 1) {
+      // Single leak - show location
+      return {
+        state: 'alert',
+        prefixText: t('status.water.leakDetected'),
+        badgeText: wetSensors[0].name,
+        emoji: '💧',
+        suffixText: '!',
+        isWarning: true,
+        clickAction: 'water',
+        priority: 100,
+      };
+    } else {
+      // Multiple leaks - show count
+      return {
+        state: 'alert',
+        prefixText: t('status.water.leakDetected'),
+        badgeText: `${count}`,
+        emoji: '💧',
+        suffixText: t('status.water.leaksDetected') + '!',
+        isWarning: true,
+        clickAction: 'water',
+        priority: 100,
+      };
+    }
+  } else {
+    // OK state - no leaks
+    return {
+      state: 'ok',
+      prefixText: t('status.water.noLeaks'),
+      badgeText: '',
+      emoji: '💧',
+      suffixText: '',
+      clickAction: 'water',
+    };
+  }
+}
+
+/**
  * Get motion status for info text row
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
@@ -645,6 +726,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     enabledLights = {},
     enabledCovers = {},
     enabledTVs = {},
+    enabledWaterLeakSensors = {},
   } = enabledEntities;
 
   const {
@@ -654,12 +736,15 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     lightLabelId = null,
     coverLabelId = null,
     tvLabelId = null,
+    waterLeakLabelId = null,
   } = labelIds;
 
   // Get appliance status items from new system
   const applianceStatusItems = getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStatus, getApplianceStatus);
 
   return [
+    // Water leak is highest priority (property damage)
+    getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors, waterLeakLabelId, entityHasLabel),
     getMotionStatus(hass, infoTextConfig, enabledMotionSensors, motionLabelId, entityHasLabel),
     getGarageStatus(hass, infoTextConfig, enabledGarages, garageLabelId, entityHasLabel),
     getWindowsStatus(hass, infoTextConfig, enabledWindows, windowLabelId, entityHasLabel),
@@ -673,6 +758,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
 
 export default {
   getWasherStatus,
+  getWaterLeakStatus,
   getMotionStatus,
   getGarageStatus,
   getWindowsStatus,

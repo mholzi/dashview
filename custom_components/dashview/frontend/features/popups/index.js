@@ -8,3 +8,4 @@ export { renderWeatherPopup } from './weather-popup.js';
 export { renderMediaPopup } from './media-popup.js';
 export { renderChangelogPopup } from './changelog-popup.js';
 export { renderUserPopup } from './user-popup.js';
+export { renderWaterPopup } from './water-popup.js';

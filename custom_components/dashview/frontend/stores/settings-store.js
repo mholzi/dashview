@@ -29,6 +29,7 @@ import { THRESHOLDS, debugLog } from '../constants/index.js';
  * @property {InfoTextItemConfig} windows
  * @property {InfoTextItemConfig} lights
  * @property {InfoTextItemConfig} covers
+ * @property {InfoTextItemConfig} water
  * @property {InfoTextItemConfig} dishwasher
  * @property {InfoTextItemConfig} dryer
  * @property {InfoTextItemConfig} vacuum
@@ -76,6 +77,7 @@ import { THRESHOLDS, debugLog } from '../constants/index.js';
  * @property {EnabledEntityMap} enabledRoofWindows
  * @property {EnabledEntityMap} enabledTVs
  * @property {EnabledEntityMap} enabledLocks
+ * @property {EnabledEntityMap} enabledWaterLeakSensors
  * @property {number} notificationTempThreshold
  * @property {number} notificationHumidityThreshold
  * @property {string} weatherEntity
@@ -124,6 +126,7 @@ export const DEFAULT_SETTINGS = {
   enabledRoofWindows: {},
   enabledTVs: {},
   enabledLocks: {},
+  enabledWaterLeakSensors: {},
 
   // Notification thresholds
   notificationTempThreshold: THRESHOLDS.DEFAULT_TEMP_NOTIFICATION,
@@ -163,6 +166,7 @@ export const DEFAULT_SETTINGS = {
     windows: { enabled: false },
     lights: { enabled: false },
     covers: { enabled: false },
+    water: { enabled: false },
     dishwasher: { enabled: false, entity: '', finishTimeEntity: '' },
     dryer: { enabled: false, entity: '', finishTimeEntity: '' },
     vacuum: { enabled: false, entity: '' },
@@ -202,6 +206,7 @@ export const DEFAULT_SETTINGS = {
     mediaPlayer: null,
     tv: null,
     lock: null,
+    waterLeak: null,
   },
 
   // User photos (custom avatar photos per person entity)

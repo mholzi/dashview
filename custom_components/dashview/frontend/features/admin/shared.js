@@ -317,6 +317,7 @@ export const LABEL_CATEGORIES = [
   { key: 'garage', icon: 'mdi:garage', titleKey: 'admin.entityTypes.garages', descKey: 'admin.entityTypes.garageDesc', prop: '_garageLabelId' },
   { key: 'motion', icon: 'mdi:motion-sensor', titleKey: 'admin.entityTypes.motionSensors', descKey: 'admin.entityTypes.motionDesc', prop: '_motionLabelId' },
   { key: 'smoke', icon: 'mdi:smoke-detector', titleKey: 'admin.entityTypes.smokeSensors', descKey: 'admin.entityTypes.smokeDesc', prop: '_smokeLabelId' },
+  { key: 'waterLeak', icon: 'mdi:water-alert', titleKey: 'admin.entityTypes.waterLeakSensors', descKey: 'admin.entityTypes.waterLeakDesc', prop: '_waterLeakLabelId' },
   { key: 'vibration', icon: 'mdi:vibrate', titleKey: 'admin.entityTypes.vibrationSensors', descKey: 'admin.entityTypes.vibrationDesc', prop: '_vibrationLabelId' },
   { key: 'temperature', icon: 'mdi:thermometer', titleKey: 'admin.entityTypes.temperatureSensors', descKey: 'admin.entityTypes.temperatureDesc', prop: '_temperatureLabelId' },
   { key: 'humidity', icon: 'mdi:water-percent', titleKey: 'admin.entityTypes.humiditySensors', descKey: 'admin.entityTypes.humidityDesc', prop: '_humidityLabelId' },
