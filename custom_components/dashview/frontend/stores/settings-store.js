@@ -212,6 +212,9 @@ export const DEFAULT_SETTINGS = {
 
   // User photos (custom avatar photos per person entity)
   userPhotos: {},  // { 'person.john': 'https://example.com/photo.jpg' }
+
+  // Mode data (dashboard configuration profiles)
+  modeData: null,  // { modes: {...}, activeMode: 'default', isManualOverride: false }
 };
 
 /**
