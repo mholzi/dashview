@@ -434,6 +434,185 @@ describe('SettingsStore', () => {
     });
   });
 
+  describe('save() double-submit prevention', () => {
+    it('should expose isSaving getter', () => {
+      expect(store.isSaving).toBe(false);
+    });
+
+    it('should set isSaving to true during save operation', async () => {
+      let capturedIsSaving = null;
+      const slowHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async () => {
+          capturedIsSaving = store.isSaving;
+          return {};
+        })
+      });
+      store.setHass(slowHass);
+      store.set('weatherEntity', 'weather.test');
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      expect(capturedIsSaving).toBe(true);
+      expect(store.isSaving).toBe(false); // Should be false after save completes
+    });
+
+    it('should queue changes when save is in progress', async () => {
+      let saveResolve;
+      const slowHass = createMockHass({
+        callWS: vi.fn().mockImplementation(() => {
+          return new Promise(resolve => {
+            saveResolve = resolve;
+          });
+        })
+      });
+      store.setHass(slowHass);
+
+      // First save
+      store.set('weatherEntity', 'weather.first');
+      vi.advanceTimersByTime(500);
+
+      // At this point save is in progress
+      expect(store.isSaving).toBe(true);
+
+      // Second save while first is pending - should be queued
+      store.set('weatherEntity', 'weather.second');
+      vi.advanceTimersByTime(500);
+
+      // Complete first save
+      saveResolve({});
+      await vi.runAllTimersAsync();
+
+      // Should have called save twice (once for first, once for queued)
+      const saveCalls = slowHass.callWS.mock.calls.filter(
+        call => call[0].type === 'dashview/save_settings'
+      );
+      expect(saveCalls.length).toBe(2);
+    });
+
+    it('should notify listeners with _saveStart and _saveEnd events', async () => {
+      const listener = vi.fn();
+      store.setHass(mockHass);
+      store.subscribe(listener);
+
+      store.set('weatherEntity', 'weather.test');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      expect(listener).toHaveBeenCalledWith('_saveStart', true);
+      expect(listener).toHaveBeenCalledWith('_saveEnd', true);
+    });
+
+    it('should process pending changes after current save completes', async () => {
+      let saveCount = 0;
+      let lastSavedValue = null;
+      const trackingHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/save_settings') {
+            saveCount++;
+            lastSavedValue = request.settings.weatherEntity;
+          }
+          return {};
+        })
+      });
+      store.setHass(trackingHass);
+
+      // Make first save take time
+      let firstSaveResolve;
+      trackingHass.callWS.mockImplementationOnce(() => {
+        return new Promise(resolve => {
+          firstSaveResolve = resolve;
+        });
+      });
+
+      // First save
+      store.set('weatherEntity', 'weather.first');
+      vi.advanceTimersByTime(500);
+
+      // Queue changes while first save is in progress
+      store.set('weatherEntity', 'weather.queued');
+      vi.advanceTimersByTime(500);
+
+      // Resolve first save - should trigger queued save
+      firstSaveResolve({});
+      await vi.runAllTimersAsync();
+
+      // The queued save should have executed with the latest value
+      expect(lastSavedValue).toBe('weather.queued');
+    });
+
+    it('should handle errors during save without breaking queue', async () => {
+      let callCount = 0;
+      const failFirstHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/save_settings') {
+            callCount++;
+            if (callCount === 1) {
+              throw new Error('First save failed');
+            }
+          }
+          return {};
+        })
+      });
+      store.setHass(failFirstHass);
+
+      // First save will fail
+      store.set('weatherEntity', 'weather.first');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      expect(store.lastError).toBe('First save failed');
+      expect(store.isSaving).toBe(false); // Should be false even after error
+
+      // Second save should work
+      store.set('weatherEntity', 'weather.second');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      expect(callCount).toBe(2);
+      expect(store.lastError).toBe(null); // Error cleared on success
+    });
+
+    it('should consolidate multiple rapid changes into single queued save', async () => {
+      let saveResolve;
+      let saveCallCount = 0;
+      const slowHass = createMockHass({
+        callWS: vi.fn().mockImplementation((request) => {
+          if (request.type === 'dashview/save_settings') {
+            saveCallCount++;
+            return new Promise(resolve => {
+              saveResolve = resolve;
+            });
+          }
+          return Promise.resolve({});
+        })
+      });
+      store.setHass(slowHass);
+
+      // Start first save
+      store.set('weatherEntity', 'weather.first');
+      vi.advanceTimersByTime(500);
+
+      // Make multiple changes while save is in progress
+      store.set('weatherEntity', 'weather.change1');
+      vi.advanceTimersByTime(100);
+      store.set('weatherEntity', 'weather.change2');
+      vi.advanceTimersByTime(100);
+      store.set('weatherEntity', 'weather.change3');
+      vi.advanceTimersByTime(100);
+
+      // Complete first save - should trigger ONE queued save with final value
+      saveResolve({});
+      await vi.runAllTimersAsync();
+      vi.advanceTimersByTime(500);
+      saveResolve({});
+      await vi.runAllTimersAsync();
+
+      // Should only have 2 saves: initial + one queued (not multiple queued)
+      expect(saveCallCount).toBe(2);
+    });
+  });
+
   describe('saveNow()', () => {
     it('should save immediately without debounce', async () => {
       store.setHass(mockHass);

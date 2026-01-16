@@ -49,3 +49,10 @@ export {
   createRoomIndicator,
   getActiveRoomIndicators,
 } from './render.js';
+
+// Request Registry
+export {
+  RequestRegistry,
+  getRequestRegistry,
+  createRequestRegistry,
+} from './request-registry.js';

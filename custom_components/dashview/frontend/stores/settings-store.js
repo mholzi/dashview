@@ -243,6 +243,12 @@ export class SettingsStore {
     // Draft Mode state
     /** @type {Object|null} */
     this._draftState = null;  // { active, formId, originalValues, draftValues, hasChanges }
+
+    // Save guard state (prevents double-submit)
+    /** @type {boolean} */
+    this._isSaving = false;
+    /** @type {boolean} */
+    this._hasPendingChanges = false;
   }
 
   /**
@@ -401,7 +407,15 @@ export class SettingsStore {
   }
 
   /**
-   * Save settings to Home Assistant (debounced)
+   * Check if a save operation is in progress
+   * @returns {boolean}
+   */
+  get isSaving() {
+    return this._isSaving;
+  }
+
+  /**
+   * Save settings to Home Assistant (debounced with double-submit prevention)
    * @returns {void}
    */
   save() {
@@ -410,24 +424,53 @@ export class SettingsStore {
     }
 
     this._saveDebounceTimer = setTimeout(async () => {
-      if (!this._hass) return;
-
-      try {
-        await this._hass.callWS({
-          type: 'dashview/save_settings',
-          settings: this._settings,
-        });
-        this._lastError = null;
-        debugLog('settings', 'Settings saved to HA');
-      } catch (e) {
-        this._lastError = e.message || 'Failed to save settings';
-        console.error('Dashview: Failed to save settings to HA:', e);
+      // If already saving, mark that we have pending changes
+      if (this._isSaving) {
+        this._hasPendingChanges = true;
+        debugLog('settings', 'Save queued - already saving');
+        return;
       }
+
+      await this._doSave();
     }, THRESHOLDS.DEBOUNCE_MS);
   }
 
   /**
-   * Force immediate save (no debounce)
+   * Internal save implementation with guard
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _doSave() {
+    if (!this._hass) return;
+
+    this._isSaving = true;
+    this._notifyListeners('_saveStart', true);
+
+    try {
+      await this._hass.callWS({
+        type: 'dashview/save_settings',
+        settings: this._settings,
+      });
+      this._lastError = null;
+      debugLog('settings', 'Settings saved to HA');
+    } catch (e) {
+      this._lastError = e.message || 'Failed to save settings';
+      console.error('Dashview: Failed to save settings to HA:', e);
+    } finally {
+      this._isSaving = false;
+      this._notifyListeners('_saveEnd', true);
+
+      // Process any pending changes that were queued during save
+      if (this._hasPendingChanges) {
+        this._hasPendingChanges = false;
+        debugLog('settings', 'Processing pending changes');
+        await this._doSave();
+      }
+    }
+  }
+
+  /**
+   * Force immediate save (no debounce, with double-submit prevention)
    * @returns {Promise<LoadResult>}
    */
   async saveNow() {
@@ -439,6 +482,28 @@ export class SettingsStore {
     if (!this._hass) {
       return { success: false, error: 'No Home Assistant instance' };
     }
+
+    // If already saving, queue and wait for completion
+    if (this._isSaving) {
+      this._hasPendingChanges = true;
+      debugLog('settings', 'Immediate save queued - already saving');
+      // Wait for current save to complete by polling (with timeout)
+      let waitAttempts = 0;
+      const maxWaitAttempts = 100; // 5 seconds max (100 * 50ms)
+      while (this._isSaving && waitAttempts < maxWaitAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        waitAttempts++;
+      }
+      if (this._isSaving) {
+        console.warn('Dashview: Save wait timeout exceeded');
+        return { success: false, error: 'Save timeout - previous save still in progress' };
+      }
+      // Return status based on whether the save succeeded
+      return { success: this._lastError === null, error: this._lastError };
+    }
+
+    this._isSaving = true;
+    this._notifyListeners('_saveStart', true);
 
     try {
       await this._hass.callWS({
@@ -452,6 +517,16 @@ export class SettingsStore {
       this._lastError = e.message || 'Failed to save settings';
       console.error('Dashview: Failed to save settings to HA:', e);
       return { success: false, error: this._lastError };
+    } finally {
+      this._isSaving = false;
+      this._notifyListeners('_saveEnd', true);
+
+      // Process any pending changes that were queued during save
+      if (this._hasPendingChanges) {
+        this._hasPendingChanges = false;
+        debugLog('settings', 'Processing pending changes (immediate)');
+        await this._doSave();
+      }
     }
   }
 

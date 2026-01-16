@@ -42,9 +42,17 @@ async function fetchSpotifyArtwork(mediaContentId, component) {
   // Mark as fetching to prevent duplicate requests
   spotifyArtworkCache.set(mediaContentId, null);
 
+  // Create unique request ID for this fetch
+  const requestId = `spotify-artwork-${mediaContentId}`;
+
   try {
     const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(mediaContentId)}`;
-    const response = await fetch(oembedUrl);
+    // Use request registry for abort handling on component unmount
+    const signal = component._requestRegistry?.register(requestId);
+    const fetchOptions = signal ? { signal } : {};
+    const response = await fetch(oembedUrl, fetchOptions);
+    // Mark request complete to clean up registry
+    component._requestRegistry?.complete(requestId);
 
     if (response.ok) {
       const data = await response.json();
@@ -54,6 +62,12 @@ async function fetchSpotifyArtwork(mediaContentId, component) {
       }
     }
   } catch (e) {
+    // Gracefully handle abort errors (component unmounted)
+    if (e.name === 'AbortError') {
+      return;
+    }
+    // Clean up registry on error
+    component._requestRegistry?.complete(requestId);
     console.warn('Failed to fetch Spotify artwork:', e);
   }
 }

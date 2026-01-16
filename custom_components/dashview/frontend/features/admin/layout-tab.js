@@ -50,7 +50,7 @@ export function renderRoomConfig(panel, html) {
             return html`
               <div style="margin-bottom: 8px;">
                 <div style="font-size: 14px; font-weight: 500; color: var(--dv-gray600); margin-bottom: 8px; padding-left: 4px;">
-                  Unassigned Rooms
+                  ${t('admin.entities.unassignedRooms')}
                 </div>
                 ${unassignedRooms.map((area) => renderAreaCard(panel, html, area))}
               </div>

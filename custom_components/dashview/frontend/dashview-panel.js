@@ -588,6 +588,13 @@ if (typeof structuredClone === 'undefined') {
       this._changelogPopupOpen = false;
       this._changelogPageIndex = 0;
       this._lastSeenVersion = null;
+      // Request registry for aborting in-flight requests on unmount
+      if (coreUtils?.createRequestRegistry) {
+        this._requestRegistry = coreUtils.createRequestRegistry();
+      } else {
+        this._requestRegistry = null;
+        debugLog('Request registry unavailable - fetch abort on unmount disabled');
+      }
     }
 
     connectedCallback() {
@@ -653,6 +660,10 @@ if (typeof structuredClone === 'undefined') {
       // Cleanup admin tab drag scroll listeners
       if (dashviewAdmin?.cleanupAdminTabDragScroll) {
         dashviewAdmin.cleanupAdminTabDragScroll(this);
+      }
+      // Abort any in-flight fetch requests to prevent stale state updates
+      if (this._requestRegistry) {
+        this._requestRegistry.abortAll();
       }
     }
 
@@ -762,7 +773,12 @@ if (typeof structuredClone === 'undefined') {
 
     async _loadMediaPresetsFromLegacyFile() {
       try {
-        const response = await fetch('/local/dashview/config/media_presets.json');
+        // Use request registry for abort handling on unmount
+        const signal = this._requestRegistry?.register('load-media-presets');
+        const fetchOptions = signal ? { signal } : {};
+        const response = await fetch('/local/dashview/config/media_presets.json', fetchOptions);
+        // Mark request complete to clean up registry
+        this._requestRegistry?.complete('load-media-presets');
         if (response.ok) {
           const data = await response.json();
           this._mediaPresets = data.media_presets || [];
@@ -774,6 +790,13 @@ if (typeof structuredClone === 'undefined') {
           this.requestUpdate();
         }
       } catch (e) {
+        // Gracefully handle abort errors (component unmounted)
+        if (e.name === 'AbortError') {
+          debugLog('Media presets fetch aborted (component unmounted)');
+          return;
+        }
+        // Clean up registry on error
+        this._requestRegistry?.complete('load-media-presets');
         console.warn('Dashview: Could not load media presets from legacy file', e);
         this._mediaPresets = [];
       }

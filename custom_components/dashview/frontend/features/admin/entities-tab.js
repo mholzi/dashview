@@ -280,7 +280,7 @@ export function renderEntitiesTab(panel, html) {
                   <div style="margin-bottom: 8px;">
                     <div style="font-size: 14px; font-weight: 500; color: var(--dv-gray600); margin-bottom: 8px; padding-left: 4px; display: flex; align-items: center; gap: 8px;">
                       <ha-icon icon="mdi:help-circle-outline" style="--mdc-icon-size: 18px;"></ha-icon>
-                      Unassigned Rooms
+                      ${t('admin.entities.unassignedRooms')}
                       <span style="font-weight: 400; opacity: 0.7;">(${unassignedRooms.length} rooms)</span>
                     </div>
                     ${unassignedRooms.map((area) => renderAreaCard(panel, html, area))}
