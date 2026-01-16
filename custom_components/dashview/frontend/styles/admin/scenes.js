@@ -203,7 +203,7 @@ export const scenesStyles = `
     margin-top: 4px;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 100;
+    z-index: var(--dv-z-modal, 6);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
 
@@ -328,7 +328,7 @@ export const scenesStyles = `
     margin-top: 4px;
     max-height: 280px;
     overflow-y: auto;
-    z-index: 100;
+    z-index: var(--dv-z-modal, 6);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
 

@@ -51,7 +51,7 @@ getLitElement().then(({ LitElement, html, css }) => {
         :host {
           position: fixed;
           inset: 0;
-          z-index: 10000;
+          z-index: 10;
           display: none;
           align-items: center;
           justify-content: center;

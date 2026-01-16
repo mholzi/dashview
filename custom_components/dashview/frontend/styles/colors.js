@@ -96,18 +96,18 @@ export const colorStyles = `
     --dv-transition-slow: 0.3s;
 
     /* Z-Index Scale
-     * Hierarchy designed to allow HA more-info dialog (z-index ~1000) to appear above Dashview popups
-     * Base content: 1-99
-     * Dashview popups/modals: 100-199
-     * Overlays/tooltips: 200-299
-     * HA more-info dialog: 1000+ (HA default, we don't control this)
+     * Hierarchy designed to allow HA more-info dialog (z-index: 8) to appear above Dashview popups
+     * Base content: 1-2
+     * Dashview popups/modals: 3-6
+     * HA more-info dialog: 8 (HA default from --dialog-z-index)
+     * Tab bar: 9 (always visible above dialogs)
      * Coach marks: 10000+ (should always be on top)
      */
-    --dv-z-dropdown: 50;
-    --dv-z-sticky: 75;
-    --dv-z-popup: 100;
-    --dv-z-modal: 150;
-    --dv-z-tooltip: 200;
+    --dv-z-dropdown: 3;
+    --dv-z-sticky: 4;
+    --dv-z-popup: 5;
+    --dv-z-modal: 6;
+    --dv-z-tooltip: 7;
     --dv-z-coach: 10000;
     --dv-z-max: 10001;
 

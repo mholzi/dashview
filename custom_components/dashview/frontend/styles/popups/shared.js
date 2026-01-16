@@ -14,7 +14,7 @@ export const sharedPopupStyles = `
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    z-index: var(--dv-z-popup, 100);
+    z-index: var(--dv-z-popup, 5);
     display: flex;
     align-items: flex-start;
     justify-content: center;

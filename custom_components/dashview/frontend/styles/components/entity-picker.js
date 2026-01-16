@@ -71,7 +71,7 @@ export const entityPickerStyles = `
     margin-top: 4px;
     max-height: 300px;
     overflow-y: auto;
-    z-index: 1000;
+    z-index: var(--dv-z-modal, 6);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
