@@ -735,6 +735,9 @@
       "selected": "selected",
       "weather": "Weather",
       "noWeather": "Not configured (optional)",
+      "layout": "Layout",
+      "layoutCustom": "Custom floor order",
+      "layoutDefault": "Default floor order",
       "edit": "Edit",
       "ready": "You're All Set!",
       "readyDesc": "Your dashboard is configured and ready to use."

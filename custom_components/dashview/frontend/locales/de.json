@@ -735,6 +735,9 @@
       "selected": "ausgewählt",
       "weather": "Wetter",
       "noWeather": "Nicht konfiguriert (optional)",
+      "layout": "Layout",
+      "layoutCustom": "Benutzerdefinierte Etagenreihenfolge",
+      "layoutDefault": "Standard-Etagenreihenfolge",
       "edit": "Bearbeiten",
       "ready": "Alles bereit!",
       "readyDesc": "Dein Dashboard ist konfiguriert und einsatzbereit."

@@ -4,7 +4,6 @@
  */
 
 import { t } from '../../shared.js';
-import { getSettingsStore } from '../../../../stores/index.js';
 
 /**
  * Layout step styles

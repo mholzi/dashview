@@ -205,6 +205,12 @@ export function generateReviewSummary(panel) {
     roomsByFloor[floor.floor_id] = areas.filter(a => a.floor_id === floor.floor_id).length;
   });
 
+  // Get layout floor order
+  const floorOrder = layoutState.floorOrder || floors.map(f => f.floor_id);
+  const orderedFloorNames = floorOrder
+    .map(id => floors.find(f => f.floor_id === id)?.name)
+    .filter(Boolean);
+
   // Get weather entity name
   let weatherEntityName = null;
   if (weatherState.selectedEntity && panel.hass?.states[weatherState.selectedEntity]) {
@@ -223,6 +229,10 @@ export function generateReviewSummary(panel) {
     },
     entities: {
       selected: selectedEntities.length
+    },
+    layout: {
+      floorOrder: orderedFloorNames,
+      isCustom: Boolean(layoutState.floorOrder && layoutState.floorOrder.length > 0)
     },
     weather: {
       entityId: weatherState.selectedEntity,
@@ -314,6 +324,27 @@ export function renderReviewStep(panel, html) {
             </p>
           </div>
           <button class="dv-review-section-edit" @click=${() => goToStep(3)}>
+            ${t('onboarding.review.edit', 'Edit')}
+          </button>
+        </div>
+
+        <!-- Layout Section -->
+        <div class="dv-review-section">
+          <div class="dv-review-section-icon success">
+            <ha-icon icon="mdi:check"></ha-icon>
+          </div>
+          <div class="dv-review-section-info">
+            <h3 class="dv-review-section-title">${t('onboarding.review.layout', 'Layout')}</h3>
+            <p class="dv-review-section-value">
+              ${summary.layout.isCustom
+                ? t('onboarding.review.layoutCustom', 'Custom floor order')
+                : t('onboarding.review.layoutDefault', 'Default floor order')}
+            </p>
+            ${summary.layout.floorOrder.length > 0 ? html`
+              <p class="dv-review-section-details">${summary.layout.floorOrder.join(' → ')}</p>
+            ` : ''}
+          </div>
+          <button class="dv-review-section-edit" @click=${() => goToStep(4)}>
             ${t('onboarding.review.edit', 'Edit')}
           </button>
         </div>

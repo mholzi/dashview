@@ -213,7 +213,24 @@ describe('Review Step', () => {
       expect(result.rooms.byFloor.floor1).toBe(1);
       expect(result.rooms.byFloor.floor2).toBe(2);
       expect(result.entities.selected).toBe(2);
+      expect(result.layout.floorOrder).toEqual(['Upstairs', 'Ground']);
+      expect(result.layout.isCustom).toBe(true);
       expect(result.weather.entityName).toBe('Home');
+    });
+
+    it('should show default layout when no custom order', () => {
+      const mockPanel = {
+        _floors: [
+          { floor_id: 'floor1', name: 'Ground' },
+          { floor_id: 'floor2', name: 'Upstairs' }
+        ],
+        _areas: [],
+        _wizardLayoutState: {}
+      };
+      const result = generateReviewSummary(mockPanel);
+
+      expect(result.layout.floorOrder).toEqual(['Ground', 'Upstairs']);
+      expect(result.layout.isCustom).toBe(false);
     });
   });
 });
