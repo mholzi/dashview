@@ -28,6 +28,7 @@ from .const import (
     URL_BASE,
     VERSION,
 )
+from .rate_limiter import rate_limited
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -239,12 +240,16 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
     vol.Required("type"): f"{DOMAIN}/get_settings",
 })
 @websocket_api.async_response
+@rate_limited("get_settings")
 async def websocket_get_settings(
     hass: HomeAssistant,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
-    """Handle get settings request."""
+    """Handle get settings request.
+
+    Rate limit: 20 req/sec, burst 10 (Story 7.9 AC2)
+    """
     settings = hass.data[DOMAIN].get("settings", {
         "enabledRooms": {},
         "enabledLights": {},
@@ -257,12 +262,16 @@ async def websocket_get_settings(
     vol.Required("settings"): dict,
 })
 @websocket_api.async_response
+@rate_limited("save_settings")
 async def websocket_save_settings(
     hass: HomeAssistant,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
-    """Handle save settings request."""
+    """Handle save settings request.
+
+    Rate limit: 5 req/sec, burst 3 (Story 7.9 AC2)
+    """
     settings = msg["settings"]
 
     # Update in memory
@@ -282,12 +291,16 @@ async def websocket_save_settings(
     vol.Required("data"): str,  # Base64 encoded image data
 })
 @websocket_api.async_response
+@rate_limited("upload_photo")
 async def websocket_upload_photo(
     hass: HomeAssistant,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
-    """Handle photo upload request."""
+    """Handle photo upload request.
+
+    Rate limit: 2 req/sec, burst 2 (Story 7.9 AC2) - strictest due to heavy payload
+    """
     filename = msg["filename"]
     data = msg["data"]
 
@@ -396,12 +409,16 @@ async def websocket_upload_photo(
     vol.Required("path"): str,
 })
 @websocket_api.async_response
+@rate_limited("delete_photo")
 async def websocket_delete_photo(
     hass: HomeAssistant,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
-    """Handle photo delete request."""
+    """Handle photo delete request.
+
+    Rate limit: 5 req/sec, burst 3 (Story 7.9 AC2)
+    """
     path = msg["path"]
 
     # Validate path is within our upload directory

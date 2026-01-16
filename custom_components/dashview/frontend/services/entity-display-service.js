@@ -355,14 +355,21 @@ export class EntityDisplayService {
   constructor() {
     this._entityRegistry = [];
     this._labelIds = {};
+    // Indexed lookup for O(1) access (Story 7.8)
+    this._entityById = new Map();
   }
 
   /**
-   * Set the entity registry for label lookups
+   * Set the entity registry and build index (Story 7.8)
    * @param {Array} entityRegistry - Entity registry array
    */
   setEntityRegistry(entityRegistry) {
     this._entityRegistry = entityRegistry || [];
+    // Build index for O(1) lookups
+    this._entityById.clear();
+    this._entityRegistry.forEach(entity => {
+      this._entityById.set(entity.entity_id, entity);
+    });
   }
 
   /**
@@ -374,12 +381,12 @@ export class EntityDisplayService {
   }
 
   /**
-   * Get labels for an entity
+   * Get labels for an entity using O(1) indexed lookup (Story 7.8)
    * @param {string} entityId - Entity ID
    * @returns {Array} Array of label IDs
    */
   getEntityLabels(entityId) {
-    const entry = this._entityRegistry.find(e => e.entity_id === entityId);
+    const entry = this._entityById.get(entityId);
     return entry?.labels || [];
   }
 

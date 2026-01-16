@@ -1055,4 +1055,225 @@ describe('RegistryStore', () => {
       expect(result).toEqual([]);
     });
   });
+
+  // Story 7.8: Indexed lookups tests
+  describe('indexed lookups (Story 7.8)', () => {
+    describe('getEntityById', () => {
+      it('should return entity by ID using O(1) lookup', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        const entity = store.getEntityById('light.wohnzimmer_decke');
+        expect(entity).toBeDefined();
+        expect(entity.entity_id).toBe('light.wohnzimmer_decke');
+      });
+
+      it('should return undefined for non-existent entity', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        const entity = store.getEntityById('non_existent_entity');
+        expect(entity).toBeUndefined();
+      });
+
+      it('should build index when loadEntities is called', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        expect(store._entityById.size).toBeGreaterThan(0);
+        expect(store._entityById.size).toBe(store.entityRegistry.length);
+      });
+    });
+
+    describe('getDeviceById', () => {
+      it('should return device by ID using O(1) lookup', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        const device = store.getDeviceById('device_001');
+        expect(device).toBeDefined();
+        // Fixture uses device_id, actual HA API uses id
+        expect(device.device_id || device.id).toBe('device_001');
+      });
+
+      it('should return undefined for non-existent device', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        const device = store.getDeviceById('non_existent_device');
+        expect(device).toBeUndefined();
+      });
+
+      it('should build index when loadEntities is called', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        expect(store._deviceById.size).toBeGreaterThan(0);
+        expect(store._deviceById.size).toBe(store.deviceRegistry.length);
+      });
+    });
+
+    describe('getAreaById', () => {
+      it('should return area by ID using O(1) lookup', async () => {
+        store.setHass(mockHass);
+        await store.loadAreas();
+
+        const area = store.getAreaById('wohnzimmer');
+        expect(area).toBeDefined();
+        expect(area.area_id).toBe('wohnzimmer');
+      });
+
+      it('should return undefined for non-existent area', async () => {
+        store.setHass(mockHass);
+        await store.loadAreas();
+
+        const area = store.getAreaById('non_existent_area');
+        expect(area).toBeUndefined();
+      });
+
+      it('should build index when loadAreas is called', async () => {
+        store.setHass(mockHass);
+        await store.loadAreas();
+
+        expect(store._areaById.size).toBeGreaterThan(0);
+        expect(store._areaById.size).toBe(store.areas.length);
+      });
+    });
+
+    describe('getAreaIdForEntity', () => {
+      it('should return area_id from entity directly', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        const areaId = store.getAreaIdForEntity('light.wohnzimmer_decke');
+        expect(areaId).toBe('wohnzimmer');
+      });
+
+      it('should return area_id from device when entity has no area', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        // Add entity without area but with device that has area
+        store._data.entityRegistry.push({
+          entity_id: 'light.indirect_area',
+          device_id: 'device_001',
+          area_id: null,
+          labels: ['light']
+        });
+        // Rebuild index
+        store._entityById.set('light.indirect_area', store._data.entityRegistry.at(-1));
+
+        const areaId = store.getAreaIdForEntity('light.indirect_area');
+        expect(areaId).toBe('wohnzimmer');
+      });
+
+      it('should return null for non-existent entity', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        const areaId = store.getAreaIdForEntity('non_existent_entity');
+        expect(areaId).toBeNull();
+      });
+
+      it('should return null when entity has no area and device has no area', async () => {
+        store.setHass(mockHass);
+        await store.loadEntities();
+
+        store._data.entityRegistry.push({
+          entity_id: 'light.no_area',
+          device_id: 'device_100',
+          area_id: null,
+          labels: ['light']
+        });
+        store._entityById.set('light.no_area', store._data.entityRegistry.at(-1));
+
+        const areaId = store.getAreaIdForEntity('light.no_area');
+        expect(areaId).toBeNull();
+      });
+    });
+
+    describe('_buildIndexes', () => {
+      it('should rebuild all indexes when called', async () => {
+        store.setHass(mockHass);
+        await store.loadAll();
+
+        // Clear indexes
+        store._entityById.clear();
+        store._deviceById.clear();
+        store._areaById.clear();
+
+        // Rebuild
+        store._buildIndexes();
+
+        expect(store._entityById.size).toBe(store.entityRegistry.length);
+        expect(store._deviceById.size).toBe(store.deviceRegistry.length);
+        expect(store._areaById.size).toBe(store.areas.length);
+      });
+
+      it('should clear area-label cache when building indexes', async () => {
+        store.setHass(mockHass);
+        await store.loadAll();
+
+        // Populate cache
+        store.getEntitiesForAreaByLabel('wohnzimmer', 'light');
+        expect(store._areaLabelCache.size).toBeGreaterThan(0);
+
+        // Rebuild indexes
+        store._buildIndexes();
+
+        expect(store._areaLabelCache.size).toBe(0);
+      });
+    });
+  });
+
+  // Story 7.8: Area-label caching tests
+  describe('area-label caching (Story 7.8)', () => {
+    it('should cache getEntitiesForAreaByLabel results', async () => {
+      store.setHass(mockHass);
+      await store.loadEntities();
+
+      // First call should populate cache
+      const result1 = store.getEntitiesForAreaByLabel('wohnzimmer', 'light');
+      expect(store._areaLabelCache.has('wohnzimmer:light')).toBe(true);
+
+      // Second call should return cached result
+      const result2 = store.getEntitiesForAreaByLabel('wohnzimmer', 'light');
+      expect(result1).toBe(result2); // Same reference
+    });
+
+    it('should invalidate cache when loadEntities is called', async () => {
+      store.setHass(mockHass);
+      await store.loadEntities();
+
+      // Populate cache
+      store.getEntitiesForAreaByLabel('wohnzimmer', 'light');
+      expect(store._areaLabelCache.size).toBeGreaterThan(0);
+
+      // Load entities again
+      await store.loadEntities();
+
+      expect(store._areaLabelCache.size).toBe(0);
+    });
+
+    it('should use indexed device lookup inside getEntitiesForAreaByLabel', async () => {
+      store.setHass(mockHass);
+      await store.loadEntities();
+
+      // Add entity that inherits area from device
+      store._data.entityRegistry.push({
+        entity_id: 'light.device_area_test',
+        device_id: 'device_001',
+        area_id: null,
+        labels: ['light']
+      });
+      store._entityById.set('light.device_area_test', store._data.entityRegistry.at(-1));
+
+      // Clear cache to force fresh lookup
+      store._areaLabelCache.clear();
+
+      const result = store.getEntitiesForAreaByLabel('wohnzimmer', 'light');
+      const hasDeviceAreaEntity = result.some(e => e.entity_id === 'light.device_area_test');
+      expect(hasDeviceAreaEntity).toBe(true);
+    });
+  });
 });

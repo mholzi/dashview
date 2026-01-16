@@ -88,6 +88,14 @@ export class RegistryStore {
     // Forecast subscriptions
     this._dailyForecastUnsubscribe = null;
     this._hourlyForecastUnsubscribe = null;
+
+    // Indexed lookups for O(1) access (Story 7.8)
+    this._entityById = new Map();      // entity_id -> entity object
+    this._deviceById = new Map();      // device_id -> device object
+    this._areaById = new Map();        // area_id -> area object
+
+    // Cache for composite lookups (Story 7.8 AC3)
+    this._areaLabelCache = new Map();  // "area_id:label_id" -> entity[]
   }
 
   /**
@@ -190,6 +198,12 @@ export class RegistryStore {
       this._data.floors = floorsResult || [];
       this._data.areasLoading = false;
 
+      // Build area index for O(1) lookups (Story 7.8)
+      this._areaById.clear();
+      this._data.areas.forEach(area => {
+        this._areaById.set(area.area_id, area);
+      });
+
       this._notifyListeners('areas', this._data.areas);
       this._notifyListeners('floors', this._data.floors);
 
@@ -220,6 +234,24 @@ export class RegistryStore {
       this._data.deviceRegistry = deviceResult || [];
       this._data.labels = labelResult || [];
       this._data.entitiesLoading = false;
+
+      // Build entity and device indexes for O(1) lookups (Story 7.8)
+      this._entityById.clear();
+      this._data.entityRegistry.forEach(entity => {
+        this._entityById.set(entity.entity_id, entity);
+      });
+
+      this._deviceById.clear();
+      this._data.deviceRegistry.forEach(device => {
+        // Home Assistant uses 'id' for device registry, but some fixtures use 'device_id'
+        const deviceId = device.id || device.device_id;
+        if (deviceId) {
+          this._deviceById.set(deviceId, device);
+        }
+      });
+
+      // Invalidate area-label cache when registries change (Story 7.8)
+      this._areaLabelCache.clear();
 
       // Resolve label IDs
       this._resolveLabelIds();
@@ -357,7 +389,7 @@ export class RegistryStore {
   }
 
   /**
-   * Get entities for an area by label
+   * Get entities for an area by label with caching (Story 7.8 AC3)
    * @param {string} areaId - Area ID
    * @param {string} labelId - Label ID
    * @returns {Array} Entities with the label in the area
@@ -365,11 +397,20 @@ export class RegistryStore {
   getEntitiesForAreaByLabel(areaId, labelId) {
     if (!labelId) return [];
 
-    return this._data.entityRegistry.filter(entity => {
+    // Check cache first (Story 7.8)
+    const cacheKey = `${areaId}:${labelId}`;
+    const cached = this._areaLabelCache.get(cacheKey);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    // Filter using indexed device lookups for O(1) device resolution
+    const result = this._data.entityRegistry.filter(entity => {
       // Check if entity is in the area (directly or via device)
       let entityAreaId = entity.area_id;
       if (!entityAreaId && entity.device_id) {
-        const device = this._data.deviceRegistry.find(d => d.id === entity.device_id);
+        // Use indexed lookup instead of .find() (Story 7.8)
+        const device = this._deviceById.get(entity.device_id);
         entityAreaId = device?.area_id;
       }
 
@@ -378,6 +419,10 @@ export class RegistryStore {
         entity.labels &&
         entity.labels.includes(labelId);
     });
+
+    // Cache the result
+    this._areaLabelCache.set(cacheKey, result);
+    return result;
   }
 
   /**
@@ -403,6 +448,86 @@ export class RegistryStore {
         console.error('Dashview: Registry listener error:', e);
       }
     });
+  }
+
+  /**
+   * Build indexed Maps for O(1) lookups (Story 7.8)
+   * Called after loading registries
+   */
+  _buildIndexes() {
+    // Build entity index
+    this._entityById.clear();
+    this._data.entityRegistry.forEach(entity => {
+      this._entityById.set(entity.entity_id, entity);
+    });
+
+    // Build device index (device_id is the key field)
+    this._deviceById.clear();
+    this._data.deviceRegistry.forEach(device => {
+      // Home Assistant uses 'id' for device registry, but some fixtures use 'device_id'
+      const deviceId = device.id || device.device_id;
+      if (deviceId) {
+        this._deviceById.set(deviceId, device);
+      }
+    });
+
+    // Build area index
+    this._areaById.clear();
+    this._data.areas.forEach(area => {
+      this._areaById.set(area.area_id, area);
+    });
+
+    // Invalidate area-label cache when registries change
+    this._areaLabelCache.clear();
+  }
+
+  /**
+   * Get entity by ID using O(1) indexed lookup (Story 7.8)
+   * @param {string} entityId - Entity ID
+   * @returns {Object|undefined} Entity object or undefined
+   */
+  getEntityById(entityId) {
+    return this._entityById.get(entityId);
+  }
+
+  /**
+   * Get device by ID using O(1) indexed lookup (Story 7.8)
+   * @param {string} deviceId - Device ID
+   * @returns {Object|undefined} Device object or undefined
+   */
+  getDeviceById(deviceId) {
+    return this._deviceById.get(deviceId);
+  }
+
+  /**
+   * Get area by ID using O(1) indexed lookup (Story 7.8)
+   * @param {string} areaId - Area ID
+   * @returns {Object|undefined} Area object or undefined
+   */
+  getAreaById(areaId) {
+    return this._areaById.get(areaId);
+  }
+
+  /**
+   * Get area ID for an entity using O(1) indexed lookups (Story 7.8)
+   * Checks entity's direct area_id, then device's area_id
+   * @param {string} entityId - Entity ID
+   * @returns {string|null} Area ID or null if not found
+   */
+  getAreaIdForEntity(entityId) {
+    const entity = this._entityById.get(entityId);
+    if (!entity) return null;
+
+    // If entity has direct area_id, use it
+    if (entity.area_id) return entity.area_id;
+
+    // Otherwise, check device's area_id
+    if (entity.device_id) {
+      const device = this._deviceById.get(entity.device_id);
+      if (device?.area_id) return device.area_id;
+    }
+
+    return null;
   }
 
   /**

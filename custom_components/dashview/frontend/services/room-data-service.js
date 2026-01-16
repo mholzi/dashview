@@ -131,6 +131,10 @@ export class RoomDataService {
     this._deviceRegistry = [];
     this._labelIds = {};
     this._enabledMaps = {};
+
+    // Indexed lookups for O(1) access (Story 7.8)
+    this._entityById = new Map();
+    this._deviceById = new Map();
   }
 
   /**
@@ -142,19 +146,29 @@ export class RoomDataService {
   }
 
   /**
-   * Set the entity registry
+   * Set the entity registry and build index (Story 7.8)
    * @param {Array} entityRegistry - Entity registry array
    */
   setEntityRegistry(entityRegistry) {
     this._entityRegistry = entityRegistry || [];
+    // Build index for O(1) lookups
+    this._entityById.clear();
+    this._entityRegistry.forEach(entity => {
+      this._entityById.set(entity.entity_id, entity);
+    });
   }
 
   /**
-   * Set the device registry
+   * Set the device registry and build index (Story 7.8)
    * @param {Array} deviceRegistry - Device registry array
    */
   setDeviceRegistry(deviceRegistry) {
     this._deviceRegistry = deviceRegistry || [];
+    // Build index for O(1) lookups
+    this._deviceById.clear();
+    this._deviceRegistry.forEach(device => {
+      this._deviceById.set(device.id, device);
+    });
   }
 
   /**
@@ -174,12 +188,13 @@ export class RoomDataService {
   }
 
   /**
-   * Get area ID for an entity (checks entity and device registry)
+   * Get area ID for an entity using O(1) indexed lookups (Story 7.8)
    * @param {string} entityId - Entity ID
    * @returns {string|null} Area ID or null
    */
   getAreaIdForEntity(entityId) {
-    const entityReg = this._entityRegistry.find(e => e.entity_id === entityId);
+    // Use indexed lookup for O(1) access
+    const entityReg = this._entityById.get(entityId);
     if (!entityReg) return null;
 
     // If entity has area_id, use it
@@ -187,8 +202,9 @@ export class RoomDataService {
 
     // Otherwise, look up the device and get area from there
     if (entityReg.device_id) {
-      const device = this._deviceRegistry.find(d => d.id === entityReg.device_id);
-      if (device && device.area_id) {
+      // Use indexed lookup for O(1) access
+      const device = this._deviceById.get(entityReg.device_id);
+      if (device?.area_id) {
         return device.area_id;
       }
     }
@@ -243,10 +259,10 @@ export class RoomDataService {
     const entities = matches.map((entityReg) => {
       const state = this._hass.states[entityReg.entity_id];
 
-      // Get device name if available
+      // Get device name if available (Story 7.8: use indexed lookup)
       let deviceName = null;
       if (entityReg.device_id) {
-        const device = this._deviceRegistry.find(d => d.id === entityReg.device_id);
+        const device = this._deviceById.get(entityReg.device_id);
         if (device) {
           deviceName = device.name_by_user || device.name || null;
         }

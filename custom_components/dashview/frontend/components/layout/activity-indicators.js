@@ -89,12 +89,16 @@ export function buildActivityIndicators({
   const roomsWithSmoke = getRoomsWithActiveEntities(hass, enabledSmokeSensors, enabledRooms, getAreaIdForEntity);
   const allActiveRooms = new Set([...roomsWithLightsOn, ...roomsWithMotion, ...roomsWithSmoke]);
 
+  // Build area index for O(1) lookups (Story 7.8)
+  const areaById = new Map();
+  areas.forEach(a => areaById.set(a.area_id, a));
+
   // Group by floor
   const roomsByFloor = new Map();
   const roomsWithoutFloor = [];
 
   allActiveRooms.forEach(areaId => {
-    const area = areas.find(a => a.area_id === areaId);
+    const area = areaById.get(areaId);
     if (!area) return;
 
     const roomData = {

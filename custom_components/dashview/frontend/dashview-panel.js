@@ -720,14 +720,17 @@ if (typeof structuredClone === 'undefined') {
     }
 
     _getAreaIdForEntity(entityId) {
-      // First check if entity has area_id directly
+      // Use registry store's indexed lookup for O(1) access (Story 7.8)
+      if (registryStore) {
+        return registryStore.getAreaIdForEntity(entityId);
+      }
+
+      // Fallback to local arrays if registry store not available
       const entityReg = this._entityRegistry.find(e => e.entity_id === entityId);
       if (!entityReg) return null;
 
-      // If entity has area_id, use it
       if (entityReg.area_id) return entityReg.area_id;
 
-      // Otherwise, look up the device and get area from there
       if (entityReg.device_id) {
         const device = this._deviceRegistry.find(d => d.id === entityReg.device_id);
         if (device && device.area_id) {
@@ -741,6 +744,15 @@ if (typeof structuredClone === 'undefined') {
     // Check if an entity has the currently configured label for its category
     _entityHasCurrentLabel(entityId, labelId) {
       if (!labelId) return false;
+
+      // Use registry store's indexed lookup for O(1) access (Story 7.8)
+      if (registryStore) {
+        const entityReg = registryStore.getEntityById(entityId);
+        if (!entityReg) return false;
+        return entityReg.labels && entityReg.labels.includes(labelId);
+      }
+
+      // Fallback to local arrays
       const entityReg = this._entityRegistry.find(e => e.entity_id === entityId);
       if (!entityReg) return false;
       return entityReg.labels && entityReg.labels.includes(labelId);
