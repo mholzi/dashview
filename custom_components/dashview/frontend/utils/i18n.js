@@ -21,12 +21,154 @@ if (!window.__dashviewI18n) {
 const state = window.__dashviewI18n;
 
 /**
+ * HTML escape character mapping (pre-defined for performance)
+ * @private
+ */
+const HTML_ESCAPE_MAP = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+};
+
+/**
+ * Hardcoded fallback translations for critical UI when all fetches fail
+ * SECURITY: Ensures app remains functional even with network failures (Story 7.5, GitHub #8)
+ * @private
+ */
+const FALLBACK_TRANSLATIONS = {
+  error: {
+    loading: 'Loading...',
+    unknown: 'Unknown error',
+    network: 'Network error'
+  },
+  common: {
+    ok: 'OK',
+    cancel: 'Cancel',
+    close: 'Close',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    back: 'Back'
+  },
+  status: {
+    on: 'On',
+    off: 'Off',
+    unavailable: 'Unavailable'
+  }
+};
+
+/**
+ * Retry state for tracking fetch attempts per locale
+ * SECURITY: Prevents infinite retry loops (Story 7.5, GitHub #8)
+ * @private
+ */
+const retryState = {
+  attempts: {},
+  maxAttempts: 2,
+  loading: false, // Prevents concurrent initI18n race conditions
+  retryDelayMs: 200 // Delay between retry attempts for transient errors
+};
+
+/**
+ * Delay helper for retry backoff
+ * @param {number} ms - Milliseconds to delay
+ * @returns {Promise<void>}
+ * @private
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Fetch with timeout using AbortController
+ * SECURITY: Prevents indefinite hangs on slow networks (Story 7.5, GitHub #8)
+ * @param {string} url - URL to fetch
+ * @param {number} timeoutMs - Timeout in milliseconds (default 5000)
+ * @returns {Promise<Response>} Fetch response
+ * @private
+ */
+function fetchWithTimeout(url, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(url, { signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+}
+
+/**
+ * Escape HTML special characters to prevent XSS attacks
+ * @param {*} str - Value to escape (converted to string if needed)
+ * @returns {string} HTML-escaped string
+ * @example
+ *   escapeHtml('<script>') // '&lt;script&gt;'
+ *   escapeHtml('A & B') // 'A &amp; B'
+ */
+export function escapeHtml(str) {
+  // Handle Symbol and other non-stringifiable types gracefully
+  if (typeof str === 'symbol') {
+    return String(str.description || 'Symbol');
+  }
+  const s = String(str);
+  return s.replace(/[&<>"']/g, char => HTML_ESCAPE_MAP[char]);
+}
+
+/**
  * Initialize the i18n system with a language code
  * Uses fetch() for broader browser compatibility (Safari doesn't support import assertions)
+ * SECURITY: Includes timeout, retry limit, and fallback to prevent hangs/loops (Story 7.5, GitHub #8)
  * @param {string} lang - Language code ('en', 'de')
  * @returns {Promise<boolean>} - Success status
  */
 export async function initI18n(lang = 'en') {
+  // Prevent concurrent initialization race conditions
+  if (retryState.loading) {
+    // Wait for current initialization to complete
+    while (retryState.loading) {
+      await delay(50);
+    }
+    // If already initialized, return current state
+    if (state.initialized) {
+      return state.translations !== FALLBACK_TRANSLATIONS;
+    }
+  }
+
+  retryState.loading = true;
+
+  try {
+    return await _doInitI18n(lang);
+  } finally {
+    retryState.loading = false;
+  }
+}
+
+/**
+ * Internal initialization logic (called by initI18n with loading lock)
+ * @private
+ */
+async function _doInitI18n(lang) {
+  // Initialize attempt counter for this locale
+  retryState.attempts[lang] = (retryState.attempts[lang] || 0) + 1;
+
+  // Check retry limit to prevent infinite loops
+  if (retryState.attempts[lang] > retryState.maxAttempts) {
+    console.warn(`[Dashview i18n] Max retries (${retryState.maxAttempts}) exceeded for locale: ${lang}`);
+
+    // If we've exhausted all options including English, use fallback translations
+    if (lang === 'en') {
+      console.warn('[Dashview i18n] All fetch attempts failed, using hardcoded fallback translations');
+      state.translations = FALLBACK_TRANSLATIONS;
+      state.currentLang = 'en';
+      state.initialized = true;
+      return false;
+    }
+
+    // Try English as last resort
+    retryState.attempts['en'] = 0; // Reset English counter
+    return _doInitI18n('en');
+  }
+
   try {
     // Get the base URL from the current script location
     // Remove query params first, then find the utils folder
@@ -34,24 +176,48 @@ export async function initI18n(lang = 'en') {
     const baseUrl = scriptUrl.substring(0, scriptUrl.lastIndexOf('/utils/'));
     const localeUrl = `${baseUrl}/locales/${lang}.json`;
 
-    console.log(`[Dashview i18n] Loading translations from: ${localeUrl}`);
+    console.log(`[Dashview i18n] Loading translations (attempt ${retryState.attempts[lang]}/${retryState.maxAttempts}): ${localeUrl}`);
 
-    const response = await fetch(localeUrl);
+    // Use fetchWithTimeout to prevent indefinite hangs on slow networks
+    const response = await fetchWithTimeout(localeUrl, 5000);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
+
     state.translations = await response.json();
     state.currentLang = lang;
     state.initialized = true;
+
+    // Reset retry counter on success
+    retryState.attempts = {};
+
     console.log(`[Dashview i18n] Initialized with language: ${lang}, loaded ${Object.keys(state.translations).length} top-level keys`);
     return true;
+
   } catch (error) {
-    console.warn(`[Dashview i18n] Translation file for ${lang} not found: ${error.message}`);
-    // If fallback to 'en' fails too, continue with empty translations
-    if (lang !== 'en') {
-      return initI18n('en');
+    // Differentiate timeout vs network error for better logging
+    const errorType = error.name === 'AbortError' ? 'timeout' : 'network';
+    console.warn(
+      `[Dashview i18n] Failed to load ${lang} (attempt ${retryState.attempts[lang]}/${retryState.maxAttempts}, ${errorType}): ${error.message}`
+    );
+
+    // Retry same locale if under limit (with delay for transient errors)
+    if (retryState.attempts[lang] < retryState.maxAttempts) {
+      await delay(retryState.retryDelayMs);
+      return _doInitI18n(lang); // Retry same locale
     }
-    state.initialized = true; // Mark as initialized even on failure to prevent loops
+
+    // Exhausted retries for this locale, try English fallback
+    if (lang !== 'en') {
+      retryState.attempts['en'] = 0; // Reset English counter
+      return _doInitI18n('en'); // Try English
+    }
+
+    // All options exhausted - use hardcoded fallback translations
+    console.warn('[Dashview i18n] All fetch attempts failed, using hardcoded fallback translations');
+    state.translations = FALLBACK_TRANSLATIONS;
+    state.currentLang = 'en';
+    state.initialized = true;
     return false;
   }
 }
@@ -61,10 +227,13 @@ export async function initI18n(lang = 'en') {
  * @param {string} key - Dot-notation key (e.g., 'sensor.motion.on')
  * @param {string|Object} fallbackOrParams - Either a fallback string or params object
  * @returns {string} Translated string, fallback, or key if not found
+ * @security All parameter values are HTML-escaped to prevent XSS attacks.
+ *   Characters &, <, >, ", ' are converted to HTML entities.
  * @example
  *   t('sensor.motion.on') // "Motion detected"
  *   t('sensor.motion.on', 'Default text') // Uses 'Default text' if key not found
  *   t('status.lights_on', { count: 3 }) // "3 lights on"
+ *   t('greeting', { name: '<script>' }) // "Hello, &lt;script&gt;!" (XSS safe)
  */
 export function t(key, fallbackOrParams = null) {
   // Determine if second arg is a fallback string or params object
@@ -75,14 +244,6 @@ export function t(key, fallbackOrParams = null) {
   // Navigate to nested key
   const keys = key.split('.');
   let value = state.translations;
-
-  // Debug: log first few translation lookups
-  if (!window._dashviewI18nDebugCount) window._dashviewI18nDebugCount = 0;
-  const shouldLog = window._dashviewI18nDebugCount < 5;
-  if (shouldLog) {
-    console.log(`[Dashview t()] key="${key}", translations has ${Object.keys(state.translations).length} keys`);
-    window._dashviewI18nDebugCount++;
-  }
 
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
@@ -99,9 +260,10 @@ export function t(key, fallbackOrParams = null) {
   }
 
   // Parameter substitution: replace {paramName} or {{paramName}} with params.paramName
+  // SECURITY: All parameter values are HTML-escaped to prevent XSS attacks (Story 7.1, GitHub #3)
   if (params && typeof params === 'object' && Object.keys(params).length > 0) {
     return value.replace(/\{\{?(\w+)\}?\}/g, (match, paramName) => {
-      return paramName in params ? String(params[paramName]) : match;
+      return paramName in params ? escapeHtml(params[paramName]) : match;
     });
   }
 
@@ -122,4 +284,17 @@ export function isI18nInitialized() {
  */
 export function getCurrentLang() {
   return state.currentLang;
+}
+
+/**
+ * Reset i18n state (for testing purposes only)
+ * SECURITY: Allows tests to verify retry/fallback behavior (Story 7.5, GitHub #8)
+ * @private
+ */
+export function _resetI18nState() {
+  retryState.attempts = {};
+  retryState.loading = false;
+  state.translations = {};
+  state.currentLang = 'en';
+  state.initialized = false;
 }

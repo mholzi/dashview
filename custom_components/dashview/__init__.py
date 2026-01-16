@@ -6,8 +6,10 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
+from urllib.parse import unquote
 
 from homeassistant.components.frontend import async_register_built_in_panel
 from homeassistant.components.http import StaticPathConfig
@@ -36,6 +38,9 @@ STORAGE_VERSION = 1
 PHOTO_UPLOAD_DIR = "www/dashview/user_photos"
 PHOTO_URL_PREFIX = "/local/dashview/user_photos"
 MAX_PHOTO_SIZE = 5 * 1024 * 1024  # 5MB
+# SECURITY: Base64 encodes 3 bytes as 4 chars. Add buffer for data URL prefix (~30 chars)
+# This prevents DoS by checking payload size BEFORE base64 decode (Story 7.3, GitHub #4)
+MAX_BASE64_SIZE = int(MAX_PHOTO_SIZE * 4 / 3) + 1000  # ~6.67MB + buffer for data URL prefix
 # Security: Only raster image formats with magic byte signatures.
 # Explicitly excluded: SVG (XML-based, XSS risk), HTML, PDF (can contain scripts)
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
@@ -49,6 +54,52 @@ MAGIC_BYTES = {
     '.gif': [b'GIF87a', b'GIF89a'],
     '.webp': None,  # Special handling: RIFF....WEBP
 }
+
+# SECURITY: Filename validation regex - only alphanumeric, dash, underscore, and dot allowed
+# Pattern: name.extension where name is 1-32 chars and extension is 1-10 chars
+SAFE_FILENAME_REGEX = re.compile(r'^[a-zA-Z0-9_-]{1,32}\.[a-zA-Z0-9]{1,10}$')
+
+
+def validate_and_sanitize_filename(filename: str, upload_dir: Path) -> tuple[str, Path]:
+    """Validate filename and return safe path.
+
+    SECURITY: Prevents path traversal attacks by:
+    1. URL decoding to catch encoded attacks (%2F, %5C, etc.)
+    2. Rejecting path separators and traversal sequences
+    3. Whitelist validation with regex
+    4. Resolving to canonical path and verifying within upload_dir
+
+    Args:
+        filename: User-provided filename
+        upload_dir: Upload directory Path object
+
+    Returns:
+        Tuple of (sanitized_filename, resolved_path)
+
+    Raises:
+        ValueError: If filename is invalid or path escapes upload_dir
+    """
+    # URL decode to catch encoded attacks (e.g., %2F = /, %5C = \)
+    decoded = unquote(filename)
+
+    # Reject path separators, traversal sequences, and null bytes
+    if any(c in decoded for c in ('/', '\\', '\x00')) or '..' in decoded:
+        raise ValueError(f"Invalid characters in filename: {filename}")
+
+    # Validate against whitelist regex
+    if not SAFE_FILENAME_REGEX.match(decoded):
+        raise ValueError(f"Filename contains invalid characters: {filename}")
+
+    # Resolve to canonical path and verify within upload_dir
+    upload_dir_resolved = upload_dir.resolve()
+    resolved = (upload_dir / decoded).resolve()
+
+    # SECURITY: Verify resolved path is within upload directory
+    # This catches any remaining path traversal attempts
+    if not str(resolved).startswith(str(upload_dir_resolved)):
+        raise ValueError(f"Path escapes upload directory: {filename}")
+
+    return decoded, resolved
 
 
 def detect_file_type(data: bytes) -> str:
@@ -240,6 +291,20 @@ async def websocket_upload_photo(
     filename = msg["filename"]
     data = msg["data"]
 
+    # SECURITY: Check payload size BEFORE any processing to prevent DoS (Story 7.3, GitHub #4)
+    # This prevents memory exhaustion from oversized base64 payloads
+    if len(data) > MAX_BASE64_SIZE:
+        _LOGGER.warning(
+            "SECURITY: Oversized upload rejected | size=%d | max=%d | filename=%s",
+            len(data), MAX_BASE64_SIZE, filename
+        )
+        connection.send_error(
+            msg["id"],
+            "file_too_large",
+            f"Photo exceeds maximum size of {MAX_PHOTO_SIZE // (1024 * 1024)}MB"
+        )
+        return
+
     # Validate file extension
     ext = os.path.splitext(filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -248,6 +313,18 @@ async def websocket_upload_photo(
             "invalid_format",
             f"Invalid file format. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
         )
+        return
+
+    # SECURITY: Validate filename and path BEFORE processing data (Story 7.2, GitHub #5)
+    upload_dir = Path(hass.config.path(PHOTO_UPLOAD_DIR))
+    try:
+        safe_filename, _ = validate_and_sanitize_filename(filename, upload_dir)
+    except ValueError as err:
+        _LOGGER.warning(
+            "SECURITY: Path traversal attempt rejected | filename=%s | error=%s",
+            filename, str(err)
+        )
+        connection.send_error(msg["id"], "invalid_filename", str(err))
         return
 
     # Decode base64 data
@@ -286,8 +363,7 @@ async def websocket_upload_photo(
         )
         return
 
-    # Create upload directory if it doesn't exist
-    upload_dir = Path(hass.config.path(PHOTO_UPLOAD_DIR))
+    # Create upload directory if it doesn't exist (upload_dir already defined above)
     try:
         upload_dir.mkdir(parents=True, exist_ok=True)
     except OSError as err:

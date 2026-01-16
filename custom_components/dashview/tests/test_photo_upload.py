@@ -2,6 +2,7 @@
 
 Includes:
 - Unit tests for validate_magic_bytes() and detect_file_type()
+- Unit tests for validate_and_sanitize_filename() path traversal prevention (Story 7.2)
 - Integration tests for websocket_upload_photo() handler
 - Security requirement validation tests
 """
@@ -9,6 +10,7 @@ import base64
 import sys
 from unittest.mock import MagicMock, AsyncMock, patch
 from pathlib import Path
+from urllib.parse import quote
 
 # Mock homeassistant before importing our module - must be at top
 # Create proper mock structure that preserves decorator behavior
@@ -447,3 +449,333 @@ class TestWebsocketUploadPhotoHandler:
 
         mock_connection.send_error.assert_not_called()
         mock_connection.send_result.assert_called_once()
+
+
+class TestValidateAndSanitizeFilename:
+    """Test suite for validate_and_sanitize_filename function (Story 7.2)."""
+
+    @pytest.fixture
+    def upload_dir(self, tmp_path):
+        """Create a temporary upload directory."""
+        upload_dir = tmp_path / "uploads"
+        upload_dir.mkdir()
+        return upload_dir
+
+    def test_valid_filename_simple(self, upload_dir):
+        """Normal filename should pass validation (AC1)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        safe_name, path = validate_and_sanitize_filename("photo.jpg", upload_dir)
+        assert safe_name == "photo.jpg"
+        assert path == upload_dir / "photo.jpg"
+
+    def test_valid_filename_with_dash_underscore(self, upload_dir):
+        """Filename with dash and underscore should pass (AC6)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        safe_name, _ = validate_and_sanitize_filename("my-photo_2024.png", upload_dir)
+        assert safe_name == "my-photo_2024.png"
+
+    def test_valid_filename_with_numbers(self, upload_dir):
+        """Filename with numbers should pass (AC6)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        safe_name, _ = validate_and_sanitize_filename("IMG12345.jpeg", upload_dir)
+        assert safe_name == "IMG12345.jpeg"
+
+    def test_path_traversal_basic(self, upload_dir):
+        """Basic path traversal should be rejected (AC2)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_and_sanitize_filename("../../../etc/passwd.jpg", upload_dir)
+
+    def test_path_traversal_double_dot(self, upload_dir):
+        """Double dot traversal should be rejected (AC2)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_and_sanitize_filename("..photo.jpg", upload_dir)
+
+    def test_path_traversal_url_encoded_slash(self, upload_dir):
+        """URL-encoded forward slash should be decoded and rejected (AC3)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        # %2F is URL-encoded /
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_and_sanitize_filename("..%2F..%2F..%2Fetc%2Fpasswd.jpg", upload_dir)
+
+    def test_path_traversal_url_encoded_backslash(self, upload_dir):
+        """URL-encoded backslash should be decoded and rejected (AC3)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        # %5C is URL-encoded \
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_and_sanitize_filename("..%5C..%5Cwindows%5Csystem32.jpg", upload_dir)
+
+    def test_null_byte_injection(self, upload_dir):
+        """Null byte injection should be rejected."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_and_sanitize_filename("photo.jpg\x00.exe", upload_dir)
+
+    def test_forward_slash_in_filename(self, upload_dir):
+        """Forward slash in filename should be rejected (AC2)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_and_sanitize_filename("path/to/photo.jpg", upload_dir)
+
+    def test_backslash_in_filename(self, upload_dir):
+        """Backslash in filename should be rejected (AC2)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_and_sanitize_filename("path\\to\\photo.jpg", upload_dir)
+
+    def test_special_characters_rejected(self, upload_dir):
+        """Special characters should be rejected (AC6)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        invalid_filenames = [
+            "photo<script>.jpg",
+            "photo>.jpg",
+            "photo|.jpg",
+            "photo:.jpg",
+            "photo*.jpg",
+            "photo?.jpg",
+            'photo".jpg',
+            "photo'.jpg",
+            "photo .jpg",  # space
+            "photo\t.jpg",  # tab
+        ]
+        for filename in invalid_filenames:
+            with pytest.raises(ValueError, match="invalid characters"):
+                validate_and_sanitize_filename(filename, upload_dir)
+
+    def test_empty_filename_rejected(self, upload_dir):
+        """Empty filename should be rejected."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError):
+            validate_and_sanitize_filename("", upload_dir)
+
+    def test_extension_only_rejected(self, upload_dir):
+        """Filename with only extension should be rejected."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError):
+            validate_and_sanitize_filename(".jpg", upload_dir)
+
+    def test_no_extension_rejected(self, upload_dir):
+        """Filename without extension should be rejected."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        with pytest.raises(ValueError):
+            validate_and_sanitize_filename("photo", upload_dir)
+
+    def test_path_is_within_upload_dir(self, upload_dir):
+        """Resolved path should be within upload directory (AC5)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        _, resolved_path = validate_and_sanitize_filename("test.jpg", upload_dir)
+        assert str(resolved_path).startswith(str(upload_dir.resolve()))
+
+    def test_pathlib_resolve_used(self, upload_dir):
+        """Path should use resolve() for canonical path (AC4)."""
+        from custom_components.dashview import validate_and_sanitize_filename
+        _, resolved_path = validate_and_sanitize_filename("test.jpg", upload_dir)
+        # Resolved path should be absolute
+        assert resolved_path.is_absolute()
+
+
+class TestDoSPrevention:
+    """Test suite for DoS prevention via early size validation (Story 7.3)."""
+
+    def test_max_base64_size_constant_defined(self):
+        """MAX_BASE64_SIZE constant should be defined correctly (AC3)."""
+        from custom_components.dashview import MAX_BASE64_SIZE, MAX_PHOTO_SIZE
+        # Should be approximately 4/3 of MAX_PHOTO_SIZE plus buffer
+        expected_min = int(MAX_PHOTO_SIZE * 4 / 3)
+        assert MAX_BASE64_SIZE > expected_min
+        assert MAX_BASE64_SIZE < expected_min + 2000  # Buffer shouldn't be too large
+
+    def test_max_base64_size_relationship(self):
+        """MAX_BASE64_SIZE should account for base64 overhead (AC3)."""
+        from custom_components.dashview import MAX_BASE64_SIZE, MAX_PHOTO_SIZE
+        # Base64 encoding: 3 bytes -> 4 chars
+        # So 5MB decoded = ~6.67MB base64
+        assert MAX_BASE64_SIZE > MAX_PHOTO_SIZE  # Must be larger due to encoding
+        assert MAX_BASE64_SIZE < MAX_PHOTO_SIZE * 2  # But not excessively large
+
+
+class TestDoSPreventionIntegration:
+    """Integration tests for DoS prevention in websocket handler (Story 7.3)."""
+
+    @pytest.fixture
+    def mock_hass(self, tmp_path):
+        """Create mock Home Assistant instance."""
+        hass = MagicMock()
+        hass.config.path = lambda p: str(tmp_path / p)
+        hass.async_add_executor_job = AsyncMock(side_effect=lambda f, *a: f(*a))
+        return hass
+
+    @pytest.fixture
+    def mock_connection(self):
+        """Create mock WebSocket connection."""
+        conn = MagicMock()
+        conn.send_result = MagicMock()
+        conn.send_error = MagicMock()
+        return conn
+
+    @pytest.mark.asyncio
+    async def test_oversized_payload_rejected_before_decode(self, mock_hass, mock_connection):
+        """Oversized base64 payload should be rejected BEFORE decode (AC2, AC4, AC5)."""
+        from custom_components.dashview import websocket_upload_photo, MAX_BASE64_SIZE
+
+        # Create payload larger than MAX_BASE64_SIZE
+        oversized_data = "A" * (MAX_BASE64_SIZE + 1000)
+        msg = {"id": 1, "filename": "huge.jpg", "data": oversized_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        mock_connection.send_result.assert_not_called()
+        mock_connection.send_error.assert_called_once()
+        error_args = mock_connection.send_error.call_args[0]
+        assert error_args[1] == "file_too_large"
+        assert "5MB" in error_args[2]
+
+    @pytest.mark.asyncio
+    async def test_valid_size_upload_succeeds(self, mock_hass, mock_connection, tmp_path):
+        """Valid size upload should succeed (AC1, AC7)."""
+        from custom_components.dashview import websocket_upload_photo
+
+        # Use a normal-sized valid JPEG
+        jpeg_data = VALID_JPEG + b'\x00' * 100
+        b64_data = base64.b64encode(jpeg_data).decode()
+
+        msg = {"id": 2, "filename": "normal.jpg", "data": b64_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        mock_connection.send_error.assert_not_called()
+        mock_connection.send_result.assert_called_once()
+        assert mock_connection.send_result.call_args[0][1]["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_boundary_size_at_limit(self, mock_hass, mock_connection):
+        """Payload exactly at limit should be accepted (boundary test)."""
+        from custom_components.dashview import websocket_upload_photo, MAX_BASE64_SIZE
+
+        # Create payload exactly at MAX_BASE64_SIZE
+        # This will fail later due to invalid content, but should pass size check
+        at_limit_data = "A" * MAX_BASE64_SIZE
+        msg = {"id": 3, "filename": "atlimit.jpg", "data": at_limit_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        # Should NOT fail with "file_too_large" - will fail later with decode_error
+        error_args = mock_connection.send_error.call_args[0]
+        assert error_args[1] != "file_too_large"
+
+    @pytest.mark.asyncio
+    async def test_data_url_format_with_size_check(self, mock_hass, mock_connection, tmp_path):
+        """Data URL format should work with size check (AC7)."""
+        from custom_components.dashview import websocket_upload_photo
+
+        jpeg_data = VALID_JPEG + b'\x00' * 100
+        data_url = f"data:image/jpeg;base64,{base64.b64encode(jpeg_data).decode()}"
+
+        msg = {"id": 4, "filename": "dataurl.jpg", "data": data_url}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        mock_connection.send_error.assert_not_called()
+        mock_connection.send_result.assert_called_once()
+
+
+class TestPathTraversalIntegration:
+    """Integration tests for path traversal prevention in websocket handler."""
+
+    @pytest.fixture
+    def mock_hass(self, tmp_path):
+        """Create mock Home Assistant instance."""
+        hass = MagicMock()
+        hass.config.path = lambda p: str(tmp_path / p)
+        hass.async_add_executor_job = AsyncMock(side_effect=lambda f, *a: f(*a))
+        return hass
+
+    @pytest.fixture
+    def mock_connection(self):
+        """Create mock WebSocket connection."""
+        conn = MagicMock()
+        conn.send_result = MagicMock()
+        conn.send_error = MagicMock()
+        return conn
+
+    @pytest.mark.asyncio
+    async def test_path_traversal_rejected_in_handler(self, mock_hass, mock_connection):
+        """Path traversal in handler should return invalid_filename error (AC7)."""
+        from custom_components.dashview import websocket_upload_photo
+
+        b64_data = base64.b64encode(VALID_JPEG + b'\x00' * 100).decode()
+        msg = {"id": 1, "filename": "../../../etc/passwd.jpg", "data": b64_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        mock_connection.send_result.assert_not_called()
+        mock_connection.send_error.assert_called_once()
+        error_args = mock_connection.send_error.call_args[0]
+        assert error_args[1] == "invalid_filename"
+
+    @pytest.mark.asyncio
+    async def test_url_encoded_traversal_rejected(self, mock_hass, mock_connection):
+        """URL-encoded path traversal should be rejected (AC3, AC7)."""
+        from custom_components.dashview import websocket_upload_photo
+
+        b64_data = base64.b64encode(VALID_JPEG + b'\x00' * 100).decode()
+        # %2F is URL-encoded /
+        msg = {"id": 2, "filename": "..%2F..%2F..%2Fetc%2Fpasswd.jpg", "data": b64_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        mock_connection.send_result.assert_not_called()
+        mock_connection.send_error.assert_called_once()
+        assert mock_connection.send_error.call_args[0][1] == "invalid_filename"
+
+    @pytest.mark.asyncio
+    async def test_null_byte_rejected_in_handler(self, mock_hass, mock_connection):
+        """Null byte injection should be rejected.
+
+        Note: Null bytes in filename get caught by extension check because
+        os.path.splitext("photo.jpg\\x00.exe") returns extension ".exe".
+        The important thing is the upload is rejected.
+        """
+        from custom_components.dashview import websocket_upload_photo
+
+        b64_data = base64.b64encode(VALID_JPEG + b'\x00' * 100).decode()
+        msg = {"id": 3, "filename": "photo.jpg\x00.exe", "data": b64_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        # Should be rejected (either invalid_format or invalid_filename depending on check order)
+        mock_connection.send_result.assert_not_called()
+        mock_connection.send_error.assert_called_once()
+        error_code = mock_connection.send_error.call_args[0][1]
+        assert error_code in ("invalid_format", "invalid_filename")
+
+    @pytest.mark.asyncio
+    async def test_special_chars_rejected_in_handler(self, mock_hass, mock_connection):
+        """Special characters in filename should be rejected (AC6)."""
+        from custom_components.dashview import websocket_upload_photo
+
+        b64_data = base64.b64encode(VALID_JPEG + b'\x00' * 100).decode()
+        msg = {"id": 4, "filename": "photo<script>.jpg", "data": b64_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        mock_connection.send_result.assert_not_called()
+        mock_connection.send_error.assert_called_once()
+        assert mock_connection.send_error.call_args[0][1] == "invalid_filename"
+
+    @pytest.mark.asyncio
+    async def test_valid_upload_still_works(self, mock_hass, mock_connection, tmp_path):
+        """Valid uploads should still succeed (AC8)."""
+        from custom_components.dashview import websocket_upload_photo
+
+        jpeg_data = VALID_JPEG + b'\x00' * 100
+        b64_data = base64.b64encode(jpeg_data).decode()
+
+        msg = {"id": 5, "filename": "valid-photo_123.jpg", "data": b64_data}
+
+        await websocket_upload_photo(mock_hass, mock_connection, msg)
+
+        mock_connection.send_error.assert_not_called()
+        mock_connection.send_result.assert_called_once()
+        assert mock_connection.send_result.call_args[0][1]["success"] is True

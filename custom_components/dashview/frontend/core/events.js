@@ -105,6 +105,7 @@ export function handleLightSliderTouchEnd(panel, setLightBrightness) {
 
 /**
  * Handle light slider mouse down (desktop support)
+ * SECURITY: Uses AbortController for guaranteed cleanup (Story 7.4, GitHub #1)
  * @param {Object} panel - DashviewPanel instance
  * @param {MouseEvent} e - Mouse event
  * @param {string} entityId - Entity ID
@@ -119,6 +120,11 @@ export function handleLightSliderMouseDown(panel, e, entityId, setLightBrightnes
     item.classList.add('dragging');
     panel._lightSliderItem = item;
   }
+
+  // SECURITY: Create AbortController for this drag operation
+  // This ensures listeners are removed even if panel unmounts during drag
+  panel._dragAbortController = new AbortController();
+  const { signal } = panel._dragAbortController;
 
   // Add global mouse event listeners
   const handleMouseMove = (moveEvent) => {
@@ -148,31 +154,56 @@ export function handleLightSliderMouseDown(panel, e, entityId, setLightBrightnes
   };
 
   const handleMouseUp = () => {
-    // Apply the final value
-    if (panel._lightSliderValue !== undefined && panel._lightSliderEntityId) {
-      setLightBrightness(panel._lightSliderEntityId, panel._lightSliderValue);
+    try {
+      // Apply the final value
+      if (panel._lightSliderValue !== undefined && panel._lightSliderEntityId) {
+        setLightBrightness(panel._lightSliderEntityId, panel._lightSliderValue);
+      }
+
+      // Remove dragging class
+      if (panel._lightSliderItem) {
+        panel._lightSliderItem.classList.remove('dragging');
+      }
+
+      // Reset state
+      panel._lightSliderDragging = false;
+      panel._lightSliderEntityId = null;
+      panel._lightSliderValue = undefined;
+      panel._lightSliderItem = null;
+    } finally {
+      // ALWAYS cleanup, even on error
+      if (panel._dragAbortController) {
+        panel._dragAbortController.abort();
+        panel._dragAbortController = null;
+      }
     }
-
-    // Remove dragging class
-    if (panel._lightSliderItem) {
-      panel._lightSliderItem.classList.remove('dragging');
-    }
-
-    // Reset state
-    panel._lightSliderDragging = false;
-    panel._lightSliderEntityId = null;
-    panel._lightSliderValue = undefined;
-    panel._lightSliderItem = null;
-
-    // Remove listeners
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
   };
 
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
+  // Use signal for automatic cleanup when abort() is called
+  document.addEventListener('mousemove', handleMouseMove, { signal });
+  document.addEventListener('mouseup', handleMouseUp, { signal });
 
   e.preventDefault();
+}
+
+/**
+ * Cleanup drag listeners on panel (call from disconnectedCallback)
+ * SECURITY: Ensures no memory leaks if panel unmounts during drag (Story 7.4, GitHub #1)
+ * @param {Object} panel - DashviewPanel instance
+ */
+export function cleanupDragListeners(panel) {
+  if (panel._dragAbortController) {
+    panel._dragAbortController.abort();
+    panel._dragAbortController = null;
+  }
+  // Reset drag state
+  panel._lightSliderDragging = false;
+  panel._lightSliderEntityId = null;
+  panel._lightSliderValue = undefined;
+  if (panel._lightSliderItem) {
+    panel._lightSliderItem.classList.remove('dragging');
+    panel._lightSliderItem = null;
+  }
 }
 
 /**

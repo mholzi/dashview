@@ -16,6 +16,7 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
   let currentEntityId = null;
   let sliderItem = null;
   let sliderValue = undefined;
+  let dragAbortController = null; // SECURITY: Track AbortController for cleanup (Story 7.4, GitHub #1)
 
   /**
    * Calculate percentage from position within element
@@ -124,6 +125,7 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
 
   /**
    * Handle mouse down (desktop support)
+   * SECURITY: Uses AbortController for guaranteed cleanup (Story 7.4, GitHub #1)
    * @param {MouseEvent} e - Mouse event
    * @param {string} entityId - Entity ID
    */
@@ -136,6 +138,11 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
       item.classList.add('dragging');
       sliderItem = item;
     }
+
+    // SECURITY: Create AbortController for this drag operation
+    // This ensures listeners are removed even if component unmounts during drag
+    dragAbortController = new AbortController();
+    const { signal } = dragAbortController;
 
     const handleMouseMove = (moveEvent) => {
       if (!dragging) return;
@@ -151,22 +158,38 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
     };
 
     const handleMouseUp = () => {
-      // Apply the final value
-      if (sliderValue !== undefined && currentEntityId) {
-        onBrightnessChange(currentEntityId, sliderValue);
+      try {
+        // Apply the final value
+        if (sliderValue !== undefined && currentEntityId) {
+          onBrightnessChange(currentEntityId, sliderValue);
+        }
+      } finally {
+        // ALWAYS cleanup, even on error
+        resetState();
+        if (dragAbortController) {
+          dragAbortController.abort();
+          dragAbortController = null;
+        }
       }
-
-      resetState();
-
-      // Remove listeners
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    // Use signal for automatic cleanup when abort() is called
+    document.addEventListener('mousemove', handleMouseMove, { signal });
+    document.addEventListener('mouseup', handleMouseUp, { signal });
 
     e.preventDefault();
+  };
+
+  /**
+   * Cleanup function for external use (e.g., disconnectedCallback)
+   * SECURITY: Ensures no memory leaks if component unmounts during drag
+   */
+  const cleanup = () => {
+    if (dragAbortController) {
+      dragAbortController.abort();
+      dragAbortController = null;
+    }
+    resetState();
   };
 
   return {
@@ -176,6 +199,7 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
     handleTouchEnd,
     handleMouseDown,
     isDragging: () => dragging,
+    cleanup, // SECURITY: Expose for component cleanup
   };
 }
 
