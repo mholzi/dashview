@@ -680,6 +680,26 @@
       "rooms": "Räume",
       "noRooms": "Keine Räume dieser Etage zugeordnet",
       "hint": "Tipp: Du kannst Bereiche auch in Home Assistant unter Einstellungen → Bereiche & Zonen verwalten"
+    },
+    "entities": {
+      "title": "Geräte auswählen",
+      "desc": "Wähle die Geräte für dein Dashboard. Geräte sind nach Räumen gruppiert.",
+      "searchPlaceholder": "Geräte suchen...",
+      "selectAll": "Alle",
+      "selectNone": "Keine",
+      "selectedCount": "{{count}} ausgewählt",
+      "suggested": "Empfohlen",
+      "noEntities": "Keine Geräte gefunden",
+      "noMatchingEntities": "Keine passenden Geräte",
+      "noRoomEntities": "Keine Geräte in diesem Raum",
+      "unassignedRoom": "Nicht zugeordnete Geräte",
+      "summary": "{{selected}} von {{total}} Geräten ausgewählt",
+      "hint": "Tipp: Empfohlene Geräte (Lichter, Klima, Rollläden) sind zur Vereinfachung vorausgewählt",
+      "enableSuggested": "Empfohlene aktivieren",
+      "selected": "Ausgewählt",
+      "total": "Gesamt",
+      "rooms": "Räume",
+      "noResults": "Keine Geräte gefunden, die deiner Suche entsprechen."
     }
   }
 }

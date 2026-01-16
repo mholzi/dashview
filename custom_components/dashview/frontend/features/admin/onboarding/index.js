@@ -18,5 +18,10 @@ export {
   renderFloorsStep,
   floorsStepStyles,
   renderRoomsStep,
-  roomsStepStyles
+  roomsStepStyles,
+  renderEntitiesStep,
+  entitiesStepStyles,
+  SUGGESTED_DOMAINS,
+  saveEntitySelections,
+  getEntitySelections
 } from './steps/index.js';

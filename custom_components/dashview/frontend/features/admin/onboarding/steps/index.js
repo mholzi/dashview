@@ -21,8 +21,14 @@ export {
   roomsStepStyles
 } from './rooms-step.js';
 
-// Entity Configuration Step (Story 9.2 - to be implemented)
-// export { renderEntitiesStep, entitiesStepStyles } from './entities-step.js';
+// Entity Configuration Step (Story 9.2)
+export {
+  renderEntitiesStep,
+  entitiesStepStyles,
+  SUGGESTED_DOMAINS,
+  saveEntitySelections,
+  getEntitySelections
+} from './entities-step.js';
 
 // Layout & Weather Steps (Story 9.3 - to be implemented)
 // export { renderLayoutStep, layoutStepStyles } from './layout-step.js';

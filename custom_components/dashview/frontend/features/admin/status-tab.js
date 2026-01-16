@@ -693,5 +693,42 @@ export function renderStatusTab(panel, html) {
         </div>
       </div>
     </div>
+
+    <!-- ==================== D. SETUP & TOOLS ==================== -->
+    <h2 class="section-title" style="margin-top: 40px;">
+      <ha-icon icon="mdi:cog-outline"></ha-icon>
+      ${t('admin.status.setupTools', 'Setup & Tools')}
+    </h2>
+    <p style="color: var(--dv-gray600); margin-bottom: 24px;">
+      ${t('admin.status.setupToolsDesc', 'Run the setup wizard again or reset your configuration.')}
+    </p>
+
+    <!-- Setup Wizard Section -->
+    <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px;">
+      <div class="card-config-section-header" style="cursor: default;">
+        <div class="card-config-section-title">
+          <ha-icon icon="mdi:wizard-hat"></ha-icon>
+          ${t('admin.status.setupWizard', 'Setup Wizard')}
+        </div>
+      </div>
+      <div class="card-config-section-content expanded">
+        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+          ${t('admin.status.wizardDesc', 'Run the guided setup wizard to configure floors, rooms, and entities. This will not delete your existing settings.')}
+        </p>
+
+        <button
+          class="scene-button-add"
+          style="width: 100%;"
+          @click=${() => {
+            panel._showWizard = true;
+            panel._adminPopupOpen = false;
+            panel.requestUpdate();
+          }}
+        >
+          <ha-icon icon="mdi:wizard-hat"></ha-icon>
+          ${t('admin.status.runWizard', 'Run Setup Wizard')}
+        </button>
+      </div>
+    </div>
   `;
 }

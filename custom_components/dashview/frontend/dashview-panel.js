@@ -298,6 +298,7 @@ if (typeof structuredClone === 'undefined') {
         _presenceHistory: { type: Array },
         _presenceHistoryExpanded: { type: Boolean },
         _adminPopupOpen: { type: Boolean },
+        _showWizard: { type: Boolean },
         _notificationTempThreshold: { type: Number },
         _notificationHumidityThreshold: { type: Number },
         _weatherPopupOpen: { type: Boolean },
@@ -491,6 +492,7 @@ if (typeof structuredClone === 'undefined') {
       this._presenceHistory = [];
       this._presenceHistoryExpanded = false;
       this._adminPopupOpen = false;
+      this._showWizard = false;
       this._notificationTempThreshold = 23;
       this._notificationHumidityThreshold = 60;
       this._weatherPopupOpen = false;
@@ -1579,6 +1581,11 @@ if (typeof structuredClone === 'undefined') {
             }
             this._settingsLoaded = true;
             this._settingsError = null;
+            // Check if setup wizard should be shown (first run)
+            if (dashviewAdmin?.shouldShowWizard && dashviewAdmin.shouldShowWizard()) {
+              this._showWizard = true;
+              debugLog("First run detected, showing setup wizard");
+            }
             // Check for new version and show changelog popup if needed
             this._checkForNewVersion();
             // Update RoomDataService with enabled maps
@@ -3952,6 +3959,14 @@ if (typeof structuredClone === 'undefined') {
           </div>
         ` : ''}
 
+        <!-- SETUP WIZARD (shown on first run) -->
+        ${this._showWizard && dashviewAdmin?.renderWizard ? dashviewAdmin.renderWizard(this, html, {
+          onComplete: () => {
+            this._showWizard = false;
+            this.requestUpdate();
+          }
+        }) : html`
+
         <!-- TOP HEADER -->
         <div class="top-header">
           <div class="header-left">
@@ -4272,6 +4287,7 @@ if (typeof structuredClone === 'undefined') {
             </button>
           </div>
         </div>
+        `}
       `;
     }
 

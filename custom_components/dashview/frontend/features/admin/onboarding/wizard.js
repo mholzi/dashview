@@ -9,11 +9,12 @@
  * - Manages wizard completion
  */
 
-import { getOnboardingStore, WIZARD_STEPS } from '../../../stores/index.js';
+import { getOnboardingStore, getSettingsStore, WIZARD_STEPS } from '../../../stores/index.js';
 import { t } from '../shared.js';
 import { renderWelcomeStep } from './steps/welcome-step.js';
 import { renderFloorsStep } from './steps/floors-step.js';
 import { renderRoomsStep } from './steps/rooms-step.js';
+import { renderEntitiesStep, saveEntitySelections, getEntitySelections } from './steps/entities-step.js';
 
 /**
  * Wizard styles
@@ -347,6 +348,12 @@ export function renderWizard(panel, html, options = {}) {
       panel.requestUpdate();
     },
     onNext: () => {
+      // Save entity selections when leaving entities step
+      if (currentStepName === 'entities') {
+        const selections = getEntitySelections(panel);
+        const settingsStore = getSettingsStore();
+        saveEntitySelections(selections, settingsStore, panel);
+      }
       store.nextStep();
       panel.requestUpdate();
     },
@@ -355,6 +362,12 @@ export function renderWizard(panel, html, options = {}) {
       panel.requestUpdate();
     },
     onComplete: () => {
+      // Save entity selections if completing from entities step
+      if (currentStepName === 'entities') {
+        const selections = getEntitySelections(panel);
+        const settingsStore = getSettingsStore();
+        saveEntitySelections(selections, settingsStore, panel);
+      }
       store.completeWizard();
       if (options.onComplete) {
         options.onComplete();
@@ -373,7 +386,7 @@ export function renderWizard(panel, html, options = {}) {
       case 'rooms':
         return options.renderRooms || renderRoomsStep;
       case 'entities':
-        return options.renderEntities || ((p, h) => renderStepContent(p, h, 'entities'));
+        return options.renderEntities || renderEntitiesStep;
       case 'layout':
         return options.renderLayout || ((p, h) => renderStepContent(p, h, 'layout'));
       case 'weather':

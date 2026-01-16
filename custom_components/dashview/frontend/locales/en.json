@@ -680,6 +680,26 @@
       "rooms": "rooms",
       "noRooms": "No rooms assigned to this floor",
       "hint": "Tip: You can also manage areas in Home Assistant under Settings → Areas & Zones"
+    },
+    "entities": {
+      "title": "Select Your Entities",
+      "desc": "Choose which entities to include in your dashboard. Entities are grouped by room.",
+      "searchPlaceholder": "Search entities...",
+      "selectAll": "All",
+      "selectNone": "None",
+      "selectedCount": "{{count}} selected",
+      "suggested": "Suggested",
+      "noEntities": "No entities found",
+      "noMatchingEntities": "No matching entities",
+      "noRoomEntities": "No entities in this room",
+      "unassignedRoom": "Unassigned Entities",
+      "summary": "{{selected}} of {{total}} entities selected",
+      "hint": "Tip: Suggested entities (lights, climate, covers) are pre-selected for convenience",
+      "enableSuggested": "Enable Suggested",
+      "selected": "Selected",
+      "total": "Total",
+      "rooms": "Rooms",
+      "noResults": "No entities found matching your search."
     }
   }
 }
