@@ -4,6 +4,99 @@
  */
 
 export const roomPopupStyles = `
+  /* ==================== SKELETON LOADING STATES ==================== */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--dv-gray200) 0%,
+      var(--dv-gray100) 50%,
+      var(--dv-gray200) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .popup-skeleton {
+    padding: 12px;
+  }
+
+  .popup-skeleton-chips {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .popup-skeleton-chip {
+    height: 40px;
+    width: 100px;
+    border-radius: 20px;
+  }
+
+  .popup-skeleton-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .popup-skeleton-action {
+    height: 44px;
+    flex: 1;
+    border-radius: 12px;
+  }
+
+  .popup-skeleton-section {
+    background: var(--dv-gray200);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .popup-skeleton-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .popup-skeleton-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+  }
+
+  .popup-skeleton-title {
+    height: 18px;
+    width: 80px;
+    border-radius: 4px;
+  }
+
+  .popup-skeleton-count {
+    height: 14px;
+    width: 60px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+
+  .popup-skeleton-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .popup-skeleton-item {
+    height: 68px;
+    border-radius: 12px;
+  }
+
   /* ==================== POPUP COVER SECTION ==================== */
   .popup-cover-section {
     margin: 0 12px 32px 12px;

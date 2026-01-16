@@ -11,82 +11,13 @@ import { getEntityDisplayService } from '../../services/entity-display-service.j
 import { openMoreInfo, toggleLight, getFriendlyName } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
 import { renderCoachMark, shouldShowCoachMark, dismissCoachMark } from '../../components/onboarding/index.js';
+import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
 
 // Re-export for backwards compatibility
 export { triggerHaptic };
 
 // Re-export coach mark functions for external use
 export { shouldShowCoachMark, dismissCoachMark };
-
-// Long press duration in ms (matches room-popup)
-const LONG_PRESS_DURATION = 500;
-
-/**
- * Create long press handlers for an element
- * @param {Function} onTap - Called on short tap
- * @param {Function} onLongPress - Called on long press
- * @returns {Object} Event handlers
- */
-function createLongPressHandlers(onTap, onLongPress) {
-  let pressTimer = null;
-  let isLongPress = false;
-  let startX = 0;
-  let startY = 0;
-
-  const start = (e) => {
-    isLongPress = false;
-    const touch = e.touches?.[0] || e;
-    startX = touch.clientX;
-    startY = touch.clientY;
-    pressTimer = setTimeout(() => {
-      isLongPress = true;
-      onLongPress();
-    }, LONG_PRESS_DURATION);
-  };
-
-  const move = (e) => {
-    if (!pressTimer) return;
-    const touch = e.touches?.[0] || e;
-    const dx = Math.abs(touch.clientX - startX);
-    const dy = Math.abs(touch.clientY - startY);
-    if (dx > 10 || dy > 10) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-  };
-
-  const end = (e) => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-      if (!isLongPress) {
-        onTap();
-      }
-    }
-    if (isLongPress) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  };
-
-  const cancel = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-  };
-
-  return {
-    onTouchStart: start,
-    onTouchMove: move,
-    onTouchEnd: end,
-    onTouchCancel: cancel,
-    onMouseDown: start,
-    onMouseMove: move,
-    onMouseUp: end,
-    onMouseLeave: cancel,
-  };
-}
 
 /**
  * Get the fill color for a light slider based on RGB color or default warm white

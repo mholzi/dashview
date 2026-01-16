@@ -7,77 +7,81 @@ import { renderPopupHeader } from '../../components/layout/index.js';
 import { renderTemperatureChart } from '../../components/charts/index.js';
 import { openMoreInfo } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
-
-// Long press duration in ms
-const LONG_PRESS_DURATION = 500;
+import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
 
 /**
- * Create long press handlers for an element
- * @param {Function} onTap - Called on short tap
- * @param {Function} onLongPress - Called on long press
- * @returns {Object} Event handlers
+ * Check if room data is still loading
+ * Returns true if hass is not available or essential data services are not ready
+ * @param {Object} component - DashviewPanel instance
+ * @param {string} areaId - Area ID to check
+ * @returns {boolean} True if loading
  */
-function createLongPressHandlers(onTap, onLongPress) {
-  let pressTimer = null;
-  let isLongPress = false;
-  let startX = 0;
-  let startY = 0;
+function isRoomDataLoading(component, areaId) {
+  // Check if hass is available
+  if (!component.hass) return true;
 
-  const start = (e) => {
-    isLongPress = false;
-    const touch = e.touches?.[0] || e;
-    startX = touch.clientX;
-    startY = touch.clientY;
-    pressTimer = setTimeout(() => {
-      isLongPress = true;
-      onLongPress();
-    }, LONG_PRESS_DURATION);
-  };
+  // Check if room data service indicates loading (if it exists)
+  if (component._roomDataService?.isReady) {
+    return component._roomDataService.isReady(areaId) === false;
+  }
 
-  const move = (e) => {
-    if (!pressTimer) return;
-    const touch = e.touches?.[0] || e;
-    const dx = Math.abs(touch.clientX - startX);
-    const dy = Math.abs(touch.clientY - startY);
-    // Cancel if moved more than 10px
-    if (dx > 10 || dy > 10) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-  };
+  // Check if states are populated (basic hass availability check)
+  if (!component.hass.states || Object.keys(component.hass.states).length === 0) {
+    return true;
+  }
 
-  const end = (e) => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-      if (!isLongPress) {
-        onTap();
-      }
-    }
-    // Prevent click event after long press
-    if (isLongPress) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  };
+  return false;
+}
 
-  const cancel = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-  };
+/**
+ * Render skeleton loaders for room popup while data is loading
+ * @param {Function} html - Lit html template function
+ * @returns {TemplateResult} Skeleton template
+ */
+function renderRoomSkeleton(html) {
+  return html`
+    <div class="popup-skeleton">
+      <!-- Skeleton for chips row -->
+      <div class="popup-skeleton-chips">
+        <div class="popup-skeleton-chip shimmer"></div>
+        <div class="popup-skeleton-chip shimmer"></div>
+        <div class="popup-skeleton-chip shimmer"></div>
+      </div>
 
-  return {
-    onTouchStart: start,
-    onTouchMove: move,
-    onTouchEnd: end,
-    onTouchCancel: cancel,
-    onMouseDown: start,
-    onMouseMove: move,
-    onMouseUp: end,
-    onMouseLeave: cancel,
-  };
+      <!-- Skeleton for quick actions -->
+      <div class="popup-skeleton-actions">
+        <div class="popup-skeleton-action shimmer"></div>
+        <div class="popup-skeleton-action shimmer"></div>
+      </div>
+
+      <!-- Skeleton for section (lights/covers/etc) -->
+      <div class="popup-skeleton-section">
+        <div class="popup-skeleton-section-header">
+          <div class="popup-skeleton-icon shimmer"></div>
+          <div class="popup-skeleton-title shimmer"></div>
+          <div class="popup-skeleton-count shimmer"></div>
+        </div>
+        <div class="popup-skeleton-items">
+          <div class="popup-skeleton-item shimmer"></div>
+          <div class="popup-skeleton-item shimmer"></div>
+          <div class="popup-skeleton-item shimmer"></div>
+        </div>
+      </div>
+
+      <!-- Second skeleton section -->
+      <div class="popup-skeleton-section">
+        <div class="popup-skeleton-section-header">
+          <div class="popup-skeleton-icon shimmer"></div>
+          <div class="popup-skeleton-title shimmer"></div>
+          <div class="popup-skeleton-count shimmer"></div>
+        </div>
+        <div class="popup-skeleton-items">
+          <div class="popup-skeleton-item shimmer"></div>
+          <div class="popup-skeleton-item shimmer"></div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 /**
@@ -90,6 +94,7 @@ export function renderRoomPopup(component, html) {
   if (!component._popupRoom) return '';
 
   const areaId = component._popupRoom.area_id;
+  const isLoading = isRoomDataLoading(component, areaId);
 
   return html`
     <div class="popup-overlay" @click=${component._handlePopupOverlayClick}>
@@ -100,18 +105,20 @@ export function renderRoomPopup(component, html) {
           onClose: component._closeRoomPopup
         })}
 
-        ${renderChipsRow(component, html, areaId)}
-        ${renderQuickActions(component, html, areaId)}
-        ${renderClimateNotification(component, html, areaId)}
-        ${renderThermostatSection(component, html, areaId)}
-        ${renderTemperatureSection(component, html, areaId)}
-        ${renderLightSection(component, html, areaId)}
-        ${renderCoverSection(component, html, areaId)}
-        ${renderMediaSection(component, html, areaId)}
-        ${renderTVSection(component, html, areaId)}
-        ${renderLockSection(component, html, areaId)}
-        ${renderGarageSection(component, html, areaId)}
-        ${renderApplianceSection(component, html, areaId)}
+        ${isLoading ? renderRoomSkeleton(html) : html`
+          ${renderChipsRow(component, html, areaId)}
+          ${renderQuickActions(component, html, areaId)}
+          ${renderClimateNotification(component, html, areaId)}
+          ${renderThermostatSection(component, html, areaId)}
+          ${renderTemperatureSection(component, html, areaId)}
+          ${renderLightSection(component, html, areaId)}
+          ${renderCoverSection(component, html, areaId)}
+          ${renderMediaSection(component, html, areaId)}
+          ${renderTVSection(component, html, areaId)}
+          ${renderLockSection(component, html, areaId)}
+          ${renderGarageSection(component, html, areaId)}
+          ${renderApplianceSection(component, html, areaId)}
+        `}
 
         <div class="popup-content">
           <!-- Additional content placeholder -->

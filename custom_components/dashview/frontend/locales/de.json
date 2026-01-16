@@ -1,5 +1,6 @@
 {
   "common": {
+    "ready": "Fertig",
     "status": {
       "currently_are": "Aktuell sind",
       "open": "offen",
@@ -53,6 +54,9 @@
       "disabled": "Deaktiviert",
       "of": "von"
     }
+  },
+  "entityPicker": {
+    "noResults": "Keine passenden Entitäten gefunden"
   },
   "sensor": {
     "motion": {

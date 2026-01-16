@@ -95,3 +95,9 @@ export {
   createCancellableTimeout,
   TIMEOUT_DEFAULTS
 } from './timeout.js';
+
+// Error message utilities
+export {
+  mapPhotoError,
+  PHOTO_ERRORS
+} from './error-messages.js';

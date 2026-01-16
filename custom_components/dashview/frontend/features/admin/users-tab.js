@@ -6,7 +6,7 @@
 import { t, createSectionHelpers } from './shared.js';
 import { renderEmptyState } from '../../components/layout/empty-state.js';
 import { initI18n, getCurrentLang } from '../../utils/i18n.js';
-import { withTimeout, TIMEOUT_DEFAULTS } from '../../utils/index.js';
+import { withTimeout, TIMEOUT_DEFAULTS, mapPhotoError } from '../../utils/index.js';
 
 // Upload configuration (must match backend)
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
@@ -59,12 +59,9 @@ async function uploadPhoto(hass, file) {
     );
     return result;
   } catch (err) {
-    console.warn('[Dashview] Photo upload failed:', err.message);
-    // Provide user-friendly error messages for timeouts
-    const errorMessage = err.message.includes('timed out')
-      ? 'Upload timed out. Please try again.'
-      : err.message || 'Upload failed';
-    return { success: false, error: errorMessage };
+    // Use centralized error mapping for user-friendly messages
+    // Technical details are logged inside mapPhotoError
+    return { success: false, error: mapPhotoError(err) };
   }
 }
 
@@ -86,11 +83,9 @@ async function deletePhoto(hass, path) {
     );
     return result;
   } catch (err) {
-    console.warn('[Dashview] Photo delete failed:', err.message);
-    const errorMessage = err.message.includes('timed out')
-      ? 'Delete timed out. Please try again.'
-      : err.message || 'Delete failed';
-    return { success: false, error: errorMessage };
+    // Use centralized error mapping for user-friendly messages
+    // Technical details are logged inside mapPhotoError
+    return { success: false, error: mapPhotoError(err) };
   }
 }
 

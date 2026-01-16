@@ -3,6 +3,8 @@
  * Common utility functions used throughout the application
  */
 
+import { t } from './i18n.js';
+
 /**
  * Sort array by custom order
  * @param {Array} items - Items to sort
@@ -367,20 +369,23 @@ export function parseNumericState(state, defaultValue = null) {
  * Format remaining time from a finish time entity state
  * Consolidates duplicate washer/dishwasher/dryer time calculations
  * @param {string} finishTimeState - ISO date string of finish time
- * @param {string} [readyText='Fertig'] - Text to show when done
+ * @param {string} [readyText=null] - Text to show when done (uses i18n 'common.ready' if null)
  * @returns {string} Formatted remaining time or ready text
  */
-export function formatRemainingTime(finishTimeState, readyText = 'Fertig') {
+export function formatRemainingTime(finishTimeState, readyText = null) {
   if (!finishTimeState || finishTimeState === 'unknown' || finishTimeState === 'unavailable') {
     return '';
   }
+
+  // Preserve backwards compatibility: if caller provides readyText, use it
+  const finalReadyText = readyText ?? t('common.ready');
 
   try {
     const endTime = new Date(finishTimeState);
     const now = new Date();
 
     if (endTime <= now) {
-      return readyText;
+      return finalReadyText;
     }
 
     const diffMs = endTime - now;

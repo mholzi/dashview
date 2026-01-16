@@ -3,6 +3,8 @@
  * A search input with dropdown suggestions for selecting Home Assistant entities
  */
 
+import { t } from '../../utils/i18n.js';
+
 /**
  * Render an entity picker with search suggestions
  * @param {Function} html - lit-html template function
@@ -83,7 +85,7 @@ export function renderEntityPicker(html, {
       ${focused && searchQuery ? html`
         <div class="entity-picker-suggestions">
           ${suggestions.length === 0 ? html`
-            <div class="entity-picker-no-results">No matching entities found</div>
+            <div class="entity-picker-no-results">${t('entityPicker.noResults')}</div>
           ` : suggestions.map(entity => {
             const state = hass?.states[entity.entity_id];
             const icon = state?.attributes?.icon || getDefaultIcon(entity.entity_id);
