@@ -356,8 +356,9 @@ function getLightFillColor(light) {
  * @param {Object} component - DashviewPanel instance
  * @param {string} entityId - Light entity ID
  * @param {boolean} isDrag - Whether this is a drag move (not final)
+ * @param {number} [previousValue] - Previous brightness value for error recovery
  */
-function handleLightSliderInteraction(e, component, entityId, isDrag = false) {
+function handleLightSliderInteraction(e, component, entityId, isDrag = false, previousValue = null) {
   const sliderArea = e.currentTarget;
   const rect = sliderArea.getBoundingClientRect();
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -373,7 +374,19 @@ function handleLightSliderInteraction(e, component, entityId, isDrag = false) {
 
   // Only call service on final interaction (not during drag)
   if (!isDrag) {
-    component._setLightBrightness(entityId, percentage);
+    // Store previous value for error recovery
+    const restoreValue = previousValue !== null ? previousValue : percentage;
+
+    component._setLightBrightness(entityId, percentage, (error) => {
+      // On error, restore slider to previous state
+      if (fill) fill.style.width = `${restoreValue}%`;
+      if (label) label.textContent = `${restoreValue}%`;
+      // Add visual error feedback
+      if (item) {
+        item.classList.add('error');
+        setTimeout(() => item.classList.remove('error'), 2000);
+      }
+    });
   }
 
   return percentage;
@@ -443,12 +456,13 @@ function renderLightSection(component, html, areaId) {
                   <div class="popup-light-slider-area"
                        @click=${(e) => {
                          e.stopPropagation();
-                         handleLightSliderInteraction(e, component, light.entity_id);
+                         handleLightSliderInteraction(e, component, light.entity_id, false, brightness);
                        }}
                        @touchstart=${(e) => {
                          const item = e.currentTarget.closest('.popup-light-item');
                          item?.classList.add('dragging');
                          item._dragValue = null;
+                         item._previousValue = brightness;
                        }}
                        @touchmove=${(e) => {
                          e.preventDefault();
@@ -459,7 +473,16 @@ function renderLightSection(component, html, areaId) {
                          const item = e.currentTarget.closest('.popup-light-item');
                          item?.classList.remove('dragging');
                          if (item?._dragValue !== null && item?._dragValue !== undefined) {
-                           component._setLightBrightness(light.entity_id, item._dragValue);
+                           const fill = item?.querySelector('.popup-light-slider-fill');
+                           const label = item?.querySelector('.popup-light-item-label');
+                           const previousValue = item._previousValue || brightness;
+                           component._setLightBrightness(light.entity_id, item._dragValue, (error) => {
+                             // Restore on error
+                             if (fill) fill.style.width = `${previousValue}%`;
+                             if (label) label.textContent = `${previousValue}%`;
+                             item?.classList.add('error');
+                             setTimeout(() => item?.classList.remove('error'), 2000);
+                           });
                          }
                        }}
                        @mousedown=${(e) => {
@@ -469,6 +492,7 @@ function renderLightSection(component, html, areaId) {
                          const sliderArea = e.currentTarget;
                          item?.classList.add('dragging');
                          let dragValue = null;
+                         const previousValue = brightness;
 
                          const onMouseMove = (moveE) => {
                            const rect = sliderArea.getBoundingClientRect();
@@ -483,7 +507,15 @@ function renderLightSection(component, html, areaId) {
                          const onMouseUp = () => {
                            item?.classList.remove('dragging');
                            if (dragValue !== null) {
-                             component._setLightBrightness(light.entity_id, dragValue);
+                             const fill = item?.querySelector('.popup-light-slider-fill');
+                             const label = item?.querySelector('.popup-light-item-label');
+                             component._setLightBrightness(light.entity_id, dragValue, (error) => {
+                               // Restore on error
+                               if (fill) fill.style.width = `${previousValue}%`;
+                               if (label) label.textContent = `${previousValue}%`;
+                               item?.classList.add('error');
+                               setTimeout(() => item?.classList.remove('error'), 2000);
+                             });
                            }
                            document.removeEventListener('mousemove', onMouseMove);
                            document.removeEventListener('mouseup', onMouseUp);

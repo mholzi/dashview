@@ -597,6 +597,29 @@ if (typeof structuredClone === 'undefined') {
       }
     }
 
+    /**
+     * Dispatch a dashview-error event for centralized error handling
+     * @param {string} source - Error source identifier
+     * @param {string|null} entityId - Optional entity ID for context
+     * @param {Error} error - The error that occurred
+     */
+    _dispatchErrorEvent(source, entityId, error) {
+      document.dispatchEvent(new CustomEvent('dashview-error', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          source,
+          entityId,
+          error: {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+          },
+          timestamp: Date.now()
+        }
+      }));
+    }
+
     connectedCallback() {
       super.connectedCallback();
       this._updateTime();
@@ -622,6 +645,21 @@ if (typeof structuredClone === 'undefined') {
       if (registryStore) {
         this._unsubscribeRegistry = registryStore.subscribe(() => this.requestUpdate());
       }
+
+      // Centralized error event listener for debugging and monitoring
+      this._errorEventHandler = (e) => {
+        const { source, entityId, error, timestamp } = e.detail;
+        console.warn(`[Dashview Error] Source: ${source}`, {
+          entityId,
+          message: error?.message,
+          timestamp: new Date(timestamp).toISOString()
+        });
+        // Track recent errors for debugging (keep last 10)
+        if (!this._recentErrors) this._recentErrors = [];
+        this._recentErrors.unshift({ source, entityId, error, timestamp });
+        if (this._recentErrors.length > 10) this._recentErrors.pop();
+      };
+      document.addEventListener('dashview-error', this._errorEventHandler);
     }
 
     disconnectedCallback() {
@@ -634,6 +672,11 @@ if (typeof structuredClone === 'undefined') {
       }
       if (this._closeDropdownHandler) {
         document.removeEventListener('click', this._closeDropdownHandler);
+      }
+      // Remove error event listener
+      if (this._errorEventHandler) {
+        document.removeEventListener('dashview-error', this._errorEventHandler);
+        this._errorEventHandler = null;
       }
       // Unsubscribe from weather forecasts
       if (this._dailyForecastUnsubscribe) {
@@ -1679,12 +1722,22 @@ if (typeof structuredClone === 'undefined') {
 
     _toggleLight(entityId) {
       if (!this.hass) return;
-      this.hass.callService("light", "toggle", { entity_id: entityId });
+      try {
+        this.hass.callService("light", "toggle", { entity_id: entityId });
+      } catch (error) {
+        console.warn(`[Dashview] Light toggle error:`, error.message);
+        this._dispatchErrorEvent('light:toggle', entityId, error);
+      }
     }
 
     _toggleTV(entityId) {
       if (!this.hass) return;
-      this.hass.callService("media_player", "toggle", { entity_id: entityId });
+      try {
+        this.hass.callService("media_player", "toggle", { entity_id: entityId });
+      } catch (error) {
+        console.warn(`[Dashview] TV toggle error:`, error.message);
+        this._dispatchErrorEvent('tv:toggle', entityId, error);
+      }
     }
 
     _turnOffAllTVs() {
@@ -1700,17 +1753,27 @@ if (typeof structuredClone === 'undefined') {
 
     _setTVVolume(entityId, volume) {
       if (!this.hass) return;
-      this.hass.callService("media_player", "volume_set", {
-        entity_id: entityId,
-        volume_level: volume
-      });
+      try {
+        this.hass.callService("media_player", "volume_set", {
+          entity_id: entityId,
+          volume_level: volume
+        });
+      } catch (error) {
+        console.warn(`[Dashview] TV volume error:`, error.message);
+        this._dispatchErrorEvent('tv:volume', entityId, error);
+      }
     }
 
     _toggleLock(entityId) {
       if (!this.hass) return;
       const state = this.hass.states[entityId];
       const isLocked = state?.state === 'locked';
-      this.hass.callService("lock", isLocked ? "unlock" : "lock", { entity_id: entityId });
+      try {
+        this.hass.callService("lock", isLocked ? "unlock" : "lock", { entity_id: entityId });
+      } catch (error) {
+        console.warn(`[Dashview] Lock toggle error:`, error.message);
+        this._dispatchErrorEvent('lock:toggle', entityId, error);
+      }
     }
 
     // Generic toggle helper for enabled entity settings
@@ -2144,7 +2207,15 @@ if (typeof structuredClone === 'undefined') {
     _handleAllRoofWindowsSliderClick(e, areaId) { this._setAllRoofWindowsPosition(areaId, this._getInvertedSliderPosition(e)); }
 
     // Cover service helpers
-    _coverService(entityId, service, data = {}) { if (this.hass) this.hass.callService('cover', service, { entity_id: entityId, ...data }); }
+    _coverService(entityId, service, data = {}) {
+      if (!this.hass) return;
+      try {
+        this.hass.callService('cover', service, { entity_id: entityId, ...data });
+      } catch (error) {
+        console.warn(`[Dashview] Cover service error (${service}):`, error.message);
+        this._dispatchErrorEvent('cover-service', entityId, error);
+      }
+    }
     _openGarage(entityId) { this._coverService(entityId, 'open_cover'); }
     _closeGarage(entityId) { this._coverService(entityId, 'close_cover'); }
     _setCoverPosition(entityId, position) { this._coverService(entityId, 'set_cover_position', { position }); }
@@ -2179,10 +2250,15 @@ if (typeof structuredClone === 'undefined') {
     _toggleAllRoomLights(areaId, turnOn) {
       const lights = this._getEnabledLightsForRoom(areaId);
       lights.forEach(l => {
-        if (turnOn) {
-          dashviewUtils.turnOnLight(this.hass, l.entity_id);
-        } else {
-          dashviewUtils.turnOffLight(this.hass, l.entity_id);
+        try {
+          if (turnOn) {
+            dashviewUtils.turnOnLight(this.hass, l.entity_id);
+          } else {
+            dashviewUtils.turnOffLight(this.hass, l.entity_id);
+          }
+        } catch (error) {
+          console.warn(`[Dashview] Light toggle error:`, error.message);
+          this._dispatchErrorEvent('room-popup:toggleLights', l.entity_id, error);
         }
       });
     }
@@ -2204,10 +2280,15 @@ if (typeof structuredClone === 'undefined') {
 
     _setThermostatHvacMode(entityId, hvacMode) {
       if (!this.hass) return;
-      this.hass.callService('climate', 'set_hvac_mode', {
-        entity_id: entityId,
-        hvac_mode: hvacMode,
-      });
+      try {
+        this.hass.callService('climate', 'set_hvac_mode', {
+          entity_id: entityId,
+          hvac_mode: hvacMode,
+        });
+      } catch (error) {
+        console.warn(`[Dashview] Thermostat mode error:`, error.message);
+        this._dispatchErrorEvent('room-popup:thermostatMode', entityId, error);
+      }
     }
 
     _adjustThermostatTemp(entityId, delta) {
@@ -2219,10 +2300,15 @@ if (typeof structuredClone === 'undefined') {
       if (currentTarget === undefined) return;
 
       const newTemp = currentTarget + delta;
-      this.hass.callService('climate', 'set_temperature', {
-        entity_id: entityId,
-        temperature: newTemp,
-      });
+      try {
+        this.hass.callService('climate', 'set_temperature', {
+          entity_id: entityId,
+          temperature: newTemp,
+        });
+      } catch (error) {
+        console.warn(`[Dashview] Thermostat temp error:`, error.message);
+        this._dispatchErrorEvent('room-popup:thermostatTemp', entityId, error);
+      }
     }
 
     // Temperature history cache to avoid repeated API calls
@@ -2245,14 +2331,22 @@ if (typeof structuredClone === 'undefined') {
         const endTime = new Date();
         const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000);
 
-        const response = await this.hass.callWS({
-          type: 'history/history_during_period',
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          entity_ids: [entityId],
-          minimal_response: true,
-          no_attributes: true,
-        });
+        // Use timeout protection (20s for historical data)
+        const timeoutMs = coreUtils?.TIMEOUT_DEFAULTS?.HISTORY_FETCH || 20000;
+        const withTimeoutFn = coreUtils?.withTimeout || ((p) => p);
+
+        const response = await withTimeoutFn(
+          this.hass.callWS({
+            type: 'history/history_during_period',
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            entity_ids: [entityId],
+            minimal_response: true,
+            no_attributes: true,
+          }),
+          timeoutMs,
+          'Temperature history fetch'
+        );
 
         if (!response || !response[entityId]) return [];
 
@@ -2270,7 +2364,7 @@ if (typeof structuredClone === 'undefined') {
 
         return history;
       } catch (e) {
-        console.error('Dashview: Error fetching temperature history:', e);
+        console.warn('[Dashview] Error fetching temperature history:', e.message);
         return [];
       }
     }
@@ -2354,12 +2448,20 @@ if (typeof structuredClone === 'undefined') {
       return { title: t('ui.notifications.ventilate_room', 'Bitte Raum lüften'), subtitle: messages.join(' · ') };
     }
 
-    _setLightBrightness(entityId, brightnessPercent) {
-      if (!this.hass) return;
-      this.hass.callService('light', 'turn_on', {
-        entity_id: entityId,
-        brightness_pct: brightnessPercent,
-      });
+    async _setLightBrightness(entityId, brightnessPercent, onError = null) {
+      if (!this.hass) return false;
+      try {
+        await this.hass.callService('light', 'turn_on', {
+          entity_id: entityId,
+          brightness_pct: brightnessPercent,
+        });
+        return true;
+      } catch (error) {
+        console.warn(`[Dashview] Light brightness error:`, error.message);
+        this._dispatchErrorEvent('light-slider:brightness', entityId, error);
+        if (onError) onError(error);
+        return false;
+      }
     }
 
     _handleLightSliderClick(e, entityId) {
@@ -2633,14 +2735,22 @@ if (typeof structuredClone === 'undefined') {
         const startTime = new Date();
         startTime.setDate(startTime.getDate() - 7);
 
-        const history = await this.hass.callWS({
-          type: 'history/history_during_period',
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          entity_ids: [person.entityId],
-          minimal_response: true,
-          significant_changes_only: true,
-        });
+        // Use timeout protection (20s for historical data)
+        const timeoutMs = coreUtils?.TIMEOUT_DEFAULTS?.HISTORY_FETCH || 20000;
+        const withTimeoutFn = coreUtils?.withTimeout || ((p) => p);
+
+        const history = await withTimeoutFn(
+          this.hass.callWS({
+            type: 'history/history_during_period',
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            entity_ids: [person.entityId],
+            minimal_response: true,
+            significant_changes_only: true,
+          }),
+          timeoutMs,
+          'Presence history fetch'
+        );
 
         if (history && history[person.entityId]) {
           // Process history to get state changes

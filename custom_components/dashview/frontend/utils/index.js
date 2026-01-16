@@ -80,3 +80,18 @@ export {
   turnOnLight,
   turnOffLight,
 } from './helpers.js';
+
+// Error boundary utilities
+export {
+  safeHandler,
+  safeHandlerSync,
+  createSafeServiceCaller
+} from './error-boundary.js';
+
+// Timeout utilities
+export {
+  withTimeout,
+  withAbortableTimeout,
+  createCancellableTimeout,
+  TIMEOUT_DEFAULTS
+} from './timeout.js';

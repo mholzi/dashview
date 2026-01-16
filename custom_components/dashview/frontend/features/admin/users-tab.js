@@ -6,6 +6,7 @@
 import { t, createSectionHelpers } from './shared.js';
 import { renderEmptyState } from '../../components/layout/empty-state.js';
 import { initI18n, getCurrentLang } from '../../utils/i18n.js';
+import { withTimeout, TIMEOUT_DEFAULTS } from '../../utils/index.js';
 
 // Upload configuration (must match backend)
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
@@ -19,56 +20,77 @@ const SUPPORTED_LANGUAGES = [
 ];
 
 /**
- * Convert a file to base64 data URL
+ * Convert a file to base64 data URL with timeout protection
  * @param {File} file - The file to convert
  * @returns {Promise<string>} Base64 data URL
+ * @throws {Error} If file reading times out after 10 seconds
  */
 function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
+  const readPromise = new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
+    reader.onerror = (e) => reject(new Error(`File read error: ${e.target?.error?.message || 'Unknown error'}`));
     reader.readAsDataURL(file);
   });
+
+  return withTimeout(readPromise, TIMEOUT_DEFAULTS.FILE_READ, 'File reading');
 }
 
 /**
- * Upload a photo to the server
+ * Upload a photo to the server with timeout protection
  * @param {Object} hass - Home Assistant instance
  * @param {File} file - The file to upload
  * @returns {Promise<{success: boolean, path?: string, error?: string}>}
  */
 async function uploadPhoto(hass, file) {
   try {
+    // File reading has 10s timeout
     const base64Data = await fileToBase64(file);
-    const result = await hass.callWS({
-      type: 'dashview/upload_photo',
-      filename: file.name,
-      data: base64Data
-    });
+
+    // WebSocket upload has 30s timeout
+    const result = await withTimeout(
+      hass.callWS({
+        type: 'dashview/upload_photo',
+        filename: file.name,
+        data: base64Data
+      }),
+      TIMEOUT_DEFAULTS.PHOTO_UPLOAD,
+      'Photo upload'
+    );
     return result;
   } catch (err) {
-    console.error('Photo upload failed:', err);
-    return { success: false, error: err.message || 'Upload failed' };
+    console.warn('[Dashview] Photo upload failed:', err.message);
+    // Provide user-friendly error messages for timeouts
+    const errorMessage = err.message.includes('timed out')
+      ? 'Upload timed out. Please try again.'
+      : err.message || 'Upload failed';
+    return { success: false, error: errorMessage };
   }
 }
 
 /**
- * Delete a photo from the server
+ * Delete a photo from the server with timeout protection
  * @param {Object} hass - Home Assistant instance
  * @param {string} path - The photo path to delete
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 async function deletePhoto(hass, path) {
   try {
-    const result = await hass.callWS({
-      type: 'dashview/delete_photo',
-      path: path
-    });
+    const result = await withTimeout(
+      hass.callWS({
+        type: 'dashview/delete_photo',
+        path: path
+      }),
+      TIMEOUT_DEFAULTS.WS_CALL,
+      'Photo delete'
+    );
     return result;
   } catch (err) {
-    console.error('Photo delete failed:', err);
-    return { success: false, error: err.message || 'Delete failed' };
+    console.warn('[Dashview] Photo delete failed:', err.message);
+    const errorMessage = err.message.includes('timed out')
+      ? 'Delete timed out. Please try again.'
+      : err.message || 'Delete failed';
+    return { success: false, error: errorMessage };
   }
 }
 

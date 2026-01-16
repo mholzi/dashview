@@ -56,3 +56,11 @@ export {
   getRequestRegistry,
   createRequestRegistry,
 } from './request-registry.js';
+
+// Timeout utilities (re-export from utils)
+export {
+  withTimeout,
+  withAbortableTimeout,
+  createCancellableTimeout,
+  TIMEOUT_DEFAULTS,
+} from '../utils/timeout.js';
