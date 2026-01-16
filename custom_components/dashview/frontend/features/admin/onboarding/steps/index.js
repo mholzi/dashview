@@ -30,7 +30,26 @@ export {
   getEntitySelections
 } from './entities-step.js';
 
-// Layout & Weather Steps (Story 9.3 - to be implemented)
-// export { renderLayoutStep, layoutStepStyles } from './layout-step.js';
-// export { renderWeatherStep, weatherStepStyles } from './weather-step.js';
-// export { renderReviewStep, reviewStepStyles } from './review-step.js';
+// Layout Step (Story 9.3)
+export {
+  renderLayoutStep,
+  layoutStepStyles,
+  getFloorOrder,
+  saveFloorOrder
+} from './layout-step.js';
+
+// Weather Step (Story 9.3)
+export {
+  renderWeatherStep,
+  weatherStepStyles,
+  getWeatherEntities,
+  getWeatherSelection,
+  saveWeatherEntity
+} from './weather-step.js';
+
+// Review Step (Story 9.3)
+export {
+  renderReviewStep,
+  reviewStepStyles,
+  generateReviewSummary
+} from './review-step.js';

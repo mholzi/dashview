@@ -700,6 +700,44 @@
       "total": "Gesamt",
       "rooms": "Räume",
       "noResults": "Keine Geräte gefunden, die deiner Suche entsprechen."
+    },
+    "layout": {
+      "title": "Etagenkarten anordnen",
+      "desc": "Lege die Anzeigereihenfolge der Etagenkarten auf dem Dashboard fest.",
+      "noFloors": "Keine Etagen konfiguriert. Gehe zurück um Etagen hinzuzufügen.",
+      "room": "Raum",
+      "rooms": "Räume",
+      "preview": "Vorschau",
+      "hint": "Du kannst die Reihenfolge später im Admin-Bereich unter Layout ändern."
+    },
+    "weather": {
+      "title": "Wetteranzeige",
+      "desc": "Wähle ein Wetter-Gerät um Vorhersagen auf dem Dashboard anzuzeigen.",
+      "optional": "Optional - du kannst diesen Schritt überspringen",
+      "noWeather": "Kein Wetter auf dem Dashboard anzeigen",
+      "noEntities": "Keine Wetter-Geräte gefunden. Installiere eine Wetter-Integration in Home Assistant.",
+      "preview": "Vorschau"
+    },
+    "review": {
+      "title": "Einrichtung überprüfen",
+      "desc": "Hier ist eine Zusammenfassung deiner Konfiguration. Du kannst jeden Abschnitt vor dem Abschluss bearbeiten.",
+      "floors": "Etagen",
+      "floor": "Etage",
+      "floorsPlural": "Etagen",
+      "configured": "konfiguriert",
+      "rooms": "Räume",
+      "room": "Raum",
+      "roomsPlural": "Räume",
+      "assigned": "zugeordnet",
+      "entities": "Geräte",
+      "entity": "Gerät",
+      "entitiesPlural": "Geräte",
+      "selected": "ausgewählt",
+      "weather": "Wetter",
+      "noWeather": "Nicht konfiguriert (optional)",
+      "edit": "Bearbeiten",
+      "ready": "Alles bereit!",
+      "readyDesc": "Dein Dashboard ist konfiguriert und einsatzbereit."
     }
   }
 }

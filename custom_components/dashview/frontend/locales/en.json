@@ -700,6 +700,44 @@
       "total": "Total",
       "rooms": "Rooms",
       "noResults": "No entities found matching your search."
+    },
+    "layout": {
+      "title": "Arrange Floor Cards",
+      "desc": "Set the display order of your floor cards on the dashboard.",
+      "noFloors": "No floors configured. Go back to add floors.",
+      "room": "room",
+      "rooms": "rooms",
+      "preview": "Preview",
+      "hint": "You can change the order later in the Admin panel under Layout."
+    },
+    "weather": {
+      "title": "Weather Display",
+      "desc": "Choose a weather entity to display forecasts on your dashboard.",
+      "optional": "Optional - you can skip this step",
+      "noWeather": "Don't show weather on dashboard",
+      "noEntities": "No weather entities found. Install a weather integration in Home Assistant.",
+      "preview": "Preview"
+    },
+    "review": {
+      "title": "Review Your Setup",
+      "desc": "Here's a summary of your configuration. You can edit any section before finishing.",
+      "floors": "Floors",
+      "floor": "floor",
+      "floorsPlural": "floors",
+      "configured": "configured",
+      "rooms": "Rooms",
+      "room": "room",
+      "roomsPlural": "rooms",
+      "assigned": "assigned",
+      "entities": "Entities",
+      "entity": "entity",
+      "entitiesPlural": "entities",
+      "selected": "selected",
+      "weather": "Weather",
+      "noWeather": "Not configured (optional)",
+      "edit": "Edit",
+      "ready": "You're All Set!",
+      "readyDesc": "Your dashboard is configured and ready to use."
     }
   }
 }

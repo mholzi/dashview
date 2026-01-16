@@ -15,6 +15,9 @@ import { renderWelcomeStep } from './steps/welcome-step.js';
 import { renderFloorsStep } from './steps/floors-step.js';
 import { renderRoomsStep } from './steps/rooms-step.js';
 import { renderEntitiesStep, saveEntitySelections, getEntitySelections } from './steps/entities-step.js';
+import { renderLayoutStep, getFloorOrder, saveFloorOrder } from './steps/layout-step.js';
+import { renderWeatherStep, getWeatherSelection, saveWeatherEntity } from './steps/weather-step.js';
+import { renderReviewStep } from './steps/review-step.js';
 
 /**
  * Wizard styles
@@ -348,11 +351,17 @@ export function renderWizard(panel, html, options = {}) {
       panel.requestUpdate();
     },
     onNext: () => {
-      // Save entity selections when leaving entities step
+      const settingsStore = getSettingsStore();
+      // Save step data when leaving specific steps
       if (currentStepName === 'entities') {
         const selections = getEntitySelections(panel);
-        const settingsStore = getSettingsStore();
         saveEntitySelections(selections, settingsStore, panel);
+      } else if (currentStepName === 'layout') {
+        const floorOrder = getFloorOrder(panel);
+        saveFloorOrder(floorOrder, settingsStore);
+      } else if (currentStepName === 'weather') {
+        const weatherEntity = getWeatherSelection(panel);
+        saveWeatherEntity(weatherEntity, settingsStore);
       }
       store.nextStep();
       panel.requestUpdate();
@@ -362,11 +371,17 @@ export function renderWizard(panel, html, options = {}) {
       panel.requestUpdate();
     },
     onComplete: () => {
-      // Save entity selections if completing from entities step
+      const settingsStore = getSettingsStore();
+      // Save current step data before completing
       if (currentStepName === 'entities') {
         const selections = getEntitySelections(panel);
-        const settingsStore = getSettingsStore();
         saveEntitySelections(selections, settingsStore, panel);
+      } else if (currentStepName === 'layout') {
+        const floorOrder = getFloorOrder(panel);
+        saveFloorOrder(floorOrder, settingsStore);
+      } else if (currentStepName === 'weather') {
+        const weatherEntity = getWeatherSelection(panel);
+        saveWeatherEntity(weatherEntity, settingsStore);
       }
       store.completeWizard();
       if (options.onComplete) {
@@ -388,11 +403,11 @@ export function renderWizard(panel, html, options = {}) {
       case 'entities':
         return options.renderEntities || renderEntitiesStep;
       case 'layout':
-        return options.renderLayout || ((p, h) => renderStepContent(p, h, 'layout'));
+        return options.renderLayout || renderLayoutStep;
       case 'weather':
-        return options.renderWeather || ((p, h) => renderStepContent(p, h, 'weather'));
+        return options.renderWeather || renderWeatherStep;
       case 'review':
-        return options.renderReview || ((p, h) => renderStepContent(p, h, 'review'));
+        return options.renderReview || renderReviewStep;
       default:
         return (p, h) => renderStepContent(p, h, currentStepName);
     }
