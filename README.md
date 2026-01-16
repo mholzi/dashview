@@ -165,6 +165,7 @@ Know the state of your home instantly.
 |---------|--------------|
 | **Windows** | All open windows with time since opened |
 | **Motion** | Recent activity throughout your home |
+| **Water Leak** | Immediate alerts when moisture is detected |
 | **Smoke Detectors** | Instant alerts if triggered |
 | **Garage Doors** | Open/closed status at a glance |
 
@@ -285,6 +286,7 @@ Go to **Settings** → **Labels** and create labels for your device types:
 | `Covers` | Blinds, shutters, curtains |
 | `Windows` | Window contact sensors |
 | `Motion` | Motion/presence sensors |
+| `Water Leak` | Water leak/moisture sensors |
 | `Smoke` | Smoke/fire detectors |
 | `Media` | Speakers, TVs |
 | `Garage` | Garage door controls |
@@ -321,7 +323,7 @@ Dashview works with any Home Assistant entity in these domains:
 | `light` | Brightness, color, temperature |
 | `climate` | Temperature control, modes |
 | `cover` | Position, tilt, open/close |
-| `binary_sensor` | Windows, motion, smoke |
+| `binary_sensor` | Windows, motion, moisture, smoke |
 | `sensor` | Temperature, humidity, battery |
 | `media_player` | Playback, volume, queue |
 | `switch` | On/off control |
