@@ -70,3 +70,12 @@ export {
   DWD_WARNING_LABELS,
   DWD_WARNING_ICONS,
 } from './weather-service.js';
+
+// Error Mapper Service
+export {
+  ERROR_TYPES,
+  detectErrorType,
+  mapError,
+  getErrorDetails,
+  isRecoverableError,
+} from './error-mapper.js';

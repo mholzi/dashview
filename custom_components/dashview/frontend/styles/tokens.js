@@ -66,12 +66,14 @@ export const OVERLAY = {
 };
 
 // Z-index scale
+// Hierarchy designed to allow HA more-info dialog (z-index ~1000) to appear above Dashview popups
+// Base content: 1-99, Dashview popups/modals: 100-199, Overlays/tooltips: 200-299, HA more-info: 1000+
 export const Z_INDEX = {
-  dropdown: 100,
-  sticky: 500,
-  modal: 1000,
-  popup: 9000,
-  tooltip: 9500,
+  dropdown: 50,
+  sticky: 75,
+  popup: 100,
+  modal: 150,
+  tooltip: 200,
   coach: 10000,
   max: 10001,
 };

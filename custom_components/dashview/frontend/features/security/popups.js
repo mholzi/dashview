@@ -12,6 +12,7 @@ import {
   formatLastChanged
 } from '../../utils/index.js';
 import { t } from '../../utils/i18n.js';
+import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
 
 export function renderSecurityPopupContent(component, html) {
   if (!component.hass) return html``;
@@ -250,73 +251,6 @@ export function renderSecurityPopupContent(component, html) {
       `}
     ` : ''}
   `;
-}
-
-
-// Long press duration in ms (matches room-popup)
-const LONG_PRESS_DURATION = 500;
-
-/**
- * Create long press handlers for an element
- */
-function createLongPressHandlers(onTap, onLongPress) {
-  let pressTimer = null;
-  let isLongPress = false;
-  let startX = 0;
-  let startY = 0;
-
-  const start = (e) => {
-    isLongPress = false;
-    const touch = e.touches?.[0] || e;
-    startX = touch.clientX;
-    startY = touch.clientY;
-    pressTimer = setTimeout(() => {
-      isLongPress = true;
-      onLongPress();
-    }, LONG_PRESS_DURATION);
-  };
-
-  const move = (e) => {
-    if (!pressTimer) return;
-    const touch = e.touches?.[0] || e;
-    const dx = Math.abs(touch.clientX - startX);
-    const dy = Math.abs(touch.clientY - startY);
-    if (dx > 10 || dy > 10) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-  };
-
-  const end = (e) => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-      if (!isLongPress) {
-        onTap();
-      }
-    }
-    if (isLongPress) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  };
-
-  const cancel = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-  };
-
-  return {
-    onTouchStart: start,
-    onTouchMove: move,
-    onTouchEnd: end,
-    onTouchCancel: cancel,
-    onMouseDown: start,
-    onMouseUp: end,
-    onMouseLeave: cancel,
-  };
 }
 
 /**

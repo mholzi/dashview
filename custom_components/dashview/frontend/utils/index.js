@@ -101,3 +101,13 @@ export {
   mapPhotoError,
   PHOTO_ERRORS
 } from './error-messages.js';
+
+// Schema validation utilities
+export {
+  SETTINGS_SCHEMA,
+  isValidType,
+  isInRange,
+  validateSetting,
+  validateSettings,
+  validateSettingsUpdate
+} from './schema-validator.js';

@@ -7,6 +7,7 @@
  */
 
 import { THRESHOLDS, debugLog } from '../constants/index.js';
+import { validateSettings, validateSettingsUpdate } from '../utils/schema-validator.js';
 
 /**
  * @typedef {Object} EnabledEntityMap
@@ -316,11 +317,19 @@ export class SettingsStore {
 
   /**
    * Update multiple settings at once
+   * Validates updates against schema before applying
    * @param {Object} updates - Object with key-value pairs to update
    * @param {boolean} [save=true] - Whether to save immediately
    */
   update(updates, save = true) {
-    Object.entries(updates).forEach(([key, value]) => {
+    // Validate updates against schema
+    const { updates: validatedUpdates, warnings } = validateSettingsUpdate(updates);
+
+    if (warnings.length > 0) {
+      debugLog('settings', `Validation warnings: ${warnings.join(', ')}`);
+    }
+
+    Object.entries(validatedUpdates).forEach(([key, value]) => {
       this._settings[key] = value;
       this._notifyListeners(key, value);
     });
@@ -376,19 +385,26 @@ export class SettingsStore {
     try {
       const result = await this._hass.callWS({ type: 'dashview/get_settings' });
 
-      // Merge loaded settings with defaults
+      // Validate loaded settings against schema
+      const { settings: validatedSettings, warnings } = validateSettings(result);
+
+      if (warnings.length > 0) {
+        debugLog('settings', `Loaded settings had ${warnings.length} validation warnings`);
+      }
+
+      // Merge validated settings with defaults (deep merge nested objects)
       this._settings = {
         ...DEFAULT_SETTINGS,
-        ...result,
+        ...validatedSettings,
         // Deep merge infoTextConfig
         infoTextConfig: {
           ...DEFAULT_SETTINGS.infoTextConfig,
-          ...(result.infoTextConfig || {}),
+          ...(validatedSettings.infoTextConfig || {}),
         },
         // Deep merge categoryLabels (preserving null values from saved settings)
         categoryLabels: {
           ...DEFAULT_SETTINGS.categoryLabels,
-          ...(result.categoryLabels || {}),
+          ...(validatedSettings.categoryLabels || {}),
         },
       };
 

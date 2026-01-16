@@ -40,7 +40,7 @@ function isRoomDataLoading(component, areaId) {
  */
 function renderRoomSkeleton(html) {
   return html`
-    <div class="popup-skeleton">
+    <div class="popup-skeleton" role="status" aria-busy="true" aria-label="Loading room data">
       <!-- Skeleton for chips row -->
       <div class="popup-skeleton-chips">
         <div class="popup-skeleton-chip shimmer"></div>
