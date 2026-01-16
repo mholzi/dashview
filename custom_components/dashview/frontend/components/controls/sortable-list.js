@@ -54,18 +54,32 @@ export class SortableList extends HTMLElement {
     this._handleSelector = '.sortable-handle';
     this._disabled = false;
     this._initialized = false;
+    this._rafId = null;        // Store RAF ID for cleanup
+    this._initPending = false; // Guard against duplicate initialization
   }
 
   connectedCallback() {
+    // Guard: skip if already pending or initialized
+    if (this._initPending || this._initialized) return;
+
+    this._initPending = true;
     // Wait for children to render before initializing
     // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
+    this._rafId = requestAnimationFrame(() => {
+      this._rafId = null;
+      this._initPending = false;
       this._initSortable();
       this._initialized = true;
     });
   }
 
   disconnectedCallback() {
+    // Cancel pending RAF if component unmounts quickly
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+    this._initPending = false;
     this._destroySortable();
     this._initialized = false;
   }
@@ -136,6 +150,12 @@ export class SortableList extends HTMLElement {
    */
   _reinitialize() {
     if (this.isConnected) {
+      // Cancel any pending RAF to avoid double initialization
+      if (this._rafId !== null) {
+        cancelAnimationFrame(this._rafId);
+        this._rafId = null;
+        this._initPending = false;
+      }
       this._initSortable();
     }
   }

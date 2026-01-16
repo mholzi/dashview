@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 /**
- * Unit tests for Story 7.1: Sortable List Component
- * Tests the reusable drag-and-drop sortable list wrapper using SortableJS
+ * Unit tests for Sortable List Component
+ * - Story 7.1: Core sortable list functionality
+ * - Story 7.6: RAF cleanup and initialization guard
  */
 
 // Mock SortableJS (local vendor copy)
@@ -21,7 +22,7 @@ vi.mock('../../vendor/sortable.core.esm.js', () => ({
   }
 }));
 
-describe('Story 7.1: Sortable List Component', () => {
+describe('SortableList Component', () => {
   let container;
 
   beforeEach(() => {
@@ -439,6 +440,223 @@ describe('Story 7.1: Sortable List Component', () => {
       // Touch start threshold of 3px prevents accidental drags on scroll
       const spec = { touchStartThreshold: 3 };
       expect(spec.touchStartThreshold).toBe(3);
+    });
+  });
+
+  describe('RAF Cleanup (Story 7.6)', () => {
+    it('should store RAF ID when requestAnimationFrame is called (AC1)', async () => {
+      await import('./sortable-list.js');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // RAF ID should be stored immediately after connectedCallback
+      expect(element._rafId).not.toBeNull();
+    });
+
+    it('should clear RAF ID after callback executes (AC1)', async () => {
+      await import('./sortable-list.js');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // Wait for RAF to execute
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      // RAF ID should be cleared after execution
+      expect(element._rafId).toBeNull();
+    });
+
+    it('should cancel RAF in disconnectedCallback if pending (AC2)', async () => {
+      await import('./sortable-list.js');
+
+      const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // Get the RAF ID before disconnecting
+      const rafId = element._rafId;
+      expect(rafId).not.toBeNull();
+
+      // Disconnect immediately before RAF executes
+      container.removeChild(element);
+
+      // cancelAnimationFrame should have been called
+      expect(cancelSpy).toHaveBeenCalledWith(rafId);
+      expect(element._rafId).toBeNull();
+
+      cancelSpy.mockRestore();
+    });
+
+    it('should not execute stale callbacks on disconnected components (AC4)', async () => {
+      const Sortable = (await import('../../vendor/sortable.core.esm.js')).default;
+      const createCallsBefore = Sortable.create.mock.calls.length;
+
+      await import('./sortable-list.js');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // Disconnect immediately
+      container.removeChild(element);
+
+      // Wait for RAF timing to pass
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      // Sortable.create should NOT have been called for this disconnected component
+      expect(Sortable.create.mock.calls.length).toBe(createCallsBefore);
+    });
+  });
+
+  describe('Initialization Guard (Story 7.6)', () => {
+    it('should have _rafId property initialized to null', async () => {
+      const { SortableList } = await import('./sortable-list.js');
+      const element = new SortableList();
+
+      expect(element._rafId).toBeNull();
+    });
+
+    it('should have _initPending property initialized to false (AC3)', async () => {
+      const { SortableList } = await import('./sortable-list.js');
+      const element = new SortableList();
+
+      expect(element._initPending).toBe(false);
+    });
+
+    it('should set _initPending true before RAF call (AC3)', async () => {
+      await import('./sortable-list.js');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // _initPending should be true immediately after connection
+      expect(element._initPending).toBe(true);
+    });
+
+    it('should set _initPending false after RAF executes (AC3)', async () => {
+      await import('./sortable-list.js');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // Wait for RAF
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      expect(element._initPending).toBe(false);
+    });
+
+    it('should skip RAF if _initPending is true (AC3, AC6)', async () => {
+      await import('./sortable-list.js');
+
+      const rafSpy = vi.spyOn(window, 'requestAnimationFrame');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      const firstRafCallCount = rafSpy.mock.calls.length;
+
+      // Simulate rapid remount by calling connectedCallback again while pending
+      element.connectedCallback();
+
+      // Should NOT have called RAF again
+      expect(rafSpy.mock.calls.length).toBe(firstRafCallCount);
+
+      rafSpy.mockRestore();
+    });
+
+    it('should skip RAF if _initialized is true (AC3, AC6)', async () => {
+      await import('./sortable-list.js');
+
+      const rafSpy = vi.spyOn(window, 'requestAnimationFrame');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // Wait for initialization
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      const initializedRafCallCount = rafSpy.mock.calls.length;
+
+      // Simulate calling connectedCallback again after initialized
+      element.connectedCallback();
+
+      // Should NOT have called RAF again
+      expect(rafSpy.mock.calls.length).toBe(initializedRafCallCount);
+
+      rafSpy.mockRestore();
+    });
+
+    it('should handle rapid mount/unmount cycles without errors (AC6)', async () => {
+      await import('./sortable-list.js');
+
+      // Rapid mount/unmount 5 times
+      for (let i = 0; i < 5; i++) {
+        const element = document.createElement('sortable-list');
+        container.appendChild(element);
+        container.removeChild(element);
+      }
+
+      // Wait for all potential RAF callbacks
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      // Should complete without throwing
+      expect(true).toBe(true);
+    });
+
+    it('should not cause duplicate initialization on rapid remount (AC6)', async () => {
+      const Sortable = (await import('../../vendor/sortable.core.esm.js')).default;
+      const callsBefore = Sortable.create.mock.calls.length;
+
+      await import('./sortable-list.js');
+
+      const element = document.createElement('sortable-list');
+
+      // Mount
+      container.appendChild(element);
+      // Wait for RAF
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      const callsAfterFirst = Sortable.create.mock.calls.length;
+      expect(callsAfterFirst).toBe(callsBefore + 1);
+
+      // Unmount and immediately remount
+      container.removeChild(element);
+      container.appendChild(element);
+
+      // Wait for RAF
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      // Should have been called exactly twice (once per mount)
+      expect(Sortable.create.mock.calls.length).toBe(callsBefore + 2);
+    });
+
+    it('should cancel pending RAF when refresh() is called', async () => {
+      const Sortable = (await import('../../vendor/sortable.core.esm.js')).default;
+      const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame');
+
+      await import('./sortable-list.js');
+
+      const element = document.createElement('sortable-list');
+      container.appendChild(element);
+
+      // RAF is pending now
+      const rafId = element._rafId;
+      expect(rafId).not.toBeNull();
+
+      // Call refresh while RAF is pending
+      element.refresh();
+
+      // Should have cancelled the pending RAF
+      expect(cancelSpy).toHaveBeenCalledWith(rafId);
+      expect(element._rafId).toBeNull();
+      expect(element._initPending).toBe(false);
+
+      // Sortable should be initialized via refresh (not RAF)
+      expect(Sortable.create).toHaveBeenCalled();
+
+      cancelSpy.mockRestore();
     });
   });
 
