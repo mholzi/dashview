@@ -4,9 +4,11 @@
  */
 
 import { calculateTimeDifference } from './helpers.js';
+import { t } from './i18n.js';
 
 /**
  * Format garage last changed time for display
+ * Uses i18n for localized output
  * @param {string} lastChanged - ISO date string of last change
  * @returns {string} Formatted relative time string
  */
@@ -19,19 +21,21 @@ export function formatGarageLastChanged(lastChanged) {
   const diff = now - last;
   const { days, hours, minutes } = calculateTimeDifference(diff);
 
-  if (days >= 2) return `${days} days ago`;
-  if (days >= 1) return `Yesterday`;
-  if (hours >= 1) return `${hours}h ago`;
-  return `${minutes}m ago`;
+  if (days >= 2) return t('time.days_ago', { count: days }, `${days} days ago`);
+  if (days >= 1) return t('time.yesterday', 'Yesterday');
+  if (hours >= 1) return t('time.hours_ago', { count: hours }, `${hours}h ago`);
+  return t('time.minutes_ago', { count: minutes }, `${minutes}m ago`);
 }
 
 /**
- * Format date in German locale
+ * Format date in user's locale
  * @returns {string} Formatted date string
  */
 export function formatDate() {
   const now = new Date();
-  return now.toLocaleDateString("de-DE", {
+  // Use the browser's locale for date formatting
+  const locale = navigator.language || 'en-US';
+  return now.toLocaleDateString(locale, {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -41,6 +45,7 @@ export function formatDate() {
 
 /**
  * Format last changed time for display
+ * Uses i18n for localized output
  * @param {string} lastChanged - ISO date string
  * @returns {string} Formatted relative time
  */
@@ -59,10 +64,33 @@ export function formatLastChanged(lastChanged) {
 
   if (isNaN(minutes)) return "";
 
-  if (days >= 2) return `${days} days ago`;
-  if (days >= 1) return `Yesterday`;
-  if (hours >= 1) return `${hours}h ago`;
-  return `${minutes}m ago`;
+  // Use i18n for localized time strings
+  if (days >= 2) return t('time.days_ago', { count: days }, `${days} days ago`);
+  if (days >= 1) return t('time.yesterday', 'Yesterday');
+  if (hours >= 1) return t('time.hours_ago', { count: hours }, `${hours}h ago`);
+  if (minutes < 1) return t('time.just_now', 'Just now');
+  return t('time.minutes_ago', { count: minutes }, `${minutes}m ago`);
+}
+
+/**
+ * Format absolute timestamp for tooltip display
+ * @param {string} lastChanged - ISO date string
+ * @returns {string} Formatted absolute time (e.g., "Jan 15, 2026 at 14:32")
+ */
+export function formatAbsoluteTime(lastChanged) {
+  if (!lastChanged) return "";
+
+  const date = new Date(lastChanged);
+  if (isNaN(date.getTime())) return "";
+
+  const locale = navigator.language || 'en-US';
+  return date.toLocaleString(locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 /**

@@ -21,6 +21,7 @@ export {
   formatGarageLastChanged,
   formatDate,
   formatLastChanged,
+  formatAbsoluteTime,
   parseGarbageState
 } from './formatters.js';
 
@@ -111,3 +112,10 @@ export {
   validateSettings,
   validateSettingsUpdate
 } from './schema-validator.js';
+
+// Gesture handler utilities
+export {
+  createGestureHandler,
+  GESTURE_STATE,
+  GESTURE_DEFAULTS
+} from './gesture-handler.js';
