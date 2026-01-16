@@ -51,6 +51,16 @@ export {
   DEFAULT_REGISTRY,
 } from './registry-store.js';
 
+// Onboarding Store - wizard state management
+export {
+  OnboardingStore,
+  getOnboardingStore,
+  resetOnboardingStore,
+  WIZARD_STEPS,
+  SKIPPABLE_STEPS,
+  DEFAULT_ONBOARDING_STATE,
+} from './onboarding-store.js';
+
 /**
  * Initialize all stores with Home Assistant instance
  * @param {Object} hass - Home Assistant instance

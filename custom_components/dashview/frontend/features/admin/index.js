@@ -41,6 +41,17 @@ export { renderScenesTab } from './scenes-tab.js';
 // Users tab exports
 export { renderUsersTab } from './users-tab.js';
 
+// Onboarding/Setup Wizard exports
+export {
+  renderWizard,
+  shouldShowWizard,
+  resetWizard,
+  wizardStyles,
+  renderWelcomeStep,
+  renderFloorsStep,
+  renderRoomsStep
+} from './onboarding/index.js';
+
 // Local imports for renderAdminTab
 import {
   t,

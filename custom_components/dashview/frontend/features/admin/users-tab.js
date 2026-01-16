@@ -7,6 +7,7 @@ import { t, createSectionHelpers } from './shared.js';
 import { renderEmptyState } from '../../components/layout/empty-state.js';
 import { initI18n, getCurrentLang } from '../../utils/i18n.js';
 import { withTimeout, TIMEOUT_DEFAULTS, mapPhotoError } from '../../utils/index.js';
+import { getOnboardingStore } from '../../stores/index.js';
 
 // Upload configuration (must match backend)
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
@@ -515,6 +516,51 @@ export function renderUsersTab(panel, html) {
           title: t('admin.users.noUsers'),
           description: t('admin.users.noUsersHint', 'Add person entities in Home Assistant to configure their photos.')
         })}
+      </div>
+    </div>
+
+    <!-- Setup Wizard Section -->
+    <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px; margin-bottom: 16px;">
+      <div class="card-config-section-header" @click=${() => toggleSection('setupWizard')}>
+        <div class="card-config-section-title">
+          <ha-icon icon="mdi:wizard-hat"></ha-icon>
+          ${t('admin.users.setupWizard', 'Setup Wizard')}
+        </div>
+        <ha-icon
+          class="card-config-section-chevron ${isExpanded('setupWizard') ? 'expanded' : ''}"
+          icon="mdi:chevron-down"
+        ></ha-icon>
+      </div>
+      <div class="card-config-section-content ${isExpanded('setupWizard') ? 'expanded' : ''}">
+        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+          ${t('admin.users.setupWizardDesc', 'Re-run the guided setup wizard to reconfigure Dashview from scratch.')}
+        </p>
+        <button
+          @click=${() => {
+            const store = getOnboardingStore();
+            store.reset();
+            // Navigate to show wizard
+            panel._showSetupWizard = true;
+            panel.requestUpdate();
+          }}
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--dv-gray100);
+            border: 1px solid var(--dv-gray300);
+            border-radius: 8px;
+            color: var(--dv-gray700);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          "
+        >
+          <ha-icon icon="mdi:restart" style="--mdc-icon-size: 20px;"></ha-icon>
+          ${t('admin.users.rerunWizard', 'Re-run Setup Wizard')}
+        </button>
       </div>
     </div>
 

@@ -464,7 +464,10 @@
       "uploadPhoto": "Upload",
       "changePhoto": "Change",
       "removePhoto": "Remove",
-      "uploadSuccess": "Photo uploaded!"
+      "uploadSuccess": "Photo uploaded!",
+      "setupWizard": "Setup Wizard",
+      "setupWizardDesc": "Re-run the guided setup wizard to reconfigure Dashview from scratch.",
+      "rerunWizard": "Re-run Setup Wizard"
     },
     "confirmation": {
       "deleteScene": "Delete Scene Button",
@@ -626,6 +629,57 @@
       "short_tap": "Short tap still toggles the light",
       "settings_reload": "Settings are no longer overwritten on reload",
       "tv_display": "TV section in room popup is displayed correctly"
+    }
+  },
+  "onboarding": {
+    "title": "Setup Wizard",
+    "subtitle": "Let's get Dashview configured for your home",
+    "step": "Step",
+    "complete": "complete",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip",
+    "finish": "Finish Setup",
+    "stepPlaceholder": "Step content will be implemented here.",
+    "steps": {
+      "welcome": "Welcome",
+      "floors": "Floors",
+      "rooms": "Rooms",
+      "entities": "Entities",
+      "layout": "Layout",
+      "weather": "Weather",
+      "review": "Review"
+    },
+    "welcome": {
+      "title": "Welcome to Dashview!",
+      "subtitle": "Your new smart home dashboard for Home Assistant. Let's set it up together.",
+      "feature1Title": "Beautiful Dashboard",
+      "feature1Desc": "A clean, intuitive dashboard designed for touch screens and wall tablets.",
+      "feature2Title": "Floor Organization",
+      "feature2Desc": "Organize your rooms by floor for easy navigation throughout your home.",
+      "feature3Title": "Quick Controls",
+      "feature3Desc": "Control lights, covers, and devices with simple taps and swipes.",
+      "feature4Title": "Weather Integration",
+      "feature4Desc": "See current weather and forecasts right on your dashboard.",
+      "ctaText": "Click \"Next\" to start configuring your dashboard"
+    },
+    "floors": {
+      "title": "Organize Your Floors",
+      "desc": "Arrange the order of your floors. Drag to reorder or use the arrow buttons.",
+      "empty": "No floors found in Home Assistant. Create floors in Settings → Areas & Zones → Floors.",
+      "rooms": "rooms",
+      "minRequired": "At least one floor is required to continue.",
+      "hint": "Tip: Create floors in Home Assistant under Settings → Areas & Zones → Floors"
+    },
+    "rooms": {
+      "title": "Assign Rooms to Floors",
+      "desc": "Assign each room (area) to a floor. Use the dropdown to change assignments.",
+      "empty": "No areas found in Home Assistant. Create areas in Settings → Areas & Zones.",
+      "unassigned": "Unassigned",
+      "unassignedFloor": "Unassigned Rooms",
+      "rooms": "rooms",
+      "noRooms": "No rooms assigned to this floor",
+      "hint": "Tip: You can also manage areas in Home Assistant under Settings → Areas & Zones"
     }
   }
 }

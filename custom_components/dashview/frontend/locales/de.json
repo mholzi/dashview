@@ -464,7 +464,10 @@
       "uploadPhoto": "Hochladen",
       "changePhoto": "Ändern",
       "removePhoto": "Entfernen",
-      "uploadSuccess": "Foto hochgeladen!"
+      "uploadSuccess": "Foto hochgeladen!",
+      "setupWizard": "Einrichtungsassistent",
+      "setupWizardDesc": "Führe den Einrichtungsassistenten erneut aus, um Dashview neu zu konfigurieren.",
+      "rerunWizard": "Einrichtung wiederholen"
     },
     "confirmation": {
       "deleteScene": "Szenen-Button löschen",
@@ -626,6 +629,57 @@
       "short_tap": "Kurzes Tippen schaltet Licht weiterhin um",
       "settings_reload": "Einstellungen werden beim Neuladen nicht mehr überschrieben",
       "tv_display": "TV-Bereich im Raum-Popup wird korrekt angezeigt"
+    }
+  },
+  "onboarding": {
+    "title": "Einrichtungsassistent",
+    "subtitle": "Lass uns Dashview für dein Zuhause einrichten",
+    "step": "Schritt",
+    "complete": "abgeschlossen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "skip": "Überspringen",
+    "finish": "Einrichtung abschließen",
+    "stepPlaceholder": "Schritt-Inhalt wird hier implementiert.",
+    "steps": {
+      "welcome": "Willkommen",
+      "floors": "Etagen",
+      "rooms": "Räume",
+      "entities": "Geräte",
+      "layout": "Layout",
+      "weather": "Wetter",
+      "review": "Überprüfung"
+    },
+    "welcome": {
+      "title": "Willkommen bei Dashview!",
+      "subtitle": "Dein neues Smart-Home-Dashboard für Home Assistant. Lass es uns gemeinsam einrichten.",
+      "feature1Title": "Schönes Dashboard",
+      "feature1Desc": "Ein übersichtliches Dashboard für Touchscreens und Wandtablets.",
+      "feature2Title": "Etagen-Organisation",
+      "feature2Desc": "Organisiere deine Räume nach Etagen für einfache Navigation.",
+      "feature3Title": "Schnelle Steuerung",
+      "feature3Desc": "Steuere Lichter, Rollläden und Geräte mit einfachen Taps.",
+      "feature4Title": "Wetter-Integration",
+      "feature4Desc": "Sieh aktuelles Wetter und Vorhersagen direkt auf dem Dashboard.",
+      "ctaText": "Klicke \"Weiter\" um mit der Konfiguration zu beginnen"
+    },
+    "floors": {
+      "title": "Etagen organisieren",
+      "desc": "Ordne die Reihenfolge deiner Etagen. Verwende die Pfeile zum Sortieren.",
+      "empty": "Keine Etagen in Home Assistant gefunden. Erstelle Etagen unter Einstellungen → Bereiche & Zonen → Etagen.",
+      "rooms": "Räume",
+      "minRequired": "Mindestens eine Etage wird benötigt um fortzufahren.",
+      "hint": "Tipp: Erstelle Etagen in Home Assistant unter Einstellungen → Bereiche & Zonen → Etagen"
+    },
+    "rooms": {
+      "title": "Räume zu Etagen zuordnen",
+      "desc": "Ordne jeden Raum (Bereich) einer Etage zu. Nutze das Dropdown zur Änderung.",
+      "empty": "Keine Bereiche in Home Assistant gefunden. Erstelle Bereiche unter Einstellungen → Bereiche & Zonen.",
+      "unassigned": "Nicht zugeordnet",
+      "unassignedFloor": "Nicht zugeordnete Räume",
+      "rooms": "Räume",
+      "noRooms": "Keine Räume dieser Etage zugeordnet",
+      "hint": "Tipp: Du kannst Bereiche auch in Home Assistant unter Einstellungen → Bereiche & Zonen verwalten"
     }
   }
 }
