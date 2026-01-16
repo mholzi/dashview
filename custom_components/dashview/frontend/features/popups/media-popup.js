@@ -182,7 +182,9 @@ function renderMediaPlayer(component, html, player) {
 
   const isPlaying = state.state === 'playing';
   const isPaused = state.state === 'paused';
-  const isActive = isPlaying || isPaused;
+  const isOff = state.state === 'off' || state.state === 'unavailable';
+  // Show full player for all states except off/unavailable (allows starting playback from idle/standby)
+  const showControls = !isOff;
   const volumePercent = state.attributes?.volume_level !== undefined
     ? Math.round(state.attributes.volume_level * 100)
     : 0;
@@ -192,8 +194,8 @@ function renderMediaPlayer(component, html, player) {
       <!-- Playlist Quick Select Buttons -->
       ${renderPlaylistButtons(component, html, player.entity_id)}
 
-      ${isActive ? html`
-        <!-- Artwork -->
+      ${showControls ? html`
+        <!-- Artwork (show placeholder when idle/standby) -->
         <div class="popup-media-artwork-container">
           ${state.attributes?.entity_picture ? html`
             <img class="popup-media-artwork" src="${state.attributes.entity_picture}" alt="Album art">
@@ -204,10 +206,15 @@ function renderMediaPlayer(component, html, player) {
           `}
         </div>
 
-        <!-- Title and Artist -->
+        <!-- Title and Artist (show state when not playing) -->
         <div class="popup-media-info">
-          <div class="popup-media-track-title">${state.attributes?.media_title || t('media.unknown_title')}</div>
-          <div class="popup-media-track-artist">${state.attributes?.media_artist || t('media.unknown_artist')}</div>
+          ${(isPlaying || isPaused) && state.attributes?.media_title ? html`
+            <div class="popup-media-track-title">${state.attributes.media_title}</div>
+            <div class="popup-media-track-artist">${state.attributes?.media_artist || t('media.unknown_artist')}</div>
+          ` : html`
+            <div class="popup-media-track-title">${player.name}</div>
+            <div class="popup-media-track-artist">${state.state === 'idle' ? t('media.idle') : state.state === 'standby' ? t('media.standby', 'Bereit') : state.state}</div>
+          `}
         </div>
 
         <!-- Controls -->
@@ -247,7 +254,7 @@ function renderMediaPlayer(component, html, player) {
         </div>
       ` : html`
         <div class="popup-media-idle">
-          ${state.state === 'idle' ? t('media.idle') : state.state === 'off' ? t('media.off') : state.state}
+          ${state.state === 'off' ? t('media.off') : t('media.unavailable', 'Nicht verfügbar')}
         </div>
       `}
     </div>
