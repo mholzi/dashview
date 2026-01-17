@@ -381,7 +381,34 @@
       "muteNotificationsDesc": "Unterdrückt unkritische Hinweise",
       "customOrder": "Eigene Reihenfolge",
       "defaultFloor": "Standard-Etage",
-      "noOverrides": "Keine Überschreibungen"
+      "noOverrides": "Keine Überschreibungen",
+      "schedules": "Zeitpläne",
+      "schedulesDesc": "Automatische zeitbasierte Moduswechsel",
+      "addSchedule": "Zeitplan hinzufügen",
+      "editSchedule": "Zeitplan bearbeiten",
+      "deleteSchedule": "Zeitplan löschen",
+      "deleteScheduleConfirm": "Möchtest du diesen Zeitplan wirklich löschen?",
+      "noSchedules": "Keine Zeitpläne konfiguriert",
+      "noSchedulesHint": "Füge Zeitpläne hinzu, um Modi automatisch zu bestimmten Zeiten zu wechseln",
+      "scheduleTime": "Uhrzeit",
+      "scheduleDays": "Tage",
+      "scheduleRevertAt": "Zurücksetzen um",
+      "scheduleRevertAtDesc": "Optionale Zeit zum Zurücksetzen auf Standardmodus",
+      "scheduleEnabled": "Zeitplan aktiviert",
+      "days": {
+        "sun": "Sonntag",
+        "mon": "Montag",
+        "tue": "Dienstag",
+        "wed": "Mittwoch",
+        "thu": "Donnerstag",
+        "fri": "Freitag",
+        "sat": "Samstag"
+      },
+      "dayPresets": {
+        "weekdays": "Wochentage",
+        "weekends": "Wochenende",
+        "everyday": "Jeden Tag"
+      }
     },
     "entities": {
       "title": "Entitäten",

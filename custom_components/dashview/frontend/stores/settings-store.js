@@ -215,6 +215,9 @@ export const DEFAULT_SETTINGS = {
 
   // Mode data (dashboard configuration profiles)
   modeData: null,  // { modes: {...}, activeMode: 'default', isManualOverride: false }
+
+  // Schedule data (automatic time-based mode switching)
+  scheduleData: null,  // { schedules: [...] }
 };
 
 /**

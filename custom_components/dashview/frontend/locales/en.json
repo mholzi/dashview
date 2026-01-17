@@ -381,7 +381,34 @@
       "muteNotificationsDesc": "Silence non-critical alerts",
       "customOrder": "Custom order",
       "defaultFloor": "Default floor",
-      "noOverrides": "No overrides"
+      "noOverrides": "No overrides",
+      "schedules": "Schedules",
+      "schedulesDesc": "Automatic time-based mode switching",
+      "addSchedule": "Add Schedule",
+      "editSchedule": "Edit Schedule",
+      "deleteSchedule": "Delete Schedule",
+      "deleteScheduleConfirm": "Are you sure you want to delete this schedule?",
+      "noSchedules": "No schedules configured",
+      "noSchedulesHint": "Add schedules to automatically switch modes at specific times",
+      "scheduleTime": "Time",
+      "scheduleDays": "Days",
+      "scheduleRevertAt": "Revert At",
+      "scheduleRevertAtDesc": "Optional time to revert to default mode",
+      "scheduleEnabled": "Schedule Enabled",
+      "days": {
+        "sun": "Sunday",
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday"
+      },
+      "dayPresets": {
+        "weekdays": "Weekdays",
+        "weekends": "Weekends",
+        "everyday": "Every day"
+      }
     },
     "entities": {
       "title": "Entities",
