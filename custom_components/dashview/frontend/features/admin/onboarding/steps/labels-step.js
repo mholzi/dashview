@@ -4,7 +4,6 @@
  */
 
 import { t, LABEL_CATEGORIES } from '../../shared.js';
-import { renderEmptyState } from '../../layout-tab.js';
 
 /**
  * Labels step styles
