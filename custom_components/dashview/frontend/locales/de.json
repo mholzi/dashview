@@ -717,12 +717,24 @@
       "ctaText": "Klicke \"Weiter\" um mit der Konfiguration zu beginnen"
     },
     "floors": {
-      "title": "Etagen organisieren",
-      "desc": "Ordne die Reihenfolge deiner Etagen. Verwende die Pfeile zum Sortieren.",
-      "empty": "Keine Etagen in Home Assistant gefunden. Erstelle Etagen unter Einstellungen → Bereiche & Zonen → Etagen.",
+      "title": "Etagen einrichten",
+      "desc": "Erstelle Etagen für dein Zuhause und ziehe sie zum Sortieren.",
+      "empty": "Noch keine Etagen. Füge deine erste Etage oben hinzu um zu beginnen.",
+      "placeholder": "Etagenname eingeben (z.B. Erdgeschoss, Obergeschoss)",
+      "addFloor": "Etage hinzufügen",
+      "creating": "Wird erstellt...",
+      "deleting": "Wird gelöscht...",
       "rooms": "Räume",
       "minRequired": "Mindestens eine Etage wird benötigt um fortzufahren.",
-      "hint": "Tipp: Erstelle Etagen in Home Assistant unter Einstellungen → Bereiche & Zonen → Etagen"
+      "deleteFloor": "Etage löschen",
+      "cannotDeleteLast": "Die letzte Etage kann nicht gelöscht werden",
+      "confirmDeleteTitle": "Etage löschen?",
+      "confirmDeleteMessage": "Möchtest du wirklich löschen",
+      "confirmDeleteWarning": "Diese Etage hat {count} zugeordnete Räume. Sie werden nicht mehr zugeordnet sein.",
+      "errorCreate": "Etage konnte nicht erstellt werden. Bitte versuche es erneut.",
+      "errorDelete": "Etage konnte nicht gelöscht werden. Bitte versuche es erneut.",
+      "errorDeleteLast": "Die letzte Etage kann nicht gelöscht werden.",
+      "hint": "Tipp: Ziehe Etagen um die Anzeigereihenfolge auf dem Dashboard festzulegen. Übliche Namen: Erdgeschoss, Obergeschoss, Keller, Dachgeschoss."
     },
     "rooms": {
       "title": "Räume zu Etagen zuordnen",

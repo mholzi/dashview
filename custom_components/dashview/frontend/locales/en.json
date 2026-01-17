@@ -717,12 +717,24 @@
       "ctaText": "Click \"Next\" to start configuring your dashboard"
     },
     "floors": {
-      "title": "Organize Your Floors",
-      "desc": "Arrange the order of your floors. Drag to reorder or use the arrow buttons.",
-      "empty": "No floors found in Home Assistant. Create floors in Settings → Areas & Zones → Floors.",
+      "title": "Set Up Your Floors",
+      "desc": "Create floors for your home and drag to reorder them.",
+      "empty": "No floors yet. Add your first floor above to get started.",
+      "placeholder": "Enter floor name (e.g., Ground Floor, First Floor)",
+      "addFloor": "Add Floor",
+      "creating": "Creating...",
+      "deleting": "Deleting...",
       "rooms": "rooms",
       "minRequired": "At least one floor is required to continue.",
-      "hint": "Tip: Create floors in Home Assistant under Settings → Areas & Zones → Floors"
+      "deleteFloor": "Delete floor",
+      "cannotDeleteLast": "Cannot delete the last floor",
+      "confirmDeleteTitle": "Delete Floor?",
+      "confirmDeleteMessage": "Are you sure you want to delete",
+      "confirmDeleteWarning": "This floor has {count} rooms assigned. They will become unassigned.",
+      "errorCreate": "Failed to create floor. Please try again.",
+      "errorDelete": "Failed to delete floor. Please try again.",
+      "errorDeleteLast": "Cannot delete the last floor.",
+      "hint": "Tip: Drag floors to set the display order on your dashboard. Common floor names: Ground Floor, First Floor, Basement, Attic."
     },
     "rooms": {
       "title": "Assign Rooms to Floors",
