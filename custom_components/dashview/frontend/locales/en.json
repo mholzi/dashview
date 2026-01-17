@@ -684,7 +684,7 @@
       "tv_display": "TV section in room popup is displayed correctly"
     }
   },
-  "onboarding": {
+  "wizard": {
     "title": "Setup Wizard",
     "subtitle": "Let's get Dashview configured for your home",
     "step": "Step",
@@ -696,11 +696,11 @@
     "stepPlaceholder": "Step content will be implemented here.",
     "steps": {
       "welcome": "Welcome",
-      "floors": "Floors",
-      "rooms": "Rooms",
-      "entities": "Entities",
-      "layout": "Layout",
-      "weather": "Weather",
+      "floorOrder": "Floors",
+      "roomOrder": "Rooms",
+      "labels": "Labels",
+      "roomConfig": "Configure",
+      "floorCards": "Cards",
       "review": "Review"
     },
     "welcome": {
@@ -710,102 +710,67 @@
       "feature1Desc": "A clean, intuitive dashboard designed for touch screens and wall tablets.",
       "feature2Title": "Floor Organization",
       "feature2Desc": "Organize your rooms by floor for easy navigation throughout your home.",
-      "feature3Title": "Quick Controls",
-      "feature3Desc": "Control lights, covers, and devices with simple taps and swipes.",
-      "feature4Title": "Weather Integration",
-      "feature4Desc": "See current weather and forecasts right on your dashboard.",
-      "ctaText": "Click \"Next\" to start configuring your dashboard"
+      "feature3Title": "Room Organization",
+      "feature3Desc": "Automatically discover and map your entities to rooms based on Home Assistant areas.",
+      "feature4Title": "Quick Controls",
+      "feature4Desc": "Control lights, covers, and devices with simple taps and swipes."
     },
-    "floors": {
-      "title": "Set Up Your Floors",
-      "desc": "Create floors for your home and drag to reorder them.",
-      "empty": "No floors yet. Add your first floor above to get started.",
-      "placeholder": "Enter floor name (e.g., Ground Floor, First Floor)",
-      "addFloor": "Add Floor",
-      "creating": "Creating...",
-      "deleting": "Deleting...",
+    "floorOrder": {
+      "title": "Arrange Your Floors",
+      "description": "Drag to reorder floors. This determines the display order on your dashboard.",
+      "empty": "No floors found in Home Assistant.",
+      "emptyHint": "Create floors in Home Assistant under Settings → Areas & Zones → Floors.",
       "rooms": "rooms",
-      "minRequired": "At least one floor is required to continue.",
-      "deleteFloor": "Delete floor",
-      "cannotDeleteLast": "Cannot delete the last floor",
-      "confirmDeleteTitle": "Delete Floor?",
-      "confirmDeleteMessage": "Are you sure you want to delete",
-      "confirmDeleteWarning": "This floor has {count} rooms assigned. They will become unassigned.",
-      "errorCreate": "Failed to create floor. Please try again.",
-      "errorDelete": "Failed to delete floor. Please try again.",
-      "errorDeleteLast": "Cannot delete the last floor.",
-      "hint": "Tip: Drag floors to set the display order on your dashboard. Common floor names: Ground Floor, First Floor, Basement, Attic."
+      "hint": "Tip: The first floor in the list will be the default view on your dashboard."
     },
-    "rooms": {
-      "title": "Assign Rooms to Floors",
-      "desc": "Assign each room (area) to a floor. Use the dropdown to change assignments.",
-      "empty": "No areas found in Home Assistant. Create areas in Settings → Areas & Zones.",
-      "unassigned": "Unassigned",
-      "unassignedFloor": "Unassigned Rooms",
-      "rooms": "rooms",
+    "roomOrder": {
+      "title": "Arrange Room Order",
+      "description": "Drag to reorder rooms within each floor. This determines how rooms appear on the dashboard.",
+      "empty": "No rooms found in Home Assistant.",
+      "emptyHint": "Create areas and assign them to floors in Home Assistant.",
       "noRooms": "No rooms assigned to this floor",
-      "hint": "Tip: You can also manage areas in Home Assistant under Settings → Areas & Zones"
-    },
-    "entities": {
-      "title": "Select Your Entities",
-      "desc": "Choose which entities to include in your dashboard. Entities are grouped by room.",
-      "searchPlaceholder": "Search entities...",
-      "selectAll": "All",
-      "selectNone": "None",
-      "selectedCount": "{{count}} selected",
-      "suggested": "Suggested",
-      "noEntities": "No entities found",
-      "noMatchingEntities": "No matching entities",
-      "noRoomEntities": "No entities in this room",
-      "unassignedRoom": "Unassigned Entities",
-      "summary": "{{selected}} of {{total}} entities selected",
-      "hint": "Tip: Suggested entities (lights, climate, covers) are pre-selected for convenience",
-      "enableSuggested": "Enable Suggested",
-      "selected": "Selected",
-      "total": "Total",
-      "rooms": "Rooms",
-      "noResults": "No entities found matching your search."
-    },
-    "layout": {
-      "title": "Arrange Floor Cards",
-      "desc": "Set the display order of your floor cards on the dashboard.",
-      "noFloors": "No floors configured. Go back to add floors.",
-      "room": "room",
       "rooms": "rooms",
-      "preview": "Preview",
-      "hint": "You can change the order later in the Admin panel under Layout."
+      "hint": "Tip: Rooms appear in this order within each floor view."
     },
-    "weather": {
-      "title": "Weather Display",
-      "desc": "Choose a weather entity to display forecasts on your dashboard.",
-      "optional": "Optional - you can skip this step",
-      "noWeather": "Don't show weather on dashboard",
-      "noEntities": "No weather entities found. Install a weather integration in Home Assistant.",
-      "preview": "Preview"
+    "labels": {
+      "title": "Set Up Your Labels",
+      "description": "Map your Home Assistant labels to Dashview categories. Only entities with labels that are assigned to rooms will appear on your dashboard.",
+      "empty": "No labels configured in Home Assistant",
+      "hint": "Tip: Create labels in Home Assistant under Settings → Labels, then assign them to your entities"
+    },
+    "roomConfig": {
+      "title": "Configure Your Rooms",
+      "description": "Enable or disable rooms to show on your dashboard.",
+      "empty": "No rooms found in Home Assistant.",
+      "emptyHint": "Create areas in Home Assistant under Settings → Areas & Zones.",
+      "enableAll": "Enable All",
+      "disableAll": "Disable All",
+      "roomsEnabled": "{{count}} rooms enabled",
+      "hint": "Tip: Only enabled rooms will appear on your dashboard. You can change this later in Admin settings."
+    },
+    "floorCards": {
+      "title": "Configure Floor Cards",
+      "description": "Choose which overview cards to display for each floor on your dashboard.",
+      "enableOverview": "Enable Overview",
+      "disableOverview": "Disable Overview",
+      "cardSlot": "Card Slot",
+      "selectCard": "Select card type",
+      "noFloors": "No floors configured.",
+      "noFloorsHint": "Go back and set up floors first.",
+      "slots": "slots configured",
+      "hint": "Tip: Floor overview cards show quick summaries like lights on, temperature, or security status."
     },
     "review": {
       "title": "Review Your Setup",
-      "desc": "Here's a summary of your configuration. You can edit any section before finishing.",
-      "floors": "Floors",
-      "floor": "floor",
-      "floorsPlural": "floors",
-      "configured": "configured",
-      "rooms": "Rooms",
-      "room": "room",
-      "roomsPlural": "rooms",
-      "assigned": "assigned",
-      "entities": "Entities",
-      "entity": "entity",
-      "entitiesPlural": "entities",
-      "selected": "selected",
-      "weather": "Weather",
-      "noWeather": "Not configured (optional)",
-      "layout": "Layout",
-      "layoutCustom": "Custom floor order",
-      "layoutDefault": "Default floor order",
+      "description": "Here's a summary of your configuration. Click Edit to make changes.",
+      "floorOrder": "Floor Order",
+      "roomOrder": "Room Order",
+      "labels": "Labels",
+      "roomConfig": "Enabled Rooms",
+      "floorCards": "Floor Cards",
       "edit": "Edit",
       "ready": "You're All Set!",
-      "readyDesc": "Your dashboard is configured and ready to use."
+      "readyDesc": "Click Finish to complete setup and start using your dashboard."
     }
   }
 }

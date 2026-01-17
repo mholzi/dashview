@@ -4,7 +4,7 @@
  *
  * This component:
  * - Renders the progress bar
- * - Handles step navigation (next/back/skip)
+ * - Handles step navigation (next/back)
  * - Displays the current step content
  * - Manages wizard completion
  */
@@ -12,11 +12,11 @@
 import { getOnboardingStore, getSettingsStore, WIZARD_STEPS } from '../../../stores/index.js';
 import { t } from '../shared.js';
 import { renderWelcomeStep } from './steps/welcome-step.js';
-import { renderFloorsStep } from './steps/floors-step.js';
-import { renderRoomsStep } from './steps/rooms-step.js';
+import { renderFloorsStep, getFloorOrder, saveFloorOrder } from './steps/floors-step.js';
+import { renderRoomsStep, getRoomOrderConfig, saveRoomOrderConfig } from './steps/rooms-step.js';
+import { renderLabelsStep, getLabelsConfig, saveLabelsConfig } from './steps/labels-step.js';
 import { renderEntitiesStep, saveEntitySelections, getEntitySelections } from './steps/entities-step.js';
-import { renderLayoutStep, getFloorOrder, saveFloorOrder } from './steps/layout-step.js';
-import { renderWeatherStep, getWeatherSelection, saveWeatherEntity } from './steps/weather-step.js';
+import { renderFloorCardsStep, getFloorCardsConfig, saveFloorCardsConfig } from './steps/floor-cards-step.js';
 import { renderReviewStep } from './steps/review-step.js';
 
 /**
@@ -201,13 +201,13 @@ export const wizardStyles = `
  */
 function getStepTitle(step) {
   const titles = {
-    welcome: t('onboarding.steps.welcome', 'Welcome'),
-    floors: t('onboarding.steps.floors', 'Floors'),
-    rooms: t('onboarding.steps.rooms', 'Rooms'),
-    entities: t('onboarding.steps.entities', 'Entities'),
-    layout: t('onboarding.steps.layout', 'Layout'),
-    weather: t('onboarding.steps.weather', 'Weather'),
-    review: t('onboarding.steps.review', 'Review')
+    welcome: t('wizard.steps.welcome', 'Welcome'),
+    floorOrder: t('wizard.steps.floorOrder', 'Floors'),
+    roomOrder: t('wizard.steps.roomOrder', 'Rooms'),
+    labels: t('wizard.steps.labels', 'Labels'),
+    roomConfig: t('wizard.steps.roomConfig', 'Rooms'),
+    floorCards: t('wizard.steps.floorCards', 'Cards'),
+    review: t('wizard.steps.review', 'Review')
   };
   return titles[step] || step;
 }
@@ -233,8 +233,8 @@ function renderProgressBar(panel, html, store) {
         ></div>
       </div>
       <div class="dv-wizard-progress-text">
-        <span>${t('onboarding.step', 'Step')} ${currentStep + 1} ${t('common.options.of', 'of')} ${steps.length}</span>
-        <span>${progress}% ${t('onboarding.complete', 'complete')}</span>
+        <span>${t('wizard.step', 'Step')} ${currentStep + 1} ${t('common.options.of', 'of')} ${steps.length}</span>
+        <span>${progress}% ${t('wizard.complete', 'complete')}</span>
       </div>
       <div class="dv-wizard-step-dots">
         ${steps.map((step, index) => html`
@@ -259,7 +259,6 @@ function renderProgressBar(panel, html, store) {
 function renderNavigation(panel, html, store, handlers) {
   const isFirst = store.isFirstStep;
   const isLast = store.isLastStep;
-  const canSkip = store.canSkip(store.currentStepName);
 
   return html`
     <div class="dv-wizard-navigation">
@@ -270,27 +269,18 @@ function renderNavigation(panel, html, store, handlers) {
             @click=${handlers.onBack}
           >
             <ha-icon icon="mdi:arrow-left"></ha-icon>
-            ${t('onboarding.back', 'Back')}
+            ${t('wizard.back', 'Back')}
           </button>
         ` : html`<div></div>`}
       </div>
 
       <div class="dv-wizard-nav-right">
-        ${canSkip && !isLast ? html`
-          <button
-            class="dv-wizard-btn dv-wizard-btn-text"
-            @click=${handlers.onSkip}
-          >
-            ${t('onboarding.skip', 'Skip')}
-          </button>
-        ` : ''}
-
         ${isLast ? html`
           <button
             class="dv-wizard-btn dv-wizard-btn-primary"
             @click=${handlers.onComplete}
           >
-            ${t('onboarding.finish', 'Finish Setup')}
+            ${t('wizard.finish', 'Finish Setup')}
             <ha-icon icon="mdi:check"></ha-icon>
           </button>
         ` : html`
@@ -298,7 +288,7 @@ function renderNavigation(panel, html, store, handlers) {
             class="dv-wizard-btn dv-wizard-btn-primary"
             @click=${handlers.onNext}
           >
-            ${t('onboarding.next', 'Next')}
+            ${t('wizard.next', 'Next')}
             <ha-icon icon="mdi:arrow-right"></ha-icon>
           </button>
         `}
@@ -315,14 +305,13 @@ function renderNavigation(panel, html, store, handlers) {
  * @returns {TemplateResult}
  */
 function renderStepContent(panel, html, stepName) {
-  // This will be replaced by actual step components in Tasks 3-5
   return html`
     <div class="dv-wizard-step">
       <div style="text-align: center; padding: 48px;">
         <ha-icon icon="mdi:cog-outline" style="--mdc-icon-size: 64px; color: var(--secondary-text-color);"></ha-icon>
         <h2 style="margin: 16px 0 8px;">${getStepTitle(stepName)}</h2>
         <p style="color: var(--secondary-text-color);">
-          ${t('onboarding.stepPlaceholder', 'Step content will be implemented here.')}
+          ${t('wizard.stepPlaceholder', 'Step content will be implemented here.')}
         </p>
       </div>
     </div>
@@ -334,9 +323,6 @@ function renderStepContent(panel, html, stepName) {
  * @param {Object} panel - The DashviewPanel instance
  * @param {Function} html - lit-html template function
  * @param {Object} options - Render options
- * @param {Function} options.renderWelcome - Render function for welcome step
- * @param {Function} options.renderFloors - Render function for floors step
- * @param {Function} options.renderRooms - Render function for rooms step
  * @param {Function} options.onComplete - Callback when wizard completes
  * @returns {TemplateResult}
  */
@@ -353,36 +339,43 @@ export function renderWizard(panel, html, options = {}) {
     onNext: () => {
       const settingsStore = getSettingsStore();
       // Save step data when leaving specific steps
-      if (currentStepName === 'entities') {
-        const selections = getEntitySelections(panel);
-        saveEntitySelections(selections, settingsStore, panel);
-      } else if (currentStepName === 'layout') {
+      if (currentStepName === 'floorOrder') {
         const floorOrder = getFloorOrder(panel);
         saveFloorOrder(floorOrder, settingsStore);
-      } else if (currentStepName === 'weather') {
-        const weatherEntity = getWeatherSelection(panel);
-        saveWeatherEntity(weatherEntity, settingsStore);
+      } else if (currentStepName === 'roomOrder') {
+        const roomOrderConfig = getRoomOrderConfig(panel);
+        saveRoomOrderConfig(roomOrderConfig, settingsStore);
+      } else if (currentStepName === 'labels') {
+        const labelsConfig = getLabelsConfig(panel);
+        saveLabelsConfig(labelsConfig, settingsStore);
+      } else if (currentStepName === 'roomConfig') {
+        const selections = getEntitySelections(panel);
+        saveEntitySelections(selections, settingsStore, panel);
+      } else if (currentStepName === 'floorCards') {
+        const floorCardsConfig = getFloorCardsConfig(panel);
+        saveFloorCardsConfig(floorCardsConfig, settingsStore);
       }
       store.nextStep();
       panel.requestUpdate();
     },
-    onSkip: () => {
-      store.skipStep();
-      panel.requestUpdate();
-    },
     onComplete: () => {
       const settingsStore = getSettingsStore();
-      // Save current step data before completing
-      if (currentStepName === 'entities') {
-        const selections = getEntitySelections(panel);
-        saveEntitySelections(selections, settingsStore, panel);
-      } else if (currentStepName === 'layout') {
-        const floorOrder = getFloorOrder(panel);
-        saveFloorOrder(floorOrder, settingsStore);
-      } else if (currentStepName === 'weather') {
-        const weatherEntity = getWeatherSelection(panel);
-        saveWeatherEntity(weatherEntity, settingsStore);
-      }
+      // Save all step data before completing
+      const floorOrder = getFloorOrder(panel);
+      saveFloorOrder(floorOrder, settingsStore);
+
+      const roomOrderConfig = getRoomOrderConfig(panel);
+      saveRoomOrderConfig(roomOrderConfig, settingsStore);
+
+      const labelsConfig = getLabelsConfig(panel);
+      saveLabelsConfig(labelsConfig, settingsStore);
+
+      const selections = getEntitySelections(panel);
+      saveEntitySelections(selections, settingsStore, panel);
+
+      const floorCardsConfig = getFloorCardsConfig(panel);
+      saveFloorCardsConfig(floorCardsConfig, settingsStore);
+
       store.completeWizard();
       if (options.onComplete) {
         options.onComplete();
@@ -396,16 +389,16 @@ export function renderWizard(panel, html, options = {}) {
     switch (currentStepName) {
       case 'welcome':
         return options.renderWelcome || renderWelcomeStep;
-      case 'floors':
+      case 'floorOrder':
         return options.renderFloors || renderFloorsStep;
-      case 'rooms':
+      case 'roomOrder':
         return options.renderRooms || renderRoomsStep;
-      case 'entities':
+      case 'labels':
+        return options.renderLabels || renderLabelsStep;
+      case 'roomConfig':
         return options.renderEntities || renderEntitiesStep;
-      case 'layout':
-        return options.renderLayout || renderLayoutStep;
-      case 'weather':
-        return options.renderWeather || renderWeatherStep;
+      case 'floorCards':
+        return options.renderFloorCards || renderFloorCardsStep;
       case 'review':
         return options.renderReview || renderReviewStep;
       default:
@@ -419,8 +412,8 @@ export function renderWizard(panel, html, options = {}) {
     <style>${wizardStyles}</style>
     <div class="dv-wizard-container">
       <div class="dv-wizard-header">
-        <h1 class="dv-wizard-title">${t('onboarding.title', 'Setup Wizard')}</h1>
-        <p class="dv-wizard-subtitle">${t('onboarding.subtitle', 'Let\'s get Dashview configured for your home')}</p>
+        <h1 class="dv-wizard-title">${t('wizard.title', 'Setup Wizard')}</h1>
+        <p class="dv-wizard-subtitle">${t('wizard.subtitle', 'Let\'s get Dashview configured for your home')}</p>
       </div>
 
       ${renderProgressBar(panel, html, store)}

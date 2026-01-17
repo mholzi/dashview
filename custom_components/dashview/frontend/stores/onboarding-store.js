@@ -16,20 +16,20 @@ import { debugLog } from '../constants/index.js';
  * @type {string[]}
  */
 export const WIZARD_STEPS = [
-  'welcome',
-  'floors',
-  'rooms',
-  'entities',
-  'layout',
-  'weather',
-  'review'
+  'welcome',      // Step 1
+  'floorOrder',   // Step 2
+  'roomOrder',    // Step 3
+  'labels',       // Step 4 (NEW)
+  'roomConfig',   // Step 5
+  'floorCards',   // Step 6 (NEW)
+  'review'        // Step 7
 ];
 
 /**
  * Steps that can be skipped (optional)
  * @type {string[]}
  */
-export const SKIPPABLE_STEPS = ['weather'];
+export const SKIPPABLE_STEPS = [];
 
 /**
  * LocalStorage keys

@@ -807,5 +807,100 @@
       "ready": "Alles bereit!",
       "readyDesc": "Dein Dashboard ist konfiguriert und einsatzbereit."
     }
+  },
+  "wizard": {
+    "title": "Einrichtungsassistent",
+    "subtitle": "Lass uns Dashview für dein Zuhause einrichten",
+    "step": "Schritt",
+    "complete": "abgeschlossen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "skip": "Überspringen",
+    "finish": "Einrichtung abschließen",
+    "stepPlaceholder": "Schritt-Inhalt wird hier implementiert.",
+    "steps": {
+      "welcome": "Willkommen",
+      "floorOrder": "Etagen",
+      "roomOrder": "Räume",
+      "labels": "Labels",
+      "roomConfig": "Konfiguration",
+      "floorCards": "Karten",
+      "review": "Überprüfung"
+    },
+    "welcome": {
+      "title": "Willkommen bei Dashview!",
+      "subtitle": "Dein neues Smart-Home-Dashboard für Home Assistant. Lass es uns gemeinsam einrichten.",
+      "feature1Title": "Schönes Dashboard",
+      "feature1Desc": "Ein übersichtliches Dashboard für Touchscreens und Wandtablets.",
+      "feature2Title": "Etagen-Organisation",
+      "feature2Desc": "Organisiere deine Räume nach Etagen für einfache Navigation.",
+      "feature3Title": "Raum-Organisation",
+      "feature3Desc": "Erkenne und ordne deine Geräte automatisch Räumen zu basierend auf Home Assistant Bereichen.",
+      "feature4Title": "Schnelle Steuerung",
+      "feature4Desc": "Steuere Lichter, Rollläden und Geräte mit einfachen Taps."
+    },
+    "floorOrder": {
+      "title": "Etagen anordnen",
+      "description": "Ziehe zum Sortieren. Dies bestimmt die Anzeigereihenfolge auf dem Dashboard.",
+      "empty": "Keine Etagen in Home Assistant gefunden.",
+      "emptyHint": "Erstelle Etagen in Home Assistant unter Einstellungen → Bereiche & Zonen → Etagen.",
+      "rooms": "Räume",
+      "hint": "Tipp: Die erste Etage in der Liste ist die Standardansicht auf dem Dashboard."
+    },
+    "roomOrder": {
+      "title": "Räume anordnen",
+      "description": "Ziehe zum Sortieren der Räume innerhalb jeder Etage. Dies bestimmt die Anzeigereihenfolge.",
+      "empty": "Keine Räume in Home Assistant gefunden.",
+      "emptyHint": "Erstelle Bereiche und weise sie Etagen zu in Home Assistant.",
+      "noRooms": "Keine Räume dieser Etage zugeordnet",
+      "rooms": "Räume",
+      "hint": "Tipp: Räume erscheinen in dieser Reihenfolge innerhalb jeder Etagenansicht.",
+      "unassigned": "Nicht zugeordnete Räume",
+      "assignInHA": "In HA zuordnen"
+    },
+    "labels": {
+      "title": "Labels einrichten",
+      "description": "Ordne deine Home Assistant Labels den Dashview-Kategorien zu. Nur Geräte mit Labels, die Räumen zugeordnet sind, erscheinen auf dem Dashboard.",
+      "empty": "Keine Labels in Home Assistant konfiguriert",
+      "hint": "Tipp: Erstelle Labels in Home Assistant unter Einstellungen → Labels, dann weise sie deinen Geräten zu"
+    },
+    "roomConfig": {
+      "title": "Räume aktivieren",
+      "description": "Wähle welche Räume auf dem Dashboard erscheinen. Du kannst Räume aktivieren oder deaktivieren und Geräte später im Admin-Bereich konfigurieren.",
+      "empty": "Keine Räume in Home Assistant gefunden.",
+      "emptyHint": "Erstelle Bereiche in Home Assistant unter Einstellungen → Bereiche & Zonen.",
+      "enableAll": "Alle aktivieren",
+      "disableAll": "Alle deaktivieren",
+      "roomsEnabled": "{{count}} Räume aktiviert",
+      "hint": "Tipp: Nur aktivierte Räume erscheinen auf dem Dashboard. Du kannst dies später in den Admin-Einstellungen ändern.",
+      "enabled": "Aktiviert",
+      "total": "Gesamt",
+      "floors": "Etagen",
+      "entities": "Geräte"
+    },
+    "floorCards": {
+      "title": "Dashboard einrichten",
+      "description": "Ordne Geräte deinem Haupt-Dashboard zu. Jede Etage hat ein Kartenraster, in dem du Geräte bestimmten Slots zuweisen kannst.",
+      "enableOverview": "Übersicht aktivieren",
+      "disableOverview": "Übersicht deaktivieren",
+      "cardSlot": "Karten-Slot",
+      "selectCard": "Kartentyp auswählen",
+      "noFloors": "Keine Etagen konfiguriert.",
+      "noFloorsHint": "Gehe zurück und richte zuerst Etagen ein.",
+      "slots": "Slots konfiguriert",
+      "hint": "Tipp: Etagen-Übersichtskarten zeigen Schnellzusammenfassungen wie eingeschaltete Lichter, Temperatur oder Sicherheitsstatus."
+    },
+    "review": {
+      "title": "Einrichtung überprüfen",
+      "description": "Hier ist eine Zusammenfassung deiner Konfiguration. Klicke Bearbeiten um Änderungen vorzunehmen.",
+      "floorOrder": "Etagen-Reihenfolge",
+      "roomOrder": "Raum-Reihenfolge",
+      "labels": "Labels",
+      "roomConfig": "Aktivierte Räume",
+      "floorCards": "Etagen-Karten",
+      "edit": "Bearbeiten",
+      "ready": "Alles bereit!",
+      "readyDesc": "Klicke Fertig um die Einrichtung abzuschließen und dein Dashboard zu nutzen."
+    }
   }
 }

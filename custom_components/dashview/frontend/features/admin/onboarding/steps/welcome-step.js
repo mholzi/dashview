@@ -103,51 +103,40 @@ export const welcomeStepStyles = `
     margin: 0;
     line-height: 1.4;
   }
-
-  /* ==================== CTA ==================== */
-  .dv-welcome-cta {
-    margin-top: 32px;
-    text-align: center;
-  }
-
-  .dv-welcome-cta-text {
-    font-size: 14px;
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
-    opacity: 0.8;
-  }
 `;
 
 /**
  * Feature highlights configuration
+ * Order: Dashboard → Floor → Room Organization → Quick Controls
  */
 const FEATURES = [
   {
     icon: 'mdi:view-dashboard',
-    titleKey: 'onboarding.welcome.feature1Title',
+    titleKey: 'wizard.welcome.feature1Title',
     titleDefault: 'Beautiful Dashboard',
-    descKey: 'onboarding.welcome.feature1Desc',
+    descKey: 'wizard.welcome.feature1Desc',
     descDefault: 'A clean, intuitive dashboard designed for touch screens and wall tablets.'
   },
   {
     icon: 'mdi:home-floor-3',
-    titleKey: 'onboarding.welcome.feature2Title',
+    titleKey: 'wizard.welcome.feature2Title',
     titleDefault: 'Floor Organization',
-    descKey: 'onboarding.welcome.feature2Desc',
+    descKey: 'wizard.welcome.feature2Desc',
     descDefault: 'Organize your rooms by floor for easy navigation throughout your home.'
   },
   {
-    icon: 'mdi:gesture-tap',
-    titleKey: 'onboarding.welcome.feature3Title',
-    titleDefault: 'Quick Controls',
-    descKey: 'onboarding.welcome.feature3Desc',
-    descDefault: 'Control lights, covers, and devices with simple taps and swipes.'
+    icon: 'mdi:home-automation',
+    titleKey: 'wizard.welcome.feature3Title',
+    titleDefault: 'Room Organization',
+    descKey: 'wizard.welcome.feature3Desc',
+    descDefault: 'Automatically discover and map your entities to rooms based on Home Assistant areas.'
   },
   {
-    icon: 'mdi:weather-partly-cloudy',
-    titleKey: 'onboarding.welcome.feature4Title',
-    titleDefault: 'Weather Integration',
-    descKey: 'onboarding.welcome.feature4Desc',
-    descDefault: 'See current weather and forecasts right on your dashboard.'
+    icon: 'mdi:gesture-tap',
+    titleKey: 'wizard.welcome.feature4Title',
+    titleDefault: 'Quick Controls',
+    descKey: 'wizard.welcome.feature4Desc',
+    descDefault: 'Control lights, covers, and devices with simple taps and swipes.'
   }
 ];
 
@@ -166,11 +155,11 @@ export function renderWelcomeStep(panel, html) {
       </div>
 
       <h1 class="dv-welcome-title">
-        ${t('onboarding.welcome.title', 'Welcome to Dashview!')}
+        ${t('wizard.welcome.title', 'Welcome to Dashview!')}
       </h1>
 
       <p class="dv-welcome-subtitle">
-        ${t('onboarding.welcome.subtitle', 'Your new smart home dashboard for Home Assistant. Let\'s set it up together.')}
+        ${t('wizard.welcome.subtitle', 'Your new smart home dashboard for Home Assistant. Let\'s set it up together.')}
       </p>
 
       <div class="dv-welcome-features">
@@ -189,12 +178,6 @@ export function renderWelcomeStep(panel, html) {
             </div>
           </div>
         `)}
-      </div>
-
-      <div class="dv-welcome-cta">
-        <p class="dv-welcome-cta-text">
-          ${t('onboarding.welcome.ctaText', 'Click "Next" to start configuring your dashboard')}
-        </p>
       </div>
     </div>
   `;

@@ -1,6 +1,9 @@
 /**
- * Rooms Step Component
- * Third step in the setup wizard - assign areas to floors
+ * Room Order Step Component
+ * Third step in the setup wizard - reorder rooms within each floor
+ *
+ * This step allows users to arrange the display order of rooms (areas)
+ * within each floor. Room creation/assignment is handled in HA settings.
  */
 
 import { t } from '../../shared.js';
@@ -40,7 +43,10 @@ export const roomsStepStyles = `
   .dv-rooms-floor-groups {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
   }
 
   .dv-rooms-floor-group {
@@ -54,14 +60,14 @@ export const roomsStepStyles = `
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px;
+    padding: 12px 16px;
     background: var(--dv-bg-tertiary, var(--secondary-background-color));
     border-bottom: 1px solid var(--dv-border, var(--divider-color));
   }
 
   .dv-rooms-floor-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
     background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
     display: flex;
@@ -70,12 +76,12 @@ export const roomsStepStyles = `
   }
 
   .dv-rooms-floor-icon ha-icon {
-    --mdc-icon-size: 20px;
+    --mdc-icon-size: 18px;
     color: var(--dv-accent-primary, var(--primary-color));
   }
 
   .dv-rooms-floor-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--dv-text-primary, var(--primary-text-color));
     flex: 1;
@@ -84,12 +90,12 @@ export const roomsStepStyles = `
   .dv-rooms-floor-count {
     font-size: 12px;
     color: var(--dv-text-secondary, var(--secondary-text-color));
-    background: var(--dv-bg-secondary, var(--card-background-color));
+    background: var(--dv-bg-primary, var(--primary-background-color));
     padding: 4px 10px;
     border-radius: 12px;
   }
 
-  /* ==================== AREA LIST ==================== */
+  /* ==================== ROOM LIST ==================== */
   .dv-rooms-area-list {
     display: flex;
     flex-direction: column;
@@ -99,7 +105,7 @@ export const roomsStepStyles = `
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--dv-border, var(--divider-color));
     transition: background 0.2s ease;
   }
@@ -112,10 +118,25 @@ export const roomsStepStyles = `
     background: var(--dv-bg-tertiary, var(--secondary-background-color));
   }
 
+  .dv-rooms-area-item.dragging {
+    opacity: 0.5;
+    background: var(--dv-bg-tertiary, var(--secondary-background-color));
+  }
+
+  .dv-rooms-drag-handle {
+    cursor: grab;
+    color: var(--dv-text-tertiary, var(--secondary-text-color));
+    padding: 4px;
+  }
+
+  .dv-rooms-drag-handle:active {
+    cursor: grabbing;
+  }
+
   .dv-rooms-area-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     background: var(--dv-bg-tertiary, var(--secondary-background-color));
     display: flex;
     align-items: center;
@@ -123,57 +144,51 @@ export const roomsStepStyles = `
   }
 
   .dv-rooms-area-icon ha-icon {
-    --mdc-icon-size: 18px;
+    --mdc-icon-size: 16px;
     color: var(--dv-text-secondary, var(--secondary-text-color));
   }
 
   .dv-rooms-area-name {
     flex: 1;
-    font-size: 14px;
-    color: var(--dv-text-primary, var(--primary-text-color));
-  }
-
-  .dv-rooms-area-floor-select {
-    min-width: 140px;
-    padding: 8px 12px;
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 8px;
     font-size: 13px;
-    background: var(--dv-bg-primary, var(--primary-background-color));
     color: var(--dv-text-primary, var(--primary-text-color));
+  }
+
+  .dv-rooms-order-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .dv-rooms-order-btn {
+    width: 24px;
+    height: 16px;
+    border: 1px solid var(--dv-border, var(--divider-color));
+    border-radius: 3px;
+    background: transparent;
     cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
   }
 
-  .dv-rooms-area-floor-select:focus {
+  .dv-rooms-order-btn:hover:not(:disabled) {
+    background: var(--dv-bg-tertiary, var(--divider-color));
     border-color: var(--dv-accent-primary, var(--primary-color));
   }
 
-  .dv-rooms-area-floor-select:hover {
-    border-color: var(--dv-accent-primary, var(--primary-color));
+  .dv-rooms-order-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 
-  /* ==================== UNASSIGNED SECTION ==================== */
-  .dv-rooms-unassigned {
-    background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.1));
-    border: 1px solid var(--dv-warning, var(--warning-color));
+  .dv-rooms-order-btn ha-icon {
+    --mdc-icon-size: 12px;
+    color: var(--dv-text-secondary, var(--secondary-text-color));
   }
 
-  .dv-rooms-unassigned .dv-rooms-floor-header {
-    background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.1));
-    border-color: var(--dv-warning, var(--warning-color));
-  }
-
-  .dv-rooms-unassigned .dv-rooms-floor-icon {
-    background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.2));
-  }
-
-  .dv-rooms-unassigned .dv-rooms-floor-icon ha-icon {
-    color: var(--dv-warning, var(--warning-color));
-  }
-
-  /* ==================== EMPTY STATE ==================== */
+  /* ==================== EMPTY STATES ==================== */
   .dv-rooms-empty {
     text-align: center;
     padding: 32px;
@@ -192,6 +207,31 @@ export const roomsStepStyles = `
     font-size: 14px;
     color: var(--dv-text-secondary, var(--secondary-text-color));
     margin: 0;
+  }
+
+  .dv-rooms-floor-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--dv-text-tertiary, var(--secondary-text-color));
+    font-size: 13px;
+  }
+
+  /* ==================== HINT ==================== */
+  .dv-rooms-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--dv-text-secondary, var(--secondary-text-color));
+  }
+
+  .dv-rooms-hint ha-icon {
+    --mdc-icon-size: 16px;
+    color: var(--dv-accent-primary, var(--primary-color));
+    flex-shrink: 0;
   }
 `;
 
@@ -247,6 +287,16 @@ function getFloorIcon(floor) {
  * @returns {TemplateResult}
  */
 export function renderRoomsStep(panel, html) {
+  // Initialize wizard room state if not exists
+  if (!panel._wizardRoomState) {
+    panel._wizardRoomState = {
+      draggedAreaId: null,
+      draggedFromFloor: null
+    };
+  }
+
+  const state = panel._wizardRoomState;
+
   // Get floors and areas from Home Assistant
   const floors = panel._floors || [];
   const areas = panel._areas || [];
@@ -254,76 +304,125 @@ export function renderRoomsStep(panel, html) {
   // Get settings store for room order
   const settings = getSettingsStore();
 
-  // Group areas by floor
-  const areasByFloor = new Map();
-  const unassignedAreas = [];
+  // Group areas by floor and apply saved order
+  const getOrderedAreasForFloor = (floorId) => {
+    const floorAreas = areas.filter(a => a.floor_id === floorId);
+    const savedOrder = settings.get(`roomOrder_${floorId}`) || [];
 
-  floors.forEach(floor => {
-    areasByFloor.set(floor.floor_id, []);
-  });
+    // Sort by saved order, then alphabetically for unsaved
+    const orderedAreas = [];
+    const seenIds = new Set();
 
-  areas.forEach(area => {
-    if (area.floor_id && areasByFloor.has(area.floor_id)) {
-      areasByFloor.get(area.floor_id).push(area);
-    } else {
-      unassignedAreas.push(area);
-    }
-  });
+    savedOrder.forEach(areaId => {
+      const area = floorAreas.find(a => a.area_id === areaId);
+      if (area && !seenIds.has(areaId)) {
+        orderedAreas.push(area);
+        seenIds.add(areaId);
+      }
+    });
 
-  // Handle floor assignment change
-  const handleFloorChange = async (area, newFloorId) => {
-    if (!panel.hass) return;
+    floorAreas.forEach(area => {
+      if (!seenIds.has(area.area_id)) {
+        orderedAreas.push(area);
+        seenIds.add(area.area_id);
+      }
+    });
 
-    try {
-      // Call Home Assistant to update area's floor assignment
-      await panel.hass.callWS({
-        type: 'config/area_registry/update',
-        area_id: area.area_id,
-        floor_id: newFloorId || null
-      });
-
-      // Refresh areas
-      const updatedAreas = await panel.hass.callWS({
-        type: 'config/area_registry/list'
-      });
-      panel._areas = updatedAreas;
-      panel.requestUpdate();
-    } catch (e) {
-      console.error('Failed to update area floor:', e);
-    }
+    return orderedAreas;
   };
 
-  // Render a single area item
-  const renderAreaItem = (area) => html`
-    <div class="dv-rooms-area-item">
-      <div class="dv-rooms-area-icon">
-        <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
-      </div>
-      <span class="dv-rooms-area-name">${area.name || area.area_id}</span>
-      <select
-        class="dv-rooms-area-floor-select"
-        .value=${area.floor_id || ''}
-        @change=${(e) => handleFloorChange(area, e.target.value)}
-      >
-        <option value="">${t('onboarding.rooms.unassigned', 'Unassigned')}</option>
-        ${floors.map(floor => html`
-          <option value="${floor.floor_id}" ?selected=${area.floor_id === floor.floor_id}>
-            ${floor.name || floor.floor_id}
-          </option>
-        `)}
-      </select>
-    </div>
-  `;
+  // Move room up within floor
+  const moveUp = (floorId, areaId, currentIndex) => {
+    if (currentIndex <= 0) return;
+    const floorAreas = getOrderedAreasForFloor(floorId);
+    const currentOrder = floorAreas.map(a => a.area_id);
+    [currentOrder[currentIndex - 1], currentOrder[currentIndex]] = [currentOrder[currentIndex], currentOrder[currentIndex - 1]];
+    settings.set(`roomOrder_${floorId}`, currentOrder);
+    panel.requestUpdate();
+  };
+
+  // Move room down within floor
+  const moveDown = (floorId, areaId, currentIndex, totalAreas) => {
+    if (currentIndex >= totalAreas - 1) return;
+    const floorAreas = getOrderedAreasForFloor(floorId);
+    const currentOrder = floorAreas.map(a => a.area_id);
+    [currentOrder[currentIndex], currentOrder[currentIndex + 1]] = [currentOrder[currentIndex + 1], currentOrder[currentIndex]];
+    settings.set(`roomOrder_${floorId}`, currentOrder);
+    panel.requestUpdate();
+  };
+
+  // Handle drag start
+  const handleDragStart = (e, areaId, floorId) => {
+    state.draggedAreaId = areaId;
+    state.draggedFromFloor = floorId;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', areaId);
+    setTimeout(() => panel.requestUpdate(), 0);
+  };
+
+  // Handle drag end
+  const handleDragEnd = () => {
+    state.draggedAreaId = null;
+    state.draggedFromFloor = null;
+    panel.requestUpdate();
+  };
+
+  // Handle drag over
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  // Handle drop
+  const handleDrop = (e, targetAreaId, floorId) => {
+    e.preventDefault();
+
+    const draggedId = state.draggedAreaId;
+    const fromFloor = state.draggedFromFloor;
+
+    // Only allow reordering within same floor
+    if (!draggedId || draggedId === targetAreaId || fromFloor !== floorId) {
+      state.draggedAreaId = null;
+      state.draggedFromFloor = null;
+      panel.requestUpdate();
+      return;
+    }
+
+    const floorAreas = getOrderedAreasForFloor(floorId);
+    const currentOrder = floorAreas.map(a => a.area_id);
+    const draggedIndex = currentOrder.indexOf(draggedId);
+    const targetIndex = currentOrder.indexOf(targetAreaId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      state.draggedAreaId = null;
+      state.draggedFromFloor = null;
+      panel.requestUpdate();
+      return;
+    }
+
+    // Remove dragged item and insert at target position
+    currentOrder.splice(draggedIndex, 1);
+    currentOrder.splice(targetIndex, 0, draggedId);
+
+    // Save new order
+    settings.set(`roomOrder_${floorId}`, currentOrder);
+    state.draggedAreaId = null;
+    state.draggedFromFloor = null;
+    panel.requestUpdate();
+  };
+
+  // Get unassigned areas
+  const unassignedAreas = areas.filter(a => !a.floor_id);
 
   return html`
     <style>${roomsStepStyles}</style>
     <div class="dv-rooms-step">
       <div class="dv-rooms-header">
         <h2 class="dv-rooms-title">
-          ${t('onboarding.rooms.title', 'Assign Rooms to Floors')}
+          ${t('wizard.roomOrder.title', 'Arrange Your Rooms')}
         </h2>
         <p class="dv-rooms-desc">
-          ${t('onboarding.rooms.desc', 'Assign each room (area) to a floor. Use the dropdown to change assignments.')}
+          ${t('wizard.roomOrder.description', 'Drag to reorder rooms within each floor. This determines the display order in room views.')}
         </p>
       </div>
 
@@ -331,36 +430,13 @@ export function renderRoomsStep(panel, html) {
         <div class="dv-rooms-empty">
           <ha-icon class="dv-rooms-empty-icon" icon="mdi:home-group"></ha-icon>
           <p class="dv-rooms-empty-text">
-            ${t('onboarding.rooms.empty', 'No areas found in Home Assistant. Create areas in Settings → Areas & Zones.')}
+            ${t('wizard.roomOrder.empty', 'No areas found in Home Assistant. Create areas in Settings → Areas & Zones.')}
           </p>
         </div>
       ` : html`
         <div class="dv-rooms-floor-groups">
-          ${unassignedAreas.length > 0 ? html`
-            <div class="dv-rooms-floor-group dv-rooms-unassigned">
-              <div class="dv-rooms-floor-header">
-                <div class="dv-rooms-floor-icon">
-                  <ha-icon icon="mdi:alert-circle"></ha-icon>
-                </div>
-                <span class="dv-rooms-floor-name">
-                  ${t('onboarding.rooms.unassignedFloor', 'Unassigned Rooms')}
-                </span>
-                <span class="dv-rooms-floor-count">
-                  ${unassignedAreas.length} ${t('onboarding.rooms.rooms', 'rooms')}
-                </span>
-              </div>
-              <div class="dv-rooms-area-list">
-                ${unassignedAreas.map(area => renderAreaItem(area))}
-              </div>
-            </div>
-          ` : ''}
-
           ${floors.map(floor => {
-            const floorAreas = areasByFloor.get(floor.floor_id) || [];
-            if (floorAreas.length === 0 && unassignedAreas.length > 0) {
-              // Don't show empty floors when there are unassigned areas to highlight
-              return '';
-            }
+            const floorAreas = getOrderedAreasForFloor(floor.floor_id);
             return html`
               <div class="dv-rooms-floor-group">
                 <div class="dv-rooms-floor-header">
@@ -369,15 +445,50 @@ export function renderRoomsStep(panel, html) {
                   </div>
                   <span class="dv-rooms-floor-name">${floor.name || floor.floor_id}</span>
                   <span class="dv-rooms-floor-count">
-                    ${floorAreas.length} ${t('onboarding.rooms.rooms', 'rooms')}
+                    ${floorAreas.length} ${t('wizard.roomOrder.rooms', 'rooms')}
                   </span>
                 </div>
                 <div class="dv-rooms-area-list">
                   ${floorAreas.length > 0
-                    ? floorAreas.map(area => renderAreaItem(area))
+                    ? floorAreas.map((area, index) => html`
+                      <div
+                        class="dv-rooms-area-item ${state.draggedAreaId === area.area_id ? 'dragging' : ''}"
+                        draggable="true"
+                        @dragstart=${(e) => handleDragStart(e, area.area_id, floor.floor_id)}
+                        @dragend=${handleDragEnd}
+                        @dragover=${handleDragOver}
+                        @drop=${(e) => handleDrop(e, area.area_id, floor.floor_id)}
+                      >
+                        <div class="dv-rooms-drag-handle">
+                          <ha-icon icon="mdi:drag-vertical"></ha-icon>
+                        </div>
+                        <div class="dv-rooms-area-icon">
+                          <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
+                        </div>
+                        <span class="dv-rooms-area-name">${area.name || area.area_id}</span>
+                        <div class="dv-rooms-order-btns">
+                          <button
+                            class="dv-rooms-order-btn"
+                            @click=${() => moveUp(floor.floor_id, area.area_id, index)}
+                            ?disabled=${index === 0}
+                            aria-label="Move up"
+                          >
+                            <ha-icon icon="mdi:chevron-up"></ha-icon>
+                          </button>
+                          <button
+                            class="dv-rooms-order-btn"
+                            @click=${() => moveDown(floor.floor_id, area.area_id, index, floorAreas.length)}
+                            ?disabled=${index === floorAreas.length - 1}
+                            aria-label="Move down"
+                          >
+                            <ha-icon icon="mdi:chevron-down"></ha-icon>
+                          </button>
+                        </div>
+                      </div>
+                    `)
                     : html`
-                      <div class="dv-rooms-area-item" style="justify-content: center; color: var(--secondary-text-color);">
-                        ${t('onboarding.rooms.noRooms', 'No rooms assigned to this floor')}
+                      <div class="dv-rooms-floor-empty">
+                        ${t('wizard.roomOrder.noRooms', 'No rooms assigned to this floor')}
                       </div>
                     `
                   }
@@ -385,14 +496,80 @@ export function renderRoomsStep(panel, html) {
               </div>
             `;
           })}
+
+          ${unassignedAreas.length > 0 ? html`
+            <div class="dv-rooms-floor-group" style="border-color: var(--dv-warning, var(--warning-color)); opacity: 0.7;">
+              <div class="dv-rooms-floor-header" style="background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.1));">
+                <div class="dv-rooms-floor-icon" style="background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.2));">
+                  <ha-icon icon="mdi:alert-circle" style="color: var(--dv-warning, var(--warning-color));"></ha-icon>
+                </div>
+                <span class="dv-rooms-floor-name">${t('wizard.roomOrder.unassigned', 'Unassigned Rooms')}</span>
+                <span class="dv-rooms-floor-count">
+                  ${unassignedAreas.length} ${t('wizard.roomOrder.rooms', 'rooms')}
+                </span>
+              </div>
+              <div class="dv-rooms-area-list">
+                ${unassignedAreas.map(area => html`
+                  <div class="dv-rooms-area-item" style="opacity: 0.7;">
+                    <div class="dv-rooms-area-icon">
+                      <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
+                    </div>
+                    <span class="dv-rooms-area-name">${area.name || area.area_id}</span>
+                    <span style="font-size: 11px; color: var(--dv-warning, var(--warning-color));">
+                      ${t('wizard.roomOrder.assignInHA', 'Assign in HA settings')}
+                    </span>
+                  </div>
+                `)}
+              </div>
+            </div>
+          ` : ''}
         </div>
       `}
 
-      <p style="font-size: 12px; color: var(--secondary-text-color); text-align: center; margin-top: auto;">
-        ${t('onboarding.rooms.hint', 'Tip: You can also manage areas in Home Assistant under Settings → Areas & Zones')}
-      </p>
+      <div style="flex: 1;"></div>
+
+      <!-- Hint -->
+      <div class="dv-rooms-hint">
+        <ha-icon icon="mdi:information-outline"></ha-icon>
+        <span>${t('wizard.roomOrder.hint', 'Tip: Assign rooms to floors in Home Assistant under Settings → Areas & Zones')}</span>
+      </div>
     </div>
   `;
+}
+
+/**
+ * Get room order config from wizard state
+ * @param {Object} panel - Panel instance
+ * @returns {Object} Room order configuration by floor
+ */
+export function getRoomOrderConfig(panel) {
+  const settings = getSettingsStore();
+  const floors = panel._floors || [];
+  const config = {};
+
+  floors.forEach(floor => {
+    const order = settings.get(`roomOrder_${floor.floor_id}`);
+    if (order && order.length > 0) {
+      config[floor.floor_id] = order;
+    }
+  });
+
+  return config;
+}
+
+/**
+ * Save room order config to settings store
+ * @param {Object} config - Room order configuration
+ * @param {Object} settingsStore - Settings store instance
+ */
+export function saveRoomOrderConfig(config, settingsStore) {
+  try {
+    Object.entries(config).forEach(([floorId, order]) => {
+      settingsStore.set(`roomOrder_${floorId}`, order);
+    });
+  } catch (e) {
+    console.warn('[Dashview] Failed to save room order config:', e);
+  }
 }
 
 export default renderRoomsStep;

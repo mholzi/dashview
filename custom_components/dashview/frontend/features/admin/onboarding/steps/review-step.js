@@ -3,7 +3,7 @@
  * Final step in the setup wizard - review all configuration and complete
  */
 
-import { t } from '../../shared.js';
+import { t, LABEL_CATEGORIES } from '../../shared.js';
 import { getSettingsStore, getOnboardingStore } from '../../../../stores/index.js';
 
 /**
@@ -40,21 +40,23 @@ export const reviewStepStyles = `
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
   }
 
   .dv-review-section {
     background: var(--dv-bg-secondary, var(--card-background-color));
     border: 1px solid var(--dv-border, var(--divider-color));
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     gap: 12px;
   }
 
   .dv-review-section-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 10px;
     background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
     display: flex;
@@ -64,7 +66,7 @@ export const reviewStepStyles = `
   }
 
   .dv-review-section-icon ha-icon {
-    --mdc-icon-size: 24px;
+    --mdc-icon-size: 22px;
     color: var(--dv-accent-primary, var(--primary-color));
   }
 
@@ -93,26 +95,26 @@ export const reviewStepStyles = `
     font-size: 14px;
     font-weight: 600;
     color: var(--dv-text-primary, var(--primary-text-color));
-    margin: 0 0 4px 0;
+    margin: 0 0 2px 0;
   }
 
   .dv-review-section-value {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--dv-text-secondary, var(--secondary-text-color));
   }
 
   .dv-review-section-details {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--dv-text-tertiary, var(--secondary-text-color));
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .dv-review-section-edit {
-    padding: 8px 14px;
+    padding: 6px 12px;
     background: transparent;
     border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 8px;
-    font-size: 12px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--dv-text-secondary, var(--secondary-text-color));
     cursor: pointer;
@@ -129,57 +131,29 @@ export const reviewStepStyles = `
   /* ==================== SUCCESS MESSAGE ==================== */
   .dv-review-success {
     text-align: center;
-    padding: 24px;
+    padding: 20px;
     background: rgba(76, 175, 80, 0.1);
     border-radius: 12px;
     border: 1px solid rgba(76, 175, 80, 0.3);
   }
 
   .dv-review-success ha-icon {
-    --mdc-icon-size: 48px;
+    --mdc-icon-size: 40px;
     color: #4caf50;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .dv-review-success-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--dv-text-primary, var(--primary-text-color));
-    margin: 0 0 8px 0;
+    margin: 0 0 4px 0;
   }
 
   .dv-review-success-desc {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--dv-text-secondary, var(--secondary-text-color));
     margin: 0;
-  }
-
-  /* ==================== COMPLETE BUTTON ==================== */
-  .dv-review-complete-btn {
-    width: 100%;
-    padding: 16px 24px;
-    background: var(--dv-accent-primary, var(--primary-color));
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--dv-text-on-accent, #fff);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-    margin-top: 8px;
-  }
-
-  .dv-review-complete-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-  }
-
-  .dv-review-complete-btn ha-icon {
-    --mdc-icon-size: 20px;
   }
 `;
 
@@ -191,52 +165,50 @@ export const reviewStepStyles = `
 export function generateReviewSummary(panel) {
   const floors = panel._floors || [];
   const areas = panel._areas || [];
-  const entityState = panel._wizardEntityState || { selected: {} };
-  const layoutState = panel._wizardLayoutState || {};
-  const weatherState = panel._wizardWeatherState || {};
+  const settings = getSettingsStore();
 
-  // Count entities per room
-  const selectedEntities = Object.entries(entityState.selected || {})
-    .filter(([, isSelected]) => isSelected);
-
-  // Count rooms per floor
-  const roomsByFloor = {};
-  floors.forEach(floor => {
-    roomsByFloor[floor.floor_id] = areas.filter(a => a.floor_id === floor.floor_id).length;
-  });
-
-  // Get layout floor order
-  const floorOrder = layoutState.floorOrder || floors.map(f => f.floor_id);
+  // Floor order
+  const floorOrder = settings.get('floorOrder') || floors.map(f => f.floor_id);
   const orderedFloorNames = floorOrder
     .map(id => floors.find(f => f.floor_id === id)?.name)
     .filter(Boolean);
 
-  // Get weather entity name
-  let weatherEntityName = null;
-  if (weatherState.selectedEntity && panel.hass?.states[weatherState.selectedEntity]) {
-    const state = panel.hass.states[weatherState.selectedEntity];
-    weatherEntityName = state.attributes.friendly_name || weatherState.selectedEntity;
-  }
+  // Room config state
+  const roomConfigState = panel._wizardRoomConfigState || { enabledRooms: {} };
+  const enabledRoomsCount = Object.values(roomConfigState.enabledRooms).filter(v => v).length;
+
+  // Labels config - count mapped labels
+  const mappedLabelsCount = LABEL_CATEGORIES.filter(cat => panel[cat.prop]).length;
+
+  // Floor cards state
+  const floorCardsState = panel._wizardFloorCardsState || {};
+  const floorOverviewCount = Object.values(floorCardsState.floorOverviewEnabled || {}).filter(v => v).length;
+  const configuredSlotsCount = Object.values(floorCardsState.floorCardConfig || {}).reduce((acc, floorConfig) => {
+    return acc + Object.keys(floorConfig || {}).length;
+  }, 0);
 
   return {
-    floors: {
+    floorOrder: {
       count: floors.length,
-      names: floors.map(f => f.name)
+      names: orderedFloorNames,
+      isCustom: Boolean(settings.get('floorOrder')?.length > 0)
     },
-    rooms: {
+    roomOrder: {
       total: areas.length,
-      byFloor: roomsByFloor
+      hasCustomOrder: floors.some(f => settings.get(`roomOrder_${f.floor_id}`)?.length > 0)
     },
-    entities: {
-      selected: selectedEntities.length
+    labels: {
+      mappedCount: mappedLabelsCount,
+      totalCategories: LABEL_CATEGORIES.length
     },
-    layout: {
-      floorOrder: orderedFloorNames,
-      isCustom: Boolean(layoutState.floorOrder && layoutState.floorOrder.length > 0)
+    roomConfig: {
+      enabledCount: enabledRoomsCount,
+      total: areas.length
     },
-    weather: {
-      entityId: weatherState.selectedEntity,
-      entityName: weatherEntityName
+    floorCards: {
+      overviewsEnabled: floorOverviewCount,
+      slotsConfigured: configuredSlotsCount,
+      floorsCount: floors.length
     }
   };
 }
@@ -262,108 +234,97 @@ export function renderReviewStep(panel, html) {
     <div class="dv-review-step">
       <div class="dv-review-header">
         <h2 class="dv-review-title">
-          ${t('onboarding.review.title', 'Review Your Setup')}
+          ${t('wizard.review.title', 'Review Your Setup')}
         </h2>
         <p class="dv-review-desc">
-          ${t('onboarding.review.desc', 'Here\'s a summary of your configuration. You can edit any section before finishing.')}
+          ${t('wizard.review.description', 'Here\'s a summary of your configuration. Click Edit to make changes.')}
         </p>
       </div>
 
       <!-- Summary Sections -->
       <div class="dv-review-sections">
-        <!-- Floors Section -->
+        <!-- Floor Order Section -->
         <div class="dv-review-section">
-          <div class="dv-review-section-icon ${summary.floors.count > 0 ? 'success' : 'warning'}">
-            <ha-icon icon="${summary.floors.count > 0 ? 'mdi:check' : 'mdi:alert'}"></ha-icon>
+          <div class="dv-review-section-icon ${summary.floorOrder.count > 0 ? 'success' : 'warning'}">
+            <ha-icon icon="mdi:home-floor-3"></ha-icon>
           </div>
           <div class="dv-review-section-info">
-            <h3 class="dv-review-section-title">${t('onboarding.review.floors', 'Floors')}</h3>
+            <h3 class="dv-review-section-title">${t('wizard.review.floorOrder', 'Floor Order')}</h3>
             <p class="dv-review-section-value">
-              ${summary.floors.count} ${summary.floors.count === 1
-                ? t('onboarding.review.floor', 'floor')
-                : t('onboarding.review.floorsPlural', 'floors')} ${t('onboarding.review.configured', 'configured')}
+              ${summary.floorOrder.count} ${summary.floorOrder.count === 1 ? 'floor' : 'floors'}
+              ${summary.floorOrder.isCustom ? ' (custom order)' : ''}
             </p>
-            ${summary.floors.names.length > 0 ? html`
-              <p class="dv-review-section-details">${summary.floors.names.join(', ')}</p>
+            ${summary.floorOrder.names.length > 0 ? html`
+              <p class="dv-review-section-details">${summary.floorOrder.names.join(' → ')}</p>
             ` : ''}
           </div>
           <button class="dv-review-section-edit" @click=${() => goToStep(1)}>
-            ${t('onboarding.review.edit', 'Edit')}
+            ${t('wizard.review.edit', 'Edit')}
           </button>
         </div>
 
-        <!-- Rooms Section -->
+        <!-- Room Order Section -->
         <div class="dv-review-section">
-          <div class="dv-review-section-icon ${summary.rooms.total > 0 ? 'success' : 'warning'}">
-            <ha-icon icon="${summary.rooms.total > 0 ? 'mdi:check' : 'mdi:alert'}"></ha-icon>
+          <div class="dv-review-section-icon ${summary.roomOrder.total > 0 ? 'success' : 'warning'}">
+            <ha-icon icon="mdi:door"></ha-icon>
           </div>
           <div class="dv-review-section-info">
-            <h3 class="dv-review-section-title">${t('onboarding.review.rooms', 'Rooms')}</h3>
+            <h3 class="dv-review-section-title">${t('wizard.review.roomOrder', 'Room Order')}</h3>
             <p class="dv-review-section-value">
-              ${summary.rooms.total} ${summary.rooms.total === 1
-                ? t('onboarding.review.room', 'room')
-                : t('onboarding.review.roomsPlural', 'rooms')} ${t('onboarding.review.assigned', 'assigned')}
+              ${summary.roomOrder.total} ${summary.roomOrder.total === 1 ? 'room' : 'rooms'}
+              ${summary.roomOrder.hasCustomOrder ? ' (custom order)' : ''}
             </p>
           </div>
           <button class="dv-review-section-edit" @click=${() => goToStep(2)}>
-            ${t('onboarding.review.edit', 'Edit')}
+            ${t('wizard.review.edit', 'Edit')}
           </button>
         </div>
 
-        <!-- Entities Section -->
+        <!-- Labels Section -->
         <div class="dv-review-section">
-          <div class="dv-review-section-icon ${summary.entities.selected > 0 ? 'success' : 'warning'}">
-            <ha-icon icon="${summary.entities.selected > 0 ? 'mdi:check' : 'mdi:alert'}"></ha-icon>
+          <div class="dv-review-section-icon ${summary.labels.mappedCount > 0 ? 'success' : 'warning'}">
+            <ha-icon icon="mdi:tag-multiple"></ha-icon>
           </div>
           <div class="dv-review-section-info">
-            <h3 class="dv-review-section-title">${t('onboarding.review.entities', 'Entities')}</h3>
+            <h3 class="dv-review-section-title">${t('wizard.review.labels', 'Labels')}</h3>
             <p class="dv-review-section-value">
-              ${summary.entities.selected} ${summary.entities.selected === 1
-                ? t('onboarding.review.entity', 'entity')
-                : t('onboarding.review.entitiesPlural', 'entities')} ${t('onboarding.review.selected', 'selected')}
+              ${summary.labels.mappedCount} of ${summary.labels.totalCategories} categories mapped
             </p>
           </div>
           <button class="dv-review-section-edit" @click=${() => goToStep(3)}>
-            ${t('onboarding.review.edit', 'Edit')}
+            ${t('wizard.review.edit', 'Edit')}
           </button>
         </div>
 
-        <!-- Layout Section -->
+        <!-- Room Config Section -->
         <div class="dv-review-section">
-          <div class="dv-review-section-icon success">
-            <ha-icon icon="mdi:check"></ha-icon>
+          <div class="dv-review-section-icon ${summary.roomConfig.enabledCount > 0 ? 'success' : 'warning'}">
+            <ha-icon icon="mdi:home-group"></ha-icon>
           </div>
           <div class="dv-review-section-info">
-            <h3 class="dv-review-section-title">${t('onboarding.review.layout', 'Layout')}</h3>
+            <h3 class="dv-review-section-title">${t('wizard.review.roomConfig', 'Enabled Rooms')}</h3>
             <p class="dv-review-section-value">
-              ${summary.layout.isCustom
-                ? t('onboarding.review.layoutCustom', 'Custom floor order')
-                : t('onboarding.review.layoutDefault', 'Default floor order')}
+              ${summary.roomConfig.enabledCount} of ${summary.roomConfig.total} rooms enabled
             </p>
-            ${summary.layout.floorOrder.length > 0 ? html`
-              <p class="dv-review-section-details">${summary.layout.floorOrder.join(' → ')}</p>
-            ` : ''}
           </div>
           <button class="dv-review-section-edit" @click=${() => goToStep(4)}>
-            ${t('onboarding.review.edit', 'Edit')}
+            ${t('wizard.review.edit', 'Edit')}
           </button>
         </div>
 
-        <!-- Weather Section -->
+        <!-- Floor Cards Section -->
         <div class="dv-review-section">
           <div class="dv-review-section-icon success">
-            <ha-icon icon="mdi:check"></ha-icon>
+            <ha-icon icon="mdi:view-grid"></ha-icon>
           </div>
           <div class="dv-review-section-info">
-            <h3 class="dv-review-section-title">${t('onboarding.review.weather', 'Weather')}</h3>
+            <h3 class="dv-review-section-title">${t('wizard.review.floorCards', 'Floor Cards')}</h3>
             <p class="dv-review-section-value">
-              ${summary.weather.entityName
-                ? summary.weather.entityName
-                : t('onboarding.review.noWeather', 'Not configured (optional)')}
+              ${summary.floorCards.overviewsEnabled} overviews, ${summary.floorCards.slotsConfigured} slots configured
             </p>
           </div>
           <button class="dv-review-section-edit" @click=${() => goToStep(5)}>
-            ${t('onboarding.review.edit', 'Edit')}
+            ${t('wizard.review.edit', 'Edit')}
           </button>
         </div>
       </div>
@@ -372,10 +333,10 @@ export function renderReviewStep(panel, html) {
       <div class="dv-review-success">
         <ha-icon icon="mdi:check-circle"></ha-icon>
         <h3 class="dv-review-success-title">
-          ${t('onboarding.review.ready', 'You\'re All Set!')}
+          ${t('wizard.review.ready', 'You\'re All Set!')}
         </h3>
         <p class="dv-review-success-desc">
-          ${t('onboarding.review.readyDesc', 'Your dashboard is configured and ready to use.')}
+          ${t('wizard.review.readyDesc', 'Click Finish to complete setup and start using your dashboard.')}
         </p>
       </div>
     </div>

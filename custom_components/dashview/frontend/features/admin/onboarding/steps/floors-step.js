@@ -1,19 +1,16 @@
 /**
- * Floors Step Component
- * Second step in the setup wizard - create, reorder, and delete floors
+ * Floor Order Step Component
+ * Second step in the setup wizard - reorder floors from Home Assistant
  *
- * Implements Story 9.1 Task 4:
- * - 4.2 Allow creating floors with name input
- * - 4.3 Drag-drop reordering for floor display order
- * - 4.4 Delete floor button with confirmation
- * - 4.5 Minimum 1 floor required validation
+ * This step allows users to arrange the display order of floors that already
+ * exist in Home Assistant. Floor creation/deletion is handled in HA settings.
  */
 
 import { t } from '../../shared.js';
 import { getSettingsStore } from '../../../../stores/index.js';
 
 /**
- * Floors step styles
+ * Floor order step styles
  */
 export const floorsStepStyles = `
   /* ==================== FLOORS STEP ==================== */
@@ -123,18 +120,18 @@ export const floorsStepStyles = `
     margin: 2px 0 0 0;
   }
 
-  .dv-floor-actions {
+  .dv-floor-order-btns {
     display: flex;
-    gap: 4px;
+    flex-direction: column;
+    gap: 2px;
   }
 
-  .dv-floor-action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: none;
+  .dv-floor-order-btn {
+    width: 28px;
+    height: 20px;
+    border: 1px solid var(--dv-border, var(--divider-color));
+    border-radius: 4px;
     background: transparent;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -142,76 +139,19 @@ export const floorsStepStyles = `
     transition: all 0.2s ease;
   }
 
-  .dv-floor-action-btn:hover {
+  .dv-floor-order-btn:hover:not(:disabled) {
     background: var(--dv-bg-tertiary, var(--divider-color));
-    color: var(--dv-text-primary, var(--primary-text-color));
+    border-color: var(--dv-accent-primary, var(--primary-color));
   }
 
-  .dv-floor-action-btn.delete:hover {
-    background: var(--dv-error-subtle, rgba(var(--rgb-error-color), 0.1));
-    color: var(--dv-error, var(--error-color));
-  }
-
-  .dv-floor-action-btn:disabled {
+  .dv-floor-order-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
   }
 
-  .dv-floor-action-btn:disabled:hover {
-    background: transparent;
+  .dv-floor-order-btn ha-icon {
+    --mdc-icon-size: 14px;
     color: var(--dv-text-secondary, var(--secondary-text-color));
-  }
-
-  /* ==================== ADD FLOOR ==================== */
-  .dv-add-floor-section {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .dv-add-floor-input {
-    flex: 1;
-    padding: 12px 16px;
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 8px;
-    font-size: 14px;
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    color: var(--dv-text-primary, var(--primary-text-color));
-    outline: none;
-    transition: border-color 0.2s ease;
-  }
-
-  .dv-add-floor-input:focus {
-    border-color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-add-floor-input::placeholder {
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
-  }
-
-  .dv-add-floor-btn {
-    padding: 12px 20px;
-    border-radius: 8px;
-    border: none;
-    background: var(--dv-accent-primary, var(--primary-color));
-    color: var(--dv-text-on-accent, #fff);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: filter 0.2s ease;
-    white-space: nowrap;
-  }
-
-  .dv-add-floor-btn:hover {
-    filter: brightness(1.1);
-  }
-
-  .dv-add-floor-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 
   /* ==================== EMPTY STATE ==================== */
@@ -232,112 +172,13 @@ export const floorsStepStyles = `
   .dv-floors-empty-text {
     font-size: 14px;
     color: var(--dv-text-secondary, var(--secondary-text-color));
-    margin: 0;
+    margin: 0 0 16px 0;
   }
 
-  /* ==================== VALIDATION ==================== */
-  .dv-floors-validation {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    background: var(--dv-error-subtle, rgba(var(--rgb-error-color), 0.1));
-    border-radius: 8px;
-    color: var(--dv-error, var(--error-color));
-    font-size: 13px;
-  }
-
-  .dv-floors-validation ha-icon {
-    --mdc-icon-size: 20px;
-  }
-
-  /* ==================== DELETE CONFIRMATION ==================== */
-  .dv-floors-confirm-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .dv-floors-confirm-dialog {
-    background: var(--dv-bg-primary, var(--primary-background-color));
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  }
-
-  .dv-floors-confirm-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--dv-text-primary, var(--primary-text-color));
-    margin: 0 0 12px 0;
-  }
-
-  .dv-floors-confirm-message {
-    font-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
-    margin: 0 0 24px 0;
-    line-height: 1.5;
-  }
-
-  .dv-floors-confirm-warning {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px;
-    background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.1));
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: var(--dv-warning, var(--warning-color));
-  }
-
-  .dv-floors-confirm-warning ha-icon {
-    --mdc-icon-size: 18px;
-    flex-shrink: 0;
-  }
-
-  .dv-floors-confirm-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-  }
-
-  .dv-floors-confirm-btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
+  .dv-floors-empty-link {
+    color: var(--dv-accent-primary, var(--primary-color));
+    text-decoration: none;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .dv-floors-confirm-btn.cancel {
-    background: var(--dv-bg-secondary, var(--secondary-background-color));
-    border: 1px solid var(--dv-border, var(--divider-color));
-    color: var(--dv-text-primary, var(--primary-text-color));
-  }
-
-  .dv-floors-confirm-btn.cancel:hover {
-    background: var(--dv-bg-tertiary, var(--divider-color));
-  }
-
-  .dv-floors-confirm-btn.delete {
-    background: var(--dv-error, var(--error-color));
-    border: none;
-    color: #fff;
-  }
-
-  .dv-floors-confirm-btn.delete:hover {
-    filter: brightness(1.1);
   }
 
   /* ==================== HINT ==================== */
@@ -390,57 +231,7 @@ export function getFloorIcon(floor, index) {
 }
 
 /**
- * Create a new floor in Home Assistant
- * @param {Object} hass - Home Assistant instance
- * @param {string} name - Floor name
- * @returns {Promise<Object>} Created floor
- */
-export async function createFloor(hass, name) {
-  if (!hass) throw new Error('Home Assistant not available');
-  if (!name || !name.trim()) throw new Error('Floor name is required');
-
-  const result = await hass.callWS({
-    type: 'config/floor_registry/create',
-    name: name.trim()
-  });
-
-  return result;
-}
-
-/**
- * Delete a floor from Home Assistant
- * @param {Object} hass - Home Assistant instance
- * @param {string} floorId - Floor ID to delete
- * @returns {Promise<void>}
- */
-export async function deleteFloor(hass, floorId) {
-  if (!hass) throw new Error('Home Assistant not available');
-  if (!floorId) throw new Error('Floor ID is required');
-
-  await hass.callWS({
-    type: 'config/floor_registry/delete',
-    floor_id: floorId
-  });
-}
-
-/**
- * Refresh floors list from Home Assistant
- * @param {Object} panel - Panel instance
- * @returns {Promise<Array>} Updated floors list
- */
-export async function refreshFloors(panel) {
-  if (!panel.hass) return [];
-
-  const floors = await panel.hass.callWS({
-    type: 'config/floor_registry/list'
-  });
-
-  panel._floors = floors;
-  return floors;
-}
-
-/**
- * Render the floors step
+ * Render the floor order step
  * @param {Object} panel - The DashviewPanel instance
  * @param {Function} html - lit-html template function
  * @returns {TemplateResult}
@@ -449,12 +240,7 @@ export function renderFloorsStep(panel, html) {
   // Initialize wizard floor state if not exists
   if (!panel._wizardFloorState) {
     panel._wizardFloorState = {
-      newFloorName: '',
-      deleteConfirm: null, // floor_id to confirm deletion
-      draggedFloorId: null,
-      isCreating: false,
-      isDeleting: false,
-      error: null
+      draggedFloorId: null
     };
   }
 
@@ -494,72 +280,22 @@ export function renderFloorsStep(panel, html) {
     return areas.filter(a => a.floor_id === floorId).length;
   };
 
-  // Handle create floor
-  const handleCreateFloor = async () => {
-    if (!state.newFloorName.trim() || state.isCreating) return;
-
-    state.isCreating = true;
-    state.error = null;
-    panel.requestUpdate();
-
-    try {
-      await createFloor(panel.hass, state.newFloorName);
-      await refreshFloors(panel);
-      state.newFloorName = '';
-    } catch (e) {
-      console.error('Failed to create floor:', e);
-      state.error = t('onboarding.floors.errorCreate', 'Failed to create floor. Please try again.');
-    } finally {
-      state.isCreating = false;
-      panel.requestUpdate();
-    }
-  };
-
-  // Handle delete floor confirmation
-  const handleDeleteClick = (floorId) => {
-    state.deleteConfirm = floorId;
+  // Handle move floor up
+  const moveUp = (index) => {
+    if (index <= 0) return;
+    const currentOrder = orderedFloors.map(f => f.floor_id);
+    [currentOrder[index - 1], currentOrder[index]] = [currentOrder[index], currentOrder[index - 1]];
+    settings.set('floorOrder', currentOrder);
     panel.requestUpdate();
   };
 
-  // Handle delete floor cancel
-  const handleDeleteCancel = () => {
-    state.deleteConfirm = null;
+  // Handle move floor down
+  const moveDown = (index) => {
+    if (index >= orderedFloors.length - 1) return;
+    const currentOrder = orderedFloors.map(f => f.floor_id);
+    [currentOrder[index], currentOrder[index + 1]] = [currentOrder[index + 1], currentOrder[index]];
+    settings.set('floorOrder', currentOrder);
     panel.requestUpdate();
-  };
-
-  // Handle delete floor confirm
-  const handleDeleteConfirm = async () => {
-    if (!state.deleteConfirm || state.isDeleting) return;
-
-    // Don't allow deleting the last floor
-    if (orderedFloors.length <= 1) {
-      state.error = t('onboarding.floors.errorDeleteLast', 'Cannot delete the last floor.');
-      state.deleteConfirm = null;
-      panel.requestUpdate();
-      return;
-    }
-
-    state.isDeleting = true;
-    state.error = null;
-    panel.requestUpdate();
-
-    try {
-      await deleteFloor(panel.hass, state.deleteConfirm);
-
-      // Remove from floor order
-      const newOrder = floorOrder.filter(id => id !== state.deleteConfirm);
-      settings.set('floorOrder', newOrder);
-
-      await refreshFloors(panel);
-      state.deleteConfirm = null;
-    } catch (e) {
-      console.error('Failed to delete floor:', e);
-      state.error = t('onboarding.floors.errorDelete', 'Failed to delete floor. Please try again.');
-      state.deleteConfirm = null;
-    } finally {
-      state.isDeleting = false;
-      panel.requestUpdate();
-    }
   };
 
   // Handle drag start
@@ -567,7 +303,6 @@ export function renderFloorsStep(panel, html) {
     state.draggedFloorId = floorId;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', floorId);
-    // Add dragging class after a small delay
     setTimeout(() => panel.requestUpdate(), 0);
   };
 
@@ -615,65 +350,27 @@ export function renderFloorsStep(panel, html) {
     panel.requestUpdate();
   };
 
-  // Handle input keydown (enter to create)
-  const handleInputKeydown = (e) => {
-    if (e.key === 'Enter') {
-      handleCreateFloor();
-    }
-  };
-
-  const hasMinimumFloors = orderedFloors.length >= 1;
-  const floorToDelete = orderedFloors.find(f => f.floor_id === state.deleteConfirm);
-
   return html`
     <style>${floorsStepStyles}</style>
     <div class="dv-floors-step">
       <div class="dv-floors-header">
         <h2 class="dv-floors-title">
-          ${t('onboarding.floors.title', 'Set Up Your Floors')}
+          ${t('wizard.floorOrder.title', 'Arrange Your Floors')}
         </h2>
         <p class="dv-floors-desc">
-          ${t('onboarding.floors.desc', 'Create floors for your home and drag to reorder them.')}
+          ${t('wizard.floorOrder.description', 'Drag to reorder floors. This determines the display order on your dashboard.')}
         </p>
       </div>
-
-      <!-- Add Floor Section -->
-      <div class="dv-add-floor-section">
-        <input
-          type="text"
-          class="dv-add-floor-input"
-          placeholder="${t('onboarding.floors.placeholder', 'Enter floor name (e.g., Ground Floor, First Floor)')}"
-          .value=${state.newFloorName}
-          @input=${(e) => { state.newFloorName = e.target.value; panel.requestUpdate(); }}
-          @keydown=${handleInputKeydown}
-          ?disabled=${state.isCreating}
-        />
-        <button
-          class="dv-add-floor-btn"
-          @click=${handleCreateFloor}
-          ?disabled=${!state.newFloorName.trim() || state.isCreating}
-        >
-          <ha-icon icon="mdi:plus"></ha-icon>
-          ${state.isCreating
-            ? t('onboarding.floors.creating', 'Creating...')
-            : t('onboarding.floors.addFloor', 'Add Floor')}
-        </button>
-      </div>
-
-      <!-- Error Message -->
-      ${state.error ? html`
-        <div class="dv-floors-validation">
-          <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <span>${state.error}</span>
-        </div>
-      ` : ''}
 
       <!-- Floor List -->
       ${orderedFloors.length === 0 ? html`
         <div class="dv-floors-empty">
           <ha-icon class="dv-floors-empty-icon" icon="mdi:home-floor-0"></ha-icon>
           <p class="dv-floors-empty-text">
-            ${t('onboarding.floors.empty', 'No floors yet. Add your first floor above to get started.')}
+            ${t('wizard.floorOrder.empty', 'No floors found in Home Assistant.')}
+          </p>
+          <p class="dv-floors-empty-text">
+            ${t('wizard.floorOrder.emptyHint', 'Create floors in Home Assistant under Settings → Areas & Zones → Floors.')}
           </p>
         </div>
       ` : html`
@@ -692,26 +389,32 @@ export function renderFloorsStep(panel, html) {
               </div>
 
               <div class="dv-floor-icon">
-                <ha-icon icon="${getFloorIcon(floor, index)}"></ha-icon>
+                <ha-icon icon="${floor.icon || getFloorIcon(floor, index)}"></ha-icon>
               </div>
 
               <div class="dv-floor-info">
                 <p class="dv-floor-name">${floor.name || floor.floor_id}</p>
                 <p class="dv-floor-areas">
-                  ${getAreaCount(floor.floor_id)} ${t('onboarding.floors.rooms', 'rooms')}
+                  ${getAreaCount(floor.floor_id)} ${t('wizard.floorOrder.rooms', 'rooms')}
                 </p>
               </div>
 
-              <div class="dv-floor-actions">
+              <div class="dv-floor-order-btns">
                 <button
-                  class="dv-floor-action-btn delete"
-                  @click=${() => handleDeleteClick(floor.floor_id)}
-                  ?disabled=${orderedFloors.length <= 1}
-                  title="${orderedFloors.length <= 1
-                    ? t('onboarding.floors.cannotDeleteLast', 'Cannot delete the last floor')
-                    : t('onboarding.floors.deleteFloor', 'Delete floor')}"
+                  class="dv-floor-order-btn"
+                  @click=${() => moveUp(index)}
+                  ?disabled=${index === 0}
+                  aria-label="Move up"
                 >
-                  <ha-icon icon="mdi:delete"></ha-icon>
+                  <ha-icon icon="mdi:chevron-up"></ha-icon>
+                </button>
+                <button
+                  class="dv-floor-order-btn"
+                  @click=${() => moveDown(index)}
+                  ?disabled=${index === orderedFloors.length - 1}
+                  aria-label="Move down"
+                >
+                  <ha-icon icon="mdi:chevron-down"></ha-icon>
                 </button>
               </div>
             </div>
@@ -719,64 +422,38 @@ export function renderFloorsStep(panel, html) {
         </div>
       `}
 
-      <!-- Minimum Floor Validation -->
-      ${!hasMinimumFloors ? html`
-        <div class="dv-floors-validation">
-          <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <span>${t('onboarding.floors.minRequired', 'At least one floor is required to continue.')}</span>
-        </div>
-      ` : ''}
-
       <div style="flex: 1;"></div>
 
       <!-- Hint -->
       <div class="dv-floors-hint">
         <ha-icon icon="mdi:information-outline"></ha-icon>
-        <span>${t('onboarding.floors.hint', 'Tip: Drag floors to set the display order on your dashboard. Common floor names: Ground Floor, First Floor, Basement, Attic.')}</span>
+        <span>${t('wizard.floorOrder.hint', 'Tip: The first floor in the list will be the default view on your dashboard.')}</span>
       </div>
     </div>
-
-    <!-- Delete Confirmation Dialog -->
-    ${state.deleteConfirm ? html`
-      <div class="dv-floors-confirm-overlay" @click=${handleDeleteCancel}>
-        <div class="dv-floors-confirm-dialog" @click=${(e) => e.stopPropagation()}>
-          <h3 class="dv-floors-confirm-title">
-            ${t('onboarding.floors.confirmDeleteTitle', 'Delete Floor?')}
-          </h3>
-          <p class="dv-floors-confirm-message">
-            ${t('onboarding.floors.confirmDeleteMessage', 'Are you sure you want to delete')}
-            <strong>"${floorToDelete?.name || state.deleteConfirm}"</strong>?
-          </p>
-          ${getAreaCount(state.deleteConfirm) > 0 ? html`
-            <div class="dv-floors-confirm-warning">
-              <ha-icon icon="mdi:alert"></ha-icon>
-              <span>
-                ${t('onboarding.floors.confirmDeleteWarning', 'This floor has {count} rooms assigned. They will become unassigned.').replace('{count}', getAreaCount(state.deleteConfirm))}
-              </span>
-            </div>
-          ` : ''}
-          <div class="dv-floors-confirm-actions">
-            <button
-              class="dv-floors-confirm-btn cancel"
-              @click=${handleDeleteCancel}
-              ?disabled=${state.isDeleting}
-            >
-              ${t('common.cancel', 'Cancel')}
-            </button>
-            <button
-              class="dv-floors-confirm-btn delete"
-              @click=${handleDeleteConfirm}
-              ?disabled=${state.isDeleting}
-            >
-              ${state.isDeleting
-                ? t('onboarding.floors.deleting', 'Deleting...')
-                : t('common.delete', 'Delete')}
-            </button>
-          </div>
-        </div>
-      </div>
-    ` : ''}
   `;
+}
+
+/**
+ * Get floor order from wizard state
+ * @param {Object} panel - Panel instance
+ * @returns {Array} Floor order array
+ */
+export function getFloorOrder(panel) {
+  const settings = getSettingsStore();
+  return settings.get('floorOrder') || [];
+}
+
+/**
+ * Save floor order to settings
+ * @param {Array} floorOrder - Array of floor IDs in order
+ * @param {Object} settingsStore - Settings store instance
+ */
+export function saveFloorOrder(floorOrder, settingsStore) {
+  try {
+    settingsStore.set('floorOrder', floorOrder);
+  } catch (e) {
+    console.warn('[Dashview] Failed to save floor order:', e);
+  }
 }
 
 export default renderFloorsStep;

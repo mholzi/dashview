@@ -3,51 +3,54 @@
  * Re-exports all wizard step components
  */
 
-// Welcome Step (Story 9.1)
+// Welcome Step
 export {
   renderWelcomeStep,
   welcomeStepStyles
 } from './welcome-step.js';
 
-// Floors Step (Story 9.1)
+// Floor Order Step
 export {
   renderFloorsStep,
-  floorsStepStyles
+  floorsStepStyles,
+  getFloorOrder,
+  saveFloorOrder,
+  getFloorIcon
 } from './floors-step.js';
 
-// Rooms Step (Story 9.1)
+// Room Order Step
 export {
   renderRoomsStep,
-  roomsStepStyles
+  roomsStepStyles,
+  getRoomOrderConfig,
+  saveRoomOrderConfig
 } from './rooms-step.js';
 
-// Entity Configuration Step (Story 9.2)
+// Labels Step
+export {
+  renderLabelsStep,
+  labelsStepStyles,
+  getLabelsConfig,
+  saveLabelsConfig
+} from './labels-step.js';
+
+// Room Configuration Step (formerly Entities Step)
 export {
   renderEntitiesStep,
   entitiesStepStyles,
-  SUGGESTED_DOMAINS,
   saveEntitySelections,
   getEntitySelections
 } from './entities-step.js';
 
-// Layout Step (Story 9.3)
+// Floor Cards Step
 export {
-  renderLayoutStep,
-  layoutStepStyles,
-  getFloorOrder,
-  saveFloorOrder
-} from './layout-step.js';
+  renderFloorCardsStep,
+  floorCardsStepStyles,
+  getFloorCardsConfig,
+  saveFloorCardsConfig
+} from './floor-cards-step.js';
 
-// Weather Step (Story 9.3)
-export {
-  renderWeatherStep,
-  weatherStepStyles,
-  getWeatherEntities,
-  getWeatherSelection,
-  saveWeatherEntity
-} from './weather-step.js';
-
-// Review Step (Story 9.3)
+// Review Step
 export {
   renderReviewStep,
   reviewStepStyles,
