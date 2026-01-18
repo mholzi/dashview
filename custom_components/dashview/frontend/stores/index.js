@@ -61,15 +61,6 @@ export {
   DEFAULT_ONBOARDING_STATE,
 } from './onboarding-store.js';
 
-// Mode Store - dashboard mode profiles
-export {
-  ModeStore,
-  getModeStore,
-  resetModeStore,
-  DEFAULT_MODE,
-  MODE_SETTINGS_SCHEMA,
-} from './mode-store.js';
-
 /**
  * Initialize all stores with Home Assistant instance
  * @param {Object} hass - Home Assistant instance

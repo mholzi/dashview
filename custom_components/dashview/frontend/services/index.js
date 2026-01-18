@@ -79,13 +79,3 @@ export {
   getErrorDetails,
   isRecoverableError,
 } from './error-mapper.js';
-
-// Mode Scheduler Service
-export {
-  ModeScheduler,
-  getModeScheduler,
-  resetModeScheduler,
-  DAYS_OF_WEEK,
-  DAY_LABELS,
-  DAY_PRESETS,
-} from './mode-scheduler.js';

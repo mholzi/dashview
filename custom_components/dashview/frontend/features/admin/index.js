@@ -41,9 +41,6 @@ export { renderScenesTab } from './scenes-tab.js';
 // Users tab exports
 export { renderUsersTab } from './users-tab.js';
 
-// Modes tab exports
-export { renderModesTab, modesTabStyles } from './modes-tab.js';
-
 // Onboarding/Setup Wizard exports
 export {
   renderWizard,
@@ -70,7 +67,6 @@ import { renderWeatherTab } from './weather-tab.js';
 import { renderStatusTab } from './status-tab.js';
 import { renderScenesTab } from './scenes-tab.js';
 import { renderUsersTab } from './users-tab.js';
-import { renderModesTab } from './modes-tab.js';
 
 /**
  * Render the main Admin tab with sub-tab navigation
@@ -153,13 +149,6 @@ export function renderAdminTab(panel, html) {
             <ha-icon icon="mdi:account-group"></ha-icon>
             ${t('admin.tabs.users')}
           </button>
-          <button
-            class="admin-sub-tab ${panel._adminSubTab === 'modes' ? 'active' : ''}"
-            @click=${() => handleTabClick('modes')}
-          >
-            <ha-icon icon="mdi:toggle-switch-outline"></ha-icon>
-            ${t('admin.tabs.modes', 'Modes')}
-          </button>
         </div>
         <div class="admin-sub-tabs-indicator admin-sub-tabs-indicator-right"></div>
       </div>
@@ -174,9 +163,7 @@ export function renderAdminTab(panel, html) {
               ? renderStatusTab(panel, html)
               : panel._adminSubTab === 'users'
                 ? renderUsersTab(panel, html)
-                : panel._adminSubTab === 'modes'
-                  ? renderModesTab(panel, html)
-                  : renderScenesTab(panel, html)}
+                : renderScenesTab(panel, html)}
     </div>
   `;
 }
