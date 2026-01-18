@@ -41,7 +41,8 @@ export const floorCardsStepStyles = `
     display: flex;
     flex-direction: column;
     gap: 24px;
-    max-height: 450px;
+    flex: 1;
+    min-height: 200px;
     overflow-y: auto;
     padding-right: 4px;
   }

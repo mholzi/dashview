@@ -40,7 +40,8 @@ export const labelsStepStyles = `
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 400px;
+    flex: 1;
+    min-height: 200px;
     overflow-y: auto;
     padding-right: 4px;
   }

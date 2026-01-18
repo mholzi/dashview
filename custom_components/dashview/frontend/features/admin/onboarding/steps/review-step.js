@@ -40,7 +40,8 @@ export const reviewStepStyles = `
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 400px;
+    flex: 1;
+    min-height: 150px;
     overflow-y: auto;
   }
 

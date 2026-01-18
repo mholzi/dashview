@@ -70,7 +70,8 @@ export const entitiesStepStyles = `
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-height: 350px;
+    flex: 1;
+    min-height: 200px;
     overflow-y: auto;
     padding-right: 4px;
   }
