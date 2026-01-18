@@ -11,19 +11,25 @@ import {
 
 // Mock the shared module
 vi.mock('../../shared.js', () => ({
-  t: (key, fallback) => fallback
+  t: (key, fallback) => fallback,
+  LABEL_CATEGORIES: [
+    { key: 'light', prop: '_lightLabelId' },
+    { key: 'cover', prop: '_coverLabelId' },
+    { key: 'motion', prop: '_motionLabelId' }
+  ]
 }));
 
 // Mock stores
 vi.mock('../../../../stores/index.js', () => ({
   getSettingsStore: vi.fn(() => ({
+    get: vi.fn((key) => null),
     settings: {},
     subscribe: vi.fn(),
     updateSettings: vi.fn()
   })),
   getOnboardingStore: vi.fn(() => ({
     currentStep: 6,
-    steps: ['welcome', 'floors', 'rooms', 'entities', 'layout', 'weather', 'review'],
+    steps: ['welcome', 'floorOrder', 'roomOrder', 'labels', 'roomConfig', 'floorCards', 'review'],
     goToStep: vi.fn(),
     subscribe: vi.fn()
   }))
@@ -62,12 +68,12 @@ describe('Review Step', () => {
       const mockPanel = {};
       const result = generateReviewSummary(mockPanel);
 
-      expect(result.floors.count).toBe(0);
-      expect(result.floors.names).toEqual([]);
-      expect(result.rooms.total).toBe(0);
-      expect(result.entities.selected).toBe(0);
-      expect(result.weather.entityId).toBeUndefined();
-      expect(result.weather.entityName).toBeNull();
+      expect(result.floorOrder.count).toBe(0);
+      expect(result.floorOrder.names).toEqual([]);
+      expect(result.roomOrder.total).toBe(0);
+      expect(result.labels.mappedCount).toBe(0);
+      expect(result.roomConfig.enabledCount).toBe(0);
+      expect(result.floorCards.overviewsEnabled).toBe(0);
     });
 
     it('should count floors correctly', () => {
@@ -80,8 +86,8 @@ describe('Review Step', () => {
       };
       const result = generateReviewSummary(mockPanel);
 
-      expect(result.floors.count).toBe(2);
-      expect(result.floors.names).toEqual(['Ground Floor', 'First Floor']);
+      expect(result.floorOrder.count).toBe(2);
+      expect(result.floorOrder.names).toEqual(['Ground Floor', 'First Floor']);
     });
 
     it('should count rooms correctly', () => {
@@ -97,81 +103,54 @@ describe('Review Step', () => {
       };
       const result = generateReviewSummary(mockPanel);
 
-      expect(result.rooms.total).toBe(3);
-      expect(result.rooms.byFloor.floor1).toBe(3);
+      expect(result.roomOrder.total).toBe(3);
     });
 
-    it('should count selected entities correctly', () => {
+    it('should count enabled rooms from wizard state', () => {
       const mockPanel = {
         _floors: [],
-        _areas: [],
-        _wizardEntityState: {
-          selected: {
-            'light.lamp1': true,
-            'light.lamp2': true,
-            'switch.outlet': false,
-            'climate.thermostat': true
+        _areas: [
+          { area_id: 'area1' },
+          { area_id: 'area2' },
+          { area_id: 'area3' }
+        ],
+        _wizardRoomConfigState: {
+          enabledRooms: {
+            'area1': true,
+            'area2': true,
+            'area3': false
           }
         }
       };
       const result = generateReviewSummary(mockPanel);
 
-      expect(result.entities.selected).toBe(3);
+      expect(result.roomConfig.enabledCount).toBe(2);
+      expect(result.roomConfig.total).toBe(3);
     });
 
-    it('should get weather entity info when selected', () => {
+    it('should count floor cards configuration', () => {
       const mockPanel = {
-        _floors: [],
+        _floors: [
+          { floor_id: 'floor1', name: 'Ground' },
+          { floor_id: 'floor2', name: 'Upstairs' }
+        ],
         _areas: [],
-        _wizardWeatherState: {
-          selectedEntity: 'weather.home'
-        },
-        hass: {
-          states: {
-            'weather.home': {
-              state: 'sunny',
-              attributes: {
-                friendly_name: 'Home Weather'
-              }
-            }
+        _wizardFloorCardsState: {
+          floorOverviewEnabled: {
+            'floor1': true,
+            'floor2': false
+          },
+          floorCardConfig: {
+            'floor1': { slot1: 'entity1', slot2: 'entity2' },
+            'floor2': { slot1: 'entity3' }
           }
         }
       };
       const result = generateReviewSummary(mockPanel);
 
-      expect(result.weather.entityId).toBe('weather.home');
-      expect(result.weather.entityName).toBe('Home Weather');
-    });
-
-    it('should handle weather entity not found in hass', () => {
-      const mockPanel = {
-        _floors: [],
-        _areas: [],
-        _wizardWeatherState: {
-          selectedEntity: 'weather.missing'
-        },
-        hass: {
-          states: {}
-        }
-      };
-      const result = generateReviewSummary(mockPanel);
-
-      expect(result.weather.entityId).toBe('weather.missing');
-      expect(result.weather.entityName).toBeNull();
-    });
-
-    it('should return null weather when no entity selected', () => {
-      const mockPanel = {
-        _floors: [],
-        _areas: [],
-        _wizardWeatherState: {
-          selectedEntity: null
-        }
-      };
-      const result = generateReviewSummary(mockPanel);
-
-      expect(result.weather.entityId).toBeNull();
-      expect(result.weather.entityName).toBeNull();
+      expect(result.floorCards.overviewsEnabled).toBe(1);
+      expect(result.floorCards.slotsConfigured).toBe(3);
+      expect(result.floorCards.floorsCount).toBe(2);
     });
 
     it('should provide complete summary with all data', () => {
@@ -185,52 +164,37 @@ describe('Review Step', () => {
           { area_id: 'area2', floor_id: 'floor2' },
           { area_id: 'area3', floor_id: 'floor2' }
         ],
-        _wizardEntityState: {
-          selected: {
-            'light.lamp1': true,
-            'light.lamp2': true
+        _wizardRoomConfigState: {
+          enabledRooms: {
+            'area1': true,
+            'area2': true
           }
         },
-        _wizardLayoutState: {
-          floorOrder: ['floor2', 'floor1']
-        },
-        _wizardWeatherState: {
-          selectedEntity: 'weather.home'
-        },
-        hass: {
-          states: {
-            'weather.home': {
-              state: 'sunny',
-              attributes: { friendly_name: 'Home' }
-            }
-          }
+        _wizardFloorCardsState: {
+          floorOverviewEnabled: { 'floor1': true },
+          floorCardConfig: {}
         }
       };
       const result = generateReviewSummary(mockPanel);
 
-      expect(result.floors.count).toBe(2);
-      expect(result.rooms.total).toBe(3);
-      expect(result.rooms.byFloor.floor1).toBe(1);
-      expect(result.rooms.byFloor.floor2).toBe(2);
-      expect(result.entities.selected).toBe(2);
-      expect(result.layout.floorOrder).toEqual(['Upstairs', 'Ground']);
-      expect(result.layout.isCustom).toBe(true);
-      expect(result.weather.entityName).toBe('Home');
+      expect(result.floorOrder.count).toBe(2);
+      expect(result.roomOrder.total).toBe(3);
+      expect(result.roomConfig.enabledCount).toBe(2);
+      expect(result.floorCards.overviewsEnabled).toBe(1);
     });
 
-    it('should show default layout when no custom order', () => {
+    it('should show default floor order when no custom order', () => {
       const mockPanel = {
         _floors: [
           { floor_id: 'floor1', name: 'Ground' },
           { floor_id: 'floor2', name: 'Upstairs' }
         ],
-        _areas: [],
-        _wizardLayoutState: {}
+        _areas: []
       };
       const result = generateReviewSummary(mockPanel);
 
-      expect(result.layout.floorOrder).toEqual(['Ground', 'Upstairs']);
-      expect(result.layout.isCustom).toBe(false);
+      expect(result.floorOrder.names).toEqual(['Ground', 'Upstairs']);
+      expect(result.floorOrder.isCustom).toBe(false);
     });
   });
 });

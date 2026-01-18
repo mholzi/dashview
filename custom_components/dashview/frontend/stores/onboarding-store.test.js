@@ -57,11 +57,11 @@ describe('OnboardingStore', () => {
 
     it('should have correct wizard steps', () => {
       expect(store.steps).toContain('welcome');
-      expect(store.steps).toContain('floors');
-      expect(store.steps).toContain('rooms');
-      expect(store.steps).toContain('entities');
-      expect(store.steps).toContain('layout');
-      expect(store.steps).toContain('weather');
+      expect(store.steps).toContain('floorOrder');
+      expect(store.steps).toContain('roomOrder');
+      expect(store.steps).toContain('labels');
+      expect(store.steps).toContain('roomConfig');
+      expect(store.steps).toContain('floorCards');
       expect(store.steps).toContain('review');
       expect(store.steps.length).toBe(7);
     });
@@ -70,7 +70,7 @@ describe('OnboardingStore', () => {
       // Setup saved state directly in mockStore
       const savedState = {
         currentStep: 3,
-        completed: { welcome: true, floors: true, rooms: true },
+        completed: { welcome: true, floorOrder: true, roomOrder: true },
         wizardCompleted: false
       };
       mockStore['dashview_onboarding_progress'] = JSON.stringify(savedState);
@@ -95,10 +95,10 @@ describe('OnboardingStore', () => {
       store.markComplete('welcome');
       expect(store.progress).toBe(14); // 1/7 ≈ 14%
 
-      store.markComplete('floors');
+      store.markComplete('floorOrder');
       expect(store.progress).toBe(29); // 2/7 ≈ 29%
 
-      store.markComplete('rooms');
+      store.markComplete('roomOrder');
       expect(store.progress).toBe(43); // 3/7 ≈ 43%
     });
 
@@ -113,7 +113,7 @@ describe('OnboardingStore', () => {
       expect(store.currentStepName).toBe('welcome');
 
       store.goToStep(2);
-      expect(store.currentStepName).toBe('rooms');
+      expect(store.currentStepName).toBe('roomOrder');
     });
 
     it('should move to next step', () => {
@@ -123,7 +123,7 @@ describe('OnboardingStore', () => {
 
       expect(moved).toBe(true);
       expect(store.currentStep).toBe(1);
-      expect(store.currentStepName).toBe('floors');
+      expect(store.currentStepName).toBe('floorOrder');
     });
 
     it('should mark current step complete when moving forward', () => {
@@ -163,11 +163,11 @@ describe('OnboardingStore', () => {
     it('should go to specific step by index', () => {
       store.goToStep(4);
       expect(store.currentStep).toBe(4);
-      expect(store.currentStepName).toBe('layout');
+      expect(store.currentStepName).toBe('roomConfig');
     });
 
     it('should go to specific step by name', () => {
-      store.goToStepByName('entities');
+      store.goToStepByName('labels');
       expect(store.currentStep).toBe(3);
     });
 
@@ -213,28 +213,18 @@ describe('OnboardingStore', () => {
 
   describe('skip functionality', () => {
     it('should identify skippable steps', () => {
-      // Weather should be skippable
-      expect(store.canSkip('weather')).toBe(true);
-
-      // Non-skippable steps
+      // Currently no steps are skippable
       expect(store.canSkip('welcome')).toBe(false);
-      expect(store.canSkip('floors')).toBe(false);
+      expect(store.canSkip('floorOrder')).toBe(false);
+      expect(store.canSkip('roomOrder')).toBe(false);
+      expect(store.canSkip('labels')).toBe(false);
+      expect(store.canSkip('roomConfig')).toBe(false);
+      expect(store.canSkip('floorCards')).toBe(false);
       expect(store.canSkip('review')).toBe(false);
     });
 
-    it('should skip skippable step', () => {
-      store.goToStepByName('weather');
-      const originalStep = store.currentStep;
-
-      const skipped = store.skipStep();
-
-      expect(skipped).toBe(true);
-      expect(store.currentStep).toBe(originalStep + 1);
-      expect(store.isStepComplete('weather')).toBe(true);
-    });
-
     it('should not skip non-skippable step', () => {
-      store.goToStepByName('floors');
+      store.goToStepByName('floorOrder');
       const originalStep = store.currentStep;
 
       const skipped = store.skipStep();
@@ -307,7 +297,7 @@ describe('OnboardingStore', () => {
       // Setup some state
       store.goToStep(3);
       store.markComplete('welcome');
-      store.markComplete('floors');
+      store.markComplete('floorOrder');
 
       store.reset();
 
@@ -362,16 +352,16 @@ describe('OnboardingStore', () => {
       // Simulate first session
       store.goToStep(3);
       store.markComplete('welcome');
-      store.markComplete('floors');
-      store.markComplete('rooms');
+      store.markComplete('floorOrder');
+      store.markComplete('roomOrder');
 
       // Simulate browser refresh - create new store
       const newStore = new OnboardingStore();
 
       expect(newStore.currentStep).toBe(3);
       expect(newStore.isStepComplete('welcome')).toBe(true);
-      expect(newStore.isStepComplete('floors')).toBe(true);
-      expect(newStore.isStepComplete('rooms')).toBe(true);
+      expect(newStore.isStepComplete('floorOrder')).toBe(true);
+      expect(newStore.isStepComplete('roomOrder')).toBe(true);
 
       newStore.destroy();
     });

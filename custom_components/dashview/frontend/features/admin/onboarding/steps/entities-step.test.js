@@ -1,9 +1,11 @@
 /**
- * Entities Step Tests
- * Tests for entity selection step component
+ * Room Config Step Tests (formerly Entities Step)
+ * Tests for room configuration step component
+ *
+ * This step allows users to enable/disable rooms (areas) for display in Dashview.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   SUGGESTED_DOMAINS,
   entitiesStepStyles,
@@ -26,12 +28,12 @@ vi.mock('../../../../stores/index.js', () => ({
   })),
   getOnboardingStore: vi.fn(() => ({
     currentStep: 0,
-    steps: ['welcome', 'floors', 'rooms', 'entities'],
+    steps: ['welcome', 'floorOrder', 'roomOrder', 'labels', 'roomConfig', 'floorCards', 'review'],
     subscribe: vi.fn()
   }))
 }));
 
-describe('Entities Step', () => {
+describe('Room Config Step', () => {
   describe('SUGGESTED_DOMAINS', () => {
     it('should export suggested domains constant', () => {
       expect(SUGGESTED_DOMAINS).toBeDefined();
@@ -81,36 +83,28 @@ describe('Entities Step', () => {
       expect(typeof entitiesStepStyles).toBe('string');
     });
 
-    it('should contain entities step container class', () => {
-      expect(entitiesStepStyles).toContain('.dv-entities-step');
+    it('should contain room config step container class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-step');
     });
 
-    it('should contain entities room class', () => {
-      expect(entitiesStepStyles).toContain('.dv-entities-room');
+    it('should contain room config floor group class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-floor-group');
     });
 
-    it('should contain entities search class', () => {
-      expect(entitiesStepStyles).toContain('.dv-entities-search');
+    it('should contain room config room item class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-room-item');
     });
 
-    it('should contain entity item class', () => {
-      expect(entitiesStepStyles).toContain('.dv-entity-item');
+    it('should contain room config checkbox class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-checkbox');
     });
 
-    it('should contain entity checkbox class', () => {
-      expect(entitiesStepStyles).toContain('.dv-entity-checkbox');
+    it('should contain room config summary class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-summary');
     });
 
-    it('should contain suggested entity styling', () => {
-      expect(entitiesStepStyles).toContain('.dv-entity-item.suggested');
-    });
-
-    it('should contain selected entity styling', () => {
-      expect(entitiesStepStyles).toContain('.dv-entity-item.selected');
-    });
-
-    it('should contain summary section styling', () => {
-      expect(entitiesStepStyles).toContain('.dv-entities-summary');
+    it('should contain empty state class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-empty');
     });
 
     it('should use CSS custom properties with dv prefix', () => {
@@ -148,259 +142,133 @@ describe('Entities Step', () => {
     });
 
     it('should identify fan entities as suggested', () => {
-      expect(isSuggestedEntity('fan.ceiling_fan')).toBe(true);
+      expect(isSuggestedEntity('fan.bedroom_fan')).toBe(true);
     });
 
-    it('should not identify sensor entities as suggested', () => {
+    it('should not suggest sensor entities', () => {
       expect(isSuggestedEntity('sensor.temperature')).toBe(false);
     });
 
-    it('should not identify binary_sensor entities as suggested', () => {
-      expect(isSuggestedEntity('binary_sensor.motion')).toBe(false);
+    it('should not suggest binary_sensor entities', () => {
+      expect(isSuggestedEntity('binary_sensor.door')).toBe(false);
     });
 
-    it('should not identify automation entities as suggested', () => {
-      expect(isSuggestedEntity('automation.turn_on_lights')).toBe(false);
-    });
-
-    it('should not identify person entities as suggested', () => {
-      expect(isSuggestedEntity('person.john')).toBe(false);
-    });
-
-    it('should handle entities with underscores in name', () => {
-      expect(isSuggestedEntity('light.kitchen_under_cabinet_lights')).toBe(true);
-    });
-  });
-
-  describe('domain icon mapping behavior', () => {
-    // Domain icons that should be defined
-    const expectedDomainIcons = [
-      'light',
-      'switch',
-      'cover',
-      'climate',
-      'lock',
-      'fan',
-      'vacuum',
-      'media_player',
-      'sensor',
-      'binary_sensor',
-      'automation',
-      'script',
-      'scene',
-      'input_boolean',
-      'person',
-      'camera',
-      'weather'
-    ];
-
-    it('should support all common domain icons', () => {
-      // This test validates that the module handles these domains
-      // The actual icon mapping is internal but we document expected coverage
-      expectedDomainIcons.forEach(domain => {
-        expect(typeof domain).toBe('string');
-      });
+    it('should not suggest automation entities', () => {
+      expect(isSuggestedEntity('automation.morning_routine')).toBe(false);
     });
   });
 });
 
-describe('Entity grouping behavior', () => {
-  // Test the expected behavior of entity grouping
+describe('getEntitySelections', () => {
+  it('should return empty object when no wizard state', () => {
+    const mockPanel = {};
+    const result = getEntitySelections(mockPanel);
+    expect(result).toEqual({});
+  });
 
-  const skipDomains = ['zone', 'persistent_notification', 'conversation', 'tts', 'update', 'button'];
+  it('should return empty object when wizard state has no enabledRooms', () => {
+    const mockPanel = {
+      _wizardRoomConfigState: {}
+    };
+    const result = getEntitySelections(mockPanel);
+    expect(result).toEqual({});
+  });
 
-  describe('skip domains', () => {
-    it('should skip zone entities', () => {
-      expect(skipDomains).toContain('zone');
-    });
-
-    it('should skip persistent_notification entities', () => {
-      expect(skipDomains).toContain('persistent_notification');
-    });
-
-    it('should skip conversation entities', () => {
-      expect(skipDomains).toContain('conversation');
-    });
-
-    it('should skip tts entities', () => {
-      expect(skipDomains).toContain('tts');
-    });
-
-    it('should skip update entities', () => {
-      expect(skipDomains).toContain('update');
-    });
-
-    it('should skip button entities', () => {
-      expect(skipDomains).toContain('button');
-    });
-
-    it('should not skip light entities', () => {
-      expect(skipDomains).not.toContain('light');
-    });
-
-    it('should not skip switch entities', () => {
-      expect(skipDomains).not.toContain('switch');
+  it('should return enabled rooms from wizard state', () => {
+    const mockPanel = {
+      _wizardRoomConfigState: {
+        enabledRooms: {
+          'living_room': true,
+          'bedroom': false,
+          'kitchen': true
+        }
+      }
+    };
+    const result = getEntitySelections(mockPanel);
+    expect(result).toEqual({
+      'living_room': true,
+      'bedroom': false,
+      'kitchen': true
     });
   });
 });
 
 describe('saveEntitySelections', () => {
-  it('should call updateSettings with selected entities', () => {
+  it('should call updateSettings with room config', () => {
     const mockUpdateSettings = vi.fn();
     const mockSettingsStore = {
       settings: {},
       updateSettings: mockUpdateSettings
     };
-    const mockPanel = {
-      _areas: [{ area_id: 'living_room', name: 'Living Room' }],
-      _entityRegistry: [
-        { entity_id: 'light.living_room_lamp', area_id: 'living_room' }
-      ]
-    };
-    const selections = {
-      'light.living_room_lamp': true
+    const mockPanel = {};
+    const enabledRooms = {
+      'living_room': true,
+      'bedroom': false
     };
 
-    saveEntitySelections(selections, mockSettingsStore, mockPanel);
+    saveEntitySelections(enabledRooms, mockSettingsStore, mockPanel);
 
     expect(mockUpdateSettings).toHaveBeenCalled();
     const updatedSettings = mockUpdateSettings.mock.calls[0][0];
     expect(updatedSettings.roomConfig).toBeDefined();
     expect(updatedSettings.roomConfig.living_room).toBeDefined();
     expect(updatedSettings.roomConfig.living_room.enabled).toBe(true);
+    expect(updatedSettings.roomConfig.bedroom.enabled).toBe(false);
   });
 
-  it('should skip entities without area assignment', () => {
+  it('should preserve existing room config', () => {
     const mockUpdateSettings = vi.fn();
     const mockSettingsStore = {
-      settings: {},
-      updateSettings: mockUpdateSettings
-    };
-    const mockPanel = {
-      _areas: [],
-      _entityRegistry: [
-        { entity_id: 'light.unassigned_lamp' } // No area_id
-      ]
-    };
-    const selections = {
-      'light.unassigned_lamp': true
-    };
-
-    saveEntitySelections(selections, mockSettingsStore, mockPanel);
-
-    expect(mockUpdateSettings).toHaveBeenCalled();
-    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
-    // Should not create room config for unassigned entity
-    expect(Object.keys(updatedSettings.roomConfig || {})).toHaveLength(0);
-  });
-
-  it('should skip deselected entities', () => {
-    const mockUpdateSettings = vi.fn();
-    const mockSettingsStore = {
-      settings: {},
-      updateSettings: mockUpdateSettings
-    };
-    const mockPanel = {
-      _areas: [{ area_id: 'living_room', name: 'Living Room' }],
-      _entityRegistry: [
-        { entity_id: 'light.living_room_lamp', area_id: 'living_room' }
-      ]
-    };
-    const selections = {
-      'light.living_room_lamp': false // Deselected
-    };
-
-    saveEntitySelections(selections, mockSettingsStore, mockPanel);
-
-    expect(mockUpdateSettings).toHaveBeenCalled();
-    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
-    expect(Object.keys(updatedSettings.roomConfig || {})).toHaveLength(0);
-  });
-
-  it('should handle errors gracefully', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const mockSettingsStore = {
-      settings: null, // This will cause an error
-      updateSettings: vi.fn(() => { throw new Error('Test error'); })
-    };
-    const mockPanel = {
-      _areas: [{ area_id: 'living_room', name: 'Living Room' }],
-      _entityRegistry: [
-        { entity_id: 'light.living_room_lamp', area_id: 'living_room' }
-      ]
-    };
-
-    // Should not throw
-    expect(() => {
-      saveEntitySelections({ 'light.living_room_lamp': true }, mockSettingsStore, mockPanel);
-    }).not.toThrow();
-
-    expect(warnSpy).toHaveBeenCalled();
-    warnSpy.mockRestore();
-  });
-
-  it('should group entities by type correctly', () => {
-    const mockUpdateSettings = vi.fn();
-    const mockSettingsStore = {
-      settings: {},
-      updateSettings: mockUpdateSettings
-    };
-    const mockPanel = {
-      _areas: [{ area_id: 'living_room', name: 'Living Room' }],
-      _entityRegistry: [
-        { entity_id: 'light.lamp1', area_id: 'living_room' },
-        { entity_id: 'light.lamp2', area_id: 'living_room' },
-        { entity_id: 'switch.outlet', area_id: 'living_room' },
-        { entity_id: 'cover.blinds', area_id: 'living_room' }
-      ]
-    };
-    const selections = {
-      'light.lamp1': true,
-      'light.lamp2': true,
-      'switch.outlet': true,
-      'cover.blinds': true
-    };
-
-    saveEntitySelections(selections, mockSettingsStore, mockPanel);
-
-    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
-    expect(updatedSettings.roomConfig.living_room.entities.lights).toContain('light.lamp1');
-    expect(updatedSettings.roomConfig.living_room.entities.lights).toContain('light.lamp2');
-    expect(updatedSettings.roomConfig.living_room.entities.switches).toContain('switch.outlet');
-    expect(updatedSettings.roomConfig.living_room.entities.covers).toContain('cover.blinds');
-  });
-});
-
-describe('getEntitySelections', () => {
-  it('should return empty object when no wizard state exists', () => {
-    const mockPanel = {};
-    const result = getEntitySelections(mockPanel);
-    expect(result).toEqual({});
-  });
-
-  it('should return empty object when selected is undefined', () => {
-    const mockPanel = {
-      _wizardEntityState: {}
-    };
-    const result = getEntitySelections(mockPanel);
-    expect(result).toEqual({});
-  });
-
-  it('should return selected entities from wizard state', () => {
-    const mockPanel = {
-      _wizardEntityState: {
-        selected: {
-          'light.lamp1': true,
-          'light.lamp2': false,
-          'switch.outlet': true
+      settings: {
+        roomConfig: {
+          'kitchen': { enabled: true, entities: { lights: ['light.kitchen'] } }
         }
-      }
+      },
+      updateSettings: mockUpdateSettings
     };
-    const result = getEntitySelections(mockPanel);
-    expect(result).toEqual({
-      'light.lamp1': true,
-      'light.lamp2': false,
-      'switch.outlet': true
-    });
+    const mockPanel = {};
+    const enabledRooms = {
+      'living_room': true
+    };
+
+    saveEntitySelections(enabledRooms, mockSettingsStore, mockPanel);
+
+    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
+    expect(updatedSettings.roomConfig.kitchen).toBeDefined();
+    expect(updatedSettings.roomConfig.living_room).toBeDefined();
+  });
+
+  it('should update existing room enabled status', () => {
+    const mockUpdateSettings = vi.fn();
+    const mockSettingsStore = {
+      settings: {
+        roomConfig: {
+          'living_room': { enabled: false, entities: {} }
+        }
+      },
+      updateSettings: mockUpdateSettings
+    };
+    const mockPanel = {};
+    const enabledRooms = {
+      'living_room': true
+    };
+
+    saveEntitySelections(enabledRooms, mockSettingsStore, mockPanel);
+
+    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
+    expect(updatedSettings.roomConfig.living_room.enabled).toBe(true);
+  });
+
+  it('should handle empty enabled rooms', () => {
+    const mockUpdateSettings = vi.fn();
+    const mockSettingsStore = {
+      settings: {},
+      updateSettings: mockUpdateSettings
+    };
+    const mockPanel = {};
+
+    saveEntitySelections({}, mockSettingsStore, mockPanel);
+
+    expect(mockUpdateSettings).toHaveBeenCalled();
   });
 });

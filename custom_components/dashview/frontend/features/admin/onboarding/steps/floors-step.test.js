@@ -1,21 +1,15 @@
 /**
  * Floors Step Tests
- * Tests for floor creation, deletion, drag-drop reordering
+ * Tests for floor order step - allows reordering floors from Home Assistant
  *
- * Story 9.1 Task 4 Requirements:
- * - 4.2 Allow creating floors with name input
- * - 4.3 Drag-drop reordering for floor display order
- * - 4.4 Delete floor button with confirmation
- * - 4.5 Minimum 1 floor required validation
+ * Note: Floor creation/deletion is handled in Home Assistant settings,
+ * this step only handles display order configuration.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   floorsStepStyles,
-  getFloorIcon,
-  createFloor,
-  deleteFloor,
-  refreshFloors
+  getFloorIcon
 } from './floors-step.js';
 
 // Mock the shared module
@@ -50,16 +44,8 @@ describe('Floors Step', () => {
       expect(floorsStepStyles).toContain('.dv-floor-item');
     });
 
-    it('should contain add floor section class', () => {
-      expect(floorsStepStyles).toContain('.dv-add-floor-section');
-    });
-
-    it('should contain add floor input class', () => {
-      expect(floorsStepStyles).toContain('.dv-add-floor-input');
-    });
-
-    it('should contain add floor button class', () => {
-      expect(floorsStepStyles).toContain('.dv-add-floor-btn');
+    it('should contain floor list class', () => {
+      expect(floorsStepStyles).toContain('.dv-floors-list');
     });
 
     it('should contain drag handle class', () => {
@@ -68,20 +54,6 @@ describe('Floors Step', () => {
 
     it('should contain dragging state class', () => {
       expect(floorsStepStyles).toContain('.dv-floor-item.dragging');
-    });
-
-    it('should contain delete button class', () => {
-      expect(floorsStepStyles).toContain('.dv-floor-action-btn.delete');
-    });
-
-    it('should contain confirmation dialog classes', () => {
-      expect(floorsStepStyles).toContain('.dv-floors-confirm-overlay');
-      expect(floorsStepStyles).toContain('.dv-floors-confirm-dialog');
-      expect(floorsStepStyles).toContain('.dv-floors-confirm-btn');
-    });
-
-    it('should contain validation message class', () => {
-      expect(floorsStepStyles).toContain('.dv-floors-validation');
     });
 
     it('should contain empty state class', () => {
@@ -153,174 +125,10 @@ describe('Floors Step', () => {
       expect(getFloorIcon({ name: 'ATTIC' }, 0)).toBe('mdi:home-floor-3');
     });
   });
-
-  describe('createFloor', () => {
-    it('should throw error when hass is not available', async () => {
-      await expect(createFloor(null, 'Test Floor')).rejects.toThrow('Home Assistant not available');
-    });
-
-    it('should throw error when name is empty', async () => {
-      const mockHass = { callWS: vi.fn() };
-      await expect(createFloor(mockHass, '')).rejects.toThrow('Floor name is required');
-      await expect(createFloor(mockHass, '   ')).rejects.toThrow('Floor name is required');
-    });
-
-    it('should throw error when name is undefined', async () => {
-      const mockHass = { callWS: vi.fn() };
-      await expect(createFloor(mockHass, undefined)).rejects.toThrow('Floor name is required');
-    });
-
-    it('should call hass.callWS with correct parameters', async () => {
-      const mockHass = {
-        callWS: vi.fn().mockResolvedValue({ floor_id: 'test_floor', name: 'Test Floor' })
-      };
-
-      const result = await createFloor(mockHass, 'Test Floor');
-
-      expect(mockHass.callWS).toHaveBeenCalledWith({
-        type: 'config/floor_registry/create',
-        name: 'Test Floor'
-      });
-      expect(result).toEqual({ floor_id: 'test_floor', name: 'Test Floor' });
-    });
-
-    it('should trim floor name', async () => {
-      const mockHass = {
-        callWS: vi.fn().mockResolvedValue({ floor_id: 'test_floor', name: 'Test Floor' })
-      };
-
-      await createFloor(mockHass, '  Test Floor  ');
-
-      expect(mockHass.callWS).toHaveBeenCalledWith({
-        type: 'config/floor_registry/create',
-        name: 'Test Floor'
-      });
-    });
-
-    it('should propagate errors from hass.callWS', async () => {
-      const mockHass = {
-        callWS: vi.fn().mockRejectedValue(new Error('API Error'))
-      };
-
-      await expect(createFloor(mockHass, 'Test Floor')).rejects.toThrow('API Error');
-    });
-  });
-
-  describe('deleteFloor', () => {
-    it('should throw error when hass is not available', async () => {
-      await expect(deleteFloor(null, 'floor_id')).rejects.toThrow('Home Assistant not available');
-    });
-
-    it('should throw error when floorId is empty', async () => {
-      const mockHass = { callWS: vi.fn() };
-      await expect(deleteFloor(mockHass, '')).rejects.toThrow('Floor ID is required');
-      await expect(deleteFloor(mockHass, undefined)).rejects.toThrow('Floor ID is required');
-    });
-
-    it('should call hass.callWS with correct parameters', async () => {
-      const mockHass = {
-        callWS: vi.fn().mockResolvedValue(undefined)
-      };
-
-      await deleteFloor(mockHass, 'test_floor');
-
-      expect(mockHass.callWS).toHaveBeenCalledWith({
-        type: 'config/floor_registry/delete',
-        floor_id: 'test_floor'
-      });
-    });
-
-    it('should propagate errors from hass.callWS', async () => {
-      const mockHass = {
-        callWS: vi.fn().mockRejectedValue(new Error('API Error'))
-      };
-
-      await expect(deleteFloor(mockHass, 'test_floor')).rejects.toThrow('API Error');
-    });
-  });
-
-  describe('refreshFloors', () => {
-    it('should return empty array when panel.hass is not available', async () => {
-      const mockPanel = {};
-      const result = await refreshFloors(mockPanel);
-      expect(result).toEqual([]);
-    });
-
-    it('should call hass.callWS and update panel._floors', async () => {
-      const mockFloors = [
-        { floor_id: 'floor1', name: 'Floor 1' },
-        { floor_id: 'floor2', name: 'Floor 2' }
-      ];
-      const mockPanel = {
-        hass: {
-          callWS: vi.fn().mockResolvedValue(mockFloors)
-        }
-      };
-
-      const result = await refreshFloors(mockPanel);
-
-      expect(mockPanel.hass.callWS).toHaveBeenCalledWith({
-        type: 'config/floor_registry/list'
-      });
-      expect(result).toEqual(mockFloors);
-      expect(mockPanel._floors).toEqual(mockFloors);
-    });
-
-    it('should propagate errors from hass.callWS', async () => {
-      const mockPanel = {
-        hass: {
-          callWS: vi.fn().mockRejectedValue(new Error('API Error'))
-        }
-      };
-
-      await expect(refreshFloors(mockPanel)).rejects.toThrow('API Error');
-    });
-  });
 });
 
 describe('Floor Step Behavior', () => {
-  describe('Minimum floor validation (Task 4.5)', () => {
-    it('should require at least one floor', () => {
-      // This tests the validation logic conceptually
-      const floors = [];
-      const hasMinimumFloors = floors.length >= 1;
-      expect(hasMinimumFloors).toBe(false);
-    });
-
-    it('should pass validation with one floor', () => {
-      const floors = [{ floor_id: 'floor1', name: 'Floor 1' }];
-      const hasMinimumFloors = floors.length >= 1;
-      expect(hasMinimumFloors).toBe(true);
-    });
-
-    it('should pass validation with multiple floors', () => {
-      const floors = [
-        { floor_id: 'floor1', name: 'Floor 1' },
-        { floor_id: 'floor2', name: 'Floor 2' }
-      ];
-      const hasMinimumFloors = floors.length >= 1;
-      expect(hasMinimumFloors).toBe(true);
-    });
-  });
-
-  describe('Delete prevention (Task 4.4)', () => {
-    it('should prevent deletion when only one floor exists', () => {
-      const floors = [{ floor_id: 'floor1', name: 'Floor 1' }];
-      const canDelete = floors.length > 1;
-      expect(canDelete).toBe(false);
-    });
-
-    it('should allow deletion when multiple floors exist', () => {
-      const floors = [
-        { floor_id: 'floor1', name: 'Floor 1' },
-        { floor_id: 'floor2', name: 'Floor 2' }
-      ];
-      const canDelete = floors.length > 1;
-      expect(canDelete).toBe(true);
-    });
-  });
-
-  describe('Floor ordering (Task 4.3)', () => {
+  describe('Floor ordering', () => {
     it('should maintain floor order after drag-drop', () => {
       const initialOrder = ['floor1', 'floor2', 'floor3'];
 
@@ -359,17 +167,6 @@ describe('Floor Step Behavior', () => {
       newOrder.splice(targetIndex, 0, draggedId);
 
       expect(newOrder).toEqual(['floor2', 'floor3', 'floor1']);
-    });
-  });
-
-  describe('Floor creation (Task 4.2)', () => {
-    it('should validate floor name is not empty', () => {
-      const isValidName = (name) => Boolean(name && name.trim().length > 0);
-
-      expect(isValidName('')).toBe(false);
-      expect(isValidName('   ')).toBe(false);
-      expect(isValidName('Ground Floor')).toBe(true);
-      expect(isValidName('  First Floor  ')).toBe(true);
     });
   });
 
