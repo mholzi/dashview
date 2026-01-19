@@ -218,13 +218,11 @@ export const cardStyles = `
     background: var(--dv-red);
   }
 
-  .garbage-slide.soon {
-    background: var(--dv-green);
-  }
-
-  /* Today (after 9am): gray background with accent text */
+  /* Today (after 9am) and Tomorrow: gray background with accent text */
   .garbage-slide.today .garbage-slide-label,
-  .garbage-slide.today .garbage-slide-name {
+  .garbage-slide.today .garbage-slide-name,
+  .garbage-slide.soon .garbage-slide-label,
+  .garbage-slide.soon .garbage-slide-name {
     color: var(--dv-blue);
   }
 
@@ -242,10 +240,6 @@ export const cardStyles = `
     color: var(--dv-white);
   }
 
-  .garbage-slide.soon .garbage-slide-name {
-    color: var(--dv-black);
-  }
-
   .garbage-slide-icon {
     grid-area: i;
     width: 50px;
@@ -260,8 +254,7 @@ export const cardStyles = `
     margin: -6px -6px 0 0;
   }
 
-  .garbage-slide.urgent .garbage-slide-icon,
-  .garbage-slide.soon .garbage-slide-icon {
+  .garbage-slide.urgent .garbage-slide-icon {
     background: var(--dv-gray800);
   }
 
@@ -271,10 +264,6 @@ export const cardStyles = `
   }
 
   .garbage-slide.urgent .garbage-slide-icon ha-icon {
-    color: var(--dv-white);
-  }
-
-  .garbage-slide.soon .garbage-slide-icon ha-icon {
     color: var(--dv-white);
   }
 
@@ -289,21 +278,6 @@ export const cardStyles = `
 
   .garbage-slide.urgent .garbage-slide-label {
     color: var(--dv-white);
-  }
-
-  .garbage-slide.soon .garbage-slide-label {
-    color: var(--dv-black);
-  }
-
-  /* Dark mode: Force dark text on green "tomorrow" background */
-  /* --dv-black inverts to white in dark mode, so we force literal dark color */
-  :host-context(html.dark-mode) .garbage-slide.soon .garbage-slide-name,
-  :host-context(body.dark-mode) .garbage-slide.soon .garbage-slide-name,
-  :host-context([data-theme="dark"]) .garbage-slide.soon .garbage-slide-name,
-  :host-context(html.dark-mode) .garbage-slide.soon .garbage-slide-label,
-  :host-context(body.dark-mode) .garbage-slide.soon .garbage-slide-label,
-  :host-context([data-theme="dark"]) .garbage-slide.soon .garbage-slide-label {
-    color: #28282A;
   }
 
   /* Garbage pagination uses unified styles above */
