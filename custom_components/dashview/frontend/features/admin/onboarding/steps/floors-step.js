@@ -4,20 +4,25 @@
  *
  * This step allows users to arrange the display order of floors that already
  * exist in Home Assistant. Floor creation/deletion is handled in HA settings.
+ *
+ * Uses the same layout as Admin → Layout → Floor Order section.
  */
 
 import { t } from '../../shared.js';
 import { getSettingsStore } from '../../../../stores/index.js';
+import { orderStyles } from '../../../../styles/admin/order.js';
 
 /**
- * Floor order step styles
+ * Floor order step styles - extends admin order styles with wizard-specific additions
  */
 export const floorsStepStyles = `
-  /* ==================== FLOORS STEP ==================== */
+  ${orderStyles}
+
+  /* ==================== WIZARD FLOORS STEP ==================== */
   .dv-floors-step {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     padding: 16px 0;
     flex: 1;
   }
@@ -29,156 +34,35 @@ export const floorsStepStyles = `
   .dv-floors-title {
     font-size: 20px;
     font-weight: 600;
-    color: var(--dv-text-primary, var(--primary-text-color));
+    color: var(--dv-gray800);
     margin: 0 0 8px 0;
   }
 
   .dv-floors-desc {
     font-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
     margin: 0;
-  }
-
-  /* ==================== FLOOR LIST ==================== */
-  .dv-floors-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-height: 100px;
-  }
-
-  .dv-floor-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 12px;
-    transition: all 0.2s ease;
-  }
-
-  .dv-floor-item:hover {
-    border-color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-floor-item.dragging {
-    opacity: 0.5;
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-    border-style: dashed;
-  }
-
-  .dv-floor-item.drag-over {
-    border-color: var(--dv-accent-primary, var(--primary-color));
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.05));
-  }
-
-  .dv-floor-drag-handle {
-    cursor: grab;
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
-    padding: 4px;
-    touch-action: none;
-  }
-
-  .dv-floor-drag-handle:active {
-    cursor: grabbing;
-  }
-
-  .dv-floor-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .dv-floor-icon ha-icon {
-    --mdc-icon-size: 24px;
-    color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-floor-info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .dv-floor-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--dv-text-primary, var(--primary-text-color));
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .dv-floor-areas {
-    font-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
-    margin: 2px 0 0 0;
-  }
-
-  .dv-floor-order-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .dv-floor-order-btn {
-    width: 28px;
-    height: 20px;
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-  }
-
-  .dv-floor-order-btn:hover:not(:disabled) {
-    background: var(--dv-bg-tertiary, var(--divider-color));
-    border-color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-floor-order-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  .dv-floor-order-btn ha-icon {
-    --mdc-icon-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
   }
 
   /* ==================== EMPTY STATE ==================== */
   .dv-floors-empty {
     text-align: center;
     padding: 32px;
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    border: 2px dashed var(--dv-border, var(--divider-color));
+    background: var(--dv-gray000);
+    border: 2px dashed var(--dv-gray300);
     border-radius: 12px;
   }
 
   .dv-floors-empty-icon {
     --mdc-icon-size: 48px;
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
+    color: var(--dv-gray500);
     margin-bottom: 12px;
   }
 
   .dv-floors-empty-text {
     font-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
-    margin: 0 0 16px 0;
-  }
-
-  .dv-floors-empty-link {
-    color: var(--dv-accent-primary, var(--primary-color));
-    text-decoration: none;
-    font-weight: 500;
+    color: var(--dv-gray600);
+    margin: 0 0 8px 0;
   }
 
   /* ==================== HINT ==================== */
@@ -187,15 +71,15 @@ export const floorsStepStyles = `
     align-items: flex-start;
     gap: 8px;
     padding: 12px;
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
+    background: var(--dv-gray000);
     border-radius: 8px;
     font-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
   }
 
   .dv-floors-hint ha-icon {
     --mdc-icon-size: 16px;
-    color: var(--dv-accent-primary, var(--primary-color));
+    color: var(--dv-blue);
     flex-shrink: 0;
   }
 `;
@@ -303,12 +187,14 @@ export function renderFloorsStep(panel, html) {
     state.draggedFloorId = floorId;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', floorId);
+    e.currentTarget.classList.add('sortable-chosen');
     setTimeout(() => panel.requestUpdate(), 0);
   };
 
   // Handle drag end
-  const handleDragEnd = () => {
+  const handleDragEnd = (e) => {
     state.draggedFloorId = null;
+    e.currentTarget.classList.remove('sortable-chosen');
     panel.requestUpdate();
   };
 
@@ -374,45 +260,43 @@ export function renderFloorsStep(panel, html) {
           </p>
         </div>
       ` : html`
-        <div class="dv-floors-list">
+        <div class="order-list">
           ${orderedFloors.map((floor, index) => html`
             <div
-              class="dv-floor-item ${state.draggedFloorId === floor.floor_id ? 'dragging' : ''}"
+              class="order-item sortable-item ${state.draggedFloorId === floor.floor_id ? 'sortable-ghost' : ''}"
               draggable="true"
               @dragstart=${(e) => handleDragStart(e, floor.floor_id)}
               @dragend=${handleDragEnd}
               @dragover=${handleDragOver}
               @drop=${(e) => handleDrop(e, floor.floor_id)}
             >
-              <div class="dv-floor-drag-handle">
-                <ha-icon icon="mdi:drag-vertical"></ha-icon>
+              <div class="sortable-handle" title="${t('admin.layout.dragToReorder', 'Drag to reorder')}">
+                <ha-icon icon="mdi:drag-horizontal"></ha-icon>
               </div>
-
-              <div class="dv-floor-icon">
+              <div class="order-item-index">${index + 1}</div>
+              <div class="order-item-icon">
                 <ha-icon icon="${floor.icon || getFloorIcon(floor, index)}"></ha-icon>
               </div>
-
-              <div class="dv-floor-info">
-                <p class="dv-floor-name">${floor.name || floor.floor_id}</p>
-                <p class="dv-floor-areas">
+              <div class="order-item-info">
+                <div class="order-item-name">${floor.name || floor.floor_id}</div>
+                <div class="order-item-subtitle">
                   ${getAreaCount(floor.floor_id)} ${t('wizard.floorOrder.rooms', 'rooms')}
-                </p>
+                </div>
               </div>
-
-              <div class="dv-floor-order-btns">
+              <div class="order-item-buttons">
                 <button
-                  class="dv-floor-order-btn"
-                  @click=${() => moveUp(index)}
+                  class="order-btn"
                   ?disabled=${index === 0}
-                  aria-label="Move up"
+                  @click=${() => moveUp(index)}
+                  title="${t('admin.layout.moveUp', 'Move up')}"
                 >
                   <ha-icon icon="mdi:chevron-up"></ha-icon>
                 </button>
                 <button
-                  class="dv-floor-order-btn"
-                  @click=${() => moveDown(index)}
+                  class="order-btn"
                   ?disabled=${index === orderedFloors.length - 1}
-                  aria-label="Move down"
+                  @click=${() => moveDown(index)}
+                  title="${t('admin.layout.moveDown', 'Move down')}"
                 >
                   <ha-icon icon="mdi:chevron-down"></ha-icon>
                 </button>
