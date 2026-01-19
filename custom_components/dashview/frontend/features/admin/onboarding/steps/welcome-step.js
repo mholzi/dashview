@@ -103,6 +103,63 @@ export const welcomeStepStyles = `
     margin: 0;
     line-height: 1.4;
   }
+
+  /* ==================== IMPORTANT NOTICE ==================== */
+  .dv-welcome-notice {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+    padding: 16px;
+    background: var(--dv-yellow);
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+
+  .dv-welcome-notice-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dv-welcome-notice-icon {
+    --mdc-icon-size: 24px;
+    color: var(--dv-warning-text);
+    flex-shrink: 0;
+  }
+
+  .dv-welcome-notice-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dv-warning-text);
+    margin: 0;
+  }
+
+  .dv-welcome-notice-text {
+    font-size: 13px;
+    color: var(--dv-warning-text);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .dv-welcome-notice-list {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    color: var(--dv-warning-text);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .dv-welcome-notice-list li {
+    margin-bottom: 4px;
+  }
+
+  .dv-welcome-notice-link {
+    color: var(--dv-warning-text);
+    font-weight: 600;
+    text-decoration: underline;
+  }
 `;
 
 /**
@@ -161,6 +218,27 @@ export function renderWelcomeStep(panel, html) {
       <p class="dv-welcome-subtitle">
         ${t('wizard.welcome.subtitle', 'Your new smart home dashboard for Home Assistant. Let\'s set it up together.')}
       </p>
+
+      <!-- Important Notice -->
+      <div class="dv-welcome-notice">
+        <div class="dv-welcome-notice-header">
+          <ha-icon class="dv-welcome-notice-icon" icon="mdi:alert-circle"></ha-icon>
+          <h3 class="dv-welcome-notice-title">
+            ${t('wizard.welcome.noticeTitle', 'Before You Start')}
+          </h3>
+        </div>
+        <p class="dv-welcome-notice-text">
+          ${t('wizard.welcome.noticeText', 'Dashview uses your Home Assistant setup to organize your dashboard. Please ensure you have configured:')}
+        </p>
+        <ul class="dv-welcome-notice-list">
+          <li><strong>${t('wizard.welcome.noticeAreas', 'Areas')}</strong> - ${t('wizard.welcome.noticeAreasDesc', 'Create rooms/areas and assign your devices to them')}</li>
+          <li><strong>${t('wizard.welcome.noticeFloors', 'Floors')}</strong> - ${t('wizard.welcome.noticeFloorsDesc', 'Group your areas by floor for better organization')}</li>
+          <li><strong>${t('wizard.welcome.noticeLabels', 'Labels')}</strong> - ${t('wizard.welcome.noticeLabelsDesc', 'Tag entities (e.g., "Lights", "Climate") for automatic categorization')}</li>
+        </ul>
+        <p class="dv-welcome-notice-text">
+          ${t('wizard.welcome.noticeLocation', 'Set these up in Home Assistant under')} <strong>Settings → Areas & Zones</strong>
+        </p>
+      </div>
 
       <div class="dv-welcome-features">
         ${FEATURES.map(feature => html`
