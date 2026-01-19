@@ -20,7 +20,7 @@ export const securityStyles = `
   .security-title {
     font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0;
     padding: 14px 0 15px 0;
   }
@@ -40,7 +40,7 @@ export const securityStyles = `
     border: none;
     border-radius: 20px;
     background: var(--dv-gray000);
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -67,7 +67,7 @@ export const securityStyles = `
   .security-subsection-title {
     font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0;
     padding: 12px 0 15px 0;
   }
@@ -169,7 +169,7 @@ export const securityStyles = `
   .security-empty-state {
     padding: 20px;
     text-align: center;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     font-size: 14px;
   }
 
@@ -187,18 +187,18 @@ export const securityStyles = `
   .battery-empty-text {
     font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .battery-empty-subtext {
     font-size: 14px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .battery-header-info {
     padding: 8px 0 16px 0;
     font-size: 14px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .battery-device-list {
@@ -226,7 +226,7 @@ export const securityStyles = `
 
   .battery-device-card:hover .battery-device-name,
   .battery-device-card:hover .battery-device-level {
-    color: var(--text-primary-color, #fff) !important;
+    color: var(--dv-gray000) !important;
   }
 
   .battery-device-icon {
@@ -246,7 +246,7 @@ export const securityStyles = `
   .battery-device-name {
     font-size: 14px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -275,7 +275,7 @@ export const securityStyles = `
   .lights-popup-section-title {
     font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0;
     padding: 12px 0 15px 0;
   }
@@ -406,7 +406,7 @@ export const securityStyles = `
 
   .lights-popup-empty-text {
     font-size: 14px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   /* ==================== COVERS POPUP ==================== */

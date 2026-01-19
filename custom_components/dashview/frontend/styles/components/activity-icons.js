@@ -41,7 +41,7 @@ export const activityIconStyles = `
 
   .activity-chip ha-icon {
     --mdc-icon-size: 22px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .activity-chip.floor-chip {
@@ -69,7 +69,7 @@ export const activityIconStyles = `
   }
 
   .activity-chip.room-smoke-chip {
-    background: var(--error-color, var(--dv-red));
+    background: var(--dv-red);
     animation: pulse-danger 1s infinite;
   }
 
@@ -82,7 +82,7 @@ export const activityIconStyles = `
   }
 
   .activity-chip.security-chip ha-icon {
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .activity-chip.security-chip.has-open {

@@ -92,13 +92,13 @@ export const sharedPopupStyles = `
     margin: 0;
     font-size: 1.1em;
     font-weight: 600;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .popup-title p {
     margin: 2px 0 0 0;
     font-size: 0.85em;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .popup-close {
@@ -111,7 +111,7 @@ export const sharedPopupStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     transition: all var(--dv-transition-normal) ease;
   }
 
@@ -155,7 +155,7 @@ export const sharedPopupStyles = `
   }
 
   .popup-chip.smoke {
-    background: var(--error-color, var(--dv-red));
+    background: var(--dv-red);
   }
 
   .popup-chip-icon {
@@ -260,18 +260,18 @@ export const sharedPopupStyles = `
 
   .popup-scene-button ha-icon {
     --mdc-icon-size: 22px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin-bottom: 4px;
   }
 
   .popup-scene-button.active ha-icon,
   .popup-scene-button.active span {
-    color: var(--dv-gray100, var(--text-primary-color, #fff));
+    color: var(--dv-gray000);
   }
 
   .popup-scene-button span {
     font-size: 11px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     text-align: center;
     white-space: normal;
     line-height: 1.2;
@@ -312,7 +312,7 @@ export const sharedPopupStyles = `
     grid-area: title;
     font-size: 20px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     text-align: left;
     align-self: end;
     padding-bottom: 2px;
@@ -321,7 +321,7 @@ export const sharedPopupStyles = `
   .popup-notification-subtitle {
     grid-area: subtitle;
     font-size: 14px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     opacity: 0.7;
     text-align: left;
     align-self: start;

@@ -446,8 +446,8 @@ export const orderStyles = `
   }
 
   .entity-state.on {
-    color: var(--text-primary-color, #fff);
-    background: var(--success-color, #4caf50);
+    color: var(--dv-gray000);
+    background: var(--dv-green);
   }
 
   .entity-state.off {

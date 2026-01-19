@@ -20,7 +20,7 @@ export const sectionsStyles = `
   .raeume-title {
     font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0;
     padding: 14px 0 15px 0;
   }

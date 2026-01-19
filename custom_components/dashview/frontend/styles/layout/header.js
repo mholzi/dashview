@@ -113,7 +113,7 @@ export const headerStyles = `
   }
 
   .person-avatar.home {
-    background: var(--success-color, #4caf50);
+    background: var(--dv-green);
   }
 
   .person-avatar.home ha-icon {

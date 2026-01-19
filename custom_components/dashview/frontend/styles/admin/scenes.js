@@ -394,7 +394,6 @@ export const scenesStyles = `
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
-    background: var(--info-color, #2196f3);
     background: rgba(33, 150, 243, 0.15);
     border-radius: 8px;
     margin-bottom: 12px;
@@ -402,7 +401,7 @@ export const scenesStyles = `
 
   .scene-button-info-box ha-icon {
     --mdc-icon-size: 18px;
-    color: var(--info-color, #2196f3);
+    color: var(--dv-blue);
     flex-shrink: 0;
   }
 
@@ -460,7 +459,7 @@ export const scenesStyles = `
 
   .scene-button.active ha-icon,
   .scene-button.active .scene-name {
-    color: var(--dv-gray100, var(--text-primary-color, #fff));
+    color: var(--dv-gray000);
   }
 
   .scene-button ha-icon {
@@ -534,7 +533,7 @@ export const scenesStyles = `
 
   .info-text-row .info-badge.warning {
     background: var(--dv-red);
-    color: var(--text-primary-color, #fff);
+    color: var(--dv-gray000);
   }
 
   .info-text-row .info-badge.success {

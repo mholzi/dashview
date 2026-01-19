@@ -28,7 +28,7 @@ export const mainStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-primary-color, #fff);
+    color: var(--dv-gray000);
   }
 
   .area-icon.disabled {
@@ -283,7 +283,7 @@ export const mainStyles = `
   }
 
   .light-info.light-on ha-icon {
-    color: var(--warning-color, #ff9800);
+    color: var(--dv-yellow);
   }
 
   .light-name {
@@ -298,7 +298,7 @@ export const mainStyles = `
   }
 
   .light-state.on {
-    color: var(--success-color, #4caf50);
+    color: var(--dv-green);
   }
 
   .no-lights {

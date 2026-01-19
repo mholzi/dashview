@@ -11,7 +11,7 @@ export const waterPopupStyles = `
     align-items: center;
     justify-content: center;
     padding: 40px 20px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .water-popup-empty ha-icon {
@@ -69,7 +69,7 @@ export const waterPopupStyles = `
 
   .water-sensor-icon ha-icon {
     --mdc-icon-size: 24px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .water-sensor-icon.alert {
@@ -89,7 +89,7 @@ export const waterPopupStyles = `
   .water-sensor-name {
     font-size: 14px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -97,7 +97,7 @@ export const waterPopupStyles = `
 
   .water-sensor-area {
     font-size: 12px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -108,7 +108,7 @@ export const waterPopupStyles = `
     font-weight: 500;
     padding: 4px 10px;
     border-radius: 12px;
-    background: var(--success-color, #4CAF50);
+    background: var(--dv-green);
     color: white;
     text-transform: uppercase;
     flex-shrink: 0;

@@ -30,7 +30,7 @@ export const userPopupStyles = `
   }
 
   .user-popup-avatar.home {
-    border-color: var(--success-color, var(--dv-green500));
+    border-color: var(--dv-green);
     box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
   }
 
@@ -57,13 +57,13 @@ export const userPopupStyles = `
   .user-popup-name {
     font-size: 24px;
     font-weight: 600;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin-bottom: 4px;
   }
 
   .user-popup-entity-id {
     font-size: 13px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     opacity: 0.7;
   }
 
@@ -88,7 +88,7 @@ export const userPopupStyles = `
 
   .user-popup-status-chip.home {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
-    color: var(--success-color, var(--dv-green600));
+    color: var(--dv-green);
     border: 1px solid rgba(76, 175, 80, 0.3);
   }
 
@@ -104,7 +104,7 @@ export const userPopupStyles = `
 
   .user-popup-status-time {
     font-size: 14px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   /* ==================== USER POPUP HISTORY SECTION ==================== */
@@ -160,7 +160,7 @@ export const userPopupStyles = `
   .user-popup-zone-section-title {
     font-size: 14px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0;
     padding: 12px 0 8px 0;
   }

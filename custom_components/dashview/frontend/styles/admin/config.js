@@ -35,7 +35,7 @@ export const configStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-primary-color, #fff);
+    color: var(--dv-gray000);
     flex-shrink: 0;
   }
 
@@ -54,7 +54,7 @@ export const configStyles = `
   .label-mapping-title {
     font-size: 15px;
     font-weight: 600;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .label-mapping-description {
@@ -75,7 +75,7 @@ export const configStyles = `
     border: 1px solid var(--dv-gray400);
     border-radius: 8px;
     background: var(--dv-gray000);
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
@@ -129,16 +129,15 @@ export const configStyles = `
     align-items: flex-start;
     gap: 12px;
     padding: 16px;
-    background: var(--info-color, #2196f3);
     background: rgba(33, 150, 243, 0.1);
     border-radius: 12px;
     margin-top: 16px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .label-mapping-hint ha-icon {
     --mdc-icon-size: 20px;
-    color: var(--info-color, #2196f3);
+    color: var(--dv-blue);
     flex-shrink: 0;
     margin-top: 2px;
   }
