@@ -4,20 +4,25 @@
  *
  * This step allows users to arrange the display order of rooms (areas)
  * within each floor. Room creation/assignment is handled in HA settings.
+ *
+ * Uses the same layout as Admin → Layout → Room Order section.
  */
 
 import { t } from '../../shared.js';
 import { getSettingsStore } from '../../../../stores/index.js';
+import { orderStyles } from '../../../../styles/admin/order.js';
 
 /**
- * Rooms step styles
+ * Rooms step styles - extends admin order styles with wizard-specific additions
  */
 export const roomsStepStyles = `
-  /* ==================== ROOMS STEP ==================== */
+  ${orderStyles}
+
+  /* ==================== WIZARD ROOMS STEP ==================== */
   .dv-rooms-step {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     padding: 16px 0;
     flex: 1;
   }
@@ -29,192 +34,46 @@ export const roomsStepStyles = `
   .dv-rooms-title {
     font-size: 20px;
     font-weight: 600;
-    color: var(--dv-text-primary, var(--primary-text-color));
+    color: var(--dv-gray800);
     margin: 0 0 8px 0;
   }
 
   .dv-rooms-desc {
     font-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
     margin: 0;
   }
 
-  /* ==================== FLOOR GROUPS ==================== */
+  /* ==================== FLOOR GROUPS CONTAINER ==================== */
   .dv-rooms-floor-groups {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 0;
     flex: 1;
     min-height: 200px;
     overflow-y: auto;
     padding-right: 4px;
   }
 
-  .dv-rooms-floor-group {
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .dv-rooms-floor-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-    border-bottom: 1px solid var(--dv-border, var(--divider-color));
-  }
-
-  .dv-rooms-floor-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .dv-rooms-floor-icon ha-icon {
-    --mdc-icon-size: 18px;
-    color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-rooms-floor-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--dv-text-primary, var(--primary-text-color));
-    flex: 1;
-  }
-
-  .dv-rooms-floor-count {
-    font-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
-    background: var(--dv-bg-primary, var(--primary-background-color));
-    padding: 4px 10px;
-    border-radius: 12px;
-  }
-
-  /* ==================== ROOM LIST ==================== */
-  .dv-rooms-area-list {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .dv-rooms-area-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--dv-border, var(--divider-color));
-    transition: background 0.2s ease;
-  }
-
-  .dv-rooms-area-item:last-child {
-    border-bottom: none;
-  }
-
-  .dv-rooms-area-item:hover {
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-  }
-
-  .dv-rooms-area-item.dragging {
-    opacity: 0.5;
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-  }
-
-  .dv-rooms-drag-handle {
-    cursor: grab;
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
-    padding: 4px;
-  }
-
-  .dv-rooms-drag-handle:active {
-    cursor: grabbing;
-  }
-
-  .dv-rooms-area-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .dv-rooms-area-icon ha-icon {
-    --mdc-icon-size: 16px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
-  }
-
-  .dv-rooms-area-name {
-    flex: 1;
-    font-size: 13px;
-    color: var(--dv-text-primary, var(--primary-text-color));
-  }
-
-  .dv-rooms-order-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .dv-rooms-order-btn {
-    width: 24px;
-    height: 16px;
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 3px;
-    background: transparent;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-  }
-
-  .dv-rooms-order-btn:hover:not(:disabled) {
-    background: var(--dv-bg-tertiary, var(--divider-color));
-    border-color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-rooms-order-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  .dv-rooms-order-btn ha-icon {
-    --mdc-icon-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
-  }
-
   /* ==================== EMPTY STATES ==================== */
   .dv-rooms-empty {
     text-align: center;
     padding: 32px;
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    border: 2px dashed var(--dv-border, var(--divider-color));
+    background: var(--dv-gray000);
+    border: 2px dashed var(--dv-gray300);
     border-radius: 12px;
   }
 
   .dv-rooms-empty-icon {
     --mdc-icon-size: 48px;
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
+    color: var(--dv-gray500);
     margin-bottom: 12px;
   }
 
   .dv-rooms-empty-text {
     font-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
     margin: 0;
-  }
-
-  .dv-rooms-floor-empty {
-    padding: 16px;
-    text-align: center;
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
-    font-size: 13px;
   }
 
   /* ==================== HINT ==================== */
@@ -223,15 +82,15 @@ export const roomsStepStyles = `
     align-items: flex-start;
     gap: 8px;
     padding: 12px;
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
+    background: var(--dv-gray000);
     border-radius: 8px;
     font-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
   }
 
   .dv-rooms-hint ha-icon {
     --mdc-icon-size: 16px;
-    color: var(--dv-accent-primary, var(--primary-color));
+    color: var(--dv-blue);
     flex-shrink: 0;
   }
 `;
@@ -365,13 +224,15 @@ export function renderRoomsStep(panel, html) {
     state.draggedFromFloor = floorId;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', areaId);
+    e.currentTarget.classList.add('sortable-chosen');
     setTimeout(() => panel.requestUpdate(), 0);
   };
 
   // Handle drag end
-  const handleDragEnd = () => {
+  const handleDragEnd = (e) => {
     state.draggedAreaId = null;
     state.draggedFromFloor = null;
+    e.currentTarget.classList.remove('sortable-chosen');
     panel.requestUpdate();
   };
 
@@ -448,88 +309,95 @@ export function renderRoomsStep(panel, html) {
           ${floors.map(floor => {
             const floorAreas = getOrderedAreasForFloor(floor.floor_id);
             return html`
-              <div class="dv-rooms-floor-group">
-                <div class="dv-rooms-floor-header">
-                  <div class="dv-rooms-floor-icon">
-                    <ha-icon icon="${floor.icon || getFloorIcon(floor)}"></ha-icon>
-                  </div>
-                  <span class="dv-rooms-floor-name">${floor.name || floor.floor_id}</span>
-                  <span class="dv-rooms-floor-count">
+              <div class="order-floor-section">
+                <div class="order-floor-header">
+                  <ha-icon icon="${floor.icon || getFloorIcon(floor)}"></ha-icon>
+                  <span class="order-floor-name">${floor.name || floor.floor_id}</span>
+                  <span style="opacity: 0.8; font-size: 13px;">
                     ${floorAreas.length} ${t('wizard.roomOrder.rooms', 'rooms')}
                   </span>
                 </div>
-                <div class="dv-rooms-area-list">
-                  ${floorAreas.length > 0
-                    ? floorAreas.map((area, index) => html`
-                      <div
-                        class="dv-rooms-area-item ${state.draggedAreaId === area.area_id ? 'dragging' : ''}"
-                        draggable="true"
-                        @dragstart=${(e) => handleDragStart(e, area.area_id, floor.floor_id)}
-                        @dragend=${handleDragEnd}
-                        @dragover=${handleDragOver}
-                        @drop=${(e) => handleDrop(e, area.area_id, floor.floor_id)}
-                      >
-                        <div class="dv-rooms-drag-handle">
-                          <ha-icon icon="mdi:drag-vertical"></ha-icon>
+
+                ${floorAreas.length === 0 ? html`
+                  <p style="color: var(--dv-gray600); padding: 12px 0 0 36px; font-size: 14px;">
+                    ${t('wizard.roomOrder.noRooms', 'No rooms assigned to this floor')}
+                  </p>
+                ` : html`
+                  <div class="order-rooms-list">
+                    <div class="order-list">
+                      ${floorAreas.map((area, index) => html`
+                        <div
+                          class="order-item sortable-item ${state.draggedAreaId === area.area_id ? 'sortable-ghost' : ''}"
+                          draggable="true"
+                          @dragstart=${(e) => handleDragStart(e, area.area_id, floor.floor_id)}
+                          @dragend=${handleDragEnd}
+                          @dragover=${handleDragOver}
+                          @drop=${(e) => handleDrop(e, area.area_id, floor.floor_id)}
+                        >
+                          <div class="sortable-handle" title="${t('admin.layout.dragToReorder', 'Drag to reorder')}">
+                            <ha-icon icon="mdi:drag-horizontal"></ha-icon>
+                          </div>
+                          <div class="order-item-index">${index + 1}</div>
+                          <div class="order-item-icon">
+                            <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
+                          </div>
+                          <div class="order-item-info">
+                            <div class="order-item-name">${area.name || area.area_id}</div>
+                          </div>
+                          <div class="order-item-buttons">
+                            <button
+                              class="order-btn"
+                              ?disabled=${index === 0}
+                              @click=${() => moveUp(floor.floor_id, area.area_id, index)}
+                              title="${t('admin.layout.moveUp', 'Move up')}"
+                            >
+                              <ha-icon icon="mdi:chevron-up"></ha-icon>
+                            </button>
+                            <button
+                              class="order-btn"
+                              ?disabled=${index === floorAreas.length - 1}
+                              @click=${() => moveDown(floor.floor_id, area.area_id, index, floorAreas.length)}
+                              title="${t('admin.layout.moveDown', 'Move down')}"
+                            >
+                              <ha-icon icon="mdi:chevron-down"></ha-icon>
+                            </button>
+                          </div>
                         </div>
-                        <div class="dv-rooms-area-icon">
-                          <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
-                        </div>
-                        <span class="dv-rooms-area-name">${area.name || area.area_id}</span>
-                        <div class="dv-rooms-order-btns">
-                          <button
-                            class="dv-rooms-order-btn"
-                            @click=${() => moveUp(floor.floor_id, area.area_id, index)}
-                            ?disabled=${index === 0}
-                            aria-label="Move up"
-                          >
-                            <ha-icon icon="mdi:chevron-up"></ha-icon>
-                          </button>
-                          <button
-                            class="dv-rooms-order-btn"
-                            @click=${() => moveDown(floor.floor_id, area.area_id, index, floorAreas.length)}
-                            ?disabled=${index === floorAreas.length - 1}
-                            aria-label="Move down"
-                          >
-                            <ha-icon icon="mdi:chevron-down"></ha-icon>
-                          </button>
-                        </div>
-                      </div>
-                    `)
-                    : html`
-                      <div class="dv-rooms-floor-empty">
-                        ${t('wizard.roomOrder.noRooms', 'No rooms assigned to this floor')}
-                      </div>
-                    `
-                  }
-                </div>
+                      `)}
+                    </div>
+                  </div>
+                `}
               </div>
             `;
           })}
 
+          <!-- Unassigned rooms -->
           ${unassignedAreas.length > 0 ? html`
-            <div class="dv-rooms-floor-group" style="border-color: var(--dv-warning, var(--warning-color)); opacity: 0.7;">
-              <div class="dv-rooms-floor-header" style="background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.1));">
-                <div class="dv-rooms-floor-icon" style="background: var(--dv-warning-subtle, rgba(var(--rgb-warning-color), 0.2));">
-                  <ha-icon icon="mdi:alert-circle" style="color: var(--dv-warning, var(--warning-color));"></ha-icon>
-                </div>
-                <span class="dv-rooms-floor-name">${t('wizard.roomOrder.unassigned', 'Unassigned Rooms')}</span>
-                <span class="dv-rooms-floor-count">
+            <div class="order-floor-section">
+              <div class="order-floor-header" style="background: var(--dv-gray600);">
+                <ha-icon icon="mdi:help-circle"></ha-icon>
+                <span class="order-floor-name">${t('wizard.roomOrder.unassigned', 'Unassigned Rooms')}</span>
+                <span style="opacity: 0.8; font-size: 13px;">
                   ${unassignedAreas.length} ${t('wizard.roomOrder.rooms', 'rooms')}
                 </span>
               </div>
-              <div class="dv-rooms-area-list">
-                ${unassignedAreas.map(area => html`
-                  <div class="dv-rooms-area-item" style="opacity: 0.7;">
-                    <div class="dv-rooms-area-icon">
-                      <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
+              <div class="order-rooms-list">
+                <div class="order-list">
+                  ${unassignedAreas.map((area, index) => html`
+                    <div class="order-item" style="opacity: 0.7;">
+                      <div class="order-item-index">${index + 1}</div>
+                      <div class="order-item-icon">
+                        <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
+                      </div>
+                      <div class="order-item-info">
+                        <div class="order-item-name">${area.name || area.area_id}</div>
+                        <div class="order-item-subtitle" style="color: var(--dv-orange);">
+                          ${t('wizard.roomOrder.assignInHA', 'Assign in HA settings')}
+                        </div>
+                      </div>
                     </div>
-                    <span class="dv-rooms-area-name">${area.name || area.area_id}</span>
-                    <span style="font-size: 11px; color: var(--dv-warning, var(--warning-color));">
-                      ${t('wizard.roomOrder.assignInHA', 'Assign in HA settings')}
-                    </span>
-                  </div>
-                `)}
+                  `)}
+                </div>
               </div>
             </div>
           ` : ''}
