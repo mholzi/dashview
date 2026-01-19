@@ -152,6 +152,17 @@ export const roomPopupStyles = `
     transition: left var(--dv-transition-normal) ease;
   }
 
+  /* During drag: use CSS variable to override inline styles, disable transitions */
+  .popup-cover-slider.dragging .popup-cover-slider-fill {
+    width: var(--drag-position) !important;
+    transition: none !important;
+  }
+
+  .popup-cover-slider.dragging .popup-cover-slider-thumb {
+    left: var(--drag-position) !important;
+    transition: none !important;
+  }
+
   .popup-cover-position {
     font-size: 14px;
     font-weight: 500;

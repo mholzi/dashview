@@ -2275,31 +2275,51 @@ if (typeof structuredClone === 'undefined') {
     }
 
     // Touch handlers for cover sliders (mobile support)
+    // Only update visuals during drag, send position on release to prevent fighting with HA state updates
     _handleCoverSliderTouchStart(e, entityId, areaId) {
       e.preventDefault();
       this._coverTouchEntityId = entityId;
       this._coverTouchAreaId = areaId;
       this._coverTouchSlider = e.currentTarget;
-      this._handleCoverSliderTouchMove(e);
+      this._coverDragValue = null; // Track drag value
+      this._coverTouchSlider.classList.add('dragging');
     }
     _handleCoverSliderTouchMove(e) {
       if (!this._coverTouchSlider) return;
       e.preventDefault();
       const touch = e.touches[0];
       const rect = this._coverTouchSlider.getBoundingClientRect();
-      const position = Math.round(Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100)));
-      // Invert position (same as click handler logic)
-      const invertedPosition = 100 - position;
-      if (this._coverTouchEntityId) {
-        this._setCoverPosition(this._coverTouchEntityId, invertedPosition);
-      } else if (this._coverTouchAreaId) {
-        this._setAllCoversPosition(this._coverTouchAreaId, invertedPosition);
-      }
+      const displayPosition = Math.round(Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100)));
+
+      // Store inverted position for the actual command (same as click handler logic)
+      this._coverDragValue = 100 - displayPosition;
+
+      // Set CSS custom property - CSS will use this with !important to override template styles
+      this._coverTouchSlider.style.setProperty('--drag-position', `${displayPosition}%`);
+
+      // Update position label
+      const parent = this._coverTouchSlider.closest('.popup-cover-header, .popup-cover-item');
+      const posLabel = parent?.querySelector('.popup-cover-position');
+      if (posLabel) posLabel.textContent = `${displayPosition}%`;
     }
     _handleCoverSliderTouchEnd(e) {
+      if (this._coverTouchSlider) {
+        this._coverTouchSlider.classList.remove('dragging');
+      }
+
+      // Now send the final position
+      if (this._coverDragValue !== null) {
+        if (this._coverTouchEntityId) {
+          this._setCoverPosition(this._coverTouchEntityId, this._coverDragValue);
+        } else if (this._coverTouchAreaId) {
+          this._setAllCoversPosition(this._coverTouchAreaId, this._coverDragValue);
+        }
+      }
+
       this._coverTouchEntityId = null;
       this._coverTouchAreaId = null;
       this._coverTouchSlider = null;
+      this._coverDragValue = null;
     }
 
     _togglePopupLightExpanded() { this._toggleBoolProp('_popupLightExpanded'); }
