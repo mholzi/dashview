@@ -272,8 +272,8 @@ export const weatherPopupStyles = `
   }
 
   .weather-forecast-tab.active {
-    background: var(--primary-color);
-    color: white;
+    background: var(--dv-gray800);
+    color: var(--dv-gray000);
   }
 
   .weather-radar-card {

@@ -214,14 +214,14 @@ export const securityStyles = `
     gap: 4px 12px;
     align-items: center;
     padding: 12px;
-    background: var(--secondary-background-color);
+    background: var(--dv-gray100);
     border-radius: 12px;
     cursor: pointer;
     transition: background var(--dv-transition-normal) ease;
   }
 
   .battery-device-card:hover {
-    background: var(--primary-color);
+    background: var(--dv-gray800);
   }
 
   .battery-device-card:hover .battery-device-name,

@@ -334,7 +334,7 @@ export const mediaPopupStyles = `
   }
 
   .popup-media-control-btn.active {
-    background: var(--primary-color, #03a9f4);
+    background: var(--dv-gray800);
   }
 
   .popup-media-control-btn.active ha-icon {

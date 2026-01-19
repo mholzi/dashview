@@ -255,7 +255,7 @@ export const sharedPopupStyles = `
   }
 
   .popup-scene-button.active {
-    background: var(--dv-gray800, var(--primary-color));
+    background: var(--dv-gray800);
   }
 
   .popup-scene-button ha-icon {

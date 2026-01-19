@@ -31,7 +31,7 @@ export const configStyles = `
     width: 44px;
     height: 44px;
     border-radius: 10px;
-    background: var(--primary-color);
+    background: var(--dv-gray800);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -86,8 +86,8 @@ export const configStyles = `
 
   .label-mapping-selector select:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(var(--rgb-primary-color), 0.2);
+    border-color: var(--dv-gray800);
+    box-shadow: 0 0 0 2px var(--dv-shadow-light);
   }
 
   .label-mapping-current {
@@ -95,9 +95,9 @@ export const configStyles = `
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: var(--primary-color);
+    background: var(--dv-gray800);
     border-radius: 8px;
-    color: var(--text-primary-color, #fff);
+    color: var(--dv-gray000);
     font-size: 13px;
     font-weight: 500;
     border: 2px solid transparent;

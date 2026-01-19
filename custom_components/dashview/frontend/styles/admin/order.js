@@ -37,7 +37,7 @@ export const orderStyles = `
 
   .order-config-section-title ha-icon {
     --mdc-icon-size: 22px;
-    color: var(--primary-color);
+    color: var(--dv-blue);
   }
 
   .order-config-section-chevron {
@@ -70,21 +70,21 @@ export const orderStyles = `
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: var(--secondary-background-color);
+    background: var(--dv-gray100);
     border-radius: 8px;
     transition: background var(--dv-transition-normal) ease;
   }
 
   .order-item:hover {
-    background: var(--primary-background-color);
+    background: var(--dv-background);
   }
 
   .order-item-index {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: var(--primary-color);
-    color: var(--text-primary-color, #fff);
+    background: var(--dv-gray800);
+    color: var(--dv-gray000);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -149,8 +149,8 @@ export const orderStyles = `
   }
 
   .order-btn:hover:not(:disabled) {
-    background: var(--primary-color);
-    color: var(--text-primary-color, #fff);
+    background: var(--dv-gray800);
+    color: var(--dv-gray000);
   }
 
   .order-btn:disabled {
@@ -178,8 +178,8 @@ export const orderStyles = `
   }
 
   .sortable-handle:hover {
-    background: var(--primary-color);
-    color: var(--text-primary-color, #fff);
+    background: var(--dv-gray800);
+    color: var(--dv-gray000);
   }
 
   .sortable-handle:active {
@@ -193,7 +193,7 @@ export const orderStyles = `
   /* Ghost element (placeholder) during drag */
   .sortable-ghost {
     opacity: 0.4;
-    background: var(--primary-color) !important;
+    background: var(--dv-gray800) !important;
   }
 
   /* Currently dragged element */
@@ -237,8 +237,8 @@ export const orderStyles = `
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: var(--primary-color);
-    color: var(--text-primary-color, #fff);
+    background: var(--dv-gray800);
+    color: var(--dv-gray000);
     border-radius: 8px;
     margin-bottom: 8px;
   }
@@ -285,7 +285,7 @@ export const orderStyles = `
   .info-header .time {
     font-size: 2.5em;
     font-weight: 300;
-    color: var(--primary-color);
+    color: var(--dv-blue);
     margin: 12px 0 0 0;
   }
 
@@ -313,7 +313,7 @@ export const orderStyles = `
   }
 
   .card h2 ha-icon {
-    color: var(--primary-color);
+    color: var(--dv-blue);
   }
 
   .stat-grid {
@@ -325,14 +325,14 @@ export const orderStyles = `
   .stat-item {
     text-align: center;
     padding: 16px;
-    background: var(--primary-background-color);
+    background: var(--dv-background);
     border-radius: 8px;
   }
 
   .stat-value {
     font-size: 2em;
     font-weight: 500;
-    color: var(--primary-color);
+    color: var(--dv-blue);
   }
 
   .stat-label {
@@ -442,7 +442,7 @@ export const orderStyles = `
     font-weight: 500;
     padding: 4px 12px;
     border-radius: 16px;
-    background: var(--secondary-background-color);
+    background: var(--dv-gray100);
   }
 
   .entity-state.on {
@@ -452,7 +452,7 @@ export const orderStyles = `
 
   .entity-state.off {
     color: var(--dv-gray600);
-    background: var(--secondary-background-color);
+    background: var(--dv-gray100);
   }
 
   /* Device config item (for appliances/devices section) */

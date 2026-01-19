@@ -9,7 +9,7 @@
 export const hostStyles = `
   /* Layout */
   display: block;
-  background: var(--primary-background-color);
+  background: var(--dv-background);
   min-height: 100vh;
   box-sizing: border-box;
   max-width: 500px;

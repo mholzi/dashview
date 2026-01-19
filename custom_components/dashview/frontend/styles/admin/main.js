@@ -24,7 +24,7 @@ export const mainStyles = `
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    background: var(--primary-color);
+    background: var(--dv-gray800);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -32,7 +32,7 @@ export const mainStyles = `
   }
 
   .area-icon.disabled {
-    background: var(--secondary-background-color);
+    background: var(--dv-gray100);
     color: var(--dv-gray600);
   }
 
@@ -61,14 +61,14 @@ export const mainStyles = `
     position: relative;
     width: 48px;
     height: 24px;
-    background: var(--secondary-background-color);
+    background: var(--dv-gray100);
     border-radius: 12px;
     cursor: pointer;
     transition: background 0.3s ease;
   }
 
   .toggle-switch.on {
-    background: var(--primary-color);
+    background: var(--dv-gray800);
   }
 
   .toggle-switch::after {
@@ -121,7 +121,7 @@ export const mainStyles = `
     align-items: center;
     gap: 6px;
     padding: 4px 8px;
-    background: var(--secondary-background-color);
+    background: var(--dv-gray100);
     border-radius: 8px;
   }
 
@@ -239,7 +239,7 @@ export const mainStyles = `
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: var(--primary-background-color);
+    background: var(--dv-background);
     border: 1px solid var(--dv-gray200);
     border-radius: 6px;
     color: var(--dv-gray800);
@@ -249,8 +249,8 @@ export const mainStyles = `
   }
 
   .entity-expand-button:hover {
-    background: var(--secondary-background-color);
-    border-color: var(--primary-color);
+    background: var(--dv-gray100);
+    border-color: var(--dv-gray800);
   }
 
   .entity-expand-button ha-icon {
@@ -262,7 +262,7 @@ export const mainStyles = `
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    background: var(--primary-background-color);
+    background: var(--dv-background);
     border-radius: 8px;
     margin-bottom: 8px;
   }
@@ -318,7 +318,7 @@ export const mainStyles = `
   }
 
   .section-title ha-icon {
-    color: var(--primary-color);
+    color: var(--dv-blue);
   }
 
   .no-selected-lights {

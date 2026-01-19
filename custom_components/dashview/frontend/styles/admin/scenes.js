@@ -455,7 +455,7 @@ export const scenesStyles = `
   }
 
   .scene-button.active {
-    background: var(--dv-gray800, var(--primary-color));
+    background: var(--dv-gray800);
   }
 
   .scene-button.active ha-icon,
@@ -484,7 +484,7 @@ export const scenesStyles = `
   }
 
   .scene-row-container {
-    background: var(--primary-background-color);
+    background: var(--dv-background);
   }
 
   .scene-row-title {

@@ -10,7 +10,7 @@ export const headerStyles = `
     align-items: center;
     justify-content: space-between;
     padding: 12px 8px;
-    background: var(--primary-background-color);
+    background: var(--dv-background);
   }
 
   .header-left {
@@ -63,7 +63,7 @@ export const headerStyles = `
 
   .weather-icon {
     --mdc-icon-size: 32px;
-    color: var(--primary-color);
+    color: var(--dv-blue);
   }
 
   .weather-info {
