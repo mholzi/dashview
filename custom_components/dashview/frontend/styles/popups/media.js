@@ -377,6 +377,7 @@ export const mediaPopupStyles = `
     border-radius: 3px;
     cursor: pointer;
     position: relative;
+    touch-action: none;
   }
 
   .popup-media-volume-fill {

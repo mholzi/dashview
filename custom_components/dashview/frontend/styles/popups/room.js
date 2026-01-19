@@ -128,6 +128,7 @@ export const roomPopupStyles = `
     background: var(--dv-gray100);
     border-radius: 4px;
     cursor: pointer;
+    touch-action: none;
   }
 
   .popup-cover-slider-fill {

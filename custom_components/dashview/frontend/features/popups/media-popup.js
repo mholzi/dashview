@@ -260,7 +260,12 @@ function renderMediaPlayer(component, html, player) {
           <div class="popup-media-volume-icon">
             <ha-icon icon="${state.attributes?.is_volume_muted ? 'mdi:volume-off' : volumePercent > 50 ? 'mdi:volume-high' : volumePercent > 0 ? 'mdi:volume-medium' : 'mdi:volume-low'}"></ha-icon>
           </div>
-          <div class="popup-media-volume-slider" @click=${(e) => component._handleMediaVolumeSliderClick(e, player.entity_id)}>
+          <div class="popup-media-volume-slider"
+            @click=${(e) => component._handleMediaVolumeSliderClick(e, player.entity_id)}
+            @touchstart=${(e) => component._handleMediaVolumeSliderTouchStart(e, player.entity_id)}
+            @touchmove=${(e) => component._handleMediaVolumeSliderTouchMove(e, player.entity_id)}
+            @touchend=${(e) => component._handleMediaVolumeSliderTouchEnd(e)}
+          >
             <div class="popup-media-volume-fill" style="width: ${volumePercent}%"></div>
             <div class="popup-media-volume-thumb" style="left: ${volumePercent}%"></div>
           </div>

@@ -582,7 +582,12 @@ function renderCoverSection(component, html, areaId) {
     <div class="popup-cover-section">
       <div class="popup-cover-header">
         <span class="popup-cover-title" @click=${component._togglePopupCoverExpanded}>${t('ui.sections.covers')}</span>
-        <div class="popup-cover-slider" @click=${(e) => component._handleAllCoversSliderClick(e, areaId)}>
+        <div class="popup-cover-slider"
+          @click=${(e) => component._handleAllCoversSliderClick(e, areaId)}
+          @touchstart=${(e) => component._handleCoverSliderTouchStart(e, null, areaId)}
+          @touchmove=${(e) => component._handleCoverSliderTouchMove(e)}
+          @touchend=${(e) => component._handleCoverSliderTouchEnd(e)}
+        >
           <div class="popup-cover-slider-fill" style="width: ${avgDisplayPosition}%"></div>
           <div class="popup-cover-slider-thumb" style="left: ${avgDisplayPosition}%"></div>
         </div>
@@ -605,7 +610,12 @@ function renderCoverSection(component, html, areaId) {
           return html`
           <div class="popup-cover-item">
             <span class="popup-cover-item-name">${cover.name}</span>
-            <div class="popup-cover-slider" @click=${(e) => component._handleCoverSliderClick(e, cover.entity_id)}>
+            <div class="popup-cover-slider"
+              @click=${(e) => component._handleCoverSliderClick(e, cover.entity_id)}
+              @touchstart=${(e) => component._handleCoverSliderTouchStart(e, cover.entity_id, null)}
+              @touchmove=${(e) => component._handleCoverSliderTouchMove(e)}
+              @touchend=${(e) => component._handleCoverSliderTouchEnd(e)}
+            >
               <div class="popup-cover-slider-fill" style="width: ${displayPosition}%"></div>
               <div class="popup-cover-slider-thumb" style="left: ${displayPosition}%"></div>
             </div>
@@ -702,7 +712,12 @@ function renderMediaPlayer(component, html, player) {
           <div class="popup-media-volume-icon">
             <ha-icon icon="${player.is_volume_muted ? 'mdi:volume-off' : volumePercent > 50 ? 'mdi:volume-high' : volumePercent > 0 ? 'mdi:volume-medium' : 'mdi:volume-low'}"></ha-icon>
           </div>
-          <div class="popup-media-volume-slider" @click=${(e) => component._handleMediaVolumeSliderClick(e, player.entity_id)}>
+          <div class="popup-media-volume-slider"
+            @click=${(e) => component._handleMediaVolumeSliderClick(e, player.entity_id)}
+            @touchstart=${(e) => component._handleMediaVolumeSliderTouchStart(e, player.entity_id)}
+            @touchmove=${(e) => component._handleMediaVolumeSliderTouchMove(e, player.entity_id)}
+            @touchend=${(e) => component._handleMediaVolumeSliderTouchEnd(e)}
+          >
             <div class="popup-media-volume-fill" style="width: ${volumePercent}%"></div>
             <div class="popup-media-volume-thumb" style="left: ${volumePercent}%"></div>
           </div>

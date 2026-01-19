@@ -2274,6 +2274,34 @@ if (typeof structuredClone === 'undefined') {
     _handleAllCoversSliderClick(e, areaId) { this._setAllCoversPosition(areaId, this._getInvertedSliderPosition(e));
     }
 
+    // Touch handlers for cover sliders (mobile support)
+    _handleCoverSliderTouchStart(e, entityId, areaId) {
+      e.preventDefault();
+      this._coverTouchEntityId = entityId;
+      this._coverTouchAreaId = areaId;
+      this._coverTouchSlider = e.currentTarget;
+      this._handleCoverSliderTouchMove(e);
+    }
+    _handleCoverSliderTouchMove(e) {
+      if (!this._coverTouchSlider) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = this._coverTouchSlider.getBoundingClientRect();
+      const position = Math.round(Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100)));
+      // Invert position (same as click handler logic)
+      const invertedPosition = 100 - position;
+      if (this._coverTouchEntityId) {
+        this._setCoverPosition(this._coverTouchEntityId, invertedPosition);
+      } else if (this._coverTouchAreaId) {
+        this._setAllCoversPosition(this._coverTouchAreaId, invertedPosition);
+      }
+    }
+    _handleCoverSliderTouchEnd(e) {
+      this._coverTouchEntityId = null;
+      this._coverTouchAreaId = null;
+      this._coverTouchSlider = null;
+    }
+
     _togglePopupLightExpanded() { this._toggleBoolProp('_popupLightExpanded'); }
     _togglePopupDevicesExpanded() { this._toggleBoolProp('_popupDevicesExpanded'); }
     _togglePopupTVExpanded() { this._toggleBoolProp('_popupTVExpanded'); }
@@ -3730,6 +3758,26 @@ if (typeof structuredClone === 'undefined') {
     _handleMediaVolumeSliderClick(e, entityId) {
       const rect = e.currentTarget.getBoundingClientRect();
       this._mediaCallService(entityId, 'volume_set', { volume_level: Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) });
+    }
+
+    // Touch handlers for media volume slider (mobile support)
+    _handleMediaVolumeSliderTouchStart(e, entityId) {
+      e.preventDefault();
+      this._mediaVolumeTouchEntityId = entityId;
+      this._mediaVolumeTouchSlider = e.currentTarget;
+      this._handleMediaVolumeSliderTouchMove(e, entityId);
+    }
+    _handleMediaVolumeSliderTouchMove(e, entityId) {
+      if (!this._mediaVolumeTouchSlider) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = this._mediaVolumeTouchSlider.getBoundingClientRect();
+      const volume = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+      this._mediaCallService(this._mediaVolumeTouchEntityId || entityId, 'volume_set', { volume_level: volume });
+    }
+    _handleMediaVolumeSliderTouchEnd(e) {
+      this._mediaVolumeTouchEntityId = null;
+      this._mediaVolumeTouchSlider = null;
     }
 
     _getEntityCounts() {
