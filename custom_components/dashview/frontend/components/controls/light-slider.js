@@ -7,10 +7,11 @@
  * Create light slider event handlers
  * @param {Object} options - Handler options
  * @param {Function} options.onBrightnessChange - Callback when brightness changes (entityId, percentage)
+ * @param {Function} options.onToggle - Callback when light should be toggled (entityId)
  * @param {Function} options.getSliderElement - Function to get slider element from event
  * @returns {Object} Event handler methods and state
  */
-export function createLightSliderHandlers({ onBrightnessChange, getSliderElement }) {
+export function createLightSliderHandlers({ onBrightnessChange, onToggle, getSliderElement }) {
   // Internal state
   let dragging = false;
   let currentEntityId = null;
@@ -61,17 +62,16 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
   };
 
   /**
-   * Handle click on slider (when not dragging)
+   * Handle click on slider (when not dragging) - toggles light on/off
    * @param {Event} e - Click event
    * @param {string} entityId - Entity ID
    */
   const handleClick = (e, entityId) => {
     if (dragging) return;
-
-    const slider = e.currentTarget;
-    const rect = slider.getBoundingClientRect();
-    const percentage = calculatePercentage(e.clientX, rect);
-    onBrightnessChange(entityId, percentage);
+    // Tap toggles light on/off (drag changes brightness)
+    if (onToggle) {
+      onToggle(entityId);
+    }
   };
 
   /**
@@ -115,9 +115,12 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
   const handleTouchEnd = () => {
     if (!dragging) return;
 
-    // Apply the final value
+    // If dragged (sliderValue set), change brightness; otherwise toggle
     if (sliderValue !== undefined && currentEntityId) {
       onBrightnessChange(currentEntityId, sliderValue);
+    } else if (currentEntityId && onToggle) {
+      // No drag movement = tap = toggle
+      onToggle(currentEntityId);
     }
 
     resetState();
@@ -159,9 +162,12 @@ export function createLightSliderHandlers({ onBrightnessChange, getSliderElement
 
     const handleMouseUp = () => {
       try {
-        // Apply the final value
+        // If dragged (sliderValue set), change brightness; otherwise toggle
         if (sliderValue !== undefined && currentEntityId) {
           onBrightnessChange(currentEntityId, sliderValue);
+        } else if (currentEntityId && onToggle) {
+          // No drag movement = click = toggle
+          onToggle(currentEntityId);
         }
       } finally {
         // ALWAYS cleanup, even on error

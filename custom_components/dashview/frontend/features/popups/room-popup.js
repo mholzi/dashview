@@ -463,7 +463,8 @@ function renderLightSection(component, html, areaId) {
                   <div class="popup-light-slider-area"
                        @click=${(e) => {
                          e.stopPropagation();
-                         handleLightSliderInteraction(e, component, light.entity_id, false, brightness);
+                         // Tap toggles light on/off (drag changes brightness)
+                         component._toggleLight(light.entity_id);
                        }}
                        @touchstart=${(e) => {
                          const item = e.currentTarget.closest('.popup-light-item');
@@ -479,6 +480,7 @@ function renderLightSection(component, html, areaId) {
                        @touchend=${(e) => {
                          const item = e.currentTarget.closest('.popup-light-item');
                          item?.classList.remove('dragging');
+                         // If dragged, set brightness; otherwise tap = toggle (handled by click)
                          if (item?._dragValue !== null && item?._dragValue !== undefined) {
                            const fill = item?.querySelector('.popup-light-slider-fill');
                            const label = item?.querySelector('.popup-light-item-label');
@@ -513,6 +515,7 @@ function renderLightSection(component, html, areaId) {
 
                          const onMouseUp = () => {
                            item?.classList.remove('dragging');
+                           // If dragged, set brightness; otherwise click = toggle (handled by click event)
                            if (dragValue !== null) {
                              const fill = item?.querySelector('.popup-light-slider-fill');
                              const label = item?.querySelector('.popup-light-item-label');

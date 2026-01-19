@@ -10,14 +10,10 @@ import { getFloorIcon } from '../../utils/icons.js';
 import { getEntityDisplayService } from '../../services/entity-display-service.js';
 import { openMoreInfo, toggleLight, getFriendlyName } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
-import { renderCoachMark, shouldShowCoachMark, dismissCoachMark } from '../../components/onboarding/index.js';
 import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
 
 // Re-export for backwards compatibility
 export { triggerHaptic };
-
-// Re-export coach mark functions for external use
-export { shouldShowCoachMark, dismissCoachMark };
 
 /**
  * Get the fill color for a light slider based on RGB color or default warm white
@@ -146,24 +142,12 @@ export function renderDwdWarnings(component, html) {
 }
 
 export function renderHomeTab(component, html) {
-  // Handle coach mark dismiss
-  const handleCoachMarkDismiss = () => {
-    component._showCoachMark = false;
-    component.requestUpdate();
-  };
-
-  // Check if coach mark should be shown (only on first load check)
-  if (component._showCoachMark === undefined) {
-    component._showCoachMark = shouldShowCoachMark();
-  }
-
   return html`
     <div class="container">
       ${renderDwdWarnings(component, html)}
       ${renderTrainDepartures(component, html)}
       ${renderRaeumeSection(component, html)}
     </div>
-    ${component._showCoachMark ? renderCoachMark(component, html, handleCoachMarkDismiss) : ''}
   `;
 }
 
@@ -548,7 +532,8 @@ export function renderRoomCardsGrid(component, html) {
             <div class="floor-light-slider-area"
                  @click=${(e) => {
                    e.stopPropagation();
-                   handleSliderInteraction(e);
+                   // Tap toggles light on/off (drag changes brightness)
+                   toggleLight(component.hass, slotConfig.entity_id);
                  }}
                  @touchstart=${(e) => {
                    const card = e.currentTarget.closest('.floor-light-card');
@@ -563,6 +548,7 @@ export function renderRoomCardsGrid(component, html) {
                  @touchend=${(e) => {
                    const card = e.currentTarget.closest('.floor-light-card');
                    card?.classList.remove('dragging');
+                   // If dragged, set brightness; otherwise tap = toggle (handled by click)
                    if (card?._dragValue !== null && card?._dragValue !== undefined) {
                      component._setLightBrightness(slotConfig.entity_id, card._dragValue);
                    }
@@ -587,6 +573,7 @@ export function renderRoomCardsGrid(component, html) {
 
                    const onMouseUp = () => {
                      card?.classList.remove('dragging');
+                     // If dragged, set brightness; otherwise click = toggle (handled by click event)
                      if (dragValue !== null) {
                        component._setLightBrightness(slotConfig.entity_id, dragValue);
                      }

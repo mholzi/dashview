@@ -384,7 +384,8 @@ export function renderLightsPopupContent(component, html) {
           <div class="lights-popup-slider-area"
                @click=${(e) => {
                  e.stopPropagation();
-                 handleSliderInteraction(e);
+                 // Tap toggles light on/off (drag changes brightness)
+                 component._toggleLight(entityId);
                }}
                @touchstart=${(e) => {
                  const card = e.currentTarget.closest('.lights-popup-card');
@@ -399,6 +400,7 @@ export function renderLightsPopupContent(component, html) {
                @touchend=${(e) => {
                  const card = e.currentTarget.closest('.lights-popup-card');
                  card?.classList.remove('dragging');
+                 // If dragged, set brightness; otherwise tap = toggle (handled by click)
                  if (card?._dragValue !== null && card?._dragValue !== undefined) {
                    component._setLightBrightness(entityId, card._dragValue);
                  }
@@ -423,6 +425,7 @@ export function renderLightsPopupContent(component, html) {
 
                  const onMouseUp = () => {
                    card?.classList.remove('dragging');
+                   // If dragged, set brightness; otherwise click = toggle (handled by click event)
                    if (dragValue !== null) {
                      component._setLightBrightness(entityId, dragValue);
                    }
