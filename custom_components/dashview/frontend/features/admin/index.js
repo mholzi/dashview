@@ -35,6 +35,9 @@ export { renderWeatherTab } from './weather-tab.js';
 // Status tab exports
 export { renderStatusTab } from './status-tab.js';
 
+// Setup tab exports
+export { renderSetupTab } from './setup-tab.js';
+
 // Scenes tab exports
 export { renderScenesTab } from './scenes-tab.js';
 
@@ -65,6 +68,7 @@ import { renderEntitiesTab } from './entities-tab.js';
 import { renderLayoutTab } from './layout-tab.js';
 import { renderWeatherTab } from './weather-tab.js';
 import { renderStatusTab } from './status-tab.js';
+import { renderSetupTab } from './setup-tab.js';
 import { renderScenesTab } from './scenes-tab.js';
 import { renderUsersTab } from './users-tab.js';
 
@@ -149,6 +153,13 @@ export function renderAdminTab(panel, html) {
             <ha-icon icon="mdi:account-group"></ha-icon>
             ${t('admin.tabs.users')}
           </button>
+          <button
+            class="admin-sub-tab ${panel._adminSubTab === 'setup' ? 'active' : ''}"
+            @click=${() => handleTabClick('setup')}
+          >
+            <ha-icon icon="mdi:wizard-hat"></ha-icon>
+            ${t('admin.tabs.setup', 'Setup')}
+          </button>
         </div>
         <div class="admin-sub-tabs-indicator admin-sub-tabs-indicator-right"></div>
       </div>
@@ -163,7 +174,9 @@ export function renderAdminTab(panel, html) {
               ? renderStatusTab(panel, html)
               : panel._adminSubTab === 'users'
                 ? renderUsersTab(panel, html)
-                : renderScenesTab(panel, html)}
+                : panel._adminSubTab === 'setup'
+                  ? renderSetupTab(panel, html)
+                  : renderScenesTab(panel, html)}
     </div>
   `;
 }
