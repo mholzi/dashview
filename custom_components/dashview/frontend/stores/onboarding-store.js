@@ -10,6 +10,7 @@
  */
 
 import { debugLog } from '../constants/index.js';
+import { getSettingsStore } from './settings-store.js';
 
 /**
  * Wizard steps in order
@@ -143,14 +144,30 @@ export class OnboardingStore {
    */
   isFirstRun() {
     try {
-      // Check for completed wizard flag
+      // Check for completed wizard flag in localStorage
       const wizardDone = localStorage.getItem(STORAGE_KEYS.COMPLETED);
       if (wizardDone === 'true') {
         return false;
       }
 
-      // Check for existing dashview settings
-      // If settings exist with configured entities, not first run
+      // Check backend settings (from Home Assistant storage)
+      // This is the authoritative source - survives integration updates
+      const settingsStore = getSettingsStore();
+      if (settingsStore.loaded) {
+        const enabledRooms = settingsStore.get('enabledRooms') || {};
+        const floorOrder = settingsStore.get('floorOrder') || [];
+        const roomOrder = settingsStore.get('roomOrder') || {};
+
+        // If there are any configured rooms, floor order, or room order, not first run
+        if (Object.keys(enabledRooms).length > 0 ||
+            floorOrder.length > 0 ||
+            Object.keys(roomOrder).length > 0) {
+          debugLog('onboarding', 'Existing backend settings found, not first run');
+          return false;
+        }
+      }
+
+      // Fallback: Check localStorage for existing dashview settings
       const localSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
       if (localSettings) {
         try {
