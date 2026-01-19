@@ -602,6 +602,7 @@ export const roomPopupStyles = `
     bottom: 0;
     cursor: ew-resize;
     z-index: 2;
+    touch-action: none;
   }
 
   .popup-light-item-icon {

@@ -480,6 +480,7 @@ export const sectionsStyles = `
     height: 40%;
     z-index: 2;
     cursor: ew-resize;
+    touch-action: none;
   }
 
   .floor-light-card.small .floor-light-slider-area {

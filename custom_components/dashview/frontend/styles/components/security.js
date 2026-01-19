@@ -392,6 +392,7 @@ export const securityStyles = `
     height: 100%;
     z-index: 2;
     cursor: ew-resize;
+    touch-action: none;
   }
 
   .lights-popup-empty {
@@ -566,6 +567,7 @@ export const securityStyles = `
     background: var(--dv-gray300);
     border-radius: 3px;
     outline: none;
+    touch-action: none;
   }
 
   .covers-popup-slider input[type="range"]::-webkit-slider-thumb {
