@@ -128,28 +128,31 @@ export const floorCardsStepStyles = `
     justify-content: center;
     gap: 4px;
     padding: 8px;
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-    border: 2px dashed var(--dv-border, var(--divider-color));
-    border-radius: 8px;
+    margin: 4px;
+    background: var(--dv-gray200);
+    border: 2px dashed var(--dv-gray300);
+    border-radius: var(--dv-radius-md, 8px);
     cursor: pointer;
     transition: all 0.2s ease;
+    box-sizing: border-box;
   }
 
   .dv-floor-card-slot:hover {
-    border-color: var(--dv-accent-primary, var(--primary-color));
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.05));
+    border-color: var(--dv-gray800);
+    background: var(--dv-gray300);
   }
 
   .dv-floor-card-slot.configured {
-    background: var(--dv-bg-secondary, var(--card-background-color));
+    background: var(--dv-gray000);
     border-style: solid;
-    border-color: var(--dv-accent-primary, var(--primary-color));
+    border-color: var(--dv-gray800);
   }
 
   .dv-floor-card-slot.selected {
-    border-color: var(--dv-accent-primary, var(--primary-color));
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
-    box-shadow: 0 0 0 2px var(--dv-accent-primary, var(--primary-color));
+    border-color: var(--dv-blue);
+    border-style: solid;
+    background: color-mix(in srgb, var(--dv-blue) 10%, var(--dv-gray000));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--dv-blue) 30%, transparent);
   }
 
   .dv-floor-card-slot.disabled {
@@ -182,7 +185,7 @@ export const floorCardsStepStyles = `
   }
 
   .dv-floor-card-slot.configured ha-icon {
-    color: var(--dv-accent-primary, var(--primary-color));
+    color: var(--dv-gray800);
   }
 
   /* ==================== ENTITY PICKER ==================== */
@@ -367,39 +370,65 @@ export function renderFloorCardsStep(panel, html) {
     `;
   }
 
-  // Get entities for selection
-  const getAvailableEntities = () => {
-    if (!panel.hass) return [];
+  // Get enabled entities for a specific floor (same logic as admin)
+  const getFloorEntities = (floorId) => {
+    const areasForFloor = (panel._areas || []).filter(area =>
+      area.floor_id === floorId && panel._enabledRooms[area.area_id] !== false
+    );
     const entities = [];
-    Object.entries(panel.hass.states).forEach(([entityId, state]) => {
-      const domain = entityId.split('.')[0];
-      // Only include commonly used entity types for floor cards
-      const allowedDomains = ['light', 'sensor', 'binary_sensor', 'climate', 'cover', 'switch', 'media_player'];
-      if (allowedDomains.includes(domain)) {
-        entities.push({
-          entity_id: entityId,
-          name: state.attributes?.friendly_name || entityId,
-          icon: state.attributes?.icon || getDefaultIcon(domain)
+
+    areasForFloor.forEach(area => {
+      // Add lights (only enabled ones)
+      if (panel._getAreaLights) {
+        const lights = panel._getAreaLights(area.area_id);
+        lights.filter(light => light.enabled).forEach(light => {
+          entities.push({ entity_id: light.entity_id, name: light.name, type: 'light', area: area.name, icon: 'mdi:lightbulb' });
+        });
+      }
+
+      // Add motion sensors (only enabled ones)
+      if (panel._getAreaMotionSensors) {
+        const motionSensors = panel._getAreaMotionSensors(area.area_id);
+        motionSensors.filter(sensor => sensor.enabled).forEach(sensor => {
+          entities.push({ entity_id: sensor.entity_id, name: sensor.name, type: 'motion', area: area.name, icon: 'mdi:motion-sensor' });
+        });
+      }
+
+      // Add windows (only enabled ones)
+      if (panel._getAreaWindows) {
+        const windows = panel._getAreaWindows(area.area_id);
+        windows.filter(window => window.enabled).forEach(window => {
+          entities.push({ entity_id: window.entity_id, name: window.name, type: 'window', area: area.name, icon: 'mdi:window-closed' });
+        });
+      }
+
+      // Add covers (only enabled ones)
+      if (panel._getAreaCovers) {
+        const covers = panel._getAreaCovers(area.area_id);
+        covers.filter(cover => cover.enabled).forEach(cover => {
+          entities.push({ entity_id: cover.entity_id, name: cover.name, type: 'cover', area: area.name, icon: 'mdi:window-shutter' });
+        });
+      }
+
+      // Add temperature sensors (only enabled ones)
+      if (panel._getAreaTemperatureSensors) {
+        const tempSensors = panel._getAreaTemperatureSensors(area.area_id);
+        tempSensors.filter(sensor => sensor.enabled).forEach(sensor => {
+          entities.push({ entity_id: sensor.entity_id, name: sensor.name, type: 'temperature', area: area.name, icon: 'mdi:thermometer' });
+        });
+      }
+
+      // Add climate entities (only enabled ones)
+      if (panel._getAreaClimates) {
+        const climates = panel._getAreaClimates(area.area_id);
+        climates.filter(climate => climate.enabled).forEach(climate => {
+          entities.push({ entity_id: climate.entity_id, name: climate.name, type: 'climate', area: area.name, icon: 'mdi:thermostat' });
         });
       }
     });
+
     return entities.sort((a, b) => a.name.localeCompare(b.name));
   };
-
-  const getDefaultIcon = (domain) => {
-    const icons = {
-      light: 'mdi:lightbulb',
-      sensor: 'mdi:thermometer',
-      binary_sensor: 'mdi:motion-sensor',
-      climate: 'mdi:thermostat',
-      cover: 'mdi:window-shutter',
-      switch: 'mdi:toggle-switch',
-      media_player: 'mdi:speaker'
-    };
-    return icons[domain] || 'mdi:help-circle';
-  };
-
-  const entities = getAvailableEntities();
 
   // Toggle floor overview
   const toggleFloorOverview = (floorId) => {
@@ -441,7 +470,8 @@ export function renderFloorCardsStep(panel, html) {
     const slotConfig = config[slotIndex] || null;
     const entityId = slotConfig?.entity_id;
     const isConfigured = !!entityId;
-    const entity = isConfigured ? entities.find(e => e.entity_id === entityId) : null;
+    const floorEntities = getFloorEntities(floorId);
+    const entity = isConfigured ? floorEntities.find(e => e.entity_id === entityId) : null;
     const isSelected = state.selectedSlot === `${floorId}-${slotIndex}`;
 
     if (isDisabled) {
@@ -482,6 +512,8 @@ export function renderFloorCardsStep(panel, html) {
     const config = state.floorCardConfig[floorId] || {};
     const currentEntity = config[slotIndex]?.entity_id || '';
 
+    const floorEntities = getFloorEntities(floorId);
+
     return html`
       <div class="dv-floor-card-entity-picker">
         <div class="dv-floor-card-entity-picker-title">
@@ -492,9 +524,9 @@ export function renderFloorCardsStep(panel, html) {
           @change=${(e) => setSlotEntity(e.target.value)}
         >
           <option value="">${t('admin.layout.selectEntity', 'Select entity...')}</option>
-          ${entities.map(entity => html`
+          ${floorEntities.map(entity => html`
             <option value="${entity.entity_id}" ?selected=${currentEntity === entity.entity_id}>
-              ${entity.name}
+              ${entity.name}${entity.area ? ` (${entity.area})` : ''}
             </option>
           `)}
         </select>
