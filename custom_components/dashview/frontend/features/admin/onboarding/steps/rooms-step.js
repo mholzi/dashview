@@ -308,7 +308,8 @@ export function renderRoomsStep(panel, html) {
   // Group areas by floor and apply saved order
   const getOrderedAreasForFloor = (floorId) => {
     const floorAreas = areas.filter(a => a.floor_id === floorId);
-    const savedOrder = settings.get(`roomOrder_${floorId}`) || [];
+    const roomOrder = settings.get('roomOrder') || {};
+    const savedOrder = roomOrder[floorId] || [];
 
     // Sort by saved order, then alphabetically for unsaved
     const orderedAreas = [];
@@ -338,7 +339,10 @@ export function renderRoomsStep(panel, html) {
     const floorAreas = getOrderedAreasForFloor(floorId);
     const currentOrder = floorAreas.map(a => a.area_id);
     [currentOrder[currentIndex - 1], currentOrder[currentIndex]] = [currentOrder[currentIndex], currentOrder[currentIndex - 1]];
-    settings.set(`roomOrder_${floorId}`, currentOrder);
+    // Save to nested roomOrder object
+    const roomOrder = { ...(settings.get('roomOrder') || {}) };
+    roomOrder[floorId] = currentOrder;
+    settings.set('roomOrder', roomOrder);
     panel.requestUpdate();
   };
 
@@ -348,7 +352,10 @@ export function renderRoomsStep(panel, html) {
     const floorAreas = getOrderedAreasForFloor(floorId);
     const currentOrder = floorAreas.map(a => a.area_id);
     [currentOrder[currentIndex], currentOrder[currentIndex + 1]] = [currentOrder[currentIndex + 1], currentOrder[currentIndex]];
-    settings.set(`roomOrder_${floorId}`, currentOrder);
+    // Save to nested roomOrder object
+    const roomOrder = { ...(settings.get('roomOrder') || {}) };
+    roomOrder[floorId] = currentOrder;
+    settings.set('roomOrder', roomOrder);
     panel.requestUpdate();
   };
 
@@ -405,8 +412,10 @@ export function renderRoomsStep(panel, html) {
     currentOrder.splice(draggedIndex, 1);
     currentOrder.splice(targetIndex, 0, draggedId);
 
-    // Save new order
-    settings.set(`roomOrder_${floorId}`, currentOrder);
+    // Save new order to nested roomOrder object
+    const roomOrder = { ...(settings.get('roomOrder') || {}) };
+    roomOrder[floorId] = currentOrder;
+    settings.set('roomOrder', roomOrder);
     state.draggedAreaId = null;
     state.draggedFromFloor = null;
     panel.requestUpdate();
@@ -545,29 +554,21 @@ export function renderRoomsStep(panel, html) {
  */
 export function getRoomOrderConfig(panel) {
   const settings = getSettingsStore();
-  const floors = panel._floors || [];
-  const config = {};
-
-  floors.forEach(floor => {
-    const order = settings.get(`roomOrder_${floor.floor_id}`);
-    if (order && order.length > 0) {
-      config[floor.floor_id] = order;
-    }
-  });
-
-  return config;
+  // Return the nested roomOrder object directly
+  return settings.get('roomOrder') || {};
 }
 
 /**
  * Save room order config to settings store
- * @param {Object} config - Room order configuration
+ * @param {Object} config - Room order configuration (nested object: { floorId: [...areaIds] })
  * @param {Object} settingsStore - Settings store instance
  */
 export function saveRoomOrderConfig(config, settingsStore) {
   try {
-    Object.entries(config).forEach(([floorId, order]) => {
-      settingsStore.set(`roomOrder_${floorId}`, order);
-    });
+    // Merge with existing roomOrder to preserve other floors
+    const existingRoomOrder = settingsStore.get('roomOrder') || {};
+    const mergedRoomOrder = { ...existingRoomOrder, ...config };
+    settingsStore.set('roomOrder', mergedRoomOrder);
   } catch (e) {
     console.warn('[Dashview] Failed to save room order config:', e);
   }

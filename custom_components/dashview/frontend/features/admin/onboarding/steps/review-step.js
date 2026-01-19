@@ -196,7 +196,7 @@ export function generateReviewSummary(panel) {
     },
     roomOrder: {
       total: areas.length,
-      hasCustomOrder: floors.some(f => settings.get(`roomOrder_${f.floor_id}`)?.length > 0)
+      hasCustomOrder: floors.some(f => (settings.get('roomOrder') || {})[f.floor_id]?.length > 0)
     },
     labels: {
       mappedCount: mappedLabelsCount,

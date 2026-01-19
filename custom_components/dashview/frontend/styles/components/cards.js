@@ -258,9 +258,12 @@ export const cardStyles = `
     margin: -6px -6px 0 0;
   }
 
-  .garbage-slide.urgent .garbage-slide-icon,
-  .garbage-slide.soon .garbage-slide-icon {
+  .garbage-slide.urgent .garbage-slide-icon {
     background: var(--dv-gray800);
+  }
+
+  .garbage-slide.soon .garbage-slide-icon {
+    background: var(--dv-gray000);
   }
 
   .garbage-slide-icon ha-icon {
@@ -268,9 +271,12 @@ export const cardStyles = `
     color: var(--dv-gray800);
   }
 
-  .garbage-slide.urgent .garbage-slide-icon ha-icon,
-  .garbage-slide.soon .garbage-slide-icon ha-icon {
+  .garbage-slide.urgent .garbage-slide-icon ha-icon {
     color: var(--dv-white);
+  }
+
+  .garbage-slide.soon .garbage-slide-icon ha-icon {
+    color: var(--dv-gray800);
   }
 
   .garbage-slide-label {

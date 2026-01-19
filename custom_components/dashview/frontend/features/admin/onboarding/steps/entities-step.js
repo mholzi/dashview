@@ -324,15 +324,19 @@ function getFloorIcon(floor) {
 export function renderEntitiesStep(panel, html) {
   // Initialize wizard room config state if not exists
   if (!panel._wizardRoomConfigState) {
+    const settings = getSettingsStore();
+    const savedEnabledRooms = settings.get('enabledRooms') || {};
+
     panel._wizardRoomConfigState = {
       enabledRooms: {}
     };
 
-    // Default: enable all rooms that have entities with suggested labels
+    // Load saved values or default all rooms to enabled
     const areas = panel._areas || [];
     areas.forEach(area => {
-      // Enable all rooms by default
-      panel._wizardRoomConfigState.enabledRooms[area.area_id] = true;
+      // Use saved value if exists, otherwise default to true
+      panel._wizardRoomConfigState.enabledRooms[area.area_id] =
+        area.area_id in savedEnabledRooms ? savedEnabledRooms[area.area_id] : true;
     });
   }
 
@@ -505,19 +509,8 @@ export function getEntitySelections(panel) {
  */
 export function saveEntitySelections(enabledRooms, settingsStore, panel) {
   try {
-    const settings = settingsStore.settings || {};
-    const roomConfig = { ...(settings.roomConfig || {}) };
-
-    // Update enabled status for each room
-    Object.entries(enabledRooms).forEach(([areaId, isEnabled]) => {
-      if (!roomConfig[areaId]) {
-        roomConfig[areaId] = { enabled: isEnabled, entities: {} };
-      } else {
-        roomConfig[areaId].enabled = isEnabled;
-      }
-    });
-
-    settingsStore.updateSettings({ ...settings, roomConfig });
+    // Save directly to enabledRooms (flat format: { areaId: boolean })
+    settingsStore.set('enabledRooms', { ...enabledRooms });
   } catch (e) {
     console.warn('[Dashview] Failed to save room config:', e);
   }

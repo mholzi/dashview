@@ -21,10 +21,10 @@ vi.mock('../../shared.js', () => ({
 // Mock stores
 vi.mock('../../../../stores/index.js', () => ({
   getSettingsStore: vi.fn(() => ({
-    settings: {},
+    get: vi.fn(() => ({})),
+    set: vi.fn(),
     subscribe: vi.fn(),
-    unsubscribe: vi.fn(),
-    updateSettings: vi.fn()
+    unsubscribe: vi.fn()
   })),
   getOnboardingStore: vi.fn(() => ({
     currentStep: 0,
@@ -194,11 +194,10 @@ describe('getEntitySelections', () => {
 });
 
 describe('saveEntitySelections', () => {
-  it('should call updateSettings with room config', () => {
-    const mockUpdateSettings = vi.fn();
+  it('should call set with enabledRooms', () => {
+    const mockSet = vi.fn();
     const mockSettingsStore = {
-      settings: {},
-      updateSettings: mockUpdateSettings
+      set: mockSet
     };
     const mockPanel = {};
     const enabledRooms = {
@@ -208,67 +207,41 @@ describe('saveEntitySelections', () => {
 
     saveEntitySelections(enabledRooms, mockSettingsStore, mockPanel);
 
-    expect(mockUpdateSettings).toHaveBeenCalled();
-    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
-    expect(updatedSettings.roomConfig).toBeDefined();
-    expect(updatedSettings.roomConfig.living_room).toBeDefined();
-    expect(updatedSettings.roomConfig.living_room.enabled).toBe(true);
-    expect(updatedSettings.roomConfig.bedroom.enabled).toBe(false);
+    expect(mockSet).toHaveBeenCalledWith('enabledRooms', {
+      'living_room': true,
+      'bedroom': false
+    });
   });
 
-  it('should preserve existing room config', () => {
-    const mockUpdateSettings = vi.fn();
+  it('should save all enabled rooms', () => {
+    const mockSet = vi.fn();
     const mockSettingsStore = {
-      settings: {
-        roomConfig: {
-          'kitchen': { enabled: true, entities: { lights: ['light.kitchen'] } }
-        }
-      },
-      updateSettings: mockUpdateSettings
+      set: mockSet
     };
     const mockPanel = {};
     const enabledRooms = {
-      'living_room': true
+      'living_room': true,
+      'kitchen': true,
+      'bedroom': false
     };
 
     saveEntitySelections(enabledRooms, mockSettingsStore, mockPanel);
 
-    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
-    expect(updatedSettings.roomConfig.kitchen).toBeDefined();
-    expect(updatedSettings.roomConfig.living_room).toBeDefined();
-  });
-
-  it('should update existing room enabled status', () => {
-    const mockUpdateSettings = vi.fn();
-    const mockSettingsStore = {
-      settings: {
-        roomConfig: {
-          'living_room': { enabled: false, entities: {} }
-        }
-      },
-      updateSettings: mockUpdateSettings
-    };
-    const mockPanel = {};
-    const enabledRooms = {
-      'living_room': true
-    };
-
-    saveEntitySelections(enabledRooms, mockSettingsStore, mockPanel);
-
-    const updatedSettings = mockUpdateSettings.mock.calls[0][0];
-    expect(updatedSettings.roomConfig.living_room.enabled).toBe(true);
+    const savedRooms = mockSet.mock.calls[0][1];
+    expect(savedRooms.living_room).toBe(true);
+    expect(savedRooms.kitchen).toBe(true);
+    expect(savedRooms.bedroom).toBe(false);
   });
 
   it('should handle empty enabled rooms', () => {
-    const mockUpdateSettings = vi.fn();
+    const mockSet = vi.fn();
     const mockSettingsStore = {
-      settings: {},
-      updateSettings: mockUpdateSettings
+      set: mockSet
     };
     const mockPanel = {};
 
     saveEntitySelections({}, mockSettingsStore, mockPanel);
 
-    expect(mockUpdateSettings).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith('enabledRooms', {});
   });
 });

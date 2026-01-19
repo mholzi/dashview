@@ -336,7 +336,7 @@ export function renderWizard(panel, html, options = {}) {
       store.prevStep();
       panel.requestUpdate();
     },
-    onNext: () => {
+    onNext: async () => {
       const settingsStore = getSettingsStore();
       // Save step data when leaving specific steps
       if (currentStepName === 'floorOrder') {
@@ -355,10 +355,12 @@ export function renderWizard(panel, html, options = {}) {
         const floorCardsConfig = getFloorCardsConfig(panel);
         saveFloorCardsConfig(floorCardsConfig, settingsStore);
       }
+      // Force immediate save to ensure step data is persisted
+      await settingsStore.saveNow();
       store.nextStep();
       panel.requestUpdate();
     },
-    onComplete: () => {
+    onComplete: async () => {
       const settingsStore = getSettingsStore();
       // Save all step data before completing
       const floorOrder = getFloorOrder(panel);
@@ -375,6 +377,9 @@ export function renderWizard(panel, html, options = {}) {
 
       const floorCardsConfig = getFloorCardsConfig(panel);
       saveFloorCardsConfig(floorCardsConfig, settingsStore);
+
+      // Force immediate save to ensure all settings are persisted
+      await settingsStore.saveNow();
 
       store.completeWizard();
       if (options.onComplete) {
