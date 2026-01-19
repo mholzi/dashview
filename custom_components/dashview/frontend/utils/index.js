@@ -119,3 +119,9 @@ export {
   GESTURE_STATE,
   GESTURE_DEFAULTS
 } from './gesture-handler.js';
+
+// Settings diff utilities
+export {
+  calculateDelta,
+  applyDelta
+} from './settings-diff.js';

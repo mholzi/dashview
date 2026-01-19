@@ -8,6 +8,7 @@
 
 import { THRESHOLDS, debugLog } from '../constants/index.js';
 import { validateSettings, validateSettingsUpdate } from '../utils/schema-validator.js';
+import { calculateDelta } from '../utils/settings-diff.js';
 
 /**
  * @typedef {Object} EnabledEntityMap
@@ -250,6 +251,12 @@ export class SettingsStore {
     this._isSaving = false;
     /** @type {boolean} */
     this._hasPendingChanges = false;
+
+    // Delta save support (Story 10.1)
+    /** @type {Object|null} */
+    this._previousSettings = null;  // Snapshot for delta calculation
+    /** @type {number} */
+    this._settingsVersion = 0;  // Server version timestamp for conflict detection
   }
 
   /**
@@ -411,6 +418,11 @@ export class SettingsStore {
       this._loaded = true;
       this._loadError = false;
       this._lastError = null;
+
+      // Snapshot for delta saves (Story 10.1)
+      this._previousSettings = structuredClone(this._settings);
+      this._settingsVersion = validatedSettings._version || 0;
+
       this._notifyListeners('_loaded', true);
       debugLog('settings', 'Settings loaded from HA');
       return { success: true };
@@ -453,6 +465,7 @@ export class SettingsStore {
 
   /**
    * Internal save implementation with guard
+   * Uses delta save when possible, falls back to full save
    * @private
    * @returns {Promise<void>}
    */
@@ -462,13 +475,29 @@ export class SettingsStore {
     this._isSaving = true;
     this._notifyListeners('_saveStart', true);
 
+    // Snapshot current settings to save (in case they change during async save)
+    const settingsToSave = structuredClone(this._settings);
+
     try {
-      await this._hass.callWS({
-        type: 'dashview/save_settings',
-        settings: this._settings,
-      });
+      // Try delta save if we have previous settings snapshot (Story 10.1 AC4)
+      if (this._previousSettings !== null) {
+        const delta = calculateDelta(this._previousSettings, settingsToSave);
+
+        // If delta is null (shouldn't happen if _previousSettings exists) or empty, nothing to save
+        if (delta === null) {
+          debugLog('settings', 'Delta calculation failed, using full save');
+          await this._doFullSave(settingsToSave);
+        } else if (Object.keys(delta).length === 0) {
+          debugLog('settings', 'No changes detected, skipping save');
+        } else {
+          await this._doSaveDelta(delta, settingsToSave);
+        }
+      } else {
+        // No previous settings - use full save (first save, Story 10.1 AC4)
+        debugLog('settings', 'No previous settings, using full save');
+        await this._doFullSave(settingsToSave);
+      }
       this._lastError = null;
-      debugLog('settings', 'Settings saved to HA');
     } catch (e) {
       this._lastError = e.message || 'Failed to save settings';
       console.error('Dashview: Failed to save settings to HA:', e);
@@ -486,7 +515,71 @@ export class SettingsStore {
   }
 
   /**
+   * Perform a delta save to the backend
+   * @private
+   * @param {Object} delta - Delta changes object
+   * @param {Object} settingsToSave - Settings snapshot to update _previousSettings with on success
+   * @returns {Promise<void>}
+   */
+  async _doSaveDelta(delta, settingsToSave) {
+    // Log payload size in dev mode (Story 10.1 AC3)
+    if (import.meta.env?.DEV) {
+      const fullSize = JSON.stringify(settingsToSave).length;
+      const deltaSize = JSON.stringify(delta).length;
+      const reduction = ((1 - deltaSize / fullSize) * 100).toFixed(1);
+      debugLog('settings', `Delta save: ${deltaSize} bytes (${reduction}% reduction from ${fullSize} bytes)`);
+    }
+
+    try {
+      const result = await this._hass.callWS({
+        type: 'dashview/save_settings_delta',
+        changes: delta,
+        version: this._settingsVersion,
+      });
+
+      // Update version from server response
+      if (result.version) {
+        this._settingsVersion = result.version;
+      }
+
+      // Update snapshot for next delta calculation (use the snapshot we saved, not current _settings)
+      this._previousSettings = settingsToSave;
+
+      debugLog('settings', `Delta saved: ${Object.keys(delta).length} changes`);
+    } catch (e) {
+      // Handle version conflict (Story 10.1 AC5)
+      if (e.code === 'version_conflict') {
+        console.warn('Dashview: Settings version conflict - another session modified settings');
+        this._notifyListeners('_versionConflict', true);
+        throw e;
+      }
+      // For other errors, fall back to full save
+      console.warn('Dashview: Delta save failed, falling back to full save:', e.message);
+      await this._doFullSave(settingsToSave);
+    }
+  }
+
+  /**
+   * Perform a full settings save to the backend
+   * @private
+   * @param {Object} settingsToSave - Settings to save (pass the snapshot, not current _settings)
+   * @returns {Promise<void>}
+   */
+  async _doFullSave(settingsToSave) {
+    const settings = settingsToSave || this._settings;
+    await this._hass.callWS({
+      type: 'dashview/save_settings',
+      settings: settings,
+    });
+
+    // Update snapshot for future delta saves (use the snapshot we saved, not current _settings)
+    this._previousSettings = structuredClone(settings);
+    debugLog('settings', 'Full settings saved to HA');
+  }
+
+  /**
    * Force immediate save (no debounce, with double-submit prevention)
+   * Uses delta save when possible
    * @returns {Promise<LoadResult>}
    */
   async saveNow() {
@@ -521,11 +614,28 @@ export class SettingsStore {
     this._isSaving = true;
     this._notifyListeners('_saveStart', true);
 
+    // Snapshot current settings to save
+    const settingsToSave = structuredClone(this._settings);
+
     try {
-      await this._hass.callWS({
-        type: 'dashview/save_settings',
-        settings: this._settings,
-      });
+      // Use delta save logic (same as _doSave but returns result)
+      if (this._previousSettings !== null) {
+        const delta = calculateDelta(this._previousSettings, settingsToSave);
+
+        if (delta === null || Object.keys(delta).length === 0) {
+          // No changes or delta failed - skip or use full save
+          if (delta === null) {
+            await this._doFullSave(settingsToSave);
+          }
+          // If empty delta, nothing to save
+        } else {
+          await this._doSaveDelta(delta, settingsToSave);
+        }
+      } else {
+        // No previous settings - use full save
+        await this._doFullSave(settingsToSave);
+      }
+
       this._lastError = null;
       debugLog('settings', 'Settings saved to HA (immediate)');
       return { success: true };

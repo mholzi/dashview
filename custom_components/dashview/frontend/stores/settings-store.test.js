@@ -483,9 +483,9 @@ describe('SettingsStore', () => {
       saveResolve({});
       await vi.runAllTimersAsync();
 
-      // Should have called save twice (once for first, once for queued)
+      // Should have called save twice (once for first full save, once for queued delta save)
       const saveCalls = slowHass.callWS.mock.calls.filter(
-        call => call[0].type === 'dashview/save_settings'
+        call => call[0].type.includes('save_settings')
       );
       expect(saveCalls.length).toBe(2);
     });
@@ -511,6 +511,10 @@ describe('SettingsStore', () => {
           if (request.type === 'dashview/save_settings') {
             saveCount++;
             lastSavedValue = request.settings.weatherEntity;
+          } else if (request.type === 'dashview/save_settings_delta') {
+            saveCount++;
+            // For delta saves, get value from changes (may be undefined if nested)
+            lastSavedValue = request.changes.weatherEntity;
           }
           return {};
         })
@@ -578,7 +582,8 @@ describe('SettingsStore', () => {
       let saveCallCount = 0;
       const slowHass = createMockHass({
         callWS: vi.fn().mockImplementation((request) => {
-          if (request.type === 'dashview/save_settings') {
+          // Count both full and delta saves
+          if (request.type.includes('save_settings')) {
             saveCallCount++;
             return new Promise(resolve => {
               saveResolve = resolve;
@@ -1147,6 +1152,8 @@ describe('SettingsStore', () => {
       await store.load();
       expect(store.loaded).toBe(true);
 
+      mockHass.callWS.mockClear();
+
       // Modify settings
       store.set('weatherEntity', 'weather.modified');
       store.toggleEnabled('enabledRooms', 'room.test');
@@ -1155,19 +1162,22 @@ describe('SettingsStore', () => {
       vi.advanceTimersByTime(500);
       await vi.runAllTimersAsync();
 
+      // After loading, delta save is used
       const saveCalls = mockHass.callWS.mock.calls.filter(
-        call => call[0].type === 'dashview/save_settings'
+        call => call[0].type === 'dashview/save_settings_delta'
       );
       expect(saveCalls.length).toBe(1);
-      expect(saveCalls[0][0].settings).toMatchObject({
+      expect(saveCalls[0][0].changes).toMatchObject({
         weatherEntity: 'weather.modified',
-        enabledRooms: { 'room.test': true }
+        'enabledRooms.room.test': true
       });
     });
 
     it('should handle admin panel workflow', async () => {
       store.setHass(mockHass);
       await store.load();
+
+      mockHass.callWS.mockClear();
 
       const listener = vi.fn();
       store.subscribe(listener);
@@ -1189,9 +1199,10 @@ describe('SettingsStore', () => {
       vi.advanceTimersByTime(500);
       await vi.runAllTimersAsync();
 
+      // After loading, delta save is used
       expect(mockHass.callWS).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'dashview/save_settings'
+          type: 'dashview/save_settings_delta'
         })
       );
     });
@@ -1413,6 +1424,335 @@ describe('SettingsStore', () => {
 
       // Original should not be affected
       expect(store.get('customConfig').test.nested).toBe('value');
+    });
+  });
+
+  describe('Delta Save (Story 10.1)', () => {
+    beforeEach(() => {
+      store.setHass(mockHass);
+    });
+
+    it('should use full save when no previous settings exist', async () => {
+      // Don't load - _previousSettings will be null
+      store.set('weatherEntity', 'weather.test');
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should use full save endpoint
+      expect(mockHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings'
+        })
+      );
+    });
+
+    it('should use delta save after loading settings', async () => {
+      // Load settings to populate _previousSettings
+      await store.load();
+
+      mockHass.callWS.mockClear();
+
+      // Make a change
+      store.set('weatherEntity', 'weather.modified');
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should use delta save endpoint
+      expect(mockHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings_delta'
+        })
+      );
+    });
+
+    it('should send only changed fields in delta payload', async () => {
+      await store.load();
+      mockHass.callWS.mockClear();
+
+      // Change a single field
+      store.set('weatherEntity', 'weather.delta_test');
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should only include the changed field
+      expect(mockHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings_delta',
+          changes: expect.objectContaining({
+            weatherEntity: 'weather.delta_test'
+          }),
+          version: expect.any(Number)
+        })
+      );
+    });
+
+    it('should skip save when no changes detected', async () => {
+      await store.load();
+      mockHass.callWS.mockClear();
+
+      // Set to same value (no actual change)
+      const currentValue = store.get('weatherEntity');
+      store.set('weatherEntity', currentValue);
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should not call any save endpoint
+      const saveCalls = mockHass.callWS.mock.calls.filter(
+        call => call[0].type.includes('save_settings')
+      );
+      expect(saveCalls.length).toBe(0);
+    });
+
+    it('should update version after successful delta save', async () => {
+      // Mock delta save to return version
+      const mockDeltaHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/get_settings') {
+            return { _version: 1000 };
+          }
+          if (request.type === 'dashview/save_settings_delta') {
+            return { success: true, version: 2000 };
+          }
+          return {};
+        })
+      });
+      store.setHass(mockDeltaHass);
+
+      await store.load();
+      expect(store._settingsVersion).toBe(1000);
+
+      store.set('weatherEntity', 'weather.test');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      expect(store._settingsVersion).toBe(2000);
+    });
+
+    it('should snapshot settings after load for delta calculation', async () => {
+      await store.load();
+
+      expect(store._previousSettings).not.toBeNull();
+      expect(store._previousSettings).toEqual(store.all);
+    });
+
+    it('should update snapshot after successful save', async () => {
+      await store.load();
+      const initialSnapshot = JSON.stringify(store._previousSettings);
+
+      store.set('weatherEntity', 'weather.modified');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      const newSnapshot = JSON.stringify(store._previousSettings);
+      expect(newSnapshot).not.toBe(initialSnapshot);
+      expect(store._previousSettings.weatherEntity).toBe('weather.modified');
+    });
+
+    it('should fallback to full save on delta error', async () => {
+      let callCount = 0;
+      const fallbackHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/get_settings') {
+            return { _version: 1000 };
+          }
+          if (request.type === 'dashview/save_settings_delta') {
+            callCount++;
+            throw new Error('Delta save failed');
+          }
+          if (request.type === 'dashview/save_settings') {
+            callCount++;
+            return { success: true };
+          }
+          return {};
+        })
+      });
+      store.setHass(fallbackHass);
+
+      await store.load();
+      store.set('weatherEntity', 'weather.test');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should have tried delta first, then fallen back to full save
+      expect(callCount).toBe(2);
+      expect(fallbackHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings'
+        })
+      );
+    });
+
+    it('should emit _versionConflict event on version conflict', async () => {
+      const conflictHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/get_settings') {
+            return { _version: 1000 };
+          }
+          if (request.type === 'dashview/save_settings_delta') {
+            const error = new Error('Settings were modified by another session');
+            error.code = 'version_conflict';
+            throw error;
+          }
+          return {};
+        })
+      });
+      store.setHass(conflictHass);
+
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      await store.load();
+      store.set('weatherEntity', 'weather.test');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      expect(listener).toHaveBeenCalledWith('_versionConflict', true);
+    });
+
+    it('should handle nested object changes with dot notation', async () => {
+      // Set up mock to return initial settings with nested object
+      const nestedHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/get_settings') {
+            return {
+              infoTextConfig: {
+                motion: { enabled: true },
+                garage: { enabled: false }
+              }
+            };
+          }
+          if (request.type === 'dashview/save_settings_delta') {
+            return { success: true, version: 2000 };
+          }
+          return {};
+        })
+      });
+      store.setHass(nestedHass);
+
+      await store.load();
+      nestedHass.callWS.mockClear();
+
+      // Modify nested value
+      const config = { ...store.get('infoTextConfig') };
+      config.motion = { enabled: false };
+      store.set('infoTextConfig', config);
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should send delta with changed nested path
+      expect(nestedHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings_delta',
+          changes: expect.any(Object)
+        })
+      );
+    });
+
+    it('should batch rapid changes into single delta save', async () => {
+      await store.load();
+      mockHass.callWS.mockClear();
+
+      // Make multiple rapid changes
+      store.set('weatherEntity', 'weather.test1');
+      store.set('weatherEntity', 'weather.test2');
+      store.set('weatherEntity', 'weather.test3');
+      store.set('notificationTempThreshold', 25);
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should only save once with all changes
+      const saveCalls = mockHass.callWS.mock.calls.filter(
+        call => call[0].type === 'dashview/save_settings_delta'
+      );
+      expect(saveCalls.length).toBe(1);
+    });
+
+    it('should handle array changes by replacing entire array', async () => {
+      const arrayHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/get_settings') {
+            return { floorOrder: ['floor1', 'floor2'] };
+          }
+          if (request.type === 'dashview/save_settings_delta') {
+            return { success: true, version: 2000 };
+          }
+          return {};
+        })
+      });
+      store.setHass(arrayHass);
+
+      await store.load();
+      arrayHass.callWS.mockClear();
+
+      // Change array
+      store.set('floorOrder', ['floor2', 'floor1', 'floor3']);
+
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should send entire array in delta
+      expect(arrayHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings_delta',
+          changes: expect.objectContaining({
+            floorOrder: ['floor2', 'floor1', 'floor3']
+          })
+        })
+      );
+    });
+
+    it('should use delta save in saveNow after load', async () => {
+      await store.load();
+      mockHass.callWS.mockClear();
+
+      store.set('weatherEntity', 'weather.immediate', false);
+      await store.saveNow();
+
+      expect(mockHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'dashview/save_settings_delta'
+        })
+      );
+    });
+
+    it('should handle double-failure when both delta and full save fail', async () => {
+      const doubleFailHass = createMockHass({
+        callWS: vi.fn().mockImplementation(async (request) => {
+          if (request.type === 'dashview/get_settings') {
+            return { _version: 1000 };
+          }
+          if (request.type === 'dashview/save_settings_delta') {
+            throw new Error('Delta save failed');
+          }
+          if (request.type === 'dashview/save_settings') {
+            throw new Error('Full save also failed');
+          }
+          return {};
+        })
+      });
+      store.setHass(doubleFailHass);
+
+      await store.load();
+      store.set('weatherEntity', 'weather.test');
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      // Should have tried both delta and full save
+      expect(doubleFailHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'dashview/save_settings_delta' })
+      );
+      expect(doubleFailHass.callWS).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'dashview/save_settings' })
+      );
+
+      // Should set lastError from the full save failure
+      expect(store.lastError).toBe('Full save also failed');
     });
   });
 });

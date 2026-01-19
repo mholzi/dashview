@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
 import json
 import logging
@@ -232,6 +233,7 @@ def async_register_websocket_commands(hass: HomeAssistant) -> None:
     """Register WebSocket commands."""
     websocket_api.async_register_command(hass, websocket_get_settings)
     websocket_api.async_register_command(hass, websocket_save_settings)
+    websocket_api.async_register_command(hass, websocket_save_settings_delta)
     websocket_api.async_register_command(hass, websocket_upload_photo)
     websocket_api.async_register_command(hass, websocket_delete_photo)
 
@@ -283,6 +285,117 @@ async def websocket_save_settings(
 
     _LOGGER.debug("Dashview settings saved: %s", settings)
     connection.send_result(msg["id"], {"success": True})
+
+
+def deep_merge(base: dict, changes: dict) -> dict:
+    """Deep merge changes into base dict using dot-notation paths.
+
+    Args:
+        base: Base settings dictionary
+        changes: Dict with dot-notation paths as keys (e.g., "weather.entity": "value")
+
+    Returns:
+        Merged dictionary (new object, base is not modified)
+
+    Raises:
+        ValueError: If a path contains dangerous keys
+    """
+    # Reject dangerous keys that could cause issues
+    dangerous_keys = {"__class__", "__init__", "__proto__", "constructor", "__dict__"}
+
+    result = copy.deepcopy(base)
+
+    for path, value in changes.items():
+        parts = path.split(".")
+
+        # Validate path parts don't contain dangerous keys
+        if any(part in dangerous_keys for part in parts):
+            raise ValueError(f"Invalid path: {path}")
+
+        if len(parts) == 1:
+            # Top-level key
+            if value is None:
+                result.pop(path, None)
+            else:
+                result[path] = value
+        else:
+            # Nested path - navigate to parent and set/delete value
+            current = result
+            for part in parts[:-1]:
+                if part not in current or not isinstance(current.get(part), dict):
+                    current[part] = {}
+                current = current[part]
+
+            # Set or delete the final key
+            final_key = parts[-1]
+            if value is None:
+                current.pop(final_key, None)
+            else:
+                current[final_key] = value
+
+    return result
+
+
+@websocket_api.websocket_command({
+    vol.Required("type"): f"{DOMAIN}/save_settings_delta",
+    vol.Required("changes"): dict,
+    vol.Optional("version"): int,  # Timestamp for conflict detection
+})
+@websocket_api.async_response
+@rate_limited("save_settings")
+async def websocket_save_settings_delta(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Handle delta settings save request with conflict detection.
+
+    Rate limit: 5 req/sec, burst 3 (same as full save)
+
+    This endpoint applies incremental changes to existing settings using
+    dot-notation paths (e.g., "weather.entity": "new_value").
+    """
+    changes = msg["changes"]
+    client_version = msg.get("version", 0)
+
+    # Get current settings
+    existing = hass.data[DOMAIN].get("settings", {})
+    current_version = existing.get("_version", 0)
+
+    # Version conflict detection (Story 10.1 AC5)
+    if client_version > 0 and client_version < current_version:
+        _LOGGER.warning(
+            "Settings version conflict: client=%d, server=%d",
+            client_version, current_version
+        )
+        connection.send_error(
+            msg["id"],
+            "version_conflict",
+            "Settings were modified by another session. Please reload."
+        )
+        return
+
+    # Apply delta changes
+    try:
+        merged = deep_merge(existing, changes)
+    except Exception as err:
+        _LOGGER.error("Failed to merge settings delta: %s", err)
+        connection.send_error(msg["id"], "merge_error", f"Failed to apply changes: {err}")
+        return
+
+    # Update version timestamp
+    new_version = int(time.time() * 1000)
+    merged["_version"] = new_version
+
+    # Update in memory
+    hass.data[DOMAIN]["settings"] = merged
+
+    # Persist to storage
+    store: Store = hass.data[DOMAIN]["store"]
+    await store.async_save(merged)
+
+    _LOGGER.debug("Dashview delta settings saved: %d changes", len(changes))
+    connection.send_result(msg["id"], {"success": True, "version": new_version})
 
 
 @websocket_api.websocket_command({
