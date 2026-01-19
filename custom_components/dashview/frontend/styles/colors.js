@@ -24,7 +24,7 @@ export const colorStyles = `
     /* Semantic Colors (matches mysmarthome theme) */
     --dv-black: #28282A;
     --dv-white: #f5f7fa;
-    --dv-background: #f5f7fa;
+    --dv-background: var(--primary-background-color, #f5f7fa);
     --dv-popup-bg-color: #fafbfc;
 
     /* Accent Colors - Light Mode */
@@ -141,7 +141,7 @@ export const colorStyles = `
       /* Semantic Colors - adjusted for dark mode */
       --dv-black: #ffffff;    /* Inverted for dark mode text */
       --dv-white: #28282A;    /* Inverted for dark mode backgrounds */
-      --dv-background: #28282A;
+      --dv-background: var(--primary-background-color, #28282A);
       --dv-popup-bg-color: #28282A;
 
       /* Accent Colors - Dark Mode (matches mysmarthome theme) */
@@ -184,7 +184,7 @@ export const colorStyles = `
 
     --dv-black: #ffffff;
     --dv-white: #28282A;
-    --dv-background: #28282A;
+    --dv-background: var(--primary-background-color, #28282A);
     --dv-popup-bg-color: #28282A;
 
     /* Accent Colors - Dark Mode (matches mysmarthome theme) */
