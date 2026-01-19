@@ -192,30 +192,18 @@ export function renderRoomsStep(panel, html) {
     return orderedAreas;
   };
 
-  // Move room up within floor
-  const moveUp = (floorId, areaId, currentIndex) => {
-    if (currentIndex <= 0) return;
-    const floorAreas = getOrderedAreasForFloor(floorId);
-    const currentOrder = floorAreas.map(a => a.area_id);
-    [currentOrder[currentIndex - 1], currentOrder[currentIndex]] = [currentOrder[currentIndex], currentOrder[currentIndex - 1]];
-    // Save to nested roomOrder object
-    const roomOrder = { ...(settings.get('roomOrder') || {}) };
-    roomOrder[floorId] = currentOrder;
-    settings.set('roomOrder', roomOrder);
-    panel.requestUpdate();
+  // Move room up within floor - use panel method for proper state sync
+  const moveUp = (floorId, areaId) => {
+    if (panel._moveRoom) {
+      panel._moveRoom(floorId, areaId, -1);
+    }
   };
 
-  // Move room down within floor
-  const moveDown = (floorId, areaId, currentIndex, totalAreas) => {
-    if (currentIndex >= totalAreas - 1) return;
-    const floorAreas = getOrderedAreasForFloor(floorId);
-    const currentOrder = floorAreas.map(a => a.area_id);
-    [currentOrder[currentIndex], currentOrder[currentIndex + 1]] = [currentOrder[currentIndex + 1], currentOrder[currentIndex]];
-    // Save to nested roomOrder object
-    const roomOrder = { ...(settings.get('roomOrder') || {}) };
-    roomOrder[floorId] = currentOrder;
-    settings.set('roomOrder', roomOrder);
-    panel.requestUpdate();
+  // Move room down within floor - use panel method for proper state sync
+  const moveDown = (floorId, areaId) => {
+    if (panel._moveRoom) {
+      panel._moveRoom(floorId, areaId, 1);
+    }
   };
 
   // Handle drag start
@@ -242,7 +230,7 @@ export function renderRoomsStep(panel, html) {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  // Handle drop
+  // Handle drop - sync both settings store AND panel state
   const handleDrop = (e, targetAreaId, floorId) => {
     e.preventDefault();
 
@@ -273,10 +261,20 @@ export function renderRoomsStep(panel, html) {
     currentOrder.splice(draggedIndex, 1);
     currentOrder.splice(targetIndex, 0, draggedId);
 
-    // Save new order to nested roomOrder object
+    // Update BOTH panel state AND settings store
+    const orderKey = floorId || '_unassigned';
+    if (!panel._roomOrder) panel._roomOrder = {};
+    panel._roomOrder = { ...panel._roomOrder, [orderKey]: currentOrder };
+
     const roomOrder = { ...(settings.get('roomOrder') || {}) };
     roomOrder[floorId] = currentOrder;
     settings.set('roomOrder', roomOrder);
+
+    // Trigger save to backend
+    if (panel._saveSettings) {
+      panel._saveSettings();
+    }
+
     state.draggedAreaId = null;
     state.draggedFromFloor = null;
     panel.requestUpdate();
@@ -348,7 +346,7 @@ export function renderRoomsStep(panel, html) {
                             <button
                               class="order-btn"
                               ?disabled=${index === 0}
-                              @click=${() => moveUp(floor.floor_id, area.area_id, index)}
+                              @click=${() => moveUp(floor.floor_id, area.area_id)}
                               title="${t('admin.layout.moveUp', 'Move up')}"
                             >
                               <ha-icon icon="mdi:chevron-up"></ha-icon>
@@ -356,7 +354,7 @@ export function renderRoomsStep(panel, html) {
                             <button
                               class="order-btn"
                               ?disabled=${index === floorAreas.length - 1}
-                              @click=${() => moveDown(floor.floor_id, area.area_id, index, floorAreas.length)}
+                              @click=${() => moveDown(floor.floor_id, area.area_id)}
                               title="${t('admin.layout.moveDown', 'Move down')}"
                             >
                               <ha-icon icon="mdi:chevron-down"></ha-icon>

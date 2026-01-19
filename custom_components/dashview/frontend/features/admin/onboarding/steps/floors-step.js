@@ -164,22 +164,18 @@ export function renderFloorsStep(panel, html) {
     return areas.filter(a => a.floor_id === floorId).length;
   };
 
-  // Handle move floor up
-  const moveUp = (index) => {
-    if (index <= 0) return;
-    const currentOrder = orderedFloors.map(f => f.floor_id);
-    [currentOrder[index - 1], currentOrder[index]] = [currentOrder[index], currentOrder[index - 1]];
-    settings.set('floorOrder', currentOrder);
-    panel.requestUpdate();
+  // Handle move floor up - use panel method for proper state sync
+  const moveUp = (floorId) => {
+    if (panel._moveFloor) {
+      panel._moveFloor(floorId, -1);
+    }
   };
 
-  // Handle move floor down
-  const moveDown = (index) => {
-    if (index >= orderedFloors.length - 1) return;
-    const currentOrder = orderedFloors.map(f => f.floor_id);
-    [currentOrder[index], currentOrder[index + 1]] = [currentOrder[index + 1], currentOrder[index]];
-    settings.set('floorOrder', currentOrder);
-    panel.requestUpdate();
+  // Handle move floor down - use panel method for proper state sync
+  const moveDown = (floorId) => {
+    if (panel._moveFloor) {
+      panel._moveFloor(floorId, 1);
+    }
   };
 
   // Handle drag start
@@ -204,7 +200,7 @@ export function renderFloorsStep(panel, html) {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  // Handle drop
+  // Handle drop - sync both settings store AND panel state
   const handleDrop = (e, targetFloorId) => {
     e.preventDefault();
 
@@ -215,8 +211,8 @@ export function renderFloorsStep(panel, html) {
       return;
     }
 
-    // Get current order
-    const currentOrder = orderedFloors.map(f => f.floor_id);
+    // Get current order from panel or settings
+    let currentOrder = panel._floorOrder ? [...panel._floorOrder] : orderedFloors.map(f => f.floor_id);
     const draggedIndex = currentOrder.indexOf(draggedId);
     const targetIndex = currentOrder.indexOf(targetFloorId);
 
@@ -230,8 +226,15 @@ export function renderFloorsStep(panel, html) {
     currentOrder.splice(draggedIndex, 1);
     currentOrder.splice(targetIndex, 0, draggedId);
 
-    // Save new order
+    // Update BOTH panel state AND settings store
+    panel._floorOrder = currentOrder;
     settings.set('floorOrder', currentOrder);
+
+    // Trigger save to backend
+    if (panel._saveSettings) {
+      panel._saveSettings();
+    }
+
     state.draggedFloorId = null;
     panel.requestUpdate();
   };
@@ -287,7 +290,7 @@ export function renderFloorsStep(panel, html) {
                 <button
                   class="order-btn"
                   ?disabled=${index === 0}
-                  @click=${() => moveUp(index)}
+                  @click=${() => moveUp(floor.floor_id)}
                   title="${t('admin.layout.moveUp', 'Move up')}"
                 >
                   <ha-icon icon="mdi:chevron-up"></ha-icon>
@@ -295,7 +298,7 @@ export function renderFloorsStep(panel, html) {
                 <button
                   class="order-btn"
                   ?disabled=${index === orderedFloors.length - 1}
-                  @click=${() => moveDown(index)}
+                  @click=${() => moveDown(floor.floor_id)}
                   title="${t('admin.layout.moveDown', 'Move down')}"
                 >
                   <ha-icon icon="mdi:chevron-down"></ha-icon>
