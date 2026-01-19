@@ -51,7 +51,7 @@ export const headerStyles = `
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     cursor: pointer;
     transition: background var(--dv-transition-normal) ease;
@@ -88,7 +88,7 @@ export const headerStyles = `
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     display: flex;
     align-items: center;
     justify-content: center;

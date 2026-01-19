@@ -28,7 +28,7 @@ export const activityIconStyles = `
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     cursor: pointer;
     transition: all var(--dv-transition-normal) ease;
     padding: 13px;
@@ -78,7 +78,7 @@ export const activityIconStyles = `
   }
 
   .activity-chip.security-chip {
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
   }
 
   .activity-chip.security-chip ha-icon {

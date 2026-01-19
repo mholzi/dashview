@@ -448,7 +448,7 @@ export const roomPopupStyles = `
     flex: 0 0 calc(100% - 16px);
     min-width: 280px;
     height: 160px;
-    background: var(--card-background-color, var(--dv-gray200));
+    background: var(--dv-gray000);
     border-radius: var(--ha-card-border-radius, 12px);
     position: relative;
     padding: 6px;

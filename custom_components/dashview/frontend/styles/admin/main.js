@@ -6,7 +6,7 @@
 export const mainStyles = `
   /* ==================== ADMIN TAB ==================== */
   .area-card {
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 16px;
@@ -152,7 +152,7 @@ export const mainStyles = `
   .lights-section {
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid var(--divider-color);
+    border-top: 1px solid var(--dv-gray200);
   }
 
   .lights-title {
@@ -240,7 +240,7 @@ export const mainStyles = `
     gap: 6px;
     padding: 6px 12px;
     background: var(--primary-background-color);
-    border: 1px solid var(--divider-color);
+    border: 1px solid var(--dv-gray200);
     border-radius: 6px;
     color: var(--dv-gray800);
     font-size: 0.9em;

@@ -39,7 +39,7 @@ export const securityStyles = `
     padding: 8px 14px;
     border: none;
     border-radius: 20px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     color: var(--secondary-text-color);
     font-size: 13px;
     font-weight: 500;
@@ -260,7 +260,7 @@ export const securityStyles = `
   .battery-device-bar {
     grid-column: 2 / 4;
     height: 4px;
-    background: var(--divider-color, rgba(0,0,0,0.1));
+    background: var(--dv-gray200);
     border-radius: 2px;
     overflow: hidden;
   }

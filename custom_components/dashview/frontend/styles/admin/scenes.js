@@ -436,7 +436,7 @@ export const scenesStyles = `
     width: 80px;
     height: 80px;
     padding: 10px 5px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     cursor: pointer;
     transition: all var(--dv-transition-normal) ease;

@@ -36,7 +36,7 @@ export const waterPopupStyles = `
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     cursor: pointer;
     transition: all var(--dv-transition-normal, 0.2s) ease;

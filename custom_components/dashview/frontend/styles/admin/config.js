@@ -16,7 +16,7 @@ export const configStyles = `
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     border: 1px solid var(--dv-gray300);
   }
@@ -74,7 +74,7 @@ export const configStyles = `
     font-size: 14px;
     border: 1px solid var(--dv-gray400);
     border-radius: 8px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     color: var(--primary-text-color);
     cursor: pointer;
     appearance: none;

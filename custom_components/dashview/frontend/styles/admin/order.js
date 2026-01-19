@@ -6,7 +6,7 @@
 export const orderStyles = `
   /* ==================== ORDER CONFIG ==================== */
   .order-config-section {
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     margin-bottom: 16px;
     overflow: hidden;
@@ -97,7 +97,7 @@ export const orderStyles = `
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,7 +139,7 @@ export const orderStyles = `
     height: 32px;
     border: none;
     border-radius: 6px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     color: var(--dv-gray800);
     cursor: pointer;
     display: flex;
@@ -171,7 +171,7 @@ export const orderStyles = `
     justify-content: center;
     cursor: grab;
     border-radius: 6px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     color: var(--dv-gray600);
     transition: all var(--dv-transition-normal) ease;
     flex-shrink: 0;
@@ -255,7 +255,7 @@ export const orderStyles = `
 
   .order-rooms-list {
     padding-left: 16px;
-    border-left: 2px solid var(--divider-color);
+    border-left: 2px solid var(--dv-gray200);
     margin-left: 20px;
   }
 
@@ -264,7 +264,7 @@ export const orderStyles = `
     text-align: center;
     margin-bottom: 24px;
     padding: 24px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 16px;
     box-shadow: var(--ha-card-box-shadow, 0 2px 8px var(--dv-shadow-light));
   }
@@ -296,7 +296,7 @@ export const orderStyles = `
   }
 
   .card {
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     padding: 20px;
     box-shadow: var(--ha-card-box-shadow, 0 2px 8px var(--dv-shadow-light));
@@ -352,7 +352,7 @@ export const orderStyles = `
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid var(--divider-color);
+    border-bottom: 1px solid var(--dv-gray200);
     cursor: pointer;
     transition: background var(--dv-transition-normal) ease;
     border-radius: 8px;

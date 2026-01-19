@@ -38,8 +38,8 @@ export const sharedPopupStyles = `
   }
 
   .popup-container {
-    background: var(--ha-card-background, var(--card-background-color));
-    background-color: color-mix(in srgb, var(--ha-card-background, var(--card-background-color)) 88%, transparent);
+    background: var(--dv-gray000);
+    background-color: color-mix(in srgb, var(--dv-gray000) 88%, transparent);
     border-radius: 42px 42px 0 0;
     width: 100%;
     max-width: 500px;
@@ -63,7 +63,7 @@ export const sharedPopupStyles = `
     padding: 16px;
     position: sticky;
     top: 0;
-    background: var(--ha-card-background, var(--card-background-color));
+    background: var(--dv-gray000);
     z-index: 10;
     border-radius: 42px 42px 0 0;
   }
@@ -236,7 +236,7 @@ export const sharedPopupStyles = `
     width: 80px;
     height: 80px;
     padding: 10px 5px;
-    background: var(--card-background-color);
+    background: var(--dv-gray000);
     border-radius: 12px;
     cursor: pointer;
     transition: all var(--dv-transition-normal) ease;

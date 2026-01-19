@@ -164,7 +164,7 @@ export const changelogPopupStyles = `
 
   .changelog-footer {
     padding: 16px 20px;
-    border-top: 1px solid var(--divider-color, rgba(255, 255, 255, 0.1));
+    border-top: 1px solid var(--dv-gray200);
     display: flex;
     align-items: center;
     gap: 12px;

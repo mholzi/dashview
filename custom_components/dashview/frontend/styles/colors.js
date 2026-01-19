@@ -40,8 +40,8 @@ export const colorStyles = `
     --dv-warning-text: #0f0f10;  /* Fixed dark text for warning cards */
 
     /* Popup/Card Backgrounds */
-    --dv-popup-bg: var(--ha-card-background, var(--card-background-color));
-    --dv-card-bg: var(--card-background-color);
+    --dv-popup-bg: var(--dv-gray000);
+    --dv-card-bg: var(--dv-gray000);
 
     /* Gradient Accents */
     --dv-gradient-active: linear-gradient(145deg, rgba(255,220,178,1) 0%, rgba(255,176,233,1) 60%, rgba(104,156,255,1) 150%);
