@@ -218,7 +218,11 @@ export const cardStyles = `
     background: var(--dv-red);
   }
 
-  /* Today (after 9am) and Tomorrow: gray background with accent text */
+  .garbage-slide.soon {
+    background: var(--dv-green);
+  }
+
+  /* Today (after 9am) and Tomorrow: accent text color */
   .garbage-slide.today .garbage-slide-label,
   .garbage-slide.today .garbage-slide-name,
   .garbage-slide.soon .garbage-slide-label,
@@ -254,7 +258,8 @@ export const cardStyles = `
     margin: -6px -6px 0 0;
   }
 
-  .garbage-slide.urgent .garbage-slide-icon {
+  .garbage-slide.urgent .garbage-slide-icon,
+  .garbage-slide.soon .garbage-slide-icon {
     background: var(--dv-gray800);
   }
 
@@ -263,7 +268,8 @@ export const cardStyles = `
     color: var(--dv-gray800);
   }
 
-  .garbage-slide.urgent .garbage-slide-icon ha-icon {
+  .garbage-slide.urgent .garbage-slide-icon ha-icon,
+  .garbage-slide.soon .garbage-slide-icon ha-icon {
     color: var(--dv-white);
   }
 
