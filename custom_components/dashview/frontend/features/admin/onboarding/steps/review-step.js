@@ -174,9 +174,10 @@ export function generateReviewSummary(panel) {
     .map(id => floors.find(f => f.floor_id === id)?.name)
     .filter(Boolean);
 
-  // Room config state
-  const roomConfigState = panel._wizardRoomConfigState || { enabledRooms: {} };
-  const enabledRoomsCount = Object.values(roomConfigState.enabledRooms).filter(v => v).length;
+  // Room config state - use panel._enabledRooms (same as admin)
+  // Rooms are enabled by default (true) unless explicitly set to false
+  const enabledRooms = panel._enabledRooms || {};
+  const enabledRoomsCount = areas.filter(area => enabledRooms[area.area_id] !== false).length;
 
   // Labels config - count mapped labels
   const mappedLabelsCount = LABEL_CATEGORIES.filter(cat => panel[cat.prop]).length;
