@@ -222,6 +222,12 @@ export const cardStyles = `
     background: var(--dv-green);
   }
 
+  /* Today (after 9am): gray background with accent text */
+  .garbage-slide.today .garbage-slide-label,
+  .garbage-slide.today .garbage-slide-name {
+    color: var(--dv-blue);
+  }
+
   .garbage-slide-name {
     grid-area: n;
     font-size: 14px;

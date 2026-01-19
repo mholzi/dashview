@@ -764,10 +764,13 @@ export function renderGarbageCard(component, html) {
           const now = new Date();
           const hour = now.getHours();
 
-          // Urgent: today before 9am (red)
-          // Soon: tomorrow (green)
+          // Urgent: today before 9am (red background)
+          // Today: today after 9am (accent text color)
+          // Soon: tomorrow (green background)
           if (item.days === 0 && hour < 9) {
             slideClass = 'urgent';
+          } else if (item.days === 0) {
+            slideClass = 'today';
           } else if (item.days === 1) {
             slideClass = 'soon';
           }
