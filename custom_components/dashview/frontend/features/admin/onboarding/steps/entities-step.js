@@ -1,23 +1,28 @@
 /**
  * Room Config Step Component
- * Fifth step in the setup wizard - enable/disable rooms for the dashboard
+ * Fifth step in the setup wizard - configure rooms and entities for the dashboard
  *
- * This step allows users to toggle which rooms appear on the dashboard.
- * Entity-level configuration is handled in the Admin panel.
+ * This step mirrors the Admin → Entities tab functionality, allowing users to:
+ * - Enable/disable rooms
+ * - Expand rooms to see entity categories
+ * - Enable/disable individual entities within each category
+ * - Search for rooms and entities
  */
 
 import { t } from '../../shared.js';
 import { getSettingsStore } from '../../../../stores/index.js';
+import { renderAreaCard } from '../../index.js';
+import { getFloorIcon } from '../../../../utils/index.js';
 
 /**
- * Room config step styles
+ * Room config step styles - matches admin entities tab
  */
 export const entitiesStepStyles = `
   /* ==================== ROOM CONFIG STEP ==================== */
   .dv-room-config-step {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     padding: 16px 0;
     flex: 1;
   }
@@ -29,228 +34,115 @@ export const entitiesStepStyles = `
   .dv-room-config-title {
     font-size: 20px;
     font-weight: 600;
-    color: var(--dv-text-primary, var(--primary-text-color));
+    color: var(--dv-gray800);
     margin: 0 0 8px 0;
   }
 
   .dv-room-config-desc {
     font-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
     margin: 0;
   }
 
-  /* ==================== SUMMARY ==================== */
-  .dv-room-config-summary {
+  /* ==================== SEARCH ==================== */
+  .dv-room-config-search {
+    margin-bottom: 8px;
+  }
+
+  .dv-room-config-search .garbage-search-input-wrapper {
     display: flex;
-    justify-content: center;
-    gap: 24px;
-    padding: 16px;
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    border-radius: 12px;
-    border: 1px solid var(--dv-border, var(--divider-color));
+    align-items: center;
+    background: var(--dv-gray100);
+    border-radius: 10px;
+    padding: 0 12px;
+    border: 1px solid var(--dv-gray300);
+    transition: border-color 0.2s ease;
   }
 
-  .dv-room-config-stat {
-    text-align: center;
+  .dv-room-config-search .garbage-search-input-wrapper:focus-within {
+    border-color: var(--dv-blue);
   }
 
-  .dv-room-config-stat-value {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--dv-accent-primary, var(--primary-color));
+  .dv-room-config-search .garbage-search-icon {
+    --mdc-icon-size: 20px;
+    color: var(--dv-gray500);
+    margin-right: 8px;
   }
 
-  .dv-room-config-stat-label {
-    font-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+  .dv-room-config-search .garbage-search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 12px 0;
+    font-size: 14px;
+    color: var(--dv-gray800);
+    outline: none;
+  }
+
+  .dv-room-config-search .garbage-search-input::placeholder {
+    color: var(--dv-gray500);
+  }
+
+  .dv-room-config-search .garbage-search-clear {
+    --mdc-icon-size: 18px;
+    color: var(--dv-gray500);
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .dv-room-config-search .garbage-search-clear:hover {
+    color: var(--dv-gray700);
   }
 
   /* ==================== FLOOR GROUPS ==================== */
   .dv-room-config-floors {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     flex: 1;
     min-height: 200px;
     overflow-y: auto;
     padding-right: 4px;
   }
 
-  .dv-room-config-floor-group {
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
   .dv-room-config-floor-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-    border-bottom: 1px solid var(--dv-border, var(--divider-color));
-  }
-
-  .dv-room-config-floor-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .dv-room-config-floor-icon ha-icon {
-    --mdc-icon-size: 18px;
-    color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-room-config-floor-name {
     font-size: 14px;
-    font-weight: 600;
-    color: var(--dv-text-primary, var(--primary-text-color));
-    flex: 1;
-  }
-
-  .dv-room-config-floor-toggle-all {
+    font-weight: 500;
+    color: var(--dv-gray600);
+    margin-bottom: 8px;
+    padding-left: 4px;
     display: flex;
+    align-items: center;
     gap: 8px;
   }
 
-  .dv-room-config-toggle-btn {
-    padding: 4px 10px;
-    border: 1px solid var(--dv-border, var(--divider-color));
-    border-radius: 6px;
-    background: transparent;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .dv-room-config-toggle-btn:hover {
-    background: var(--dv-bg-tertiary, var(--divider-color));
-    color: var(--dv-text-primary, var(--primary-text-color));
-  }
-
-  /* ==================== ROOM LIST ==================== */
-  .dv-room-config-room-list {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .dv-room-config-room-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--dv-border, var(--divider-color));
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-
-  .dv-room-config-room-item:last-child {
-    border-bottom: none;
-  }
-
-  .dv-room-config-room-item:hover {
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-  }
-
-  .dv-room-config-room-item.enabled {
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.05));
-  }
-
-  .dv-room-config-checkbox {
-    width: 22px;
-    height: 22px;
-    border: 2px solid var(--dv-border, var(--divider-color));
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-  }
-
-  .dv-room-config-room-item.enabled .dv-room-config-checkbox {
-    background: var(--dv-accent-primary, var(--primary-color));
-    border-color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-room-config-checkbox ha-icon {
-    --mdc-icon-size: 16px;
-    color: var(--dv-text-on-accent, #fff);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .dv-room-config-room-item.enabled .dv-room-config-checkbox ha-icon {
-    opacity: 1;
-  }
-
-  .dv-room-config-room-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--dv-bg-tertiary, var(--secondary-background-color));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .dv-room-config-room-icon ha-icon {
+  .dv-room-config-floor-header ha-icon {
     --mdc-icon-size: 18px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
   }
 
-  .dv-room-config-room-item.enabled .dv-room-config-room-icon {
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
-  }
-
-  .dv-room-config-room-item.enabled .dv-room-config-room-icon ha-icon {
-    color: var(--dv-accent-primary, var(--primary-color));
-  }
-
-  .dv-room-config-room-info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .dv-room-config-room-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--dv-text-primary, var(--primary-text-color));
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .dv-room-config-room-entities {
-    font-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+  .dv-room-config-floor-header .floor-count {
+    font-weight: 400;
+    opacity: 0.7;
   }
 
   /* ==================== EMPTY STATE ==================== */
   .dv-room-config-empty {
     text-align: center;
     padding: 32px;
-    background: var(--dv-bg-secondary, var(--card-background-color));
-    border: 2px dashed var(--dv-border, var(--divider-color));
+    background: var(--dv-gray000);
+    border: 2px dashed var(--dv-gray300);
     border-radius: 12px;
   }
 
   .dv-room-config-empty-icon {
     --mdc-icon-size: 48px;
-    color: var(--dv-text-tertiary, var(--secondary-text-color));
+    color: var(--dv-gray500);
     margin-bottom: 12px;
   }
 
   .dv-room-config-empty-text {
     font-size: 14px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
     margin: 0;
   }
 
@@ -260,15 +152,15 @@ export const entitiesStepStyles = `
     align-items: flex-start;
     gap: 8px;
     padding: 12px;
-    background: var(--dv-accent-subtle, rgba(var(--rgb-primary-color), 0.1));
+    background: var(--dv-gray000);
     border-radius: 8px;
     font-size: 12px;
-    color: var(--dv-text-secondary, var(--secondary-text-color));
+    color: var(--dv-gray600);
   }
 
   .dv-room-config-hint ha-icon {
     --mdc-icon-size: 16px;
-    color: var(--dv-accent-primary, var(--primary-color));
+    color: var(--dv-blue);
     flex-shrink: 0;
   }
 `;
@@ -279,139 +171,54 @@ export const entitiesStepStyles = `
 export const SUGGESTED_DOMAINS = ['light', 'climate', 'cover', 'switch', 'fan'];
 
 /**
- * Get area icon based on area name
- * @param {Object} area - Area object
- * @returns {string} MDI icon name
- */
-function getAreaIcon(area) {
-  const name = (area.name || area.area_id || '').toLowerCase();
-
-  if (name.includes('kitchen') || name.includes('küche')) return 'mdi:countertop';
-  if (name.includes('living') || name.includes('wohnzimmer')) return 'mdi:sofa';
-  if (name.includes('bedroom') || name.includes('schlafzimmer')) return 'mdi:bed';
-  if (name.includes('bathroom') || name.includes('bad')) return 'mdi:shower';
-  if (name.includes('office') || name.includes('büro') || name.includes('arbeit')) return 'mdi:desk';
-  if (name.includes('garage')) return 'mdi:garage';
-  if (name.includes('garden') || name.includes('garten')) return 'mdi:flower';
-  if (name.includes('hall') || name.includes('flur')) return 'mdi:door';
-  if (name.includes('dining') || name.includes('ess')) return 'mdi:silverware-fork-knife';
-
-  return 'mdi:door';
-}
-
-/**
- * Get floor icon based on floor name
- * @param {Object} floor - Floor object
- * @returns {string} MDI icon name
- */
-function getFloorIcon(floor) {
-  const name = (floor.name || floor.floor_id || '').toLowerCase();
-
-  if (name.includes('basement') || name.includes('keller')) return 'mdi:home-floor-negative-1';
-  if (name.includes('ground') || name.includes('erdgeschoss') || name.includes('eg')) return 'mdi:home-floor-0';
-  if (name.includes('first') || name.includes('obergeschoss') || name.includes('og') || name.includes('1')) return 'mdi:home-floor-1';
-  if (name.includes('second') || name.includes('2')) return 'mdi:home-floor-2';
-
-  return 'mdi:home-floor-0';
-}
-
-/**
  * Render the room config step
  * @param {Object} panel - The DashviewPanel instance
  * @param {Function} html - lit-html template function
  * @returns {TemplateResult}
  */
 export function renderEntitiesStep(panel, html) {
-  // Initialize wizard room config state if not exists
-  if (!panel._wizardRoomConfigState) {
-    const settings = getSettingsStore();
-    const savedEnabledRooms = settings.get('enabledRooms') || {};
-
-    panel._wizardRoomConfigState = {
-      enabledRooms: {}
-    };
-
-    // Load saved values or default all rooms to enabled
-    const areas = panel._areas || [];
-    areas.forEach(area => {
-      // Use saved value if exists, otherwise default to true
-      panel._wizardRoomConfigState.enabledRooms[area.area_id] =
-        area.area_id in savedEnabledRooms ? savedEnabledRooms[area.area_id] : true;
-    });
+  // Initialize search state if not exists
+  if (!panel._wizardEntitySearchQuery) {
+    panel._wizardEntitySearchQuery = '';
   }
 
-  const state = panel._wizardRoomConfigState;
-  const settings = getSettingsStore();
-
-  // Get floors and areas
-  const floors = panel._floors || [];
+  // Get ordered floors and areas
+  const orderedFloors = panel._getOrderedFloors ? panel._getOrderedFloors() : (panel._floors || []);
   const areas = panel._areas || [];
 
-  // Count entities per room (using entity registry)
-  const getEntityCount = (areaId) => {
-    const entityRegistry = panel._entityRegistry || [];
-    return entityRegistry.filter(e => e.area_id === areaId && !e.hidden_by).length;
+  // Filter rooms based on search query
+  const searchQuery = panel._wizardEntitySearchQuery ? panel._wizardEntitySearchQuery.toLowerCase() : '';
+  const filterRooms = (rooms) => {
+    if (!searchQuery) return rooms;
+    return rooms.filter(room => room.name.toLowerCase().includes(searchQuery));
   };
 
-  // Group areas by floor
-  const getAreasForFloor = (floorId) => {
+  // Get rooms for a floor
+  const getRoomsForFloor = (floorId) => {
+    if (panel._getOrderedRoomsForFloor) {
+      return panel._getOrderedRoomsForFloor(floorId);
+    }
     return areas.filter(a => a.floor_id === floorId);
   };
 
-  // Toggle room
-  const toggleRoom = (areaId) => {
-    state.enabledRooms[areaId] = !state.enabledRooms[areaId];
-    panel.requestUpdate();
-  };
-
-  // Enable all rooms on floor
-  const enableAllOnFloor = (floorId) => {
-    const floorAreas = getAreasForFloor(floorId);
-    floorAreas.forEach(area => {
-      state.enabledRooms[area.area_id] = true;
-    });
-    panel.requestUpdate();
-  };
-
-  // Disable all rooms on floor
-  const disableAllOnFloor = (floorId) => {
-    const floorAreas = getAreasForFloor(floorId);
-    floorAreas.forEach(area => {
-      state.enabledRooms[area.area_id] = false;
-    });
-    panel.requestUpdate();
-  };
-
-  // Count enabled rooms
-  const enabledCount = Object.values(state.enabledRooms).filter(v => v).length;
-  const totalRooms = areas.length;
+  // Calculate totals
+  let totalRooms = 0;
+  let enabledRooms = 0;
+  areas.forEach(area => {
+    totalRooms++;
+    if (panel._enabledRooms[area.area_id] !== false) enabledRooms++;
+  });
 
   return html`
     <style>${entitiesStepStyles}</style>
     <div class="dv-room-config-step">
       <div class="dv-room-config-header">
         <h2 class="dv-room-config-title">
-          ${t('wizard.roomConfig.title', 'Enable Your Rooms')}
+          ${t('wizard.roomConfig.title', 'Configure Your Rooms')}
         </h2>
         <p class="dv-room-config-desc">
-          ${t('wizard.roomConfig.description', 'Choose which rooms appear on your dashboard. You can enable or disable rooms and configure entities in the Admin panel later.')}
+          ${t('wizard.roomConfig.description', 'Enable or disable rooms to show on your dashboard.')}
         </p>
-      </div>
-
-      <!-- Summary -->
-      <div class="dv-room-config-summary">
-        <div class="dv-room-config-stat">
-          <div class="dv-room-config-stat-value">${enabledCount}</div>
-          <div class="dv-room-config-stat-label">${t('wizard.roomConfig.enabled', 'Enabled')}</div>
-        </div>
-        <div class="dv-room-config-stat">
-          <div class="dv-room-config-stat-value">${totalRooms}</div>
-          <div class="dv-room-config-stat-label">${t('wizard.roomConfig.total', 'Total')}</div>
-        </div>
-        <div class="dv-room-config-stat">
-          <div class="dv-room-config-stat-value">${floors.length}</div>
-          <div class="dv-room-config-stat-label">${t('wizard.roomConfig.floors', 'Floors')}</div>
-        </div>
       </div>
 
       ${areas.length === 0 ? html`
@@ -422,62 +229,65 @@ export function renderEntitiesStep(panel, html) {
           </p>
         </div>
       ` : html`
+        <!-- Search -->
+        <div class="dv-room-config-search">
+          <div class="garbage-search-input-wrapper">
+            <ha-icon icon="mdi:magnify" class="garbage-search-icon"></ha-icon>
+            <input
+              type="text"
+              class="garbage-search-input"
+              placeholder="${t('admin.entities.searchRooms', 'Search rooms...')}"
+              .value=${panel._wizardEntitySearchQuery || ''}
+              @input=${(e) => {
+                panel._wizardEntitySearchQuery = e.target.value;
+                panel.requestUpdate();
+              }}
+            />
+            ${panel._wizardEntitySearchQuery ? html`
+              <ha-icon
+                icon="mdi:close"
+                class="garbage-search-clear"
+                @click=${() => {
+                  panel._wizardEntitySearchQuery = '';
+                  panel.requestUpdate();
+                }}
+              ></ha-icon>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Room List by Floor -->
         <div class="dv-room-config-floors">
-          ${floors.map(floor => {
-            const floorAreas = getAreasForFloor(floor.floor_id);
-            if (floorAreas.length === 0) return '';
-
+          ${orderedFloors.map(floor => {
+            const roomsForFloor = filterRooms(getRoomsForFloor(floor.floor_id));
+            if (roomsForFloor.length === 0) return '';
             return html`
-              <div class="dv-room-config-floor-group">
+              <div style="margin-bottom: 8px;">
                 <div class="dv-room-config-floor-header">
-                  <div class="dv-room-config-floor-icon">
-                    <ha-icon icon="${floor.icon || getFloorIcon(floor)}"></ha-icon>
-                  </div>
-                  <span class="dv-room-config-floor-name">${floor.name || floor.floor_id}</span>
-                  <div class="dv-room-config-floor-toggle-all">
-                    <button
-                      class="dv-room-config-toggle-btn"
-                      @click=${(e) => { e.stopPropagation(); enableAllOnFloor(floor.floor_id); }}
-                    >
-                      ${t('admin.entities.selectAll', 'All')}
-                    </button>
-                    <button
-                      class="dv-room-config-toggle-btn"
-                      @click=${(e) => { e.stopPropagation(); disableAllOnFloor(floor.floor_id); }}
-                    >
-                      ${t('admin.entities.selectNone', 'None')}
-                    </button>
-                  </div>
+                  <ha-icon icon="${floor.icon || getFloorIcon(floor)}"></ha-icon>
+                  ${floor.name}
+                  <span class="floor-count">(${roomsForFloor.length} rooms)</span>
                 </div>
-                <div class="dv-room-config-room-list">
-                  ${floorAreas.map(area => {
-                    const isEnabled = state.enabledRooms[area.area_id] === true;
-                    const entityCount = getEntityCount(area.area_id);
-
-                    return html`
-                      <div
-                        class="dv-room-config-room-item ${isEnabled ? 'enabled' : ''}"
-                        @click=${() => toggleRoom(area.area_id)}
-                      >
-                        <div class="dv-room-config-checkbox">
-                          <ha-icon icon="mdi:check"></ha-icon>
-                        </div>
-                        <div class="dv-room-config-room-icon">
-                          <ha-icon icon="${area.icon || getAreaIcon(area)}"></ha-icon>
-                        </div>
-                        <div class="dv-room-config-room-info">
-                          <div class="dv-room-config-room-name">${area.name || area.area_id}</div>
-                          <div class="dv-room-config-room-entities">
-                            ${entityCount} ${t('wizard.roomConfig.entities', 'entities')}
-                          </div>
-                        </div>
-                      </div>
-                    `;
-                  })}
-                </div>
+                ${roomsForFloor.map((area) => renderAreaCard(panel, html, area))}
               </div>
             `;
           })}
+
+          <!-- Unassigned rooms -->
+          ${(() => {
+            const unassignedRooms = filterRooms(getRoomsForFloor(null));
+            if (unassignedRooms.length === 0) return '';
+            return html`
+              <div style="margin-bottom: 8px;">
+                <div class="dv-room-config-floor-header">
+                  <ha-icon icon="mdi:help-circle-outline"></ha-icon>
+                  ${t('admin.entities.unassignedRooms', 'Unassigned Rooms')}
+                  <span class="floor-count">(${unassignedRooms.length} rooms)</span>
+                </div>
+                ${unassignedRooms.map((area) => renderAreaCard(panel, html, area))}
+              </div>
+            `;
+          })()}
         </div>
       `}
 
@@ -486,7 +296,7 @@ export function renderEntitiesStep(panel, html) {
       <!-- Hint -->
       <div class="dv-room-config-hint">
         <ha-icon icon="mdi:information-outline"></ha-icon>
-        <span>${t('wizard.roomConfig.hint', 'Tip: Configure individual entities for each room in the Admin panel after setup')}</span>
+        <span>${t('wizard.roomConfig.hint', 'Tip: Click a room to expand and configure individual entities. Changes are saved automatically.')}</span>
       </div>
     </div>
   `;
@@ -498,7 +308,7 @@ export function renderEntitiesStep(panel, html) {
  * @returns {Object} Room configuration
  */
 export function getEntitySelections(panel) {
-  return panel._wizardRoomConfigState?.enabledRooms || {};
+  return panel._enabledRooms || {};
 }
 
 /**
