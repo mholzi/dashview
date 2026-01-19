@@ -576,7 +576,7 @@ export const securityStyles = `
     background: var(--dv-white);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px var(--dv-shadow-heavy);
   }
 
   .covers-popup-slider input[type="range"]::-moz-range-thumb {
@@ -586,7 +586,7 @@ export const securityStyles = `
     border-radius: 50%;
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px var(--dv-shadow-heavy);
   }
 
   /* ==================== TVS POPUP ==================== */
@@ -776,7 +776,7 @@ export const securityStyles = `
     background: var(--dv-white);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px var(--dv-shadow-heavy);
   }
 
   .tvs-popup-volume input[type="range"]::-moz-range-thumb {
@@ -786,7 +786,7 @@ export const securityStyles = `
     border-radius: 50%;
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px var(--dv-shadow-heavy);
   }
 
   .tvs-popup-volume-text {

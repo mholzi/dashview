@@ -204,7 +204,7 @@ export const scenesStyles = `
     max-height: 200px;
     overflow-y: auto;
     z-index: var(--dv-z-modal, 6);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px var(--dv-shadow-medium);
   }
 
   .scene-button-no-results {
@@ -329,7 +329,7 @@ export const scenesStyles = `
     max-height: 280px;
     overflow-y: auto;
     z-index: var(--dv-z-modal, 6);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px var(--dv-shadow-medium);
   }
 
   .icon-picker-no-results {
@@ -408,7 +408,7 @@ export const scenesStyles = `
 
   .scene-button-info-box span {
     font-size: 13px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   /* ==================== SCENE ROW ==================== */
@@ -465,13 +465,13 @@ export const scenesStyles = `
 
   .scene-button ha-icon {
     --mdc-icon-size: 22px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin-bottom: 4px;
   }
 
   .scene-button .scene-name {
     font-size: 11px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     text-align: center;
     white-space: normal;
     line-height: 1.2;
@@ -490,7 +490,7 @@ export const scenesStyles = `
   .scene-row-title {
     font-size: 0.9em;
     font-weight: 500;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     padding: 8px 16px 0 16px;
     display: flex;
     align-items: center;
@@ -510,7 +510,7 @@ export const scenesStyles = `
     padding: 8px 16px 16px 16px;
     font-size: 1.2em;
     line-height: 1.8em;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .info-text-row .text-segment {

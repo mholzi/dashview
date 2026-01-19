@@ -32,12 +32,12 @@ export const changelogPopupStyles = `
 
   .changelog-date {
     font-size: 12px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .changelog-page-indicator {
     font-size: 12px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     text-align: center;
     margin-bottom: 8px;
   }
@@ -45,14 +45,14 @@ export const changelogPopupStyles = `
   .changelog-title {
     font-size: 20px;
     font-weight: 600;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0 0 4px 0;
     text-align: center;
   }
 
   .changelog-subtitle {
     font-size: 14px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     margin: 0 0 20px 0;
     text-align: center;
   }
@@ -133,12 +133,12 @@ export const changelogPopupStyles = `
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .changelog-change-description {
     font-size: 14px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     line-height: 1.4;
   }
 
@@ -203,13 +203,13 @@ export const changelogPopupStyles = `
 
   .changelog-button.secondary {
     background: transparent;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     padding: 10px 16px;
   }
 
   .changelog-button.secondary:hover {
     background: var(--dv-gray100, rgba(255, 255, 255, 0.05));
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .changelog-button ha-icon {
@@ -224,7 +224,7 @@ export const changelogPopupStyles = `
     justify-content: center;
     gap: 12px;
     padding: 40px 20px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .changelog-loading ha-icon,
@@ -244,7 +244,7 @@ export const changelogPopupStyles = `
   .changelog-raw-body {
     font-size: 14px;
     line-height: 1.6;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .changelog-raw-body p {
@@ -259,7 +259,7 @@ export const changelogPopupStyles = `
     padding: 10px 14px;
     background: var(--dv-gray100, rgba(255, 255, 255, 0.05));
     border-radius: 10px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     text-decoration: none;
     font-size: 13px;
     transition: all 0.2s ease;

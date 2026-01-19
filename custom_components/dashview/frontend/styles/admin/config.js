@@ -428,7 +428,7 @@ export const configStyles = `
     max-height: 200px;
     overflow-y: auto;
     z-index: var(--dv-z-modal, 6);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--dv-shadow-medium);
   }
 
   .info-text-search-no-results {

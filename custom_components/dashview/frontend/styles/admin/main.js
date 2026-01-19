@@ -33,7 +33,7 @@ export const mainStyles = `
 
   .area-icon.disabled {
     background: var(--secondary-background-color);
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .area-title {
@@ -43,12 +43,12 @@ export const mainStyles = `
   .area-name {
     font-size: 1.2em;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .area-subtitle {
     font-size: 0.85em;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .area-toggle {
@@ -127,13 +127,13 @@ export const mainStyles = `
 
   .extra-toggle-label {
     font-size: 11px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     white-space: nowrap;
   }
 
   .expand-icon {
     --mdc-icon-size: 24px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     transition: transform var(--dv-transition-slow) ease;
   }
 
@@ -158,7 +158,7 @@ export const mainStyles = `
   .lights-title {
     font-size: 1em;
     font-weight: 500;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     margin-bottom: 12px;
     display: flex;
     align-items: center;
@@ -211,7 +211,7 @@ export const mainStyles = `
     font-weight: 500;
     border: 1px solid var(--dv-gray400);
     background: transparent;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -242,7 +242,7 @@ export const mainStyles = `
     background: var(--primary-background-color);
     border: 1px solid var(--divider-color);
     border-radius: 6px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     font-size: 0.9em;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -279,7 +279,7 @@ export const mainStyles = `
 
   .light-info ha-icon {
     --mdc-icon-size: 20px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .light-info.light-on ha-icon {
@@ -287,13 +287,13 @@ export const mainStyles = `
   }
 
   .light-name {
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     font-size: 0.95em;
   }
 
   .light-state {
     font-size: 0.8em;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     margin-left: 4px;
   }
 
@@ -302,7 +302,7 @@ export const mainStyles = `
   }
 
   .no-lights {
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     font-style: italic;
     padding: 8px 0;
   }
@@ -310,7 +310,7 @@ export const mainStyles = `
   .section-title {
     font-size: 1.5em;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0 0 24px 0;
     display: flex;
     align-items: center;
@@ -324,7 +324,7 @@ export const mainStyles = `
   .no-selected-lights {
     text-align: center;
     padding: 32px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .no-selected-lights ha-icon {

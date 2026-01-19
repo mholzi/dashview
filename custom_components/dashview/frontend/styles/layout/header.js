@@ -24,7 +24,7 @@ export const headerStyles = `
     border: none;
     padding: 8px;
     cursor: pointer;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -74,14 +74,14 @@ export const headerStyles = `
 
   .weather-condition {
     font-size: 0.75em;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     text-transform: capitalize;
   }
 
   .weather-temp {
     font-size: 1.25em;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .person-avatar {
@@ -109,7 +109,7 @@ export const headerStyles = `
 
   .person-avatar ha-icon {
     --mdc-icon-size: 28px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .person-avatar.home {

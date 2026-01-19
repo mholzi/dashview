@@ -31,7 +31,7 @@ export const orderStyles = `
     gap: 12px;
     font-size: 16px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     margin: 0;
   }
 
@@ -42,7 +42,7 @@ export const orderStyles = `
 
   .order-config-section-chevron {
     --mdc-icon-size: 24px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     transition: transform var(--dv-transition-normal) ease;
   }
 
@@ -106,7 +106,7 @@ export const orderStyles = `
 
   .order-item-icon ha-icon {
     --mdc-icon-size: 20px;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .order-item-info {
@@ -117,7 +117,7 @@ export const orderStyles = `
   .order-item-name {
     font-size: 14px;
     font-weight: 500;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -125,7 +125,7 @@ export const orderStyles = `
 
   .order-item-subtitle {
     font-size: 12px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 
   .order-item-buttons {
@@ -140,7 +140,7 @@ export const orderStyles = `
     border: none;
     border-radius: 6px;
     background: var(--card-background-color);
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -172,7 +172,7 @@ export const orderStyles = `
     cursor: grab;
     border-radius: 6px;
     background: var(--card-background-color);
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     transition: all var(--dv-transition-normal) ease;
     flex-shrink: 0;
   }
@@ -198,7 +198,7 @@ export const orderStyles = `
 
   /* Currently dragged element */
   .sortable-chosen {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px var(--dv-shadow-heavy);
     transform: scale(1.02);
   }
 
@@ -218,7 +218,7 @@ export const orderStyles = `
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     padding: 4px 8px;
     margin-bottom: 8px;
     opacity: 0.7;
@@ -271,13 +271,13 @@ export const orderStyles = `
 
   .info-header h1 {
     margin: 0 0 8px 0;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     font-size: 2em;
     font-weight: 500;
   }
 
   .info-header .subtitle {
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     font-size: 1.1em;
     margin: 0;
   }
@@ -304,7 +304,7 @@ export const orderStyles = `
 
   .card h2 {
     margin: 0 0 16px 0;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     font-size: 1.3em;
     font-weight: 500;
     display: flex;
@@ -337,7 +337,7 @@ export const orderStyles = `
 
   .stat-label {
     font-size: 0.9em;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     margin-top: 4px;
   }
 
@@ -431,14 +431,14 @@ export const orderStyles = `
   }
 
   .entity-name {
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
   .entity-state {
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     font-weight: 500;
     padding: 4px 12px;
     border-radius: 16px;
@@ -451,7 +451,7 @@ export const orderStyles = `
   }
 
   .entity-state.off {
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
     background: var(--secondary-background-color);
   }
 
@@ -564,7 +564,7 @@ export const orderStyles = `
   .welcome-message {
     font-size: 1.1em;
     line-height: 1.6;
-    color: var(--primary-text-color);
+    color: var(--dv-gray800);
   }
 
   .welcome-message p {
@@ -578,6 +578,6 @@ export const orderStyles = `
 
   .welcome-message li {
     margin: 8px 0;
-    color: var(--secondary-text-color);
+    color: var(--dv-gray600);
   }
 `;

@@ -48,7 +48,7 @@ export const sharedPopupStyles = `
     -ms-overflow-style: none;
     scrollbar-width: none;
     animation: slideUp 0.3s ease;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -4px 20px var(--dv-shadow-heavy);
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 
