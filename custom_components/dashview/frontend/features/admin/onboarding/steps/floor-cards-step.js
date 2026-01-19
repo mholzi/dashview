@@ -110,12 +110,14 @@ export const floorCardsStepStyles = `
   /* ==================== VISUAL GRID ==================== */
   .dv-floor-cards-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 60px);
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 76px 76px 76px 76px;
     grid-template-areas:
-      "small1 small1 big1 big1"
-      "small2 small2 big2 big2";
-    gap: 8px;
+      "small1 big1"
+      "big2 big1"
+      "big2 small2"
+      "small3 small4";
+    gap: 0;
     margin-bottom: 8px;
   }
 
@@ -309,9 +311,11 @@ export const floorCardsStepStyles = `
  */
 const SLOT_LABELS = {
   0: { name: 'Top Left', desc: 'Small slot' },
-  1: { name: 'Top Right', desc: 'Large slot' },
-  2: { name: 'Bottom Right', desc: 'Large slot' },
-  3: { name: 'Middle Left', desc: 'Small slot' }
+  1: { name: 'Top Right', desc: 'Large slot (Floor Overview or Entity)' },
+  2: { name: 'Bottom Right', desc: 'Large slot (Garbage Card or Entity)' },
+  3: { name: 'Middle Left', desc: 'Small slot' },
+  4: { name: 'Lower Left 1', desc: 'Small slot' },
+  5: { name: 'Lower Left 2', desc: 'Small slot' }
 };
 
 /**
@@ -528,8 +532,8 @@ export function renderFloorCardsStep(panel, html) {
               <div class="dv-floor-overview-toggle-label">
                 <ha-icon icon="mdi:view-carousel"></ha-icon>
                 <div class="dv-floor-overview-toggle-text">
-                  <span class="dv-floor-overview-toggle-title">${t('admin.layout.floorOverview', 'Floor Overview')}</span>
-                  <span class="dv-floor-overview-toggle-subtitle">${t('admin.layout.floorOverviewDesc', 'Swipeable card showing all rooms')}</span>
+                  <span class="dv-floor-overview-toggle-title">${t('admin.layout.floorOverviewTopRight', 'Floor Overview (Top Right)')}</span>
+                  <span class="dv-floor-overview-toggle-subtitle">${t('admin.layout.floorOverviewDescFull', 'Swipeable card showing all rooms on this floor')}</span>
                 </div>
               </div>
               <div
@@ -538,7 +542,7 @@ export function renderFloorCardsStep(panel, html) {
               ></div>
             </div>
 
-            <!-- Visual Grid (4 slots: 2 small on left, 2 big on right) -->
+            <!-- Visual Grid (6 slots matching admin layout) -->
             <div class="dv-floor-cards-grid">
               ${renderVisualSlot(floor.floor_id, 0, false, 'small1', false)}
               ${renderVisualSlot(
@@ -546,8 +550,10 @@ export function renderFloorCardsStep(panel, html) {
                 state.floorOverviewEnabled[floor.floor_id],
                 'mdi:view-carousel', 'Floor Overview'
               )}
-              ${renderVisualSlot(floor.floor_id, 3, false, 'small2', false)}
               ${renderVisualSlot(floor.floor_id, 2, true, 'big2', false)}
+              ${renderVisualSlot(floor.floor_id, 3, false, 'small2', false)}
+              ${renderVisualSlot(floor.floor_id, 4, false, 'small3', false)}
+              ${renderVisualSlot(floor.floor_id, 5, false, 'small4', false)}
             </div>
 
             <!-- Entity Picker -->
