@@ -305,8 +305,11 @@ Ensure entities are assigned to Areas (rooms):
 
 ### Step 4: Configure in Dashview
 
+**New in v1.3.0:** The **Setup Wizard** launches automatically for new installations and guides you through the entire configuration process—label mapping, room visibility, and dashboard layout. Just follow the steps!
+
+For manual configuration or to make changes later:
 1. Open **Dashview** from sidebar
-2. Click the **gear icon**
+2. Click the **gear icon** to open the Admin panel
 3. Map your labels to Dashview categories
 4. Toggle entity visibility as needed
 
@@ -361,7 +364,7 @@ Absolutely. Dashview is fully responsive and touch-optimized. It works great in 
 <details>
 <summary><strong>How do I change the order of rooms?</strong></summary>
 
-Room order follows Home Assistant's area ordering. Reorder areas in HA settings to change Dashview's display order.
+Open the Admin panel (gear icon) → **Layout** tab. You can reorder floors and rooms using drag-and-drop or the arrow buttons.
 
 </details>
 

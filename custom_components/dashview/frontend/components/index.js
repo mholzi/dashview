@@ -63,9 +63,3 @@ export {
   processHistoryData
 } from './charts/index.js';
 
-// Onboarding
-export {
-  renderCoachMark,
-  shouldShowCoachMark,
-  dismissCoachMark
-} from './onboarding/index.js';

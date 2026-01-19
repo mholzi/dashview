@@ -222,12 +222,16 @@ export const cardStyles = `
     background: var(--dv-green);
   }
 
-  /* Today (after 9am) and Tomorrow: accent text color */
+  /* Today (after 9am): accent text color */
   .garbage-slide.today .garbage-slide-label,
-  .garbage-slide.today .garbage-slide-name,
+  .garbage-slide.today .garbage-slide-name {
+    color: var(--dv-blue);
+  }
+
+  /* Tomorrow: fixed dark text color */
   .garbage-slide.soon .garbage-slide-label,
   .garbage-slide.soon .garbage-slide-name {
-    color: var(--dv-blue);
+    color: var(--dv-fixed-dark);
   }
 
   .garbage-slide-name {

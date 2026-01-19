@@ -3,8 +3,4 @@
  * Entry point for onboarding-related UI components
  */
 
-export {
-  renderCoachMark,
-  shouldShowCoachMark,
-  dismissCoachMark
-} from './coach-mark.js';
+// No exports - coach mark removed

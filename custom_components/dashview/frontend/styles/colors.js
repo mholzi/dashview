@@ -38,6 +38,7 @@ export const colorStyles = `
     --dv-pink: #eda7b2;
     --dv-lime: #e6f4ac;
     --dv-warning-text: #0f0f10;  /* Fixed dark text for warning cards */
+    --dv-fixed-dark: #0f0f10;    /* Fixed dark color - does not invert in dark mode */
 
     /* Popup/Card Backgrounds */
     --dv-popup-bg: var(--ha-card-background, var(--card-background-color));

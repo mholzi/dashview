@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-01-19
+
+### Added
+
+- **Guided Setup Wizard** - 7-step onboarding flow for first-time users
+  - Welcome screen with feature overview
+  - Floor and room organization with drag-and-drop
+  - Label mapping to Dashview categories
+  - Room and entity configuration
+  - Floor card layout customization
+  - Progress persistence across sessions
+- **Setup Tab** in Admin panel to re-run the wizard anytime
+- **Loading States** - Skeleton loaders with shimmer animations
+- **Mobile Touch Support** - Volume and cover sliders now work on touch devices
+
+### Fixed
+
+- **#58** - Light tap/slide gestures now work correctly (tap to toggle, slide to dim)
+- **#56** - More-info dialogs now appear above Dashview popups
+- **#57** - Entity timestamps show actual last_changed time
+- **#44** - Error boundaries prevent individual failures from crashing popups
+- **#43** - Timeout protection for all async operations
+- **#49, #13** - Loading states in popups
+- **#32, #21, #18** - Schema validation prevents settings corruption
+- **#17** - Standardized user-friendly error messages
+- **#14, #48** - Complete i18n audit (no more hardcoded strings)
+- **#7** - Consolidated duplicate long-press handler code
+
+### Changed
+
+- Unified color palette using Dashview gray scale
+- Dashboard now uses Home Assistant theme background
+- Improved toggle switch visibility in dark mode
+- Garbage card accent colors for today/tomorrow dates
+
+### Closed Issues
+
+#7, #13, #14, #17, #18, #21, #32, #43, #44, #45, #48, #49, #56, #57, #58
+
+---
+
+## [1.1.0] - 2026-01-16
+
+### Added
+
+- Error boundaries and timeout protection
+- Loading states and i18n improvements
+- Long-press handler refactoring
+
+---
+
+## [1.0.x] - 2025-12 to 2026-01
+
+Multiple releases with incremental improvements including:
+- User popup with presence history
+- Covers and TVs popups
+- Lights popup with interactive floor cards
+- Weather forecast improvements
+- Entity filtering enhancements
+- Various bug fixes and UI polish
+
+---
+
 ## [0.0.22] - 2025-12-02
 
 ### Fixed

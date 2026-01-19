@@ -69,32 +69,22 @@ Every button, message, and label is now fully translated in English and German. 
 
 ---
 
-## What's Changed
+## Closed Issues
 
-### New Features
+This release closes the following GitHub issues:
 
-- Guided Setup Wizard with 7-step onboarding flow
-- New Setup tab in Admin panel
-- Home Assistant setup guidance in wizard
-
-### Improvements
-
-- Light tap/slide gestures work correctly
-- Loading states with smooth animations
-- Smart timeouts prevent infinite loading
-- User-friendly error messages
-- More-info dialogs appear above popups
-- Accurate entity timestamps
-- Unified color palette
-- HA theme background support
-- Dark mode toggle visibility
-- Mobile touch support for sliders
-- Complete English and German translations
-
-### Bug Fixes
-
-- Wizard settings now persist correctly
-- Wizard only launches on fresh installs
-- Floor/room ordering syncs properly
-- Entity filtering shows correct entities per floor
-- Popup layering works with HA dialogs
+- **#45** - Guided Setup Wizard for first-time users
+- **#58** - Light tap/slide gestures not working correctly
+- **#56** - More-info dialog hidden behind popups
+- **#57** - Entity timestamps showing incorrect values
+- **#44** - Add error boundaries to prevent popup crashes
+- **#43** - Add timeout protection for async operations
+- **#49** - Add loading states to popups
+- **#13** - Improve loading feedback
+- **#32** - Schema validation for settings
+- **#21** - Settings validation improvements
+- **#18** - Prevent corrupted settings
+- **#17** - Standardize error message patterns
+- **#14** - Complete i18n audit
+- **#48** - Fix hardcoded language strings
+- **#7** - Consolidate duplicate long-press handler code
