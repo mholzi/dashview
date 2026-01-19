@@ -61,14 +61,16 @@ export const mainStyles = `
     position: relative;
     width: 48px;
     height: 24px;
-    background: var(--dv-gray100);
+    background: var(--dv-gray200);
+    border: 1px solid var(--dv-gray400);
     border-radius: 12px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
 
   .toggle-switch.on {
-    background: var(--dv-gray800);
+    background: var(--dv-blue);
+    border-color: var(--dv-blue);
   }
 
   .toggle-switch::after {
