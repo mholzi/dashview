@@ -108,13 +108,15 @@ export const welcomeStepStyles = `
   .dv-welcome-notice {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
     max-width: 400px;
     padding: 16px;
     background: var(--dv-yellow);
     border-radius: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+    text-align: left;
+    box-sizing: border-box;
   }
 
   .dv-welcome-notice-header {
