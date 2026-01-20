@@ -121,27 +121,6 @@ describe('Haptic Utilities', () => {
     });
   });
 
-  describe('setHapticEnabled', () => {
-    it('should disable haptic feedback when set to false', async () => {
-      const { triggerHaptic, setHapticEnabled } = await import('./haptic.js');
-
-      setHapticEnabled(false);
-      triggerHaptic('light');
-
-      expect(mockVibrate).not.toHaveBeenCalled();
-    });
-
-    it('should enable haptic feedback when set to true', async () => {
-      const { triggerHaptic, setHapticEnabled } = await import('./haptic.js');
-
-      setHapticEnabled(false);
-      setHapticEnabled(true);
-      triggerHaptic('light');
-
-      expect(mockVibrate).toHaveBeenCalledWith(10);
-    });
-  });
-
   describe('graceful degradation', () => {
     it('should handle vibrate throwing an error gracefully', async () => {
       mockVibrate.mockImplementation(() => {

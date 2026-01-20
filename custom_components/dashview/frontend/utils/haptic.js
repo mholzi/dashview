@@ -1,6 +1,6 @@
 /**
  * Haptic Feedback Utilities
- * Provides vibration feedback on supported devices
+ * Provides vibration feedback on supported devices (always enabled)
  *
  * Patterns (Story 10.4):
  * - tap/light: 10ms - Light tap for toggles, buttons
@@ -12,9 +12,6 @@
  * - longPress: 25ms - Medium pulse when threshold reached
  */
 
-/** @type {boolean} */
-let _enabled = true;
-
 /**
  * Check if haptic feedback is supported on this device
  * @returns {boolean}
@@ -24,21 +21,12 @@ export function isHapticSupported() {
 }
 
 /**
- * Enable or disable haptic feedback globally
- * @param {boolean} enabled - Whether to enable haptic feedback
- */
-export function setHapticEnabled(enabled) {
-  _enabled = enabled;
-}
-
-/**
  * Internal vibrate wrapper with error handling
  * @param {number|number[]} pattern - Vibration pattern
  * @returns {boolean} - Whether vibration was triggered
  * @private
  */
 function _vibrate(pattern) {
-  if (!_enabled) return false;
   if (!isHapticSupported()) return false;
 
   try {

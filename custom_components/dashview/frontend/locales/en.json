@@ -469,12 +469,6 @@
       "setupWizardDesc": "Re-run the guided setup wizard to reconfigure Dashview from scratch.",
       "rerunWizard": "Re-run Setup Wizard"
     },
-    "generalSettings": {
-      "title": "General Settings",
-      "description": "Configure app-wide settings and preferences.",
-      "hapticFeedback": "Haptic Feedback",
-      "hapticFeedbackDesc": "Vibration feedback on touch interactions"
-    },
     "confirmation": {
       "deleteScene": "Delete Scene Button",
       "deleteSceneMessage": "Are you sure you want to delete the scene button \"{name}\"? This action cannot be undone.",

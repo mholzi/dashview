@@ -694,49 +694,5 @@ export function renderStatusTab(panel, html) {
       </div>
     </div>
 
-    <!-- ==================== E. GENERAL SETTINGS ==================== -->
-    <h2 class="section-title" style="margin-top: 40px;">
-      <ha-icon icon="mdi:cog"></ha-icon>
-      ${t('admin.generalSettings.title')}
-    </h2>
-    <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      ${t('admin.generalSettings.description')}
-    </p>
-
-    <!-- Haptic Feedback Section -->
-    <div class="card-config-section">
-      <div class="card-config-section-header" @click=${() => toggleSection('generalSettings')}>
-        <div class="card-config-section-title">
-          <ha-icon icon="mdi:vibrate"></ha-icon>
-          ${t('admin.generalSettings.hapticFeedback')}
-        </div>
-        <ha-icon
-          class="card-config-section-chevron ${isExpanded('generalSettings') ? 'expanded' : ''}"
-          icon="mdi:chevron-down"
-        ></ha-icon>
-      </div>
-      <div class="card-config-section-content ${isExpanded('generalSettings') ? 'expanded' : ''}">
-        <div class="info-text-config-item">
-          <div class="info-text-config-row">
-            <div class="info-text-config-icon">
-              <ha-icon icon="mdi:vibrate"></ha-icon>
-            </div>
-            <div class="info-text-config-label">
-              <span class="info-text-config-title">${t('admin.generalSettings.hapticFeedback')}</span>
-              <span class="info-text-config-subtitle">${t('admin.generalSettings.hapticFeedbackDesc')}</span>
-            </div>
-            <div
-              class="toggle-switch ${panel._settingsStore?.get('hapticsEnabled') !== false ? 'on' : ''}"
-              @click=${() => {
-                const current = panel._settingsStore?.get('hapticsEnabled') !== false;
-                panel._settingsStore?.set('hapticsEnabled', !current);
-                panel.requestUpdate();
-              }}
-            ></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
   `;
 }

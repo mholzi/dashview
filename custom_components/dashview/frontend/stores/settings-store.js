@@ -9,7 +9,7 @@
 import { THRESHOLDS, debugLog } from '../constants/index.js';
 import { validateSettings, validateSettingsUpdate } from '../utils/schema-validator.js';
 import { calculateDelta } from '../utils/settings-diff.js';
-import { setHapticEnabled, hapticWarning } from '../utils/haptic.js';
+import { hapticWarning } from '../utils/haptic.js';
 
 /**
  * @typedef {Object} EnabledEntityMap
@@ -319,11 +319,6 @@ export class SettingsStore {
     this._settings[key] = value;
     this._notifyListeners(key, value);
 
-    // Sync haptic setting (Story 10.4)
-    if (key === 'hapticsEnabled') {
-      setHapticEnabled(value);
-    }
-
     if (save) {
       this.save();
     }
@@ -347,11 +342,6 @@ export class SettingsStore {
     Object.entries(validatedUpdates).forEach(([key, value]) => {
       this._settings[key] = value;
       this._notifyListeners(key, value);
-
-      // Sync haptic setting (Story 10.4)
-      if (key === 'hapticsEnabled') {
-        setHapticEnabled(value);
-      }
     });
     if (save) {
       this.save();
@@ -435,9 +425,6 @@ export class SettingsStore {
       // Snapshot for delta saves (Story 10.1)
       this._previousSettings = structuredClone(this._settings);
       this._settingsVersion = validatedSettings._version || 0;
-
-      // Sync haptic setting (Story 10.4)
-      setHapticEnabled(this._settings.hapticsEnabled ?? true);
 
       this._notifyListeners('_loaded', true);
       debugLog('settings', 'Settings loaded from HA');

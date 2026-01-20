@@ -19,8 +19,7 @@ export {
   hapticSuccess,
   hapticWarning,
   hapticLongPress,
-  isHapticSupported,
-  setHapticEnabled
+  isHapticSupported
 } from './haptic.js';
 
 // Formatters
