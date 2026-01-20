@@ -183,6 +183,7 @@ Plan your day without leaving the dashboard.
 - Hourly forecast
 - Multi-day overview
 - Weather alerts (DWD support for Germany)
+- Pollen forecast (via [DWD Pollenflug](https://github.com/mampfes/hacs_dwd_pollenflug) integration)
 
 ---
 
