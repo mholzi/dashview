@@ -29,7 +29,106 @@ export const POLLEN_TYPES = {
 };
 
 /**
+ * Check if an entity is a DWD Pollenflug sensor by its attributes
+ * DWD Pollenflug sensors have these unique attributes:
+ * - state_tomorrow (number)
+ * - state_in_2_days (number)
+ * - state_today_desc (string, optional)
+ *
+ * @param {Object} state - Entity state object
+ * @returns {boolean} True if this is a DWD Pollenflug sensor
+ */
+function isDwdPollenSensor(state) {
+  if (!state || !state.attributes) return false;
+
+  const attrs = state.attributes;
+
+  // Must have forecast attributes (unique to DWD Pollenflug)
+  const hasTomorrow = 'state_tomorrow' in attrs;
+  const hasDayAfter = 'state_in_2_days' in attrs;
+
+  // State should be a number in valid pollen range (0-3, with 0.5 increments)
+  const stateValue = parseFloat(state.state);
+  const hasValidState = !isNaN(stateValue) && stateValue >= 0 && stateValue <= 3.5;
+
+  return hasTomorrow && hasDayAfter && hasValidState;
+}
+
+/**
+ * Extract pollen type from entity
+ * Tries multiple sources: entity_id pattern, friendly_name, or attributes
+ *
+ * @param {string} entityId - Entity ID
+ * @param {Object} state - Entity state object
+ * @returns {string|null} Pollen type key or null if not found
+ */
+function extractPollenType(entityId, state) {
+  // 1. Try entity ID pattern first (most reliable if not renamed)
+  const idMatch = entityId.match(DWD_POLLEN_PATTERN);
+  if (idMatch) {
+    return idMatch[1];
+  }
+
+  // 2. Try to find type in friendly_name
+  const friendlyName = (state.attributes?.friendly_name || '').toLowerCase();
+  const pollenTypeKeys = Object.keys(POLLEN_TYPES);
+
+  for (const type of pollenTypeKeys) {
+    // Check German and English names
+    const typeInfo = POLLEN_TYPES[type];
+    if (
+      friendlyName.includes(type) ||
+      friendlyName.includes(typeInfo.en.toLowerCase()) ||
+      friendlyName.includes(typeInfo.de.toLowerCase())
+    ) {
+      return type;
+    }
+  }
+
+  // 3. Try entity_id for partial matches (e.g., sensor.birch_pollen)
+  const idLower = entityId.toLowerCase();
+  for (const type of pollenTypeKeys) {
+    const typeInfo = POLLEN_TYPES[type];
+    if (
+      idLower.includes(type) ||
+      idLower.includes(typeInfo.en.toLowerCase()) ||
+      idLower.includes(typeInfo.de.toLowerCase())
+    ) {
+      return type;
+    }
+  }
+
+  // 4. Could not determine type
+  return null;
+}
+
+/**
+ * Extract region from entity (if available)
+ *
+ * @param {string} entityId - Entity ID
+ * @param {Object} state - Entity state object
+ * @returns {string} Region ID or 'unknown'
+ */
+function extractRegion(entityId, state) {
+  // Try entity ID pattern
+  const idMatch = entityId.match(DWD_POLLEN_PATTERN);
+  if (idMatch) {
+    return idMatch[2];
+  }
+
+  // Try to find region number in entity_id
+  const regionMatch = entityId.match(/_(\d+)$/);
+  if (regionMatch) {
+    return regionMatch[1];
+  }
+
+  return 'unknown';
+}
+
+/**
  * Detect all DWD Pollenflug sensors from Home Assistant states
+ * Uses attribute-based detection (works even if entity is renamed)
+ *
  * @param {Object} hass - Home Assistant instance
  * @returns {Array} Array of pollen sensor objects
  */
@@ -38,21 +137,32 @@ export function detectPollenSensors(hass) {
     return [];
   }
 
-  return Object.keys(hass.states)
-    .filter(id => DWD_POLLEN_PATTERN.test(id))
-    .map(id => {
-      const match = id.match(DWD_POLLEN_PATTERN);
-      const state = hass.states[id];
-      return {
-        entityId: id,
-        type: match[1],
-        region: match[2],
-        value: parseFloat(state.state) || 0,
-        tomorrow: parseFloat(state.attributes?.state_tomorrow) || 0,
-        dayAfter: parseFloat(state.attributes?.state_in_2_days) || 0,
-        todayDesc: state.attributes?.state_today_desc || '',
-      };
+  const sensors = [];
+
+  for (const [entityId, state] of Object.entries(hass.states)) {
+    // Skip non-sensor entities
+    if (!entityId.startsWith('sensor.')) continue;
+
+    // Check if this is a DWD Pollenflug sensor by attributes
+    if (!isDwdPollenSensor(state)) continue;
+
+    // Extract pollen type
+    const type = extractPollenType(entityId, state);
+    if (!type) continue; // Skip if we can't determine the type
+
+    sensors.push({
+      entityId,
+      type,
+      region: extractRegion(entityId, state),
+      value: parseFloat(state.state) || 0,
+      tomorrow: parseFloat(state.attributes?.state_tomorrow) || 0,
+      dayAfter: parseFloat(state.attributes?.state_in_2_days) || 0,
+      todayDesc: state.attributes?.state_today_desc || '',
+      friendlyName: state.attributes?.friendly_name || entityId,
     });
+  }
+
+  return sensors;
 }
 
 /**

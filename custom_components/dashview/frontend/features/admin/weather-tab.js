@@ -432,7 +432,9 @@ function renderPollenSection(panel, html, toggleSection, isExpanded) {
                     <!-- Info -->
                     <div style="flex: 1; min-width: 0;">
                       <div style="font-weight: 500; color: var(--dv-gray800);">${typeName}</div>
-                      <div style="font-size: 12px; color: var(--dv-gray600);">${sensor.entityId}</div>
+                      <div style="font-size: 12px; color: var(--dv-gray600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${sensor.entityId}">
+                        ${sensor.friendlyName || sensor.entityId}
+                      </div>
                     </div>
 
                     <!-- Level Indicator -->

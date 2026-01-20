@@ -56,7 +56,7 @@ describe('detectPollenSensors', () => {
     expect(result).toEqual([]);
   });
 
-  it('detects all pollen sensors from hass states', () => {
+  it('detects pollen sensors by standard entity ID pattern', () => {
     const hass = {
       states: {
         'sensor.pollenflug_birke_124': {
@@ -65,6 +65,7 @@ describe('detectPollenSensors', () => {
             state_tomorrow: 2.5,
             state_in_2_days: 3,
             state_today_desc: 'Mäßig',
+            friendly_name: 'Pollenflug Birke 124',
           }
         },
         'sensor.pollenflug_graeser_124': {
@@ -73,6 +74,7 @@ describe('detectPollenSensors', () => {
             state_tomorrow: 1,
             state_in_2_days: 0.5,
             state_today_desc: 'Gering bis mäßig',
+            friendly_name: 'Pollenflug Gräser 124',
           }
         },
         'sensor.temperature': { state: '21.5', attributes: {} },
@@ -90,41 +92,142 @@ describe('detectPollenSensors', () => {
     expect(result[0].dayAfter).toBe(3);
   });
 
-  it('handles missing attributes gracefully', () => {
+  it('detects renamed sensors by attributes (attribute-based detection)', () => {
     const hass = {
       states: {
-        'sensor.pollenflug_hasel_124': {
+        // Renamed entity - no longer matches pattern
+        'sensor.my_birch_pollen': {
+          state: '2.5',
+          attributes: {
+            state_tomorrow: 3,
+            state_in_2_days: 2,
+            friendly_name: 'My Birch Pollen Sensor',
+          }
+        },
+        // Another renamed entity with German name
+        'sensor.graeser_allergie': {
           state: '1',
-          attributes: {}
-        }
+          attributes: {
+            state_tomorrow: 1.5,
+            state_in_2_days: 2,
+            friendly_name: 'Gräser Allergie Sensor',
+          }
+        },
+        'sensor.temperature': { state: '21.5', attributes: {} },
       }
     };
 
     const result = detectPollenSensors(hass);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].value).toBe(1);
-    expect(result[0].tomorrow).toBe(0);
-    expect(result[0].dayAfter).toBe(0);
+    expect(result).toHaveLength(2);
+
+    // Should detect birke from "birch" in entity ID
+    const birke = result.find(s => s.type === 'birke');
+    expect(birke).toBeDefined();
+    expect(birke.value).toBe(2.5);
+
+    // Should detect graeser from "graeser" in entity ID
+    const graeser = result.find(s => s.type === 'graeser');
+    expect(graeser).toBeDefined();
+    expect(graeser.value).toBe(1);
   });
 
-  it('handles invalid/unavailable state values', () => {
+  it('detects sensors by friendly_name when entity ID has no type info', () => {
     const hass = {
       states: {
-        'sensor.pollenflug_esche_124': {
-          state: 'unavailable',
-          attributes: {}
-        }
+        'sensor.pollen_sensor_1': {
+          state: '2',
+          attributes: {
+            state_tomorrow: 2.5,
+            state_in_2_days: 3,
+            friendly_name: 'Hazel Pollen Frankfurt',
+          }
+        },
       }
     };
 
     const result = detectPollenSensors(hass);
 
     expect(result).toHaveLength(1);
-    expect(result[0].value).toBe(0);
+    expect(result[0].type).toBe('hasel'); // Detected from "Hazel" in friendly_name
   });
 
-  it('returns null when hass is not provided', () => {
+  it('skips sensors without required DWD attributes', () => {
+    const hass = {
+      states: {
+        // Missing state_in_2_days - not a valid DWD sensor
+        'sensor.fake_pollen': {
+          state: '2',
+          attributes: {
+            state_tomorrow: 2.5,
+            // missing state_in_2_days
+          }
+        },
+        // Valid DWD sensor
+        'sensor.pollenflug_birke_124': {
+          state: '2',
+          attributes: {
+            state_tomorrow: 2.5,
+            state_in_2_days: 3,
+          }
+        },
+      }
+    };
+
+    const result = detectPollenSensors(hass);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].entityId).toBe('sensor.pollenflug_birke_124');
+  });
+
+  it('skips sensors with out-of-range state values', () => {
+    const hass = {
+      states: {
+        // State value too high - not a valid pollen sensor
+        'sensor.weird_sensor': {
+          state: '100',
+          attributes: {
+            state_tomorrow: 2.5,
+            state_in_2_days: 3,
+          }
+        },
+        // Valid DWD sensor
+        'sensor.pollenflug_birke_124': {
+          state: '2',
+          attributes: {
+            state_tomorrow: 2.5,
+            state_in_2_days: 3,
+          }
+        },
+      }
+    };
+
+    const result = detectPollenSensors(hass);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].entityId).toBe('sensor.pollenflug_birke_124');
+  });
+
+  it('includes friendlyName in returned sensor objects', () => {
+    const hass = {
+      states: {
+        'sensor.pollenflug_birke_124': {
+          state: '2',
+          attributes: {
+            state_tomorrow: 2.5,
+            state_in_2_days: 3,
+            friendly_name: 'Birke Pollen Frankfurt',
+          }
+        },
+      }
+    };
+
+    const result = detectPollenSensors(hass);
+
+    expect(result[0].friendlyName).toBe('Birke Pollen Frankfurt');
+  });
+
+  it('returns empty array when hass is not provided', () => {
     expect(detectPollenSensors(null)).toEqual([]);
     expect(detectPollenSensors(undefined)).toEqual([]);
   });
