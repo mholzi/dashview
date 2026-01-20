@@ -3,6 +3,8 @@
  * A simple on/off toggle control
  */
 
+import { triggerHaptic } from '../../utils/haptic.js';
+
 /**
  * Render a toggle switch component
  * @param {Function} html - lit-html template function
@@ -19,7 +21,10 @@ export function renderToggleSwitch(html, { checked, onChange, disabled = false, 
       class="toggle-switch ${checked ? 'on' : ''} ${disabled ? 'disabled' : ''} ${small ? 'small' : ''}"
       @click=${(e) => {
         e.stopPropagation();
-        if (!disabled) onChange();
+        if (!disabled) {
+          triggerHaptic('light');
+          onChange();
+        }
       }}
     ></div>
   `;

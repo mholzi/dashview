@@ -3,6 +3,8 @@
  * Handles touch and mouse interactions for light brightness sliders
  */
 
+import { triggerHaptic } from '../../utils/haptic.js';
+
 /**
  * Create light slider event handlers
  * @param {Object} options - Handler options
@@ -80,6 +82,7 @@ export function createLightSliderHandlers({ onBrightnessChange, onToggle, getSli
    * @param {string} entityId - Entity ID
    */
   const handleTouchStart = (e, entityId) => {
+    triggerHaptic('light');
     dragging = true;
     currentEntityId = entityId;
 
@@ -133,6 +136,7 @@ export function createLightSliderHandlers({ onBrightnessChange, onToggle, getSli
    * @param {string} entityId - Entity ID
    */
   const handleMouseDown = (e, entityId) => {
+    triggerHaptic('light');
     dragging = true;
     currentEntityId = entityId;
 

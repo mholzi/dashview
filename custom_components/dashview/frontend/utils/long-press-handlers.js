@@ -23,6 +23,8 @@
  *   />`
  */
 
+import { triggerHaptic, hapticLongPress } from './haptic.js';
+
 /** Default long press duration in milliseconds */
 export const DEFAULT_LONG_PRESS_DURATION = 500;
 
@@ -72,6 +74,7 @@ export function createLongPressHandlers(onTap, onLongPress, options = {}) {
     clearTimer();
     pressTimer = setTimeout(() => {
       isLongPress = true;
+      hapticLongPress(); // Haptic feedback when long-press threshold reached
       if (onLongPress) {
         onLongPress();
       }
@@ -103,6 +106,7 @@ export function createLongPressHandlers(onTap, onLongPress, options = {}) {
     if (pressTimer) {
       clearTimer();
       if (!isLongPress && onTap) {
+        triggerHaptic('light'); // Haptic feedback for tap
         onTap();
       }
     }

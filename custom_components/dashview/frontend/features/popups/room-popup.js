@@ -7,6 +7,7 @@ import { renderPopupHeader } from '../../components/layout/index.js';
 import { renderTemperatureChart } from '../../components/charts/index.js';
 import { openMoreInfo } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
+import { triggerHaptic } from '../../utils/haptic.js';
 import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
 
 /**
@@ -175,6 +176,7 @@ function renderQuickActions(component, html, areaId) {
   // Handler for executing scene button action
   const executeSceneButton = (button) => {
     if (!button.entity || !component.hass) return;
+    triggerHaptic('light');
 
     const [domain] = button.entity.split('.');
 
@@ -204,7 +206,7 @@ function renderQuickActions(component, html, areaId) {
       ${lights.length > 0 ? html`
         <button
           class="popup-scene-button ${anyLightsOn ? 'active' : ''}"
-          @click=${() => component._toggleAllRoomLights(areaId, !anyLightsOn)}
+          @click=${() => { triggerHaptic('light'); component._toggleAllRoomLights(areaId, !anyLightsOn); }}
         >
           <ha-icon icon="${anyLightsOn ? 'mdi:lightbulb-off' : 'mdi:lightbulb-group'}"></ha-icon>
           <span>${anyLightsOn ? t('popup.actions.lights_off') : t('popup.actions.lights_on')}</span>
@@ -213,7 +215,7 @@ function renderQuickActions(component, html, areaId) {
       ${covers.length > 0 ? html`
         <button
           class="popup-scene-button ${anyCoversOpen ? '' : 'active'}"
-          @click=${() => component._toggleAllRoomCovers(areaId, anyCoversOpen)}
+          @click=${() => { triggerHaptic('light'); component._toggleAllRoomCovers(areaId, anyCoversOpen); }}
         >
           <ha-icon icon="${anyCoversOpen ? 'mdi:window-shutter' : 'mdi:window-shutter-open'}"></ha-icon>
           <span>${anyCoversOpen ? t('popup.actions.covers_close') : t('popup.actions.covers_open')}</span>

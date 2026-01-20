@@ -14,7 +14,14 @@
 export { structuredClonePolyfill, initPolyfills } from './polyfills.js';
 
 // Haptic feedback
-export { triggerHaptic } from './haptic.js';
+export {
+  triggerHaptic,
+  hapticSuccess,
+  hapticWarning,
+  hapticLongPress,
+  isHapticSupported,
+  setHapticEnabled
+} from './haptic.js';
 
 // Formatters
 export {

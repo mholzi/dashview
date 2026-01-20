@@ -570,6 +570,12 @@
       "discardMessage": "Sie haben nicht gespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?",
       "save": "Speichern",
       "cancel": "Abbrechen"
+    },
+    "generalSettings": {
+      "title": "Allgemeine Einstellungen",
+      "description": "App-weite Einstellungen und Präferenzen konfigurieren.",
+      "hapticFeedback": "Haptisches Feedback",
+      "hapticFeedbackDesc": "Vibrationsfeedback bei Berührungen"
     }
   },
   "changelog": {

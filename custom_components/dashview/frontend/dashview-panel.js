@@ -3841,6 +3841,7 @@ if (typeof structuredClone === 'undefined') {
     }
 
     _setTab(tab) {
+      if (dashviewUtils?.triggerHaptic) dashviewUtils.triggerHaptic('light');
       this._closeAllPopups();
       this._activeTab = tab;
     }
@@ -4506,6 +4507,7 @@ if (typeof structuredClone === 'undefined') {
 
     _handleSceneButtonClick(button) {
       if (!this.hass || !button) return;
+      if (dashviewUtils?.triggerHaptic) dashviewUtils.triggerHaptic('light');
 
       const actionType = button.actionType || 'service';
       const entity = button.entity;

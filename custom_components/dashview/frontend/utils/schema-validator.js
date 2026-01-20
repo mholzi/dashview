@@ -93,6 +93,9 @@ export const SETTINGS_SCHEMA = {
 
   // User photos
   userPhotos: { type: 'object', default: {} },
+
+  // Feature toggles
+  hapticsEnabled: { type: 'boolean', default: true },
 };
 
 /**
