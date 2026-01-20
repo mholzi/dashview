@@ -305,21 +305,14 @@ function renderPollenDots(html, filled, color) {
 
 /**
  * Translate pollen type name
+ * Uses POLLEN_TYPES directly to ensure correct language is shown
+ * (t() uses pre-loaded translations which may not match current interface language)
  * @param {string} type - Pollen type key (e.g., 'birke', 'graeser')
  * @param {string} lang - Language code (en/de)
  * @returns {string} Translated pollen type name
  */
 function translatePollenType(type, lang) {
-  // Try i18n translation first
-  const i18nKey = `weather.pollen_types.${type}`;
-  const translated = t(i18nKey);
-
-  // If translation exists and isn't the key itself, use it
-  if (translated && translated !== i18nKey) {
-    return translated;
-  }
-
-  // Fall back to POLLEN_TYPES constant
+  // Use POLLEN_TYPES directly to respect current language
   const pollenType = POLLEN_TYPES[type];
   if (pollenType) {
     return lang === 'de' ? pollenType.de : pollenType.en;
