@@ -310,67 +310,63 @@ export const weatherPopupStyles = `
   }
 
   /* ==================== POLLEN FORECAST ==================== */
-  .pollen-forecast-card {
-    background: var(--dv-popup-bg-color);
-    border-radius: 24px;
-    padding: 16px;
+  .pollen-forecast-section {
     margin: 32px 0;
   }
 
   .pollen-forecast-title {
     font-size: 12px;
     color: var(--dv-gray800, var(--secondary-text-color));
-    margin-left: 8px;
     margin-bottom: 12px;
   }
 
-  .pollen-forecast-list {
+  .pollen-forecast-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pollen-forecast-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pollen-forecast-container {
     display: flex;
-    flex-direction: column;
     gap: 8px;
   }
 
   .pollen-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: var(--dv-gray100);
-    border-radius: 12px;
-  }
-
-  .pollen-item-icon {
-    flex-shrink: 0;
-  }
-
-  .pollen-item-icon ha-icon {
-    --mdc-icon-size: 24px;
-  }
-
-  .pollen-item-info {
-    flex: 1;
-    min-width: 0;
+    padding: 12px 16px;
+    background: var(--dv-popup-bg-color);
+    border-radius: 16px;
+    min-width: 70px;
   }
 
   .pollen-item-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--dv-gray800, var(--primary-text-color));
-    margin-bottom: 2px;
+    font-size: 12px;
+    color: var(--dv-gray800, var(--secondary-text-color));
+    margin-bottom: 8px;
+    white-space: nowrap;
   }
 
-  .pollen-item-source {
-    font-size: 11px;
-    color: var(--dv-gray500, var(--secondary-text-color));
-    margin-bottom: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .pollen-item-icon {
+    margin-bottom: 8px;
+  }
+
+  .pollen-item-icon ha-icon {
+    --mdc-icon-size: 32px;
   }
 
   .pollen-item-level {
     display: flex;
     align-items: center;
+    margin-bottom: 6px;
   }
 
   .pollen-dots {
@@ -379,8 +375,8 @@ export const weatherPopupStyles = `
   }
 
   .pollen-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--dv-gray300);
   }
@@ -390,12 +386,11 @@ export const weatherPopupStyles = `
   }
 
   .pollen-item-trend {
-    flex-shrink: 0;
     display: flex;
     align-items: center;
   }
 
   .pollen-item-trend ha-icon {
-    --mdc-icon-size: 16px;
+    --mdc-icon-size: 14px;
   }
 `;

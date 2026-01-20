@@ -241,10 +241,12 @@ function renderPollenForecast(component, html) {
   const lang = component.hass?.language?.substring(0, 2) || 'en';
 
   return html`
-    <div class="pollen-forecast-card">
+    <div class="pollen-forecast-section">
       <div class="pollen-forecast-title">${t('weather.pollen') || 'Pollen Forecast'}</div>
-      <div class="pollen-forecast-list">
-        ${sensors.map(sensor => renderPollenItem(html, sensor, lang))}
+      <div class="pollen-forecast-scroll">
+        <div class="pollen-forecast-container">
+          ${sensors.map(sensor => renderPollenItem(html, sensor, lang))}
+        </div>
       </div>
     </div>
   `;
@@ -265,31 +267,21 @@ function renderPollenItem(html, sensor, lang) {
   // Get translated pollen type name
   const typeName = translatePollenType(sensor.type, lang);
 
-  // Use friendlyName if different from type, otherwise just show type
-  const showFriendlyName = sensor.friendlyName &&
-    !sensor.friendlyName.toLowerCase().includes(sensor.type) &&
-    !sensor.friendlyName.toLowerCase().includes(typeName.toLowerCase());
-
   // Trend icon
   const trendIcon = trend === 'up' ? 'mdi:arrow-up' : trend === 'down' ? 'mdi:arrow-down' : 'mdi:minus';
   const trendColor = trend === 'up' ? 'var(--dv-red)' : trend === 'down' ? 'var(--dv-green)' : 'var(--dv-gray500)';
 
   return html`
     <div class="pollen-item">
+      <div class="pollen-item-name">${typeName}</div>
       <div class="pollen-item-icon" style="color: ${levelInfo.color};">
         <ha-icon icon="${pollenType?.icon || 'mdi:flower'}"></ha-icon>
       </div>
-      <div class="pollen-item-info">
-        <div class="pollen-item-name">${typeName}</div>
-        ${showFriendlyName ? html`
-          <div class="pollen-item-source">${sensor.friendlyName}</div>
-        ` : ''}
-        <div class="pollen-item-level">
-          ${renderPollenDots(html, levelInfo.dots, levelInfo.color)}
-        </div>
+      <div class="pollen-item-level">
+        ${renderPollenDots(html, levelInfo.dots, levelInfo.color)}
       </div>
       <div class="pollen-item-trend" style="color: ${trendColor};">
-        <ha-icon icon="${trendIcon}" style="--mdc-icon-size: 16px;"></ha-icon>
+        <ha-icon icon="${trendIcon}" style="--mdc-icon-size: 14px;"></ha-icon>
       </div>
     </div>
   `;
