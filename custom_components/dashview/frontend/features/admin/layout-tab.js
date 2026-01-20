@@ -438,6 +438,85 @@ export function renderCardConfig(panel, html) {
             <span class="card-config-unit">%</span>
           </div>
         </div>
+
+        <h4 style="margin: 24px 0 12px 0; font-size: 14px; font-weight: 600; color: var(--dv-text-primary);">
+          ${t('climate.rapidChange.sectionTitle', 'Rate-of-Change Detection')}
+        </h4>
+        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+          ${t('climate.rapidChange.sectionDesc', 'Alert when temperature or humidity changes rapidly, indicating open windows, HVAC issues, or other problems.')}
+        </p>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.rapidChange.tempThreshold', 'Temperature Rapid Change')}</span>
+            <span class="card-config-label-subtitle">${t('climate.rapidChange.tempThresholdDesc', 'Minimum temperature change to trigger alert')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="1"
+              max="20"
+              step="1"
+              .value=${panel._tempRapidChangeThreshold}
+              @change=${panel._handleTempRapidChangeThresholdChange}
+            />
+            <span class="card-config-unit">°C</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.rapidChange.tempWindow', 'Temperature Time Window')}</span>
+            <span class="card-config-label-subtitle">${t('climate.rapidChange.tempWindowDesc', 'Time period for temperature change detection')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="15"
+              max="180"
+              step="15"
+              .value=${panel._tempRapidChangeWindowMinutes}
+              @change=${panel._handleTempRapidChangeWindowChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.rapidChange.humidityThreshold', 'Humidity Rapid Change')}</span>
+            <span class="card-config-label-subtitle">${t('climate.rapidChange.humidityThresholdDesc', 'Minimum humidity change to trigger alert')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="5"
+              max="50"
+              step="5"
+              .value=${panel._humidityRapidChangeThreshold}
+              @change=${panel._handleHumidityRapidChangeThresholdChange}
+            />
+            <span class="card-config-unit">%</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.rapidChange.humidityWindow', 'Humidity Time Window')}</span>
+            <span class="card-config-label-subtitle">${t('climate.rapidChange.humidityWindowDesc', 'Time period for humidity change detection')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="10"
+              max="120"
+              step="5"
+              .value=${panel._humidityRapidChangeWindowMinutes}
+              @change=${panel._handleHumidityRapidChangeWindowChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
       </div>
     </div>
 

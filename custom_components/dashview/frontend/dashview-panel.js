@@ -171,6 +171,7 @@ if (typeof structuredClone === 'undefined') {
   let roomDataService = null;
   let statusService = null;
   let weatherService = null;
+  let anomalyDetector = null;
   try {
     const servicesModule = await import(`./services/index.js?v=${DASHVIEW_VERSION}`);
     roomDataService = servicesModule.getRoomDataService();
@@ -198,6 +199,10 @@ if (typeof structuredClone === 'undefined') {
       getPrecipitation: servicesModule.getPrecipitation,
       getDwdWarnings: servicesModule.getDwdWarnings,
       getPerson: servicesModule.getPerson,
+    };
+    anomalyDetector = {
+      detectTemperatureAnomaly: servicesModule.detectTemperatureAnomaly,
+      detectHumidityAnomaly: servicesModule.detectHumidityAnomaly,
     };
     debugLog("Loaded services module");
   } catch (e) {
@@ -301,6 +306,10 @@ if (typeof structuredClone === 'undefined') {
         _showWizard: { type: Boolean },
         _notificationTempThreshold: { type: Number },
         _notificationHumidityThreshold: { type: Number },
+        _tempRapidChangeThreshold: { type: Number },
+        _tempRapidChangeWindowMinutes: { type: Number },
+        _humidityRapidChangeThreshold: { type: Number },
+        _humidityRapidChangeWindowMinutes: { type: Number },
         _weatherPopupOpen: { type: Boolean },
         _selectedForecastTab: { type: Number },
         _weatherEntity: { type: String },
@@ -343,6 +352,7 @@ if (typeof structuredClone === 'undefined') {
         _personEntitySearchFocused: { type: Boolean },
         _expandedCardSections: { type: Object },
         _thermostatHistory: { type: Object },
+        _roomRateOfChangeAlert: { type: Object },
         // Info text configuration
         _infoTextConfig: { type: Object },
         _infoTextSearchQuery: { type: Object },
@@ -495,6 +505,10 @@ if (typeof structuredClone === 'undefined') {
       this._showWizard = false;
       this._notificationTempThreshold = 23;
       this._notificationHumidityThreshold = 60;
+      this._tempRapidChangeThreshold = 5;
+      this._tempRapidChangeWindowMinutes = 60;
+      this._humidityRapidChangeThreshold = 20;
+      this._humidityRapidChangeWindowMinutes = 30;
       this._weatherPopupOpen = false;
       this._selectedForecastTab = 0;
       this._weatherEntity = "weather.forecast_home";
@@ -539,6 +553,7 @@ if (typeof structuredClone === 'undefined') {
       this._personEntitySearchFocused = false;
       this._expandedCardSections = {};
       this._thermostatHistory = {};
+      this._roomRateOfChangeAlert = null;
       // Info text configuration - which status items to show and their entity configs
       this._infoTextConfig = {
         motion: { enabled: true },
@@ -739,6 +754,58 @@ if (typeof structuredClone === 'undefined') {
       const value = parseInt(e.target.value, 10);
       if (!isNaN(value) && value >= 0 && value <= 100) {
         this._notificationHumidityThreshold = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle temperature rapid change threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleTempRapidChangeThresholdChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 1 && value <= 20) {
+        this._tempRapidChangeThreshold = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle temperature rapid change window from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleTempRapidChangeWindowChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 15 && value <= 180) {
+        this._tempRapidChangeWindowMinutes = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle humidity rapid change threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleHumidityRapidChangeThresholdChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 5 && value <= 50) {
+        this._humidityRapidChangeThreshold = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle humidity rapid change window from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleHumidityRapidChangeWindowChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 10 && value <= 120) {
+        this._humidityRapidChangeWindowMinutes = value;
         this._saveSettings();
         this.requestUpdate();
       }
@@ -1526,6 +1593,10 @@ if (typeof structuredClone === 'undefined') {
             this._enabledRoofWindows = settings.enabledRoofWindows || {};
             this._notificationTempThreshold = settings.notificationTempThreshold ?? 23;
             this._notificationHumidityThreshold = settings.notificationHumidityThreshold ?? 60;
+            this._tempRapidChangeThreshold = settings.tempRapidChangeThreshold ?? 5;
+            this._tempRapidChangeWindowMinutes = settings.tempRapidChangeWindowMinutes ?? 60;
+            this._humidityRapidChangeThreshold = settings.humidityRapidChangeThreshold ?? 20;
+            this._humidityRapidChangeWindowMinutes = settings.humidityRapidChangeWindowMinutes ?? 30;
             this._weatherEntity = settings.weatherEntity;
             this._weatherCurrentTempEntity = settings.weatherCurrentTempEntity;
             this._weatherCurrentStateEntity = settings.weatherCurrentStateEntity;
@@ -1954,9 +2025,12 @@ if (typeof structuredClone === 'undefined') {
       const area = this._areas.find(a => a.area_id === areaId);
       if (area) {
         this._popupRoom = area;
+        this._roomRateOfChangeAlert = null; // Reset alert when opening new popup
         this.requestUpdate();
         // Fetch temperature history for climate entities in this room
         this._loadThermostatHistory(areaId);
+        // Fetch rate-of-change alerts for this room
+        this._loadRoomRateOfChangeAlerts(areaId);
       }
     }
 
@@ -1980,6 +2054,19 @@ if (typeof structuredClone === 'undefined') {
             [climate.entity_id]: history
           };
         }
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Load rate-of-change alerts for a room (async)
+     * @param {string} areaId - Area ID
+     */
+    async _loadRoomRateOfChangeAlerts(areaId) {
+      const alert = await this._getRoomRateOfChangeAlerts(areaId);
+      // Only update if popup is still showing the same room (prevent race condition)
+      if (alert && this._popupRoom?.area_id === areaId) {
+        this._roomRateOfChangeAlert = alert;
         this.requestUpdate();
       }
     }
@@ -2424,6 +2511,64 @@ if (typeof structuredClone === 'undefined') {
       }
     }
 
+    // Humidity history cache to avoid repeated API calls
+    _humidityHistoryCache = {};
+    _humidityHistoryCacheTime = {};
+
+    async _fetchHumidityHistory(entityId, hours = 24) {
+      if (!this.hass || !entityId) return [];
+
+      // Check cache (valid for 5 minutes)
+      const cacheKey = `${entityId}_${hours}`;
+      const now = Date.now();
+      if (this._humidityHistoryCache[cacheKey] &&
+          this._humidityHistoryCacheTime[cacheKey] &&
+          (now - this._humidityHistoryCacheTime[cacheKey]) < 300000) {
+        return this._humidityHistoryCache[cacheKey];
+      }
+
+      try {
+        const endTime = new Date();
+        const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000);
+
+        // Use timeout protection (20s for historical data)
+        const timeoutMs = coreUtils?.TIMEOUT_DEFAULTS?.HISTORY_FETCH || 20000;
+        const withTimeoutFn = coreUtils?.withTimeout || ((p) => p);
+
+        const response = await withTimeoutFn(
+          this.hass.callWS({
+            type: 'history/history_during_period',
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            entity_ids: [entityId],
+            minimal_response: true,
+            no_attributes: true,
+          }),
+          timeoutMs,
+          'Humidity history fetch'
+        );
+
+        if (!response || !response[entityId]) return [];
+
+        // Process history data into simple array of {time, value}
+        const history = response[entityId]
+          .filter(item => item.s !== 'unavailable' && item.s !== 'unknown' && !isNaN(parseFloat(item.s)))
+          .map(item => ({
+            time: new Date(item.lu * 1000).getTime(),
+            value: parseFloat(item.s)
+          }));
+
+        // Cache the result
+        this._humidityHistoryCache[cacheKey] = history;
+        this._humidityHistoryCacheTime[cacheKey] = now;
+
+        return history;
+      } catch (e) {
+        console.warn('[Dashview] Error fetching humidity history:', e.message);
+        return [];
+      }
+    }
+
     _getEnabledTemperatureSensorsForRoom(areaId) {
       return this._getEnabledEntitiesForRoom(areaId, this._enabledTemperatureSensors, s => ({
         state: s.state, unit: s.attributes?.unit_of_measurement || '°C',
@@ -2501,6 +2646,90 @@ if (typeof structuredClone === 'undefined') {
       }
 
       return { title: t('ui.notifications.ventilate_room', 'Bitte Raum lüften'), subtitle: messages.join(' · ') };
+    }
+
+    /**
+     * Get rate-of-change alerts for a room (rapid temperature/humidity changes)
+     * @param {string} areaId - Room/area ID
+     * @returns {Promise<{title: string, subtitle: string}|null>} Alert notification or null
+     */
+    async _getRoomRateOfChangeAlerts(areaId) {
+      if (!this.hass || !anomalyDetector) return null;
+
+      // Get enabled sensors for this room
+      const tempSensors = this._getEnabledTemperatureSensorsForRoom(areaId)
+        .filter(s => s.state !== 'unavailable' && s.state !== 'unknown');
+      const humiditySensors = this._getEnabledHumiditySensorsForRoom(areaId)
+        .filter(s => s.state !== 'unavailable' && s.state !== 'unknown');
+
+      if (tempSensors.length === 0 && humiditySensors.length === 0) return null;
+
+      const alerts = [];
+
+      // Check temperature rate-of-change for first sensor
+      if (tempSensors.length > 0) {
+        const tempSensor = tempSensors[0];
+        try {
+          // Fetch enough history to cover the window (add extra buffer)
+          const windowMinutes = this._tempRapidChangeWindowMinutes || 60;
+          const history = await this._fetchTemperatureHistory(tempSensor.entity_id, Math.ceil(windowMinutes / 60) + 1);
+
+          if (history.length >= 2) {
+            const anomaly = anomalyDetector.detectTemperatureAnomaly(
+              history,
+              this._tempRapidChangeThreshold || 5,
+              windowMinutes
+            );
+
+            if (anomaly) {
+              const direction = anomaly.direction === 'falling'
+                ? t('climate.rapidChange.tempDropped', `Temperature dropped {{degrees}}° in {{time}}`)
+                : t('climate.rapidChange.tempRose', `Temperature rose {{degrees}}° in {{time}}`);
+              alerts.push(direction
+                .replace('{{degrees}}', anomaly.change.toFixed(1))
+                .replace('{{time}}', anomaly.formattedDuration));
+            }
+          }
+        } catch (e) {
+          console.warn('[Dashview] Error checking temperature rate-of-change:', e.message);
+        }
+      }
+
+      // Check humidity rate-of-change for first sensor
+      if (humiditySensors.length > 0) {
+        const humiditySensor = humiditySensors[0];
+        try {
+          // Fetch enough history to cover the window (add extra buffer)
+          const windowMinutes = this._humidityRapidChangeWindowMinutes || 30;
+          const history = await this._fetchHumidityHistory(humiditySensor.entity_id, Math.ceil(windowMinutes / 60) + 1);
+
+          if (history.length >= 2) {
+            const anomaly = anomalyDetector.detectHumidityAnomaly(
+              history,
+              this._humidityRapidChangeThreshold || 20,
+              windowMinutes
+            );
+
+            if (anomaly) {
+              const direction = anomaly.direction === 'falling'
+                ? t('climate.rapidChange.humidityDropped', `Humidity dropped {{percent}}% in {{time}}`)
+                : t('climate.rapidChange.humidityRose', `Humidity rose {{percent}}% in {{time}}`);
+              alerts.push(direction
+                .replace('{{percent}}', anomaly.change.toFixed(0))
+                .replace('{{time}}', anomaly.formattedDuration));
+            }
+          }
+        } catch (e) {
+          console.warn('[Dashview] Error checking humidity rate-of-change:', e.message);
+        }
+      }
+
+      if (alerts.length === 0) return null;
+
+      return {
+        title: t('climate.rapidChange.title', 'Rapid Climate Change'),
+        subtitle: alerts.join(' · ')
+      };
     }
 
     async _setLightBrightness(entityId, brightnessPercent, onError = null) {

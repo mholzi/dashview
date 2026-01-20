@@ -88,3 +88,11 @@ export {
   getPollenLevel,
   getPollenTrend,
 } from './pollen-service.js';
+
+// Anomaly Detector Service (Rate-of-change detection)
+export {
+  formatDuration,
+  calculateRateOfChange,
+  detectTemperatureAnomaly,
+  detectHumidityAnomaly,
+} from './anomaly-detector.js';

@@ -103,6 +103,25 @@
     "noSensors": "Keine Wasserleck-Sensoren konfiguriert",
     "unknownArea": "Unbekannter Bereich"
   },
+  "climate": {
+    "rapidChange": {
+      "title": "Schnelle Klimaänderung",
+      "tempDropped": "Temperatur gefallen um {{degrees}}° in {{time}}",
+      "tempRose": "Temperatur gestiegen um {{degrees}}° in {{time}}",
+      "humidityDropped": "Luftfeuchtigkeit gefallen um {{percent}}% in {{time}}",
+      "humidityRose": "Luftfeuchtigkeit gestiegen um {{percent}}% in {{time}}",
+      "sectionTitle": "Änderungsrate-Erkennung",
+      "sectionDesc": "Warnung bei schnellen Temperatur- oder Luftfeuchtigkeitsänderungen, die auf offene Fenster, HVAC-Probleme oder andere Ursachen hinweisen.",
+      "tempThreshold": "Temperatur-Schnelländerung",
+      "tempThresholdDesc": "Mindesttemperaturänderung für Alarm",
+      "tempWindow": "Temperatur-Zeitfenster",
+      "tempWindowDesc": "Zeitraum für Temperaturänderungserkennung",
+      "humidityThreshold": "Luftfeuchtigkeits-Schnelländerung",
+      "humidityThresholdDesc": "Mindestfeuchtigkeitsänderung für Alarm",
+      "humidityWindow": "Luftfeuchtigkeits-Zeitfenster",
+      "humidityWindowDesc": "Zeitraum für Feuchtigkeitsänderungserkennung"
+    }
+  },
   "ui": {
     "tabs": {
       "home": "Home",

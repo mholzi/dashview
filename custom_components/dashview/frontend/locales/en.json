@@ -103,6 +103,25 @@
     "noSensors": "No water leak sensors configured",
     "unknownArea": "Unknown area"
   },
+  "climate": {
+    "rapidChange": {
+      "title": "Rapid Climate Change",
+      "tempDropped": "Temperature dropped {{degrees}}° in {{time}}",
+      "tempRose": "Temperature rose {{degrees}}° in {{time}}",
+      "humidityDropped": "Humidity dropped {{percent}}% in {{time}}",
+      "humidityRose": "Humidity rose {{percent}}% in {{time}}",
+      "sectionTitle": "Rate-of-Change Detection",
+      "sectionDesc": "Alert when temperature or humidity changes rapidly, indicating open windows, HVAC issues, or other problems.",
+      "tempThreshold": "Temperature Rapid Change",
+      "tempThresholdDesc": "Minimum temperature change to trigger alert",
+      "tempWindow": "Temperature Time Window",
+      "tempWindowDesc": "Time period for temperature change detection",
+      "humidityThreshold": "Humidity Rapid Change",
+      "humidityThresholdDesc": "Minimum humidity change to trigger alert",
+      "humidityWindow": "Humidity Time Window",
+      "humidityWindowDesc": "Time period for humidity change detection"
+    }
+  },
   "ui": {
     "tabs": {
       "home": "Home",

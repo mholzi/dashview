@@ -46,6 +46,32 @@ export const SETTINGS_SCHEMA = {
     default: THRESHOLDS?.DEFAULT_HUMIDITY_NOTIFICATION ?? 70
   },
 
+  // Rate-of-change thresholds (rapid change detection)
+  tempRapidChangeThreshold: {
+    type: 'number',
+    min: 1,
+    max: 20,
+    default: THRESHOLDS?.DEFAULT_TEMP_RAPID_CHANGE ?? 5
+  },
+  tempRapidChangeWindowMinutes: {
+    type: 'number',
+    min: 15,
+    max: 180,
+    default: THRESHOLDS?.DEFAULT_TEMP_RAPID_CHANGE_WINDOW ?? 60
+  },
+  humidityRapidChangeThreshold: {
+    type: 'number',
+    min: 5,
+    max: 50,
+    default: THRESHOLDS?.DEFAULT_HUMIDITY_RAPID_CHANGE ?? 20
+  },
+  humidityRapidChangeWindowMinutes: {
+    type: 'number',
+    min: 10,
+    max: 120,
+    default: THRESHOLDS?.DEFAULT_HUMIDITY_RAPID_CHANGE_WINDOW ?? 30
+  },
+
   // Weather entity configuration
   weatherEntity: { type: 'string', default: 'weather.forecast_home' },
   weatherCurrentTempEntity: { type: 'string', default: '' },

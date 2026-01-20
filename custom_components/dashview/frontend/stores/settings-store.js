@@ -83,6 +83,10 @@ import { hapticWarning } from '../utils/haptic.js';
  * @property {EnabledEntityMap} enabledWaterLeakSensors
  * @property {number} notificationTempThreshold
  * @property {number} notificationHumidityThreshold
+ * @property {number} tempRapidChangeThreshold - Temperature rapid change threshold in degrees
+ * @property {number} tempRapidChangeWindowMinutes - Time window for temperature rapid change in minutes
+ * @property {number} humidityRapidChangeThreshold - Humidity rapid change threshold in percent
+ * @property {number} humidityRapidChangeWindowMinutes - Time window for humidity rapid change in minutes
  * @property {string} weatherEntity
  * @property {string} weatherCurrentTempEntity
  * @property {string} weatherCurrentStateEntity
@@ -134,6 +138,12 @@ export const DEFAULT_SETTINGS = {
   // Notification thresholds
   notificationTempThreshold: THRESHOLDS.DEFAULT_TEMP_NOTIFICATION,
   notificationHumidityThreshold: THRESHOLDS.DEFAULT_HUMIDITY_NOTIFICATION,
+
+  // Rate-of-change thresholds (rapid change detection)
+  tempRapidChangeThreshold: THRESHOLDS.DEFAULT_TEMP_RAPID_CHANGE,
+  tempRapidChangeWindowMinutes: THRESHOLDS.DEFAULT_TEMP_RAPID_CHANGE_WINDOW,
+  humidityRapidChangeThreshold: THRESHOLDS.DEFAULT_HUMIDITY_RAPID_CHANGE,
+  humidityRapidChangeWindowMinutes: THRESHOLDS.DEFAULT_HUMIDITY_RAPID_CHANGE_WINDOW,
 
   // Weather entity configuration
   weatherEntity: 'weather.forecast_home',

@@ -235,18 +235,29 @@ function renderQuickActions(component, html, areaId) {
 }
 
 /**
- * Render climate notification (temperature/humidity warnings)
+ * Render climate notification (temperature/humidity warnings and rate-of-change alerts)
  */
 function renderClimateNotification(component, html, areaId) {
   const notification = component._getRoomClimateNotification(areaId);
-  if (!notification) return '';
+  const rateOfChangeAlert = component._roomRateOfChangeAlert;
+
+  if (!notification && !rateOfChangeAlert) return '';
 
   return html`
-    <div class="popup-notification">
-      <div class="popup-notification-icon">⚠️</div>
-      <div class="popup-notification-title">${notification.title}</div>
-      <div class="popup-notification-subtitle">${notification.subtitle}</div>
-    </div>
+    ${notification ? html`
+      <div class="popup-notification">
+        <div class="popup-notification-icon">⚠️</div>
+        <div class="popup-notification-title">${notification.title}</div>
+        <div class="popup-notification-subtitle">${notification.subtitle}</div>
+      </div>
+    ` : ''}
+    ${rateOfChangeAlert ? html`
+      <div class="popup-notification">
+        <div class="popup-notification-icon">⚠️</div>
+        <div class="popup-notification-title">${rateOfChangeAlert.title}</div>
+        <div class="popup-notification-subtitle">${rateOfChangeAlert.subtitle}</div>
+      </div>
+    ` : ''}
   `;
 }
 

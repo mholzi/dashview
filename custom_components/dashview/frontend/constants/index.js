@@ -183,6 +183,12 @@ export const THRESHOLDS = {
   DEFAULT_TEMP_NOTIFICATION: 23,
   DEFAULT_HUMIDITY_NOTIFICATION: 60,
 
+  // Rate-of-change thresholds (rapid change detection)
+  DEFAULT_TEMP_RAPID_CHANGE: 5,            // °C change to trigger alert
+  DEFAULT_TEMP_RAPID_CHANGE_WINDOW: 60,    // minutes
+  DEFAULT_HUMIDITY_RAPID_CHANGE: 20,       // % change to trigger alert
+  DEFAULT_HUMIDITY_RAPID_CHANGE_WINDOW: 30, // minutes
+
   // UI thresholds
   SWIPE_DISTANCE: 50,  // pixels
 
