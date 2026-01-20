@@ -356,7 +356,16 @@ export const weatherPopupStyles = `
     font-size: 14px;
     font-weight: 500;
     color: var(--dv-gray800, var(--primary-text-color));
+    margin-bottom: 2px;
+  }
+
+  .pollen-item-source {
+    font-size: 11px;
+    color: var(--dv-gray500, var(--secondary-text-color));
     margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .pollen-item-level {

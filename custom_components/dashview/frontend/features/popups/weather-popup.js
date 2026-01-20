@@ -265,6 +265,11 @@ function renderPollenItem(html, sensor, lang) {
   // Get translated pollen type name
   const typeName = translatePollenType(sensor.type, lang);
 
+  // Use friendlyName if different from type, otherwise just show type
+  const showFriendlyName = sensor.friendlyName &&
+    !sensor.friendlyName.toLowerCase().includes(sensor.type) &&
+    !sensor.friendlyName.toLowerCase().includes(typeName.toLowerCase());
+
   // Trend icon
   const trendIcon = trend === 'up' ? 'mdi:arrow-up' : trend === 'down' ? 'mdi:arrow-down' : 'mdi:minus';
   const trendColor = trend === 'up' ? 'var(--dv-red)' : trend === 'down' ? 'var(--dv-green)' : 'var(--dv-gray500)';
@@ -276,6 +281,9 @@ function renderPollenItem(html, sensor, lang) {
       </div>
       <div class="pollen-item-info">
         <div class="pollen-item-name">${typeName}</div>
+        ${showFriendlyName ? html`
+          <div class="pollen-item-source">${sensor.friendlyName}</div>
+        ` : ''}
         <div class="pollen-item-level">
           ${renderPollenDots(html, levelInfo.dots, levelInfo.color)}
         </div>
