@@ -4,7 +4,7 @@
  */
 
 import { renderPopupHeader } from '../../components/layout/index.js';
-import { t } from '../../utils/i18n.js';
+import { t, getCurrentLang } from '../../utils/i18n.js';
 import { getWeatherIconUrl } from '../../assets/weather-icons.js';
 import { detectPollenSensors, getPollenLevel, getPollenTrend, POLLEN_TYPES } from '../../services/pollen-service.js';
 
