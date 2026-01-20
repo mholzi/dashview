@@ -4,7 +4,7 @@
  */
 
 import { renderEntityPicker } from '../../components/controls/index.js';
-import { t, createSectionHelpers } from './shared.js';
+import { t, createSectionHelpers, getCurrentLang } from './shared.js';
 import { renderEmptyState } from '../../components/layout/empty-state.js';
 import { detectPollenSensors, getPollenLevel, POLLEN_TYPES } from '../../services/pollen-service.js';
 
@@ -320,8 +320,8 @@ function renderPollenSection(panel, html, toggleSection, isExpanded) {
   // Get current pollen config from settings
   const pollenConfig = panel._pollenConfig || { enabled: true, enabledSensors: {}, displayMode: 'active' };
 
-  // Get current language for translations
-  const lang = panel.hass?.language?.substring(0, 2) || 'en';
+  // Get current language from i18n system (more reliable than hass.language)
+  const lang = getCurrentLang();
 
   return html`
     <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px; margin-bottom: 16px;">

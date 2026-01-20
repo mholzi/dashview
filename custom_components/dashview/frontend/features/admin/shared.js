@@ -12,7 +12,8 @@ import {
   isStateOn,
   isStateOpen
 } from '../../utils/index.js';
-import { t as importedT } from '../../utils/i18n.js';
+import { t as importedT, getCurrentLang } from '../../utils/i18n.js';
+export { getCurrentLang };
 import '../../components/controls/confirmation-dialog.js';
 
 // ============================================================================

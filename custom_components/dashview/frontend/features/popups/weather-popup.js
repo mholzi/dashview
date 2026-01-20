@@ -237,8 +237,8 @@ function renderPollenForecast(component, html) {
   // Don't render if no sensors to show
   if (sensors.length === 0) return '';
 
-  // Get current language for translations
-  const lang = component.hass?.language?.substring(0, 2) || 'en';
+  // Get current language from i18n system (more reliable than hass.language)
+  const lang = getCurrentLang();
 
   return html`
     <div class="pollen-forecast-section">
