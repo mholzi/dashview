@@ -214,6 +214,13 @@ export const DEFAULT_SETTINGS = {
 
   // User photos (custom avatar photos per person entity)
   userPhotos: {},  // { 'person.john': 'https://example.com/photo.jpg' }
+
+  // Pollen configuration (DWD Pollenflug integration)
+  pollenConfig: {
+    enabled: true,                    // Master toggle for pollen display
+    enabledSensors: {},               // { 'sensor.pollenflug_birke_124': true }
+    displayMode: 'active',            // 'active' | 'all' | 'top3'
+  },
 };
 
 /**

@@ -40,6 +40,14 @@ export const colorStyles = `
     --dv-warning-text: #0f0f10;  /* Fixed dark text for warning cards */
     --dv-fixed-dark: #0f0f10;    /* Fixed dark color - does not invert in dark mode */
 
+    /* Pollen Level Colors - DWD Pollenflug scale (0-3) */
+    --dv-pollen-none: #b0b0b0;          /* Level 0: None */
+    --dv-pollen-low: #a8d5a2;           /* Level 1: Low - light green */
+    --dv-pollen-low-moderate: #f5e66b;  /* Level 1.5: Low-Moderate - yellow */
+    --dv-pollen-moderate: #f5c842;      /* Level 2: Moderate - amber */
+    --dv-pollen-moderate-high: #f5a142; /* Level 2.5: Moderate-High - orange */
+    --dv-pollen-high: #e85d4c;          /* Level 3: High - red */
+
     /* Popup/Card Backgrounds */
     --dv-popup-bg: var(--ha-card-background, var(--card-background-color));
     --dv-card-bg: var(--dv-gray000);

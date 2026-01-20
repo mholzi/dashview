@@ -203,6 +203,23 @@
       "warning_marked": "Warning of significant",
       "severe_warning": "Severe weather warning",
       "extreme_warning": "Extreme weather"
+    },
+    "pollen": "Pollen Forecast",
+    "pollen_types": {
+      "erle": "Alder",
+      "ambrosia": "Ragweed",
+      "esche": "Ash",
+      "birke": "Birch",
+      "hasel": "Hazel",
+      "graeser": "Grass",
+      "beifuss": "Mugwort",
+      "roggen": "Rye"
+    },
+    "pollen_levels": {
+      "none": "None",
+      "low": "Low",
+      "moderate": "Moderate",
+      "high": "High"
     }
   },
   "media": {
@@ -406,7 +423,21 @@
       "clearSearch": "Clear search",
       "addWarning": "Add Warning Sensor",
       "noWarningsConfigured": "No warning sensors configured",
-      "selectWeather": "-- Select Weather Entity --"
+      "selectWeather": "-- Select Weather Entity --",
+      "noWeatherEntities": "No Weather Entities Found"
+    },
+    "pollen": {
+      "title": "Pollen Forecast",
+      "description": "Configure DWD Pollenflug sensors to display pollen levels.",
+      "noSensors": "No DWD Pollenflug Sensors",
+      "noSensorsHint": "Install the DWD Pollenflug integration via HACS to display pollen levels.",
+      "displayMode": "Display Mode",
+      "displayModeDesc": "How to show pollen in weather popup",
+      "onlyActive": "Only active (level > 0)",
+      "allEnabled": "All enabled",
+      "top3": "Top 3 by level",
+      "sensorsTitle": "Detected Pollen Sensors",
+      "sensorsFound": "sensors found"
     },
     "status": {
       "title": "Status",

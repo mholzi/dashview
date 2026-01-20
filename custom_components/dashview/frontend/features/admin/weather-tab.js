@@ -1,11 +1,12 @@
 /**
  * Dashview Admin - Weather Tab
- * Weather entity selection and DWD warning configuration
+ * Weather entity selection, DWD warning configuration, and pollen forecast
  */
 
 import { renderEntityPicker } from '../../components/controls/index.js';
 import { t, createSectionHelpers } from './shared.js';
 import { renderEmptyState } from '../../components/layout/empty-state.js';
+import { detectPollenSensors, getPollenLevel, POLLEN_TYPES } from '../../services/pollen-service.js';
 
 /**
  * Render the Weather tab
@@ -174,6 +175,9 @@ export function renderWeatherTab(panel, html) {
       </div>
     </div>
 
+    <!-- Pollen Forecast Section (DWD Pollenflug) -->
+    ${renderPollenSection(panel, html, toggleSection, isExpanded)}
+
     <!-- Weather Radar Section -->
     <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px; margin-bottom: 16px;">
       <div class="card-config-section-header" @click=${() => toggleSection('weatherRadar')}>
@@ -299,4 +303,174 @@ export function renderWeatherTab(panel, html) {
       </div>
     </div>
   `;
+}
+
+/**
+ * Render the Pollen Forecast configuration section
+ * @param {Object} panel - The DashviewPanel instance
+ * @param {Function} html - lit-html template function
+ * @param {Function} toggleSection - Section toggle helper
+ * @param {Function} isExpanded - Section expansion check helper
+ * @returns {TemplateResult} Pollen section HTML
+ */
+function renderPollenSection(panel, html, toggleSection, isExpanded) {
+  // Detect available pollen sensors
+  const pollenSensors = detectPollenSensors(panel.hass);
+
+  // Get current pollen config from settings
+  const pollenConfig = panel._pollenConfig || { enabled: true, enabledSensors: {}, displayMode: 'active' };
+
+  // Get current language for translations
+  const lang = panel.hass?.language?.substring(0, 2) || 'en';
+
+  return html`
+    <div class="card-config-section" style="border: 1px solid var(--dv-gray300); border-radius: 12px; margin-bottom: 16px;">
+      <div class="card-config-section-header" @click=${() => toggleSection('pollenForecast')}>
+        <div class="card-config-section-title">
+          <ha-icon icon="mdi:flower-pollen"></ha-icon>
+          ${t('admin.pollen.title') || 'Pollen Forecast'}
+        </div>
+        <ha-icon
+          class="card-config-section-chevron ${isExpanded('pollenForecast') ? 'expanded' : ''}"
+          icon="mdi:chevron-down"
+        ></ha-icon>
+      </div>
+      <div class="card-config-section-content ${isExpanded('pollenForecast') ? 'expanded' : ''}">
+        <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
+          ${t('admin.pollen.description') || 'Configure DWD Pollenflug sensors to display pollen levels.'}
+        </p>
+
+        ${pollenSensors.length === 0
+          ? renderEmptyState(html, {
+              icon: 'mdi:flower-pollen-outline',
+              title: t('admin.pollen.noSensors') || 'No DWD Pollenflug Sensors',
+              description: t('admin.pollen.noSensorsHint') || 'Install the DWD Pollenflug integration via HACS to display pollen levels.',
+              hint: 'https://github.com/mampfes/hacs_dwd_pollenflug'
+            })
+          : html`
+            <!-- Display Mode Dropdown -->
+            <div style="margin-bottom: 16px;">
+              <div class="card-config-label" style="margin-bottom: 8px;">
+                <span class="card-config-label-title">${t('admin.pollen.displayMode') || 'Display Mode'}</span>
+                <span class="card-config-label-subtitle">${t('admin.pollen.displayModeDesc') || 'How to show pollen in weather popup'}</span>
+              </div>
+              <select
+                .value=${pollenConfig.displayMode || 'active'}
+                @change=${(e) => {
+                  panel._pollenConfig = {
+                    ...pollenConfig,
+                    displayMode: e.target.value
+                  };
+                  panel._saveSettings();
+                  panel.requestUpdate();
+                }}
+                style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
+              >
+                <option value="active" ?selected=${pollenConfig.displayMode === 'active'}>
+                  ${t('admin.pollen.onlyActive') || 'Only active (level > 0)'}
+                </option>
+                <option value="all" ?selected=${pollenConfig.displayMode === 'all'}>
+                  ${t('admin.pollen.allEnabled') || 'All enabled'}
+                </option>
+                <option value="top3" ?selected=${pollenConfig.displayMode === 'top3'}>
+                  ${t('admin.pollen.top3') || 'Top 3 by level'}
+                </option>
+              </select>
+            </div>
+
+            <!-- Pollen Sensor List -->
+            <div style="margin-bottom: 8px;">
+              <div class="card-config-label">
+                <span class="card-config-label-title">${t('admin.pollen.sensorsTitle') || 'Detected Pollen Sensors'}</span>
+                <span class="card-config-label-subtitle">${pollenSensors.length} ${t('admin.pollen.sensorsFound') || 'sensors found'}</span>
+              </div>
+            </div>
+
+            <div class="pollen-sensor-list" style="display: flex; flex-direction: column; gap: 8px;">
+              ${pollenSensors.map(sensor => {
+                const pollenType = POLLEN_TYPES[sensor.type];
+                const levelInfo = getPollenLevel(sensor.value);
+                const isEnabled = pollenConfig.enabledSensors[sensor.entityId] !== false; // Default to enabled
+                const typeName = pollenType ? (lang === 'de' ? pollenType.de : pollenType.en) : sensor.type;
+
+                return html`
+                  <div class="pollen-sensor-item" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px;
+                    background: var(--dv-gray100);
+                    border-radius: 12px;
+                  ">
+                    <!-- Toggle Switch -->
+                    <label class="switch" style="flex-shrink: 0;">
+                      <input
+                        type="checkbox"
+                        ?checked=${isEnabled}
+                        @change=${(e) => {
+                          const newEnabledSensors = {
+                            ...pollenConfig.enabledSensors,
+                            [sensor.entityId]: e.target.checked
+                          };
+                          panel._pollenConfig = {
+                            ...pollenConfig,
+                            enabledSensors: newEnabledSensors
+                          };
+                          panel._saveSettings();
+                          panel.requestUpdate();
+                        }}
+                      />
+                      <span class="slider"></span>
+                    </label>
+
+                    <!-- Icon -->
+                    <ha-icon
+                      icon="${pollenType?.icon || 'mdi:flower'}"
+                      style="color: ${isEnabled ? levelInfo.color : 'var(--dv-gray400)'}; --mdc-icon-size: 24px;"
+                    ></ha-icon>
+
+                    <!-- Info -->
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-weight: 500; color: var(--dv-gray800);">${typeName}</div>
+                      <div style="font-size: 12px; color: var(--dv-gray600);">${sensor.entityId}</div>
+                    </div>
+
+                    <!-- Level Indicator -->
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      ${renderLevelDots(html, levelInfo.dots, levelInfo.color)}
+                      <span style="font-size: 12px; color: var(--dv-gray600); min-width: 24px; text-align: center;">
+                        ${sensor.value.toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+                `;
+              })}
+            </div>
+          `}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render level dots indicator (6 dots)
+ * @param {Function} html - lit-html template function
+ * @param {number} filled - Number of filled dots (0-6)
+ * @param {string} color - Color for filled dots
+ * @returns {TemplateResult} Level dots HTML
+ */
+function renderLevelDots(html, filled, color) {
+  const dots = [];
+  for (let i = 0; i < 6; i++) {
+    const isFilled = i < filled;
+    dots.push(html`
+      <span style="
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: ${isFilled ? color : 'var(--dv-gray300)'};
+      "></span>
+    `);
+  }
+  return html`<div style="display: flex; gap: 3px;">${dots}</div>`;
 }

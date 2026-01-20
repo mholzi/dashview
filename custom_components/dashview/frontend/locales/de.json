@@ -203,6 +203,23 @@
       "warning_marked": "Warnung vor markantem",
       "severe_warning": "Unwetterwarnung vor",
       "extreme_warning": "Extremes Unwetter"
+    },
+    "pollen": "Pollenflug",
+    "pollen_types": {
+      "erle": "Erle",
+      "ambrosia": "Ambrosia",
+      "esche": "Esche",
+      "birke": "Birke",
+      "hasel": "Hasel",
+      "graeser": "Gräser",
+      "beifuss": "Beifuß",
+      "roggen": "Roggen"
+    },
+    "pollen_levels": {
+      "none": "Keine",
+      "low": "Gering",
+      "moderate": "Mäßig",
+      "high": "Stark"
     }
   },
   "media": {
@@ -406,7 +423,21 @@
       "clearSearch": "Suche löschen",
       "addWarning": "Warnsensor hinzufügen",
       "noWarningsConfigured": "Keine Warnsensoren konfiguriert",
-      "selectWeather": "-- Wetter-Entität auswählen --"
+      "selectWeather": "-- Wetter-Entität auswählen --",
+      "noWeatherEntities": "Keine Wetter-Entitäten gefunden"
+    },
+    "pollen": {
+      "title": "Pollenflug",
+      "description": "DWD Pollenflug-Sensoren konfigurieren, um Pollenbelastung anzuzeigen.",
+      "noSensors": "Keine DWD Pollenflug-Sensoren",
+      "noSensorsHint": "Installiere die DWD Pollenflug-Integration über HACS, um Pollenbelastung anzuzeigen.",
+      "displayMode": "Anzeigemodus",
+      "displayModeDesc": "Wie Pollen im Wetter-Popup angezeigt werden",
+      "onlyActive": "Nur aktive (Level > 0)",
+      "allEnabled": "Alle aktivierten",
+      "top3": "Top 3 nach Belastung",
+      "sensorsTitle": "Erkannte Pollenflug-Sensoren",
+      "sensorsFound": "Sensoren gefunden"
     },
     "status": {
       "title": "Status",

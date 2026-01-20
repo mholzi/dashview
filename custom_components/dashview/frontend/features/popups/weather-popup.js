@@ -1,11 +1,12 @@
 /**
  * Weather Popup Module
- * Renders the weather detail popup with current conditions, hourly forecast, and daily forecast
+ * Renders the weather detail popup with current conditions, hourly forecast, daily forecast, and pollen
  */
 
 import { renderPopupHeader } from '../../components/layout/index.js';
 import { t } from '../../utils/i18n.js';
 import { getWeatherIconUrl } from '../../assets/weather-icons.js';
+import { detectPollenSensors, getPollenLevel, getPollenTrend, POLLEN_TYPES } from '../../services/pollen-service.js';
 
 /**
  * Render the complete weather popup
@@ -31,6 +32,7 @@ export function renderWeatherPopup(component, html) {
           ${renderHourlyForecast(component, html)}
           ${renderForecastTabs(component, html)}
           ${renderForecastCard(component, html)}
+          ${renderPollenForecast(component, html)}
           ${renderWeatherRadar(component, html)}
         </div>
       </div>
@@ -195,6 +197,136 @@ function renderWeatherRadar(component, html) {
       </iframe>
     </div>
   `;
+}
+
+/**
+ * Render pollen forecast section
+ * Shows enabled pollen types with current level, trend, and tomorrow's forecast
+ * @param {Object} component - DashviewPanel instance
+ * @param {Function} html - Lit html template function
+ * @returns {TemplateResult} Pollen forecast template
+ */
+function renderPollenForecast(component, html) {
+  // Get pollen config from component
+  const pollenConfig = component._pollenConfig || { enabled: true, enabledSensors: {}, displayMode: 'active' };
+
+  // If pollen is disabled entirely, don't render anything
+  if (!pollenConfig.enabled) return '';
+
+  // Detect all pollen sensors
+  const allSensors = detectPollenSensors(component.hass);
+
+  // Filter based on enabled sensors (default to all enabled)
+  let sensors = allSensors.filter(sensor => {
+    const isExplicitlyEnabled = pollenConfig.enabledSensors[sensor.entityId];
+    // Default to enabled if not explicitly disabled
+    return isExplicitlyEnabled !== false;
+  });
+
+  // Apply display mode filtering
+  const displayMode = pollenConfig.displayMode || 'active';
+  if (displayMode === 'active') {
+    // Only show sensors with value > 0
+    sensors = sensors.filter(s => s.value > 0);
+  } else if (displayMode === 'top3') {
+    // Sort by value descending and take top 3
+    sensors = [...sensors].sort((a, b) => b.value - a.value).slice(0, 3);
+  }
+  // 'all' mode shows all enabled sensors
+
+  // Don't render if no sensors to show
+  if (sensors.length === 0) return '';
+
+  // Get current language for translations
+  const lang = component.hass?.language?.substring(0, 2) || 'en';
+
+  return html`
+    <div class="pollen-forecast-card">
+      <div class="pollen-forecast-title">${t('weather.pollen') || 'Pollen Forecast'}</div>
+      <div class="pollen-forecast-list">
+        ${sensors.map(sensor => renderPollenItem(html, sensor, lang))}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render a single pollen item
+ * @param {Function} html - Lit html template function
+ * @param {Object} sensor - Pollen sensor data
+ * @param {string} lang - Language code (en/de)
+ * @returns {TemplateResult} Pollen item template
+ */
+function renderPollenItem(html, sensor, lang) {
+  const pollenType = POLLEN_TYPES[sensor.type];
+  const levelInfo = getPollenLevel(sensor.value);
+  const trend = getPollenTrend(sensor.value, sensor.tomorrow);
+
+  // Get translated pollen type name
+  const typeName = translatePollenType(sensor.type, lang);
+
+  // Trend icon
+  const trendIcon = trend === 'up' ? 'mdi:arrow-up' : trend === 'down' ? 'mdi:arrow-down' : 'mdi:minus';
+  const trendColor = trend === 'up' ? 'var(--dv-red)' : trend === 'down' ? 'var(--dv-green)' : 'var(--dv-gray500)';
+
+  return html`
+    <div class="pollen-item">
+      <div class="pollen-item-icon" style="color: ${levelInfo.color};">
+        <ha-icon icon="${pollenType?.icon || 'mdi:flower'}"></ha-icon>
+      </div>
+      <div class="pollen-item-info">
+        <div class="pollen-item-name">${typeName}</div>
+        <div class="pollen-item-level">
+          ${renderPollenDots(html, levelInfo.dots, levelInfo.color)}
+        </div>
+      </div>
+      <div class="pollen-item-trend" style="color: ${trendColor};">
+        <ha-icon icon="${trendIcon}" style="--mdc-icon-size: 16px;"></ha-icon>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render pollen level dots (6 dots)
+ * @param {Function} html - Lit html template function
+ * @param {number} filled - Number of filled dots (0-6)
+ * @param {string} color - Color for filled dots
+ * @returns {TemplateResult} Level dots template
+ */
+function renderPollenDots(html, filled, color) {
+  const dots = [];
+  for (let i = 0; i < 6; i++) {
+    const isFilled = i < filled;
+    dots.push(html`<span class="pollen-dot ${isFilled ? 'filled' : ''}" style="${isFilled ? `background: ${color};` : ''}"></span>`);
+  }
+  return html`<div class="pollen-dots">${dots}</div>`;
+}
+
+/**
+ * Translate pollen type name
+ * @param {string} type - Pollen type key (e.g., 'birke', 'graeser')
+ * @param {string} lang - Language code (en/de)
+ * @returns {string} Translated pollen type name
+ */
+function translatePollenType(type, lang) {
+  // Try i18n translation first
+  const i18nKey = `weather.pollen_types.${type}`;
+  const translated = t(i18nKey);
+
+  // If translation exists and isn't the key itself, use it
+  if (translated && translated !== i18nKey) {
+    return translated;
+  }
+
+  // Fall back to POLLEN_TYPES constant
+  const pollenType = POLLEN_TYPES[type];
+  if (pollenType) {
+    return lang === 'de' ? pollenType.de : pollenType.en;
+  }
+
+  // Last resort: capitalize the type
+  return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
 export default { renderWeatherPopup };

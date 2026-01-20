@@ -79,3 +79,12 @@ export {
   getErrorDetails,
   isRecoverableError,
 } from './error-mapper.js';
+
+// Pollen Service (DWD Pollenflug)
+export {
+  DWD_POLLEN_PATTERN,
+  POLLEN_TYPES,
+  detectPollenSensors,
+  getPollenLevel,
+  getPollenTrend,
+} from './pollen-service.js';

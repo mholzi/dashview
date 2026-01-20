@@ -308,4 +308,85 @@ export const weatherPopupStyles = `
     font-size: 11px;
     color: var(--dv-gray800, var(--secondary-text-color));
   }
+
+  /* ==================== POLLEN FORECAST ==================== */
+  .pollen-forecast-card {
+    background: var(--dv-popup-bg-color);
+    border-radius: 24px;
+    padding: 16px;
+    margin: 32px 0;
+  }
+
+  .pollen-forecast-title {
+    font-size: 12px;
+    color: var(--dv-gray800, var(--secondary-text-color));
+    margin-left: 8px;
+    margin-bottom: 12px;
+  }
+
+  .pollen-forecast-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pollen-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--dv-gray100);
+    border-radius: 12px;
+  }
+
+  .pollen-item-icon {
+    flex-shrink: 0;
+  }
+
+  .pollen-item-icon ha-icon {
+    --mdc-icon-size: 24px;
+  }
+
+  .pollen-item-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pollen-item-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dv-gray800, var(--primary-text-color));
+    margin-bottom: 4px;
+  }
+
+  .pollen-item-level {
+    display: flex;
+    align-items: center;
+  }
+
+  .pollen-dots {
+    display: flex;
+    gap: 3px;
+  }
+
+  .pollen-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--dv-gray300);
+  }
+
+  .pollen-dot.filled {
+    /* Color is set inline based on level */
+  }
+
+  .pollen-item-trend {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .pollen-item-trend ha-icon {
+    --mdc-icon-size: 16px;
+  }
 `;
