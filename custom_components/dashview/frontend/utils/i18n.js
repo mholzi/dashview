@@ -1,7 +1,58 @@
 /**
- * Lightweight i18n utility for Dashview
- * Uses window-scoped state to ensure singleton across module instances
- * (Different import URLs can create separate module instances)
+ * Dashview Internationalization (i18n) Module
+ *
+ * @module utils/i18n
+ * @description
+ * This module provides translation utilities for the Dashview dashboard.
+ * It uses a window-scoped singleton to ensure consistent state across module instances.
+ *
+ * ## Architecture
+ *
+ * Language is determined by the admin setting in Admin → Settings → Language.
+ * The initialization happens in `dashview-panel.js` during the `updated()` lifecycle,
+ * which runs BEFORE any component renders.
+ *
+ * ## Language Priority
+ *
+ * 1. **Manual setting** (`_manualLanguage`) - User's explicit choice in admin settings
+ * 2. **Home Assistant language** (`hass.language`) - When set to "Auto"
+ * 3. **Default 'en'** - Fallback for unsupported languages
+ *
+ * ## Usage
+ *
+ * All components should import and use these utilities:
+ *
+ * ```javascript
+ * import { t, getCurrentLang } from '../../utils/i18n.js';
+ *
+ * // Translate a key
+ * const label = t('common.status.on');
+ *
+ * // Translate with fallback
+ * const label = t('common.status.on', 'On');
+ *
+ * // Translate with parameters (auto-escaped for XSS safety)
+ * const msg = t('time.ago_hours', { hours: 3 });
+ *
+ * // Get current language code
+ * const lang = getCurrentLang();  // 'en' or 'de'
+ * ```
+ *
+ * ## Anti-Patterns (DO NOT DO)
+ *
+ * - **Never** access `hass.language` directly in components
+ * - **Never** implement your own language detection/fallback logic
+ * - **Never** hardcode language-specific strings in components
+ * - **Never** check `getCurrentLang() === 'en'` and then override based on `hass.language`
+ *
+ * ## Single Source of Truth
+ *
+ * `getCurrentLang()` is the ONLY approved method to get the current language.
+ * It returns the language that was initialized based on admin settings.
+ *
+ * @see dashview-panel.js:1538-1555 - Language initialization logic
+ * @see features/admin/users-tab.js - Admin language settings UI
+ * @see _bmad-output/project-context.md - Full language architecture documentation
  */
 
 // Use window-scoped state to ensure singleton pattern works across module instances
@@ -279,8 +330,17 @@ export function isI18nInitialized() {
 }
 
 /**
- * Get current active language
+ * Get current active language - SINGLE SOURCE OF TRUTH
+ *
+ * This is the ONLY approved method to get the current language in Dashview.
+ * It returns the language that was initialized based on admin settings.
+ *
+ * DO NOT access `hass.language` directly - use this function instead.
+ *
  * @returns {string} Language code ('en' or 'de')
+ * @example
+ * const lang = getCurrentLang();
+ * const pollenName = POLLEN_TYPES[type][lang];  // Use lang for lookups
  */
 export function getCurrentLang() {
   return state.currentLang;

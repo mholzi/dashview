@@ -1536,12 +1536,24 @@ if (typeof structuredClone === 'undefined') {
 
     updated(changedProperties) {
       if (changedProperties.has("hass") && this.hass) {
-        // Language detection and i18n initialization
+        // ============================================================
+        // LANGUAGE DETECTION - SINGLE SOURCE OF TRUTH
+        // ============================================================
+        // This is the ONLY place where language is determined for Dashview.
+        // All components must use getCurrentLang() from utils/i18n.js.
+        //
+        // Priority:
+        // 1. _manualLanguage (Admin → Settings → Language override)
+        // 2. hass.language (when Admin setting is "Auto")
+        // 3. 'en' (fallback for unsupported languages)
+        //
+        // DO NOT access hass.language directly elsewhere - see project-context.md
+        // ============================================================
         if (this.hass?.language && initI18n && getCurrentLang && isI18nInitialized) {
           const rawLang = this.hass.language;
           const baseLang = rawLang.split('-')[0]; // 'de-DE' -> 'de'
           const supportedLangs = ['en', 'de'];
-          // Use manual override if set, otherwise follow HA language
+          // Admin setting (_manualLanguage) takes priority over HA language
           const haLang = supportedLangs.includes(baseLang) ? baseLang : 'en';
           const targetLang = this._manualLanguage || haLang;
           const currentLang = getCurrentLang();
