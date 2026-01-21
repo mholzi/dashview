@@ -254,11 +254,12 @@ export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labe
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
  * @param {Object} enabledGarages - Map of enabled garage IDs
+ * @param {number} garageOpenTooLongMinutes - Minutes threshold for open-too-long warning
  * @param {string|null} labelId - Optional label ID to filter by
  * @param {Function|null} entityHasLabel - Optional function to check if entity has label
  * @returns {Object|null} Status object or null
  */
-export function getGarageStatus(hass, infoTextConfig, enabledGarages, labelId = null, entityHasLabel = null) {
+export function getGarageStatus(hass, infoTextConfig, enabledGarages, garageOpenTooLongMinutes = 30, labelId = null, entityHasLabel = null) {
   if (!hass || !infoTextConfig.garage?.enabled) return null;
 
   let enabledGarageIds = getEnabledEntityIds(enabledGarages);
@@ -271,13 +272,155 @@ export function getGarageStatus(hass, infoTextConfig, enabledGarages, labelId = 
   const openGarages = filterEntitiesByState(enabledGarageIds, hass, 'open');
   if (openGarages.length === 0) return null;
 
+  const count = openGarages.length;
+  const now = new Date();
+
+  // Find the longest open duration among all open garages
+  let longestOpenMinutes = 0;
+  openGarages.forEach(entityId => {
+    const state = hass.states[entityId];
+    if (state && state.last_changed) {
+      const lastChanged = new Date(state.last_changed);
+      const diffMs = now - lastChanged;
+      const openMinutes = Math.floor(diffMs / 60000);
+      if (openMinutes > longestOpenMinutes) {
+        longestOpenMinutes = openMinutes;
+      }
+    }
+  });
+
+  // Check if any garage has been open too long
+  const isOpenTooLong = longestOpenMinutes >= garageOpenTooLongMinutes;
+
+  if (isOpenTooLong) {
+    // Format duration text
+    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
+    let durationText = '';
+    if (days > 0) {
+      durationText = t('common.time.duration_days', { days });
+    } else if (hours > 0) {
+      durationText = t('common.time.duration_hours', { hours });
+    } else {
+      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
+    }
+
+    return {
+      state: "warning",
+      prefixText: "",
+      badgeText: t('status.garage.open_too_long', { duration: durationText }),
+      badgeIcon: "mdi:garage-alert",
+      suffixText: "",
+      clickAction: "garage",
+      isWarning: true,
+      priority: 91,
+    };
+  }
+
+  // Normal open status (no warning)
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
-    badgeText: `${openGarages.length}`,
+    badgeText: `${count}`,
     badgeIcon: "mdi:garage-open",
     suffixText: t('status.general.open_suffix'),
     clickAction: "garage",
+  };
+}
+
+/**
+ * Get door status for info text row
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {Object} enabledDoors - Map of enabled door entity IDs
+ * @param {number} doorOpenTooLongMinutes - Minutes threshold for open-too-long warning
+ * @param {string|null} labelId - Optional label ID to filter by
+ * @param {Function|null} entityHasLabel - Optional function to check if entity has label
+ * @returns {Object|null} Status object or null
+ */
+export function getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLongMinutes = 30, labelId = null, entityHasLabel = null) {
+  if (!hass || !infoTextConfig.doors?.enabled) return null;
+
+  let enabledDoorIds = getEnabledEntityIds(enabledDoors);
+  // Filter by label if provided
+  if (labelId && entityHasLabel) {
+    enabledDoorIds = enabledDoorIds.filter(id => entityHasLabel(id, labelId));
+  }
+  if (enabledDoorIds.length === 0) return null;
+
+  // Filter for binary_sensors with device_class: door that are 'on' (open)
+  const openDoors = enabledDoorIds
+    .map(entityId => {
+      const state = hass.states[entityId];
+      if (!state || state.state !== 'on') return null;
+      // Only include actual door sensors (device_class: door)
+      if (state.attributes?.device_class !== 'door') return null;
+      return {
+        entityId,
+        name: state.attributes?.friendly_name || entityId,
+        lastChanged: state.last_changed ? new Date(state.last_changed) : null,
+      };
+    })
+    .filter(d => d !== null);
+
+  if (openDoors.length === 0) return null;
+
+  const now = new Date();
+
+  // Find the longest open duration and the door that's been open longest
+  let longestOpenDoor = openDoors[0];
+  let longestOpenMinutes = 0;
+
+  openDoors.forEach(door => {
+    if (door.lastChanged) {
+      const diffMs = now - door.lastChanged;
+      const openMinutes = Math.floor(diffMs / 60000);
+      if (openMinutes > longestOpenMinutes) {
+        longestOpenMinutes = openMinutes;
+        longestOpenDoor = door;
+      }
+    }
+  });
+
+  // Check if any door has been open too long
+  const isOpenTooLong = longestOpenMinutes >= doorOpenTooLongMinutes;
+
+  if (isOpenTooLong) {
+    // Format duration text
+    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
+    let durationText = '';
+    if (days > 0) {
+      durationText = t('common.time.duration_days', { days });
+    } else if (hours > 0) {
+      durationText = t('common.time.duration_hours', { hours });
+    } else {
+      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
+    }
+
+    // Show door name if single door, count if multiple
+    const displayText = openDoors.length === 1
+      ? t('status.door.open_too_long_single', { name: longestOpenDoor.name, duration: durationText })
+      : t('status.door.open_too_long_multiple', { count: openDoors.length, duration: durationText });
+
+    return {
+      state: "warning",
+      prefixText: "",
+      badgeText: displayText,
+      emoji: "🚪",
+      suffixText: "",
+      clickAction: "security",
+      isWarning: true,
+      priority: 92,
+    };
+  }
+
+  // Normal open status (no warning) - just show count of open doors
+  return {
+    state: "open",
+    prefixText: t('status.general.currently_are'),
+    badgeText: `${openDoors.length}`,
+    emoji: "🚪",
+    suffixText: t('status.door.open_suffix'),
+    clickAction: "security",
   };
 }
 
@@ -286,11 +429,12 @@ export function getGarageStatus(hass, infoTextConfig, enabledGarages, labelId = 
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
  * @param {Object} enabledWindows - Map of enabled window IDs
+ * @param {number} windowOpenTooLongMinutes - Minutes threshold for open-too-long warning
  * @param {string|null} labelId - Optional label ID to filter by
  * @param {Function|null} entityHasLabel - Optional function to check if entity has label
  * @returns {Object|null} Status object or null
  */
-export function getWindowsStatus(hass, infoTextConfig, enabledWindows, labelId = null, entityHasLabel = null) {
+export function getWindowsStatus(hass, infoTextConfig, enabledWindows, windowOpenTooLongMinutes = 120, labelId = null, entityHasLabel = null) {
   if (!hass || !infoTextConfig.windows?.enabled) return null;
 
   let enabledWindowIds = getEnabledEntityIds(enabledWindows);
@@ -304,6 +448,50 @@ export function getWindowsStatus(hass, infoTextConfig, enabledWindows, labelId =
   if (openWindows.length === 0) return null;
 
   const count = openWindows.length;
+  const now = new Date();
+
+  // Find the longest open duration among all open windows
+  let longestOpenMinutes = 0;
+  openWindows.forEach(entityId => {
+    const state = hass.states[entityId];
+    if (state && state.last_changed) {
+      const lastChanged = new Date(state.last_changed);
+      const diffMs = now - lastChanged;
+      const openMinutes = Math.floor(diffMs / 60000);
+      if (openMinutes > longestOpenMinutes) {
+        longestOpenMinutes = openMinutes;
+      }
+    }
+  });
+
+  // Check if any window has been open too long
+  const isOpenTooLong = longestOpenMinutes >= windowOpenTooLongMinutes;
+
+  if (isOpenTooLong) {
+    // Format duration text
+    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
+    let durationText = '';
+    if (days > 0) {
+      durationText = t('common.time.duration_days', { days });
+    } else if (hours > 0) {
+      durationText = t('common.time.duration_hours', { hours });
+    } else {
+      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
+    }
+
+    return {
+      state: "warning",
+      prefixText: "",
+      badgeText: `${count}`,
+      emoji: "🪟",
+      suffixText: ` ${t('status.general.open_suffix')} (${durationText})`,
+      clickAction: "security",
+      isWarning: true,
+      priority: 90,
+    };
+  }
+
+  // Normal open status (no warning)
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
@@ -716,13 +904,15 @@ export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStat
  * @param {Function|null} entityHasLabel - Optional function to check if entity has label
  * @param {Array} appliancesWithHomeStatus - Optional array of appliances with showInHomeStatus enabled
  * @param {Function} getApplianceStatus - Optional function to get appliance status
+ * @param {Object} openTooLongThresholds - Thresholds for open-too-long alerts
  * @returns {Array} Array of active status objects
  */
-export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelIds = {}, entityHasLabel = null, appliancesWithHomeStatus = [], getApplianceStatus = null) {
+export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelIds = {}, entityHasLabel = null, appliancesWithHomeStatus = [], getApplianceStatus = null, openTooLongThresholds = {}) {
   const {
     enabledMotionSensors = {},
     enabledGarages = {},
     enabledWindows = {},
+    enabledDoors = {},
     enabledLights = {},
     enabledCovers = {},
     enabledTVs = {},
@@ -732,6 +922,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
   const {
     motionLabelId = null,
     garageLabelId = null,
+    doorLabelId = null,
     windowLabelId = null,
     lightLabelId = null,
     coverLabelId = null,
@@ -739,15 +930,23 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     waterLeakLabelId = null,
   } = labelIds;
 
+  const {
+    doorOpenTooLongMinutes = 30,
+    windowOpenTooLongMinutes = 120,
+    garageOpenTooLongMinutes = 30,
+  } = openTooLongThresholds;
+
   // Get appliance status items from new system
   const applianceStatusItems = getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStatus, getApplianceStatus);
 
   return [
     // Water leak is highest priority (property damage)
     getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors, waterLeakLabelId, entityHasLabel),
+    // Door/garage/window open-too-long alerts (security concerns)
+    getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLongMinutes, doorLabelId, entityHasLabel),
+    getGarageStatus(hass, infoTextConfig, enabledGarages, garageOpenTooLongMinutes, garageLabelId, entityHasLabel),
+    getWindowsStatus(hass, infoTextConfig, enabledWindows, windowOpenTooLongMinutes, windowLabelId, entityHasLabel),
     getMotionStatus(hass, infoTextConfig, enabledMotionSensors, motionLabelId, entityHasLabel),
-    getGarageStatus(hass, infoTextConfig, enabledGarages, garageLabelId, entityHasLabel),
-    getWindowsStatus(hass, infoTextConfig, enabledWindows, windowLabelId, entityHasLabel),
     getLightsOnStatus(hass, infoTextConfig, enabledLights, lightLabelId, entityHasLabel),
     getCoversStatus(hass, infoTextConfig, enabledCovers, coverLabelId, entityHasLabel),
     getTVsStatus(hass, infoTextConfig, enabledTVs, tvLabelId, entityHasLabel),
@@ -761,6 +960,7 @@ export default {
   getWaterLeakStatus,
   getMotionStatus,
   getGarageStatus,
+  getDoorStatus,
   getWindowsStatus,
   getLightsOnStatus,
   getCoversStatus,

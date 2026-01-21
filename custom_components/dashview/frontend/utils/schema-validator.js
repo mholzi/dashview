@@ -72,6 +72,26 @@ export const SETTINGS_SCHEMA = {
     default: THRESHOLDS?.DEFAULT_HUMIDITY_RAPID_CHANGE_WINDOW ?? 30
   },
 
+  // Open-too-long thresholds (duration alerts)
+  doorOpenTooLongMinutes: {
+    type: 'number',
+    min: 5,
+    max: 1440,
+    default: THRESHOLDS?.DEFAULT_DOOR_OPEN_TOO_LONG_MINUTES ?? 30
+  },
+  windowOpenTooLongMinutes: {
+    type: 'number',
+    min: 5,
+    max: 1440,
+    default: THRESHOLDS?.DEFAULT_WINDOW_OPEN_TOO_LONG_MINUTES ?? 120
+  },
+  garageOpenTooLongMinutes: {
+    type: 'number',
+    min: 5,
+    max: 1440,
+    default: THRESHOLDS?.DEFAULT_GARAGE_OPEN_TOO_LONG_MINUTES ?? 30
+  },
+
   // Weather entity configuration
   weatherEntity: { type: 'string', default: 'weather.forecast_home' },
   weatherCurrentTempEntity: { type: 'string', default: '' },

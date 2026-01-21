@@ -189,6 +189,11 @@ export const THRESHOLDS = {
   DEFAULT_HUMIDITY_RAPID_CHANGE: 20,       // % change to trigger alert
   DEFAULT_HUMIDITY_RAPID_CHANGE_WINDOW: 30, // minutes
 
+  // Open-too-long thresholds (duration alerts)
+  DEFAULT_DOOR_OPEN_TOO_LONG_MINUTES: 30,     // minutes before door alert
+  DEFAULT_WINDOW_OPEN_TOO_LONG_MINUTES: 120,  // minutes before window alert
+  DEFAULT_GARAGE_OPEN_TOO_LONG_MINUTES: 30,   // minutes before garage alert
+
   // UI thresholds
   SWIPE_DISTANCE: 50,  // pixels
 

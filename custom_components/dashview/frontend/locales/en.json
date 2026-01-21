@@ -30,6 +30,7 @@
       "since_hours": "for {{hours}}h",
       "since_minutes": "for {{minutes}}min",
       "in_days": "in {{days}} days",
+      "duration_days": "{{days}}d",
       "duration_hours": "{{hours}}h",
       "duration_minutes": "{{minutes}}min",
       "until_time": "until {{time}}",
@@ -120,6 +121,16 @@
       "humidityThresholdDesc": "Minimum humidity change to trigger alert",
       "humidityWindow": "Humidity Time Window",
       "humidityWindowDesc": "Time period for humidity change detection"
+    },
+    "openTooLong": {
+      "sectionTitle": "Open Too Long Alerts",
+      "sectionDesc": "Alert when doors, windows, or garages are left open beyond these thresholds.",
+      "doorThreshold": "Door Open Threshold",
+      "doorThresholdDesc": "Alert after door is open this long",
+      "windowThreshold": "Window Open Threshold",
+      "windowThresholdDesc": "Alert after window is open this long",
+      "garageThreshold": "Garage Open Threshold",
+      "garageThresholdDesc": "Alert after garage is open this long"
     }
   },
   "ui": {
@@ -255,6 +266,14 @@
       "noLeaks": "No leaks detected",
       "leakDetected": "LEAK DETECTED",
       "leaksDetected": "leaks detected"
+    },
+    "door": {
+      "open_suffix": "doors open.",
+      "open_too_long_single": "{{name}} open {{duration}}",
+      "open_too_long_multiple": "{{count}} doors open ({{duration}})"
+    },
+    "garage": {
+      "open_too_long": "Garage open {{duration}}"
     },
     "motion": {
       "prefix": "Motion in house",

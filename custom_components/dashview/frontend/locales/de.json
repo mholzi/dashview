@@ -30,6 +30,7 @@
       "since_hours": "seit {{hours}}h",
       "since_minutes": "seit {{minutes}}min",
       "in_days": "in {{days}} Tagen",
+      "duration_days": "{{days}}T",
       "duration_hours": "{{hours}}h",
       "duration_minutes": "{{minutes}}min",
       "until_time": "bis {{time}}",
@@ -120,6 +121,16 @@
       "humidityThresholdDesc": "Mindestfeuchtigkeitsänderung für Alarm",
       "humidityWindow": "Luftfeuchtigkeits-Zeitfenster",
       "humidityWindowDesc": "Zeitraum für Feuchtigkeitsänderungserkennung"
+    },
+    "openTooLong": {
+      "sectionTitle": "Zu lange offen-Warnungen",
+      "sectionDesc": "Warnung wenn Türen, Fenster oder Garagen zu lange offen stehen.",
+      "doorThreshold": "Tür offen-Schwellwert",
+      "doorThresholdDesc": "Warnung nach dieser Zeit",
+      "windowThreshold": "Fenster offen-Schwellwert",
+      "windowThresholdDesc": "Warnung nach dieser Zeit",
+      "garageThreshold": "Garage offen-Schwellwert",
+      "garageThresholdDesc": "Warnung nach dieser Zeit"
     }
   },
   "ui": {
@@ -255,6 +266,14 @@
       "noLeaks": "Keine Lecks erkannt",
       "leakDetected": "LECK ERKANNT",
       "leaksDetected": "Lecks erkannt"
+    },
+    "door": {
+      "open_suffix": "Türen offen.",
+      "open_too_long_single": "{{name}} offen {{duration}}",
+      "open_too_long_multiple": "{{count}} Türen offen ({{duration}})"
+    },
+    "garage": {
+      "open_too_long": "Garage offen {{duration}}"
     },
     "motion": {
       "prefix": "Bewegung im Haus",

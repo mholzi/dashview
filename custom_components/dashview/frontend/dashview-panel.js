@@ -310,6 +310,9 @@ if (typeof structuredClone === 'undefined') {
         _tempRapidChangeWindowMinutes: { type: Number },
         _humidityRapidChangeThreshold: { type: Number },
         _humidityRapidChangeWindowMinutes: { type: Number },
+        _doorOpenTooLongMinutes: { type: Number },
+        _windowOpenTooLongMinutes: { type: Number },
+        _garageOpenTooLongMinutes: { type: Number },
         _weatherPopupOpen: { type: Boolean },
         _selectedForecastTab: { type: Number },
         _weatherEntity: { type: String },
@@ -509,6 +512,9 @@ if (typeof structuredClone === 'undefined') {
       this._tempRapidChangeWindowMinutes = 60;
       this._humidityRapidChangeThreshold = 20;
       this._humidityRapidChangeWindowMinutes = 30;
+      this._doorOpenTooLongMinutes = 30;
+      this._windowOpenTooLongMinutes = 120;
+      this._garageOpenTooLongMinutes = 30;
       this._weatherPopupOpen = false;
       this._selectedForecastTab = 0;
       this._weatherEntity = "weather.forecast_home";
@@ -806,6 +812,45 @@ if (typeof structuredClone === 'undefined') {
       const value = parseInt(e.target.value, 10);
       if (!isNaN(value) && value >= 10 && value <= 120) {
         this._humidityRapidChangeWindowMinutes = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle door open too long threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleDoorOpenTooLongChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 5 && value <= 1440) {
+        this._doorOpenTooLongMinutes = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle window open too long threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleWindowOpenTooLongChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 5 && value <= 1440) {
+        this._windowOpenTooLongMinutes = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle garage open too long threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleGarageOpenTooLongChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 5 && value <= 1440) {
+        this._garageOpenTooLongMinutes = value;
         this._saveSettings();
         this.requestUpdate();
       }
@@ -1597,6 +1642,9 @@ if (typeof structuredClone === 'undefined') {
             this._tempRapidChangeWindowMinutes = settings.tempRapidChangeWindowMinutes ?? 60;
             this._humidityRapidChangeThreshold = settings.humidityRapidChangeThreshold ?? 20;
             this._humidityRapidChangeWindowMinutes = settings.humidityRapidChangeWindowMinutes ?? 30;
+            this._doorOpenTooLongMinutes = settings.doorOpenTooLongMinutes ?? 30;
+            this._windowOpenTooLongMinutes = settings.windowOpenTooLongMinutes ?? 120;
+            this._garageOpenTooLongMinutes = settings.garageOpenTooLongMinutes ?? 30;
             this._weatherEntity = settings.weatherEntity;
             this._weatherCurrentTempEntity = settings.weatherCurrentTempEntity;
             this._weatherCurrentStateEntity = settings.weatherCurrentStateEntity;

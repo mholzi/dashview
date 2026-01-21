@@ -87,6 +87,9 @@ import { hapticWarning } from '../utils/haptic.js';
  * @property {number} tempRapidChangeWindowMinutes - Time window for temperature rapid change in minutes
  * @property {number} humidityRapidChangeThreshold - Humidity rapid change threshold in percent
  * @property {number} humidityRapidChangeWindowMinutes - Time window for humidity rapid change in minutes
+ * @property {number} doorOpenTooLongMinutes - Minutes before door open alert
+ * @property {number} windowOpenTooLongMinutes - Minutes before window open alert
+ * @property {number} garageOpenTooLongMinutes - Minutes before garage open alert
  * @property {string} weatherEntity
  * @property {string} weatherCurrentTempEntity
  * @property {string} weatherCurrentStateEntity
@@ -145,6 +148,11 @@ export const DEFAULT_SETTINGS = {
   humidityRapidChangeThreshold: THRESHOLDS.DEFAULT_HUMIDITY_RAPID_CHANGE,
   humidityRapidChangeWindowMinutes: THRESHOLDS.DEFAULT_HUMIDITY_RAPID_CHANGE_WINDOW,
 
+  // Open-too-long thresholds (duration alerts)
+  doorOpenTooLongMinutes: THRESHOLDS.DEFAULT_DOOR_OPEN_TOO_LONG_MINUTES,
+  windowOpenTooLongMinutes: THRESHOLDS.DEFAULT_WINDOW_OPEN_TOO_LONG_MINUTES,
+  garageOpenTooLongMinutes: THRESHOLDS.DEFAULT_GARAGE_OPEN_TOO_LONG_MINUTES,
+
   // Weather entity configuration
   weatherEntity: 'weather.forecast_home',
   weatherCurrentTempEntity: '',
@@ -175,6 +183,7 @@ export const DEFAULT_SETTINGS = {
   infoTextConfig: {
     motion: { enabled: true },
     garage: { enabled: true },
+    doors: { enabled: false },
     washer: { enabled: true, entity: '', finishTimeEntity: '' },
     windows: { enabled: false },
     lights: { enabled: false },
