@@ -2991,6 +2991,25 @@ if (typeof structuredClone === 'undefined') {
       }
     }
 
+    /**
+     * Dismiss a warning alert from the status bar
+     * @param {Object} status - Status object with alertId and entityLastChanged
+     */
+    _dismissAlert(status) {
+      if (!uiStateStore || !status.alertId) return;
+      uiStateStore.dismissAlert(status.alertId, status.entityLastChanged);
+      this.requestUpdate();
+    }
+
+    /**
+     * Show all alerts by clearing dismissed state
+     */
+    _showAllAlerts() {
+      if (!uiStateStore) return;
+      uiStateStore.clearDismissedAlerts();
+      this.requestUpdate();
+    }
+
     _closeLightsPopup() { this._closePopup('_lightsPopupOpen'); }
     _handleLightsPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeLightsPopup()); }
 
@@ -4283,6 +4302,18 @@ if (typeof structuredClone === 'undefined') {
           )
         : [];
 
+      // Filter out dismissed alerts (warnings only, per AC #5)
+      const visibleStatusItems = allStatusItems.filter(status => {
+        // Non-warning items are always visible
+        if (!status.isWarning) return true;
+        // Warning items: check if dismissed
+        if (!status.alertId || !uiStateStore) return true;
+        return !uiStateStore.isAlertDismissed(status.alertId, status.entityLastChanged);
+      });
+
+      // Track dismissed count for "Show all" UI
+      const dismissedCount = uiStateStore ? uiStateStore.getDismissedCount() : 0;
+
       // Use current weather sensors if configured, otherwise fallback to main weather entity
       const headerWeather = currentWeather || (weather ? { temperature: weather.temperature, condition: weather.state } : null);
       const headerUnit = weather?.unit || '°C';
@@ -4405,10 +4436,10 @@ if (typeof structuredClone === 'undefined') {
         })()}
 
         <!-- INFO TEXT ROW (Dynamic status messages) -->
-        ${allStatusItems.length > 0
+        ${visibleStatusItems.length > 0 || dismissedCount > 0
           ? html`
               <div class="info-text-row">
-                ${allStatusItems.map((status, index) => html`
+                ${visibleStatusItems.map((status, index) => html`
                   ${index > 0 ? html`<span class="text-segment">&nbsp;&nbsp;</span>` : ''}
                   <span class="text-segment">${status.prefixText} </span>
                   <span
@@ -4416,9 +4447,29 @@ if (typeof structuredClone === 'undefined') {
                     @click=${status.clickAction ? () => this._handleInfoTextClick(status.clickAction) : null}
                   >
                     ${status.badgeIcon ? html`<ha-icon icon="${status.badgeIcon}" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon> ` : ''}${status.badgeText}${status.emoji || ''}
+                    ${status.isWarning && status.alertId ? html`
+                      <span
+                        class="info-badge-dismiss"
+                        @click=${(e) => { e.stopPropagation(); this._dismissAlert(status); }}
+                        title="${t('status.dismiss', this._currentLanguage)}"
+                      >
+                        <ha-icon icon="mdi:close" style="--mdc-icon-size: 12px;"></ha-icon>
+                      </span>
+                    ` : ''}
                   </span>
                   <span class="text-segment">${status.suffixText}</span>
                 `)}
+                ${dismissedCount > 0 ? html`
+                  <span class="text-segment">&nbsp;&nbsp;</span>
+                  <span
+                    class="info-badge dismissed-indicator clickable"
+                    @click=${() => this._showAllAlerts()}
+                    title="${t('status.showAllAlerts', this._currentLanguage)}"
+                  >
+                    <ha-icon icon="mdi:eye-off" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon>
+                    ${t('status.dismissedCount', this._currentLanguage, { count: dismissedCount })}
+                  </span>
+                ` : ''}
               </div>
             `
           : ""}

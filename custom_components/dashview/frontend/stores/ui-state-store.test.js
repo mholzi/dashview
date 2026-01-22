@@ -5,6 +5,10 @@ describe('UIStateStore', () => {
   let store;
 
   beforeEach(async () => {
+    // Clear sessionStorage to prevent test pollution (dismissed alerts persist)
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
     // Reset module to clear singleton
     await vi.resetModules();
     const { UIStateStore: FreshUIStateStore } = await import('./ui-state-store.js');
@@ -853,6 +857,396 @@ describe('UIStateStore', () => {
 
       const instance2 = getStore();
       expect(instance2.get('activeTab')).toBe('singleton-test');
+    });
+  });
+
+  // ==================== Dismissed Alerts (Story 11.4) ====================
+
+  describe('dismissed alerts - dismissedAlerts state', () => {
+    it('should initialize with empty dismissedAlerts Map', () => {
+      expect(store.get('dismissedAlerts')).toBeInstanceOf(Map);
+      expect(store.get('dismissedAlerts').size).toBe(0);
+    });
+  });
+
+  describe('dismissed alerts - dismissAlert()', () => {
+    it('should add alert to dismissedAlerts Map', () => {
+      const alertId = 'door:binary_sensor.front_door';
+      const lastChanged = '2026-01-22T10:00:00Z';
+
+      store.dismissAlert(alertId, lastChanged);
+
+      const dismissedAlerts = store.get('dismissedAlerts');
+      expect(dismissedAlerts.has(alertId)).toBe(true);
+    });
+
+    it('should store dismissedAt timestamp and entityLastChanged', () => {
+      const alertId = 'window:binary_sensor.kitchen_window';
+      const lastChanged = '2026-01-22T11:30:00Z';
+      const beforeDismiss = Date.now();
+
+      store.dismissAlert(alertId, lastChanged);
+
+      const dismissedAlerts = store.get('dismissedAlerts');
+      const dismissal = dismissedAlerts.get(alertId);
+
+      expect(dismissal.entityLastChanged).toBe(lastChanged);
+      expect(dismissal.dismissedAt).toBeGreaterThanOrEqual(beforeDismiss);
+      expect(dismissal.dismissedAt).toBeLessThanOrEqual(Date.now());
+    });
+
+    it('should notify listeners when alert is dismissed', () => {
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.dismissAlert('battery:sensor.motion_battery', '2026-01-22T09:00:00Z');
+
+      expect(listener).toHaveBeenCalledWith(
+        'dismissedAlerts',
+        expect.any(Map),
+        expect.any(Map)
+      );
+    });
+
+    it('should handle multiple dismissed alerts', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+      store.dismissAlert('window:binary_sensor.bedroom_window', '2026-01-22T10:30:00Z');
+      store.dismissAlert('battery:sensor.temp_battery', '2026-01-22T11:00:00Z');
+
+      const dismissedAlerts = store.get('dismissedAlerts');
+      expect(dismissedAlerts.size).toBe(3);
+    });
+
+    it('should update existing dismissal if alert dismissed again', () => {
+      const alertId = 'garage:cover.garage_door';
+      store.dismissAlert(alertId, '2026-01-22T08:00:00Z');
+      const firstDismissal = store.get('dismissedAlerts').get(alertId);
+
+      // Dismiss again with new lastChanged
+      store.dismissAlert(alertId, '2026-01-22T12:00:00Z');
+      const secondDismissal = store.get('dismissedAlerts').get(alertId);
+
+      expect(secondDismissal.entityLastChanged).toBe('2026-01-22T12:00:00Z');
+      expect(secondDismissal.dismissedAt).toBeGreaterThanOrEqual(firstDismissal.dismissedAt);
+    });
+  });
+
+  describe('dismissed alerts - isAlertDismissed()', () => {
+    it('should return false for non-dismissed alert', () => {
+      expect(store.isAlertDismissed('door:binary_sensor.front_door', '2026-01-22T10:00:00Z')).toBe(false);
+    });
+
+    it('should return true for dismissed alert with same lastChanged', () => {
+      const alertId = 'door:binary_sensor.front_door';
+      const lastChanged = '2026-01-22T10:00:00Z';
+
+      store.dismissAlert(alertId, lastChanged);
+
+      expect(store.isAlertDismissed(alertId, lastChanged)).toBe(true);
+    });
+
+    it('should return false when entity state changed (different lastChanged)', () => {
+      const alertId = 'door:binary_sensor.front_door';
+      const originalLastChanged = '2026-01-22T10:00:00Z';
+      const newLastChanged = '2026-01-22T14:00:00Z';
+
+      store.dismissAlert(alertId, originalLastChanged);
+
+      // Entity state changed - alert should reappear
+      expect(store.isAlertDismissed(alertId, newLastChanged)).toBe(false);
+    });
+
+    it('should return false when dismissal has expired', () => {
+      const alertId = 'window:binary_sensor.kitchen_window';
+      const lastChanged = '2026-01-22T10:00:00Z';
+
+      store.dismissAlert(alertId, lastChanged);
+
+      // Mock time to be 2 hours later (past 1 hour expiry)
+      const originalDateNow = Date.now;
+      Date.now = vi.fn(() => originalDateNow() + 2 * 60 * 60 * 1000);
+
+      expect(store.isAlertDismissed(alertId, lastChanged)).toBe(false);
+
+      Date.now = originalDateNow;
+    });
+
+    it('should return true when dismissal has not expired', () => {
+      const alertId = 'battery:sensor.motion_battery';
+      const lastChanged = '2026-01-22T10:00:00Z';
+
+      store.dismissAlert(alertId, lastChanged);
+
+      // Mock time to be 30 minutes later (within 1 hour expiry)
+      const originalDateNow = Date.now;
+      const dismissTime = Date.now();
+      Date.now = vi.fn(() => dismissTime + 30 * 60 * 1000);
+
+      expect(store.isAlertDismissed(alertId, lastChanged)).toBe(true);
+
+      Date.now = originalDateNow;
+    });
+
+    it('should accept custom expiry duration - shorter expiry', () => {
+      const alertId = 'door:binary_sensor.front_door';
+      const lastChanged = '2026-01-22T10:00:00Z';
+
+      store.dismissAlert(alertId, lastChanged);
+
+      // Mock time to be 45 minutes later
+      const originalDateNow = Date.now;
+      const dismissTime = Date.now();
+      Date.now = vi.fn(() => dismissTime + 45 * 60 * 1000);
+
+      // With 30 minute expiry, should be expired
+      expect(store.isAlertDismissed(alertId, lastChanged, 30 * 60 * 1000)).toBe(false);
+
+      Date.now = originalDateNow;
+    });
+
+    it('should accept custom expiry duration - longer expiry', () => {
+      const alertId = 'door:binary_sensor.back_door';
+      const lastChanged = '2026-01-22T10:00:00Z';
+
+      store.dismissAlert(alertId, lastChanged);
+
+      // Mock time to be 45 minutes later
+      const originalDateNow = Date.now;
+      const dismissTime = Date.now();
+      Date.now = vi.fn(() => dismissTime + 45 * 60 * 1000);
+
+      // With 1 hour expiry, should still be valid
+      expect(store.isAlertDismissed(alertId, lastChanged, 60 * 60 * 1000)).toBe(true);
+
+      Date.now = originalDateNow;
+    });
+
+    it('should auto-remove expired dismissals from Map', () => {
+      const alertId = 'garage:cover.garage_door';
+      const lastChanged = '2026-01-22T10:00:00Z';
+
+      store.dismissAlert(alertId, lastChanged);
+      expect(store.get('dismissedAlerts').has(alertId)).toBe(true);
+
+      // Mock time past expiry
+      const originalDateNow = Date.now;
+      Date.now = vi.fn(() => originalDateNow() + 2 * 60 * 60 * 1000);
+
+      store.isAlertDismissed(alertId, lastChanged);
+
+      // Alert should be removed from Map
+      expect(store.get('dismissedAlerts').has(alertId)).toBe(false);
+
+      Date.now = originalDateNow;
+    });
+
+    it('should auto-remove alert when state changed', () => {
+      const alertId = 'water:binary_sensor.kitchen_leak';
+      const originalLastChanged = '2026-01-22T10:00:00Z';
+      const newLastChanged = '2026-01-22T15:00:00Z';
+
+      store.dismissAlert(alertId, originalLastChanged);
+      expect(store.get('dismissedAlerts').has(alertId)).toBe(true);
+
+      store.isAlertDismissed(alertId, newLastChanged);
+
+      // Alert should be removed from Map
+      expect(store.get('dismissedAlerts').has(alertId)).toBe(false);
+    });
+  });
+
+  describe('dismissed alerts - clearDismissedAlerts()', () => {
+    it('should clear all dismissed alerts', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+      store.dismissAlert('window:binary_sensor.bedroom_window', '2026-01-22T10:30:00Z');
+      store.dismissAlert('battery:sensor.temp_battery', '2026-01-22T11:00:00Z');
+
+      expect(store.get('dismissedAlerts').size).toBe(3);
+
+      store.clearDismissedAlerts();
+
+      expect(store.get('dismissedAlerts').size).toBe(0);
+    });
+
+    it('should notify listeners when alerts are cleared', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.clearDismissedAlerts();
+
+      expect(listener).toHaveBeenCalledWith(
+        'dismissedAlerts',
+        expect.any(Map),
+        expect.any(Map)
+      );
+    });
+
+    it('should be safe to call when no alerts are dismissed', () => {
+      expect(() => store.clearDismissedAlerts()).not.toThrow();
+      expect(store.get('dismissedAlerts').size).toBe(0);
+    });
+  });
+
+  describe('dismissed alerts - sessionStorage persistence', () => {
+    beforeEach(() => {
+      // Mock sessionStorage
+      const storage = {};
+      vi.stubGlobal('sessionStorage', {
+        getItem: vi.fn((key) => storage[key] || null),
+        setItem: vi.fn((key, value) => { storage[key] = value; }),
+        removeItem: vi.fn((key) => { delete storage[key]; }),
+        clear: vi.fn(() => { Object.keys(storage).forEach(k => delete storage[k]); }),
+      });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('should sync dismissed alerts to sessionStorage on dismiss', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+
+      expect(sessionStorage.setItem).toHaveBeenCalledWith(
+        'dashview_dismissed_alerts',
+        expect.any(String)
+      );
+    });
+
+    it('should sync to sessionStorage on clear', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+      vi.mocked(sessionStorage.setItem).mockClear();
+
+      store.clearDismissedAlerts();
+
+      expect(sessionStorage.setItem).toHaveBeenCalledWith(
+        'dashview_dismissed_alerts',
+        expect.any(String)
+      );
+    });
+
+    it('should serialize Map to JSON array format', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+
+      const setItemCall = vi.mocked(sessionStorage.setItem).mock.calls[0];
+      const serialized = JSON.parse(setItemCall[1]);
+
+      expect(Array.isArray(serialized)).toBe(true);
+      expect(serialized[0][0]).toBe('door:binary_sensor.front_door');
+      expect(serialized[0][1]).toHaveProperty('dismissedAt');
+      expect(serialized[0][1]).toHaveProperty('entityLastChanged');
+    });
+
+    it('should load dismissed alerts from sessionStorage on initialization', async () => {
+      const storedData = JSON.stringify([
+        ['door:binary_sensor.front_door', { dismissedAt: Date.now(), entityLastChanged: '2026-01-22T10:00:00Z' }],
+        ['window:binary_sensor.bedroom_window', { dismissedAt: Date.now(), entityLastChanged: '2026-01-22T11:00:00Z' }],
+      ]);
+
+      vi.mocked(sessionStorage.getItem).mockReturnValue(storedData);
+
+      // Create fresh store that should load from storage
+      await vi.resetModules();
+      const { UIStateStore: FreshUIStateStore } = await import('./ui-state-store.js');
+      const freshStore = new FreshUIStateStore();
+      freshStore._loadDismissedFromStorage();
+
+      const dismissedAlerts = freshStore.get('dismissedAlerts');
+      expect(dismissedAlerts.has('door:binary_sensor.front_door')).toBe(true);
+      expect(dismissedAlerts.has('window:binary_sensor.bedroom_window')).toBe(true);
+    });
+
+    it('should handle sessionStorage errors gracefully', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.mocked(sessionStorage.setItem).mockImplementation(() => {
+        throw new Error('Storage quota exceeded');
+      });
+
+      expect(() => store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z')).not.toThrow();
+
+      // Alert should still be in memory
+      expect(store.get('dismissedAlerts').has('door:binary_sensor.front_door')).toBe(true);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Dashview: Failed to save dismissed alerts',
+        expect.any(Error)
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should handle corrupted sessionStorage data gracefully', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.mocked(sessionStorage.getItem).mockReturnValue('invalid json {{{');
+
+      await vi.resetModules();
+      const { UIStateStore: FreshUIStateStore } = await import('./ui-state-store.js');
+      const freshStore = new FreshUIStateStore();
+
+      expect(() => freshStore._loadDismissedFromStorage()).not.toThrow();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Dashview: Failed to load dismissed alerts',
+        expect.any(Error)
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should handle null sessionStorage data', async () => {
+      vi.mocked(sessionStorage.getItem).mockReturnValue(null);
+
+      await vi.resetModules();
+      const { UIStateStore: FreshUIStateStore } = await import('./ui-state-store.js');
+      const freshStore = new FreshUIStateStore();
+      freshStore._loadDismissedFromStorage();
+
+      expect(freshStore.get('dismissedAlerts').size).toBe(0);
+    });
+
+    it('should automatically load dismissed alerts on construction (AC4 persistence)', async () => {
+      // Pre-populate sessionStorage with dismissed alerts
+      const storedAlerts = [
+        ['door:binary_sensor.front_door', { dismissedAt: Date.now(), entityLastChanged: '2026-01-22T10:00:00Z' }],
+        ['window:binary_sensor.bedroom_window', { dismissedAt: Date.now(), entityLastChanged: '2026-01-22T10:30:00Z' }],
+      ];
+      vi.mocked(sessionStorage.getItem).mockReturnValue(JSON.stringify(storedAlerts));
+
+      await vi.resetModules();
+      const { UIStateStore: FreshUIStateStore } = await import('./ui-state-store.js');
+
+      // Creating new instance should automatically load from sessionStorage
+      const freshStore = new FreshUIStateStore();
+
+      // Verify alerts were loaded automatically (no manual _loadDismissedFromStorage call)
+      expect(freshStore.get('dismissedAlerts').size).toBe(2);
+      expect(freshStore.get('dismissedAlerts').has('door:binary_sensor.front_door')).toBe(true);
+      expect(freshStore.get('dismissedAlerts').has('window:binary_sensor.bedroom_window')).toBe(true);
+    });
+  });
+
+  describe('dismissed alerts - getDismissedCount()', () => {
+    it('should return 0 when no alerts dismissed', () => {
+      expect(store.getDismissedCount()).toBe(0);
+    });
+
+    it('should return count of dismissed alerts', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+      store.dismissAlert('window:binary_sensor.bedroom_window', '2026-01-22T10:30:00Z');
+
+      expect(store.getDismissedCount()).toBe(2);
+    });
+  });
+
+  describe('dismissed alerts - reset integration', () => {
+    it('should clear dismissed alerts on reset', () => {
+      store.dismissAlert('door:binary_sensor.front_door', '2026-01-22T10:00:00Z');
+      store.dismissAlert('window:binary_sensor.bedroom_window', '2026-01-22T10:30:00Z');
+
+      store.reset();
+
+      expect(store.get('dismissedAlerts').size).toBe(0);
     });
   });
 

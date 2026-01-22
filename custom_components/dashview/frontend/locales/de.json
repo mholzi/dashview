@@ -349,7 +349,10 @@
     },
     "home": "Zuhause",
     "away": "Abwesend",
-    "since": "seit"
+    "since": "seit",
+    "dismiss": "Ausblenden",
+    "dismissedCount": "{{count}} ausgeblendet",
+    "showAllAlerts": "Alle Meldungen anzeigen"
   },
   "user": {
     "presence_history": "Anwesenheitsverlauf",

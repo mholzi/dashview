@@ -73,6 +73,10 @@ export const DEFAULT_UI_STATE = {
 
   // Time display
   currentTime: '',
+
+  // Dismissed alerts state (Story 11.4)
+  // Map<alertId, { dismissedAt: number, entityLastChanged: string }>
+  dismissedAlerts: new Map(),
 };
 
 /**
@@ -81,8 +85,14 @@ export const DEFAULT_UI_STATE = {
  */
 export class UIStateStore {
   constructor() {
-    this._state = { ...DEFAULT_UI_STATE };
+    this._state = {
+      ...DEFAULT_UI_STATE,
+      // Ensure fresh Map instances for nested objects
+      dismissedAlerts: new Map(),
+    };
     this._listeners = new Set();
+    // Load persisted dismissed alerts from sessionStorage (AC4)
+    this._loadDismissedFromStorage();
   }
 
   /**
@@ -335,6 +345,116 @@ export class UIStateStore {
     this.toggleInMap('expandedCardSections', sectionId);
   }
 
+  // ==================== Dismissed Alerts (Story 11.4) ====================
+
+  /**
+   * Dismiss an alert
+   * @param {string} alertId - Unique alert identifier (e.g., "door:binary_sensor.front_door")
+   * @param {string} entityLastChanged - ISO timestamp of entity's last_changed
+   */
+  dismissAlert(alertId, entityLastChanged) {
+    const oldDismissedAlerts = this._state.dismissedAlerts;
+    const dismissedAlerts = new Map(oldDismissedAlerts);
+    dismissedAlerts.set(alertId, {
+      dismissedAt: Date.now(),
+      entityLastChanged,
+    });
+    this._state.dismissedAlerts = dismissedAlerts;
+    this._notifyListeners('dismissedAlerts', dismissedAlerts, oldDismissedAlerts);
+    this._syncDismissedToStorage();
+  }
+
+  /**
+   * Check if an alert is currently dismissed
+   * @param {string} alertId - Alert identifier
+   * @param {string} currentLastChanged - Current entity last_changed timestamp
+   * @param {number} expiryMs - Dismissal expiry in ms (default 1 hour)
+   * @returns {boolean} True if alert should be hidden
+   */
+  isAlertDismissed(alertId, currentLastChanged, expiryMs = 3600000) {
+    const dismissedAlerts = this._state.dismissedAlerts;
+    if (!dismissedAlerts.has(alertId)) return false;
+
+    const { dismissedAt, entityLastChanged } = dismissedAlerts.get(alertId);
+
+    // Check if expired
+    if (Date.now() - dismissedAt > expiryMs) {
+      this._removeDismissedAlert(alertId);
+      return false;
+    }
+
+    // Check if entity state changed since dismissal
+    if (currentLastChanged && currentLastChanged !== entityLastChanged) {
+      this._removeDismissedAlert(alertId);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Clear all dismissed alerts
+   */
+  clearDismissedAlerts() {
+    const oldDismissedAlerts = this._state.dismissedAlerts;
+    const dismissedAlerts = new Map();
+    this._state.dismissedAlerts = dismissedAlerts;
+    this._notifyListeners('dismissedAlerts', dismissedAlerts, oldDismissedAlerts);
+    this._syncDismissedToStorage();
+  }
+
+  /**
+   * Get count of dismissed alerts
+   * @returns {number} Number of dismissed alerts
+   */
+  getDismissedCount() {
+    return this._state.dismissedAlerts.size;
+  }
+
+  /**
+   * Remove a specific dismissed alert
+   * @param {string} alertId - Alert identifier to remove
+   * @private
+   */
+  _removeDismissedAlert(alertId) {
+    const oldDismissedAlerts = this._state.dismissedAlerts;
+    if (!oldDismissedAlerts.has(alertId)) return;
+
+    const dismissedAlerts = new Map(oldDismissedAlerts);
+    dismissedAlerts.delete(alertId);
+    this._state.dismissedAlerts = dismissedAlerts;
+    this._notifyListeners('dismissedAlerts', dismissedAlerts, oldDismissedAlerts);
+    this._syncDismissedToStorage();
+  }
+
+  /**
+   * Load dismissed alerts from sessionStorage
+   */
+  _loadDismissedFromStorage() {
+    try {
+      const stored = sessionStorage.getItem('dashview_dismissed_alerts');
+      if (stored) {
+        const entries = JSON.parse(stored);
+        this._state.dismissedAlerts = new Map(entries);
+      }
+    } catch (e) {
+      console.warn('Dashview: Failed to load dismissed alerts', e);
+    }
+  }
+
+  /**
+   * Sync dismissed alerts to sessionStorage
+   * @private
+   */
+  _syncDismissedToStorage() {
+    try {
+      const entries = Array.from(this._state.dismissedAlerts.entries());
+      sessionStorage.setItem('dashview_dismissed_alerts', JSON.stringify(entries));
+    } catch (e) {
+      console.warn('Dashview: Failed to save dismissed alerts', e);
+    }
+  }
+
   // ==================== Subscription ====================
 
   /**
@@ -367,7 +487,11 @@ export class UIStateStore {
    * Reset UI state to defaults
    */
   reset() {
-    this._state = { ...DEFAULT_UI_STATE };
+    this._state = {
+      ...DEFAULT_UI_STATE,
+      // Ensure fresh Map instances for nested objects
+      dismissedAlerts: new Map(),
+    };
     this._notifyListeners('_reset', true, false);
   }
 

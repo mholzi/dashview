@@ -553,4 +553,44 @@ export const scenesStyles = `
   .info-text-row .info-badge.clickable:active {
     transform: scale(0.97);
   }
+
+  /* Dismiss button for warning alerts */
+  .info-text-row .info-badge-dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    padding: 6px;
+    min-width: 24px;
+    min-height: 24px;
+    border-radius: 50%;
+    opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    vertical-align: middle;
+    box-sizing: border-box;
+  }
+
+  .info-text-row .info-badge-dismiss:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  .info-text-row .info-badge.warning .info-badge-dismiss:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  /* Dismissed alerts indicator */
+  .info-text-row .info-badge.dismissed-indicator {
+    background: var(--dv-gray500);
+    color: var(--dv-gray000);
+    gap: 4px;
+  }
+
+  /* Touch devices - always visible dismiss button */
+  @media (hover: none) {
+    .info-text-row .info-badge-dismiss {
+      opacity: 0.8;
+    }
+  }
 `;

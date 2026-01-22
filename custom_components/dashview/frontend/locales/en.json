@@ -349,7 +349,10 @@
     },
     "home": "Home",
     "away": "Away",
-    "since": "since"
+    "since": "since",
+    "dismiss": "Dismiss",
+    "dismissedCount": "{{count}} hidden",
+    "showAllAlerts": "Show all alerts"
   },
   "user": {
     "presence_history": "Presence History",

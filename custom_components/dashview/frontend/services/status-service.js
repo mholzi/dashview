@@ -100,18 +100,24 @@ export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors
 
     if (count === 1) {
       // Single leak - show location
+      const sensor = wetSensors[0];
       return {
         state: 'alert',
         prefixText: t('status.water.leakDetected'),
-        badgeText: wetSensors[0].name,
+        badgeText: sensor.name,
         emoji: '💧',
         suffixText: '!',
         isWarning: true,
         clickAction: 'water',
         priority: 100,
+        alertId: `water:${sensor.entityId}`,
+        entityLastChanged: sensor.lastChanged ? sensor.lastChanged.toISOString() : null,
       };
     } else {
-      // Multiple leaks - show count
+      // Multiple leaks - show count (use earliest lastChanged for aggregate)
+      const earliestSensor = wetSensors.reduce((earliest, current) =>
+        current.lastChanged && (!earliest.lastChanged || current.lastChanged < earliest.lastChanged) ? current : earliest
+      );
       return {
         state: 'alert',
         prefixText: t('status.water.leakDetected'),
@@ -121,6 +127,8 @@ export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors
         isWarning: true,
         clickAction: 'water',
         priority: 100,
+        alertId: 'water:multiple',
+        entityLastChanged: earliestSensor.lastChanged ? earliestSensor.lastChanged.toISOString() : null,
       };
     }
   } else {
@@ -304,6 +312,20 @@ export function getGarageStatus(hass, infoTextConfig, enabledGarages, garageOpen
       durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
     }
 
+    // Find the garage that's been open longest for alertId
+    let longestOpenGarage = openGarages[0];
+    let longestLastChanged = null;
+    openGarages.forEach(entityId => {
+      const state = hass.states[entityId];
+      if (state && state.last_changed) {
+        const lastChanged = new Date(state.last_changed);
+        if (!longestLastChanged || lastChanged < longestLastChanged) {
+          longestLastChanged = lastChanged;
+          longestOpenGarage = entityId;
+        }
+      }
+    });
+
     return {
       state: "warning",
       prefixText: "",
@@ -313,6 +335,8 @@ export function getGarageStatus(hass, infoTextConfig, enabledGarages, garageOpen
       clickAction: "garage",
       isWarning: true,
       priority: 91,
+      alertId: count === 1 ? `garage:${longestOpenGarage}` : 'garage:multiple',
+      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
     };
   }
 
@@ -410,6 +434,8 @@ export function getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLon
       clickAction: "security",
       isWarning: true,
       priority: 92,
+      alertId: openDoors.length === 1 ? `door:${longestOpenDoor.entityId}` : 'door:multiple',
+      entityLastChanged: longestOpenDoor.lastChanged ? longestOpenDoor.lastChanged.toISOString() : null,
     };
   }
 
@@ -479,6 +505,20 @@ export function getWindowsStatus(hass, infoTextConfig, enabledWindows, windowOpe
       durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
     }
 
+    // Find the window that's been open longest for alertId
+    let longestOpenWindow = openWindows[0];
+    let longestLastChanged = null;
+    openWindows.forEach(entityId => {
+      const state = hass.states[entityId];
+      if (state && state.last_changed) {
+        const lastChanged = new Date(state.last_changed);
+        if (!longestLastChanged || lastChanged < longestLastChanged) {
+          longestLastChanged = lastChanged;
+          longestOpenWindow = entityId;
+        }
+      }
+    });
+
     return {
       state: "warning",
       prefixText: "",
@@ -488,6 +528,8 @@ export function getWindowsStatus(hass, infoTextConfig, enabledWindows, windowOpe
       clickAction: "security",
       isWarning: true,
       priority: 90,
+      alertId: count === 1 ? `window:${longestOpenWindow}` : 'window:multiple',
+      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
     };
   }
 
@@ -778,6 +820,8 @@ export function getVacuumStatus(hass, infoTextConfig) {
       badgeIcon: "mdi:robot-vacuum-alert",
       suffixText: "!",
       isWarning: true,
+      alertId: `vacuum:${entityId}`,
+      entityLastChanged: vacuumState.last_changed || null,
     };
   }
   return null;
@@ -813,6 +857,7 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
         entityId,
         name: state.attributes?.friendly_name || entityId,
         value: Math.round(value),
+        lastChanged: state.last_changed || null,
       });
     }
   });
@@ -831,6 +876,8 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
     suffixText: count === 1 ? t('status.battery.has_low') : t('status.battery.have_low'),
     isWarning: true,
     clickAction: "battery",
+    alertId: count === 1 ? `battery:${lowestDevice.entityId}` : 'battery:multiple',
+    entityLastChanged: lowestDevice.lastChanged,
   };
 }
 
