@@ -412,12 +412,20 @@
   "admin": {
     "invertPosition": "Invert",
     "tabs": {
+      "setup": "Setup",
       "entities": "Entities",
       "layout": "Layout",
       "weather": "Weather",
       "status": "Status",
       "scenes": "Scenes",
       "users": "Users"
+    },
+    "setup": {
+      "wizard": "Setup Wizard",
+      "wizardIntro": "Run the guided setup wizard to configure your dashboard step by step.",
+      "runWizard": "Run Setup Wizard",
+      "wizardDesc": "The setup wizard guides you through configuring floors, rooms, entities, and dashboard layout. Your existing settings will be preserved.",
+      "startWizard": "Start Setup Wizard"
     },
     "entities": {
       "title": "Entities",
@@ -569,7 +577,20 @@
       "noEntities": "No entities found",
       "entityId": "Entity ID",
       "deviceName": "Device Name",
-      "friendlyName": "Friendly Name"
+      "friendlyName": "Friendly Name",
+      "entityNotFound": "Entity not found"
+    },
+    "tooltip": {
+      "state": "State",
+      "changed": "Changed",
+      "type": "Type"
+    },
+    "suggestions": {
+      "unusedEntitySingular": "1 unused entity found",
+      "unusedEntityPlural": "{{count}} unused entities found",
+      "more": "+{{count}} more",
+      "unusedLights": "{{name}} has {{count}} lights that are not enabled",
+      "unusedTemperature": "{{name}} has temperature sensors that could be enabled"
     },
     "entityTypes": {
       "lights": "Lights",

@@ -13,6 +13,7 @@ export {
   getEntitySuggestions,
   createEntityPickerState
 } from './entity-picker.js';
+export { renderEntityPreviewTooltip } from './entity-preview-tooltip.js';
 
 // Import sortable-list to ensure it registers as custom element
 import './sortable-list.js';

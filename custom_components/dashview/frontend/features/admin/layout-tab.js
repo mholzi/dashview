@@ -1901,7 +1901,8 @@ export function renderAreaCard(panel, html, area) {
               typeKey: key,
               onSelectAll: settingsKey ? () => panel._bulkToggleEntities(area.area_id, settingsKey, group.filteredEntities, true) : undefined,
               onSelectNone: settingsKey ? () => panel._bulkToggleEntities(area.area_id, settingsKey, group.filteredEntities, false) : undefined,
-              getExtraToggle: group.getExtraToggle
+              getExtraToggle: group.getExtraToggle,
+              hass: panel.hass
             });
           });
         })()}

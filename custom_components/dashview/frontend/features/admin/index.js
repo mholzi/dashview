@@ -112,6 +112,13 @@ export function renderAdminTab(panel, html) {
           @wheel=${(e) => handleAdminTabWheel(panel, e)}
         >
           <button
+            class="admin-sub-tab ${panel._adminSubTab === 'setup' ? 'active' : ''}"
+            @click=${() => handleTabClick('setup')}
+          >
+            <ha-icon icon="mdi:wizard-hat"></ha-icon>
+            ${t('admin.tabs.setup', 'Setup')}
+          </button>
+          <button
             class="admin-sub-tab ${panel._adminSubTab === 'entities' ? 'active' : ''}"
             @click=${() => handleTabClick('entities')}
           >
@@ -152,13 +159,6 @@ export function renderAdminTab(panel, html) {
           >
             <ha-icon icon="mdi:account-group"></ha-icon>
             ${t('admin.tabs.users')}
-          </button>
-          <button
-            class="admin-sub-tab ${panel._adminSubTab === 'setup' ? 'active' : ''}"
-            @click=${() => handleTabClick('setup')}
-          >
-            <ha-icon icon="mdi:wizard-hat"></ha-icon>
-            ${t('admin.tabs.setup', 'Setup')}
           </button>
         </div>
         <div class="admin-sub-tabs-indicator admin-sub-tabs-indicator-right"></div>

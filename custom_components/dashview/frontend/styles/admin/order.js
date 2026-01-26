@@ -430,6 +430,151 @@ export const orderStyles = `
     margin-left: 12px;
   }
 
+  /* Entity Preview Tooltip (shown on hover in admin) */
+  .entity-item-with-tooltip {
+    position: relative;
+  }
+
+  .entity-preview-tooltip {
+    position: absolute;
+    z-index: 1000;
+    background: var(--dv-gray000, #ffffff);
+    border: 1px solid var(--dv-gray300, #e0e0e0);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    max-width: 300px;
+    pointer-events: none;
+    display: none;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
+  }
+
+  .entity-item-with-tooltip:hover .entity-preview-tooltip {
+    display: block;
+  }
+
+  .tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--dv-gray200, #f0f0f0);
+  }
+
+  .tooltip-header ha-icon {
+    --mdc-icon-size: 20px;
+    color: var(--dv-blue500, #2196F3);
+  }
+
+  .tooltip-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--dv-gray800, #333);
+  }
+
+  .tooltip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+
+  .tooltip-label {
+    color: var(--dv-gray500, #888);
+  }
+
+  .tooltip-value {
+    color: var(--dv-gray800, #333);
+    font-weight: 500;
+  }
+
+  .tooltip-value.state-value {
+    color: var(--dv-blue600, #1976D2);
+  }
+
+  /* Entity Suggestions Banner */
+  .entity-suggestions-banner {
+    background: linear-gradient(135deg, rgba(var(--dv-blue-rgb, 33, 150, 243), 0.08), rgba(var(--dv-blue-rgb, 33, 150, 243), 0.04));
+    border: 1px solid rgba(var(--dv-blue-rgb, 33, 150, 243), 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+  }
+
+  .suggestions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--dv-blue600, #1976D2);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .suggestions-header ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
+  .suggestions-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .suggestion-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--dv-gray000, #fff);
+    border: 1px solid var(--dv-gray300, #e0e0e0);
+    border-radius: 16px;
+    font-size: 12px;
+    color: var(--dv-gray700, #555);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .suggestion-chip:hover {
+    border-color: var(--dv-blue500, #2196F3);
+    background: rgba(var(--dv-blue-rgb, 33, 150, 243), 0.05);
+  }
+
+  .suggestion-chip ha-icon {
+    --mdc-icon-size: 16px;
+    color: var(--dv-gray500, #888);
+  }
+
+  .suggestion-chip .suggestion-add {
+    color: var(--dv-green, #4CAF50);
+    opacity: 0;
+    margin-left: -4px;
+    transition: opacity 0.2s ease;
+  }
+
+  .suggestion-chip:hover .suggestion-add {
+    opacity: 1;
+    margin-left: 0;
+  }
+
+  .suggestions-more {
+    font-size: 12px;
+    color: var(--dv-gray500, #888);
+    font-style: italic;
+  }
+
   .entity-name {
     color: var(--dv-gray800);
     display: flex;

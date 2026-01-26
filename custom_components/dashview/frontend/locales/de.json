@@ -412,12 +412,20 @@
   "admin": {
     "invertPosition": "Invertieren",
     "tabs": {
+      "setup": "Setup",
       "entities": "Entitäten",
       "layout": "Layout",
       "weather": "Wetter",
       "status": "Status",
       "scenes": "Szenen",
       "users": "Benutzer"
+    },
+    "setup": {
+      "wizard": "Einrichtungsassistent",
+      "wizardIntro": "Starte den geführten Einrichtungsassistenten, um dein Dashboard Schritt für Schritt zu konfigurieren.",
+      "runWizard": "Einrichtungsassistent starten",
+      "wizardDesc": "Der Einrichtungsassistent führt dich durch die Konfiguration von Etagen, Räumen, Entitäten und Dashboard-Layout. Deine bestehenden Einstellungen bleiben erhalten.",
+      "startWizard": "Einrichtungsassistent starten"
     },
     "entities": {
       "title": "Entitäten",
@@ -569,7 +577,20 @@
       "noEntities": "Keine Entitäten gefunden",
       "entityId": "Entitäts-ID",
       "deviceName": "Gerätename",
-      "friendlyName": "Anzeigename"
+      "friendlyName": "Anzeigename",
+      "entityNotFound": "Entität nicht gefunden"
+    },
+    "tooltip": {
+      "state": "Status",
+      "changed": "Geändert",
+      "type": "Typ"
+    },
+    "suggestions": {
+      "unusedEntitySingular": "1 ungenutzte Entität gefunden",
+      "unusedEntityPlural": "{{count}} ungenutzte Entitäten gefunden",
+      "more": "+{{count}} weitere",
+      "unusedLights": "{{name}} hat {{count}} Lichter, die nicht aktiviert sind",
+      "unusedTemperature": "{{name}} hat Temperatursensoren, die aktiviert werden könnten"
     },
     "entityTypes": {
       "lights": "Lichter",

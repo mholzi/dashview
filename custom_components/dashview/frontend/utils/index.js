@@ -131,3 +131,12 @@ export {
   calculateDelta,
   applyDelta
 } from './settings-diff.js';
+
+// Entity suggestions utilities
+export {
+  getUnusedEntitiesForCategory,
+  getAllSuggestionsForArea,
+  getUnusedEntityCount,
+  getMissingSuggestions,
+  renderSuggestionsBanner
+} from './entity-suggestions.js';

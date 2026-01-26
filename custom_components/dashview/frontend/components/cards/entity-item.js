@@ -4,6 +4,7 @@
  */
 
 import { renderToggleSwitch } from '../controls/toggle-switch.js';
+import { renderEntityPreviewTooltip } from '../controls/entity-preview-tooltip.js';
 
 /**
  * Render a generic entity card/item for admin configuration
@@ -21,11 +22,15 @@ import { renderToggleSwitch } from '../controls/toggle-switch.js';
  * @param {string} options.extraToggle.label - Label for the extra toggle
  * @param {boolean} options.extraToggle.checked - Whether the extra toggle is checked
  * @param {Function} options.extraToggle.onChange - Callback when extra toggle is clicked
+ * @param {Object} [options.hass] - Optional Home Assistant instance for tooltip preview
+ * @param {string} [options.entityId] - Optional entity ID for tooltip preview
  * @returns {TemplateResult} Entity card HTML
  */
-export function renderEntityItem(html, { icon, name, subtitle, state, isActive, enabled, onToggle, onClick, extraToggle }) {
+export function renderEntityItem(html, { icon, name, subtitle, state, isActive, enabled, onToggle, onClick, extraToggle, hass, entityId }) {
+  const showTooltip = hass && entityId;
+
   return html`
-    <div class="entity-item ${extraToggle ? 'with-extra-toggle' : ''}" @click=${onClick}>
+    <div class="entity-item ${extraToggle ? 'with-extra-toggle' : ''} ${showTooltip ? 'entity-item-with-tooltip' : ''}" @click=${onClick}>
       <div class="entity-item-info ${isActive ? 'active' : ''}">
         <ha-icon icon="${icon}"></ha-icon>
         <div class="entity-item-text">
@@ -43,6 +48,7 @@ export function renderEntityItem(html, { icon, name, subtitle, state, isActive, 
         ` : ''}
         ${renderToggleSwitch(html, { checked: enabled, onChange: onToggle })}
       </div>
+      ${showTooltip ? renderEntityPreviewTooltip(html, hass, entityId) : ''}
     </div>
   `;
 }
@@ -68,6 +74,7 @@ export function renderEntityItem(html, { icon, name, subtitle, state, isActive, 
  * @param {Function} [options.onSelectAll] - Optional callback to enable all entities
  * @param {Function} [options.onSelectNone] - Optional callback to disable all entities
  * @param {Function} [options.getExtraToggle] - Optional function to get extra toggle config for entity (entity) => { label, checked, onChange }
+ * @param {Object} [options.hass] - Optional Home Assistant instance for entity preview tooltips
  * @returns {TemplateResult} Entity section HTML
  */
 export function renderEntitySection(html, {
@@ -87,7 +94,8 @@ export function renderEntitySection(html, {
   typeKey,
   onSelectAll,
   onSelectNone,
-  getExtraToggle
+  getExtraToggle,
+  hass
 }) {
   if (entities.length === 0) return '';
 
@@ -146,7 +154,9 @@ export function renderEntitySection(html, {
           isActive: isActive(entity),
           enabled: entity.enabled,
           onToggle: () => onToggle(entity.entity_id),
-          extraToggle: getExtraToggle ? getExtraToggle(entity) : undefined
+          extraToggle: getExtraToggle ? getExtraToggle(entity) : undefined,
+          hass,
+          entityId: entity.entity_id
         }))}
       </div>
     </div>
