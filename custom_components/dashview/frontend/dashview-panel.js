@@ -3383,7 +3383,15 @@ if (typeof structuredClone === 'undefined') {
     // ============================================
 
     _getAreaLights(areaId) {
-      return roomDataService ? roomDataService.getAreaLights(areaId) : [];
+      const lights = roomDataService ? roomDataService.getAreaLights(areaId) : [];
+      // DEBUG: Log lights for each area (remove after debugging)
+      console.log(`[Dashview DEBUG] _getAreaLights("${areaId}"):`, lights.length, 'lights', lights.map(l => ({
+        id: l.entity_id,
+        domain: l.entity_id.split('.')[0],
+        state: l.state,
+        enabled: l.enabled
+      })));
+      return lights;
     }
 
     _getAreaMotionSensors(areaId) {

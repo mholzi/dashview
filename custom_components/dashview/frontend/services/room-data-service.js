@@ -246,6 +246,8 @@ export class RoomDataService {
       if (config.excludeDomains && config.excludeDomains.length > 0) {
         const domain = entityReg.entity_id.split('.')[0];
         if (config.excludeDomains.includes(domain)) {
+          // DEBUG: Log when filtering out excluded domains (remove after debugging)
+          console.log(`[Dashview DEBUG] FILTERED OUT: "${entityReg.entity_id}" (domain: ${domain}, excluded: ${config.excludeDomains.join(',')})`);
           return false;
         }
       }
