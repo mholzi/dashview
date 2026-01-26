@@ -152,7 +152,8 @@
       "rooms": "Rooms",
       "other_devices": "Other Devices",
       "devices": "Devices",
-      "locks": "Locks"
+      "locks": "Locks",
+      "batteries": "Batteries"
     },
     "errors": {
       "no_data": "No data available",
@@ -340,7 +341,10 @@
       "low": "low battery",
       "devices_low": "{{count}} devices",
       "has_low": "has low battery.",
-      "have_low": "have low battery."
+      "have_low": "have low battery.",
+      "devices_critical": "{{count}} devices critical",
+      "is_critical": "is critical.",
+      "are_critical": "are critical."
     },
     "general": {
       "currently_are": "Currently",

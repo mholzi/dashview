@@ -2227,27 +2227,25 @@ if (typeof structuredClone === 'undefined') {
         });
       });
 
-      // Get windows for this room (only show when open, iterate over registry)
-      this._entityRegistry.forEach((entityReg) => {
-        const entityId = entityReg.entity_id;
-        if (this._enabledWindows[entityId] === false) return;
-        const entityAreaId = this._getAreaIdForEntity(entityId);
-        if (entityAreaId !== areaId) return;
-        // Filter by current window label
-        if (!this._windowLabelId || !entityReg.labels || !entityReg.labels.includes(this._windowLabelId)) return;
+      // Get windows for this room (only show when open)
+      // Use roomDataService for consistency with room config (fixes #69)
+      const areaWindows = roomDataService ? roomDataService.getAreaWindows(areaId) : [];
+      areaWindows.forEach((window) => {
+        // Skip if explicitly disabled in settings
+        if (this._enabledWindows && this._enabledWindows[window.entity_id] === false) return;
 
-        const state = this.hass.states[entityId];
+        const state = this.hass.states[window.entity_id];
         if (!state) return;
 
         // Only show window when open
         if (state.state !== 'on') return;
 
-        const friendlyName = state.attributes?.friendly_name || entityId;
+        const friendlyName = state.attributes?.friendly_name || window.entity_id;
         const timeAgo = this._formatTimeAgo(state.last_changed);
 
         chips.push({
           type: 'window',
-          entityId,
+          entityId: window.entity_id,
           name: friendlyName,
           stateText: friendlyName,
           timeAgo,
@@ -4465,15 +4463,15 @@ if (typeof structuredClone === 'undefined') {
                   ${index > 0 ? html`<span class="text-segment">&nbsp;&nbsp;</span>` : ''}
                   <span class="text-segment">${status.prefixText} </span>
                   <span
-                    class="info-badge ${status.state === 'motion' || status.state === 'finished' || status.state === 'on' ? 'success' : ''} ${status.isWarning ? 'warning' : ''} ${status.clickAction ? 'clickable' : ''}"
+                    class="info-badge ${status.state === 'motion' || status.state === 'finished' || status.state === 'on' ? 'success' : ''} ${status.isCritical ? 'critical' : status.isWarning ? 'warning' : ''} ${status.clickAction ? 'clickable' : ''}"
                     @click=${status.clickAction ? () => this._handleInfoTextClick(status.clickAction) : null}
                   >
                     ${status.badgeIcon ? html`<ha-icon icon="${status.badgeIcon}" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon> ` : ''}${status.badgeText}${status.emoji || ''}
-                    ${status.isWarning && status.alertId ? html`
+                    ${(status.isWarning || status.isCritical) && status.alertId ? html`
                       <span
                         class="info-badge-dismiss"
                         @click=${(e) => { e.stopPropagation(); this._dismissAlert(status); }}
-                        title="${t('status.dismiss', this._currentLanguage)}"
+                        title="${t('status.dismiss')}"
                       >
                         <ha-icon icon="mdi:close" style="--mdc-icon-size: 12px;"></ha-icon>
                       </span>
@@ -4486,10 +4484,10 @@ if (typeof structuredClone === 'undefined') {
                   <span
                     class="info-badge dismissed-indicator clickable"
                     @click=${() => this._showAllAlerts()}
-                    title="${t('status.showAllAlerts', this._currentLanguage)}"
+                    title="${t('status.showAllAlerts')}"
                   >
                     <ha-icon icon="mdi:eye-off" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon>
-                    ${t('status.dismissedCount', this._currentLanguage, { count: dismissedCount })}
+                    ${t('status.dismissedCount', { count: dismissedCount })}
                   </span>
                 ` : ''}
               </div>
@@ -4613,15 +4611,18 @@ if (typeof structuredClone === 'undefined') {
 
         <!-- BATTERY POPUP -->
         ${this._batteryPopupOpen
-          ? html`
+          ? (() => {
+              const batteryStatus = statusService?.getBatteryLowStatus(this.hass, this._infoTextConfig);
+              const isCritical = batteryStatus?.isCritical || false;
+              return html`
               <div class="popup-overlay" @click=${this._handleBatteryPopupOverlayClick}>
                 <div class="popup-container">
                   <div class="popup-header">
-                    <div class="popup-icon" style="background: var(--warning-color, #ff9800);">
-                      <ha-icon icon="mdi:battery-low"></ha-icon>
+                    <div class="popup-icon" style="background: var(${isCritical ? '--error-color, #dc2626' : '--warning-color, #ff9800'});">
+                      <ha-icon icon="${isCritical ? 'mdi:battery-alert' : 'mdi:battery-low'}"></ha-icon>
                     </div>
                     <div class="popup-title">
-                      <h2>Batterien</h2>
+                      <h2>${t('ui.sections.batteries', 'Batteries')}</h2>
                     </div>
                     <button class="popup-close" @click=${this._closeBatteryPopup}>
                       <ha-icon icon="mdi:close"></ha-icon>
@@ -4632,7 +4633,7 @@ if (typeof structuredClone === 'undefined') {
                   </div>
                 </div>
               </div>
-            `
+            `})()
           : ""}
 
         <!-- USER POPUP -->

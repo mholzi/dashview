@@ -101,8 +101,8 @@ export function renderMediaPopup(component, html) {
  * Render media popup content with area tabs
  */
 function renderMediaContent(component, html) {
-  // Only show media players that are enabled in Admin
-  const allMediaPlayers = component._getAllMediaPlayers().filter(p => p.enabled);
+  // Only show media players that are enabled in Admin AND assigned to a room
+  const allMediaPlayers = component._getAllMediaPlayers().filter(p => p.enabled && p.areaId);
 
   if (allMediaPlayers.length === 0) {
     return html`

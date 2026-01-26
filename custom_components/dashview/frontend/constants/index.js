@@ -178,6 +178,7 @@ export const ICONS = {
 export const THRESHOLDS = {
   // Sensor thresholds
   BATTERY_LOW: 20,
+  BATTERY_CRITICAL: 10,
   TEMPERATURE_HIGH: 25,
   HUMIDITY_HIGH: 65,
   DEFAULT_TEMP_NOTIFICATION: 23,

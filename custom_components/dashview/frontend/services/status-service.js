@@ -829,6 +829,7 @@ export function getVacuumStatus(hass, infoTextConfig) {
 
 /**
  * Get battery low status for info text row
+ * Supports two tiers: critical (< criticalThreshold) and low (< threshold)
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
  * @returns {Object|null} Status object or null
@@ -837,9 +838,11 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
   if (!hass || !infoTextConfig.batteryLow?.enabled) return null;
 
   const threshold = infoTextConfig.batteryLow.threshold || 20;
+  const criticalThreshold = infoTextConfig.batteryLow.criticalThreshold || 10;
 
-  // Find all battery sensors below threshold
+  // Find all battery sensors below thresholds
   const lowBatteryDevices = [];
+  const criticalBatteryDevices = [];
 
   Object.entries(hass.states).forEach(([entityId, state]) => {
     // Check if it's a battery sensor
@@ -852,7 +855,14 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
     const value = parseFloat(state.state);
     if (isNaN(value)) return;
 
-    if (value < threshold && value >= 0) {
+    if (value < criticalThreshold && value >= 0) {
+      criticalBatteryDevices.push({
+        entityId,
+        name: state.attributes?.friendly_name || entityId,
+        value: Math.round(value),
+        lastChanged: state.last_changed || null,
+      });
+    } else if (value < threshold && value >= 0) {
       lowBatteryDevices.push({
         entityId,
         name: state.attributes?.friendly_name || entityId,
@@ -862,10 +872,31 @@ export function getBatteryLowStatus(hass, infoTextConfig) {
     }
   });
 
+  // Critical takes priority
+  if (criticalBatteryDevices.length > 0) {
+    const count = criticalBatteryDevices.length;
+    const lowestDevice = criticalBatteryDevices.sort((a, b) => a.value - b.value)[0];
+
+    return {
+      state: "critical",
+      prefixText: "",
+      badgeText: count === 1
+        ? `${lowestDevice.name} (${lowestDevice.value}%)`
+        : t('status.battery.devices_critical', { count }),
+      badgeIcon: "mdi:battery-alert",
+      suffixText: count === 1 ? t('status.battery.is_critical') : t('status.battery.are_critical'),
+      isWarning: true,
+      isCritical: true,
+      clickAction: "battery",
+      alertId: count === 1 ? `battery:${lowestDevice.entityId}` : 'battery:critical',
+      entityLastChanged: lowestDevice.lastChanged,
+    };
+  }
+
+  // Low battery (existing logic)
   if (lowBatteryDevices.length === 0) return null;
 
   const count = lowBatteryDevices.length;
-  // Get the lowest battery device name for the badge
   const lowestDevice = lowBatteryDevices.sort((a, b) => a.value - b.value)[0];
 
   return {

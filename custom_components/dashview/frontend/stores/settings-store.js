@@ -192,7 +192,7 @@ export const DEFAULT_SETTINGS = {
     dishwasher: { enabled: false, entity: '', finishTimeEntity: '' },
     dryer: { enabled: false, entity: '', finishTimeEntity: '' },
     vacuum: { enabled: false, entity: '' },
-    batteryLow: { enabled: false, threshold: THRESHOLDS.BATTERY_LOW },
+    batteryLow: { enabled: false, threshold: THRESHOLDS.BATTERY_LOW, criticalThreshold: THRESHOLDS.BATTERY_CRITICAL },
   },
 
   // Scene buttons (global and per-room)

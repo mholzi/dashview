@@ -152,7 +152,8 @@
       "rooms": "Räume",
       "other_devices": "Weitere Geräte",
       "devices": "Geräte",
-      "locks": "Schlösser"
+      "locks": "Schlösser",
+      "batteries": "Batterien"
     },
     "errors": {
       "no_data": "Keine Daten verfügbar",
@@ -340,7 +341,10 @@
       "low": "niedriger Akku",
       "devices_low": "{{count}} Geräte",
       "has_low": "hat niedrigen Akku.",
-      "have_low": "haben niedrigen Akku."
+      "have_low": "haben niedrigen Akku.",
+      "devices_critical": "{{count}} Geräte kritisch",
+      "is_critical": "ist kritisch.",
+      "are_critical": "sind kritisch."
     },
     "general": {
       "currently_are": "Aktuell sind",

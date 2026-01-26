@@ -536,6 +536,17 @@ export const scenesStyles = `
     color: var(--dv-gray000);
   }
 
+  .info-text-row .info-badge.critical {
+    background: var(--error-color, #dc2626);
+    color: white;
+    animation: pulse-critical 2s infinite;
+  }
+
+  @keyframes pulse-critical {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
   .info-text-row .info-badge.success {
     background: var(--dv-green);
     color: var(--dv-gray000);
@@ -578,6 +589,10 @@ export const scenesStyles = `
 
   .info-text-row .info-badge.warning .info-badge-dismiss:hover {
     background: rgba(0, 0, 0, 0.2);
+  }
+
+  .info-text-row .info-badge.critical .info-badge-dismiss:hover {
+    background: rgba(0, 0, 0, 0.25);
   }
 
   /* Dismissed alerts indicator */
