@@ -2299,9 +2299,17 @@ if (typeof structuredClone === 'undefined') {
     _togglePopupGarageExpanded() { this._toggleBoolProp('_popupGarageExpanded'); }
     _togglePopupThermostatExpanded() { this._toggleBoolProp('_popupThermostatExpanded'); }
 
-    // Generic helper to get enabled entities for a room with custom attribute mapping
-    // Iterates over registry entities (not enabledMap) to support default-enabled behavior
-    _getEnabledEntitiesForRoom(areaId, enabledMap, attrMapper, labelId = null) {
+    /**
+     * Generic helper to get enabled entities for a room with custom attribute mapping.
+     * Iterates over registry entities (not enabledMap) to support default-enabled behavior.
+     * @param {string} areaId - The area/room ID to get entities for
+     * @param {Object} enabledMap - Map of entity IDs to enabled state (false = disabled)
+     * @param {Function} attrMapper - Function to map entity state to additional attributes
+     * @param {string|null} labelId - Label ID to filter entities by
+     * @param {string[]|null} excludeDomains - Domains to exclude (e.g., ['automation', 'script', 'scene'])
+     * @returns {Array} Array of entity objects with mapped attributes
+     */
+    _getEnabledEntitiesForRoom(areaId, enabledMap, attrMapper, labelId = null, excludeDomains = null) {
       if (!this.hass || !labelId) return [];
       const entities = [];
       // Iterate over registry entities that have the label and are in the area
@@ -2309,6 +2317,11 @@ if (typeof structuredClone === 'undefined') {
         const entityId = entityReg.entity_id;
         // Check if entity has the required label
         if (!entityReg.labels || !entityReg.labels.includes(labelId)) return;
+        // Check excluded domains (e.g., automation/script/scene for lights)
+        if (excludeDomains && excludeDomains.length > 0) {
+          const domain = entityId.split('.')[0];
+          if (excludeDomains.includes(domain)) return;
+        }
         // Check if entity is in this area
         if (this._getAreaIdForEntity(entityId) !== areaId) return;
         // Check if entity is NOT explicitly disabled (default is enabled)
@@ -2642,6 +2655,7 @@ if (typeof structuredClone === 'undefined') {
     }
 
     _getEnabledLightsForRoom(areaId) {
+      const excludeDomains = ['automation', 'script', 'scene'];
       return this._getEnabledEntitiesForRoom(areaId, this._enabledLights, s => {
         const brightness = s.attributes?.brightness;
         const rgbColor = s.attributes?.rgb_color;
@@ -2651,7 +2665,7 @@ if (typeof structuredClone === 'undefined') {
           icon: s.attributes?.icon || 'mdi:lightbulb',
           rgbColor: rgbColor || null,
         };
-      }, this._lightLabelId);
+      }, this._lightLabelId, excludeDomains);
     }
 
     _getEnabledTVsForRoom(areaId) {
