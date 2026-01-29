@@ -1625,10 +1625,8 @@ if (typeof structuredClone === 'undefined') {
         }
 
         // Load settings via store (replaces _loadSettings)
-        if (settingsStore && !settingsStore.loaded && !settingsStore._loading) {
-          settingsStore._loading = true;
+        if (settingsStore && !settingsStore.loaded) {
           settingsStore.load().then(() => {
-            settingsStore._loading = false;
             // Sync store data to local properties for backwards compatibility
             const settings = settingsStore.all;
             this._enabledRooms = settings.enabledRooms || {};
@@ -1745,7 +1743,6 @@ if (typeof structuredClone === 'undefined') {
             debugLog("Settings synced from store");
             this.requestUpdate();
           }).catch(e => {
-            settingsStore._loading = false;
             console.error("Failed to load settings from store:", e);
           });
         }
