@@ -52,7 +52,7 @@ if (typeof structuredClone === 'undefined') {
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.0.23";
+  const DASHVIEW_VERSION = "1.5.0-beta.10";
 
   // Debug mode - set to true for development logging
   const DEBUG = false;
