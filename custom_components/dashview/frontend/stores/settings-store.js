@@ -258,6 +258,8 @@ export class SettingsStore {
     this._settings = { ...DEFAULT_SETTINGS };
     /** @type {boolean} */
     this._loaded = false;
+    /** @type {Promise|null} - Deduplicates concurrent load() calls (#74) */
+    this._loadPromise = null;
     /** @type {boolean} */
     this._loadError = false;
     /** @type {string|null} */
@@ -418,6 +420,21 @@ export class SettingsStore {
       return { success: true };
     }
 
+    // Deduplicate concurrent calls — return existing promise if load is in-flight (#74)
+    if (this._loadPromise) {
+      return this._loadPromise;
+    }
+
+    this._loadPromise = this._doLoad();
+    return this._loadPromise;
+  }
+
+  /**
+   * Internal load implementation
+   * @returns {Promise<LoadResult>}
+   * @private
+   */
+  async _doLoad() {
     try {
       const result = await this._hass.callWS({ type: 'dashview/get_settings' });
 
@@ -460,6 +477,8 @@ export class SettingsStore {
       this._lastError = e.message || 'Failed to load settings';
       console.error('Dashview: Failed to load settings from HA:', e);
       return { success: false, error: this._lastError };
+    } finally {
+      this._loadPromise = null;
     }
   }
 
