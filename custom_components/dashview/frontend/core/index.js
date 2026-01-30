@@ -22,6 +22,7 @@ export {
   handleLightSliderTouchMove,
   handleLightSliderTouchEnd,
   handleLightSliderMouseDown,
+  cleanupDragListeners,
   handleLightSliderClick,
   handlePopupOverlayClick,
   handleEntitySearch,

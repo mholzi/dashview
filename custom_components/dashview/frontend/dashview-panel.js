@@ -731,6 +731,10 @@ if (typeof structuredClone === 'undefined') {
       if (this._requestRegistry) {
         this._requestRegistry.abortAll();
       }
+      // Cleanup light slider drag listeners (fix memory leak #73)
+      if (coreUtils?.cleanupDragListeners) {
+        coreUtils.cleanupDragListeners(this);
+      }
     }
 
     _saveSettings() {
@@ -2894,69 +2898,11 @@ if (typeof structuredClone === 'undefined') {
     }
 
     // Mouse event handlers for light slider (desktop support)
+    // Delegates to core/events.js which uses AbortController for guaranteed cleanup (#73)
     _handleLightSliderMouseDown(e, entityId) {
-      this._lightSliderDragging = true;
-      this._lightSliderEntityId = entityId;
-
-      const item = e.currentTarget.closest('.popup-light-item');
-      if (item) {
-        item.classList.add('dragging');
-        this._lightSliderItem = item;
+      if (coreUtils?.handleLightSliderMouseDown) {
+        coreUtils.handleLightSliderMouseDown(this, e, entityId, this._setLightBrightness.bind(this));
       }
-
-      // Add global mouse event listeners
-      const handleMouseMove = (moveEvent) => {
-        if (!this._lightSliderDragging) return;
-
-        const slider = item.querySelector('.popup-light-slider-area');
-        if (!slider) return;
-
-        const rect = slider.getBoundingClientRect();
-        const mouseX = moveEvent.clientX - rect.left;
-        const percentage = Math.round((mouseX / rect.width) * 100);
-        const clampedPercentage = Math.max(1, Math.min(100, percentage));
-
-        // Update visual immediately
-        const sliderBg = item.querySelector('.popup-light-slider-bg');
-        if (sliderBg) {
-          sliderBg.style.width = `${clampedPercentage}%`;
-        }
-
-        // Update brightness display
-        const brightnessEl = item.querySelector('.popup-light-brightness');
-        if (brightnessEl) {
-          brightnessEl.textContent = `${clampedPercentage}%`;
-        }
-
-        this._lightSliderValue = clampedPercentage;
-      };
-
-      const handleMouseUp = () => {
-        // Apply the final value
-        if (this._lightSliderValue !== undefined && this._lightSliderEntityId) {
-          this._setLightBrightness(this._lightSliderEntityId, this._lightSliderValue);
-        }
-
-        // Remove dragging class
-        if (this._lightSliderItem) {
-          this._lightSliderItem.classList.remove('dragging');
-        }
-
-        // Reset state
-        this._lightSliderDragging = false;
-        this._lightSliderEntityId = null;
-        this._lightSliderValue = undefined;
-        this._lightSliderItem = null;
-
-        // Remove listeners
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-
-      e.preventDefault();
     }
 
     _handlePopupOverlayClick(e) {
