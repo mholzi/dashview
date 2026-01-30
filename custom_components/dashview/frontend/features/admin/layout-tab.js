@@ -947,6 +947,10 @@ export function renderCardConfig(panel, html) {
         ${renderInfoTextToggle(panel, html, 'tvs', t('admin.infoTextToggles.tvs'), 'mdi:television',
           t('admin.infoTextToggles.tvsDesc'))}
 
+        <!-- Smoke Detector Status -->
+        ${renderInfoTextToggle(panel, html, 'smoke', t('admin.infoTextToggles.smoke'), 'mdi:smoke-detector',
+          t('admin.infoTextToggles.smokeDesc'))}
+
         <!-- Washer Status -->
         ${renderInfoTextEntityConfig(panel, html, 'washer', t('admin.infoTextToggles.washer'), 'mdi:washing-machine',
           t('admin.infoTextToggles.washerDesc'), true)}

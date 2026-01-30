@@ -295,6 +295,10 @@
       "leakDetected": "LECK ERKANNT",
       "leaksDetected": "Lecks erkannt"
     },
+    "smoke": {
+      "detected": "RAUCH ERKANNT",
+      "detectedMultiple": "Melder ausgelöst"
+    },
     "door": {
       "open_suffix": "Türen offen.",
       "open_too_long_single": "{{name}} offen {{duration}}",
@@ -852,6 +856,8 @@
       "tvsDesc": "Zeigt eingeschaltete Fernseher an",
       "water": "Wasserleck",
       "waterDesc": "Zeigt Status der Wasserleck-Sensoren an",
+      "smoke": "Rauchmelder",
+      "smokeDesc": "Zeigt Rauchmelder-Alarme auf dem Dashboard an",
       "washer": "Waschmaschine",
       "washerDesc": "Zeigt Status der Waschmaschine an",
       "dishwasher": "Geschirrspüler",

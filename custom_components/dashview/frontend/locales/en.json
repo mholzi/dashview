@@ -295,6 +295,10 @@
       "leakDetected": "LEAK DETECTED",
       "leaksDetected": "leaks detected"
     },
+    "smoke": {
+      "detected": "SMOKE DETECTED",
+      "detectedMultiple": "detectors triggered"
+    },
     "door": {
       "open_suffix": "doors open.",
       "open_too_long_single": "{{name}} open {{duration}}",
@@ -852,6 +856,8 @@
       "tvsDesc": "Shows TVs turned on",
       "water": "Water Leak",
       "waterDesc": "Shows water leak sensor status",
+      "smoke": "Smoke Detectors",
+      "smokeDesc": "Shows smoke detector alerts on the dashboard",
       "washer": "Washing Machine",
       "washerDesc": "Shows washing machine status",
       "dishwasher": "Dishwasher",
