@@ -89,7 +89,7 @@ export function renderLabelMappingConfig(panel, html) {
 
       <div class="label-mapping-hint">
         <ha-icon icon="mdi:information-outline"></ha-icon>
-        <p>After configuring labels, go to the <strong>Rooms</strong> tab to enable specific entities for each room.</p>
+        <p>${t('admin.entities.labelsHint')}</p>
       </div>
     `}
   `;
@@ -173,10 +173,10 @@ export function renderEntitiesTab(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:home-group"></ha-icon>
-      Entities
+      ${t('admin.entities.title')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 20px;">
-      Configure label mappings and enable entities for each room.
+      ${t('admin.entities.entitiesTabDescription')}
     </p>
 
     <!-- Label Configuration Section -->
@@ -184,7 +184,7 @@ export function renderEntitiesTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('labelConfig')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:tag-multiple"></ha-icon>
-          Label Configuration
+          ${t('admin.entities.labelConfig')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('labelConfig') ? 'expanded' : ''}"
@@ -199,8 +199,8 @@ export function renderEntitiesTab(panel, html) {
         ${availableLabels.length === 0 ? renderEmptyState(html, {
           icon: 'mdi:tag-off-outline',
           title: t('admin.entities.noLabels'),
-          description: 'Create labels in Home Assistant first: Settings → Labels → Create Label',
-          hint: 'Then assign labels to your entities and come back here to configure the mapping'
+          description: t('admin.entities.createLabelsHint'),
+          hint: t('admin.entities.createLabelsThenAssign')
         }) : html`
           <div class="label-mapping-list">
             ${LABEL_CATEGORIES.map(category => renderCategoryRow(category))}
@@ -214,9 +214,9 @@ export function renderEntitiesTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('entityConfig')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:home-group"></ha-icon>
-          Room Configuration
+          ${t('admin.entities.roomConfig')}
           <span style="font-size: 14px; font-weight: 400; margin-left: 8px; color: var(--dv-gray600);">
-            ${enabledRooms}/${totalRooms} rooms enabled
+            ${enabledRooms}/${totalRooms} ${t('admin.entities.roomsEnabled2', { enabled: enabledRooms, total: totalRooms })}
           </span>
         </div>
         <ha-icon
@@ -226,7 +226,7 @@ export function renderEntitiesTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('entityConfig') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Enable rooms and configure which entities appear on the dashboard. Click a room to expand and toggle individual devices.
+          ${t('admin.entities.roomConfigTabDesc')}
         </p>
 
         <!-- Global Search -->
@@ -267,7 +267,7 @@ export function renderEntitiesTab(panel, html) {
                     <div style="font-size: 14px; font-weight: 500; color: var(--dv-gray600); margin-bottom: 8px; padding-left: 4px; display: flex; align-items: center; gap: 8px;">
                       <ha-icon icon="${getFloorIcon(floor)}" style="--mdc-icon-size: 18px;"></ha-icon>
                       ${floor.name}
-                      <span style="font-weight: 400; opacity: 0.7;">(${roomsForFloor.length} rooms)</span>
+                      <span style="font-weight: 400; opacity: 0.7;">(${roomsForFloor.length} ${t('admin.layout.rooms')})</span>
                     </div>
                     ${roomsForFloor.map((area) => renderAreaCard(panel, html, area))}
                   </div>
@@ -281,7 +281,7 @@ export function renderEntitiesTab(panel, html) {
                     <div style="font-size: 14px; font-weight: 500; color: var(--dv-gray600); margin-bottom: 8px; padding-left: 4px; display: flex; align-items: center; gap: 8px;">
                       <ha-icon icon="mdi:help-circle-outline" style="--mdc-icon-size: 18px;"></ha-icon>
                       ${t('admin.entities.unassignedRooms')}
-                      <span style="font-weight: 400; opacity: 0.7;">(${unassignedRooms.length} rooms)</span>
+                      <span style="font-weight: 400; opacity: 0.7;">(${unassignedRooms.length} ${t('admin.layout.rooms')})</span>
                     </div>
                     ${unassignedRooms.map((area) => renderAreaCard(panel, html, area))}
                   </div>

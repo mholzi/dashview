@@ -177,13 +177,13 @@ function renderInfoTextEntityConfig(panel, html, key, label, icon, description, 
       ${config.enabled ? html`
         <div class="info-text-config-entities">
           <div class="info-text-entity-row">
-            <label>Status Entity</label>
+            <label>${t('admin.layout.statusEntity')}</label>
             ${renderEntityPicker(html, {
               hass: panel.hass,
               value: '',
               searchQuery: searchState.query,
               focused: searchState.focused,
-              placeholder: 'Search sensors...',
+              placeholder: t('admin.common.searchSensors'),
               domainFilter: 'sensor',
               maxSuggestions: 15,
               onSelect: (entityId) => {
@@ -211,7 +211,7 @@ function renderInfoTextEntityConfig(panel, html, key, label, icon, description, 
           <!-- Selected Status Entity -->
           ${config.entity ? html`
             <div class="garbage-selected-sensors" style="margin-top: 8px;">
-              <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Selected Sensor</label>
+              <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.selectedSensor')}</label>
               <div class="garbage-sensor-list">
                 ${(() => {
                   const state = panel.hass?.states[config.entity];
@@ -239,13 +239,13 @@ function renderInfoTextEntityConfig(panel, html, key, label, icon, description, 
 
           ${hasFinishTime ? html`
             <div class="info-text-entity-row" style="margin-top: 16px;">
-              <label>Finish Time Entity (optional)</label>
+              <label>${t('admin.layout.finishTimeEntity')}</label>
               ${renderEntityPicker(html, {
                 hass: panel.hass,
                 value: '',
                 searchQuery: searchState.finishQuery,
                 focused: searchState.finishFocused,
-                placeholder: 'Search sensors...',
+                placeholder: t('admin.common.searchSensors'),
                 domainFilter: 'sensor',
                 maxSuggestions: 15,
                 onSelect: (entityId) => {
@@ -273,7 +273,7 @@ function renderInfoTextEntityConfig(panel, html, key, label, icon, description, 
             <!-- Selected Finish Time Entity -->
             ${config.finishTimeEntity ? html`
               <div class="garbage-selected-sensors" style="margin-top: 8px;">
-                <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Selected Finish Time Sensor</label>
+                <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.selectedFinishTimeSensor')}</label>
                 <div class="garbage-sensor-list">
                   ${(() => {
                     const state = panel.hass?.states[config.finishTimeEntity];
@@ -336,8 +336,8 @@ export function renderInfoTextBatteryConfig(panel, html) {
           <ha-icon icon="mdi:battery-low"></ha-icon>
         </div>
         <div class="info-text-config-label">
-          <span class="info-text-config-title">Niedriger Akkustand</span>
-          <span class="info-text-config-subtitle">Warnung bei niedrigem Akkustand von Geräten</span>
+          <span class="info-text-config-title">${t('admin.layout.lowBattery')}</span>
+          <span class="info-text-config-subtitle">${t('admin.layout.lowBatteryDesc')}</span>
         </div>
         <div
           class="toggle-switch ${config.enabled ? 'on' : ''}"
@@ -347,7 +347,7 @@ export function renderInfoTextBatteryConfig(panel, html) {
       ${config.enabled ? html`
         <div class="info-text-config-entities">
           <div class="info-text-entity-row">
-            <label>Schwellenwert</label>
+            <label>${t('admin.layout.threshold')}</label>
             <div class="info-text-threshold-input">
               <input
                 type="number"
@@ -380,10 +380,10 @@ export function renderCardConfig(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:card-multiple"></ha-icon>
-      Card Configuration
+      ${t('admin.layout.cardConfig')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure which cards appear on the Home dashboard and customize their settings.
+      ${t('admin.layout.cardConfigDesc')}
     </p>
 
     <!-- Room Climate Notification Section -->
@@ -391,7 +391,7 @@ export function renderCardConfig(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('climate')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          Room Climate Notification
+          ${t('admin.layout.roomClimateNotification')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('climate') ? 'expanded' : ''}"
@@ -400,13 +400,13 @@ export function renderCardConfig(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('climate') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Show a ventilation warning in room popups when temperature or humidity exceeds these thresholds.
+          ${t('admin.layout.ventilationWarningDesc')}
         </p>
 
         <div class="card-config-row">
           <div class="card-config-label">
-            <span class="card-config-label-title">Temperature Threshold</span>
-            <span class="card-config-label-subtitle">Show notification when temperature is above this value</span>
+            <span class="card-config-label-title">${t('admin.layout.temperatureThreshold')}</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.temperatureThresholdDesc')}</span>
           </div>
           <div class="card-config-input">
             <input
@@ -423,8 +423,8 @@ export function renderCardConfig(panel, html) {
 
         <div class="card-config-row">
           <div class="card-config-label">
-            <span class="card-config-label-title">Humidity Threshold</span>
-            <span class="card-config-label-subtitle">Show notification when humidity is above this value</span>
+            <span class="card-config-label-title">${t('admin.layout.humidityThreshold')}</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.humidityThresholdDesc')}</span>
           </div>
           <div class="card-config-input">
             <input
@@ -640,7 +640,7 @@ export function renderCardConfig(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('weather')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
-          Weather Card
+          ${t('admin.layout.weatherCard')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('weather') ? 'expanded' : ''}"
@@ -649,13 +649,13 @@ export function renderCardConfig(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('weather') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Select the weather entity for the header and weather popup. All forecast data will be fetched from this entity.
+          ${t('admin.layout.weatherCardDesc')}
         </p>
 
         <div class="card-config-row">
           <div class="card-config-label">
             <span class="card-config-label-title">${t('admin.weather.weatherEntity')}</span>
-            <span class="card-config-label-subtitle">Select your weather integration</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.selectWeatherIntegration')}</span>
           </div>
           <div class="card-config-input" style="flex: 1;">
             <select
@@ -685,8 +685,8 @@ export function renderCardConfig(panel, html) {
         <!-- DWD Warning Entity -->
         <div class="card-config-row" style="margin-top: 16px;">
           <div class="card-config-label">
-            <span class="card-config-label-title">DWD Warning Entity</span>
-            <span class="card-config-label-subtitle">German weather warnings (sensor.xxx_current_warning_level)</span>
+            <span class="card-config-label-title">${t('admin.layout.dwdWarningEntity')}</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.dwdWarningSubtitle')}</span>
           </div>
           <div class="card-config-input" style="flex: 1;">
             ${renderEntityPicker(html, {
@@ -724,7 +724,7 @@ export function renderCardConfig(panel, html) {
         <!-- Selected DWD Warning Sensor -->
         ${panel._dwdWarningEntity ? html`
           <div class="garbage-selected-sensors" style="margin-top: 12px;">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Selected Sensor</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.selectedSensor')}</label>
             <div class="garbage-sensor-list">
               ${(() => {
                 const state = panel.hass?.states[panel._dwdWarningEntity];
@@ -761,7 +761,7 @@ export function renderCardConfig(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('garbage')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:trash-can"></ha-icon>
-          Garbage Card
+          ${t('admin.layout.garbageCard')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('garbage') ? 'expanded' : ''}"
@@ -770,7 +770,7 @@ export function renderCardConfig(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('garbage') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 12px; font-size: 14px;">
-          Search and add sensor entities to display upcoming garbage pickup dates. The card shows in the Big 2 position.
+          ${t('admin.layout.garbageCardDesc')}
         </p>
 
         <!-- Search Input -->
@@ -780,7 +780,7 @@ export function renderCardConfig(panel, html) {
             <input
               type="text"
               class="garbage-search-input"
-              placeholder="Search sensor entities..."
+              placeholder="${t('admin.layout.searchSensorEntities')}"
               .value=${panel._garbageSearchQuery || ''}
               @input=${(e) => panel._handleGarbageSearch(e.target.value)}
               @focus=${() => panel._garbageSearchFocused = true}
@@ -799,7 +799,7 @@ export function renderCardConfig(panel, html) {
           ${panel._garbageSearchQuery && panel._garbageSearchFocused ? html`
             <div class="garbage-search-suggestions">
               ${panel._getGarbageSearchSuggestions().length === 0 ? html`
-                <div class="garbage-search-no-results">No matching sensors found</div>
+                <div class="garbage-search-no-results">${t('admin.layout.noMatchingSensors')}</div>
               ` : panel._getGarbageSearchSuggestions().map(sensor => {
                 const state = panel.hass?.states[sensor.entity_id];
                 const icon = state?.attributes?.icon || 'mdi:trash-can';
@@ -817,7 +817,7 @@ export function renderCardConfig(panel, html) {
                       <div class="garbage-suggestion-entity">${sensor.entity_id}</div>
                     </div>
                     ${alreadyAdded ? html`
-                      <span class="garbage-suggestion-added">Added</span>
+                      <span class="garbage-suggestion-added">${t('admin.layout.added')}</span>
                     ` : html`
                       <ha-icon icon="mdi:plus" class="garbage-suggestion-add"></ha-icon>
                     `}
@@ -831,7 +831,7 @@ export function renderCardConfig(panel, html) {
         <!-- Selected Sensors List -->
         ${panel._garbageSensors.length > 0 ? html`
           <div class="garbage-selected-sensors">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Selected Sensors</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.selectedSensors')}</label>
             <div class="garbage-sensor-list">
               ${panel._garbageSensors.map(entityId => {
                 const state = panel.hass?.states[entityId];
@@ -857,22 +857,22 @@ export function renderCardConfig(panel, html) {
           </div>
         ` : renderEmptyState(html, {
           icon: 'mdi:trash-can-outline',
-          title: 'No sensors added yet',
-          hint: 'Use the search above to find and add garbage pickup sensors'
+          title: t('admin.layout.noSensorsAdded'),
+          hint: t('admin.layout.noSensorsAddedHint')
         })}
 
         <!-- Floor Selection -->
         <div class="garbage-floor-selector">
-          <label>Display on Floor</label>
+          <label>${t('admin.layout.displayOnFloor')}</label>
           <p style="color: var(--dv-gray600); margin-bottom: 12px; font-size: 12px;">
-            Select which floor should show the garbage card in the Big 2 (bottom-left) position.
+            ${t('admin.layout.displayOnFloorDesc')}
           </p>
           <div class="garbage-floor-buttons">
             <button
               class="garbage-floor-btn ${!panel._garbageDisplayFloor ? 'active' : ''}"
               @click=${() => panel._setGarbageDisplayFloor(null)}
             >
-              None
+              ${t('admin.layout.none')}
             </button>
             ${orderedFloors.map(floor => html`
               <button
@@ -887,7 +887,7 @@ export function renderCardConfig(panel, html) {
 
         ${panel._garbageSensors.length > 0 ? html`
           <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--dv-gray300);">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Preview</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.preview')}</label>
             ${panel._renderGarbageCard()}
           </div>
         ` : ''}
@@ -899,7 +899,7 @@ export function renderCardConfig(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('infoText')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:text-box-outline"></ha-icon>
-          Info Text Area
+          ${t('admin.layout.infoTextArea')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('infoText') ? 'expanded' : ''}"
@@ -908,7 +908,7 @@ export function renderCardConfig(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('infoText') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Configure which status messages appear in the info text area below the header.
+          ${t('admin.layout.infoTextAreaDesc')}
         </p>
 
         <!-- Motion Status -->
@@ -993,7 +993,7 @@ export function renderCardConfig(panel, html) {
         <!-- Add New Scene Button -->
         <button class="scene-button-add" @click=${() => panel._addSceneButton()}>
           <ha-icon icon="mdi:plus"></ha-icon>
-          Add Scene Button
+          ${t('admin.layout.addSceneButton')}
         </button>
       </div>
     </div>
@@ -1003,7 +1003,7 @@ export function renderCardConfig(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('customLabels')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:tag-multiple"></ha-icon>
-          Custom Labels
+          ${t('admin.layout.customLabels')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('customLabels') ? 'expanded' : ''}"
@@ -1012,14 +1012,14 @@ export function renderCardConfig(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('customLabels') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Enable custom labels to show their entities in room configuration. Custom labels are user-defined labels beyond the standard types (lights, covers, etc.). Entities with enabled labels can have related child entities linked to them.
+          ${t('admin.layout.customLabelsDesc')}
         </p>
 
         ${panel._getCustomLabels().length === 0 ? html`
           <div class="custom-labels-empty">
             <ha-icon icon="mdi:tag-off-outline"></ha-icon>
-            <p>No custom labels found in Home Assistant.</p>
-            <p style="font-size: 12px; margin-top: 8px;">Create labels in Settings → Labels to organize your entities.</p>
+            <p>${t('admin.layout.noCustomLabelsFound')}</p>
+            <p style="font-size: 12px; margin-top: 8px;">${t('admin.layout.noCustomLabelsHint')}</p>
           </div>
         ` : html`
           <div class="custom-labels-list">
@@ -1151,7 +1151,7 @@ export function renderSceneButtonItem(panel, html, button, index) {
       <div class="scene-button-item-config">
         <!-- Button Label -->
         <div class="scene-button-config-row">
-          <label>Button Label</label>
+          <label>${t('admin.layout.buttonLabel')}</label>
           <input
             type="text"
             placeholder="e.g. All Off"
@@ -1162,14 +1162,14 @@ export function renderSceneButtonItem(panel, html, button, index) {
 
         <!-- Icon Selection -->
         <div class="scene-button-config-row">
-          <label>Icon</label>
+          <label>${t('admin.layout.icon')}</label>
           <div class="entity-picker">
             <div class="entity-picker-input-wrapper">
               <ha-icon icon="${button.icon || 'mdi:help'}" class="entity-picker-icon" style="--mdc-icon-size: 18px;"></ha-icon>
               <input
                 type="text"
                 class="entity-picker-input"
-                placeholder="Enter icon name (e.g., mdi:coffee) or search..."
+                placeholder="${t('admin.layout.iconPlaceholder')}"
                 .value=${searchState.iconFocused ? searchState.iconQuery : (button.icon || '')}
                 @input=${(e) => {
                   let value = e.target.value.trim();
@@ -1246,7 +1246,7 @@ export function renderSceneButtonItem(panel, html, button, index) {
             <!-- Validation error message -->
             ${searchState.iconQuery && !searchState.iconValid ? html`
               <div style="color: var(--dv-red); font-size: 12px; margin-top: 4px; padding-left: 4px;">
-                Invalid icon format. Use "mdi:icon-name" (e.g., mdi:coffee)
+                ${t('admin.layout.iconInvalidFormat')}
               </div>
             ` : ''}
 
@@ -1254,7 +1254,7 @@ export function renderSceneButtonItem(panel, html, button, index) {
             ${searchState.iconFocused ? html`
               <div class="entity-picker-suggestions">
                 ${getFilteredIcons().length === 0 ? html`
-                  <div class="entity-picker-no-results">No matching icons found in quick select list</div>
+                  <div class="entity-picker-no-results">${t('admin.layout.noMatchingIcons')}</div>
                 ` : getFilteredIcons().map(icon => html`
                   <div
                     class="entity-picker-suggestion ${button.icon === icon ? 'selected' : ''}"
@@ -1286,7 +1286,7 @@ export function renderSceneButtonItem(panel, html, button, index) {
 
         <!-- Action Type -->
         <div class="scene-button-config-row">
-          <label>Action Type</label>
+          <label>${t('admin.layout.actionType')}</label>
           <select
             .value=${button.actionType || 'service'}
             @change=${(e) => {
@@ -1295,9 +1295,9 @@ export function renderSceneButtonItem(panel, html, button, index) {
               updateButton('entity', '');
             }}
           >
-            <option value="service">Service Call</option>
-            <option value="scene">Activate Scene</option>
-            <option value="script">Run Script</option>
+            <option value="service">${t('admin.layout.serviceCall')}</option>
+            <option value="scene">${t('admin.layout.activateScene')}</option>
+            <option value="script">${t('admin.layout.runScript')}</option>
           </select>
         </div>
 
@@ -1341,7 +1341,7 @@ export function renderSceneButtonItem(panel, html, button, index) {
         <!-- Selected Entity Display -->
         ${button.entity ? html`
           <div class="garbage-selected-sensors" style="margin-top: 8px;">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Selected Entity</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.selectedEntity')}</label>
             <div class="garbage-sensor-list">
               ${(() => {
                 const state = panel.hass?.states[button.entity];
@@ -1369,12 +1369,12 @@ export function renderSceneButtonItem(panel, html, button, index) {
 
         <!-- Room Assignment -->
         <div class="scene-button-config-row" style="margin-top: 16px;">
-          <label>Display Location</label>
+          <label>${t('admin.layout.displayLocation')}</label>
           <select
             .value=${button.roomId || ''}
             @change=${(e) => updateButton('roomId', e.target.value)}
           >
-            <option value="">Main Page (Home)</option>
+            <option value="">${t('admin.layout.mainPageHome')}</option>
             ${panel._areas
               .filter(area => panel._enabledRooms[area.area_id] !== false)
               .sort((a, b) => a.name.localeCompare(b.name))
@@ -1386,7 +1386,7 @@ export function renderSceneButtonItem(panel, html, button, index) {
             }
           </select>
           <p style="font-size: 11px; color: var(--dv-gray600); margin-top: 4px;">
-            Select a room to show this button in the room popup, or leave empty for main page.
+            ${t('admin.layout.displayLocationHint')}
           </p>
         </div>
       </div>
@@ -1421,8 +1421,8 @@ export function renderOrderConfig(panel, html) {
       <div class="order-config-section-header" @click=${() => toggleSection('floorOrder')}>
         <div class="order-config-section-title">
           <ha-icon icon="mdi:layers"></ha-icon>
-          Floor Order
-          <span style="margin-left: 8px; font-size: 12px; opacity: 0.7;">(${sortedFloors.length} floors)</span>
+          ${t('admin.layout.floorOrder')}
+          <span style="margin-left: 8px; font-size: 12px; opacity: 0.7;">(${sortedFloors.length} ${t('admin.layout.floors')})</span>
         </div>
         <ha-icon
           class="order-config-section-chevron ${isExpanded('floorOrder') ? 'expanded' : ''}"
@@ -1432,8 +1432,8 @@ export function renderOrderConfig(panel, html) {
       <div class="order-config-section-content ${isExpanded('floorOrder') ? 'expanded' : ''}">
         ${sortedFloors.length === 0 ? renderEmptyState(html, {
           icon: 'mdi:floor-plan',
-          title: 'No floors configured in Home Assistant',
-          hint: 'Go to Settings → Areas & Zones → Floors to create floors'
+          title: t('admin.layout.noFloorsConfigured'),
+          hint: t('admin.layout.noFloorsConfiguredHint')
         }) : html`
           <sortable-list
             item-key="floor_id"
@@ -1453,7 +1453,7 @@ export function renderOrderConfig(panel, html) {
                   <div class="order-item-info">
                     <div class="order-item-name">${floor.name}</div>
                     <div class="order-item-subtitle">
-                      ${panel._getAreasForFloor(floor.floor_id).length} rooms
+                      ${panel._getAreasForFloor(floor.floor_id).length} ${t('admin.layout.rooms')}
                     </div>
                   </div>
                   <div class="order-item-buttons">
@@ -1487,7 +1487,7 @@ export function renderOrderConfig(panel, html) {
       <div class="order-config-section-header" @click=${() => toggleSection('roomOrder')}>
         <div class="order-config-section-title">
           <ha-icon icon="mdi:door"></ha-icon>
-          Room Order (per Floor)
+          ${t('admin.layout.roomOrderPerFloor')}
         </div>
         <ha-icon
           class="order-config-section-chevron ${isExpanded('roomOrder') ? 'expanded' : ''}"
@@ -1497,7 +1497,7 @@ export function renderOrderConfig(panel, html) {
       <div class="order-config-section-content ${isExpanded('roomOrder') ? 'expanded' : ''}">
         ${sortedFloors.length === 0 ? renderEmptyState(html, {
           icon: 'mdi:home-alert',
-          title: 'Configure floors first to order rooms'
+          title: t('admin.layout.configureFloorsFirst')
         }) : sortedFloors.map(floor => {
           const rooms = panel._getOrderedRoomsForFloor(floor.floor_id);
           return html`
@@ -1505,12 +1505,12 @@ export function renderOrderConfig(panel, html) {
               <div class="order-floor-header">
                 <ha-icon icon="${getFloorIcon(floor)}"></ha-icon>
                 <span class="order-floor-name">${floor.name}</span>
-                <span style="opacity: 0.8; font-size: 13px;">${rooms.length} rooms</span>
+                <span style="opacity: 0.8; font-size: 13px;">${rooms.length} ${t('admin.layout.rooms')}</span>
               </div>
 
               ${rooms.length === 0 ? html`
                 <p style="color: var(--dv-gray600); padding: 12px 0 0 36px; font-size: 14px;">
-                  No rooms assigned to this floor.
+                  ${t('admin.layout.noRoomsAssigned')}
                 </p>
               ` : html`
                 <div class="order-rooms-list">
@@ -1532,7 +1532,7 @@ export function renderOrderConfig(panel, html) {
                           <div class="order-item-info">
                             <div class="order-item-name">${area.name}</div>
                             <div class="order-item-subtitle">
-                              ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
+                              ${panel._enabledRooms[area.area_id] !== false ? t('admin.layout.enabled') : t('admin.layout.disabled')}
                             </div>
                           </div>
                           <div class="order-item-buttons">
@@ -1572,7 +1572,7 @@ export function renderOrderConfig(panel, html) {
               <div class="order-floor-header" style="background: var(--dv-gray600);">
                 <ha-icon icon="mdi:help-circle"></ha-icon>
                 <span class="order-floor-name">${t('admin.entities.unassignedRooms')}</span>
-                <span style="opacity: 0.8; font-size: 13px;">${unassignedRooms.length} rooms</span>
+                <span style="opacity: 0.8; font-size: 13px;">${unassignedRooms.length} ${t('admin.layout.rooms')}</span>
               </div>
               <div class="order-rooms-list">
                 <div class="order-list">
@@ -1585,7 +1585,7 @@ export function renderOrderConfig(panel, html) {
                       <div class="order-item-info">
                         <div class="order-item-name">${area.name}</div>
                         <div class="order-item-subtitle">
-                          ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
+                          ${panel._enabledRooms[area.area_id] !== false ? t('admin.layout.enabled') : t('admin.layout.disabled')}
                         </div>
                       </div>
                       <div class="order-item-buttons">
@@ -1649,7 +1649,7 @@ function renderAppliancesSection(panel, html, area) {
       <div class="entity-section-header">
         <div class="entity-section-title">
           <ha-icon icon="mdi:devices"></ha-icon>
-          <span>Devices</span>
+          <span>${t('admin.layout.devices')}</span>
           <span class="entity-section-count">${enabledCount}/${devices.length}</span>
         </div>
       </div>
@@ -1674,7 +1674,7 @@ function renderAppliancesSection(panel, html, area) {
                 <div class="device-config-row">
                   <label>
                     <ha-icon icon="mdi:state-machine" style="--mdc-icon-size: 16px;"></ha-icon>
-                    State Entity
+                    ${t('admin.layout.stateEntity')}
                   </label>
                   <select
                     .value=${device.stateEntity || ''}
@@ -1691,7 +1691,7 @@ function renderAppliancesSection(panel, html, area) {
                 <div class="device-config-row">
                   <label>
                     <ha-icon icon="mdi:timer-outline" style="--mdc-icon-size: 16px;"></ha-icon>
-                    Timer Entity
+                    ${t('admin.layout.timerEntity')}
                   </label>
                   <select
                     .value=${device.timerEntity || ''}
@@ -1854,7 +1854,7 @@ export function renderAreaCard(panel, html, area) {
             <input
               type="text"
               class="garbage-search-input"
-              placeholder="Search entities..."
+              placeholder="${t('admin.layout.searchEntities')}"
               .value=${searchTerm}
               @input=${(e) => {
                 e.stopPropagation();
@@ -1892,7 +1892,7 @@ export function renderAreaCard(panel, html, area) {
               }}
             >
               <ha-icon icon="${allExpanded ? 'mdi:unfold-less-horizontal' : 'mdi:unfold-more-horizontal'}"></ha-icon>
-              ${allExpanded ? 'Collapse All' : 'Expand All'}
+              ${allExpanded ? t('admin.layout.collapseAll') : t('admin.layout.expandAll')}
             </button>
           </div>
         ` : ''}
@@ -1914,7 +1914,7 @@ export function renderAreaCard(panel, html, area) {
             return html`
               <div style="padding: 24px; text-align: center; color: var(--dv-gray600);">
                 <ha-icon icon="mdi:magnify" style="font-size: 48px; opacity: 0.3; margin-bottom: 8px;"></ha-icon>
-                <div>No entities match "${searchTerm}"</div>
+                <div>${t('admin.layout.noEntitiesMatch', { query: searchTerm })}</div>
               </div>
             `;
           }
@@ -2200,7 +2200,7 @@ export function renderLayoutTab(panel, html) {
         <div class="floor-card-entity-config-header">
           <span class="floor-card-entity-config-title">
             <ha-icon icon="mdi:pencil" style="--mdc-icon-size: 16px;"></ha-icon>
-            Configure ${slotLabels[slotIndex].name}
+            ${t('admin.layout.configure')} ${slotLabels[slotIndex].name}
           </span>
           <ha-icon
             icon="mdi:close"
@@ -2214,14 +2214,14 @@ export function renderLayoutTab(panel, html) {
 
         <!-- Entity Search - Only shows enabled entities from enabled rooms -->
         <div class="scene-button-config-row">
-          <label>Select Entity (${entities.length} available)</label>
+          <label>${t('admin.layout.selectEntity')} (${entities.length})</label>
           <div class="entity-picker">
             <div class="entity-picker-input-wrapper">
               <ha-icon icon="mdi:magnify" class="entity-picker-icon"></ha-icon>
               <input
                 type="text"
                 class="entity-picker-input"
-                placeholder="Search enabled entities..."
+                placeholder="${t('admin.layout.searchEnabledEntities')}"
                 .value=${searchState.query}
                 @input=${(e) => {
                   searchState.query = e.target.value;
@@ -2259,7 +2259,7 @@ export function renderLayoutTab(panel, html) {
                   ).slice(0, 20);
 
                   if (filtered.length === 0) {
-                    return html`<div class="entity-picker-no-results">No matching enabled entities found</div>`;
+                    return html`<div class="entity-picker-no-results">${t('admin.layout.noMatchingEnabledEntities')}</div>`;
                   }
 
                   return filtered.map(entity => html`
@@ -2294,7 +2294,7 @@ export function renderLayoutTab(panel, html) {
 
         ${isConfigured && entityInfo ? html`
           <div class="garbage-selected-sensors" style="margin-top: 8px;">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${isAppliance ? 'Selected Device' : 'Selected Entity'}</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${isAppliance ? t('admin.layout.selectedDevice') : t('admin.layout.selectedEntity')}</label>
             <div class="garbage-sensor-list">
               <div class="garbage-sensor-item selected">
                 <ha-icon icon="${entityInfo.icon}"></ha-icon>
@@ -2323,10 +2323,10 @@ export function renderLayoutTab(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:view-grid-plus"></ha-icon>
-      Layout Configuration
+      ${t('admin.layout.layoutConfig')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure the display order of floors and rooms, and assign entities to floor card slots.
+      ${t('admin.layout.layoutConfigDesc')}
     </p>
 
     <!-- Floor Order Section -->
@@ -2334,8 +2334,8 @@ export function renderLayoutTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('floorOrder')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:layers"></ha-icon>
-          Floor Order
-          <span style="margin-left: 8px; font-size: 12px; opacity: 0.7;">(${orderedFloors.length} floors)</span>
+          ${t('admin.layout.floorOrder')}
+          <span style="margin-left: 8px; font-size: 12px; opacity: 0.7;">(${orderedFloors.length} ${t('admin.layout.floors')})</span>
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('floorOrder') ? 'expanded' : ''}"
@@ -2345,8 +2345,8 @@ export function renderLayoutTab(panel, html) {
       <div class="card-config-section-content ${isExpanded('floorOrder') ? 'expanded' : ''}">
         ${orderedFloors.length === 0 ? renderEmptyState(html, {
           icon: 'mdi:floor-plan',
-          title: 'No floors configured in Home Assistant',
-          hint: 'Go to Settings → Areas & Zones → Floors to create floors'
+          title: t('admin.layout.noFloorsConfigured'),
+          hint: t('admin.layout.noFloorsConfiguredHint')
         }) : html`
           <div class="order-list">
             ${orderedFloors.map((floor, index) => html`
@@ -2358,7 +2358,7 @@ export function renderLayoutTab(panel, html) {
                 <div class="order-item-info">
                   <div class="order-item-name">${floor.name}</div>
                   <div class="order-item-subtitle">
-                    ${panel._getAreasForFloor(floor.floor_id).length} rooms
+                    ${panel._getAreasForFloor(floor.floor_id).length} ${t('admin.layout.rooms')}
                   </div>
                 </div>
                 <div class="order-item-buttons">
@@ -2391,7 +2391,7 @@ export function renderLayoutTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('roomOrder')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:door"></ha-icon>
-          Room Order
+          ${t('admin.layout.roomOrder')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('roomOrder') ? 'expanded' : ''}"
@@ -2401,7 +2401,7 @@ export function renderLayoutTab(panel, html) {
       <div class="card-config-section-content ${isExpanded('roomOrder') ? 'expanded' : ''}">
         ${orderedFloors.length === 0 ? renderEmptyState(html, {
           icon: 'mdi:home-alert',
-          title: 'Configure floors first to order rooms'
+          title: t('admin.layout.configureFloorsFirst')
         }) : orderedFloors.map(floor => {
           const rooms = panel._getOrderedRoomsForFloor(floor.floor_id);
           return html`
@@ -2409,12 +2409,12 @@ export function renderLayoutTab(panel, html) {
               <div class="order-floor-header">
                 <ha-icon icon="${getFloorIcon(floor)}"></ha-icon>
                 <span class="order-floor-name">${floor.name}</span>
-                <span style="opacity: 0.8; font-size: 13px;">${rooms.length} rooms</span>
+                <span style="opacity: 0.8; font-size: 13px;">${rooms.length} ${t('admin.layout.rooms')}</span>
               </div>
 
               ${rooms.length === 0 ? html`
                 <p style="color: var(--dv-gray600); padding: 12px 0 0 36px; font-size: 14px;">
-                  No rooms assigned to this floor.
+                  ${t('admin.layout.noRoomsAssigned')}
                 </p>
               ` : html`
                 <div class="order-rooms-list">
@@ -2436,7 +2436,7 @@ export function renderLayoutTab(panel, html) {
                           <div class="order-item-info">
                             <div class="order-item-name">${area.name}</div>
                             <div class="order-item-subtitle">
-                              ${panel._enabledRooms[area.area_id] !== false ? 'Enabled' : 'Disabled'}
+                              ${panel._enabledRooms[area.area_id] !== false ? t('admin.layout.enabled') : t('admin.layout.disabled')}
                             </div>
                           </div>
                           <div class="order-item-buttons">
@@ -2474,7 +2474,7 @@ export function renderLayoutTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('floorCards')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:view-grid"></ha-icon>
-          Floor Card Slots
+          ${t('admin.layout.floorCardSlots')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('floorCards') ? 'expanded' : ''}"
@@ -2483,7 +2483,7 @@ export function renderLayoutTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('floorCards') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Configure which entities appear on each floor's card grid. Click a slot to select an entity.
+          ${t('admin.layout.floorCardSlotsDesc')}
         </p>
 
         ${orderedFloors.map(floor => html`
@@ -2498,8 +2498,8 @@ export function renderLayoutTab(panel, html) {
               <div class="floor-overview-toggle-label">
                 <ha-icon icon="mdi:view-carousel"></ha-icon>
                 <div class="floor-overview-toggle-text">
-                  <span class="floor-overview-toggle-title">Floor Overview (Top Right)</span>
-                  <span class="floor-overview-toggle-subtitle">Swipeable card showing all rooms on this floor</span>
+                  <span class="floor-overview-toggle-title">${t('admin.layout.floorOverviewTopRight')}</span>
+                  <span class="floor-overview-toggle-subtitle">${t('admin.layout.floorOverviewSubtitle')}</span>
                 </div>
               </div>
               <div
@@ -2514,12 +2514,12 @@ export function renderLayoutTab(panel, html) {
               ${renderVisualSlot(
                 floor.floor_id, 1, true, 'big1',
                 panel._floorOverviewEnabled[floor.floor_id],
-                'mdi:view-carousel', 'Floor Overview'
+                'mdi:view-carousel', t('admin.layout.floorOverview')
               )}
               ${renderVisualSlot(
                 floor.floor_id, 2, true, 'big2',
                 panel._garbageDisplayFloor === floor.floor_id && panel._garbageSensors.length > 0,
-                'mdi:trash-can', 'Garbage Card'
+                'mdi:trash-can', t('admin.layout.garbageCard')
               )}
               ${renderVisualSlot(floor.floor_id, 3, false, 'small2', false)}
               ${renderVisualSlot(floor.floor_id, 4, false, 'small3', false)}
@@ -2547,13 +2547,13 @@ export function renderLayoutTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('climate') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Show a ventilation warning in room popups when temperature or humidity exceeds these thresholds.
+          ${t('admin.layout.ventilationWarningDesc')}
         </p>
 
         <div class="card-config-row">
           <div class="card-config-label">
-            <span class="card-config-label-title">Temperature Threshold</span>
-            <span class="card-config-label-subtitle">Show notification when temperature is above this value</span>
+            <span class="card-config-label-title">${t('admin.layout.temperatureThreshold')}</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.temperatureThresholdDesc')}</span>
           </div>
           <div class="card-config-input">
             <input
@@ -2570,8 +2570,8 @@ export function renderLayoutTab(panel, html) {
 
         <div class="card-config-row">
           <div class="card-config-label">
-            <span class="card-config-label-title">Humidity Threshold</span>
-            <span class="card-config-label-subtitle">Show notification when humidity is above this value</span>
+            <span class="card-config-label-title">${t('admin.layout.humidityThreshold')}</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.humidityThresholdDesc')}</span>
           </div>
           <div class="card-config-input">
             <input

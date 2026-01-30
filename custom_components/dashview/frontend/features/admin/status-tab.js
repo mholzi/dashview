@@ -94,10 +94,10 @@ export function renderStatusTab(panel, html) {
     <!-- ==================== A. HOUSE INFO ==================== -->
     <h2 class="section-title">
       <ha-icon icon="mdi:home-outline"></ha-icon>
-      House Info
+      ${t('admin.status.houseInfo')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure status information that appears in the info text area below the header.
+      ${t('admin.status.houseInfoDesc')}
     </p>
 
     <!-- Quick Status Section -->
@@ -105,7 +105,7 @@ export function renderStatusTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('quickStatus')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:text-box-outline"></ha-icon>
-          Quick Status Items
+          ${t('admin.status.quickStatusItems')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('quickStatus') ? 'expanded' : ''}"
@@ -114,7 +114,7 @@ export function renderStatusTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('quickStatus') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Toggle status messages that appear in the info text area below the header.
+          ${t('admin.status.quickStatusItemsDesc')}
         </p>
 
         <!-- Motion Status -->
@@ -156,10 +156,10 @@ export function renderStatusTab(panel, html) {
     <!-- ==================== B. GARBAGE ==================== -->
     <h2 class="section-title" style="margin-top: 40px;">
       <ha-icon icon="mdi:trash-can"></ha-icon>
-      Garbage
+      ${t('admin.status.garbage')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure garbage pickup schedule display.
+      ${t('admin.status.garbageDesc')}
     </p>
 
     <!-- Garbage Card Section -->
@@ -167,7 +167,7 @@ export function renderStatusTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('garbage')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:trash-can"></ha-icon>
-          Garbage Card
+          ${t('admin.layout.garbageCard')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('garbage') ? 'expanded' : ''}"
@@ -176,7 +176,7 @@ export function renderStatusTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('garbage') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 12px; font-size: 14px;">
-          Search and add sensor entities to display upcoming garbage pickup dates.
+          ${t('admin.status.garbageCardDesc')}
         </p>
 
         <!-- Search Input -->
@@ -186,7 +186,7 @@ export function renderStatusTab(panel, html) {
             <input
               type="text"
               class="garbage-search-input"
-              placeholder="Search sensor entities..."
+              placeholder="${t('admin.layout.searchSensorEntities')}"
               .value=${panel._garbageSearchQuery || ''}
               @input=${(e) => panel._handleGarbageSearch(e.target.value)}
               @focus=${() => panel._garbageSearchFocused = true}
@@ -205,7 +205,7 @@ export function renderStatusTab(panel, html) {
           ${panel._garbageSearchQuery && panel._garbageSearchFocused ? html`
             <div class="garbage-search-suggestions">
               ${panel._getGarbageSearchSuggestions().length === 0 ? html`
-                <div class="garbage-search-no-results">No matching sensors found</div>
+                <div class="garbage-search-no-results">${t('admin.layout.noMatchingSensors')}</div>
               ` : panel._getGarbageSearchSuggestions().map(sensor => {
                 const state = panel.hass?.states[sensor.entity_id];
                 const icon = state?.attributes?.icon || 'mdi:trash-can';
@@ -223,7 +223,7 @@ export function renderStatusTab(panel, html) {
                       <div class="garbage-suggestion-entity">${sensor.entity_id}</div>
                     </div>
                     ${alreadyAdded ? html`
-                      <span class="garbage-suggestion-added">Added</span>
+                      <span class="garbage-suggestion-added">${t('admin.layout.added')}</span>
                     ` : html`
                       <ha-icon icon="mdi:plus" class="garbage-suggestion-add"></ha-icon>
                     `}
@@ -237,7 +237,7 @@ export function renderStatusTab(panel, html) {
         <!-- Selected Sensors List -->
         ${panel._garbageSensors.length > 0 ? html`
           <div class="garbage-selected-sensors">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Selected Sensors</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.selectedSensors')}</label>
             <div class="garbage-sensor-list">
               ${panel._garbageSensors.map(entityId => {
                 const state = panel.hass?.states[entityId];
@@ -263,22 +263,22 @@ export function renderStatusTab(panel, html) {
           </div>
         ` : renderEmptyState(html, {
           icon: 'mdi:trash-can-outline',
-          title: 'No sensors added yet',
-          hint: 'Use the search above to find and add garbage pickup sensors'
+          title: t('admin.status.noSensorsAdded'),
+          hint: t('admin.status.noSensorsAddedHint')
         })}
 
         <!-- Floor Selection -->
         <div class="garbage-floor-selector">
-          <label>Display on Floor</label>
+          <label>${t('admin.status.displayOnFloor')}</label>
           <p style="color: var(--dv-gray600); margin-bottom: 12px; font-size: 12px;">
-            Select which floor should show the garbage card in the Bottom Right position.
+            ${t('admin.status.displayOnFloorDesc')}
           </p>
           <div class="garbage-floor-buttons">
             <button
               class="garbage-floor-btn ${!panel._garbageDisplayFloor ? 'active' : ''}"
               @click=${() => panel._setGarbageDisplayFloor(null)}
             >
-              None
+              ${t('admin.layout.none')}
             </button>
             ${orderedFloors.map(floor => html`
               <button
@@ -293,7 +293,7 @@ export function renderStatusTab(panel, html) {
 
         ${panel._garbageSensors.length > 0 ? html`
           <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--dv-gray300);">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Preview</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.layout.preview')}</label>
             ${panel._renderGarbageCard()}
           </div>
         ` : ''}
@@ -303,10 +303,10 @@ export function renderStatusTab(panel, html) {
     <!-- ==================== B2. TRAIN DEPARTURES ==================== -->
     <h2 class="section-title" style="margin-top: 40px;">
       <ha-icon icon="mdi:train"></ha-icon>
-      Train Departures
+      ${t('admin.status.trainDepartures')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure train departure times to display based on location or conditions.
+      ${t('admin.status.trainDeparturesDesc')}
     </p>
 
     <!-- Train Departures Section -->
@@ -314,7 +314,7 @@ export function renderStatusTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('trainDepartures')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:clock-outline"></ha-icon>
-          Train Schedules
+          ${t('admin.status.trainSchedules')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('trainDepartures') ? 'expanded' : ''}"
@@ -323,7 +323,7 @@ export function renderStatusTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('trainDepartures') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 12px; font-size: 14px;">
-          Add train departure sensors. Each can have a condition to show only when relevant (e.g., when you're at home or near a station).
+          ${t('admin.status.trainSchedulesDesc')}
         </p>
 
         <!-- Search Input -->
@@ -333,7 +333,7 @@ export function renderStatusTab(panel, html) {
             <input
               type="text"
               class="garbage-search-input"
-              placeholder="Search departure sensors..."
+              placeholder="${t('admin.status.searchDepartureSensors')}"
               .value=${panel._trainSearchQuery || ''}
               @input=${(e) => panel._handleTrainSearch(e.target.value)}
               @focus=${() => panel._trainSearchFocused = true}
@@ -352,7 +352,7 @@ export function renderStatusTab(panel, html) {
           ${panel._trainSearchQuery && panel._trainSearchFocused ? html`
             <div class="garbage-search-suggestions">
               ${panel._getTrainSearchSuggestions().length === 0 ? html`
-                <div class="garbage-search-no-results">No matching sensors found</div>
+                <div class="garbage-search-no-results">${t('admin.layout.noMatchingSensors')}</div>
               ` : panel._getTrainSearchSuggestions().map(sensor => {
                 const state = panel.hass?.states[sensor.entity_id];
                 const icon = state?.attributes?.icon || 'mdi:train';
@@ -370,7 +370,7 @@ export function renderStatusTab(panel, html) {
                       <div class="garbage-suggestion-entity">${sensor.entity_id}</div>
                     </div>
                     ${alreadyAdded ? html`
-                      <span class="garbage-suggestion-added">Added</span>
+                      <span class="garbage-suggestion-added">${t('admin.layout.added')}</span>
                     ` : html`
                       <ha-icon icon="mdi:plus" class="garbage-suggestion-add"></ha-icon>
                     `}
@@ -384,7 +384,7 @@ export function renderStatusTab(panel, html) {
         <!-- Selected Train Departures List -->
         ${panel._trainDepartures.length > 0 ? html`
           <div class="garbage-selected-sensors" style="margin-top: 16px;">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Configured Departures</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.status.configuredDepartures')}</label>
             <div class="train-departure-list">
               ${panel._trainDepartures.map(train => {
                 const state = panel.hass?.states[train.entity];
@@ -410,10 +410,10 @@ export function renderStatusTab(panel, html) {
                     <div class="train-departure-config">
                       <!-- Label -->
                       <div class="train-config-row">
-                        <label>Display Label</label>
+                        <label>${t('admin.status.displayLabel')}</label>
                         <input
                           type="text"
-                          placeholder="e.g., Nach Frankfurt"
+                          placeholder="${t('admin.status.displayLabelPlaceholder')}"
                           .value=${train.label || ''}
                           @change=${(e) => panel._updateTrainDeparture(trainId, 'label', e.target.value)}
                         />
@@ -421,7 +421,7 @@ export function renderStatusTab(panel, html) {
 
                       <!-- Delay Minutes -->
                       <div class="train-config-row">
-                        <label>Min. Minutes Until Departure</label>
+                        <label>${t('admin.status.minMinutesUntilDeparture')}</label>
                         <input
                           type="number"
                           min="0"
@@ -433,13 +433,13 @@ export function renderStatusTab(panel, html) {
 
                       <!-- Condition Entity (Person/Zone dropdown) -->
                       <div class="train-config-row">
-                        <label>Show When (Person/Zone)</label>
+                        <label>${t('admin.status.showWhenPersonZone')}</label>
                         <select
                           .value=${train.conditionEntity || ''}
                           @change=${(e) => panel._updateTrainDeparture(trainId, 'conditionEntity', e.target.value)}
                         >
-                          <option value="">-- Always show --</option>
-                          <optgroup label="Persons">
+                          <option value="">${t('admin.status.alwaysShow')}</option>
+                          <optgroup label="${t('admin.status.persons')}">
                             ${Object.keys(panel.hass?.states || {})
                               .filter(id => id.startsWith('person.'))
                               .map(id => {
@@ -448,7 +448,7 @@ export function renderStatusTab(panel, html) {
                                 return html`<option value="${id}" ?selected=${train.conditionEntity === id}>${name}</option>`;
                               })}
                           </optgroup>
-                          <optgroup label="Zones">
+                          <optgroup label="${t('admin.status.zones')}">
                             ${Object.keys(panel.hass?.states || {})
                               .filter(id => id.startsWith('zone.'))
                               .map(id => {
@@ -462,10 +462,10 @@ export function renderStatusTab(panel, html) {
 
                       <!-- Condition State -->
                       <div class="train-config-row">
-                        <label>Show When State Is</label>
+                        <label>${t('admin.status.showWhenStateIs')}</label>
                         <input
                           type="text"
-                          placeholder="e.g., home (leave empty for 'not 0')"
+                          placeholder="${t('admin.status.showWhenStatePlaceholder')}"
                           .value=${train.conditionState || ''}
                           @change=${(e) => panel._updateTrainDeparture(trainId, 'conditionState', e.target.value)}
                         />
@@ -474,7 +474,7 @@ export function renderStatusTab(panel, html) {
                       <!-- Time Range -->
                       <div class="train-config-row-inline">
                         <div class="train-config-row">
-                          <label>Show From</label>
+                          <label>${t('admin.status.showFrom')}</label>
                           <input
                             type="time"
                             .value=${train.timeStart || ''}
@@ -482,7 +482,7 @@ export function renderStatusTab(panel, html) {
                           />
                         </div>
                         <div class="train-config-row">
-                          <label>Show Until</label>
+                          <label>${t('admin.status.showUntil')}</label>
                           <input
                             type="time"
                             .value=${train.timeEnd || ''}
@@ -498,8 +498,8 @@ export function renderStatusTab(panel, html) {
           </div>
         ` : renderEmptyState(html, {
           icon: 'mdi:train',
-          title: 'No train departures configured',
-          hint: 'Use the search above to find and add departure sensors'
+          title: t('admin.status.noTrainDeparturesConfigured'),
+          hint: t('admin.status.noTrainDeparturesHint')
         })}
       </div>
     </div>
@@ -507,10 +507,10 @@ export function renderStatusTab(panel, html) {
     <!-- ==================== B3. MEDIA PLAYLISTS ==================== -->
     <h2 class="section-title" style="margin-top: 40px;">
       <ha-icon icon="mdi:music"></ha-icon>
-      Media Playlists
+      ${t('admin.status.mediaPlaylists')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure playlists to show in the media player popup. Add Spotify, Apple Music, or other media URIs.
+      ${t('admin.status.mediaPlaylistsDesc')}
     </p>
 
     <!-- Media Playlists Section -->
@@ -518,7 +518,7 @@ export function renderStatusTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('mediaPlaylists')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:playlist-music"></ha-icon>
-          Playlists
+          ${t('admin.status.playlists')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('mediaPlaylists') ? 'expanded' : ''}"
@@ -527,7 +527,7 @@ export function renderStatusTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('mediaPlaylists') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 12px; font-size: 14px;">
-          Add playlists that appear as quick-select buttons in the media player popup. Use Spotify URIs (e.g., spotify:playlist:xxxxx) or other media content IDs.
+          ${t('admin.status.playlistsDesc')}
         </p>
 
         <!-- Existing Playlists -->
@@ -579,35 +579,35 @@ export function renderStatusTab(panel, html) {
                 </div>
                 <div class="media-preset-config">
                   <div class="media-preset-row">
-                    <label>Display Name</label>
+                    <label>${t('admin.status.displayName')}</label>
                     <input
                       type="text"
-                      placeholder="e.g., Dinner Jazz"
+                      placeholder="${t('admin.status.displayNamePlaceholder')}"
                       .value=${preset.name || ''}
                       @change=${(e) => panel._updateMediaPreset(index, 'name', e.target.value)}
                     />
                   </div>
                   <div class="media-preset-row">
-                    <label>Media Content ID / URI</label>
+                    <label>${t('admin.status.mediaContentId')}</label>
                     <input
                       type="text"
-                      placeholder="e.g., spotify:playlist:37i9dQZF1DX4sWSpwq3LiO"
+                      placeholder="${t('admin.status.mediaContentIdPlaceholder')}"
                       .value=${preset.media_content_id || ''}
                       @change=${(e) => panel._updateMediaPreset(index, 'media_content_id', e.target.value)}
                     />
                   </div>
                   <div class="media-preset-row">
-                    <label>Cover Image URL (optional override)</label>
+                    <label>${t('admin.status.coverImageUrl')}</label>
                     <input
                       type="text"
-                      placeholder="Leave empty for auto-fetch, or paste custom URL"
+                      placeholder="${t('admin.status.coverImagePlaceholder')}"
                       .value=${preset.image_url || ''}
                       @change=${(e) => panel._updateMediaPreset(index, 'image_url', e.target.value)}
                     />
                     <span style="font-size: 11px; color: var(--dv-gray500); margin-top: 4px;">
                       ${preset.media_content_id?.startsWith('spotify:')
-                        ? 'Spotify artwork is fetched automatically. Only set this to override.'
-                        : 'For non-Spotify sources, paste an image URL here.'}
+                        ? t('admin.status.spotifyAutoFetch')
+                        : t('admin.status.nonSpotifyHint')}
                     </span>
                   </div>
                   ${preset.image_url ? html`
@@ -637,10 +637,10 @@ export function renderStatusTab(panel, html) {
     <!-- ==================== C. HOUSE NOTIFICATIONS ==================== -->
     <h2 class="section-title" style="margin-top: 40px;">
       <ha-icon icon="mdi:bell-outline"></ha-icon>
-      House Notifications
+      ${t('admin.status.houseNotifications')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure climate notifications and alerts for rooms.
+      ${t('admin.status.houseNotificationsDesc')}
     </p>
 
     <!-- Climate Notification Section -->
@@ -648,18 +648,18 @@ export function renderStatusTab(panel, html) {
       <div class="card-config-section-header" style="cursor: default;">
         <div class="card-config-section-title">
           <ha-icon icon="mdi:thermometer-alert"></ha-icon>
-          Room Climate Notifications
+          ${t('admin.status.roomClimateNotifications')}
         </div>
       </div>
       <div class="card-config-section-content expanded">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Show a ventilation warning in room popups when temperature or humidity exceeds these thresholds.
+          ${t('admin.status.roomClimateNotificationsDesc')}
         </p>
 
         <div class="card-config-row">
           <div class="card-config-label">
-            <span class="card-config-label-title">Temperature Threshold</span>
-            <span class="card-config-label-subtitle">Show notification when temperature is above this value</span>
+            <span class="card-config-label-title">${t('admin.layout.temperatureThreshold')}</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.temperatureThresholdDesc')}</span>
           </div>
           <div class="card-config-input">
             <input
@@ -676,8 +676,8 @@ export function renderStatusTab(panel, html) {
 
         <div class="card-config-row">
           <div class="card-config-label">
-            <span class="card-config-label-title">Humidity Threshold</span>
-            <span class="card-config-label-subtitle">Show notification when humidity is above this value</span>
+            <span class="card-config-label-title">${t('admin.layout.humidityThreshold')}</span>
+            <span class="card-config-label-subtitle">${t('admin.layout.humidityThresholdDesc')}</span>
           </div>
           <div class="card-config-input">
             <input

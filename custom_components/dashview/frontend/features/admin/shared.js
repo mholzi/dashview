@@ -315,7 +315,6 @@ export const LABEL_CATEGORIES = [
   { key: 'cover', icon: 'mdi:window-shutter', titleKey: 'admin.entityTypes.covers', descKey: 'admin.entityTypes.coverDesc', prop: '_coverLabelId' },
   { key: 'roofWindow', icon: 'mdi:window-open', titleKey: 'admin.entityTypes.roofWindows', descKey: 'admin.entityTypes.roofWindowDesc', prop: '_roofWindowLabelId' },
   { key: 'window', icon: 'mdi:window-closed-variant', titleKey: 'admin.entityTypes.windows', descKey: 'admin.entityTypes.windowDesc', prop: '_windowLabelId' },
-  { key: 'door', icon: 'mdi:door', titleKey: 'admin.entityTypes.doors', descKey: 'admin.entityTypes.doorDesc', prop: '_doorLabelId' },
   { key: 'garage', icon: 'mdi:garage', titleKey: 'admin.entityTypes.garages', descKey: 'admin.entityTypes.garageDesc', prop: '_garageLabelId' },
   { key: 'motion', icon: 'mdi:motion-sensor', titleKey: 'admin.entityTypes.motionSensors', descKey: 'admin.entityTypes.motionDesc', prop: '_motionLabelId' },
   { key: 'smoke', icon: 'mdi:smoke-detector', titleKey: 'admin.entityTypes.smokeSensors', descKey: 'admin.entityTypes.smokeDesc', prop: '_smokeLabelId' },
@@ -362,13 +361,6 @@ export function renderSecurityPopupContent(panel, html) {
     (state) => ({ isOpen: isStateOn(state) })
   );
 
-  // Get enabled doors - sorted by last changed, filtered by current label
-  const enabledDoors = getEnabledEntitiesSortedByLastChanged(
-    filterByCurrentLabel(panel._enabledDoors || {}, panel._doorLabelId),
-    panel.hass,
-    (state) => ({ isOpen: isStateOn(state) })
-  );
-
   // Get enabled motion sensors - sorted by last changed, filtered by current label
   const enabledMotion = getEnabledEntitiesSortedByLastChanged(
     filterByCurrentLabel(panel._enabledMotionSensors, panel._motionLabelId),
@@ -385,7 +377,6 @@ export function renderSecurityPopupContent(panel, html) {
 
   // Count active entities
   const openWindowsCount = enabledWindows.filter(w => w.isOpen).length;
-  const openDoorsCount = enabledDoors.filter(d => d.isOpen).length;
   const activeMotionCount = enabledMotion.filter(m => m.isActive).length;
   const openGaragesCount = enabledGarages.filter(g => g.isOpen).length;
 
@@ -395,8 +386,6 @@ export function renderSecurityPopupContent(panel, html) {
     let icon;
     if (type === 'window') {
       icon = entity.isOpen ? 'mdi:window-open' : 'mdi:window-closed';
-    } else if (type === 'door') {
-      icon = entity.isOpen ? 'mdi:door-open' : 'mdi:door-closed';
     } else if (type === 'garage') {
       icon = entity.isOpen ? 'mdi:garage-open' : 'mdi:garage';
     } else {
@@ -425,28 +414,21 @@ export function renderSecurityPopupContent(panel, html) {
         @click=${() => panel._activeSecurityTab = 'windows'}
       >
         <ha-icon icon="mdi:window-open"></ha-icon>
-        <span>${openWindowsCount} ${t('common.options.of', 'of')} ${enabledWindows.length}</span>
-      </button>
-      <button
-        class="security-tab ${panel._activeSecurityTab === 'doors' ? 'active' : ''}"
-        @click=${() => panel._activeSecurityTab = 'doors'}
-      >
-        <ha-icon icon="mdi:door"></ha-icon>
-        <span>${openDoorsCount} von ${enabledDoors.length}</span>
+        <span>${openWindowsCount} von ${enabledWindows.length}</span>
       </button>
       <button
         class="security-tab ${panel._activeSecurityTab === 'garage' ? 'active' : ''}"
         @click=${() => panel._activeSecurityTab = 'garage'}
       >
         <ha-icon icon="mdi:garage"></ha-icon>
-        <span>${openGaragesCount} ${t('common.options.of', 'of')} ${enabledGarages.length}</span>
+        <span>${openGaragesCount} von ${enabledGarages.length}</span>
       </button>
       <button
         class="security-tab ${panel._activeSecurityTab === 'motion' ? 'active' : ''}"
         @click=${() => panel._activeSecurityTab = 'motion'}
       >
         <ha-icon icon="mdi:motion-sensor"></ha-icon>
-        <span>${activeMotionCount} ${t('common.options.of', 'of')} ${enabledMotion.length}</span>
+        <span>${activeMotionCount} von ${enabledMotion.length}</span>
       </button>
     </div>
 
@@ -454,12 +436,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'windows' ? html`
       ${enabledWindows.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('security.windows.empty', 'No windows enabled in admin configuration.')}
+          ${t('admin.security.noWindowsEnabled')}
         </div>
       ` : html`
         <!-- Open Windows -->
         ${enabledWindows.filter(w => w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.windows.open', 'Open Windows')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.openWindows')}</h3>
           <div class="security-entity-list">
             ${enabledWindows.filter(w => w.isOpen).map(w => renderEntityCard(w, 'window'))}
           </div>
@@ -467,34 +449,9 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Closed Windows -->
         ${enabledWindows.filter(w => !w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.windows.closed', 'Closed Windows')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.closedWindows')}</h3>
           <div class="security-entity-list">
             ${enabledWindows.filter(w => !w.isOpen).map(w => renderEntityCard(w, 'window'))}
-          </div>
-        ` : ''}
-      `}
-    ` : ''}
-
-    <!-- Doors Content -->
-    ${panel._activeSecurityTab === 'doors' ? html`
-      ${enabledDoors.length === 0 ? html`
-        <div class="security-empty-state">
-          ${t('security.doors.empty')}
-        </div>
-      ` : html`
-        <!-- Open Doors -->
-        ${enabledDoors.filter(d => d.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.doors.open')}</h3>
-          <div class="security-entity-list">
-            ${enabledDoors.filter(d => d.isOpen).map(d => renderEntityCard(d, 'door'))}
-          </div>
-        ` : ''}
-
-        <!-- Closed Doors -->
-        ${enabledDoors.filter(d => !d.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.doors.closed')}</h3>
-          <div class="security-entity-list">
-            ${enabledDoors.filter(d => !d.isOpen).map(d => renderEntityCard(d, 'door'))}
           </div>
         ` : ''}
       `}
@@ -504,12 +461,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'garage' ? html`
       ${enabledGarages.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('security.garages.empty', 'No garage doors enabled in admin configuration.')}
+          ${t('admin.security.noGaragesEnabled')}
         </div>
       ` : html`
         <!-- Open Garages -->
         ${enabledGarages.filter(g => g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.garages.open', 'Open Garage Doors')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.openGarages')}</h3>
           <div class="security-entity-list">
             ${enabledGarages.filter(g => g.isOpen).map(g => renderEntityCard(g, 'garage'))}
           </div>
@@ -517,7 +474,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Closed Garages -->
         ${enabledGarages.filter(g => !g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.garages.closed', 'Closed Garage Doors')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.closedGarages')}</h3>
           <div class="security-entity-list">
             ${enabledGarages.filter(g => !g.isOpen).map(g => renderEntityCard(g, 'garage'))}
           </div>
@@ -529,12 +486,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'motion' ? html`
       ${enabledMotion.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('security.motion.empty', 'No motion sensors enabled in admin configuration.')}
+          ${t('admin.security.noMotionEnabled')}
         </div>
       ` : html`
         <!-- Active Motion -->
         ${enabledMotion.filter(m => m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.motion.detected', 'Motion Detected')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.motionDetected')}</h3>
           <div class="security-entity-list">
             ${enabledMotion.filter(m => m.isActive).map(m => renderEntityCard(m, 'motion'))}
           </div>
@@ -542,7 +499,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Inactive Motion -->
         ${enabledMotion.filter(m => !m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.motion.none', 'No Motion')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.noMotion')}</h3>
           <div class="security-entity-list">
             ${enabledMotion.filter(m => !m.isActive).map(m => renderEntityCard(m, 'motion'))}
           </div>
