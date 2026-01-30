@@ -107,7 +107,7 @@ export const roomPopupStyles = `
 
   .popup-cover-header {
     display: grid;
-    grid-template-columns: 120px 1fr 50px;
+    grid-template-columns: auto 1fr 50px;
     align-items: center;
     padding: 6px 12px 6px 0;
     min-height: 46px;
@@ -119,6 +119,7 @@ export const roomPopupStyles = `
     font-weight: 500;
     color: var(--dv-gray800, var(--primary-text-color));
     padding: 8px 14px;
+    white-space: nowrap;
     cursor: pointer;
   }
 
@@ -168,7 +169,7 @@ export const roomPopupStyles = `
     font-weight: 500;
     text-align: right;
     color: var(--dv-gray800, var(--primary-text-color));
-    padding: 8px 0;
+    padding: 8px 0 8px 8px;
     cursor: pointer;
   }
 
@@ -205,7 +206,7 @@ export const roomPopupStyles = `
 
   .popup-cover-item {
     display: grid;
-    grid-template-columns: 120px 1fr 50px;
+    grid-template-columns: auto 1fr 50px;
     align-items: center;
     min-height: 30px;
   }
