@@ -262,6 +262,7 @@ if (typeof structuredClone === 'undefined') {
         _coverInvertPosition: { type: Object },
         _enabledGarages: { type: Object },
         _enabledWindows: { type: Object },
+        _enabledDoors: { type: Object },
         _enabledVibrationSensors: { type: Object },
         _enabledTemperatureSensors: { type: Object },
         _enabledHumiditySensors: { type: Object },
@@ -271,6 +272,7 @@ if (typeof structuredClone === 'undefined') {
         _enabledLocks: { type: Object },
         _enabledWaterLeakSensors: { type: Object },
         _waterLeakLabelId: { type: String },
+        _doorLabelId: { type: String },
         _mediaPopupOpen: { type: Boolean },
         _waterPopupOpen: { type: Boolean },
         _activeMediaTab: { type: String },
@@ -449,6 +451,7 @@ if (typeof structuredClone === 'undefined') {
       this._activeMediaTab = null;
       this._enabledGarages = {};
       this._enabledWindows = {};
+      this._enabledDoors = {};
       this._enabledVibrationSensors = {};
       this._enabledTemperatureSensors = {};
       this._enabledHumiditySensors = {};
@@ -483,6 +486,7 @@ if (typeof structuredClone === 'undefined') {
       this._coverLabelId = null;
       this._garageLabelId = null;
       this._windowLabelId = null;
+      this._doorLabelId = null;
       this._vibrationLabelId = null;
       this._temperatureLabelId = null;
       this._humidityLabelId = null;
@@ -1653,6 +1657,7 @@ if (typeof structuredClone === 'undefined') {
             if (this._coverLabelId === null) this._coverLabelId = labelIds.cover;
             if (this._garageLabelId === null) this._garageLabelId = labelIds.garage;
             if (this._windowLabelId === null) this._windowLabelId = labelIds.window;
+            if (this._doorLabelId === null) this._doorLabelId = labelIds.door;
             if (this._vibrationLabelId === null) this._vibrationLabelId = labelIds.vibration;
             if (this._temperatureLabelId === null) this._temperatureLabelId = labelIds.temperature;
             if (this._humidityLabelId === null) this._humidityLabelId = labelIds.humidity;
@@ -1692,6 +1697,7 @@ if (typeof structuredClone === 'undefined') {
             this._enabledLocks = settings.enabledLocks || {};
             this._enabledGarages = settings.enabledGarages || {};
             this._enabledWindows = settings.enabledWindows || {};
+            this._enabledDoors = settings.enabledDoors || {};
             this._enabledVibrationSensors = settings.enabledVibrationSensors || {};
             this._enabledTemperatureSensors = settings.enabledTemperatureSensors || {};
             this._enabledHumiditySensors = settings.enabledHumiditySensors || {};
@@ -1751,6 +1757,7 @@ if (typeof structuredClone === 'undefined') {
               this._coverLabelId = 'cover' in settings.categoryLabels ? settings.categoryLabels.cover : this._coverLabelId;
               this._roofWindowLabelId = 'roofWindow' in settings.categoryLabels ? settings.categoryLabels.roofWindow : this._roofWindowLabelId;
               this._windowLabelId = 'window' in settings.categoryLabels ? settings.categoryLabels.window : this._windowLabelId;
+              this._doorLabelId = 'door' in settings.categoryLabels ? settings.categoryLabels.door : this._doorLabelId;
               this._garageLabelId = 'garage' in settings.categoryLabels ? settings.categoryLabels.garage : this._garageLabelId;
               this._motionLabelId = 'motion' in settings.categoryLabels ? settings.categoryLabels.motion : this._motionLabelId;
               this._smokeLabelId = 'smoke' in settings.categoryLabels ? settings.categoryLabels.smoke : this._smokeLabelId;
@@ -1782,6 +1789,7 @@ if (typeof structuredClone === 'undefined') {
                 coverInvertPosition: this._coverInvertPosition,
                 enabledGarages: this._enabledGarages,
                 enabledWindows: this._enabledWindows,
+                enabledDoors: this._enabledDoors,
                 enabledVibrationSensors: this._enabledVibrationSensors,
                 enabledTemperatureSensors: this._enabledTemperatureSensors,
                 enabledHumiditySensors: this._enabledHumiditySensors,
@@ -1983,6 +1991,7 @@ if (typeof structuredClone === 'undefined') {
           coverInvertPosition: this._coverInvertPosition,
           enabledGarages: this._enabledGarages,
           enabledWindows: this._enabledWindows,
+          enabledDoors: this._enabledDoors,
           enabledVibrationSensors: this._enabledVibrationSensors,
           enabledTemperatureSensors: this._enabledTemperatureSensors,
           enabledHumiditySensors: this._enabledHumiditySensors,
@@ -2009,6 +2018,7 @@ if (typeof structuredClone === 'undefined') {
     _isCoverInverted(entityId) { return !!this._coverInvertPosition[entityId]; }
     _toggleGarageEnabled(entityId) { this._toggleEntityEnabled('_enabledGarages', entityId); }
     _toggleWindowEnabled(entityId) { this._toggleEntityEnabled('_enabledWindows', entityId); }
+    _toggleDoorEnabled(entityId) { this._toggleEntityEnabled('_enabledDoors', entityId); }
     _toggleVibrationSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledVibrationSensors', entityId); }
     _toggleTemperatureSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledTemperatureSensors', entityId); }
     _toggleHumiditySensorEnabled(entityId) { this._toggleEntityEnabled('_enabledHumiditySensors', entityId); }
@@ -2105,6 +2115,7 @@ if (typeof structuredClone === 'undefined') {
           coverInvertPosition: this._coverInvertPosition,
           enabledGarages: this._enabledGarages,
           enabledWindows: this._enabledWindows,
+          enabledDoors: this._enabledDoors,
           enabledVibrationSensors: this._enabledVibrationSensors,
           enabledTemperatureSensors: this._enabledTemperatureSensors,
           enabledHumiditySensors: this._enabledHumiditySensors,
@@ -2306,6 +2317,35 @@ if (typeof structuredClone === 'undefined') {
         });
       });
 
+      // Get doors for this room (only show when open)
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        if (this._enabledDoors[entityId] === false) return;
+        const entityAreaId = this._getAreaIdForEntity(entityId);
+        if (entityAreaId !== areaId) return;
+        if (!this._doorLabelId || !entityReg.labels || !entityReg.labels.includes(this._doorLabelId)) return;
+
+        const state = this.hass.states[entityId];
+        if (!state) return;
+
+        // Only show door when open
+        if (state.state !== 'on') return;
+
+        const friendlyName = state.attributes?.friendly_name || entityId;
+        const timeAgo = this._formatTimeAgo(state.last_changed);
+
+        chips.push({
+          type: 'door',
+          entityId,
+          name: friendlyName,
+          stateText: friendlyName,
+          timeAgo,
+          icon: 'mdi:door-open',
+          isActive: true,
+          state: state.state,
+        });
+      });
+
       // Get water leak sensors for this room (show wet/dry state per AC5)
       this._entityRegistry.forEach((entityReg) => {
         const entityId = entityReg.entity_id;
@@ -2394,6 +2434,10 @@ if (typeof structuredClone === 'undefined') {
 
     _getEnabledGaragesForRoom(areaId) {
       return this._getEnabledEntitiesForRoom(areaId, this._enabledGarages, s => ({ state: s.state, last_changed: s.last_changed }), this._garageLabelId);
+    }
+
+    _getEnabledDoorsForRoom(areaId) {
+      return this._getEnabledEntitiesForRoom(areaId, this._enabledDoors, s => ({ state: s.state, last_changed: s.last_changed, isOpen: s.state === 'on' }), this._doorLabelId);
     }
 
     _getEnabledRoofWindowsForRoom(areaId) {
@@ -3580,6 +3624,7 @@ if (typeof structuredClone === 'undefined') {
         this._coverLabelId,
         this._garageLabelId,
         this._windowLabelId,
+        this._doorLabelId,
         this._vibrationLabelId,
         this._temperatureLabelId,
         this._humidityLabelId,
@@ -3774,6 +3819,7 @@ if (typeof structuredClone === 'undefined') {
       if (this._coverLabelId) labelIds.add(this._coverLabelId);
       if (this._roofWindowLabelId) labelIds.add(this._roofWindowLabelId);
       if (this._windowLabelId) labelIds.add(this._windowLabelId);
+      if (this._doorLabelId) labelIds.add(this._doorLabelId);
       if (this._garageLabelId) labelIds.add(this._garageLabelId);
       if (this._motionLabelId) labelIds.add(this._motionLabelId);
       if (this._smokeLabelId) labelIds.add(this._smokeLabelId);
@@ -4368,7 +4414,11 @@ if (typeof structuredClone === 'undefined') {
               enabledMotionSensors: this._buildEnabledMapFromRegistry(this._motionLabelId, this._enabledMotionSensors),
               enabledGarages: this._buildEnabledMapFromRegistry(this._garageLabelId, this._enabledGarages),
               enabledWindows: this._buildEnabledMapFromRegistry(this._windowLabelId, this._enabledWindows),
+<<<<<<< HEAD
               enabledRoofWindows: this._buildEnabledMapFromRegistry(this._roofWindowLabelId, this._enabledRoofWindows),
+=======
+              enabledDoors: this._buildEnabledMapFromRegistry(this._doorLabelId, this._enabledDoors),
+>>>>>>> fix/109-add-doors-ui
               enabledLights: this._buildEnabledMapFromRegistry(this._lightLabelId, this._enabledLights),
               enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
               enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
@@ -4379,7 +4429,11 @@ if (typeof structuredClone === 'undefined') {
               motionLabelId: this._motionLabelId,
               garageLabelId: this._garageLabelId,
               windowLabelId: this._windowLabelId,
+<<<<<<< HEAD
               roofWindowLabelId: this._roofWindowLabelId,
+=======
+              doorLabelId: this._doorLabelId,
+>>>>>>> fix/109-add-doors-ui
               lightLabelId: this._lightLabelId,
               coverLabelId: this._coverLabelId,
               tvLabelId: this._tvLabelId,

@@ -315,6 +315,7 @@ export const LABEL_CATEGORIES = [
   { key: 'cover', icon: 'mdi:window-shutter', titleKey: 'admin.entityTypes.covers', descKey: 'admin.entityTypes.coverDesc', prop: '_coverLabelId' },
   { key: 'roofWindow', icon: 'mdi:window-open', titleKey: 'admin.entityTypes.roofWindows', descKey: 'admin.entityTypes.roofWindowDesc', prop: '_roofWindowLabelId' },
   { key: 'window', icon: 'mdi:window-closed-variant', titleKey: 'admin.entityTypes.windows', descKey: 'admin.entityTypes.windowDesc', prop: '_windowLabelId' },
+  { key: 'door', icon: 'mdi:door', titleKey: 'admin.entityTypes.doors', descKey: 'admin.entityTypes.doorDesc', prop: '_doorLabelId' },
   { key: 'garage', icon: 'mdi:garage', titleKey: 'admin.entityTypes.garages', descKey: 'admin.entityTypes.garageDesc', prop: '_garageLabelId' },
   { key: 'motion', icon: 'mdi:motion-sensor', titleKey: 'admin.entityTypes.motionSensors', descKey: 'admin.entityTypes.motionDesc', prop: '_motionLabelId' },
   { key: 'smoke', icon: 'mdi:smoke-detector', titleKey: 'admin.entityTypes.smokeSensors', descKey: 'admin.entityTypes.smokeDesc', prop: '_smokeLabelId' },
@@ -361,6 +362,13 @@ export function renderSecurityPopupContent(panel, html) {
     (state) => ({ isOpen: isStateOn(state) })
   );
 
+  // Get enabled doors - sorted by last changed, filtered by current label
+  const enabledDoors = getEnabledEntitiesSortedByLastChanged(
+    filterByCurrentLabel(panel._enabledDoors || {}, panel._doorLabelId),
+    panel.hass,
+    (state) => ({ isOpen: isStateOn(state) })
+  );
+
   // Get enabled motion sensors - sorted by last changed, filtered by current label
   const enabledMotion = getEnabledEntitiesSortedByLastChanged(
     filterByCurrentLabel(panel._enabledMotionSensors, panel._motionLabelId),
@@ -377,6 +385,7 @@ export function renderSecurityPopupContent(panel, html) {
 
   // Count active entities
   const openWindowsCount = enabledWindows.filter(w => w.isOpen).length;
+  const openDoorsCount = enabledDoors.filter(d => d.isOpen).length;
   const activeMotionCount = enabledMotion.filter(m => m.isActive).length;
   const openGaragesCount = enabledGarages.filter(g => g.isOpen).length;
 
@@ -386,6 +395,8 @@ export function renderSecurityPopupContent(panel, html) {
     let icon;
     if (type === 'window') {
       icon = entity.isOpen ? 'mdi:window-open' : 'mdi:window-closed';
+    } else if (type === 'door') {
+      icon = entity.isOpen ? 'mdi:door-open' : 'mdi:door-closed';
     } else if (type === 'garage') {
       icon = entity.isOpen ? 'mdi:garage-open' : 'mdi:garage';
     } else {
@@ -415,6 +426,13 @@ export function renderSecurityPopupContent(panel, html) {
       >
         <ha-icon icon="mdi:window-open"></ha-icon>
         <span>${openWindowsCount} ${t('common.options.of', 'of')} ${enabledWindows.length}</span>
+      </button>
+      <button
+        class="security-tab ${panel._activeSecurityTab === 'doors' ? 'active' : ''}"
+        @click=${() => panel._activeSecurityTab = 'doors'}
+      >
+        <ha-icon icon="mdi:door"></ha-icon>
+        <span>${openDoorsCount} von ${enabledDoors.length}</span>
       </button>
       <button
         class="security-tab ${panel._activeSecurityTab === 'garage' ? 'active' : ''}"
@@ -452,6 +470,31 @@ export function renderSecurityPopupContent(panel, html) {
           <h3 class="security-subsection-title">${t('security.windows.closed', 'Closed Windows')}</h3>
           <div class="security-entity-list">
             ${enabledWindows.filter(w => !w.isOpen).map(w => renderEntityCard(w, 'window'))}
+          </div>
+        ` : ''}
+      `}
+    ` : ''}
+
+    <!-- Doors Content -->
+    ${panel._activeSecurityTab === 'doors' ? html`
+      ${enabledDoors.length === 0 ? html`
+        <div class="security-empty-state">
+          ${t('security.doors.empty')}
+        </div>
+      ` : html`
+        <!-- Open Doors -->
+        ${enabledDoors.filter(d => d.isOpen).length > 0 ? html`
+          <h3 class="security-subsection-title">${t('security.doors.open')}</h3>
+          <div class="security-entity-list">
+            ${enabledDoors.filter(d => d.isOpen).map(d => renderEntityCard(d, 'door'))}
+          </div>
+        ` : ''}
+
+        <!-- Closed Doors -->
+        ${enabledDoors.filter(d => !d.isOpen).length > 0 ? html`
+          <h3 class="security-subsection-title">${t('security.doors.closed')}</h3>
+          <div class="security-entity-list">
+            ${enabledDoors.filter(d => !d.isOpen).map(d => renderEntityCard(d, 'door'))}
           </div>
         ` : ''}
       `}

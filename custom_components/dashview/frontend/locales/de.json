@@ -663,7 +663,9 @@
       "locks": "Schlösser",
       "lockDesc": "Schloss-Entitäten für Türen und Tore",
       "devices": "Geräte",
-      "deviceDesc": "Andere Smart-Geräte"
+      "deviceDesc": "Andere Smart-Geräte",
+      "doors": "Türen",
+      "doorDesc": "Türsensor-Entitäten"
     },
     "infoTextToggles": {
       "motion": "Bewegung",
@@ -691,7 +693,9 @@
       "roofWindows": "Dachfenster",
       "roofWindowsDesc": "Zeigt offene Dachfenster an",
       "locks": "Schlösser",
-      "locksDesc": "Zeigt entriegelte Schlösser an"
+      "locksDesc": "Zeigt entriegelte Schlösser an",
+      "doors": "Türen",
+      "doorsDesc": "Zeigt offene Türen an"
     },
     "settings": {
       "room_config": "Raum-Konfiguration",
@@ -1005,6 +1009,11 @@
       "empty": "Keine Bewegungsmelder in der Admin-Konfiguration aktiviert.",
       "detected": "Bewegung erkannt",
       "none": "Keine Bewegung"
+    },
+    "doors": {
+      "empty": "Keine Türsensoren in der Admin-Konfiguration aktiviert.",
+      "open": "Offene Türen",
+      "closed": "Geschlossene Türen"
     }
   }
 }

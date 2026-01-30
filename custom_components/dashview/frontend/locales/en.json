@@ -663,7 +663,9 @@
       "locks": "Locks",
       "lockDesc": "Lock entities for doors and gates",
       "devices": "Devices",
-      "deviceDesc": "Other smart devices"
+      "deviceDesc": "Other smart devices",
+      "doors": "Doors",
+      "doorDesc": "Door sensor entities"
     },
     "infoTextToggles": {
       "motion": "Motion",
@@ -691,7 +693,9 @@
       "roofWindows": "Roof Windows",
       "roofWindowsDesc": "Shows open roof windows",
       "locks": "Locks",
-      "locksDesc": "Shows unlocked locks"
+      "locksDesc": "Shows unlocked locks",
+      "doors": "Doors",
+      "doorsDesc": "Shows open doors"
     },
     "settings": {
       "room_config": "Room Configuration",
@@ -881,6 +885,11 @@
       "empty": "No motion sensors enabled in admin configuration.",
       "detected": "Motion Detected",
       "none": "No Motion"
+    },
+    "doors": {
+      "empty": "No door sensors enabled in admin configuration.",
+      "open": "Open Doors",
+      "closed": "Closed Doors"
     }
   },
   "onboarding": {
