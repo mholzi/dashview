@@ -314,6 +314,9 @@ if (typeof structuredClone === 'undefined') {
         _doorOpenTooLongMinutes: { type: Number },
         _windowOpenTooLongMinutes: { type: Number },
         _garageOpenTooLongMinutes: { type: Number },
+        _roofWindowOpenTooLongMinutes: { type: Number },
+        _coverOpenTooLongMinutes: { type: Number },
+        _lockUnlockedTooLongMinutes: { type: Number },
         _weatherPopupOpen: { type: Boolean },
         _selectedForecastTab: { type: Number },
         _weatherEntity: { type: String },
@@ -517,6 +520,9 @@ if (typeof structuredClone === 'undefined') {
       this._doorOpenTooLongMinutes = 30;
       this._windowOpenTooLongMinutes = 120;
       this._garageOpenTooLongMinutes = 30;
+      this._roofWindowOpenTooLongMinutes = 120;
+      this._coverOpenTooLongMinutes = 240;
+      this._lockUnlockedTooLongMinutes = 30;
       this._weatherPopupOpen = false;
       this._selectedForecastTab = 0;
       this._weatherEntity = "weather.forecast_home";
@@ -857,6 +863,45 @@ if (typeof structuredClone === 'undefined') {
       const value = parseInt(e.target.value, 10);
       if (!isNaN(value) && value >= 5 && value <= 1440) {
         this._garageOpenTooLongMinutes = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle roof window open too long threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleRoofWindowOpenTooLongChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 5 && value <= 1440) {
+        this._roofWindowOpenTooLongMinutes = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle cover open too long threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleCoverOpenTooLongChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 5 && value <= 1440) {
+        this._coverOpenTooLongMinutes = value;
+        this._saveSettings();
+        this.requestUpdate();
+      }
+    }
+
+    /**
+     * Handle lock unlocked too long threshold from admin input
+     * @param {Event} e - Input change event
+     */
+    _handleLockUnlockedTooLongChange(e) {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 5 && value <= 1440) {
+        this._lockUnlockedTooLongMinutes = value;
         this._saveSettings();
         this.requestUpdate();
       }
@@ -1661,6 +1706,9 @@ if (typeof structuredClone === 'undefined') {
             this._doorOpenTooLongMinutes = settings.doorOpenTooLongMinutes ?? 30;
             this._windowOpenTooLongMinutes = settings.windowOpenTooLongMinutes ?? 120;
             this._garageOpenTooLongMinutes = settings.garageOpenTooLongMinutes ?? 30;
+            this._roofWindowOpenTooLongMinutes = settings.roofWindowOpenTooLongMinutes ?? 120;
+            this._coverOpenTooLongMinutes = settings.coverOpenTooLongMinutes ?? 240;
+            this._lockUnlockedTooLongMinutes = settings.lockUnlockedTooLongMinutes ?? 30;
             this._weatherEntity = settings.weatherEntity;
             this._weatherCurrentTempEntity = settings.weatherCurrentTempEntity;
             this._weatherCurrentStateEntity = settings.weatherCurrentStateEntity;
@@ -4284,6 +4332,7 @@ if (typeof structuredClone === 'undefined') {
               enabledMotionSensors: this._buildEnabledMapFromRegistry(this._motionLabelId, this._enabledMotionSensors),
               enabledGarages: this._buildEnabledMapFromRegistry(this._garageLabelId, this._enabledGarages),
               enabledWindows: this._buildEnabledMapFromRegistry(this._windowLabelId, this._enabledWindows),
+              enabledRoofWindows: this._buildEnabledMapFromRegistry(this._roofWindowLabelId, this._enabledRoofWindows),
               enabledLights: this._buildEnabledMapFromRegistry(this._lightLabelId, this._enabledLights),
               enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
               enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
@@ -4294,6 +4343,7 @@ if (typeof structuredClone === 'undefined') {
               motionLabelId: this._motionLabelId,
               garageLabelId: this._garageLabelId,
               windowLabelId: this._windowLabelId,
+              roofWindowLabelId: this._roofWindowLabelId,
               lightLabelId: this._lightLabelId,
               coverLabelId: this._coverLabelId,
               tvLabelId: this._tvLabelId,
@@ -4302,7 +4352,15 @@ if (typeof structuredClone === 'undefined') {
             },
             (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
             appliancesWithHomeStatus,
-            (appliance) => this._getApplianceStatus(appliance)
+            (appliance) => this._getApplianceStatus(appliance),
+            {
+              doorOpenTooLongMinutes: this._doorOpenTooLongMinutes,
+              windowOpenTooLongMinutes: this._windowOpenTooLongMinutes,
+              garageOpenTooLongMinutes: this._garageOpenTooLongMinutes,
+              roofWindowOpenTooLongMinutes: this._roofWindowOpenTooLongMinutes,
+              coverOpenTooLongMinutes: this._coverOpenTooLongMinutes,
+              lockUnlockedTooLongMinutes: this._lockUnlockedTooLongMinutes,
+            }
           )
         : [];
 

@@ -522,7 +522,7 @@ export function renderCardConfig(panel, html) {
           ${t('climate.openTooLong.sectionTitle', 'Open Too Long Alerts')}
         </h4>
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          ${t('climate.openTooLong.sectionDesc', 'Alert when doors, windows, or garages are left open beyond these thresholds.')}
+          ${t('climate.openTooLong.sectionDesc', 'Alert when doors, windows, roof windows, covers, garages, or locks are left open/unlocked beyond these thresholds.')}
         </p>
 
         <div class="card-config-row">
@@ -574,6 +574,60 @@ export function renderCardConfig(panel, html) {
               step="5"
               .value=${panel._garageOpenTooLongMinutes}
               @change=${panel._handleGarageOpenTooLongChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.openTooLong.roofWindowThreshold', 'Roof Window Open Threshold')}</span>
+            <span class="card-config-label-subtitle">${t('climate.openTooLong.roofWindowThresholdDesc', 'Alert after roof window is open this long')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="5"
+              max="1440"
+              step="5"
+              .value=${panel._roofWindowOpenTooLongMinutes}
+              @change=${panel._handleRoofWindowOpenTooLongChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.openTooLong.coverThreshold', 'Cover Open Threshold')}</span>
+            <span class="card-config-label-subtitle">${t('climate.openTooLong.coverThresholdDesc', 'Alert after cover is open this long')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="5"
+              max="1440"
+              step="5"
+              .value=${panel._coverOpenTooLongMinutes}
+              @change=${panel._handleCoverOpenTooLongChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.openTooLong.lockThreshold', 'Lock Unlocked Threshold')}</span>
+            <span class="card-config-label-subtitle">${t('climate.openTooLong.lockThresholdDesc', 'Alert after lock is unlocked this long')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="5"
+              max="1440"
+              step="5"
+              .value=${panel._lockUnlockedTooLongMinutes}
+              @change=${panel._handleLockUnlockedTooLongChange}
             />
             <span class="card-config-unit">min</span>
           </div>
@@ -876,6 +930,14 @@ export function renderCardConfig(panel, html) {
         <!-- Covers Status -->
         ${renderInfoTextToggle(panel, html, 'covers', t('admin.infoTextToggles.covers'), 'mdi:window-shutter',
           t('admin.infoTextToggles.coversDesc'))}
+
+        <!-- Roof Windows Status -->
+        ${renderInfoTextToggle(panel, html, 'roofWindows', t('admin.infoTextToggles.roofWindows'), 'mdi:window-open-variant',
+          t('admin.infoTextToggles.roofWindowsDesc'))}
+
+        <!-- Locks Status -->
+        ${renderInfoTextToggle(panel, html, 'locks', t('admin.infoTextToggles.locks'), 'mdi:lock-open',
+          t('admin.infoTextToggles.locksDesc'))}
 
         <!-- TVs Status -->
         ${renderInfoTextToggle(panel, html, 'tvs', t('admin.infoTextToggles.tvs'), 'mdi:television',
@@ -2603,7 +2665,7 @@ export function renderLayoutTab(panel, html) {
           ${t('climate.openTooLong.sectionTitle', 'Open Too Long Alerts')}
         </h4>
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          ${t('climate.openTooLong.sectionDesc', 'Alert when doors, windows, or garages are left open beyond these thresholds.')}
+          ${t('climate.openTooLong.sectionDesc', 'Alert when doors, windows, roof windows, covers, garages, or locks are left open/unlocked beyond these thresholds.')}
         </p>
 
         <div class="card-config-row">
@@ -2658,6 +2720,60 @@ export function renderLayoutTab(panel, html) {
             />
             <span class="card-config-unit">min</span>
           </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.openTooLong.roofWindowThreshold', 'Roof Window Open Threshold')}</span>
+            <span class="card-config-label-subtitle">${t('climate.openTooLong.roofWindowThresholdDesc', 'Alert after roof window is open this long')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="5"
+              max="1440"
+              step="5"
+              .value=${panel._roofWindowOpenTooLongMinutes}
+              @change=${panel._handleRoofWindowOpenTooLongChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.openTooLong.coverThreshold', 'Cover Open Threshold')}</span>
+            <span class="card-config-label-subtitle">${t('climate.openTooLong.coverThresholdDesc', 'Alert after cover is open this long')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="5"
+              max="1440"
+              step="5"
+              .value=${panel._coverOpenTooLongMinutes}
+              @change=${panel._handleCoverOpenTooLongChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
+
+        <div class="card-config-row">
+          <div class="card-config-label">
+            <span class="card-config-label-title">${t('climate.openTooLong.lockThreshold', 'Lock Unlocked Threshold')}</span>
+            <span class="card-config-label-subtitle">${t('climate.openTooLong.lockThresholdDesc', 'Alert after lock is unlocked this long')}</span>
+          </div>
+          <div class="card-config-input">
+            <input
+              type="number"
+              min="5"
+              max="1440"
+              step="5"
+              .value=${panel._lockUnlockedTooLongMinutes}
+              @change=${panel._handleLockUnlockedTooLongChange}
+            />
+            <span class="card-config-unit">min</span>
+          </div>
+        </div>
         </div>
       </div>
     </div>
