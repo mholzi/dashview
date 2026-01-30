@@ -124,7 +124,7 @@
     },
     "openTooLong": {
       "sectionTitle": "Open Too Long Alerts",
-      "sectionDesc": "Alert when doors, windows, roof windows, covers, garages, or locks are left open/unlocked beyond these thresholds.",
+      "sectionDesc": "Alert when doors, windows, or garages are left open beyond these thresholds.",
       "doorThreshold": "Door Open Threshold",
       "doorThresholdDesc": "Alert after door is open this long",
       "windowThreshold": "Window Open Threshold",
@@ -160,7 +160,8 @@
       "devices": "Devices",
       "locks": "Locks",
       "batteries": "Batteries",
-      "batteries_ok": "All batteries OK"
+      "batteries_ok": "All batteries OK",
+      "roofWindows": "Roof Windows"
     },
     "errors": {
       "no_data": "No data available",

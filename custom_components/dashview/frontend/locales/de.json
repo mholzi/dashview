@@ -124,7 +124,7 @@
     },
     "openTooLong": {
       "sectionTitle": "Zu lange offen-Warnungen",
-      "sectionDesc": "Warnung wenn Türen, Fenster, Dachfenster, Rollos, Garagen oder Schlösser zu lange offen/entriegelt stehen.",
+      "sectionDesc": "Warnung wenn Türen, Fenster oder Garagen zu lange offen stehen.",
       "doorThreshold": "Tür offen-Schwellwert",
       "doorThresholdDesc": "Warnung nach dieser Zeit",
       "windowThreshold": "Fenster offen-Schwellwert",
@@ -160,7 +160,8 @@
       "devices": "Geräte",
       "locks": "Schlösser",
       "batteries": "Batterien",
-      "batteries_ok": "Alle Batterien in Ordnung"
+      "batteries_ok": "Alle Batterien in Ordnung",
+      "roofWindows": "Dachfenster"
     },
     "errors": {
       "no_data": "Keine Daten verfügbar",

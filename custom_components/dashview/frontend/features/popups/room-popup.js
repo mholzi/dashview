@@ -114,6 +114,7 @@ export function renderRoomPopup(component, html) {
           ${renderTemperatureSection(component, html, areaId)}
           ${renderLightSection(component, html, areaId)}
           ${renderCoverSection(component, html, areaId)}
+          ${renderRoofWindowSection(component, html, areaId)}
           ${renderMediaSection(component, html, areaId)}
           ${renderTVSection(component, html, areaId)}
           ${renderLockSection(component, html, areaId)}
@@ -681,6 +682,68 @@ function renderCoverSection(component, html, areaId) {
               <div class="popup-cover-slider-thumb" style="left: ${displayPosition}%"></div>
             </div>
             <span class="popup-cover-position">${displayPosition}%</span>
+          </div>
+        `})}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render roof window section with slider controls (same pattern as covers)
+ */
+function renderRoofWindowSection(component, html, areaId) {
+  const roofWindows = component._getEnabledRoofWindowsForRoom(areaId);
+  if (roofWindows.length === 0) return '';
+
+  // Calculate average position across all roof windows
+  const avgPosition = Math.round(roofWindows.reduce((sum, rw) => sum + (rw.position || 0), 0) / roofWindows.length);
+
+  return html`
+    <div class="popup-cover-section">
+      <div class="popup-cover-header">
+        <span class="popup-cover-title" @click=${component._togglePopupRoofWindowExpanded}>
+          <ha-icon icon="mdi:window-open" style="--mdc-icon-size: 18px; vertical-align: middle; margin-right: 4px;"></ha-icon>
+          ${t('ui.sections.roofWindows')}
+        </span>
+        <div class="popup-cover-slider"
+          @click=${(e) => component._handleAllRoofWindowsSliderClick(e, areaId)}
+          @touchstart=${(e) => component._handleRoofWindowSliderTouchStart(e, null, areaId)}
+          @touchmove=${(e) => component._handleRoofWindowSliderTouchMove(e)}
+          @touchend=${(e) => component._handleRoofWindowSliderTouchEnd(e)}
+        >
+          <div class="popup-cover-slider-fill" style="width: ${avgPosition}%"></div>
+          <div class="popup-cover-slider-thumb" style="left: ${avgPosition}%"></div>
+        </div>
+        <span class="popup-cover-position" @click=${component._togglePopupRoofWindowExpanded}>${avgPosition}%</span>
+      </div>
+
+      <div class="popup-cover-content ${component._popupRoofWindowExpanded ? 'expanded' : ''}">
+        <!-- Preset buttons -->
+        <div class="popup-cover-presets">
+          <button class="popup-cover-preset" @click=${() => component._setAllRoofWindowsPosition(areaId, 0)}>0%</button>
+          <button class="popup-cover-preset" @click=${() => component._setAllRoofWindowsPosition(areaId, 25)}>25%</button>
+          <button class="popup-cover-preset" @click=${() => component._setAllRoofWindowsPosition(areaId, 50)}>50%</button>
+          <button class="popup-cover-preset" @click=${() => component._setAllRoofWindowsPosition(areaId, 75)}>75%</button>
+          <button class="popup-cover-preset" @click=${() => component._setAllRoofWindowsPosition(areaId, 100)}>100%</button>
+        </div>
+
+        <!-- Individual roof windows -->
+        ${roofWindows.map(rw => {
+          const position = rw.position || 0;
+          return html`
+          <div class="popup-cover-item">
+            <span class="popup-cover-item-name">${rw.name}</span>
+            <div class="popup-cover-slider"
+              @click=${(e) => component._handleRoofWindowSliderClick(e, rw.entity_id)}
+              @touchstart=${(e) => component._handleRoofWindowSliderTouchStart(e, rw.entity_id, null)}
+              @touchmove=${(e) => component._handleRoofWindowSliderTouchMove(e)}
+              @touchend=${(e) => component._handleRoofWindowSliderTouchEnd(e)}
+            >
+              <div class="popup-cover-slider-fill" style="width: ${position}%"></div>
+              <div class="popup-cover-slider-thumb" style="left: ${position}%"></div>
+            </div>
+            <span class="popup-cover-position">${position}%</span>
           </div>
         `})}
       </div>
