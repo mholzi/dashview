@@ -623,9 +623,30 @@ function renderCoverSection(component, html, areaId) {
         <!-- Individual covers -->
         ${covers.map(cover => {
           const displayPosition = cover.invertPosition ? (100 - (cover.position || 0)) : (cover.position || 0);
+
+          // Long press on cover name to open HA details
+          const coverLongPress = createLongPressHandlers(
+            null, // No tap action on name (slider handles position)
+            () => {
+              component._closeRoomPopup();
+              requestAnimationFrame(() => {
+                openMoreInfo(component, cover.entity_id);
+              });
+            }
+          );
+
           return html`
           <div class="popup-cover-item">
-            <span class="popup-cover-item-name">${cover.name}</span>
+            <span class="popup-cover-item-name"
+                  style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+                  @touchstart=${coverLongPress.onTouchStart}
+                  @touchmove=${coverLongPress.onTouchMove}
+                  @touchend=${coverLongPress.onTouchEnd}
+                  @touchcancel=${coverLongPress.onTouchCancel}
+                  @mousedown=${coverLongPress.onMouseDown}
+                  @mouseup=${coverLongPress.onMouseUp}
+                  @mouseleave=${coverLongPress.onMouseLeave}
+            >${cover.name}</span>
             <div class="popup-cover-slider"
               @click=${(e) => component._handleCoverSliderClick(e, cover.entity_id)}
               @touchstart=${(e) => component._handleCoverSliderTouchStart(e, cover.entity_id, null)}
@@ -677,9 +698,29 @@ function renderMediaPlayer(component, html, player) {
   const isActive = isPlaying || isPaused;
   const volumePercent = player.volume_level !== undefined ? Math.round(player.volume_level * 100) : 0;
 
+  // Long press on player name to open HA details
+  const mediaLongPress = createLongPressHandlers(
+    null, // No tap action on name
+    () => {
+      component._closeRoomPopup();
+      requestAnimationFrame(() => {
+        openMoreInfo(component, player.entity_id);
+      });
+    }
+  );
+
   return html`
     <div class="popup-media-player">
-      <div class="popup-media-player-name">${player.name}</div>
+      <div class="popup-media-player-name"
+           style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+           @touchstart=${mediaLongPress.onTouchStart}
+           @touchmove=${mediaLongPress.onTouchMove}
+           @touchend=${mediaLongPress.onTouchEnd}
+           @touchcancel=${mediaLongPress.onTouchCancel}
+           @mousedown=${mediaLongPress.onMouseDown}
+           @mouseup=${mediaLongPress.onMouseUp}
+           @mouseleave=${mediaLongPress.onMouseLeave}
+      >${player.name}</div>
 
       ${isActive ? html`
         <!-- Artwork -->
@@ -767,9 +808,28 @@ function renderTVSection(component, html, areaId) {
       </div>
 
       <div class="popup-tv-content ${component._popupTVExpanded ? 'expanded' : ''}">
-        ${tvs.map(tv => html`
+        ${tvs.map(tv => {
+          // Long press opens HA details, tap toggles
+          const tvLongPress = createLongPressHandlers(
+            () => component._toggleTV(tv.entity_id),
+            () => {
+              component._closeRoomPopup();
+              requestAnimationFrame(() => {
+                openMoreInfo(component, tv.entity_id);
+              });
+            }
+          );
+
+          return html`
           <div class="popup-tv-item ${tv.state === 'on' ? 'on' : 'off'}"
-               @click=${() => component._toggleTV(tv.entity_id)}>
+               style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+               @touchstart=${tvLongPress.onTouchStart}
+               @touchmove=${tvLongPress.onTouchMove}
+               @touchend=${tvLongPress.onTouchEnd}
+               @touchcancel=${tvLongPress.onTouchCancel}
+               @mousedown=${tvLongPress.onMouseDown}
+               @mouseup=${tvLongPress.onMouseUp}
+               @mouseleave=${tvLongPress.onMouseLeave}>
             <div class="popup-tv-item-icon ${tv.entityPicture ? 'has-image' : ''}">
               ${tv.entityPicture ? html`
                 <img class="popup-tv-item-image" src="${tv.entityPicture}" alt="">
@@ -782,7 +842,7 @@ function renderTVSection(component, html, areaId) {
               <span class="popup-tv-item-state">${tv.name}</span>
             </div>
           </div>
-        `)}
+        `})}
       </div>
     </div>
   `;
@@ -807,9 +867,28 @@ function renderLockSection(component, html, areaId) {
       </div>
 
       <div class="popup-lock-content">
-        ${locks.map(lock => html`
+        ${locks.map(lock => {
+          // Long press opens HA details, tap toggles
+          const lockLongPress = createLongPressHandlers(
+            () => component._toggleLock(lock.entity_id),
+            () => {
+              component._closeRoomPopup();
+              requestAnimationFrame(() => {
+                openMoreInfo(component, lock.entity_id);
+              });
+            }
+          );
+
+          return html`
           <div class="popup-lock-item ${lock.state === 'unlocked' ? 'unlocked' : 'locked'}"
-               @click=${() => component._toggleLock(lock.entity_id)}>
+               style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+               @touchstart=${lockLongPress.onTouchStart}
+               @touchmove=${lockLongPress.onTouchMove}
+               @touchend=${lockLongPress.onTouchEnd}
+               @touchcancel=${lockLongPress.onTouchCancel}
+               @mousedown=${lockLongPress.onMouseDown}
+               @mouseup=${lockLongPress.onMouseUp}
+               @mouseleave=${lockLongPress.onMouseLeave}>
             <div class="popup-lock-item-icon">
               <ha-icon icon="${lock.icon}"></ha-icon>
             </div>
@@ -818,7 +897,7 @@ function renderLockSection(component, html, areaId) {
               <span class="popup-lock-item-state">${lock.state === 'locked' ? t('lock.locked') : lock.state === 'unlocked' ? t('lock.unlocked') : lock.state}</span>
             </div>
           </div>
-        `)}
+        `})}
       </div>
     </div>
   `;
@@ -843,13 +922,33 @@ function renderGarageSection(component, html, areaId) {
       </div>
 
       <div class="popup-garage-content ${component._popupGarageExpanded ? 'expanded' : ''}">
-        ${garages.map(garage => html`
+        ${garages.map(garage => {
+          // Long press on garage info area to open HA details
+          const garageLongPress = createLongPressHandlers(
+            null, // No tap action on info area
+            () => {
+              component._closeRoomPopup();
+              requestAnimationFrame(() => {
+                openMoreInfo(component, garage.entity_id);
+              });
+            }
+          );
+
+          return html`
           <div class="popup-garage-item">
             <div class="popup-garage-item-header ${garage.state === 'open' ? 'open' : 'closed'}">
               <div class="popup-garage-item-icon">
                 <ha-icon icon="${garage.state === 'open' ? 'mdi:garage-open' : 'mdi:garage'}"></ha-icon>
               </div>
-              <div class="popup-garage-item-info">
+              <div class="popup-garage-item-info"
+                   style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+                   @touchstart=${garageLongPress.onTouchStart}
+                   @touchmove=${garageLongPress.onTouchMove}
+                   @touchend=${garageLongPress.onTouchEnd}
+                   @touchcancel=${garageLongPress.onTouchCancel}
+                   @mousedown=${garageLongPress.onMouseDown}
+                   @mouseup=${garageLongPress.onMouseUp}
+                   @mouseleave=${garageLongPress.onMouseLeave}>
                 <span class="popup-garage-item-name">${garage.name}</span>
                 <span class="popup-garage-item-last-changed">${component._formatGarageLastChanged(garage.last_changed)}</span>
               </div>
@@ -863,7 +962,7 @@ function renderGarageSection(component, html, areaId) {
               </div>
             </div>
           </div>
-        `)}
+        `})}
       </div>
     </div>
   `;
@@ -917,8 +1016,27 @@ function renderDeviceCard(component, html, appliance) {
   if (status.isError) classes.push('error');
   if (status.isUnavailable) classes.push('unavailable');
 
+  // Long press on device card to open HA details
+  const deviceLongPress = createLongPressHandlers(
+    null, // No tap action
+    () => {
+      component._closeRoomPopup();
+      requestAnimationFrame(() => {
+        openMoreInfo(component, appliance.entityId);
+      });
+    }
+  );
+
   return html`
-    <div class="${classes.join(' ')}">
+    <div class="${classes.join(' ')}"
+         style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+         @touchstart=${deviceLongPress.onTouchStart}
+         @touchmove=${deviceLongPress.onTouchMove}
+         @touchend=${deviceLongPress.onTouchEnd}
+         @touchcancel=${deviceLongPress.onTouchCancel}
+         @mousedown=${deviceLongPress.onMouseDown}
+         @mouseup=${deviceLongPress.onMouseUp}
+         @mouseleave=${deviceLongPress.onMouseLeave}>
       <div class="popup-device-card-icon">
         <ha-icon icon="${appliance.icon}"></ha-icon>
       </div>
