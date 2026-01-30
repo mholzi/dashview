@@ -159,19 +159,28 @@ function renderChipsRow(component, html, areaId) {
 function renderQuickActions(component, html, areaId) {
   const lights = component._getEnabledLightsForRoom(areaId);
   const covers = component._getEnabledCoversForRoom(areaId);
+  const locks = component._getEnabledLocksForRoom(areaId);
+  const tvs = component._getEnabledTVsForRoom(areaId);
+  const garages = component._getEnabledGaragesForRoom(areaId);
+  const mediaPlayers = component._getEnabledMediaPlayersForRoom(areaId);
 
   // Get custom scene buttons assigned to this room
   const roomSceneButtons = (component._sceneButtons || []).filter(
     btn => btn.roomId === areaId && btn.entity
   );
 
-  if (lights.length === 0 && covers.length === 0 && roomSceneButtons.length === 0) return '';
+  if (lights.length === 0 && covers.length === 0 && locks.length === 0 && tvs.length === 0 && garages.length === 0 && mediaPlayers.length === 0 && roomSceneButtons.length === 0) return '';
 
   const lightsOnCount = lights.filter(l => l.state === 'on').length;
   const anyLightsOn = lightsOnCount > 0;
 
   const coversOpenCount = covers.filter(c => c.state === 'open' || (c.position && c.position < 100)).length;
   const anyCoversOpen = coversOpenCount > 0;
+
+  const anyLocksUnlocked = locks.some(l => l.state === 'unlocked');
+  const anyTVsOn = tvs.some(tv => tv.state === 'on');
+  const anyGaragesOpen = garages.some(g => g.state === 'open');
+  const anyMediaPlaying = mediaPlayers.some(mp => mp.state === 'playing');
 
   // Handler for executing scene button action
   const executeSceneButton = (button) => {
@@ -219,6 +228,42 @@ function renderQuickActions(component, html, areaId) {
         >
           <ha-icon icon="${anyCoversOpen ? 'mdi:window-shutter' : 'mdi:window-shutter-open'}"></ha-icon>
           <span>${anyCoversOpen ? t('popup.actions.covers_close') : t('popup.actions.covers_open')}</span>
+        </button>
+      ` : ''}
+      ${anyLocksUnlocked ? html`
+        <button
+          class="popup-scene-button"
+          @click=${() => { triggerHaptic('light'); component._lockAllRoom(areaId); }}
+        >
+          <ha-icon icon="mdi:lock-open"></ha-icon>
+          <span>${t('popup.actions.lock_all')}</span>
+        </button>
+      ` : ''}
+      ${anyTVsOn ? html`
+        <button
+          class="popup-scene-button"
+          @click=${() => { triggerHaptic('light'); component._turnOffAllRoomTVs(areaId); }}
+        >
+          <ha-icon icon="mdi:television-off"></ha-icon>
+          <span>${t('popup.actions.tvs_off')}</span>
+        </button>
+      ` : ''}
+      ${anyGaragesOpen ? html`
+        <button
+          class="popup-scene-button"
+          @click=${() => { triggerHaptic('light'); component._closeAllRoomGarages(areaId); }}
+        >
+          <ha-icon icon="mdi:garage-open"></ha-icon>
+          <span>${t('popup.actions.close_garages')}</span>
+        </button>
+      ` : ''}
+      ${anyMediaPlaying ? html`
+        <button
+          class="popup-scene-button"
+          @click=${() => { triggerHaptic('light'); component._stopAllRoomMedia(areaId); }}
+        >
+          <ha-icon icon="mdi:stop"></ha-icon>
+          <span>${t('popup.actions.stop_media')}</span>
         </button>
       ` : ''}
       ${roomSceneButtons.map(button => html`

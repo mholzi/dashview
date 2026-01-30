@@ -406,7 +406,11 @@
       "all_covers": "Alle Rollos",
       "close_all": "Alle schließen",
       "open_all": "Alle öffnen",
-      "turn_off_all": "Alle ausschalten"
+      "turn_off_all": "Alle ausschalten",
+      "lock_all": "Alle verriegeln",
+      "tvs_off": "Fernseher aus",
+      "close_garages": "Alle schließen",
+      "stop_media": "Alle stoppen"
     }
   },
   "admin": {
