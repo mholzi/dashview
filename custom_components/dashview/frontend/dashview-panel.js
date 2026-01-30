@@ -582,7 +582,7 @@ if (typeof structuredClone === 'undefined') {
         covers: { enabled: false },
         dishwasher: { enabled: false, entity: '', finishTimeEntity: '' },
         dryer: { enabled: false, entity: '', finishTimeEntity: '' },
-        vacuum: { enabled: false, entity: '' },
+        vacuum: { enabled: false, entity: '', roomMapping: {} },
         batteryLow: { enabled: false, threshold: 20 },
       };
       // Search state for info text entity pickers

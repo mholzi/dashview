@@ -1099,35 +1099,38 @@ export function getVacuumStatus(hass, infoTextConfig) {
   // Get current room being cleaned from vacuum attributes
   const currentSegment = vacuumState.attributes?.current_segment;
   const selectedMap = vacuumState.attributes?.selected_map;
+  const attrs = vacuumState.attributes || {};
 
-  // Room mapping based on vacuum's map segments
-  const roomDict = {
-    'Erdgeschoss': {
-      1: 'Arbeitszimmer',
-      2: 'Gästeklo',
-      3: 'Küche',
-      4: 'Wohnzimmer',
-      5: 'Esszimmer',
-      6: 'Flur'
-    },
-    'Keller': {
-      1: 'Partykeller',
-      2: 'Kellerflur',
-      3: 'Raum 3',
-      5: 'Waschkeller'
-    },
-    'Dachgeschoss': {
-      1: 'Elternschlafzimmer',
-      2: 'Klo',
-      3: 'Ankleide',
-      4: 'Badezimmer'
+  // Resolve current room name via cascade:
+  // 1. Auto-detect from vacuum entity attributes (Valetudo, Dreame, Xiaomi MIOT, etc.)
+  // 2. User-configured room mapping from admin settings (Roborock, etc.)
+  // 3. Fall back to generic i18n text
+  let roomName = null;
+
+  // Auto-detect: try common attribute patterns from various integrations
+  if (attrs.room_name) {
+    // Xiaomi MIOT and some integrations expose room_name directly
+    roomName = attrs.room_name;
+  } else if (currentSegment && attrs.rooms && typeof attrs.rooms === 'object') {
+    // Valetudo exposes rooms as { segmentId: { name: '...' } } or { segmentId: 'name' }
+    const room = attrs.rooms[currentSegment];
+    roomName = typeof room === 'object' ? room.name : room;
+  } else if (currentSegment && attrs.room_mapping && attrs.room_mapping[currentSegment]) {
+    // Dreame and similar expose room_mapping as { segmentId: 'name' }
+    roomName = attrs.room_mapping[currentSegment];
+  }
+
+  // Fallback: user-configured room mapping from admin settings
+  if (!roomName && selectedMap && currentSegment && infoTextConfig.vacuum.roomMapping) {
+    const userMapping = infoTextConfig.vacuum.roomMapping;
+    if (userMapping[selectedMap] && userMapping[selectedMap][currentSegment]) {
+      roomName = userMapping[selectedMap][currentSegment];
     }
-  };
+  }
 
-  // Get current room name
-  let roomName = t('status.appliances.vacuum.cleaning_in_progress');
-  if (selectedMap && currentSegment && roomDict[selectedMap] && roomDict[selectedMap][currentSegment]) {
-    roomName = roomDict[selectedMap][currentSegment];
+  // Final fallback: generic text
+  if (!roomName) {
+    roomName = t('status.appliances.vacuum.cleaning_in_progress');
   }
 
   if (state === "cleaning") {

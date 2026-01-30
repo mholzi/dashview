@@ -873,6 +873,14 @@
       "doors": "Doors",
       "doorsDesc": "Shows open doors"
     },
+    "vacuum": {
+      "roomMapping": "Room Mapping",
+      "roomMappingDesc": "Map vacuum segment IDs to room names (for vacuums that don't expose room names automatically)",
+      "mapName": "Floor / Map name",
+      "segmentId": "Segment #",
+      "roomName": "Room name",
+      "addMap": "Add Floor"
+    },
     "settings": {
       "room_config": "Room Configuration",
       "floor_config": "Floor Configuration",

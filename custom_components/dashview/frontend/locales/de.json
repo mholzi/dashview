@@ -873,6 +873,14 @@
       "doors": "Türen",
       "doorsDesc": "Zeigt offene Türen an"
     },
+    "vacuum": {
+      "roomMapping": "Raum-Zuordnung",
+      "roomMappingDesc": "Segment-IDs des Saugroboters den Raumnamen zuordnen (für Saugroboter, die Raumnamen nicht automatisch bereitstellen)",
+      "mapName": "Etage / Kartenname",
+      "segmentId": "Segment #",
+      "roomName": "Raumname",
+      "addMap": "Etage hinzufügen"
+    },
     "settings": {
       "room_config": "Raum-Konfiguration",
       "floor_config": "Etagen-Konfiguration",
