@@ -46,14 +46,23 @@
       "search": "Suchen",
       "filter": "Filter",
       "close": "Schließen",
-      "confirm": "Bestätigen"
+      "confirm": "Bestätigen",
+      "retry": "Erneut versuchen",
+      "skip": "Überspringen",
+      "continue": "Weiter",
+      "lets_go": "Los geht's!"
     },
     "options": {
       "all": "Alle",
       "none": "Keine",
       "enabled": "Aktiviert",
       "disabled": "Deaktiviert",
-      "of": "von"
+      "of": "von",
+      "under": "unter",
+      "new": "Neu",
+      "improved": "Verbessert",
+      "fixed": "Behoben",
+      "attention": "Achtung"
     }
   },
   "entityPicker": {
@@ -140,6 +149,9 @@
     }
   },
   "ui": {
+    "notifications": {
+      "ventilate_room": "Bitte Raum lüften"
+    },
     "tabs": {
       "home": "Home",
       "weather": "Wetter",
@@ -158,10 +170,17 @@
       "rooms": "Räume",
       "other_devices": "Weitere Geräte",
       "devices": "Geräte",
+      "device": "Gerät",
       "locks": "Schlösser",
       "batteries": "Batterien",
       "batteries_ok": "Alle Batterien in Ordnung",
-      "roofWindows": "Dachfenster"
+      "roofWindows": "Dachfenster",
+      "open_windows": "Offene Fenster",
+      "closed_windows": "Geschlossene Fenster",
+      "open_garages": "Offene Garagentore",
+      "closed_garages": "Geschlossene Garagentore",
+      "no_devices_under": "Keine Geräte unter",
+      "whats_new": "Was ist neu?"
     },
     "errors": {
       "no_data": "Keine Daten verfügbar",
@@ -287,7 +306,8 @@
     "idle": "Bereit",
     "playing": "Spielt",
     "paused": "Pausiert",
-    "standby": "Bereit"
+    "standby": "Bereit",
+    "unavailable": "Nicht verfügbar"
   },
   "status": {
     "water": {

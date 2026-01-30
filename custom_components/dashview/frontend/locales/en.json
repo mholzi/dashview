@@ -46,14 +46,23 @@
       "search": "Search",
       "filter": "Filter",
       "close": "Close",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "retry": "Try again",
+      "skip": "Skip",
+      "continue": "Continue",
+      "lets_go": "Let's go!"
     },
     "options": {
       "all": "All",
       "none": "None",
       "enabled": "Enabled",
       "disabled": "Disabled",
-      "of": "of"
+      "of": "of",
+      "under": "under",
+      "new": "New",
+      "improved": "Improved",
+      "fixed": "Fixed",
+      "attention": "Attention"
     }
   },
   "entityPicker": {
@@ -140,6 +149,9 @@
     }
   },
   "ui": {
+    "notifications": {
+      "ventilate_room": "Please ventilate room"
+    },
     "tabs": {
       "home": "Home",
       "weather": "Weather",
@@ -158,10 +170,17 @@
       "rooms": "Rooms",
       "other_devices": "Other Devices",
       "devices": "Devices",
+      "device": "Device",
       "locks": "Locks",
       "batteries": "Batteries",
       "batteries_ok": "All batteries OK",
-      "roofWindows": "Roof Windows"
+      "roofWindows": "Roof Windows",
+      "open_windows": "Open Windows",
+      "closed_windows": "Closed Windows",
+      "open_garages": "Open Garage Doors",
+      "closed_garages": "Closed Garage Doors",
+      "no_devices_under": "No devices under",
+      "whats_new": "What's New?"
     },
     "errors": {
       "no_data": "No data available",
@@ -287,7 +306,8 @@
     "idle": "Ready",
     "playing": "Playing",
     "paused": "Paused",
-    "standby": "Standby"
+    "standby": "Standby",
+    "unavailable": "Unavailable"
   },
   "status": {
     "water": {
