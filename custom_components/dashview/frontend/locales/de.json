@@ -124,13 +124,19 @@
     },
     "openTooLong": {
       "sectionTitle": "Zu lange offen-Warnungen",
-      "sectionDesc": "Warnung wenn Türen, Fenster oder Garagen zu lange offen stehen.",
+      "sectionDesc": "Warnung wenn Türen, Fenster, Dachfenster, Rollos, Garagen oder Schlösser zu lange offen/entriegelt stehen.",
       "doorThreshold": "Tür offen-Schwellwert",
       "doorThresholdDesc": "Warnung nach dieser Zeit",
       "windowThreshold": "Fenster offen-Schwellwert",
       "windowThresholdDesc": "Warnung nach dieser Zeit",
       "garageThreshold": "Garage offen-Schwellwert",
-      "garageThresholdDesc": "Warnung nach dieser Zeit"
+      "garageThresholdDesc": "Warnung nach dieser Zeit",
+      "roofWindowThreshold": "Dachfenster offen-Schwellwert",
+      "roofWindowThresholdDesc": "Warnung nach dieser Zeit",
+      "coverThreshold": "Rollo offen-Schwellwert",
+      "coverThresholdDesc": "Warnung nach dieser Zeit",
+      "lockThreshold": "Schloss offen-Schwellwert",
+      "lockThresholdDesc": "Warnung nach dieser Zeit"
     }
   },
   "ui": {
@@ -356,7 +362,15 @@
     "since": "seit",
     "dismiss": "Ausblenden",
     "dismissedCount": "{{count}} ausgeblendet",
-    "showAllAlerts": "Alle Meldungen anzeigen"
+    "showAllAlerts": "Alle Meldungen anzeigen",
+    "roofWindow": {
+      "open_suffix": "Dachf. offen.",
+      "open_too_long": "Dachf. offen"
+    },
+    "lock": {
+      "unlocked_too_long_single": "{{name}} offen {{duration}}",
+      "unlocked_too_long_multiple": "{{count}} Schlösser offen ({{duration}})"
+    }
   },
   "user": {
     "presence_history": "Anwesenheitsverlauf",
@@ -648,7 +662,11 @@
       "dryer": "Trockner",
       "dryerDesc": "Zeigt Status des Trockners an",
       "vacuum": "Staubsauger",
-      "vacuumDesc": "Zeigt Status des Staubsauger-Roboters an"
+      "vacuumDesc": "Zeigt Status des Staubsauger-Roboters an",
+      "roofWindows": "Dachfenster",
+      "roofWindowsDesc": "Zeigt offene Dachfenster an",
+      "locks": "Schlösser",
+      "locksDesc": "Zeigt entriegelte Schlösser an"
     },
     "settings": {
       "room_config": "Raum-Konfiguration",

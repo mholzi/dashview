@@ -194,6 +194,9 @@ export const THRESHOLDS = {
   DEFAULT_DOOR_OPEN_TOO_LONG_MINUTES: 30,     // minutes before door alert
   DEFAULT_WINDOW_OPEN_TOO_LONG_MINUTES: 120,  // minutes before window alert
   DEFAULT_GARAGE_OPEN_TOO_LONG_MINUTES: 30,   // minutes before garage alert
+  DEFAULT_ROOF_WINDOW_OPEN_TOO_LONG_MINUTES: 120, // minutes before roof window alert
+  DEFAULT_COVER_OPEN_TOO_LONG_MINUTES: 240,   // minutes before cover alert (longer, often intentional)
+  DEFAULT_LOCK_UNLOCKED_TOO_LONG_MINUTES: 30, // minutes before lock alert (security sensitive)
 
   // UI thresholds
   SWIPE_DISTANCE: 50,  // pixels

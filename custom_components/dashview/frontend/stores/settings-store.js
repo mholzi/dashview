@@ -90,6 +90,9 @@ import { hapticWarning } from '../utils/haptic.js';
  * @property {number} doorOpenTooLongMinutes - Minutes before door open alert
  * @property {number} windowOpenTooLongMinutes - Minutes before window open alert
  * @property {number} garageOpenTooLongMinutes - Minutes before garage open alert
+ * @property {number} roofWindowOpenTooLongMinutes - Minutes before roof window open alert
+ * @property {number} coverOpenTooLongMinutes - Minutes before cover open alert
+ * @property {number} lockUnlockedTooLongMinutes - Minutes before lock unlocked alert
  * @property {string} weatherEntity
  * @property {string} weatherCurrentTempEntity
  * @property {string} weatherCurrentStateEntity
@@ -152,6 +155,9 @@ export const DEFAULT_SETTINGS = {
   doorOpenTooLongMinutes: THRESHOLDS.DEFAULT_DOOR_OPEN_TOO_LONG_MINUTES,
   windowOpenTooLongMinutes: THRESHOLDS.DEFAULT_WINDOW_OPEN_TOO_LONG_MINUTES,
   garageOpenTooLongMinutes: THRESHOLDS.DEFAULT_GARAGE_OPEN_TOO_LONG_MINUTES,
+  roofWindowOpenTooLongMinutes: THRESHOLDS.DEFAULT_ROOF_WINDOW_OPEN_TOO_LONG_MINUTES,
+  coverOpenTooLongMinutes: THRESHOLDS.DEFAULT_COVER_OPEN_TOO_LONG_MINUTES,
+  lockUnlockedTooLongMinutes: THRESHOLDS.DEFAULT_LOCK_UNLOCKED_TOO_LONG_MINUTES,
 
   // Weather entity configuration
   weatherEntity: 'weather.forecast_home',
@@ -184,6 +190,8 @@ export const DEFAULT_SETTINGS = {
     motion: { enabled: true },
     garage: { enabled: true },
     doors: { enabled: false },
+    roofWindows: { enabled: false },
+    locks: { enabled: false },
     washer: { enabled: true, entity: '', finishTimeEntity: '' },
     windows: { enabled: false },
     lights: { enabled: false },

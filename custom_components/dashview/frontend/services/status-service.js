@@ -586,15 +586,110 @@ export function getLightsOnStatus(hass, infoTextConfig, enabledLights, labelId =
 }
 
 /**
- * Get covers status for info text row
+ * Get roof window status for info text row
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
- * @param {Object} enabledCovers - Map of enabled cover IDs
+ * @param {Object} enabledRoofWindows - Map of enabled roof window IDs
+ * @param {number} roofWindowOpenTooLongMinutes - Minutes threshold for open-too-long warning
  * @param {string|null} labelId - Optional label ID to filter by
  * @param {Function|null} entityHasLabel - Optional function to check if entity has label
  * @returns {Object|null} Status object or null
  */
-export function getCoversStatus(hass, infoTextConfig, enabledCovers, labelId = null, entityHasLabel = null) {
+export function getRoofWindowStatus(hass, infoTextConfig, enabledRoofWindows, roofWindowOpenTooLongMinutes = 120, labelId = null, entityHasLabel = null) {
+  if (!hass || !infoTextConfig.roofWindows?.enabled) return null;
+
+  let enabledRoofWindowIds = getEnabledEntityIds(enabledRoofWindows);
+  // Filter by label if provided
+  if (labelId && entityHasLabel) {
+    enabledRoofWindowIds = enabledRoofWindowIds.filter(id => entityHasLabel(id, labelId));
+  }
+  if (enabledRoofWindowIds.length === 0) return null;
+
+  const openRoofWindows = filterEntitiesByState(enabledRoofWindowIds, hass, 'on');
+  if (openRoofWindows.length === 0) return null;
+
+  const count = openRoofWindows.length;
+  const now = new Date();
+
+  // Find the longest open duration among all open roof windows
+  let longestOpenMinutes = 0;
+  openRoofWindows.forEach(entityId => {
+    const state = hass.states[entityId];
+    if (state && state.last_changed) {
+      const lastChanged = new Date(state.last_changed);
+      const diffMs = now - lastChanged;
+      const openMinutes = Math.floor(diffMs / 60000);
+      if (openMinutes > longestOpenMinutes) {
+        longestOpenMinutes = openMinutes;
+      }
+    }
+  });
+
+  // Check if any roof window has been open too long
+  const isOpenTooLong = longestOpenMinutes >= roofWindowOpenTooLongMinutes;
+
+  if (isOpenTooLong) {
+    // Format duration text
+    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
+    let durationText = '';
+    if (days > 0) {
+      durationText = t('common.time.duration_days', { days });
+    } else if (hours > 0) {
+      durationText = t('common.time.duration_hours', { hours });
+    } else {
+      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
+    }
+
+    // Find the roof window that's been open longest for alertId
+    let longestOpenRoofWindow = openRoofWindows[0];
+    let longestLastChanged = null;
+    openRoofWindows.forEach(entityId => {
+      const state = hass.states[entityId];
+      if (state && state.last_changed) {
+        const lastChanged = new Date(state.last_changed);
+        if (!longestLastChanged || lastChanged < longestLastChanged) {
+          longestLastChanged = lastChanged;
+          longestOpenRoofWindow = entityId;
+        }
+      }
+    });
+
+    return {
+      state: "warning",
+      prefixText: "",
+      badgeText: `${count}`,
+      badgeIcon: "mdi:window-open-variant",
+      suffixText: ` ${t('status.roofWindow.open_too_long')} (${durationText})`,
+      clickAction: "security",
+      isWarning: true,
+      priority: 89,
+      alertId: count === 1 ? `roofWindow:${longestOpenRoofWindow}` : 'roofWindow:multiple',
+      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
+    };
+  }
+
+  // Normal open status (no warning)
+  return {
+    state: "open",
+    prefixText: t('status.general.currently_are'),
+    badgeText: `${count}`,
+    badgeIcon: "mdi:window-open-variant",
+    suffixText: t('status.roofWindow.open_suffix'),
+    clickAction: "security",
+  };
+}
+
+/**
+ * Get covers status for info text row
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {Object} enabledCovers - Map of enabled cover IDs
+ * @param {number} coverOpenTooLongMinutes - Minutes threshold for open-too-long warning
+ * @param {string|null} labelId - Optional label ID to filter by
+ * @param {Function|null} entityHasLabel - Optional function to check if entity has label
+ * @returns {Object|null} Status object or null
+ */
+export function getCoversStatus(hass, infoTextConfig, enabledCovers, coverOpenTooLongMinutes = 240, labelId = null, entityHasLabel = null) {
   if (!hass || !infoTextConfig.covers?.enabled) return null;
 
   let enabledCoverIds = getEnabledEntityIds(enabledCovers);
@@ -617,6 +712,66 @@ export function getCoversStatus(hass, infoTextConfig, enabledCovers, labelId = n
   if (openCovers.length === 0) return null;
 
   const count = openCovers.length;
+  const now = new Date();
+
+  // Find the longest open duration among all open covers
+  let longestOpenMinutes = 0;
+  openCovers.forEach(entityId => {
+    const state = hass.states[entityId];
+    if (state && state.last_changed) {
+      const lastChanged = new Date(state.last_changed);
+      const diffMs = now - lastChanged;
+      const openMinutes = Math.floor(diffMs / 60000);
+      if (openMinutes > longestOpenMinutes) {
+        longestOpenMinutes = openMinutes;
+      }
+    }
+  });
+
+  // Check if any cover has been open too long
+  const isOpenTooLong = longestOpenMinutes >= coverOpenTooLongMinutes;
+
+  if (isOpenTooLong) {
+    // Format duration text
+    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
+    let durationText = '';
+    if (days > 0) {
+      durationText = t('common.time.duration_days', { days });
+    } else if (hours > 0) {
+      durationText = t('common.time.duration_hours', { hours });
+    } else {
+      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
+    }
+
+    // Find the cover that's been open longest for alertId
+    let longestOpenCover = openCovers[0];
+    let longestLastChanged = null;
+    openCovers.forEach(entityId => {
+      const state = hass.states[entityId];
+      if (state && state.last_changed) {
+        const lastChanged = new Date(state.last_changed);
+        if (!longestLastChanged || lastChanged < longestLastChanged) {
+          longestLastChanged = lastChanged;
+          longestOpenCover = entityId;
+        }
+      }
+    });
+
+    return {
+      state: "warning",
+      prefixText: "",
+      badgeText: `${count} ${count === 1 ? t('status.covers.label_singular') : t('status.covers.label_plural')}`,
+      badgeIcon: "mdi:window-shutter-alert",
+      suffixText: ` ${t('status.general.open_suffix')} (${durationText})`,
+      clickAction: "covers",
+      isWarning: true,
+      priority: 88,
+      alertId: count === 1 ? `cover:${longestOpenCover}` : 'cover:multiple',
+      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
+    };
+  }
+
+  // Normal open status (no warning)
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
@@ -624,6 +779,103 @@ export function getCoversStatus(hass, infoTextConfig, enabledCovers, labelId = n
     badgeIcon: "mdi:window-shutter-open",
     suffixText: t('status.general.open_suffix'),
     clickAction: "covers",
+  };
+}
+
+/**
+ * Get lock status for info text row
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {Object} enabledLocks - Map of enabled lock IDs
+ * @param {number} lockUnlockedTooLongMinutes - Minutes threshold for unlocked-too-long warning
+ * @param {string|null} labelId - Optional label ID to filter by
+ * @param {Function|null} entityHasLabel - Optional function to check if entity has label
+ * @returns {Object|null} Status object or null
+ */
+export function getLockStatus(hass, infoTextConfig, enabledLocks, lockUnlockedTooLongMinutes = 30, labelId = null, entityHasLabel = null) {
+  if (!hass || !infoTextConfig.locks?.enabled) return null;
+
+  let enabledLockIds = getEnabledEntityIds(enabledLocks);
+  // Filter by label if provided
+  if (labelId && entityHasLabel) {
+    enabledLockIds = enabledLockIds.filter(id => entityHasLabel(id, labelId));
+  }
+  if (enabledLockIds.length === 0) return null;
+
+  // Find all locks that are currently unlocked
+  const unlockedLocks = enabledLockIds
+    .map(entityId => {
+      const state = hass.states[entityId];
+      if (!state || state.state !== 'unlocked') return null;
+      return {
+        entityId,
+        name: state.attributes?.friendly_name || entityId,
+        lastChanged: state.last_changed ? new Date(state.last_changed) : null,
+      };
+    })
+    .filter(l => l !== null);
+
+  if (unlockedLocks.length === 0) return null;
+
+  const now = new Date();
+
+  // Find the longest unlocked duration and the lock that's been unlocked longest
+  let longestUnlockedLock = unlockedLocks[0];
+  let longestUnlockedMinutes = 0;
+
+  unlockedLocks.forEach(lock => {
+    if (lock.lastChanged) {
+      const diffMs = now - lock.lastChanged;
+      const unlockedMinutes = Math.floor(diffMs / 60000);
+      if (unlockedMinutes > longestUnlockedMinutes) {
+        longestUnlockedMinutes = unlockedMinutes;
+        longestUnlockedLock = lock;
+      }
+    }
+  });
+
+  // Check if any lock has been unlocked too long
+  const isUnlockedTooLong = longestUnlockedMinutes >= lockUnlockedTooLongMinutes;
+
+  if (isUnlockedTooLong) {
+    // Format duration text
+    const { days, hours, minutes } = calculateTimeDifference(longestUnlockedMinutes * 60000);
+    let durationText = '';
+    if (days > 0) {
+      durationText = t('common.time.duration_days', { days });
+    } else if (hours > 0) {
+      durationText = t('common.time.duration_hours', { hours });
+    } else {
+      durationText = t('common.time.duration_minutes', { minutes: minutes || longestUnlockedMinutes });
+    }
+
+    // Show lock name if single lock, count if multiple
+    const displayText = unlockedLocks.length === 1
+      ? t('status.lock.unlocked_too_long_single', { name: longestUnlockedLock.name, duration: durationText })
+      : t('status.lock.unlocked_too_long_multiple', { count: unlockedLocks.length, duration: durationText });
+
+    return {
+      state: "warning",
+      prefixText: "",
+      badgeText: displayText,
+      badgeIcon: "mdi:lock-alert",
+      suffixText: "",
+      clickAction: "security",
+      isWarning: true,
+      priority: 93,
+      alertId: unlockedLocks.length === 1 ? `lock:${longestUnlockedLock.entityId}` : 'lock:multiple',
+      entityLastChanged: longestUnlockedLock.lastChanged ? longestUnlockedLock.lastChanged.toISOString() : null,
+    };
+  }
+
+  // Normal unlocked status (no warning) - just show count
+  return {
+    state: "unlocked",
+    prefixText: t('status.general.currently_are'),
+    badgeText: `${unlockedLocks.length}`,
+    badgeIcon: "mdi:lock-open",
+    suffixText: t('status.general.open_suffix'),
+    clickAction: "security",
   };
 }
 
@@ -991,9 +1243,11 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     enabledGarages = {},
     enabledWindows = {},
     enabledDoors = {},
+    enabledRoofWindows = {},
     enabledLights = {},
     enabledCovers = {},
     enabledTVs = {},
+    enabledLocks = {},
     enabledWaterLeakSensors = {},
   } = enabledEntities;
 
@@ -1002,9 +1256,11 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     garageLabelId = null,
     doorLabelId = null,
     windowLabelId = null,
+    roofWindowLabelId = null,
     lightLabelId = null,
     coverLabelId = null,
     tvLabelId = null,
+    lockLabelId = null,
     waterLeakLabelId = null,
   } = labelIds;
 
@@ -1012,6 +1268,9 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     doorOpenTooLongMinutes = 30,
     windowOpenTooLongMinutes = 120,
     garageOpenTooLongMinutes = 30,
+    roofWindowOpenTooLongMinutes = 120,
+    coverOpenTooLongMinutes = 240,
+    lockUnlockedTooLongMinutes = 30,
   } = openTooLongThresholds;
 
   // Get appliance status items from new system
@@ -1020,13 +1279,15 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
   return [
     // Water leak is highest priority (property damage)
     getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors, waterLeakLabelId, entityHasLabel),
-    // Door/garage/window open-too-long alerts (security concerns)
+    // Door/lock/garage/window open-too-long alerts (security concerns)
     getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLongMinutes, doorLabelId, entityHasLabel),
+    getLockStatus(hass, infoTextConfig, enabledLocks, lockUnlockedTooLongMinutes, lockLabelId, entityHasLabel),
     getGarageStatus(hass, infoTextConfig, enabledGarages, garageOpenTooLongMinutes, garageLabelId, entityHasLabel),
     getWindowsStatus(hass, infoTextConfig, enabledWindows, windowOpenTooLongMinutes, windowLabelId, entityHasLabel),
+    getRoofWindowStatus(hass, infoTextConfig, enabledRoofWindows, roofWindowOpenTooLongMinutes, roofWindowLabelId, entityHasLabel),
     getMotionStatus(hass, infoTextConfig, enabledMotionSensors, motionLabelId, entityHasLabel),
     getLightsOnStatus(hass, infoTextConfig, enabledLights, lightLabelId, entityHasLabel),
-    getCoversStatus(hass, infoTextConfig, enabledCovers, coverLabelId, entityHasLabel),
+    getCoversStatus(hass, infoTextConfig, enabledCovers, coverOpenTooLongMinutes, coverLabelId, entityHasLabel),
     getTVsStatus(hass, infoTextConfig, enabledTVs, tvLabelId, entityHasLabel),
     ...applianceStatusItems,
     getBatteryLowStatus(hass, infoTextConfig),
@@ -1040,8 +1301,10 @@ export default {
   getGarageStatus,
   getDoorStatus,
   getWindowsStatus,
+  getRoofWindowStatus,
   getLightsOnStatus,
   getCoversStatus,
+  getLockStatus,
   getTVsStatus,
   getDishwasherStatus,
   getDryerStatus,

@@ -124,13 +124,19 @@
     },
     "openTooLong": {
       "sectionTitle": "Open Too Long Alerts",
-      "sectionDesc": "Alert when doors, windows, or garages are left open beyond these thresholds.",
+      "sectionDesc": "Alert when doors, windows, roof windows, covers, garages, or locks are left open/unlocked beyond these thresholds.",
       "doorThreshold": "Door Open Threshold",
       "doorThresholdDesc": "Alert after door is open this long",
       "windowThreshold": "Window Open Threshold",
       "windowThresholdDesc": "Alert after window is open this long",
       "garageThreshold": "Garage Open Threshold",
-      "garageThresholdDesc": "Alert after garage is open this long"
+      "garageThresholdDesc": "Alert after garage is open this long",
+      "roofWindowThreshold": "Roof Window Open Threshold",
+      "roofWindowThresholdDesc": "Alert after roof window is open this long",
+      "coverThreshold": "Cover Open Threshold",
+      "coverThresholdDesc": "Alert after cover is open this long",
+      "lockThreshold": "Lock Unlocked Threshold",
+      "lockThresholdDesc": "Alert after lock is unlocked this long"
     }
   },
   "ui": {
@@ -356,7 +362,15 @@
     "since": "since",
     "dismiss": "Dismiss",
     "dismissedCount": "{{count}} hidden",
-    "showAllAlerts": "Show all alerts"
+    "showAllAlerts": "Show all alerts",
+    "roofWindow": {
+      "open_suffix": "roof win. open.",
+      "open_too_long": "roof win. open"
+    },
+    "lock": {
+      "unlocked_too_long_single": "{{name}} unlocked {{duration}}",
+      "unlocked_too_long_multiple": "{{count}} locks unlocked ({{duration}})"
+    }
   },
   "user": {
     "presence_history": "Presence History",
@@ -648,7 +662,11 @@
       "dryer": "Dryer",
       "dryerDesc": "Shows dryer status",
       "vacuum": "Vacuum",
-      "vacuumDesc": "Shows vacuum robot status"
+      "vacuumDesc": "Shows vacuum robot status",
+      "roofWindows": "Roof Windows",
+      "roofWindowsDesc": "Shows open roof windows",
+      "locks": "Locks",
+      "locksDesc": "Shows unlocked locks"
     },
     "settings": {
       "room_config": "Room Configuration",
