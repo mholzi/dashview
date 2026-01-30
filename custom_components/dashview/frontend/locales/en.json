@@ -153,7 +153,8 @@
       "other_devices": "Other Devices",
       "devices": "Devices",
       "locks": "Locks",
-      "batteries": "Batteries"
+      "batteries": "Batteries",
+      "roofWindows": "Roof Windows"
     },
     "errors": {
       "no_data": "No data available",
