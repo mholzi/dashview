@@ -450,16 +450,7 @@ export function debugLog(category, ...args) {
   console.log(`[Dashview:${category}]`, ...args);
 }
 
-// Re-export German text constants
-export {
-  STATUS_TEXT,
-  UI_LABELS,
-  ERROR_TEXT,
-  TIME_FORMAT,
-  DWD_WARNINGS,
-  formatCount,
-  formatOfTotal,
-} from './german-text.js';
+// German text constants have been moved to the i18n translation system
 
 // Re-export changelog functions
 export {
