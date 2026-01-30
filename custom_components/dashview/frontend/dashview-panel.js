@@ -2267,6 +2267,35 @@ if (typeof structuredClone === 'undefined') {
         });
       });
 
+      // Get doors for this room (only show when open)
+      this._entityRegistry.forEach((entityReg) => {
+        const entityId = entityReg.entity_id;
+        if (this._enabledDoors[entityId] === false) return;
+        const entityAreaId = this._getAreaIdForEntity(entityId);
+        if (entityAreaId !== areaId) return;
+        if (!this._doorLabelId || !entityReg.labels || !entityReg.labels.includes(this._doorLabelId)) return;
+
+        const state = this.hass.states[entityId];
+        if (!state) return;
+
+        // Only show door when open
+        if (state.state !== 'on') return;
+
+        const friendlyName = state.attributes?.friendly_name || entityId;
+        const timeAgo = this._formatTimeAgo(state.last_changed);
+
+        chips.push({
+          type: 'door',
+          entityId,
+          name: friendlyName,
+          stateText: friendlyName,
+          timeAgo,
+          icon: 'mdi:door-open',
+          isActive: true,
+          state: state.state,
+        });
+      });
+
       // Get water leak sensors for this room (show wet/dry state per AC5)
       this._entityRegistry.forEach((entityReg) => {
         const entityId = entityReg.entity_id;
