@@ -12,7 +12,10 @@ import time
 from pathlib import Path
 from urllib.parse import unquote
 
-from homeassistant.components.frontend import async_register_built_in_panel
+from homeassistant.components.frontend import (
+    async_register_built_in_panel,
+    async_remove_panel,
+)
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntry
@@ -225,6 +228,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    # Remove frontend panel (#77)
+    panel_url = PANEL_URL.lstrip("/")
+    try:
+        async_remove_panel(hass, panel_url)
+    except Exception:  # noqa: BLE001
+        _LOGGER.debug("Panel %s was not registered, skipping removal", panel_url)
+
+    # Clean up domain data
+    hass.data.pop(DOMAIN, None)
+
     return True
 
 
