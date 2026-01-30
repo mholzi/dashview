@@ -24,6 +24,7 @@ import { activityIconStyles } from './components/activity-icons.js';
 import { cardStyles } from './components/cards.js';
 import { securityStyles } from './components/security.js';
 import { entityPickerStyles } from './components/entity-picker.js';
+import { suggestionStyles } from './components/suggestions.js';
 
 // Popups
 import { sharedPopupStyles } from './popups/shared.js';
@@ -60,6 +61,7 @@ ${activityIconStyles}
 ${cardStyles}
 ${securityStyles}
 ${entityPickerStyles}
+${suggestionStyles}
 ${sharedPopupStyles}
 ${roomPopupStyles}
 ${mediaPopupStyles}
@@ -95,6 +97,7 @@ export {
   cardStyles,
   securityStyles,
   entityPickerStyles,
+  suggestionStyles,
   // Popups
   sharedPopupStyles,
   roomPopupStyles,

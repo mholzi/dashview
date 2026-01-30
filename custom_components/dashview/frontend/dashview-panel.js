@@ -1908,7 +1908,8 @@ if (typeof structuredClone === 'undefined') {
 
     _updateTime() {
       const now = new Date();
-      this._currentTime = now.toLocaleTimeString("de-DE", {
+      const locale = this.hass?.language || navigator.language || 'en';
+      this._currentTime = now.toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
@@ -2890,14 +2891,15 @@ if (typeof structuredClone === 'undefined') {
       const messages = [];
       if (highTemps.length > 0) {
         const avg = (highTemps.reduce((sum, s) => sum + s.value, 0) / highTemps.length).toFixed(1);
-        messages.push(`Temperatur: ${avg}°C`);
+        const unit = highTemps[0]?.unit || this.hass?.config?.unit_system?.temperature || '°C';
+        messages.push(`${t('sensor.temperature', 'Temperature')}: ${avg}${unit}`);
       }
       if (highHumidity.length > 0) {
         const avg = (highHumidity.reduce((sum, s) => sum + s.value, 0) / highHumidity.length).toFixed(1);
-        messages.push(`Luftfeuchtigkeit: ${avg}%`);
+        messages.push(`${t('sensor.humidity', 'Humidity')}: ${avg}%`);
       }
 
-      return { title: t('ui.notifications.ventilate_room', 'Bitte Raum lüften'), subtitle: messages.join(' · ') };
+      return { title: t('ui.notifications.ventilate_room', 'Please ventilate room'), subtitle: messages.join(' · ') };
     }
 
     /**
@@ -4286,7 +4288,7 @@ if (typeof structuredClone === 'undefined') {
     }
 
     _formatDate() {
-      return coreUtils ? coreUtils.formatDate() : '';
+      return coreUtils ? coreUtils.formatDate(this.hass?.language) : '';
     }
 
     _setTab(tab) {
@@ -4499,7 +4501,7 @@ if (typeof structuredClone === 'undefined') {
                 cursor: pointer;
                 font-size: 12px;
               "
-            >Erneut versuchen</button>
+            >${t('common.retry', 'Retry')}</button>
           </div>
         ` : ''}
 
@@ -4658,7 +4660,7 @@ if (typeof structuredClone === 'undefined') {
                       <ha-icon icon="mdi:shield-home"></ha-icon>
                     </div>
                     <div class="popup-title">
-                      <h2>Sicherheit</h2>
+                      <h2>${t('security.title', 'Security')}</h2>
                     </div>
                     <button class="popup-close" @click=${() => this._securityPopupOpen = false}>
                       <ha-icon icon="mdi:close"></ha-icon>
@@ -4802,7 +4804,7 @@ if (typeof structuredClone === 'undefined') {
                       <ha-icon icon="mdi:cog"></ha-icon>
                     </div>
                     <div class="popup-title">
-                      <h2>Admin</h2>
+                      <h2>${t('admin.title', 'Admin')}</h2>
                     </div>
                     <button class="popup-close" @click=${() => this._adminPopupOpen = false}>
                       <ha-icon icon="mdi:close"></ha-icon>
@@ -4832,28 +4834,28 @@ if (typeof structuredClone === 'undefined') {
               @click=${() => this._setTab("home")}
             >
               <ha-icon icon="mdi:home"></ha-icon>
-              <span>Home</span>
+              <span>${t('ui.tabs.home', 'Home')}</span>
             </button>
             <button
               class="tab ${this._securityPopupOpen ? "active" : ""}"
               @click=${() => { this._closeAllPopups(); this._securityPopupOpen = true; this.requestUpdate(); }}
             >
               <ha-icon icon="mdi:shield-home"></ha-icon>
-              <span>Sicherheit</span>
+              <span>${t('security.title', 'Security')}</span>
             </button>
             <button
               class="tab ${this._mediaPopupOpen ? "active" : ""}"
               @click=${() => { this._closeAllPopups(); this._mediaPopupOpen = true; this.requestUpdate(); }}
             >
               <ha-icon icon="mdi:music"></ha-icon>
-              <span>Musik</span>
+              <span>${t('media.title', 'Music')}</span>
             </button>
             <button
               class="tab ${this._adminPopupOpen ? "active" : ""}"
               @click=${() => { this._closeAllPopups(); this._adminPopupOpen = true; this.requestUpdate(); }}
             >
               <ha-icon icon="mdi:cog"></ha-icon>
-              <span>Admin</span>
+              <span>${t('admin.title', 'Admin')}</span>
             </button>
           </div>
         </div>

@@ -141,11 +141,51 @@ export function renderDwdWarnings(component, html) {
   `;
 }
 
+/**
+ * Render smart suggestion banners
+ * Displays contextual suggestions with action buttons and dismiss
+ * @param {Object} component - The DashviewPanel instance
+ * @param {Function} html - lit-html template function
+ * @returns {TemplateResult} Suggestions HTML
+ */
+export function renderSuggestionsBanner(component, html) {
+  const suggestions = component._activeSuggestions;
+  if (!suggestions || suggestions.length === 0) return '';
+
+  return html`
+    <div class="suggestions-section">
+      ${suggestions.map(suggestion => html`
+        <div class="suggestion-banner ${suggestion.level || 'info'}" role="${suggestion.level === 'warning' ? 'alert' : 'status'}">
+          <div class="suggestion-banner-icon">${suggestion.icon}</div>
+          <div class="suggestion-banner-content">
+            <div class="suggestion-banner-title">${suggestion.title}</div>
+            <div class="suggestion-banner-desc">${suggestion.description}</div>
+          </div>
+          <div class="suggestion-banner-actions">
+            <button
+              class="suggestion-action-btn"
+              @click=${(e) => { e.stopPropagation(); component._handleSuggestionAction(suggestion); }}
+            >${suggestion.actionText}</button>
+            ${suggestion.dismissable ? html`
+              <button
+                class="suggestion-dismiss-btn"
+                @click=${(e) => { e.stopPropagation(); component._handleSuggestionDismiss(suggestion); }}
+                title="${t('suggestions.dismiss')}"
+              >✕</button>
+            ` : ''}
+          </div>
+        </div>
+      `)}
+    </div>
+  `;
+}
+
 export function renderHomeTab(component, html) {
   return html`
     <div class="container">
       ${renderDwdWarnings(component, html)}
       ${renderTrainDepartures(component, html)}
+      ${renderSuggestionsBanner(component, html)}
       ${renderRaeumeSection(component, html)}
     </div>
   `;

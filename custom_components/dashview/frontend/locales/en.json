@@ -35,7 +35,10 @@
       "duration_minutes": "{{minutes}}min",
       "until_time": "until {{time}}",
       "until_tomorrow": "until tomorrow {{time}}",
-      "until_date": "until {{date}} {{time}}"
+      "until_date": "until {{date}} {{time}}",
+      "days_ago": "{{days}} days ago",
+      "hours_ago": "{{hours}}h ago",
+      "minutes_ago": "{{minutes}}min ago"
     },
     "actions": {
       "save": "Save",
@@ -46,15 +49,24 @@
       "search": "Search",
       "filter": "Filter",
       "close": "Close",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "skip": "Skip",
+      "lets_go": "Let's go!",
+      "continue": "Continue"
     },
     "options": {
       "all": "All",
       "none": "None",
       "enabled": "Enabled",
       "disabled": "Disabled",
-      "of": "of"
-    }
+      "of": "of",
+      "new": "New",
+      "improved": "Improved",
+      "fixed": "Fixed",
+      "attention": "Attention",
+      "under": "under"
+    },
+    "retry": "Retry"
   },
   "entityPicker": {
     "noResults": "No matching entities found"
@@ -161,7 +173,14 @@
       "locks": "Locks",
       "batteries": "Batteries",
       "batteries_ok": "All batteries OK",
-      "roofWindows": "Roof Windows"
+      "roofWindows": "Roof Windows",
+      "open_windows": "Open Windows",
+      "closed_windows": "Closed Windows",
+      "open_garages": "Open Garages",
+      "closed_garages": "Closed Garages",
+      "no_devices_under": "No devices under",
+      "device": "Device",
+      "whats_new": "What's New?"
     },
     "errors": {
       "no_data": "No data available",
@@ -176,7 +195,9 @@
       "no_sensors_selected": "No sensors selected",
       "no_devices_enabled": "No devices enabled.",
       "no_lights_enabled": "No lights enabled in admin configuration.",
-      "no_windows_enabled": "No windows enabled in admin configuration."
+      "no_windows_enabled": "No windows enabled in admin configuration.",
+      "no_garages_enabled": "No garages enabled in admin configuration.",
+      "no_motion_enabled": "No motion sensors enabled in admin configuration."
     },
     "popups": {
       "lights": {
@@ -196,6 +217,9 @@
         "on_section": "TVs on",
         "off_section": "TVs off"
       }
+    },
+    "notifications": {
+      "ventilate_room": "Please ventilate room"
     }
   },
   "rooms": {
@@ -287,7 +311,9 @@
     "idle": "Ready",
     "playing": "Playing",
     "paused": "Paused",
-    "standby": "Standby"
+    "standby": "Standby",
+    "title": "Music",
+    "unavailable": "Unavailable"
   },
   "status": {
     "water": {
@@ -909,7 +935,8 @@
       "noWindowsEnabled": "No windows enabled in admin configuration.",
       "noGaragesEnabled": "No garage doors enabled in admin configuration.",
       "noMotionEnabled": "No motion sensors enabled in admin configuration."
-    }
+    },
+    "title": "Admin"
   },
   "changelog": {
     "titles": {
@@ -1085,7 +1112,8 @@
       "empty": "No door sensors enabled in admin configuration.",
       "open": "Open Doors",
       "closed": "Closed Doors"
-    }
+    },
+    "title": "Security"
   },
   "onboarding": {
     "title": "Setup Wizard",
@@ -1210,5 +1238,23 @@
       "ready": "All set!",
       "readyDesc": "Your dashboard is configured and ready to use."
     }
+  },
+  "suggestions": {
+    "lightsLeftOn": {
+      "title": "Lights still on",
+      "desc": "{{count}} lights are on late at night",
+      "action": "Turn off all"
+    },
+    "acConflict": {
+      "title": "Windows open with climate running",
+      "desc": "This wastes energy — close windows or turn off climate",
+      "action": "Show windows"
+    },
+    "sunset": {
+      "title": "It's dark outside",
+      "desc": "No lights are on — turn on lights?",
+      "action": "Turn on lights"
+    },
+    "dismiss": "Dismiss"
   }
 }
