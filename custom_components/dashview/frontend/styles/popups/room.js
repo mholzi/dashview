@@ -862,6 +862,7 @@ export const roomPopupStyles = `
     align-items: center;
     padding: 6px 0;
     min-height: 46px;
+    cursor: pointer;
   }
 
   .popup-lock-header ha-icon {
@@ -885,6 +886,13 @@ export const roomPopupStyles = `
   }
 
   .popup-lock-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--dv-transition-slow) ease;
+  }
+
+  .popup-lock-content.expanded {
+    max-height: 500px;
     display: flex;
     flex-direction: column;
     gap: 4px;

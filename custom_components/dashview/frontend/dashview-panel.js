@@ -281,6 +281,7 @@ if (typeof structuredClone === 'undefined') {
         _popupCoverExpanded: { type: Boolean },
         _popupGarageExpanded: { type: Boolean },
         _popupLightExpanded: { type: Boolean },
+        _popupLockExpanded: { type: Boolean },
         _popupTVExpanded: { type: Boolean },
         _popupMediaExpanded: { type: Boolean },
         _popupThermostatExpanded: { type: Boolean },
@@ -458,6 +459,7 @@ if (typeof structuredClone === 'undefined') {
       this._popupCoverExpanded = false;
       this._popupGarageExpanded = false;
       this._popupLightExpanded = true;
+      this._popupLockExpanded = true;
       this._popupMediaExpanded = true;
       this._popupThermostatExpanded = true;
       this._popupRoofWindowExpanded = true;
@@ -2296,6 +2298,7 @@ if (typeof structuredClone === 'undefined') {
 
     _togglePopupCoverExpanded() { this._toggleBoolProp('_popupCoverExpanded'); }
     _togglePopupGarageExpanded() { this._toggleBoolProp('_popupGarageExpanded'); }
+    _togglePopupLockExpanded() { this._toggleBoolProp('_popupLockExpanded'); }
     _togglePopupThermostatExpanded() { this._toggleBoolProp('_popupThermostatExpanded'); }
 
     /**
