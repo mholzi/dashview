@@ -110,9 +110,9 @@ function renderVacuumRoomMapping(panel, html) {
 
   const roomMapping = vacuumConfig.roomMapping || {};
 
-  // Initialize edit state if not exists
+  // Initialize edit state if not exists (per-map state for room inputs)
   if (!panel._vacuumRoomMappingState) {
-    panel._vacuumRoomMappingState = { newMapName: '', newSegmentId: '', newRoomName: '' };
+    panel._vacuumRoomMappingState = { newMapName: '', newRooms: {} };
   }
   const editState = panel._vacuumRoomMappingState;
 
@@ -142,16 +142,17 @@ function renderVacuumRoomMapping(panel, html) {
   };
 
   const addRoom = (mapName) => {
-    const segId = editState.newSegmentId.trim();
-    const roomName = editState.newRoomName.trim();
+    const newRoomState = editState.newRooms[mapName] || { segId: '', roomName: '' };
+    const segId = newRoomState.segId.trim();
+    const roomName = newRoomState.roomName.trim();
     if (!segId || !roomName) return;
     const updatedMap = { ...roomMapping[mapName], [segId]: roomName };
     panel._infoTextConfig = {
       ...panel._infoTextConfig,
       vacuum: { ...vacuumConfig, roomMapping: { ...roomMapping, [mapName]: updatedMap } }
     };
-    editState.newSegmentId = '';
-    editState.newRoomName = '';
+    newRoomState.segId = '';
+    newRoomState.roomName = '';
     panel._saveSettings();
     panel.requestUpdate();
   };
@@ -180,7 +181,10 @@ function renderVacuumRoomMapping(panel, html) {
       </div>
       <div class="info-text-config-entities" style="padding: 0 12px 12px;">
         <!-- Existing maps -->
-        ${mapNames.map(mapName => html`
+        ${mapNames.map(mapName => {
+          if (!editState.newRooms[mapName]) editState.newRooms[mapName] = { segId: '', roomName: '' };
+          const newRoomState = editState.newRooms[mapName];
+          return html`
           <div style="margin-bottom: 12px; padding: 10px; background: var(--dv-gray100, #f5f5f5); border-radius: 8px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
               <strong style="font-size: 14px;">${mapName}</strong>
@@ -207,15 +211,15 @@ function renderVacuumRoomMapping(panel, html) {
               <input
                 type="text"
                 placeholder="${t('admin.vacuum.segmentId')}"
-                .value=${editState.newSegmentId}
-                @input=${(e) => { editState.newSegmentId = e.target.value; }}
+                .value=${newRoomState.segId}
+                @input=${(e) => { newRoomState.segId = e.target.value; }}
                 style="width: 60px; padding: 6px 8px; border: 1px solid var(--dv-gray300, #ddd); border-radius: 6px; font-size: 13px;"
               />
               <input
                 type="text"
                 placeholder="${t('admin.vacuum.roomName')}"
-                .value=${editState.newRoomName}
-                @input=${(e) => { editState.newRoomName = e.target.value; }}
+                .value=${newRoomState.roomName}
+                @input=${(e) => { newRoomState.roomName = e.target.value; }}
                 style="flex: 1; padding: 6px 8px; border: 1px solid var(--dv-gray300, #ddd); border-radius: 6px; font-size: 13px;"
               />
               <div
@@ -224,7 +228,7 @@ function renderVacuumRoomMapping(panel, html) {
               >+</div>
             </div>
           </div>
-        `)}
+        `})}
 
         <!-- Add new map -->
         <div style="display: flex; gap: 6px; margin-top: 4px;">
