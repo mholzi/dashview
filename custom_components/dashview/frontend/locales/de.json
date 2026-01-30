@@ -609,6 +609,8 @@
       "garageDesc": "Garagentor-Entitäten",
       "windows": "Fenster",
       "windowDesc": "Fenstersensor-Entitäten",
+      "doors": "Türen",
+      "doorDesc": "Türsensor-Entitäten",
       "vibrationSensors": "Vibrationssensoren",
       "vibrationDesc": "Vibrationserkennungssensoren",
       "temperatureSensors": "Temperatursensoren",
@@ -647,6 +649,8 @@
       "dishwasherDesc": "Zeigt Status des Geschirrspülers an",
       "dryer": "Trockner",
       "dryerDesc": "Zeigt Status des Trockners an",
+      "doors": "Türen",
+      "doorsDesc": "Zeigt offene Türen an",
       "vacuum": "Staubsauger",
       "vacuumDesc": "Zeigt Status des Staubsauger-Roboters an"
     },
@@ -945,6 +949,13 @@
       "edit": "Bearbeiten",
       "ready": "Alles bereit!",
       "readyDesc": "Klicke Fertig um die Einrichtung abzuschließen und dein Dashboard zu nutzen."
+    }
+  },
+  "security": {
+    "doors": {
+      "empty": "Keine Türsensoren in der Admin-Konfiguration aktiviert.",
+      "open": "Offene Türen",
+      "closed": "Geschlossene Türen"
     }
   }
 }

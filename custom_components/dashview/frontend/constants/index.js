@@ -265,6 +265,13 @@ export const ENTITY_CONFIGS = {
     getState: (entity) => entity.position !== undefined ? `${entity.position}%` : entity.state,
     isActive: (entity) => entity.state === STATES.OPEN,
   },
+  doors: {
+    icon: ICONS.DOOR,
+    title: 'Doors / Türen',
+    getIcon: (entity) => entity.state === STATES.ON ? 'mdi:door-open' : 'mdi:door-closed',
+    getState: (entity) => entity.state,
+    isActive: (entity) => entity.state === STATES.ON,
+  },
   vibrationSensors: {
     icon: ICONS.VIBRATE_ON,
     title: 'Vibration Sensors',

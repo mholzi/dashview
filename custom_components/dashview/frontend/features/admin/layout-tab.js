@@ -865,6 +865,10 @@ export function renderCardConfig(panel, html) {
         ${renderInfoTextToggle(panel, html, 'garage', t('admin.infoTextToggles.garage'), 'mdi:garage',
           t('admin.infoTextToggles.garageDesc'))}
 
+        <!-- Doors Status -->
+        ${renderInfoTextToggle(panel, html, 'doors', t('admin.infoTextToggles.doors'), 'mdi:door',
+          t('admin.infoTextToggles.doorsDesc'))}
+
         <!-- Windows Status -->
         ${renderInfoTextToggle(panel, html, 'windows', t('admin.infoTextToggles.windows'), 'mdi:window-open',
           t('admin.infoTextToggles.windowsDesc'))}

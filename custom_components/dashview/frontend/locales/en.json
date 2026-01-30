@@ -609,6 +609,8 @@
       "garageDesc": "Garage door entities",
       "windows": "Windows",
       "windowDesc": "Window sensor entities",
+      "doors": "Doors",
+      "doorDesc": "Door sensor entities",
       "vibrationSensors": "Vibration Sensors",
       "vibrationDesc": "Vibration detection sensors",
       "temperatureSensors": "Temperature Sensors",
@@ -647,6 +649,8 @@
       "dishwasherDesc": "Shows dishwasher status",
       "dryer": "Dryer",
       "dryerDesc": "Shows dryer status",
+      "doors": "Doors",
+      "doorsDesc": "Shows open doors",
       "vacuum": "Vacuum",
       "vacuumDesc": "Shows vacuum robot status"
     },
@@ -815,6 +819,13 @@
       "edit": "Edit",
       "ready": "You're All Set!",
       "readyDesc": "Click Finish to complete setup and start using your dashboard."
+    }
+  },
+  "security": {
+    "doors": {
+      "empty": "No door sensors enabled in admin configuration.",
+      "open": "Open Doors",
+      "closed": "Closed Doors"
     }
   }
 }
