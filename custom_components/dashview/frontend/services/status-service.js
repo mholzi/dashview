@@ -21,8 +21,10 @@ import { t } from '../utils/i18n.js';
 export function getWasherStatus(hass, infoTextConfig) {
   if (!hass || !infoTextConfig.washer?.enabled) return null;
 
-  const entityId = infoTextConfig.washer.entity || "sensor.waschmaschine_operation_state";
-  const finishTimeEntityId = infoTextConfig.washer.finishTimeEntity || "sensor.waschmaschine_programme_finish_time";
+  const entityId = infoTextConfig.washer.entity;
+  const finishTimeEntityId = infoTextConfig.washer.finishTimeEntity;
+
+  if (!entityId) return null;
 
   const operationState = hass.states[entityId];
   const finishTime = finishTimeEntityId ? hass.states[finishTimeEntityId] : null;
