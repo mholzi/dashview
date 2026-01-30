@@ -244,6 +244,14 @@
       "severe_warning": "Unwetterwarnung vor",
       "extreme_warning": "Extremes Unwetter"
     },
+    "uv_index": "UV-Index",
+    "uv_peak": "UV-Maximum",
+    "uv_protection": "Sonnenschutz empfohlen",
+    "uv_low": "Niedrig",
+    "uv_moderate": "Mäßig",
+    "uv_high": "Hoch",
+    "uv_very_high": "Sehr hoch",
+    "uv_extreme": "Extrem",
     "pollen": "Pollenflug",
     "pollen_types": {
       "erle": "Erle",

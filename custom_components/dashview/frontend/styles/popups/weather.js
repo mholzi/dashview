@@ -393,4 +393,90 @@ export const weatherPopupStyles = `
   .pollen-item-trend ha-icon {
     --mdc-icon-size: 14px;
   }
+
+  /* ==================== UV INDEX ==================== */
+
+  /* Current card with UV row: add grid area */
+  .weather-current-card.has-uv {
+    grid-template-areas:
+      "title icon"
+      "temp icon"
+      "condition icon"
+      "uvrow uvrow";
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .weather-current-uv {
+    grid-area: uvrow;
+  }
+
+  /* Forecast card with UV row: add grid area */
+  .weather-forecast-card.has-uv {
+    grid-template-areas:
+      "title icon"
+      "temp icon"
+      "condition icon"
+      "uvrow uvrow";
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .weather-forecast-uv {
+    grid-area: uvrow;
+  }
+
+  /* UV footer row — shared between current and forecast cards */
+  .forecast-uv-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid var(--dv-gray300, rgba(0,0,0,0.1));
+    padding-top: 10px;
+    margin-top: 8px;
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+
+  .forecast-uv-icon {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .forecast-uv-text {
+    font-size: 12px;
+    color: var(--dv-gray800, var(--secondary-text-color));
+  }
+
+  .forecast-uv-value {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .forecast-uv-level {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    line-height: 1.4;
+  }
+
+  .forecast-uv-protection {
+    font-size: 11px;
+    color: var(--dv-gray800, var(--secondary-text-color));
+    font-style: italic;
+    width: 100%;
+    margin-top: -2px;
+    padding-left: 24px;
+  }
+
+  /* UV badge in hourly forecast items */
+  .weather-hourly-uv {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-top: 4px;
+    white-space: nowrap;
+  }
 `;
