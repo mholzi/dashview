@@ -3,6 +3,8 @@
  * Functions for getting icons for entities, areas, floors, and weather
  */
 
+import { t } from './i18n.js';
+
 /**
  * Get icon for an area (room)
  * @param {Object} area - Area object from Home Assistant
@@ -72,27 +74,10 @@ export function getWeatherIcon(state) {
 }
 
 /**
- * Translate weather condition to German
+ * Translate weather condition using i18n
  * @param {string} state - Weather condition state
  * @returns {string} Translated condition string
  */
 export function translateWeatherCondition(state) {
-  const translations = {
-    "sunny": "Sonnig",
-    "clear-night": "Klar",
-    "partlycloudy": "Teilweise bewölkt",
-    "cloudy": "Bewölkt",
-    "rainy": "Regnerisch",
-    "pouring": "Starkregen",
-    "lightning": "Gewitter",
-    "lightning-rainy": "Gewitter mit Regen",
-    "windy": "Windig",
-    "windy-variant": "Windig",
-    "fog": "Nebel",
-    "hail": "Hagel",
-    "snowy": "Schnee",
-    "snowy-rainy": "Schneeregen",
-    "exceptional": "Außergewöhnlich"
-  };
-  return translations[state] || state;
+  return t(`weather.conditions.${state}`, state);
 }

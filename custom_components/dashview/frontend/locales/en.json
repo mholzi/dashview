@@ -153,7 +153,8 @@
       "other_devices": "Other Devices",
       "devices": "Devices",
       "locks": "Locks",
-      "batteries": "Batteries"
+      "batteries": "Batteries",
+      "batteries_ok": "All batteries OK"
     },
     "errors": {
       "no_data": "No data available",
@@ -167,7 +168,8 @@
       "no_cards_configured": "No cards configured. Configure cards in the admin area under \"Floor Cards\".",
       "no_sensors_selected": "No sensors selected",
       "no_devices_enabled": "No devices enabled.",
-      "no_lights_enabled": "No lights enabled in admin configuration."
+      "no_lights_enabled": "No lights enabled in admin configuration.",
+      "no_windows_enabled": "No windows enabled in admin configuration."
     },
     "popups": {
       "lights": {
@@ -251,6 +253,23 @@
       "low": "Low",
       "moderate": "Moderate",
       "high": "High"
+    },
+    "conditions": {
+      "sunny": "Sunny",
+      "clear-night": "Clear night",
+      "partlycloudy": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "rainy": "Rainy",
+      "pouring": "Heavy rain",
+      "lightning": "Thunderstorm",
+      "lightning-rainy": "Thunderstorm with rain",
+      "windy": "Windy",
+      "windy-variant": "Windy",
+      "fog": "Fog",
+      "hail": "Hail",
+      "snowy": "Snow",
+      "snowy-rainy": "Sleet",
+      "exceptional": "Exceptional"
     }
   },
   "media": {
@@ -260,7 +279,8 @@
     "off": "Off",
     "idle": "Ready",
     "playing": "Playing",
-    "paused": "Paused"
+    "paused": "Paused",
+    "standby": "Standby"
   },
   "status": {
     "water": {
@@ -774,7 +794,9 @@
       "emptyHint": "Create areas and assign them to floors in Home Assistant.",
       "noRooms": "No rooms assigned to this floor",
       "rooms": "rooms",
-      "hint": "Tip: Rooms appear in this order within each floor view."
+      "hint": "Tip: Rooms appear in this order within each floor view.",
+      "unassigned": "Unassigned Rooms",
+      "assignInHA": "Assign in HA"
     },
     "labels": {
       "title": "Set Up Your Labels",
@@ -790,7 +812,11 @@
       "enableAll": "Enable All",
       "disableAll": "Disable All",
       "roomsEnabled": "{{count}} rooms enabled",
-      "hint": "Tip: Only enabled rooms will appear on your dashboard. You can change this later in Admin settings."
+      "hint": "Tip: Only enabled rooms will appear on your dashboard. You can change this later in Admin settings.",
+      "enabled": "Enabled",
+      "total": "Total",
+      "floors": "Floors",
+      "entities": "Entities"
     },
     "floorCards": {
       "title": "Configure Floor Cards",
@@ -815,6 +841,147 @@
       "edit": "Edit",
       "ready": "You're All Set!",
       "readyDesc": "Click Finish to complete setup and start using your dashboard."
+    }
+  },
+  "security": {
+    "windows": {
+      "empty": "No windows enabled in admin configuration.",
+      "open": "Open Windows",
+      "closed": "Closed Windows"
+    },
+    "garages": {
+      "empty": "No garage doors enabled in admin configuration.",
+      "open": "Open Garage Doors",
+      "closed": "Closed Garage Doors"
+    },
+    "motion": {
+      "empty": "No motion sensors enabled in admin configuration.",
+      "detected": "Motion Detected",
+      "none": "No Motion"
+    }
+  },
+  "onboarding": {
+    "title": "Setup Wizard",
+    "subtitle": "Let's get Dashview configured for your home",
+    "step": "Step",
+    "complete": "complete",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip",
+    "finish": "Finish Setup",
+    "stepPlaceholder": "Step content will be implemented here.",
+    "steps": {
+      "welcome": "Welcome",
+      "floors": "Floors",
+      "rooms": "Rooms",
+      "entities": "Entities",
+      "layout": "Layout",
+      "weather": "Weather",
+      "review": "Review"
+    },
+    "welcome": {
+      "title": "Welcome to Dashview!",
+      "subtitle": "Your new smart home dashboard for Home Assistant. Let's set it up together.",
+      "feature1Title": "Beautiful Dashboard",
+      "feature1Desc": "A clean, intuitive dashboard designed for touch screens and wall tablets.",
+      "feature2Title": "Floor Organization",
+      "feature2Desc": "Organize your rooms by floor for easy navigation throughout your home.",
+      "feature3Title": "Quick Controls",
+      "feature3Desc": "Control lights, covers, and devices with simple taps and swipes.",
+      "feature4Title": "Weather Integration",
+      "feature4Desc": "View current weather and forecasts directly on your dashboard.",
+      "ctaText": "Click \"Next\" to start configuring"
+    },
+    "floors": {
+      "title": "Set Up Floors",
+      "desc": "Create floors for your home and drag to reorder them.",
+      "empty": "No floors yet. Add your first floor above to get started.",
+      "placeholder": "Enter floor name (e.g. Ground Floor, Upper Floor)",
+      "addFloor": "Add Floor",
+      "creating": "Creating...",
+      "deleting": "Deleting...",
+      "rooms": "Rooms",
+      "minRequired": "At least one floor is required to continue.",
+      "deleteFloor": "Delete Floor",
+      "cannotDeleteLast": "The last floor cannot be deleted",
+      "confirmDeleteTitle": "Delete floor?",
+      "confirmDeleteMessage": "Do you really want to delete",
+      "confirmDeleteWarning": "This floor has {count} assigned rooms. They will become unassigned.",
+      "errorCreate": "Could not create floor. Please try again.",
+      "errorDelete": "Could not delete floor. Please try again.",
+      "errorDeleteLast": "The last floor cannot be deleted.",
+      "hint": "Tip: Drag floors to set the display order on your dashboard. Common names: Ground Floor, Upper Floor, Basement, Attic."
+    },
+    "rooms": {
+      "title": "Assign Rooms to Floors",
+      "desc": "Assign each room (area) to a floor. Use the dropdown to change.",
+      "empty": "No areas found in Home Assistant. Create areas under Settings → Areas & Zones.",
+      "unassigned": "Unassigned",
+      "unassignedFloor": "Unassigned Rooms",
+      "rooms": "Rooms",
+      "noRooms": "No rooms assigned to this floor",
+      "hint": "Tip: You can also manage areas in Home Assistant under Settings → Areas & Zones"
+    },
+    "entities": {
+      "title": "Select Devices",
+      "desc": "Choose devices for your dashboard. Devices are grouped by room.",
+      "searchPlaceholder": "Search devices...",
+      "selectAll": "All",
+      "selectNone": "None",
+      "selectedCount": "{{count}} selected",
+      "suggested": "Suggested",
+      "noEntities": "No devices found",
+      "noMatchingEntities": "No matching devices",
+      "noRoomEntities": "No devices in this room",
+      "unassignedRoom": "Unassigned Devices",
+      "summary": "{{selected}} of {{total}} devices selected",
+      "hint": "Tip: Suggested devices (lights, climate, covers) are pre-selected for convenience",
+      "enableSuggested": "Enable suggested",
+      "selected": "Selected",
+      "total": "Total",
+      "rooms": "Rooms",
+      "noResults": "No devices matching your search."
+    },
+    "layout": {
+      "title": "Arrange Floor Cards",
+      "desc": "Set the display order of floor cards on the dashboard.",
+      "noFloors": "No floors configured. Go back to add floors.",
+      "room": "Room",
+      "rooms": "Rooms",
+      "preview": "Preview",
+      "hint": "You can change the order later in the Admin area under Layout."
+    },
+    "weather": {
+      "title": "Weather Display",
+      "desc": "Choose a weather entity to show forecasts on the dashboard.",
+      "optional": "Optional — you can skip this step",
+      "noWeather": "Don't show weather on the dashboard",
+      "noEntities": "No weather entities found. Install a weather integration in Home Assistant.",
+      "preview": "Preview"
+    },
+    "review": {
+      "title": "Review Setup",
+      "desc": "Here's a summary of your configuration. You can edit any section before finishing.",
+      "floors": "Floors",
+      "floor": "Floor",
+      "floorsPlural": "Floors",
+      "configured": "configured",
+      "rooms": "Rooms",
+      "room": "Room",
+      "roomsPlural": "Rooms",
+      "assigned": "assigned",
+      "entities": "Entities",
+      "entity": "Entity",
+      "entitiesPlural": "Entities",
+      "selected": "selected",
+      "weather": "Weather",
+      "noWeather": "Not configured (optional)",
+      "layout": "Layout",
+      "layoutCustom": "Custom floor order",
+      "layoutDefault": "Default floor order",
+      "edit": "Edit",
+      "ready": "All set!",
+      "readyDesc": "Your dashboard is configured and ready to use."
     }
   }
 }
