@@ -800,13 +800,13 @@ function renderLockSection(component, html, areaId) {
 
   return html`
     <div class="popup-lock-section">
-      <div class="popup-lock-header">
+      <div class="popup-lock-header" @click=${component._togglePopupLockExpanded}>
         <ha-icon icon="mdi:lock"></ha-icon>
         <span class="popup-lock-title">${t('ui.sections.locks')}</span>
         <span class="popup-lock-count">${unlockedCount > 0 ? t('lock.count_unlocked', { count: unlockedCount }) : t('lock.all_locked')}</span>
       </div>
 
-      <div class="popup-lock-content">
+      <div class="popup-lock-content ${component._popupLockExpanded ? 'expanded' : ''}"
         ${locks.map(lock => html`
           <div class="popup-lock-item ${lock.state === 'unlocked' ? 'unlocked' : 'locked'}"
                @click=${() => component._toggleLock(lock.entity_id)}>
