@@ -4240,6 +4240,7 @@ if (typeof structuredClone === 'undefined') {
               enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
               enabledLocks: this._buildEnabledMapFromRegistry(this._lockLabelId, this._enabledLocks),
               enabledWaterLeakSensors: this._buildEnabledMapFromRegistry(this._waterLeakLabelId, this._enabledWaterLeakSensors),
+              enabledSmokeSensors: this._buildEnabledMapFromRegistry(this._smokeLabelId, this._enabledSmokeSensors),
             },
             {
               motionLabelId: this._motionLabelId,
@@ -4250,6 +4251,7 @@ if (typeof structuredClone === 'undefined') {
               tvLabelId: this._tvLabelId,
               lockLabelId: this._lockLabelId,
               waterLeakLabelId: this._waterLeakLabelId,
+              smokeLabelId: this._smokeLabelId,
             },
             (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
             appliancesWithHomeStatus,

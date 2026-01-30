@@ -189,6 +189,7 @@ export const DEFAULT_SETTINGS = {
     lights: { enabled: false },
     covers: { enabled: false },
     water: { enabled: false },
+    smoke: { enabled: false },
     dishwasher: { enabled: false, entity: '', finishTimeEntity: '' },
     dryer: { enabled: false, entity: '', finishTimeEntity: '' },
     vacuum: { enabled: false, entity: '' },

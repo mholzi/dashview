@@ -41,6 +41,7 @@ export {
 // Status Service
 export {
   getWasherStatus,
+  getSmokeStatus,
   getMotionStatus,
   getGarageStatus,
   getWindowsStatus,
