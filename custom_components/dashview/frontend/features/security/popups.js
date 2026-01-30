@@ -9,7 +9,8 @@ import {
   isStateOpen,
   calculateTimeDifference,
   getFriendlyName,
-  formatLastChanged
+  formatLastChanged,
+  openMoreInfo
 } from '../../utils/index.js';
 import { t } from '../../utils/i18n.js';
 import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
@@ -94,7 +95,7 @@ export function renderSecurityPopupContent(component, html) {
     });
   };
 
-  // Render entity card
+  // Render entity card with long-press to close popup first, then open HA details
   const renderEntityCard = (entity, type) => {
     const isActive = type === 'window' ? entity.isOpen : (type === 'garage' ? entity.isOpen : entity.isActive);
     let icon;
@@ -106,10 +107,29 @@ export function renderSecurityPopupContent(component, html) {
       icon = entity.isActive ? 'mdi:motion-sensor' : 'mdi:motion-sensor-off';
     }
 
+    // Long press closes popup first then opens HA details; tap opens directly
+    const entityLongPress = createLongPressHandlers(
+      () => component._showMoreInfo(entity.entityId),
+      () => {
+        component._securityPopupOpen = false;
+        component.requestUpdate();
+        requestAnimationFrame(() => {
+          openMoreInfo(component, entity.entityId);
+        });
+      }
+    );
+
     return html`
       <div
         class="security-entity-card ${isActive ? 'active' : 'inactive'}"
-        @click=${() => component._showMoreInfo(entity.entityId)}
+        style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+        @touchstart=${entityLongPress.onTouchStart}
+        @touchmove=${entityLongPress.onTouchMove}
+        @touchend=${entityLongPress.onTouchEnd}
+        @touchcancel=${entityLongPress.onTouchCancel}
+        @mousedown=${entityLongPress.onMouseDown}
+        @mouseup=${entityLongPress.onMouseUp}
+        @mouseleave=${entityLongPress.onMouseLeave}
       >
         <div class="security-entity-icon">
           <ha-icon icon="${icon}"></ha-icon>
@@ -123,9 +143,22 @@ export function renderSecurityPopupContent(component, html) {
   };
 
   // Render garage card with controls (matching room popup style)
+  // Long-press on info area opens HA details
   const renderGarageCard = (garage) => {
     const isOpen = garage.isOpen;
     const icon = isOpen ? 'mdi:garage-open' : 'mdi:garage';
+
+    // Long press on garage info area to close popup and open HA details
+    const garageLongPress = createLongPressHandlers(
+      null, // No tap action on info area
+      () => {
+        component._securityPopupOpen = false;
+        component.requestUpdate();
+        requestAnimationFrame(() => {
+          openMoreInfo(component, garage.entityId);
+        });
+      }
+    );
 
     return html`
       <div class="popup-garage-item">
@@ -133,7 +166,15 @@ export function renderSecurityPopupContent(component, html) {
           <div class="popup-garage-item-icon">
             <ha-icon icon="${icon}"></ha-icon>
           </div>
-          <div class="popup-garage-item-info">
+          <div class="popup-garage-item-info"
+               style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+               @touchstart=${garageLongPress.onTouchStart}
+               @touchmove=${garageLongPress.onTouchMove}
+               @touchend=${garageLongPress.onTouchEnd}
+               @touchcancel=${garageLongPress.onTouchCancel}
+               @mousedown=${garageLongPress.onMouseDown}
+               @mouseup=${garageLongPress.onMouseUp}
+               @mouseleave=${garageLongPress.onMouseLeave}>
             <span class="popup-garage-item-name">${getFriendlyName(garage.state, garage.entityId)}</span>
             <span class="popup-garage-item-last-changed">${formatLastChanged(garage.state.last_changed)}</span>
           </div>
@@ -535,10 +576,30 @@ export function renderBatteryPopupContent(component, html) {
       <span>${lowBatteryDevices.length} ${lowBatteryDevices.length === 1 ? t('ui.sections.device', 'Gerät') : t('ui.sections.devices', 'Geräte')} ${t('common.options.under', 'unter')} ${threshold}%</span>
     </div>
     <div class="battery-device-list">
-      ${lowBatteryDevices.map(device => html`
+      ${lowBatteryDevices.map(device => {
+        // Long press closes popup first then opens HA details; tap opens directly
+        const batteryLongPress = createLongPressHandlers(
+          () => component._showMoreInfo(device.entityId),
+          () => {
+            component._batteryPopupOpen = false;
+            component.requestUpdate();
+            requestAnimationFrame(() => {
+              openMoreInfo(component, device.entityId);
+            });
+          }
+        );
+
+        return html`
         <div
           class="battery-device-card"
-          @click=${() => component._showMoreInfo(device.entityId)}
+          style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+          @touchstart=${batteryLongPress.onTouchStart}
+          @touchmove=${batteryLongPress.onTouchMove}
+          @touchend=${batteryLongPress.onTouchEnd}
+          @touchcancel=${batteryLongPress.onTouchCancel}
+          @mousedown=${batteryLongPress.onMouseDown}
+          @mouseup=${batteryLongPress.onMouseUp}
+          @mouseleave=${batteryLongPress.onMouseLeave}
         >
           <div class="battery-device-icon" style="color: ${getBatteryColor(device.value)};">
             <ha-icon icon="${getBatteryIcon(device.value)}"></ha-icon>
@@ -551,7 +612,7 @@ export function renderBatteryPopupContent(component, html) {
             <div class="battery-device-bar-fill" style="width: ${device.value}%; background: ${getBatteryColor(device.value)};"></div>
           </div>
         </div>
-      `)}
+      `})}
     </div>
   `;
 }
@@ -618,10 +679,30 @@ export function renderCoversPopupContent(component, html) {
   const coversOpen = covers.filter(c => c.isOpen).sort((a, b) => a.position - b.position);
   const coversClosed = covers.filter(c => !c.isOpen).sort((a, b) => b.position - a.position);
 
-  // Render a single cover card
-  const renderCoverCard = (cover) => html`
+  // Render a single cover card with long-press to open HA details
+  const renderCoverCard = (cover) => {
+    const coverLongPress = createLongPressHandlers(
+      () => component._toggleCover(cover.entityId),
+      () => {
+        component._coversPopupOpen = false;
+        component.requestUpdate();
+        requestAnimationFrame(() => {
+          openMoreInfo(component, cover.entityId);
+        });
+      }
+    );
+
+    return html`
     <div class="covers-popup-card ${cover.isOpen ? 'open' : 'closed'}">
-      <div class="covers-popup-header" @click=${() => component._toggleCover(cover.entityId)}>
+      <div class="covers-popup-header"
+           style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+           @touchstart=${coverLongPress.onTouchStart}
+           @touchmove=${coverLongPress.onTouchMove}
+           @touchend=${coverLongPress.onTouchEnd}
+           @touchcancel=${coverLongPress.onTouchCancel}
+           @mousedown=${coverLongPress.onMouseDown}
+           @mouseup=${coverLongPress.onMouseUp}
+           @mouseleave=${coverLongPress.onMouseLeave}>
         <div class="covers-popup-icon">
           <ha-icon icon="${cover.isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter'}"></ha-icon>
         </div>
@@ -640,7 +721,8 @@ export function renderCoversPopupContent(component, html) {
         />
       </div>
     </div>
-  `;
+  `};
+
 
   return html`
     <!-- Covers Open Section -->
@@ -726,10 +808,30 @@ export function renderTVsPopupContent(component, html) {
   const tvsOn = tvs.filter(tv => tv.isOn).sort((a, b) => a.name.localeCompare(b.name));
   const tvsOff = tvs.filter(tv => !tv.isOn).sort((a, b) => a.name.localeCompare(b.name));
 
-  // Render a single TV card
-  const renderTVCard = (tv) => html`
+  // Render a single TV card with long-press to open HA details
+  const renderTVCard = (tv) => {
+    const tvLongPress = createLongPressHandlers(
+      () => component._toggleTV(tv.entityId),
+      () => {
+        component._tvsPopupOpen = false;
+        component.requestUpdate();
+        requestAnimationFrame(() => {
+          openMoreInfo(component, tv.entityId);
+        });
+      }
+    );
+
+    return html`
     <div class="tvs-popup-card ${tv.isOn ? 'on' : 'off'}">
-      <div class="tvs-popup-header" @click=${() => component._toggleTV(tv.entityId)}>
+      <div class="tvs-popup-header"
+           style="cursor: pointer; user-select: none; -webkit-user-select: none;"
+           @touchstart=${tvLongPress.onTouchStart}
+           @touchmove=${tvLongPress.onTouchMove}
+           @touchend=${tvLongPress.onTouchEnd}
+           @touchcancel=${tvLongPress.onTouchCancel}
+           @mousedown=${tvLongPress.onMouseDown}
+           @mouseup=${tvLongPress.onMouseUp}
+           @mouseleave=${tvLongPress.onMouseLeave}>
         <div class="tvs-popup-icon ${tv.entityPicture ? 'has-image' : ''}">
           ${tv.entityPicture ? html`
             <img class="tvs-popup-image" src="${tv.entityPicture}" alt="">
@@ -756,7 +858,8 @@ export function renderTVsPopupContent(component, html) {
         </div>
       ` : ''}
     </div>
-  `;
+  `};
+
 
   return html`
     <!-- TVs On Section -->

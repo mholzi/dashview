@@ -414,21 +414,21 @@ export function renderSecurityPopupContent(panel, html) {
         @click=${() => panel._activeSecurityTab = 'windows'}
       >
         <ha-icon icon="mdi:window-open"></ha-icon>
-        <span>${openWindowsCount} ${t('common.options.of', 'of')} ${enabledWindows.length}</span>
+        <span>${openWindowsCount} von ${enabledWindows.length}</span>
       </button>
       <button
         class="security-tab ${panel._activeSecurityTab === 'garage' ? 'active' : ''}"
         @click=${() => panel._activeSecurityTab = 'garage'}
       >
         <ha-icon icon="mdi:garage"></ha-icon>
-        <span>${openGaragesCount} ${t('common.options.of', 'of')} ${enabledGarages.length}</span>
+        <span>${openGaragesCount} von ${enabledGarages.length}</span>
       </button>
       <button
         class="security-tab ${panel._activeSecurityTab === 'motion' ? 'active' : ''}"
         @click=${() => panel._activeSecurityTab = 'motion'}
       >
         <ha-icon icon="mdi:motion-sensor"></ha-icon>
-        <span>${activeMotionCount} ${t('common.options.of', 'of')} ${enabledMotion.length}</span>
+        <span>${activeMotionCount} von ${enabledMotion.length}</span>
       </button>
     </div>
 
@@ -436,12 +436,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'windows' ? html`
       ${enabledWindows.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('security.windows.empty', 'No windows enabled in admin configuration.')}
+          ${t('admin.security.noWindowsEnabled')}
         </div>
       ` : html`
         <!-- Open Windows -->
         ${enabledWindows.filter(w => w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.windows.open', 'Open Windows')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.openWindows')}</h3>
           <div class="security-entity-list">
             ${enabledWindows.filter(w => w.isOpen).map(w => renderEntityCard(w, 'window'))}
           </div>
@@ -449,7 +449,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Closed Windows -->
         ${enabledWindows.filter(w => !w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.windows.closed', 'Closed Windows')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.closedWindows')}</h3>
           <div class="security-entity-list">
             ${enabledWindows.filter(w => !w.isOpen).map(w => renderEntityCard(w, 'window'))}
           </div>
@@ -461,12 +461,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'garage' ? html`
       ${enabledGarages.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('security.garages.empty', 'No garage doors enabled in admin configuration.')}
+          ${t('admin.security.noGaragesEnabled')}
         </div>
       ` : html`
         <!-- Open Garages -->
         ${enabledGarages.filter(g => g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.garages.open', 'Open Garage Doors')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.openGarages')}</h3>
           <div class="security-entity-list">
             ${enabledGarages.filter(g => g.isOpen).map(g => renderEntityCard(g, 'garage'))}
           </div>
@@ -474,7 +474,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Closed Garages -->
         ${enabledGarages.filter(g => !g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.garages.closed', 'Closed Garage Doors')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.closedGarages')}</h3>
           <div class="security-entity-list">
             ${enabledGarages.filter(g => !g.isOpen).map(g => renderEntityCard(g, 'garage'))}
           </div>
@@ -486,12 +486,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'motion' ? html`
       ${enabledMotion.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('security.motion.empty', 'No motion sensors enabled in admin configuration.')}
+          ${t('admin.security.noMotionEnabled')}
         </div>
       ` : html`
         <!-- Active Motion -->
         ${enabledMotion.filter(m => m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.motion.detected', 'Motion Detected')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.motionDetected')}</h3>
           <div class="security-entity-list">
             ${enabledMotion.filter(m => m.isActive).map(m => renderEntityCard(m, 'motion'))}
           </div>
@@ -499,7 +499,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Inactive Motion -->
         ${enabledMotion.filter(m => !m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('security.motion.none', 'No Motion')}</h3>
+          <h3 class="security-subsection-title">${t('admin.security.noMotion')}</h3>
           <div class="security-entity-list">
             ${enabledMotion.filter(m => !m.isActive).map(m => renderEntityCard(m, 'motion'))}
           </div>

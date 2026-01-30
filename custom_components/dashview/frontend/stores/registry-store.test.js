@@ -58,6 +58,7 @@ describe('RegistryStore', () => {
         cover: null,
         garage: null,
         window: null,
+        door: null,
         vibration: null,
         temperature: null,
         humidity: null,

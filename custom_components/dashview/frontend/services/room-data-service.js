@@ -55,6 +55,11 @@ const ENTITY_TYPE_CONFIG = {
       position: state?.attributes?.current_position,
     }),
   },
+  door: {
+    labelKey: 'door',
+    enabledMapKey: 'enabledDoors',
+    extraAttributes: () => ({}),
+  },
   vibration: {
     labelKey: 'vibration',
     enabledMapKey: 'enabledVibrationSensors',

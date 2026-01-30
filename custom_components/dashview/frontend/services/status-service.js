@@ -147,6 +147,86 @@ export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors
 }
 
 /**
+ * Get smoke detector status for info text row
+ * Only shows when smoke is actively detected (life safety critical)
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {Object} enabledSmokeSensors - Map of enabled smoke sensor IDs
+ * @param {string|null} labelId - Optional label ID to filter by
+ * @param {Function|null} entityHasLabel - Optional function to check if entity has label
+ * @returns {Object|null} Status object or null
+ */
+export function getSmokeStatus(hass, infoTextConfig, enabledSmokeSensors, labelId = null, entityHasLabel = null) {
+  if (!hass || !infoTextConfig.smoke?.enabled) return null;
+
+  // Get enabled smoke sensor IDs
+  let enabledSmokeSensorIds = getEnabledEntityIds(enabledSmokeSensors);
+
+  // Filter by label if provided
+  if (labelId && entityHasLabel) {
+    enabledSmokeSensorIds = enabledSmokeSensorIds.filter(id => entityHasLabel(id, labelId));
+  }
+
+  if (enabledSmokeSensorIds.length === 0) return null;
+
+  // Find all sensors that are currently detecting smoke (state 'on')
+  const activeSensors = enabledSmokeSensorIds
+    .map(entityId => {
+      const state = hass.states[entityId];
+      if (state && state.state === 'on') {
+        return {
+          entityId,
+          name: state.attributes?.friendly_name || entityId,
+          lastChanged: state.last_changed ? new Date(state.last_changed) : null,
+        };
+      }
+      return null;
+    })
+    .filter(s => s !== null);
+
+  // Only show when smoke is actively detected — no "all clear" status
+  if (activeSensors.length === 0) return null;
+
+  const count = activeSensors.length;
+
+  if (count === 1) {
+    // Single detector — show name
+    const sensor = activeSensors[0];
+    return {
+      state: 'alert',
+      prefixText: t('status.smoke.detected'),
+      badgeText: sensor.name,
+      badgeIcon: 'mdi:smoke-detector-variant-alert',
+      suffixText: '!',
+      isWarning: true,
+      isCritical: true,
+      clickAction: 'smoke',
+      priority: 100,
+      alertId: `smoke:${sensor.entityId}`,
+      entityLastChanged: sensor.lastChanged ? sensor.lastChanged.toISOString() : null,
+    };
+  } else {
+    // Multiple detectors — show count
+    const earliestSensor = activeSensors.reduce((earliest, current) =>
+      current.lastChanged && (!earliest.lastChanged || current.lastChanged < earliest.lastChanged) ? current : earliest
+    );
+    return {
+      state: 'alert',
+      prefixText: t('status.smoke.detected'),
+      badgeText: `${count}`,
+      badgeIcon: 'mdi:smoke-detector-variant-alert',
+      suffixText: t('status.smoke.detectedMultiple') + '!',
+      isWarning: true,
+      isCritical: true,
+      clickAction: 'smoke',
+      priority: 100,
+      alertId: 'smoke:multiple',
+      entityLastChanged: earliestSensor.lastChanged ? earliestSensor.lastChanged.toISOString() : null,
+    };
+  }
+}
+
+/**
  * Get motion status for info text row
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
@@ -1251,6 +1331,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     enabledTVs = {},
     enabledLocks = {},
     enabledWaterLeakSensors = {},
+    enabledSmokeSensors = {},
   } = enabledEntities;
 
   const {
@@ -1264,6 +1345,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     tvLabelId = null,
     lockLabelId = null,
     waterLeakLabelId = null,
+    smokeLabelId = null,
   } = labelIds;
 
   const {
@@ -1279,8 +1361,9 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
   const applianceStatusItems = getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStatus, getApplianceStatus);
 
   return [
-    // Water leak is highest priority (property damage)
+    // Water leak and smoke are highest priority (life safety)
     getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors, waterLeakLabelId, entityHasLabel),
+    getSmokeStatus(hass, infoTextConfig, enabledSmokeSensors, smokeLabelId, entityHasLabel),
     // Door/lock/garage/window open-too-long alerts (security concerns)
     getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLongMinutes, doorLabelId, entityHasLabel),
     getLockStatus(hass, infoTextConfig, enabledLocks, lockUnlockedTooLongMinutes, lockLabelId, entityHasLabel),
@@ -1299,6 +1382,7 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
 export default {
   getWasherStatus,
   getWaterLeakStatus,
+  getSmokeStatus,
   getMotionStatus,
   getGarageStatus,
   getDoorStatus,
