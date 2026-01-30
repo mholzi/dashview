@@ -4414,11 +4414,8 @@ if (typeof structuredClone === 'undefined') {
               enabledMotionSensors: this._buildEnabledMapFromRegistry(this._motionLabelId, this._enabledMotionSensors),
               enabledGarages: this._buildEnabledMapFromRegistry(this._garageLabelId, this._enabledGarages),
               enabledWindows: this._buildEnabledMapFromRegistry(this._windowLabelId, this._enabledWindows),
-<<<<<<< HEAD
               enabledRoofWindows: this._buildEnabledMapFromRegistry(this._roofWindowLabelId, this._enabledRoofWindows),
-=======
               enabledDoors: this._buildEnabledMapFromRegistry(this._doorLabelId, this._enabledDoors),
->>>>>>> fix/109-add-doors-ui
               enabledLights: this._buildEnabledMapFromRegistry(this._lightLabelId, this._enabledLights),
               enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
               enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
@@ -4430,11 +4427,8 @@ if (typeof structuredClone === 'undefined') {
               motionLabelId: this._motionLabelId,
               garageLabelId: this._garageLabelId,
               windowLabelId: this._windowLabelId,
-<<<<<<< HEAD
               roofWindowLabelId: this._roofWindowLabelId,
-=======
               doorLabelId: this._doorLabelId,
->>>>>>> fix/109-add-doors-ui
               lightLabelId: this._lightLabelId,
               coverLabelId: this._coverLabelId,
               tvLabelId: this._tvLabelId,
