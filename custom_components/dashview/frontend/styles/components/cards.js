@@ -1,6 +1,6 @@
 /**
  * Card Styles
- * Floor device cards and garbage collection cards
+ * Floor device cards, garbage collection cards, and security summary card
  */
 
 export const cardStyles = `
@@ -541,6 +541,175 @@ export const cardStyles = `
   .garbage-sensor-remove:hover {
     color: var(--dv-red);
     background: rgba(240, 169, 148, 0.2);
+  }
+
+  /* ==================== SECURITY SUMMARY CARD ==================== */
+  .security-summary-card {
+    position: relative;
+    border-radius: var(--dv-radius-md);
+    cursor: pointer;
+    transition: all var(--dv-transition-normal) ease;
+    overflow: hidden;
+    box-sizing: border-box;
+    margin: 4px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .security-summary-card:hover {
+    transform: scale(0.98);
+  }
+
+  .security-summary-card:active {
+    transform: scale(0.96);
+  }
+
+  /* State: All Secure (green) */
+  .security-summary-card.secure {
+    background: var(--dv-green);
+  }
+
+  /* State: Issues detected (amber/warning) */
+  .security-summary-card.warning {
+    background: var(--dv-yellow);
+  }
+
+  /* State: Critical (smoke/water - red) */
+  .security-summary-card.critical {
+    background: var(--dv-red);
+  }
+
+  @keyframes security-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .security-summary-card.critical {
+    animation: security-pulse 2s ease-in-out infinite;
+  }
+
+  /* Small card layout (horizontal) */
+  .security-summary-card.small {
+    height: calc(100% - 8px);
+    padding: 4px 20px 4px 4px;
+  }
+
+  /* Big card layout (vertical) — matches garbage/floor-device card grid */
+  .security-summary-card.big {
+    height: calc(100% - 8px);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 20px;
+    gap: 4px;
+  }
+
+  /* Icon container */
+  .security-summary-card-icon {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .security-summary-card.small .security-summary-card-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .security-summary-card.big .security-summary-card-icon {
+    width: 50px;
+    height: 50px;
+    align-self: flex-end;
+    margin: -6px -6px 0 0;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+
+  .security-summary-card.secure .security-summary-card-icon {
+    background: var(--dv-gray000);
+  }
+
+  .security-summary-card.warning .security-summary-card-icon {
+    background: var(--dv-gray000);
+  }
+
+  .security-summary-card.critical .security-summary-card-icon {
+    background: var(--dv-gray800);
+  }
+
+  .security-summary-card-icon ha-icon {
+    --mdc-icon-size: 22px;
+    color: var(--dv-gray800);
+  }
+
+  .security-summary-card.big .security-summary-card-icon ha-icon {
+    --mdc-icon-size: 30px;
+  }
+
+  .security-summary-card.critical .security-summary-card-icon ha-icon {
+    color: var(--dv-gray000);
+  }
+
+  /* Content area */
+  .security-summary-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Title text */
+  .security-summary-card-title {
+    font-weight: 500;
+    color: var(--dv-gray800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .security-summary-card.small .security-summary-card-title {
+    font-size: 16px;
+  }
+
+  .security-summary-card.big .security-summary-card-title {
+    font-size: 1.5em;
+    font-weight: 300;
+  }
+
+  .security-summary-card.critical .security-summary-card-title {
+    color: var(--dv-white);
+    font-weight: 600;
+  }
+
+  /* Use fixed dark for green/yellow backgrounds */
+  .security-summary-card.secure .security-summary-card-title,
+  .security-summary-card.warning .security-summary-card-title {
+    color: var(--dv-fixed-dark, var(--dv-gray800));
+  }
+
+  /* Detail text below title */
+  .security-summary-card-detail {
+    font-size: 14px;
+    opacity: 0.7;
+    color: var(--dv-gray800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .security-summary-card.critical .security-summary-card-detail {
+    color: var(--dv-white);
+  }
+
+  .security-summary-card.secure .security-summary-card-detail,
+  .security-summary-card.warning .security-summary-card-detail {
+    color: var(--dv-fixed-dark, var(--dv-gray800));
   }
 
 `;

@@ -2217,10 +2217,13 @@ export function renderLayoutTab(panel, html) {
     const isConfigured = !!entityId;
     // For appliances, get display info from stored appliance object
     const isAppliance = slotConfig?.type === 'appliance' && slotConfig?.appliance;
+    const isSecurity = slotConfig?.type === 'security';
     const entityInfo = isConfigured
-      ? (isAppliance
-        ? { name: slotConfig.appliance.name, icon: slotConfig.appliance.icon || 'mdi:devices' }
-        : getEntityDisplayInfo(entityId))
+      ? (isSecurity
+        ? { name: t('security.summary.cardName'), icon: 'mdi:shield-check' }
+        : isAppliance
+          ? { name: slotConfig.appliance.name, icon: slotConfig.appliance.icon || 'mdi:devices' }
+          : getEntityDisplayInfo(entityId))
       : null;
     const isSelected = panel._selectedFloorCardSlot === `${floorId}-${slotIndex}`;
 
@@ -2325,6 +2328,15 @@ export function renderLayoutTab(panel, html) {
       });
     });
 
+    // Add Security Summary card as a special virtual entity (always available, floor-independent)
+    entities.unshift({
+      entity_id: 'virtual:security-summary',
+      name: t('security.summary.cardName'),
+      type: 'security',
+      area: '🛡️',
+      icon: 'mdi:shield-check',
+    });
+
     return entities;
   };
 
@@ -2338,12 +2350,15 @@ export function renderLayoutTab(panel, html) {
     const slotConfig = config[slotIndex] || null;
     const entityId = slotConfig?.entity_id;
     const isConfigured = !!entityId;
-    // For appliances, get display info from stored appliance object; otherwise use hass state
+    // For appliances, get display info from stored appliance object; for security, use card name; otherwise use hass state
     const isAppliance = slotConfig?.type === 'appliance' && slotConfig?.appliance;
+    const isSecurity = slotConfig?.type === 'security';
     const entityInfo = isConfigured
-      ? (isAppliance
-        ? { name: slotConfig.appliance.name, icon: slotConfig.appliance.icon || 'mdi:devices' }
-        : getEntityDisplayInfo(entityId))
+      ? (isSecurity
+        ? { name: t('security.summary.cardName'), icon: 'mdi:shield-check' }
+        : isAppliance
+          ? { name: slotConfig.appliance.name, icon: slotConfig.appliance.icon || 'mdi:devices' }
+          : getEntityDisplayInfo(entityId))
       : null;
     const entities = getFloorEntities(floorId);
 
@@ -2424,8 +2439,8 @@ export function renderLayoutTab(panel, html) {
                       class="entity-picker-suggestion"
                       @mousedown=${(e) => {
                         e.preventDefault();
-                        // For appliances, pass the full entity object; for others just the entity_id
-                        if (entity.type === 'appliance') {
+                        // For appliances and security, pass the full entity object; for others just the entity_id
+                        if (entity.type === 'appliance' || entity.type === 'security') {
                           panel._handleFloorCardEntityChange(floorId, slotIndex, entity.entity_id, entity);
                         } else {
                           panel._handleFloorCardEntityChange(floorId, slotIndex, entity.entity_id);
@@ -2437,7 +2452,7 @@ export function renderLayoutTab(panel, html) {
                       <ha-icon icon="${entity.icon}"></ha-icon>
                       <div class="entity-picker-suggestion-info">
                         <div class="entity-picker-suggestion-name">${entity.area}: ${entity.name}</div>
-                        ${entity.type !== 'appliance' ? html`
+                        ${entity.type !== 'appliance' && entity.type !== 'security' ? html`
                           <div class="entity-picker-suggestion-entity">${entity.entity_id}</div>
                         ` : ''}
                       </div>
@@ -2451,13 +2466,13 @@ export function renderLayoutTab(panel, html) {
 
         ${isConfigured && entityInfo ? html`
           <div class="garbage-selected-sensors" style="margin-top: 8px;">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${isAppliance ? t('admin.layout.selectedDevice') : t('admin.layout.selectedEntity')}</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${isAppliance ? t('admin.layout.selectedDevice') : isSecurity ? t('security.summary.cardName') : t('admin.layout.selectedEntity')}</label>
             <div class="garbage-sensor-list">
               <div class="garbage-sensor-item selected">
                 <ha-icon icon="${entityInfo.icon}"></ha-icon>
                 <div class="garbage-sensor-info">
                   <div class="garbage-sensor-name">${entityInfo.name}</div>
-                  ${!isAppliance ? html`
+                  ${!isAppliance && !isSecurity ? html`
                     <div class="garbage-sensor-entity">${entityId}</div>
                   ` : ''}
                 </div>

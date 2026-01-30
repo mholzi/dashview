@@ -1382,9 +1382,15 @@ if (typeof structuredClone === 'undefined') {
       const currentFloorConfig = this._floorCardConfig[floorId] || {};
 
       // For appliances, store additional data needed for device card rendering
+      // For security summary, store type: 'security'
       let slotData = null;
       if (entityId) {
-        if (entityData && entityData.type === 'appliance' && entityData.appliance) {
+        if (entityData && entityData.type === 'security') {
+          slotData = {
+            entity_id: entityId,
+            type: 'security',
+          };
+        } else if (entityData && entityData.type === 'appliance' && entityData.appliance) {
           slotData = {
             entity_id: entityId,
             type: 'appliance',

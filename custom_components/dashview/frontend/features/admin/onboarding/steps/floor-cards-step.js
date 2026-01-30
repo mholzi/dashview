@@ -427,7 +427,16 @@ export function renderFloorCardsStep(panel, html) {
       }
     });
 
-    return entities.sort((a, b) => a.name.localeCompare(b.name));
+    // Add Security Summary card as a special option
+    entities.unshift({
+      entity_id: 'virtual:security-summary',
+      name: t('security.summary.cardName', 'Security Summary'),
+      type: 'security',
+      area: '🛡️',
+      icon: 'mdi:shield-check',
+    });
+
+    return entities;
   };
 
   // Toggle floor overview
@@ -452,11 +461,18 @@ export function renderFloorCardsStep(panel, html) {
       state.floorCardConfig[floorId] = {};
     }
     if (entityId) {
-      const entity = entities.find(e => e.entity_id === entityId);
-      state.floorCardConfig[floorId][slotIndex] = {
-        entity_id: entityId,
-        type: 'entity'
-      };
+      // Check if this is a security summary virtual entity
+      if (entityId === 'virtual:security-summary') {
+        state.floorCardConfig[floorId][slotIndex] = {
+          entity_id: entityId,
+          type: 'security'
+        };
+      } else {
+        state.floorCardConfig[floorId][slotIndex] = {
+          entity_id: entityId,
+          type: 'entity'
+        };
+      }
     } else {
       delete state.floorCardConfig[floorId][slotIndex];
     }

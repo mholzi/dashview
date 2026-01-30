@@ -1209,6 +1209,23 @@
       "empty": "Keine Türsensoren in der Admin-Konfiguration aktiviert.",
       "open": "Offene Türen",
       "closed": "Geschlossene Türen"
+    },
+    "summary": {
+      "allSecure": "Alles sicher",
+      "everythingLocked": "Alles verriegelt & geschlossen",
+      "issues": "{{count}} Probleme",
+      "issue": "1 Problem",
+      "windows": "{{count}} Fenster",
+      "window": "1 Fenster",
+      "doors": "{{count}} Türen",
+      "door": "1 Tür",
+      "locks": "{{count}} Schlösser",
+      "lock": "1 Schloss",
+      "garages": "{{count}} Garagen",
+      "garage": "1 Garage",
+      "smokeAlert": "Rauchalarm",
+      "waterAlert": "Wasseralarm",
+      "cardName": "Sicherheit"
     }
   }
 }
