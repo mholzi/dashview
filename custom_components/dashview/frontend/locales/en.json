@@ -426,7 +426,11 @@
       "all_covers": "All covers",
       "close_all": "Close all",
       "open_all": "Open all",
-      "turn_off_all": "Turn off all"
+      "turn_off_all": "Turn off all",
+      "lock_all": "Lock all",
+      "tvs_off": "TVs off",
+      "close_garages": "Close all",
+      "stop_media": "Stop all"
     }
   },
   "admin": {

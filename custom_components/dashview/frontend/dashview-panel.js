@@ -2432,6 +2432,52 @@ if (typeof structuredClone === 'undefined') {
       });
     }
     _toggleAllRoomCovers(areaId, close) { this._setAllCoversPosition(areaId, close ? 100 : 0); }
+    async _lockAllRoom(areaId) {
+      for (const l of this._getEnabledLocksForRoom(areaId)) {
+        try {
+          await this.hass.callService('lock', 'lock', { entity_id: l.entity_id });
+        } catch (error) {
+          console.warn(`[Dashview] Lock error:`, error.message);
+          this._dispatchErrorEvent('room-popup:lockAll', l.entity_id, error);
+        }
+      }
+    }
+    async _turnOffAllRoomTVs(areaId) {
+      for (const tv of this._getEnabledTVsForRoom(areaId)) {
+        try {
+          if (tv.state === 'on') {
+            await this.hass.callService('media_player', 'turn_off', { entity_id: tv.entity_id });
+          }
+        } catch (error) {
+          console.warn(`[Dashview] TV off error:`, error.message);
+          this._dispatchErrorEvent('room-popup:tvsOff', tv.entity_id, error);
+        }
+      }
+    }
+    async _closeAllRoomGarages(areaId) {
+      for (const g of this._getEnabledGaragesForRoom(areaId)) {
+        try {
+          if (g.state === 'open') {
+            await this.hass.callService('cover', 'close_cover', { entity_id: g.entity_id });
+          }
+        } catch (error) {
+          console.warn(`[Dashview] Garage close error:`, error.message);
+          this._dispatchErrorEvent('room-popup:closeGarages', g.entity_id, error);
+        }
+      }
+    }
+    async _stopAllRoomMedia(areaId) {
+      for (const mp of this._getEnabledMediaPlayersForRoom(areaId)) {
+        try {
+          if (mp.state === 'playing') {
+            await this.hass.callService('media_player', 'media_stop', { entity_id: mp.entity_id });
+          }
+        } catch (error) {
+          console.warn(`[Dashview] Media stop error:`, error.message);
+          this._dispatchErrorEvent('room-popup:stopMedia', mp.entity_id, error);
+        }
+      }
+    }
     _handleCoverSliderClick(e, entityId) { this._setCoverPosition(entityId, this._getInvertedSliderPosition(e)); }
     _handleAllCoversSliderClick(e, areaId) { this._setAllCoversPosition(areaId, this._getInvertedSliderPosition(e));
     }
