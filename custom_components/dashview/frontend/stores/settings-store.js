@@ -200,7 +200,7 @@ export const DEFAULT_SETTINGS = {
     smoke: { enabled: false },
     dishwasher: { enabled: false, entity: '', finishTimeEntity: '' },
     dryer: { enabled: false, entity: '', finishTimeEntity: '' },
-    vacuum: { enabled: false, entity: '' },
+    vacuum: { enabled: false, entity: '', roomMapping: {} },
     batteryLow: { enabled: false, threshold: THRESHOLDS.BATTERY_LOW, criticalThreshold: THRESHOLDS.BATTERY_CRITICAL },
   },
 

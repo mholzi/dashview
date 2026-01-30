@@ -100,6 +100,156 @@ export function renderInfoTextToggle(panel, html, key, label, icon, description)
 }
 
 /**
+ * Render vacuum room mapping configuration.
+ * Allows users to map vacuum segment IDs to room names per floor/map.
+ * Only shown when vacuum is enabled and has an entity configured.
+ */
+function renderVacuumRoomMapping(panel, html) {
+  const vacuumConfig = panel._infoTextConfig.vacuum || { enabled: false, entity: '' };
+  if (!vacuumConfig.enabled || !vacuumConfig.entity) return '';
+
+  const roomMapping = vacuumConfig.roomMapping || {};
+
+  // Initialize edit state if not exists (per-map state for room inputs)
+  if (!panel._vacuumRoomMappingState) {
+    panel._vacuumRoomMappingState = { newMapName: '', newRooms: {} };
+  }
+  const editState = panel._vacuumRoomMappingState;
+
+  const mapNames = Object.keys(roomMapping);
+
+  const addMap = () => {
+    const name = editState.newMapName.trim();
+    if (!name || roomMapping[name]) return;
+    panel._infoTextConfig = {
+      ...panel._infoTextConfig,
+      vacuum: { ...vacuumConfig, roomMapping: { ...roomMapping, [name]: {} } }
+    };
+    editState.newMapName = '';
+    panel._saveSettings();
+    panel.requestUpdate();
+  };
+
+  const removeMap = (mapName) => {
+    const updated = { ...roomMapping };
+    delete updated[mapName];
+    panel._infoTextConfig = {
+      ...panel._infoTextConfig,
+      vacuum: { ...vacuumConfig, roomMapping: updated }
+    };
+    panel._saveSettings();
+    panel.requestUpdate();
+  };
+
+  const addRoom = (mapName) => {
+    const newRoomState = editState.newRooms[mapName] || { segId: '', roomName: '' };
+    const segId = newRoomState.segId.trim();
+    const roomName = newRoomState.roomName.trim();
+    if (!segId || !roomName) return;
+    const updatedMap = { ...roomMapping[mapName], [segId]: roomName };
+    panel._infoTextConfig = {
+      ...panel._infoTextConfig,
+      vacuum: { ...vacuumConfig, roomMapping: { ...roomMapping, [mapName]: updatedMap } }
+    };
+    newRoomState.segId = '';
+    newRoomState.roomName = '';
+    panel._saveSettings();
+    panel.requestUpdate();
+  };
+
+  const removeRoom = (mapName, segId) => {
+    const updatedMap = { ...roomMapping[mapName] };
+    delete updatedMap[segId];
+    panel._infoTextConfig = {
+      ...panel._infoTextConfig,
+      vacuum: { ...vacuumConfig, roomMapping: { ...roomMapping, [mapName]: updatedMap } }
+    };
+    panel._saveSettings();
+    panel.requestUpdate();
+  };
+
+  return html`
+    <div class="info-text-config-item expanded" style="margin-top: 4px; border-top: none; padding-top: 0;">
+      <div class="info-text-config-row" style="padding: 8px 12px;">
+        <div class="info-text-config-icon">
+          <ha-icon icon="mdi:map-marker-multiple"></ha-icon>
+        </div>
+        <div class="info-text-config-label">
+          <span class="info-text-config-title">${t('admin.vacuum.roomMapping')}</span>
+          <span class="info-text-config-subtitle">${t('admin.vacuum.roomMappingDesc')}</span>
+        </div>
+      </div>
+      <div class="info-text-config-entities" style="padding: 0 12px 12px;">
+        <!-- Existing maps -->
+        ${mapNames.map(mapName => {
+          if (!editState.newRooms[mapName]) editState.newRooms[mapName] = { segId: '', roomName: '' };
+          const newRoomState = editState.newRooms[mapName];
+          return html`
+          <div style="margin-bottom: 12px; padding: 10px; background: var(--dv-gray100, #f5f5f5); border-radius: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <strong style="font-size: 14px;">${mapName}</strong>
+              <ha-icon
+                icon="mdi:close"
+                style="cursor: pointer; color: var(--dv-gray500); --mdc-icon-size: 18px;"
+                @click=${() => removeMap(mapName)}
+              ></ha-icon>
+            </div>
+            <!-- Existing rooms in this map -->
+            ${Object.entries(roomMapping[mapName]).map(([segId, name]) => html`
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; padding: 4px 8px; background: var(--dv-white, #fff); border-radius: 6px;">
+                <span style="min-width: 30px; font-size: 12px; color: var(--dv-gray500);">#${segId}</span>
+                <span style="flex: 1; font-size: 13px;">${name}</span>
+                <ha-icon
+                  icon="mdi:close"
+                  style="cursor: pointer; color: var(--dv-gray400); --mdc-icon-size: 16px;"
+                  @click=${() => removeRoom(mapName, segId)}
+                ></ha-icon>
+              </div>
+            `)}
+            <!-- Add room to this map -->
+            <div style="display: flex; gap: 6px; margin-top: 8px;">
+              <input
+                type="text"
+                placeholder="${t('admin.vacuum.segmentId')}"
+                .value=${newRoomState.segId}
+                @input=${(e) => { newRoomState.segId = e.target.value; }}
+                style="width: 60px; padding: 6px 8px; border: 1px solid var(--dv-gray300, #ddd); border-radius: 6px; font-size: 13px;"
+              />
+              <input
+                type="text"
+                placeholder="${t('admin.vacuum.roomName')}"
+                .value=${newRoomState.roomName}
+                @input=${(e) => { newRoomState.roomName = e.target.value; }}
+                style="flex: 1; padding: 6px 8px; border: 1px solid var(--dv-gray300, #ddd); border-radius: 6px; font-size: 13px;"
+              />
+              <div
+                style="padding: 6px 10px; background: var(--dv-accent, #4CAF50); color: white; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center;"
+                @click=${() => addRoom(mapName)}
+              >+</div>
+            </div>
+          </div>
+        `})}
+
+        <!-- Add new map -->
+        <div style="display: flex; gap: 6px; margin-top: 4px;">
+          <input
+            type="text"
+            placeholder="${t('admin.vacuum.mapName')}"
+            .value=${editState.newMapName}
+            @input=${(e) => { editState.newMapName = e.target.value; }}
+            style="flex: 1; padding: 6px 8px; border: 1px solid var(--dv-gray300, #ddd); border-radius: 6px; font-size: 13px;"
+          />
+          <div
+            style="padding: 6px 12px; background: var(--dv-accent, #4CAF50); color: white; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center;"
+            @click=${addMap}
+          >${t('admin.vacuum.addMap')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Render info text config with entity selection (for appliances)
  */
 function renderInfoTextEntityConfig(panel, html, key, label, icon, description, hasFinishTime) {
@@ -966,6 +1116,9 @@ export function renderCardConfig(panel, html) {
         <!-- Vacuum Status -->
         ${renderInfoTextEntityConfig(panel, html, 'vacuum', t('admin.infoTextToggles.vacuum'), 'mdi:robot-vacuum',
           t('admin.infoTextToggles.vacuumDesc'), false)}
+
+        <!-- Vacuum Room Mapping -->
+        ${renderVacuumRoomMapping(panel, html)}
 
         <!-- Battery Low Status -->
         ${renderInfoTextBatteryConfig(panel, html)}
