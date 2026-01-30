@@ -3,6 +3,8 @@
  * Centralized constants for entity types, states, icons, and configuration
  */
 
+import { t } from '../utils/i18n.js';
+
 // Entity domains
 export const DOMAINS = {
   LIGHT: 'light',
@@ -334,17 +336,22 @@ export const ENTITY_CONFIGS = {
       return ICONS.LOCK_LOCKED;
     },
     getState: (entity) => {
-      if (entity.state === STATES.LOCKED) return 'Verriegelt';
-      if (entity.state === STATES.UNLOCKED) return 'Entriegelt';
-      if (entity.state === STATES.LOCKING) return 'Verriegelt...';
-      if (entity.state === STATES.UNLOCKING) return 'Entriegelt...';
+      if (entity.state === STATES.LOCKED) return t('lock.locked');
+      if (entity.state === STATES.UNLOCKED) return t('lock.unlocked');
+      if (entity.state === STATES.LOCKING) return t('lock.locking');
+      if (entity.state === STATES.UNLOCKING) return t('lock.unlocking');
       return entity.state;
     },
     isActive: (entity) => entity.state === STATES.UNLOCKED,
   },
 };
 
-// Weather condition translations (German)
+// Weather condition translations (via i18n)
+export function getWeatherConditionText(condition) {
+  return t(`weather.conditions.${condition}`, condition);
+}
+
+// Legacy mapping — kept for backward compatibility, prefer getWeatherConditionText()
 export const WEATHER_CONDITIONS = {
   'clear-night': 'Klare Nacht',
   'cloudy': 'Bewölkt',

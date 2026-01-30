@@ -97,12 +97,12 @@ export function getWeather(hass, weatherEntity) {
 }
 
 /**
- * Translate weather condition to German
+ * Translate weather condition using i18n
  * @param {string} state - Weather condition state
  * @returns {string} Translated condition
  */
 export function translateWeatherCondition(state) {
-  return WEATHER_TRANSLATIONS[state] || state;
+  return t(`weather.conditions.${state}`, state);
 }
 
 /**

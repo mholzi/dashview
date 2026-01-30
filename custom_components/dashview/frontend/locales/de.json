@@ -153,7 +153,8 @@
       "other_devices": "Weitere Geräte",
       "devices": "Geräte",
       "locks": "Schlösser",
-      "batteries": "Batterien"
+      "batteries": "Batterien",
+      "batteries_ok": "Alle Batterien in Ordnung"
     },
     "errors": {
       "no_data": "Keine Daten verfügbar",
@@ -167,7 +168,8 @@
       "no_cards_configured": "Keine Karten konfiguriert. Konfiguriere Karten im Admin-Bereich unter \"Etagen-Karten\".",
       "no_sensors_selected": "Keine Sensoren ausgewählt",
       "no_devices_enabled": "Keine Geräte aktiviert.",
-      "no_lights_enabled": "Keine Lichter in der Admin-Konfiguration aktiviert."
+      "no_lights_enabled": "Keine Lichter in der Admin-Konfiguration aktiviert.",
+      "no_windows_enabled": "Keine Fenster in der Admin-Konfiguration aktiviert."
     },
     "popups": {
       "lights": {
@@ -251,6 +253,23 @@
       "low": "Gering",
       "moderate": "Mäßig",
       "high": "Stark"
+    },
+    "conditions": {
+      "sunny": "Sonnig",
+      "clear-night": "Klare Nacht",
+      "partlycloudy": "Teilweise bewölkt",
+      "cloudy": "Bewölkt",
+      "rainy": "Regnerisch",
+      "pouring": "Starkregen",
+      "lightning": "Gewitter",
+      "lightning-rainy": "Gewitter mit Regen",
+      "windy": "Windig",
+      "windy-variant": "Windig",
+      "fog": "Nebel",
+      "hail": "Hagel",
+      "snowy": "Schnee",
+      "snowy-rainy": "Schneeregen",
+      "exceptional": "Außergewöhnlich"
     }
   },
   "media": {
@@ -260,7 +279,8 @@
     "off": "Ausgeschaltet",
     "idle": "Bereit",
     "playing": "Spielt",
-    "paused": "Pausiert"
+    "paused": "Pausiert",
+    "standby": "Bereit"
   },
   "status": {
     "water": {
@@ -945,6 +965,23 @@
       "edit": "Bearbeiten",
       "ready": "Alles bereit!",
       "readyDesc": "Klicke Fertig um die Einrichtung abzuschließen und dein Dashboard zu nutzen."
+    }
+  },
+  "security": {
+    "windows": {
+      "empty": "Keine Fenster in der Admin-Konfiguration aktiviert.",
+      "open": "Offene Fenster",
+      "closed": "Geschlossene Fenster"
+    },
+    "garages": {
+      "empty": "Keine Garagentore in der Admin-Konfiguration aktiviert.",
+      "open": "Offene Garagentore",
+      "closed": "Geschlossene Garagentore"
+    },
+    "motion": {
+      "empty": "Keine Bewegungsmelder in der Admin-Konfiguration aktiviert.",
+      "detected": "Bewegung erkannt",
+      "none": "Keine Bewegung"
     }
   }
 }
