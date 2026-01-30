@@ -25,10 +25,10 @@ export function renderScenesTab(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:play-box-multiple"></ha-icon>
-      Scenes & Actions
+      ${t('admin.scenes.scenesAndActions')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure quick action buttons and custom entity labels.
+      ${t('admin.scenes.scenesDesc')}
     </p>
 
     <!-- Scene Buttons Section -->
@@ -36,8 +36,8 @@ export function renderScenesTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('sceneButtons')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:gesture-tap-button"></ha-icon>
-          Scene Buttons
-          <span style="margin-left: 8px; font-size: 12px; opacity: 0.7;">(${panel._sceneButtons.length} buttons)</span>
+          ${t('admin.scenes.sceneButtons')}
+          <span style="margin-left: 8px; font-size: 12px; opacity: 0.7;">(${panel._sceneButtons.length})</span>
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('sceneButtons') ? 'expanded' : ''}"
@@ -46,7 +46,7 @@ export function renderScenesTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('sceneButtons') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Configure quick action buttons. Global buttons appear on the main page, room buttons appear in room popups.
+          ${t('admin.scenes.sceneButtonsDesc')}
         </p>
 
         <!-- Global Buttons -->
@@ -54,7 +54,7 @@ export function renderScenesTab(panel, html) {
           <div style="margin-bottom: 16px;">
             <div style="font-size: 13px; font-weight: 500; color: var(--dv-gray600); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
               <ha-icon icon="mdi:home" style="--mdc-icon-size: 16px;"></ha-icon>
-              Main Page Buttons (${globalButtons.length})
+              ${t('admin.scenes.mainPageButtons')} (${globalButtons.length})
             </div>
             <div class="scene-buttons-list">
               ${globalButtons.map((button) => {
@@ -70,7 +70,7 @@ export function renderScenesTab(panel, html) {
           <div style="margin-bottom: 16px;">
             <div style="font-size: 13px; font-weight: 500; color: var(--dv-gray600); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
               <ha-icon icon="mdi:door" style="--mdc-icon-size: 16px;"></ha-icon>
-              Room Buttons (${roomButtons.length})
+              ${t('admin.scenes.roomButtons')} (${roomButtons.length})
             </div>
             <div class="scene-buttons-list">
               ${roomButtons.map((button) => {
@@ -90,7 +90,7 @@ export function renderScenesTab(panel, html) {
         <!-- Add New Scene Button -->
         <button class="scene-button-add" @click=${() => panel._addSceneButton()}>
           <ha-icon icon="mdi:plus"></ha-icon>
-          Add Scene Button
+          ${t('admin.scenes.addSceneButton')}
         </button>
       </div>
     </div>

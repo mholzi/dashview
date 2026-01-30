@@ -22,10 +22,10 @@ export function renderWeatherTab(panel, html) {
   return html`
     <h2 class="section-title">
       <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
-      Weather Configuration
+      ${t('admin.weather.weatherConfig')}
     </h2>
     <p style="color: var(--dv-gray600); margin-bottom: 24px;">
-      Configure weather display and climate notification thresholds.
+      ${t('admin.weather.weatherConfigDesc')}
     </p>
 
     <!-- Weather Entity Section -->
@@ -33,7 +33,7 @@ export function renderWeatherTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('weatherEntity')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:weather-cloudy"></ha-icon>
-          Weather Entity
+          ${t('admin.weather.weatherEntitySection')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('weatherEntity') ? 'expanded' : ''}"
@@ -45,18 +45,18 @@ export function renderWeatherTab(panel, html) {
           ? renderEmptyState(html, {
               icon: 'mdi:weather-cloudy-alert',
               title: t('admin.weather.noWeatherEntities') || 'No Weather Entities Found',
-              description: 'Install a weather integration in Home Assistant to display forecasts',
-              hint: 'Supported integrations: OpenWeatherMap, Met.no, AccuWeather, etc.'
+              description: t('admin.weather.noWeatherEntitiesDesc'),
+              hint: t('admin.weather.noWeatherEntitiesHint')
             })
           : html`
             <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-              Select the weather entity for the header and weather popup. All forecast data will be fetched from this entity.
+              ${t('admin.weather.weatherEntityDesc2')}
             </p>
 
             <div style="margin-bottom: 8px;">
               <div class="card-config-label">
                 <span class="card-config-label-title">${t('admin.weather.weatherEntity')}</span>
-                <span class="card-config-label-subtitle">Select your weather integration</span>
+                <span class="card-config-label-subtitle">${t('admin.weather.selectWeatherIntegration')}</span>
               </div>
             </div>
             <div>
@@ -73,7 +73,7 @@ export function renderWeatherTab(panel, html) {
                 style="width: 100%; padding: 10px 12px; border-radius: var(--dv-radius-sm); border: 1px solid var(--dv-gray300); background: var(--dv-gray000); color: var(--dv-gray800); font-size: 14px;"
               >
                 ${panel._availableWeatherEntities.length === 0
-                  ? html`<option value="">Loading weather entities...</option>`
+                  ? html`<option value="">${t('admin.weather.loadingEntities')}</option>`
                   : panel._availableWeatherEntities.map(entity => html`
                       <option value="${entity.entity_id}" ?selected=${panel._weatherEntity === entity.entity_id}>
                         ${entity.name} (${entity.entity_id})
@@ -91,7 +91,7 @@ export function renderWeatherTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('dwdWarning')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:alert"></ha-icon>
-          DWD Weather Warnings
+          ${t('admin.weather.dwdWarningsSection')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('dwdWarning') ? 'expanded' : ''}"
@@ -100,13 +100,13 @@ export function renderWeatherTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('dwdWarning') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          German weather warnings from Deutscher Wetterdienst (DWD).
+          ${t('admin.weather.dwdWarningsSubtitle')}
         </p>
 
         <div style="margin-bottom: 8px;">
           <div class="card-config-label">
-            <span class="card-config-label-title">DWD Warning Entity</span>
-            <span class="card-config-label-subtitle">sensor.xxx_current_warning_level</span>
+            <span class="card-config-label-title">${t('admin.layout.dwdWarningEntity')}</span>
+            <span class="card-config-label-subtitle">${t('admin.weather.dwdWarningSubtitle2')}</span>
           </div>
         </div>
         <div>
@@ -143,7 +143,7 @@ export function renderWeatherTab(panel, html) {
 
         ${panel._dwdWarningEntity ? html`
           <div class="garbage-selected-sensors" style="margin-top: 12px;">
-            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">Selected Sensor</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--dv-gray800);">${t('admin.weather.selectedSensor')}</label>
             <div class="garbage-sensor-list">
               ${(() => {
                 const state = panel.hass?.states[panel._dwdWarningEntity];
@@ -183,7 +183,7 @@ export function renderWeatherTab(panel, html) {
       <div class="card-config-section-header" @click=${() => toggleSection('weatherRadar')}>
         <div class="card-config-section-title">
           <ha-icon icon="mdi:radar"></ha-icon>
-          Weather Radar (Windy)
+          ${t('admin.weather.weatherRadar')}
         </div>
         <ha-icon
           class="card-config-section-chevron ${isExpanded('weatherRadar') ? 'expanded' : ''}"
@@ -192,15 +192,15 @@ export function renderWeatherTab(panel, html) {
       </div>
       <div class="card-config-section-content ${isExpanded('weatherRadar') ? 'expanded' : ''}">
         <p style="color: var(--dv-gray600); margin-bottom: 16px; font-size: 14px;">
-          Configure the weather radar map displayed in the weather popup. Uses Windy.com embed.
+          ${t('admin.weather.weatherRadarDesc')}
         </p>
 
         <!-- Location -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
           <div>
             <div class="card-config-label" style="margin-bottom: 8px;">
-              <span class="card-config-label-title">Latitude</span>
-              <span class="card-config-label-subtitle">e.g., 50.0 for Frankfurt</span>
+              <span class="card-config-label-title">${t('admin.weather.latitude')}</span>
+              <span class="card-config-label-subtitle">${t('admin.weather.latitudeHint')}</span>
             </div>
             <input
               type="number"
@@ -216,8 +216,8 @@ export function renderWeatherTab(panel, html) {
           </div>
           <div>
             <div class="card-config-label" style="margin-bottom: 8px;">
-              <span class="card-config-label-title">Longitude</span>
-              <span class="card-config-label-subtitle">e.g., 8.7 for Frankfurt</span>
+              <span class="card-config-label-title">${t('admin.weather.longitude')}</span>
+              <span class="card-config-label-subtitle">${t('admin.weather.longitudeHint')}</span>
             </div>
             <input
               type="number"
@@ -236,8 +236,8 @@ export function renderWeatherTab(panel, html) {
         <!-- Zoom Level -->
         <div style="margin-bottom: 16px;">
           <div class="card-config-label" style="margin-bottom: 8px;">
-            <span class="card-config-label-title">Zoom Level</span>
-            <span class="card-config-label-subtitle">3 (continent) to 11 (city)</span>
+            <span class="card-config-label-title">${t('admin.weather.zoomLevel')}</span>
+            <span class="card-config-label-subtitle">${t('admin.weather.zoomLevelHint')}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
             <input
@@ -264,7 +264,7 @@ export function renderWeatherTab(panel, html) {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div>
             <div class="card-config-label" style="margin-bottom: 8px;">
-              <span class="card-config-label-title">Temperature Unit</span>
+              <span class="card-config-label-title">${t('admin.weather.temperatureUnit')}</span>
             </div>
             <select
               .value=${panel._weatherRadarTempUnit}
@@ -281,7 +281,7 @@ export function renderWeatherTab(panel, html) {
           </div>
           <div>
             <div class="card-config-label" style="margin-bottom: 8px;">
-              <span class="card-config-label-title">Wind Unit</span>
+              <span class="card-config-label-title">${t('admin.weather.windUnit')}</span>
             </div>
             <select
               .value=${panel._weatherRadarWindUnit}

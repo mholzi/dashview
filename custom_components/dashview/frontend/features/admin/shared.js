@@ -436,12 +436,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'windows' ? html`
       ${enabledWindows.length === 0 ? html`
         <div class="security-empty-state">
-          Keine Fenster in der Admin-Konfiguration aktiviert.
+          ${t('admin.security.noWindowsEnabled')}
         </div>
       ` : html`
         <!-- Open Windows -->
         ${enabledWindows.filter(w => w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">Offene Fenster</h3>
+          <h3 class="security-subsection-title">${t('admin.security.openWindows')}</h3>
           <div class="security-entity-list">
             ${enabledWindows.filter(w => w.isOpen).map(w => renderEntityCard(w, 'window'))}
           </div>
@@ -449,7 +449,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Closed Windows -->
         ${enabledWindows.filter(w => !w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">Geschlossene Fenster</h3>
+          <h3 class="security-subsection-title">${t('admin.security.closedWindows')}</h3>
           <div class="security-entity-list">
             ${enabledWindows.filter(w => !w.isOpen).map(w => renderEntityCard(w, 'window'))}
           </div>
@@ -461,12 +461,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'garage' ? html`
       ${enabledGarages.length === 0 ? html`
         <div class="security-empty-state">
-          Keine Garagentore in der Admin-Konfiguration aktiviert.
+          ${t('admin.security.noGaragesEnabled')}
         </div>
       ` : html`
         <!-- Open Garages -->
         ${enabledGarages.filter(g => g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">Offene Garagentore</h3>
+          <h3 class="security-subsection-title">${t('admin.security.openGarages')}</h3>
           <div class="security-entity-list">
             ${enabledGarages.filter(g => g.isOpen).map(g => renderEntityCard(g, 'garage'))}
           </div>
@@ -474,7 +474,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Closed Garages -->
         ${enabledGarages.filter(g => !g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">Geschlossene Garagentore</h3>
+          <h3 class="security-subsection-title">${t('admin.security.closedGarages')}</h3>
           <div class="security-entity-list">
             ${enabledGarages.filter(g => !g.isOpen).map(g => renderEntityCard(g, 'garage'))}
           </div>
@@ -486,12 +486,12 @@ export function renderSecurityPopupContent(panel, html) {
     ${panel._activeSecurityTab === 'motion' ? html`
       ${enabledMotion.length === 0 ? html`
         <div class="security-empty-state">
-          Keine Bewegungsmelder in der Admin-Konfiguration aktiviert.
+          ${t('admin.security.noMotionEnabled')}
         </div>
       ` : html`
         <!-- Active Motion -->
         ${enabledMotion.filter(m => m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">Bewegung erkannt</h3>
+          <h3 class="security-subsection-title">${t('admin.security.motionDetected')}</h3>
           <div class="security-entity-list">
             ${enabledMotion.filter(m => m.isActive).map(m => renderEntityCard(m, 'motion'))}
           </div>
@@ -499,7 +499,7 @@ export function renderSecurityPopupContent(panel, html) {
 
         <!-- Inactive Motion -->
         ${enabledMotion.filter(m => !m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">Keine Bewegung</h3>
+          <h3 class="security-subsection-title">${t('admin.security.noMotion')}</h3>
           <div class="security-entity-list">
             ${enabledMotion.filter(m => !m.isActive).map(m => renderEntityCard(m, 'motion'))}
           </div>

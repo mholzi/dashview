@@ -432,7 +432,7 @@ export function renderUsersTab(panel, html) {
                   <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
                     <span style="font-weight: 600; font-size: 15px;">${personName}</span>
                     ${hasCustomPhoto ? html`
-                      <span style="font-size: 10px; background: var(--dv-blue100); color: var(--dv-blue600); padding: 2px 6px; border-radius: 10px;">Custom</span>
+                      <span style="font-size: 10px; background: var(--dv-blue100); color: var(--dv-blue600); padding: 2px 6px; border-radius: 10px;">${t('admin.users.custom')}</span>
                     ` : ''}
                   </div>
                   <div style="font-size: 11px; color: var(--dv-gray500); margin-bottom: 8px;">${personId}</div>
