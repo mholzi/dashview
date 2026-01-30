@@ -2370,6 +2370,42 @@ if (typeof structuredClone === 'undefined') {
     }
 
     _handleRoofWindowSliderClick(e, entityId) { this._setRoofWindowPosition(entityId, this._getInvertedSliderPosition(e)); }
+    _handleRoofWindowSliderTouchStart(e, entityId, areaId) {
+      e.preventDefault();
+      this._roofWindowTouchEntityId = entityId;
+      this._roofWindowTouchAreaId = areaId;
+      this._roofWindowTouchSlider = e.currentTarget;
+      this._roofWindowDragValue = null;
+      this._roofWindowTouchSlider.classList.add('dragging');
+    }
+    _handleRoofWindowSliderTouchMove(e) {
+      if (!this._roofWindowTouchSlider) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = this._roofWindowTouchSlider.getBoundingClientRect();
+      const displayPosition = Math.round(Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100)));
+      this._roofWindowDragValue = 100 - displayPosition;
+      this._roofWindowTouchSlider.style.setProperty('--drag-position', `${displayPosition}%`);
+      const parent = this._roofWindowTouchSlider.closest('.popup-cover-header, .popup-cover-item');
+      const posLabel = parent?.querySelector('.popup-cover-position');
+      if (posLabel) posLabel.textContent = `${displayPosition}%`;
+    }
+    _handleRoofWindowSliderTouchEnd(e) {
+      if (this._roofWindowTouchSlider) {
+        this._roofWindowTouchSlider.classList.remove('dragging');
+      }
+      if (this._roofWindowDragValue !== null) {
+        if (this._roofWindowTouchEntityId) {
+          this._setRoofWindowPosition(this._roofWindowTouchEntityId, this._roofWindowDragValue);
+        } else if (this._roofWindowTouchAreaId) {
+          this._setAllRoofWindowsPosition(this._roofWindowTouchAreaId, this._roofWindowDragValue);
+        }
+      }
+      this._roofWindowTouchEntityId = null;
+      this._roofWindowTouchAreaId = null;
+      this._roofWindowTouchSlider = null;
+      this._roofWindowDragValue = null;
+    }
     _handleAllRoofWindowsSliderClick(e, areaId) { this._setAllRoofWindowsPosition(areaId, this._getInvertedSliderPosition(e)); }
 
     // Cover service helpers

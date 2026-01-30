@@ -663,9 +663,9 @@ function renderRoofWindowSection(component, html, areaId) {
         </span>
         <div class="popup-cover-slider"
           @click=${(e) => component._handleAllRoofWindowsSliderClick(e, areaId)}
-          @touchstart=${(e) => component._handleCoverSliderTouchStart(e, null, areaId)}
-          @touchmove=${(e) => component._handleCoverSliderTouchMove(e)}
-          @touchend=${(e) => component._handleCoverSliderTouchEnd(e)}
+          @touchstart=${(e) => component._handleRoofWindowSliderTouchStart(e, null, areaId)}
+          @touchmove=${(e) => component._handleRoofWindowSliderTouchMove(e)}
+          @touchend=${(e) => component._handleRoofWindowSliderTouchEnd(e)}
         >
           <div class="popup-cover-slider-fill" style="width: ${avgPosition}%"></div>
           <div class="popup-cover-slider-thumb" style="left: ${avgPosition}%"></div>
@@ -691,9 +691,9 @@ function renderRoofWindowSection(component, html, areaId) {
             <span class="popup-cover-item-name">${rw.name}</span>
             <div class="popup-cover-slider"
               @click=${(e) => component._handleRoofWindowSliderClick(e, rw.entity_id)}
-              @touchstart=${(e) => component._handleCoverSliderTouchStart(e, rw.entity_id, null)}
-              @touchmove=${(e) => component._handleCoverSliderTouchMove(e)}
-              @touchend=${(e) => component._handleCoverSliderTouchEnd(e)}
+              @touchstart=${(e) => component._handleRoofWindowSliderTouchStart(e, rw.entity_id, null)}
+              @touchmove=${(e) => component._handleRoofWindowSliderTouchMove(e)}
+              @touchend=${(e) => component._handleRoofWindowSliderTouchEnd(e)}
             >
               <div class="popup-cover-slider-fill" style="width: ${position}%"></div>
               <div class="popup-cover-slider-thumb" style="left: ${position}%"></div>
