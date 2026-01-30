@@ -4621,6 +4621,9 @@ if (typeof structuredClone === 'undefined') {
           ? dashviewChangelogPopup(this, html)
           : ''}
 
+        <!-- VERSION FOOTER -->
+        <div class="dashview-version">v${changelogUtils?.CURRENT_VERSION || DASHVIEW_VERSION}</div>
+
         <!-- BOTTOM TAB BAR -->
         <div class="bottom-tab-bar">
           <div class="bottom-tab-bar-inner">

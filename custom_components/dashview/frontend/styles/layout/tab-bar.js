@@ -70,4 +70,13 @@ export const tabBarStyles = `
     max-width: 1200px;
     margin: 0 auto;
   }
+
+  /* ==================== VERSION FOOTER ==================== */
+  .dashview-version {
+    text-align: center;
+    font-size: 10px;
+    color: var(--dv-gray500);
+    padding: 16px 0 calc(80px + env(safe-area-inset-bottom, 0px)) 0;
+    opacity: 0.6;
+  }
 `;

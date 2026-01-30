@@ -743,8 +743,8 @@ export const roomPopupStyles = `
   .popup-garage-item-header {
     display: flex;
     align-items: center;
-    height: 68px;
-    padding: 4px 20px 4px 4px;
+    height: 46px;
+    padding: 4px 12px 4px 4px;
     gap: 12px;
     cursor: pointer;
     box-sizing: border-box;
@@ -760,8 +760,8 @@ export const roomPopupStyles = `
   }
 
   .popup-garage-item-icon {
-    width: 50px;
-    height: 50px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -778,7 +778,7 @@ export const roomPopupStyles = `
   }
 
   .popup-garage-item-icon ha-icon {
-    --mdc-icon-size: 22px;
+    --mdc-icon-size: 18px;
   }
 
   .popup-garage-item-header.open .popup-garage-item-icon ha-icon {
@@ -828,8 +828,8 @@ export const roomPopupStyles = `
   }
 
   .popup-garage-control-btn {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     border: none;
     border-radius: 50%;
     background: var(--dv-white);
@@ -845,7 +845,7 @@ export const roomPopupStyles = `
   }
 
   .popup-garage-control-btn ha-icon {
-    --mdc-icon-size: 20px;
+    --mdc-icon-size: 16px;
     color: var(--dv-gray800);
   }
 
