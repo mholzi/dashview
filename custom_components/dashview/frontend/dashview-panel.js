@@ -54,6 +54,10 @@ if (typeof structuredClone === 'undefined') {
   // Version for cache busting - update this when making changes
   const DASHVIEW_VERSION = "1.5.0-beta.10";
 
+  // Non-device domains to exclude from entity lists globally
+  // These should never appear as room entities even if they carry a matching label
+  const EXCLUDED_DOMAINS = ['automation', 'script', 'scene'];
+
   // Debug mode - set to true for development logging
   const DEBUG = false;
   const debugLog = (...args) => DEBUG && console.log('[Dashview]', ...args);
@@ -2407,11 +2411,10 @@ if (typeof structuredClone === 'undefined') {
         const entityId = entityReg.entity_id;
         // Check if entity has the required label
         if (!entityReg.labels || !entityReg.labels.includes(labelId)) return;
-        // Check excluded domains (e.g., automation/script/scene for lights)
-        if (excludeDomains && excludeDomains.length > 0) {
-          const domain = entityId.split('.')[0];
-          if (excludeDomains.includes(domain)) return;
-        }
+        // Filter non-device domains globally + any caller-specified exclusions
+        const domain = entityId.split('.')[0];
+        if (EXCLUDED_DOMAINS.includes(domain)) return;
+        if (excludeDomains && excludeDomains.length > 0 && excludeDomains.includes(domain)) return;
         // Check if entity is in this area
         if (this._getAreaIdForEntity(entityId) !== areaId) return;
         // Check if entity is NOT explicitly disabled (default is enabled)
@@ -2831,7 +2834,6 @@ if (typeof structuredClone === 'undefined') {
     }
 
     _getEnabledLightsForRoom(areaId) {
-      const excludeDomains = ['automation', 'script', 'scene'];
       return this._getEnabledEntitiesForRoom(areaId, this._enabledLights, s => {
         const brightness = s.attributes?.brightness;
         const rgbColor = s.attributes?.rgb_color;
@@ -2841,7 +2843,7 @@ if (typeof structuredClone === 'undefined') {
           icon: s.attributes?.icon || 'mdi:lightbulb',
           rgbColor: rgbColor || null,
         };
-      }, this._lightLabelId, excludeDomains);
+      }, this._lightLabelId);
     }
 
     _getEnabledTVsForRoom(areaId) {
@@ -3574,6 +3576,9 @@ if (typeof structuredClone === 'undefined') {
       const map = {};
       this._entityRegistry.forEach(e => {
         if (e.labels && e.labels.includes(labelId)) {
+          // Skip non-device domains (automations, scripts, scenes)
+          const domain = e.entity_id.split('.')[0];
+          if (EXCLUDED_DOMAINS.includes(domain)) return;
           // Skip explicitly disabled entities (false), include all others (undefined/true)
           if (existingMap[e.entity_id] === false) return;
           // Skip entities not allocated to a room
@@ -3597,6 +3602,9 @@ if (typeof structuredClone === 'undefined') {
       const filtered = [];
       this._entityRegistry.forEach(e => {
         if (e.labels && e.labels.includes(labelId)) {
+          // Skip non-device domains (automations, scripts, scenes)
+          const domain = e.entity_id.split('.')[0];
+          if (EXCLUDED_DOMAINS.includes(domain)) return;
           // Skip only explicitly disabled entities (enabled by default)
           if (enabledMap[e.entity_id] === false) return;
           filtered.push(e.entity_id);
@@ -4247,16 +4255,15 @@ if (typeof structuredClone === 'undefined') {
 
       const states = Object.values(this.hass.states);
       // Filter enabled lights by current label (iterate over registry for default-enabled)
-      const excludedDomains = ['automation', 'script', 'scene'];
       const enabledLightIds = this._entityRegistry
         .filter((entityReg) => {
           const entityId = entityReg.entity_id;
           if (this._enabledLights[entityId] === false) return false;
           // Only count lights that have the currently selected light label
           if (!this._lightLabelId || !entityReg.labels || !entityReg.labels.includes(this._lightLabelId)) return false;
-          // Exclude non-light domains (automation, script, scene with light label)
+          // Exclude non-device domains
           const domain = entityId.split('.')[0];
-          if (excludedDomains.includes(domain)) return false;
+          if (EXCLUDED_DOMAINS.includes(domain)) return false;
           return true;
         })
         .map((e) => e.entity_id);
