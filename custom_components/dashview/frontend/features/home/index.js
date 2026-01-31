@@ -11,7 +11,7 @@ import { getEntityDisplayService } from '../../services/entity-display-service.j
 import { openMoreInfo, toggleLight, getFriendlyName } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
 import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
-import { getEnabledEntityIds, filterEntitiesByState } from '../../utils/helpers.js';
+import { getDefaultEnabledEntityIds, filterEntitiesByState } from '../../utils/helpers.js';
 
 // Re-export for backwards compatibility
 export { triggerHaptic };
@@ -393,32 +393,26 @@ function getSecurityCounts(component) {
   const hass = component.hass;
   if (!hass) return { windows: 0, doors: 0, locks: 0, garages: 0, smoke: 0, water: 0, total: 0, hasCritical: false };
 
-  // Debug: log enabled maps
-  console.log('[Security Card] _enabledWindows:', JSON.stringify(component._enabledWindows));
-  console.log('[Security Card] _enabledGarages:', JSON.stringify(component._enabledGarages));
-  console.log('[Security Card] _enabledDoors:', JSON.stringify(component._enabledDoors));
-  console.log('[Security Card] _enabledLocks:', JSON.stringify(component._enabledLocks));
-
   // Count open windows (binary_sensor: on = open)
-  const windowIds = getEnabledEntityIds(component._enabledWindows || {});
+  const windowIds = getDefaultEnabledEntityIds(component._enabledWindows || {});
   const openWindows = filterEntitiesByState(windowIds, hass, 'on').length;
 
   // Count open doors (binary_sensor with device_class: door, on = open)
-  const doorIds = getEnabledEntityIds(component._enabledDoors || {});
+  const doorIds = getDefaultEnabledEntityIds(component._enabledDoors || {});
   const openDoors = doorIds.filter(entityId => {
     const state = hass.states[entityId];
     return state && state.state === 'on' && state.attributes?.device_class === 'door';
   }).length;
 
   // Count unlocked locks
-  const lockIds = getEnabledEntityIds(component._enabledLocks || {});
+  const lockIds = getDefaultEnabledEntityIds(component._enabledLocks || {});
   const unlockedLocks = lockIds.filter(entityId => {
     const state = hass.states[entityId];
     return state && state.state === 'unlocked';
   }).length;
 
   // Count open garages — covers use 'open', binary_sensors use 'on'
-  const garageIds = getEnabledEntityIds(component._enabledGarages || {});
+  const garageIds = getDefaultEnabledEntityIds(component._enabledGarages || {});
   const openGarages = garageIds.filter(entityId => {
     const state = hass.states[entityId];
     if (!state) return false;
@@ -426,16 +420,12 @@ function getSecurityCounts(component) {
   }).length;
 
   // Count smoke alerts
-  const smokeIds = getEnabledEntityIds(component._enabledSmokeSensors || {});
+  const smokeIds = getDefaultEnabledEntityIds(component._enabledSmokeSensors || {});
   const smokeAlerts = filterEntitiesByState(smokeIds, hass, 'on').length;
 
   // Count water leak alerts
-  const waterIds = getEnabledEntityIds(component._enabledWaterLeakSensors || {});
+  const waterIds = getDefaultEnabledEntityIds(component._enabledWaterLeakSensors || {});
   const waterAlerts = filterEntitiesByState(waterIds, hass, 'on').length;
-
-  console.log('[Security Card] Counts:', { openWindows, openDoors, unlockedLocks, openGarages, smokeAlerts, waterAlerts });
-  console.log('[Security Card] Window IDs:', windowIds, 'states:', windowIds.map(id => hass.states[id]?.state));
-  console.log('[Security Card] Garage IDs:', garageIds, 'states:', garageIds.map(id => hass.states[id]?.state));
 
   const total = openWindows + openDoors + unlockedLocks + openGarages + smokeAlerts + waterAlerts;
   const hasCritical = smokeAlerts > 0 || waterAlerts > 0;

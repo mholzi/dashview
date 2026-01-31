@@ -245,6 +245,19 @@ export function getEnabledEntityIds(enabledMap) {
 }
 
 /**
+ * Get default enabled entity IDs from an enabled map
+ * Treats entities as enabled unless explicitly set to false
+ * @param {Object} enabledMap - Map of entityId -> boolean
+ * @returns {string[]} Array of enabled entity IDs
+ */
+export function getDefaultEnabledEntityIds(enabledMap) {
+  if (!enabledMap) return [];
+  return Object.entries(enabledMap)
+    .filter(([_, enabled]) => enabled !== false)
+    .map(([id]) => id);
+}
+
+/**
  * Format time ago in German
  * @param {string|Date} timestamp - Timestamp to format
  * @returns {string} Formatted time ago string
