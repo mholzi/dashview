@@ -393,11 +393,17 @@ function getSecurityCounts(component) {
   const hass = component.hass;
   if (!hass) return { windows: 0, doors: 0, locks: 0, garages: 0, smoke: 0, water: 0, total: 0, hasCritical: false };
 
-  // Count open windows
+  // Debug: log enabled maps
+  console.log('[Security Card] _enabledWindows:', JSON.stringify(component._enabledWindows));
+  console.log('[Security Card] _enabledGarages:', JSON.stringify(component._enabledGarages));
+  console.log('[Security Card] _enabledDoors:', JSON.stringify(component._enabledDoors));
+  console.log('[Security Card] _enabledLocks:', JSON.stringify(component._enabledLocks));
+
+  // Count open windows (binary_sensor: on = open)
   const windowIds = getEnabledEntityIds(component._enabledWindows || {});
   const openWindows = filterEntitiesByState(windowIds, hass, 'on').length;
 
-  // Count open doors (only device_class: door)
+  // Count open doors (binary_sensor with device_class: door, on = open)
   const doorIds = getEnabledEntityIds(component._enabledDoors || {});
   const openDoors = doorIds.filter(entityId => {
     const state = hass.states[entityId];
@@ -411,9 +417,13 @@ function getSecurityCounts(component) {
     return state && state.state === 'unlocked';
   }).length;
 
-  // Count open garages
+  // Count open garages — covers use 'open', binary_sensors use 'on'
   const garageIds = getEnabledEntityIds(component._enabledGarages || {});
-  const openGarages = filterEntitiesByState(garageIds, hass, 'open').length;
+  const openGarages = garageIds.filter(entityId => {
+    const state = hass.states[entityId];
+    if (!state) return false;
+    return state.state === 'open' || state.state === 'on';
+  }).length;
 
   // Count smoke alerts
   const smokeIds = getEnabledEntityIds(component._enabledSmokeSensors || {});
@@ -422,6 +432,10 @@ function getSecurityCounts(component) {
   // Count water leak alerts
   const waterIds = getEnabledEntityIds(component._enabledWaterLeakSensors || {});
   const waterAlerts = filterEntitiesByState(waterIds, hass, 'on').length;
+
+  console.log('[Security Card] Counts:', { openWindows, openDoors, unlockedLocks, openGarages, smokeAlerts, waterAlerts });
+  console.log('[Security Card] Window IDs:', windowIds, 'states:', windowIds.map(id => hass.states[id]?.state));
+  console.log('[Security Card] Garage IDs:', garageIds, 'states:', garageIds.map(id => hass.states[id]?.state));
 
   const total = openWindows + openDoors + unlockedLocks + openGarages + smokeAlerts + waterAlerts;
   const hasCritical = smokeAlerts > 0 || waterAlerts > 0;
