@@ -275,6 +275,104 @@ const RULES = [
 ];
 
 // ============================================================================
+// Room-Specific Evaluation Function
+// ============================================================================
+
+/**
+ * Evaluate suggestion rules against current state, filtered for a specific room
+ * @param {Object} hass - Home Assistant instance  
+ * @param {Object} context - Evaluation context
+ * @param {Object} context.enabledMaps - Maps of enabled entity IDs
+ * @param {Object} context.labelIds - Label IDs for each entity category
+ * @param {Function} context.entityHasLabel - Function to check if entity has label
+ * @param {Function} context.getAreaIdForEntity - Function to get area ID for an entity
+ * @param {string} areaId - Area ID to filter suggestions for
+ * @returns {Array} Array of active suggestions for this room, sorted by priority (highest first), max 2
+ */
+export function evaluateRoomSuggestions(hass, context, areaId) {
+  if (!hass || !hass.states || !areaId) return [];
+
+  const suggestions = [];
+  const now = Date.now();
+
+  // Load persistence state
+  const cooldowns = loadCooldowns();
+  const dismissed = loadDismissed();
+
+  RULES.forEach(rule => {
+    // Skip if in cooldown
+    if (cooldowns[rule.id] && (now - cooldowns[rule.id]) < rule.cooldownMs) return;
+
+    // Skip if dismissed this session
+    if (dismissed[rule.id]) return;
+
+    try {
+      const suggestion = rule.evaluate(hass, context);
+      if (suggestion) {
+        // Filter suggestion based on whether its triggering entities are in this room
+        const filteredSuggestion = filterSuggestionForRoom(suggestion, hass, context, areaId);
+        if (filteredSuggestion) {
+          suggestions.push(filteredSuggestion);
+        }
+      }
+    } catch (e) {
+      console.warn(`[Dashview] Room suggestion rule "${rule.id}" error:`, e);
+    }
+  });
+
+  // Sort by priority (highest first), limit to 2 visible
+  return suggestions.sort((a, b) => b.priority - a.priority).slice(0, 2);
+}
+
+/**
+ * Filter a suggestion to only include entities relevant to the given room
+ * @param {Object} suggestion - The suggestion object
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} context - Evaluation context
+ * @param {string} areaId - Area ID to filter for
+ * @returns {Object|null} Filtered suggestion or null if no relevant entities
+ */
+function filterSuggestionForRoom(suggestion, hass, context, areaId) {
+  if (!suggestion.actionData || suggestion.actionType !== 'service') {
+    // For non-service suggestions (like popup actions), show in all rooms
+    return suggestion;
+  }
+
+  const { entityIds } = suggestion.actionData;
+  if (!entityIds || !Array.isArray(entityIds)) {
+    // No specific entities to filter, show suggestion as-is
+    return suggestion;
+  }
+
+  // Filter entityIds to only include those in this room
+  const roomEntityIds = entityIds.filter(entityId => {
+    return context.getAreaIdForEntity && context.getAreaIdForEntity(entityId) === areaId;
+  });
+
+  // If no entities are in this room, don't show the suggestion
+  if (roomEntityIds.length === 0) {
+    return null;
+  }
+
+  // Return a modified suggestion with only room-relevant entities
+  const filteredSuggestion = {
+    ...suggestion,
+    id: `${suggestion.id}-${areaId}`, // Make ID unique per room
+    actionData: {
+      ...suggestion.actionData,
+      entityIds: roomEntityIds,
+    },
+  };
+
+  // Update description to reflect the filtered count
+  if (suggestion.id === 'lights-left-on') {
+    filteredSuggestion.description = t('smartSuggestions.lightsLeftOn.desc', { count: roomEntityIds.length });
+  }
+
+  return filteredSuggestion;
+}
+
+// ============================================================================
 // Main Evaluation Function
 // ============================================================================
 

@@ -9,6 +9,7 @@ import { openMoreInfo } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
 import { triggerHaptic } from '../../utils/haptic.js';
 import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
+import { evaluateRoomSuggestions } from '../../services/suggestion-engine.js';
 
 /**
  * Check if room data is still loading
@@ -86,6 +87,63 @@ function renderRoomSkeleton(html) {
 }
 
 /**
+ * Render smart suggestion banners for the room popup
+ * @param {Object} component - DashviewPanel instance
+ * @param {Function} html - Lit html template function
+ * @param {string} areaId - Area ID for filtering suggestions
+ * @returns {TemplateResult} Room suggestions HTML
+ */
+function renderRoomSuggestionsBanner(component, html, areaId) {
+  if (!component.hass || !areaId) return '';
+
+  // Build context for suggestion evaluation
+  const context = {
+    enabledMaps: {
+      enabledLights: component._enabledLights || {},
+      enabledClimates: component._enabledClimates || {},
+      enabledWindows: component._enabledWindows || {},
+    },
+    labelIds: {
+      light: component._lightLabelId,
+      climate: component._climateLabelId,
+      window: component._windowLabelId,
+    },
+    entityHasLabel: component._entityHasLabel?.bind(component),
+    getAreaIdForEntity: component._getAreaIdForEntity?.bind(component),
+  };
+
+  const suggestions = evaluateRoomSuggestions(component.hass, context, areaId);
+  if (!suggestions || suggestions.length === 0) return '';
+
+  return html`
+    <div class="popup-suggestions-section">
+      ${suggestions.map(suggestion => html`
+        <div class="suggestion-banner ${suggestion.level || 'info'}" role="${suggestion.level === 'warning' ? 'alert' : 'status'}">
+          <div class="suggestion-banner-icon">${suggestion.icon}</div>
+          <div class="suggestion-banner-content">
+            <div class="suggestion-banner-title">${suggestion.title}</div>
+            <div class="suggestion-banner-desc">${suggestion.description}</div>
+          </div>
+          <div class="suggestion-banner-actions">
+            <button
+              class="suggestion-action-btn"
+              @click=${(e) => { e.stopPropagation(); component._handleSuggestionAction(suggestion); }}
+            >${suggestion.actionText}</button>
+            ${suggestion.dismissable ? html`
+              <button
+                class="suggestion-dismiss-btn"
+                @click=${(e) => { e.stopPropagation(); component._handleSuggestionDismiss(suggestion); }}
+                title="${t('smartSuggestions.dismiss')}"
+              >✕</button>
+            ` : ''}
+          </div>
+        </div>
+      `)}
+    </div>
+  `;
+}
+
+/**
  * Render the complete room popup
  * @param {Object} component - DashviewPanel instance
  * @param {Function} html - Lit html template function
@@ -107,6 +165,7 @@ export function renderRoomPopup(component, html) {
         })}
 
         ${isLoading ? renderRoomSkeleton(html) : html`
+          ${renderRoomSuggestionsBanner(component, html, areaId)}
           ${renderChipsRow(component, html, areaId)}
           ${renderQuickActions(component, html, areaId)}
           ${renderClimateNotification(component, html, areaId)}

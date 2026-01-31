@@ -4,6 +4,44 @@
  */
 
 export const roomPopupStyles = `
+
+/* ============================================
+   Room Popup Suggestions Section
+   ============================================ */
+
+.popup-suggestions-section {
+  margin: 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.popup-suggestions-section .suggestion-banner {
+  margin: 0 16px;
+  padding: 10px 14px;
+}
+
+.popup-suggestions-section .suggestion-banner-title {
+  font-size: 13px;
+}
+
+.popup-suggestions-section .suggestion-banner-desc {
+  font-size: 11px;
+}
+
+.popup-suggestions-section .suggestion-action-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+}
+
+.popup-suggestions-section .suggestion-dismiss-btn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  font-size: 12px;
+}
+
+export const roomPopupStyles = `
   /* ==================== SKELETON LOADING STATES ==================== */
   @keyframes shimmer {
     0% {
