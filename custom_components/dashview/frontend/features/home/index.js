@@ -11,6 +11,7 @@ import { getEntityDisplayService } from '../../services/entity-display-service.j
 import { openMoreInfo, toggleLight, getFriendlyName } from '../../utils/helpers.js';
 import { t } from '../../utils/i18n.js';
 import { createLongPressHandlers } from '../../utils/long-press-handlers.js';
+import { getEnabledEntityIds, filterEntitiesByState } from '../../utils/helpers.js';
 
 // Re-export for backwards compatibility
 export { triggerHaptic };
@@ -343,6 +344,135 @@ export function renderFloorOverviewCard(component, html, floorId) {
   `;
 }
 
+/**
+ * Gather security counts from component's enabled entity lists
+ * @param {Object} component - The DashviewPanel instance
+ * @returns {Object} Security issue counts
+ */
+function getSecurityCounts(component) {
+  const hass = component.hass;
+  if (!hass) return { windows: 0, doors: 0, locks: 0, garages: 0, smoke: 0, water: 0, total: 0, hasCritical: false };
+
+  // Count open windows
+  const windowIds = getEnabledEntityIds(component._enabledWindows || {});
+  const openWindows = filterEntitiesByState(windowIds, hass, 'on').length;
+
+  // Count open doors (only device_class: door)
+  const doorIds = getEnabledEntityIds(component._enabledDoors || {});
+  const openDoors = doorIds.filter(entityId => {
+    const state = hass.states[entityId];
+    return state && state.state === 'on' && state.attributes?.device_class === 'door';
+  }).length;
+
+  // Count unlocked locks
+  const lockIds = getEnabledEntityIds(component._enabledLocks || {});
+  const unlockedLocks = lockIds.filter(entityId => {
+    const state = hass.states[entityId];
+    return state && state.state === 'unlocked';
+  }).length;
+
+  // Count open garages
+  const garageIds = getEnabledEntityIds(component._enabledGarages || {});
+  const openGarages = filterEntitiesByState(garageIds, hass, 'open').length;
+
+  // Count smoke alerts
+  const smokeIds = getEnabledEntityIds(component._enabledSmokeSensors || {});
+  const smokeAlerts = filterEntitiesByState(smokeIds, hass, 'on').length;
+
+  // Count water leak alerts
+  const waterIds = getEnabledEntityIds(component._enabledWaterLeakSensors || {});
+  const waterAlerts = filterEntitiesByState(waterIds, hass, 'on').length;
+
+  const total = openWindows + openDoors + unlockedLocks + openGarages + smokeAlerts + waterAlerts;
+  const hasCritical = smokeAlerts > 0 || waterAlerts > 0;
+
+  return {
+    windows: openWindows,
+    doors: openDoors,
+    locks: unlockedLocks,
+    garages: openGarages,
+    smoke: smokeAlerts,
+    water: waterAlerts,
+    total,
+    hasCritical,
+  };
+}
+
+/**
+ * Render the Security Summary Card for the floor card grid
+ * @param {Object} component - The DashviewPanel instance
+ * @param {Function} html - lit-html template function
+ * @param {boolean} isBig - Whether this is a big card slot
+ * @param {string} gridArea - CSS grid area name
+ * @returns {TemplateResult} Security summary card HTML
+ */
+export function renderSecuritySummaryCard(component, html, isBig, gridArea) {
+  const counts = getSecurityCounts(component);
+
+  // Determine state
+  let stateClass, icon, titleText, detailText;
+
+  if (counts.hasCritical) {
+    // Critical: smoke or water
+    stateClass = 'critical';
+    if (counts.smoke > 0) {
+      icon = 'mdi:smoke-detector-variant-alert';
+      titleText = t('security.summary.smokeAlert').toUpperCase();
+    } else {
+      icon = 'mdi:water-alert';
+      titleText = t('security.summary.waterAlert').toUpperCase();
+    }
+    // Build detail parts for critical (also show any other issues)
+    const parts = [];
+    if (counts.smoke > 0) parts.push(t('security.summary.smokeAlert'));
+    if (counts.water > 0) parts.push(t('security.summary.waterAlert'));
+    if (counts.windows > 0) parts.push(counts.windows === 1 ? t('security.summary.window') : t('security.summary.windows', { count: counts.windows }));
+    if (counts.doors > 0) parts.push(counts.doors === 1 ? t('security.summary.door') : t('security.summary.doors', { count: counts.doors }));
+    if (counts.locks > 0) parts.push(counts.locks === 1 ? t('security.summary.lock') : t('security.summary.locks', { count: counts.locks }));
+    if (counts.garages > 0) parts.push(counts.garages === 1 ? t('security.summary.garage') : t('security.summary.garages', { count: counts.garages }));
+    detailText = parts.join(' · ');
+  } else if (counts.total > 0) {
+    // Warning: non-critical issues
+    stateClass = 'warning';
+    icon = 'mdi:shield-alert';
+    titleText = counts.total === 1 ? t('security.summary.issue') : t('security.summary.issues', { count: counts.total });
+    // Build detail parts
+    const parts = [];
+    if (counts.windows > 0) parts.push(counts.windows === 1 ? t('security.summary.window') : t('security.summary.windows', { count: counts.windows }));
+    if (counts.doors > 0) parts.push(counts.doors === 1 ? t('security.summary.door') : t('security.summary.doors', { count: counts.doors }));
+    if (counts.locks > 0) parts.push(counts.locks === 1 ? t('security.summary.lock') : t('security.summary.locks', { count: counts.locks }));
+    if (counts.garages > 0) parts.push(counts.garages === 1 ? t('security.summary.garage') : t('security.summary.garages', { count: counts.garages }));
+    detailText = parts.join(' · ');
+  } else {
+    // All secure
+    stateClass = 'secure';
+    icon = 'mdi:shield-check';
+    titleText = t('security.summary.allSecure');
+    detailText = t('security.summary.everythingLocked');
+  }
+
+  const handleClick = () => {
+    component._securityPopupOpen = true;
+    component.requestUpdate();
+  };
+
+  return html`
+    <div
+      class="security-summary-card ${isBig ? 'big' : 'small'} ${stateClass}"
+      style="grid-area: ${gridArea};"
+      @click=${handleClick}
+    >
+      <div class="security-summary-card-icon">
+        <ha-icon icon="${icon}"></ha-icon>
+      </div>
+      <div class="security-summary-card-content">
+        <div class="security-summary-card-title">${titleText}</div>
+        <div class="security-summary-card-detail">${detailText}</div>
+      </div>
+    </div>
+  `;
+}
+
 export function renderRoomCardsGrid(component, html) {
   // Get the floor config for the active floor
   const floorConfig = component._floorCardConfig[component._activeFloorTab] || {};
@@ -401,6 +531,11 @@ export function renderRoomCardsGrid(component, html) {
 
     if (!slotConfig || !slotConfig.entity_id) {
       return html`<div class="room-card ${isBig ? 'big' : 'small'} inactive" style="grid-area: ${gridArea}; visibility: hidden;"></div>`;
+    }
+
+    // Check if this is a security summary card
+    if (slotConfig.type === 'security') {
+      return renderSecuritySummaryCard(component, html, isBig, gridArea);
     }
 
     // Check if this is an appliance - use appliance status for colors/state

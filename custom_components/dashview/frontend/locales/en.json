@@ -1113,6 +1113,23 @@
       "empty": "No door sensors enabled in admin configuration.",
       "open": "Open Doors",
       "closed": "Closed Doors"
+    },
+    "summary": {
+      "allSecure": "All Secure",
+      "everythingLocked": "Everything locked & closed",
+      "issues": "{{count}} Issues",
+      "issue": "1 Issue",
+      "windows": "{{count}} Windows",
+      "window": "1 Window",
+      "doors": "{{count}} Doors",
+      "door": "1 Door",
+      "locks": "{{count}} Locks",
+      "lock": "1 Lock",
+      "garages": "{{count}} Garages",
+      "garage": "1 Garage",
+      "smokeAlert": "Smoke Alert",
+      "waterAlert": "Water Alert",
+      "cardName": "Security Summary"
     }
   },
   "onboarding": {
