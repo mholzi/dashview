@@ -235,7 +235,7 @@ export function renderSecurityPopupContent(component, html) {
       ${!alarmEntity || !alarmState ? html`
         <div class="security-empty-state">
           <ha-icon icon="mdi:shield-off"></ha-icon>
-          <p>No alarm control panel configured.</p>
+          <p>${t('ui.errors.no_alarm_configured')}</p>
         </div>
       ` : html`
         <div class="alarm-state-display">
@@ -252,21 +252,9 @@ export function renderSecurityPopupContent(component, html) {
           <div class="alarm-state-info">
             <div class="alarm-state-name">${alarmState.attributes?.friendly_name || 'Alarm'}</div>
             <div class="alarm-state-text">${
-              alarmState.state === 'disarmed' ? 'Disarmed' :
-              alarmState.state === 'armed_home' ? 'Armed Home' :
-              alarmState.state === 'armed_away' ? 'Armed Away' :
-              alarmState.state === 'armed_night' ? 'Armed Night' :
-              alarmState.state === 'triggered' ? 'ALARM TRIGGERED' :
-              alarmState.state === 'arming' ? 'Arming...' :
-              alarmState.state === 'pending' ? 'Pending...' :
-              alarmState.state
+              t(`status.alarm.${alarmState.state}`, alarmState.state)
             }</div>
           </div>
-        </div>
-        
-        <!-- Basic Controls Placeholder -->
-        <div style="text-align: center; padding: 20px; color: var(--secondary-text-color); font-size: 14px;">
-          Alarm controls will be implemented in next iteration
         </div>
       `}
     ` : ''}

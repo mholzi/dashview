@@ -29,6 +29,7 @@ export function saveSettings(panel, settingsStore, debugLog) {
     enabledMotionSensors: panel._enabledMotionSensors,
     enabledSmokeSensors: panel._enabledSmokeSensors,
     enabledCovers: panel._enabledCovers,
+    coverInvertPosition: panel._coverInvertPosition,
     enabledMediaPlayers: panel._enabledMediaPlayers,
     enabledTVs: panel._enabledTVs,
     enabledLocks: panel._enabledLocks,
@@ -64,6 +65,7 @@ export function saveSettings(panel, settingsStore, debugLog) {
     weatherPrecipitationEntity: panel._weatherPrecipitationEntity,
     hourlyForecastEntity: panel._hourlyForecastEntity,
     dwdWarningEntity: panel._dwdWarningEntity,
+    alarmEntity: panel._alarmEntity,
     weatherRadarLat: panel._weatherRadarLat,
     weatherRadarLon: panel._weatherRadarLon,
     weatherRadarZoom: panel._weatherRadarZoom,
@@ -85,6 +87,7 @@ export function saveSettings(panel, settingsStore, debugLog) {
     mediaPresets: panel._mediaPresets,
     userPhotos: panel._userPhotos,
     manualLanguage: panel._manualLanguage,
+    lastSeenVersion: panel._lastSeenVersion,
     // Category label mappings
     categoryLabels: {
       light: panel._lightLabelId,

@@ -183,7 +183,6 @@
       "open_garages": "Open Garage Doors",
       "closed_garages": "Closed Garage Doors",
       "no_devices_under": "No devices under",
-      "device": "Device",
       "whats_new": "What's New?"
     },
     "errors": {
@@ -201,7 +200,8 @@
       "no_lights_enabled": "No lights enabled in admin configuration.",
       "no_windows_enabled": "No windows enabled in admin configuration.",
       "no_garages_enabled": "No garages enabled in admin configuration.",
-      "no_motion_enabled": "No motion sensors enabled in admin configuration."
+      "no_motion_enabled": "No motion sensors enabled in admin configuration.",
+      "no_alarm_configured": "No alarm control panel configured."
     },
     "popups": {
       "lights": {
@@ -221,9 +221,6 @@
         "on_section": "TVs on",
         "off_section": "TVs off"
       }
-    },
-    "notifications": {
-      "ventilate_room": "Please ventilate room"
     }
   },
   "rooms": {
@@ -418,9 +415,11 @@
     "alarm": {
       "disarmed": "Disarmed",
       "armed_home": "Armed Home",
-      "armed_away": "Armed Away", 
+      "armed_away": "Armed Away",
       "armed_night": "Armed Night",
-      "triggered": "ALARM TRIGGERED"
+      "triggered": "ALARM TRIGGERED",
+      "arming": "Arming…",
+      "pending": "Pending…"
     },
     "general": {
       "currently_are": "Currently",

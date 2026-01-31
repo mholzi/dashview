@@ -183,7 +183,6 @@
       "open_garages": "Offene Garagentore",
       "closed_garages": "Geschlossene Garagentore",
       "no_devices_under": "Keine Geräte unter",
-      "device": "Gerät",
       "whats_new": "Was ist neu?"
     },
     "errors": {
@@ -201,7 +200,8 @@
       "no_lights_enabled": "Keine Lichter in der Admin-Konfiguration aktiviert.",
       "no_windows_enabled": "Keine Fenster in der Admin-Konfiguration aktiviert.",
       "no_garages_enabled": "Keine Garagentore in der Admin-Konfiguration aktiviert.",
-      "no_motion_enabled": "Keine Bewegungsmelder in der Admin-Konfiguration aktiviert."
+      "no_motion_enabled": "Keine Bewegungsmelder in der Admin-Konfiguration aktiviert.",
+      "no_alarm_configured": "Keine Alarmanlage konfiguriert."
     },
     "popups": {
       "lights": {
@@ -221,9 +221,6 @@
         "on_section": "Fernseher an",
         "off_section": "Fernseher aus"
       }
-    },
-    "notifications": {
-      "ventilate_room": "Bitte Raum lüften"
     }
   },
   "rooms": {
@@ -420,7 +417,9 @@
       "armed_home": "Scharf (Zuhause)",
       "armed_away": "Scharf (Abwesend)",
       "armed_night": "Scharf (Nacht)",
-      "triggered": "ALARM AUSGELÖST"
+      "triggered": "ALARM AUSGELÖST",
+      "arming": "Wird scharf geschaltet…",
+      "pending": "Ausstehend…"
     },
     "general": {
       "currently_are": "Aktuell sind",
