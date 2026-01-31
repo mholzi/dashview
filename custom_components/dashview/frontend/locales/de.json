@@ -415,6 +415,13 @@
       "is_critical": "ist kritisch.",
       "are_critical": "sind kritisch."
     },
+    "alarm": {
+      "disarmed": "Entschärft",
+      "armed_home": "Scharf (Zuhause)",
+      "armed_away": "Scharf (Abwesend)",
+      "armed_night": "Scharf (Nacht)",
+      "triggered": "ALARM AUSGELÖST"
+    },
     "general": {
       "currently_are": "Aktuell sind",
       "open_suffix": "offen.",
