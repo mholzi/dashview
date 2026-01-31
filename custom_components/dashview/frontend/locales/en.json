@@ -263,6 +263,14 @@
       "severe_warning": "Severe weather warning",
       "extreme_warning": "Extreme weather"
     },
+    "uv_index": "UV Index",
+    "uv_peak": "Peak UV",
+    "uv_protection": "Protection recommended",
+    "uv_low": "Low",
+    "uv_moderate": "Moderate",
+    "uv_high": "High",
+    "uv_very_high": "Very High",
+    "uv_extreme": "Extreme",
     "pollen": "Pollen Forecast",
     "pollen_types": {
       "erle": "Alder",

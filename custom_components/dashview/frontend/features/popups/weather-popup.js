@@ -8,6 +8,57 @@ import { t, getCurrentLang } from '../../utils/i18n.js';
 import { getWeatherIconUrl } from '../../assets/weather-icons.js';
 import { detectPollenSensors, getPollenLevel, getPollenTrend, POLLEN_TYPES } from '../../services/pollen-service.js';
 
+// ==================== UV Index Helpers ====================
+
+/**
+ * Get UV level info based on UV index value
+ * Uses WHO standard UV index scale
+ * @param {number} index - UV index value
+ * @returns {{ level: string, color: string, translationKey: string }} Level info with color and i18n key
+ */
+function getUVLevel(index) {
+  if (index <= 2) return { level: 'Low', color: '#4caf50', translationKey: 'weather.uv_low' };
+  if (index <= 5) return { level: 'Moderate', color: '#ff9800', translationKey: 'weather.uv_moderate' };
+  if (index <= 7) return { level: 'High', color: '#f44336', translationKey: 'weather.uv_high' };
+  if (index <= 10) return { level: 'Very High', color: '#9c27b0', translationKey: 'weather.uv_very_high' };
+  return { level: 'Extreme', color: '#e91e63', translationKey: 'weather.uv_extreme' };
+}
+
+/**
+ * Get UV index from weather entity attributes
+ * @param {Object} component - DashviewPanel instance
+ * @returns {number|null} UV index value or null if not available
+ */
+function getUVIndexFromEntity(component) {
+  if (!component.hass || !component._weatherEntity) return null;
+  const entity = component.hass.states[component._weatherEntity];
+  if (!entity || entity.attributes.uv_index === undefined || entity.attributes.uv_index === null) return null;
+  return parseFloat(entity.attributes.uv_index);
+}
+
+/**
+ * Render a UV footer row (reused by current weather and forecast cards)
+ * @param {Function} html - Lit html template function
+ * @param {number} uvIndex - UV index value
+ * @param {string} label - Label text (e.g. "UV Index" or "Peak UV")
+ * @returns {TemplateResult} UV row template
+ */
+function renderUVRow(html, uvIndex, label) {
+  const uvInfo = getUVLevel(uvIndex);
+  const levelText = t(uvInfo.translationKey) || uvInfo.level;
+  const needsProtection = uvIndex > 2;
+
+  return html`
+    <div class="forecast-uv-row">
+      <span class="forecast-uv-icon">☀️</span>
+      <span class="forecast-uv-text">${label}</span>
+      <span class="forecast-uv-value" style="color: ${uvInfo.color};">${uvIndex.toFixed(1)}</span>
+      <span class="forecast-uv-level" style="background: ${uvInfo.color}20; color: ${uvInfo.color};">${levelText}</span>
+      ${needsProtection ? html`<span class="forecast-uv-protection">${t('weather.uv_protection')}</span>` : ''}
+    </div>
+  `;
+}
+
 /**
  * Render the complete weather popup
  * @param {Object} component - DashviewPanel instance
@@ -52,14 +103,19 @@ function renderCurrentWeather(component, html) {
   const conditionText = component._translateWeatherCondition(condition);
   const precipText = precipitation > 0 ? ` – ${t('weather.precipitation')} ${precipitation.toFixed(1)} mm` : '';
 
+  // Get UV index from weather entity attributes
+  const uvIndex = getUVIndexFromEntity(component);
+  const hasUV = uvIndex !== null && !isNaN(uvIndex);
+
   return html`
-    <div class="weather-current-card">
+    <div class="weather-current-card ${hasUV ? 'has-uv' : ''}">
       <div class="weather-current-title">${t('weather.current')}</div>
       <div class="weather-current-temp">${currentWeather.temperature !== null ? currentWeather.temperature.toFixed(1) : '--'}°C</div>
       <div class="weather-current-condition">${conditionText}${precipText}</div>
       <div class="weather-current-icon">
         <img src="${getWeatherIconUrl(condition)}" alt="${condition}" onerror="this.style.display='none'">
       </div>
+      ${hasUV ? html`<div class="weather-current-uv">${renderUVRow(html, uvIndex, t('weather.uv_index'))}</div>` : ''}
     </div>
   `;
 }
@@ -89,6 +145,9 @@ function renderHourlyForecast(component, html) {
           const wind = forecast.wind_speed !== undefined ? `${Math.round(forecast.wind_speed)} km/h` : '';
           const rain = forecast.precipitation !== undefined && forecast.precipitation > 0 ? `${forecast.precipitation.toFixed(1)} mm` : '';
 
+          const hasHourlyUV = forecast.uv_index !== undefined && forecast.uv_index !== null;
+          const hourlyUVInfo = hasHourlyUV ? getUVLevel(forecast.uv_index) : null;
+
           return html`
             <div class="weather-hourly-item">
               <div class="weather-hourly-time">${time}</div>
@@ -98,6 +157,7 @@ function renderHourlyForecast(component, html) {
               <div class="weather-hourly-temp">${temp}</div>
               ${wind ? html`<div class="weather-hourly-wind">${wind}</div>` : ''}
               ${rain ? html`<div class="weather-hourly-rain">${rain}</div>` : ''}
+              ${hasHourlyUV ? html`<div class="weather-hourly-uv" style="background: ${hourlyUVInfo.color}20; color: ${hourlyUVInfo.color};">UV ${Math.round(forecast.uv_index)}</div>` : ''}
             </div>
           `;
         })}
@@ -160,14 +220,19 @@ function renderForecastCard(component, html) {
     conditionSubtitle += ` – ${Math.round(forecast.precipitation_probability)}% ${t('weather.rain')}`;
   }
 
+  // Check for UV index in forecast data
+  const forecastUV = forecast.uv_index !== undefined && forecast.uv_index !== null ? parseFloat(forecast.uv_index) : null;
+  const hasForecastUV = forecastUV !== null && !isNaN(forecastUV);
+
   return html`
-    <div class="weather-forecast-card">
+    <div class="weather-forecast-card ${hasForecastUV ? 'has-uv' : ''}">
       <div class="weather-forecast-title">${titles[component._selectedForecastTab]}</div>
       <div class="weather-forecast-temp">${tempDisplay}C</div>
       <div class="weather-forecast-condition">${conditionSubtitle}</div>
       <div class="weather-forecast-icon">
         <img src="${getWeatherIconUrl(condition)}" alt="${condition}" onerror="this.style.display='none'">
       </div>
+      ${hasForecastUV ? html`<div class="weather-forecast-uv">${renderUVRow(html, forecastUV, t('weather.uv_peak'))}</div>` : ''}
     </div>
   `;
 }
