@@ -131,9 +131,9 @@ function evaluateLightsLeftOn(hass, context) {
   return {
     id: 'lights-left-on',
     icon: '💡',
-    title: t('suggestions.lightsLeftOn.title'),
-    description: t('suggestions.lightsLeftOn.desc', { count: lightsOn.length }),
-    actionText: t('suggestions.lightsLeftOn.action'),
+    title: t('smartSuggestions.lightsLeftOn.title'),
+    description: t('smartSuggestions.lightsLeftOn.desc', { count: lightsOn.length }),
+    actionText: t('smartSuggestions.lightsLeftOn.action'),
     actionType: 'service',
     actionData: {
       domain: 'light',
@@ -187,9 +187,9 @@ function evaluateACWindowsConflict(hass, context) {
   return {
     id: 'ac-windows-conflict',
     icon: '⚠️',
-    title: t('suggestions.acConflict.title'),
-    description: t('suggestions.acConflict.desc'),
-    actionText: t('suggestions.acConflict.action'),
+    title: t('smartSuggestions.acConflict.title'),
+    description: t('smartSuggestions.acConflict.desc'),
+    actionText: t('smartSuggestions.acConflict.action'),
     actionType: 'popup',
     actionData: {
       popup: 'security',
@@ -239,9 +239,9 @@ function evaluateSunsetLights(hass, context) {
   return {
     id: 'sunset-lights',
     icon: '🌅',
-    title: t('suggestions.sunset.title'),
-    description: t('suggestions.sunset.desc'),
-    actionText: t('suggestions.sunset.action'),
+    title: t('smartSuggestions.sunset.title'),
+    description: t('smartSuggestions.sunset.desc'),
+    actionText: t('smartSuggestions.sunset.action'),
     actionType: 'popup',
     actionData: {
       popup: 'lights',

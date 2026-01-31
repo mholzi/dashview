@@ -171,7 +171,7 @@ export function renderSuggestionsBanner(component, html) {
               <button
                 class="suggestion-dismiss-btn"
                 @click=${(e) => { e.stopPropagation(); component._handleSuggestionDismiss(suggestion); }}
-                title="${t('suggestions.dismiss')}"
+                title="${t('smartSuggestions.dismiss')}"
               >✕</button>
             ` : ''}
           </div>
