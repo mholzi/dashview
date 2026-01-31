@@ -117,6 +117,48 @@ export function renderStatusTab(panel, html) {
           ${t('admin.status.quickStatusItemsDesc')}
         </p>
 
+        <!-- Alarm Status -->
+        <div class="info-text-config-item">
+          <div class="info-text-config-row">
+            <div class="info-text-config-icon">
+              <ha-icon icon="mdi:shield"></ha-icon>
+            </div>
+            <div class="info-text-config-label">
+              <span class="info-text-config-title">Alarm Control Panel</span>
+              <span class="info-text-config-subtitle">Shows current alarm state</span>
+            </div>
+            <div
+              class="toggle-switch ${panel._infoTextConfig.alarm?.enabled ? 'on' : ''}"
+              @click=${() => {
+                panel._infoTextConfig = {
+                  ...panel._infoTextConfig,
+                  alarm: { 
+                    ...panel._infoTextConfig.alarm,
+                    enabled: !panel._infoTextConfig.alarm?.enabled 
+                  }
+                };
+                panel._saveSettings();
+                panel.requestUpdate();
+              }}
+            ></div>
+          </div>
+          ${panel._infoTextConfig.alarm?.enabled ? html`
+            <div class="info-text-config-entity-picker" style="padding-top: 8px;">
+              <input
+                type="text"
+                placeholder="Enter alarm entity ID (e.g., alarm_control_panel.home_alarm)"
+                .value=${panel._alarmEntity || ''}
+                @input=${(e) => {
+                  panel._alarmEntity = e.target.value;
+                  panel._saveSettings();
+                  panel.requestUpdate();
+                }}
+                style="width: 100%; padding: 8px; border: 1px solid var(--divider-color); border-radius: 4px; font-size: 14px;"
+              />
+            </div>
+          ` : ''}
+        </div>
+
         <!-- Motion Status -->
         ${renderInfoTextToggle(panel, html, 'motion', t('admin.infoTextToggles.motion'), 'mdi:motion-sensor',
           t('admin.infoTextToggles.motionDesc'))}

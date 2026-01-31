@@ -1740,6 +1740,10 @@ if (typeof structuredClone === 'undefined') {
             this._hourlyForecastEntity = settings.hourlyForecastEntity;
             this._dwdWarningEntity = settings.dwdWarningEntity;
             this._alarmEntity = settings.alarmEntity || '';
+            // Set default security tab to alarm if alarm is configured
+            if (this._alarmEntity && this._activeSecurityTab === 'windows') {
+              this._activeSecurityTab = 'alarm';
+            }
             // Weather radar settings
             this._weatherRadarLat = settings.weatherRadarLat ?? 50.0;
             this._weatherRadarLon = settings.weatherRadarLon ?? 8.7;
