@@ -1318,9 +1318,16 @@ export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStat
  * @returns {Object|null} Status object or null
  */
 export function getAlarmStatus(hass, infoTextConfig, alarmEntity) {
-  if (!hass || !infoTextConfig.alarm?.enabled || !alarmEntity) return null;
+  if (!hass || !infoTextConfig.alarm?.enabled) return null;
 
-  const state = hass.states[alarmEntity];
+  // Auto-detect alarm entity if not explicitly configured
+  let resolvedEntity = alarmEntity;
+  if (!resolvedEntity) {
+    resolvedEntity = Object.keys(hass.states).find(id => id.startsWith('alarm_control_panel.'));
+  }
+  if (!resolvedEntity) return null;
+
+  const state = hass.states[resolvedEntity];
   if (!state) return null;
 
   const alarmState = state.state;
@@ -1375,7 +1382,7 @@ export function getAlarmStatus(hass, infoTextConfig, alarmEntity) {
     isCritical: stateInfo.isCritical || false,
     priority: stateInfo.priority || 50,
     clickAction: 'security',
-    alertId: alarmState === 'triggered' ? `alarm:${alarmEntity}` : null,
+    alertId: alarmState === 'triggered' ? `alarm:${resolvedEntity}` : null,
     entityLastChanged: state.last_changed || null,
   };
 }

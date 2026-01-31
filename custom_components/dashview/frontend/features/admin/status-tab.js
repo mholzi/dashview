@@ -144,17 +144,29 @@ export function renderStatusTab(panel, html) {
           </div>
           ${panel._infoTextConfig.alarm?.enabled ? html`
             <div class="info-text-config-entity-picker" style="padding-top: 8px;">
-              <input
-                type="text"
-                placeholder="Enter alarm entity ID (e.g., alarm_control_panel.home_alarm)"
-                .value=${panel._alarmEntity || ''}
-                @input=${(e) => {
-                  panel._alarmEntity = e.target.value;
-                  panel._saveSettings();
-                  panel.requestUpdate();
-                }}
-                style="width: 100%; padding: 8px; border: 1px solid var(--divider-color); border-radius: 4px; font-size: 14px;"
-              />
+              ${(() => {
+                const autoDetected = !panel._alarmEntity && panel.hass
+                  ? Object.keys(panel.hass.states).find(id => id.startsWith('alarm_control_panel.'))
+                  : null;
+                return html`
+                  <input
+                    type="text"
+                    placeholder="${autoDetected ? autoDetected + ' (auto)' : 'alarm_control_panel.home_alarm'}"
+                    .value=${panel._alarmEntity || ''}
+                    @input=${(e) => {
+                      panel._alarmEntity = e.target.value;
+                      panel._saveSettings();
+                      panel.requestUpdate();
+                    }}
+                    style="width: 100%; padding: 8px; border: 1px solid var(--divider-color); border-radius: 4px; font-size: 14px;"
+                  />
+                  ${autoDetected && !panel._alarmEntity ? html`
+                    <div style="font-size: 11px; color: var(--secondary-text-color); margin-top: 4px;">
+                      ✓ ${t('admin.autoDetected', 'Auto-detected')}: ${autoDetected}
+                    </div>
+                  ` : ''}
+                `;
+              })()}
             </div>
           ` : ''}
         </div>

@@ -954,7 +954,8 @@
       "noGaragesEnabled": "No garage doors enabled in admin configuration.",
       "noMotionEnabled": "No motion sensors enabled in admin configuration."
     },
-    "title": "Admin"
+    "title": "Admin",
+    "autoDetected": "Auto-detected"
   },
   "changelog": {
     "titles": {

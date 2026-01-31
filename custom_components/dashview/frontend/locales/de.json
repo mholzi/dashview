@@ -954,7 +954,8 @@
       "noGaragesEnabled": "Keine Garagentore in der Admin-Konfiguration aktiviert.",
       "noMotionEnabled": "Keine Bewegungsmelder in der Admin-Konfiguration aktiviert."
     },
-    "title": "Admin"
+    "title": "Admin",
+    "autoDetected": "Automatisch erkannt"
   },
   "changelog": {
     "titles": {

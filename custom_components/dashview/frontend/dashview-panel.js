@@ -590,6 +590,7 @@ if (typeof structuredClone === 'undefined') {
         dryer: { enabled: false, entity: '', finishTimeEntity: '' },
         vacuum: { enabled: false, entity: '', roomMapping: {} },
         batteryLow: { enabled: false, threshold: 20 },
+        alarm: { enabled: true },
       };
       // Search state for info text entity pickers
       this._infoTextSearchQuery = {};
@@ -1740,10 +1741,6 @@ if (typeof structuredClone === 'undefined') {
             this._hourlyForecastEntity = settings.hourlyForecastEntity;
             this._dwdWarningEntity = settings.dwdWarningEntity;
             this._alarmEntity = settings.alarmEntity || '';
-            // Set default security tab to alarm if alarm is configured
-            if (this._alarmEntity && this._activeSecurityTab === 'windows') {
-              this._activeSecurityTab = 'alarm';
-            }
             // Weather radar settings
             this._weatherRadarLat = settings.weatherRadarLat ?? 50.0;
             this._weatherRadarLon = settings.weatherRadarLon ?? 8.7;
@@ -1788,6 +1785,15 @@ if (typeof structuredClone === 'undefined') {
             }
             this._settingsLoaded = true;
             this._settingsError = null;
+            // Auto-detect alarm entity and set security tab default
+            if (!this._alarmEntity && this.hass) {
+              const autoAlarm = Object.keys(this.hass.states).find(id => id.startsWith('alarm_control_panel.'));
+              if (autoAlarm && this._activeSecurityTab === 'windows') {
+                this._activeSecurityTab = 'alarm';
+              }
+            } else if (this._alarmEntity && this._activeSecurityTab === 'windows') {
+              this._activeSecurityTab = 'alarm';
+            }
             // Check if setup wizard should be shown (first run)
             if (dashviewAdmin?.shouldShowWizard && dashviewAdmin.shouldShowWizard()) {
               this._showWizard = true;

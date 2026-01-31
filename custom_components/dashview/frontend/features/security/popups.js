@@ -191,8 +191,11 @@ export function renderSecurityPopupContent(component, html) {
     `;
   };
 
-  // Get alarm information if configured
-  const alarmEntity = component._alarmEntity;
+  // Get alarm information — auto-detect if not explicitly configured
+  let alarmEntity = component._alarmEntity;
+  if (!alarmEntity) {
+    alarmEntity = Object.keys(component.hass.states).find(id => id.startsWith('alarm_control_panel.')) || '';
+  }
   const alarmState = alarmEntity ? component.hass.states[alarmEntity] : null;
 
   return html`
