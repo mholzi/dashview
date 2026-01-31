@@ -231,7 +231,7 @@ export function getRoomClimateNotification({
   }
 
   return {
-    title: t('ui.notifications.ventilate_room', 'Bitte Raum lüften'),
+    title: t('ui.notifications.ventilate_room'),
     subtitle: messages.join(' · ')
   };
 }

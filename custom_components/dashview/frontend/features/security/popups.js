@@ -221,12 +221,12 @@ export function renderSecurityPopupContent(component, html) {
     ${component._activeSecurityTab === 'windows' ? html`
       ${enabledWindows.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('ui.errors.no_windows_enabled', 'Keine Fenster in der Admin-Konfiguration aktiviert.')}
+          ${t('ui.errors.no_windows_enabled')}
         </div>
       ` : html`
         <!-- Open Windows -->
         ${enabledWindows.filter(w => w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('ui.sections.open_windows', 'Offene Fenster')}</h3>
+          <h3 class="security-subsection-title">${t('ui.sections.open_windows')}</h3>
           <div class="security-entity-list">
             ${sortByLastChangedTime(enabledWindows.filter(w => w.isOpen)).map(w => renderEntityCard(w, 'window'))}
           </div>
@@ -234,7 +234,7 @@ export function renderSecurityPopupContent(component, html) {
 
         <!-- Closed Windows -->
         ${enabledWindows.filter(w => !w.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('ui.sections.closed_windows', 'Geschlossene Fenster')}</h3>
+          <h3 class="security-subsection-title">${t('ui.sections.closed_windows')}</h3>
           <div class="security-entity-list">
             ${sortByLastChangedTime(enabledWindows.filter(w => !w.isOpen)).map(w => renderEntityCard(w, 'window'))}
           </div>
@@ -246,12 +246,12 @@ export function renderSecurityPopupContent(component, html) {
     ${component._activeSecurityTab === 'garage' ? html`
       ${enabledGarages.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('ui.errors.no_garages_enabled', 'Keine Garagentore in der Admin-Konfiguration aktiviert.')}
+          ${t('ui.errors.no_garages_enabled')}
         </div>
       ` : html`
         <!-- Open Garages -->
         ${enabledGarages.filter(g => g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('ui.sections.open_garages', 'Offene Garagentore')}</h3>
+          <h3 class="security-subsection-title">${t('ui.sections.open_garages')}</h3>
           <div class="security-garage-list">
             ${sortByLastChangedTime(enabledGarages.filter(g => g.isOpen)).map(g => renderGarageCard(g))}
           </div>
@@ -259,7 +259,7 @@ export function renderSecurityPopupContent(component, html) {
 
         <!-- Closed Garages -->
         ${enabledGarages.filter(g => !g.isOpen).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('ui.sections.closed_garages', 'Geschlossene Garagentore')}</h3>
+          <h3 class="security-subsection-title">${t('ui.sections.closed_garages')}</h3>
           <div class="security-garage-list">
             ${sortByLastChangedTime(enabledGarages.filter(g => !g.isOpen)).map(g => renderGarageCard(g))}
           </div>
@@ -271,12 +271,12 @@ export function renderSecurityPopupContent(component, html) {
     ${component._activeSecurityTab === 'motion' ? html`
       ${enabledMotion.length === 0 ? html`
         <div class="security-empty-state">
-          ${t('ui.errors.no_motion_enabled', 'Keine Bewegungsmelder in der Admin-Konfiguration aktiviert.')}
+          ${t('ui.errors.no_motion_enabled')}
         </div>
       ` : html`
         <!-- Active Motion -->
         ${enabledMotion.filter(m => m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('sensor.motion.detected', 'Bewegung erkannt')}</h3>
+          <h3 class="security-subsection-title">${t('sensor.motion.detected')}</h3>
           <div class="security-entity-list">
             ${sortByLastChangedTime(enabledMotion.filter(m => m.isActive)).map(m => renderEntityCard(m, 'motion'))}
           </div>
@@ -284,7 +284,7 @@ export function renderSecurityPopupContent(component, html) {
 
         <!-- Inactive Motion -->
         ${enabledMotion.filter(m => !m.isActive).length > 0 ? html`
-          <h3 class="security-subsection-title">${t('sensor.motion.no_motion', 'Keine Bewegung')}</h3>
+          <h3 class="security-subsection-title">${t('sensor.motion.no_motion')}</h3>
           <div class="security-entity-list">
             ${sortByLastChangedTime(enabledMotion.filter(m => !m.isActive)).map(m => renderEntityCard(m, 'motion'))}
           </div>
@@ -565,15 +565,15 @@ export function renderBatteryPopupContent(component, html) {
     return html`
       <div class="battery-empty-state">
         <ha-icon icon="mdi:battery-check" style="--mdc-icon-size: 48px; color: var(--success-color, #4caf50);"></ha-icon>
-        <div class="battery-empty-text">${t('ui.sections.batteries_ok', 'Alle Batterien in Ordnung')}</div>
-        <div class="battery-empty-subtext">${t('ui.sections.no_devices_under', 'Keine Geräte unter')} ${threshold}%</div>
+        <div class="battery-empty-text">${t('ui.sections.batteries_ok')}</div>
+        <div class="battery-empty-subtext">${t('ui.sections.no_devices_under')} ${threshold}%</div>
       </div>
     `;
   }
 
   return html`
     <div class="battery-header-info">
-      <span>${lowBatteryDevices.length} ${lowBatteryDevices.length === 1 ? t('ui.sections.device', 'Gerät') : t('ui.sections.devices', 'Geräte')} ${t('common.options.under', 'unter')} ${threshold}%</span>
+      <span>${lowBatteryDevices.length} ${lowBatteryDevices.length === 1 ? t('ui.sections.device') : t('ui.sections.devices')} ${t('common.options.under')} ${threshold}%</span>
     </div>
     <div class="battery-device-list">
       ${lowBatteryDevices.map(device => {

@@ -2890,14 +2890,14 @@ if (typeof structuredClone === 'undefined') {
       const messages = [];
       if (highTemps.length > 0) {
         const avg = (highTemps.reduce((sum, s) => sum + s.value, 0) / highTemps.length).toFixed(1);
-        messages.push(`Temperatur: ${avg}°C`);
+        messages.push(`${t('sensor.temperature')}: ${avg}°C`);
       }
       if (highHumidity.length > 0) {
         const avg = (highHumidity.reduce((sum, s) => sum + s.value, 0) / highHumidity.length).toFixed(1);
         messages.push(`Luftfeuchtigkeit: ${avg}%`);
       }
 
-      return { title: t('ui.notifications.ventilate_room', 'Bitte Raum lüften'), subtitle: messages.join(' · ') };
+      return { title: t('ui.notifications.ventilate_room'), subtitle: messages.join(' · ') };
     }
 
     /**
@@ -4499,7 +4499,7 @@ if (typeof structuredClone === 'undefined') {
                 cursor: pointer;
                 font-size: 12px;
               "
-            >Erneut versuchen</button>
+            >${t('common.actions.retry')}</button>
           </div>
         ` : ''}
 
