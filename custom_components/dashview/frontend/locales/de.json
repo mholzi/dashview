@@ -419,7 +419,8 @@
       "armed_night": "Scharf (Nacht)",
       "triggered": "ALARM AUSGELÖST",
       "arming": "Wird scharf geschaltet…",
-      "pending": "Ausstehend…"
+      "pending": "Ausstehend…",
+      "openSensors": "Offene Sensoren"
     },
     "general": {
       "currently_are": "Aktuell sind",

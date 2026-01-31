@@ -240,26 +240,182 @@ export function renderSecurityPopupContent(component, html) {
           <ha-icon icon="mdi:shield-off"></ha-icon>
           <p>${t('ui.errors.no_alarm_configured')}</p>
         </div>
-      ` : html`
-        <div class="alarm-state-display">
-          <div class="alarm-state-icon">
-            <ha-icon icon="${
-              alarmState.state === 'disarmed' ? 'mdi:shield-off' :
-              alarmState.state === 'armed_home' ? 'mdi:shield-home' :
-              alarmState.state === 'armed_away' ? 'mdi:shield-lock' :
-              alarmState.state === 'armed_night' ? 'mdi:shield-moon' :
-              alarmState.state === 'triggered' ? 'mdi:shield-alert' :
-              'mdi:shield'
-            }"></ha-icon>
+      ` : (() => {
+        const state = alarmState.state;
+        const attrs = alarmState.attributes || {};
+        const codeRequired = attrs.code_arm_required || attrs.code_format;
+        const supportedFeatures = attrs.supported_features || 0;
+        // Standard alarm_control_panel feature flags
+        const SUPPORT_ARM_HOME = 1;
+        const SUPPORT_ARM_AWAY = 2;
+        const SUPPORT_ARM_NIGHT = 4;
+        const SUPPORT_TRIGGER = 8;
+        // If supported_features is 0, assume all basic modes
+        const supportsHome = supportedFeatures === 0 || (supportedFeatures & SUPPORT_ARM_HOME);
+        const supportsAway = supportedFeatures === 0 || (supportedFeatures & SUPPORT_ARM_AWAY);
+        const supportsNight = supportedFeatures === 0 || (supportedFeatures & SUPPORT_ARM_NIGHT);
+        const isArmed = state.startsWith('armed_');
+        const isDisarmed = state === 'disarmed';
+        const isTriggered = state === 'triggered';
+        const isPending = state === 'arming' || state === 'pending';
+        // Open sensors (Alarmo-specific attribute)
+        const openSensors = attrs.open_sensors || null;
+
+        // State → color class mapping
+        const stateColorClass = isDisarmed ? 'alarm-disarmed' :
+          state === 'armed_home' ? 'alarm-armed-home' :
+          (state === 'armed_away' || state === 'armed_night') ? 'alarm-armed-away' :
+          isTriggered ? 'alarm-triggered' :
+          isPending ? 'alarm-pending' : '';
+
+        // State → icon
+        const stateIcon = state === 'disarmed' ? 'mdi:shield-off' :
+          state === 'armed_home' ? 'mdi:shield-home' :
+          state === 'armed_away' ? 'mdi:shield-lock' :
+          state === 'armed_night' ? 'mdi:shield-moon' :
+          state === 'triggered' ? 'mdi:shield-alert' :
+          'mdi:shield';
+
+        // Arm/disarm handlers
+        const callAlarmService = (service, code) => {
+          const data = { entity_id: alarmEntity };
+          if (code) data.code = code;
+          component.hass.callService('alarm_control_panel', service, data);
+        };
+
+        const handleArmAction = (service) => {
+          if (codeRequired && !isDisarmed) {
+            // Need PIN to disarm — show PIN pad
+            component._alarmPendingAction = service;
+            component._alarmPinCode = '';
+            component.requestUpdate();
+          } else if (codeRequired && service === 'alarm_disarm') {
+            component._alarmPendingAction = service;
+            component._alarmPinCode = '';
+            component.requestUpdate();
+          } else {
+            callAlarmService(service);
+          }
+        };
+
+        const handlePinSubmit = () => {
+          if (component._alarmPinCode && component._alarmPendingAction) {
+            callAlarmService(component._alarmPendingAction, component._alarmPinCode);
+            component._alarmPendingAction = null;
+            component._alarmPinCode = '';
+            component.requestUpdate();
+          }
+        };
+
+        const handlePinDigit = (digit) => {
+          if ((component._alarmPinCode || '').length < 8) {
+            component._alarmPinCode = (component._alarmPinCode || '') + digit;
+            component.requestUpdate();
+          }
+        };
+
+        const handlePinBackspace = () => {
+          component._alarmPinCode = (component._alarmPinCode || '').slice(0, -1);
+          component.requestUpdate();
+        };
+
+        const handlePinCancel = () => {
+          component._alarmPendingAction = null;
+          component._alarmPinCode = '';
+          component.requestUpdate();
+        };
+
+        const showingPinPad = !!component._alarmPendingAction;
+
+        return html`
+          <!-- Alarm State Banner -->
+          <div class="alarm-state-display ${stateColorClass}">
+            <div class="alarm-state-icon">
+              <ha-icon icon="${stateIcon}"></ha-icon>
+            </div>
+            <div class="alarm-state-info">
+              <div class="alarm-state-name">${attrs.friendly_name || 'Alarm'}</div>
+              <div class="alarm-state-text">${t(`status.alarm.${state}`, state)}</div>
+            </div>
           </div>
-          <div class="alarm-state-info">
-            <div class="alarm-state-name">${alarmState.attributes?.friendly_name || 'Alarm'}</div>
-            <div class="alarm-state-text">${
-              t(`status.alarm.${alarmState.state}`, alarmState.state)
-            }</div>
-          </div>
-        </div>
-      `}
+
+          ${showingPinPad ? html`
+            <!-- PIN Code Entry -->
+            <div class="alarm-pin-section">
+              <div class="alarm-pin-display">
+                ${(component._alarmPinCode || '').split('').map(() => html`<span class="alarm-pin-dot filled"></span>`)}
+                ${Array(Math.max(0, 4 - (component._alarmPinCode || '').length)).fill(0).map(() => html`<span class="alarm-pin-dot"></span>`)}
+              </div>
+              <div class="alarm-pin-pad">
+                ${[1,2,3,4,5,6,7,8,9].map(d => html`
+                  <button class="alarm-pin-key" @click=${() => handlePinDigit(String(d))}>${d}</button>
+                `)}
+                <button class="alarm-pin-key alarm-pin-cancel" @click=${handlePinCancel}>
+                  <ha-icon icon="mdi:close"></ha-icon>
+                </button>
+                <button class="alarm-pin-key" @click=${() => handlePinDigit('0')}>0</button>
+                <button class="alarm-pin-key alarm-pin-backspace" @click=${handlePinBackspace}>
+                  <ha-icon icon="mdi:backspace-outline"></ha-icon>
+                </button>
+              </div>
+              <button
+                class="alarm-pin-submit ${(component._alarmPinCode || '').length >= 4 ? '' : 'disabled'}"
+                @click=${handlePinSubmit}
+                ?disabled=${(component._alarmPinCode || '').length < 4}
+              >${t('common.actions.confirm', 'Confirm')}</button>
+            </div>
+          ` : html`
+            <!-- Arm/Disarm Controls -->
+            <div class="alarm-controls">
+              ${isDisarmed || isPending ? html`
+                <!-- Arm buttons -->
+                ${supportsHome ? html`
+                  <button class="alarm-mode-btn alarm-mode-home" @click=${() => handleArmAction('alarm_arm_home')}>
+                    <ha-icon icon="mdi:shield-home"></ha-icon>
+                    <span>${t('status.alarm.armed_home', 'Home')}</span>
+                  </button>
+                ` : ''}
+                ${supportsAway ? html`
+                  <button class="alarm-mode-btn alarm-mode-away" @click=${() => handleArmAction('alarm_arm_away')}>
+                    <ha-icon icon="mdi:shield-lock"></ha-icon>
+                    <span>${t('status.alarm.armed_away', 'Away')}</span>
+                  </button>
+                ` : ''}
+                ${supportsNight ? html`
+                  <button class="alarm-mode-btn alarm-mode-night" @click=${() => handleArmAction('alarm_arm_night')}>
+                    <ha-icon icon="mdi:shield-moon"></ha-icon>
+                    <span>${t('status.alarm.armed_night', 'Night')}</span>
+                  </button>
+                ` : ''}
+              ` : html`
+                <!-- Disarm button -->
+                <button class="alarm-mode-btn alarm-mode-disarm" @click=${() => handleArmAction('alarm_disarm')}>
+                  <ha-icon icon="mdi:shield-off"></ha-icon>
+                  <span>${t('status.alarm.disarmed', 'Disarm')}</span>
+                </button>
+              `}
+            </div>
+
+            ${openSensors && Object.keys(openSensors).length > 0 ? html`
+              <!-- Open Sensors (blocking arming) -->
+              <div class="alarm-open-sensors">
+                <h4 class="alarm-open-sensors-title">
+                  <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
+                  ${t('status.alarm.openSensors', 'Open Sensors')}
+                </h4>
+                <div class="alarm-open-sensors-list">
+                  ${Object.entries(openSensors).map(([entityId, name]) => html`
+                    <div class="alarm-open-sensor-item">
+                      <ha-icon icon="mdi:alert"></ha-icon>
+                      <span>${name || entityId}</span>
+                    </div>
+                  `)}
+                </div>
+              </div>
+            ` : ''}
+          `}
+        `;
+      })()}
     ` : ''}
 
     <!-- Windows Content -->

@@ -419,7 +419,8 @@
       "armed_night": "Armed Night",
       "triggered": "ALARM TRIGGERED",
       "arming": "Arming…",
-      "pending": "Pending…"
+      "pending": "Pending…",
+      "openSensors": "Open Sensors"
     },
     "general": {
       "currently_are": "Currently",

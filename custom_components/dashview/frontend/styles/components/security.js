@@ -799,6 +799,8 @@ export const securityStyles = `
   }
 
   /* ==================== ALARM CONTROL PANEL ==================== */
+
+  /* State banner */
   .alarm-state-display {
     display: flex;
     align-items: center;
@@ -807,6 +809,34 @@ export const securityStyles = `
     margin-bottom: 20px;
     border-radius: 12px;
     background: var(--dv-gray100);
+    transition: background 0.3s ease;
+  }
+
+  /* Color-coded state backgrounds */
+  .alarm-state-display.alarm-disarmed {
+    background: var(--dv-green);
+  }
+
+  .alarm-state-display.alarm-armed-home {
+    background: var(--dv-orange);
+  }
+
+  .alarm-state-display.alarm-armed-away {
+    background: var(--dv-red);
+  }
+
+  .alarm-state-display.alarm-triggered {
+    background: var(--dv-red);
+    animation: alarm-flash 0.8s ease-in-out infinite;
+  }
+
+  .alarm-state-display.alarm-pending {
+    background: var(--dv-yellow);
+  }
+
+  @keyframes alarm-flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
   }
 
   .alarm-state-icon {
@@ -816,12 +846,20 @@ export const securityStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--dv-white);
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .alarm-state-display.alarm-disarmed .alarm-state-icon,
+  .alarm-state-display.alarm-armed-home .alarm-state-icon,
+  .alarm-state-display.alarm-armed-away .alarm-state-icon,
+  .alarm-state-display.alarm-triggered .alarm-state-icon,
+  .alarm-state-display.alarm-pending .alarm-state-icon {
+    background: rgba(255, 255, 255, 0.35);
   }
 
   .alarm-state-icon ha-icon {
     --mdc-icon-size: 28px;
-    color: var(--dv-gray800);
+    color: var(--dv-fixed-dark);
   }
 
   .alarm-state-info {
@@ -830,13 +868,232 @@ export const securityStyles = `
 
   .alarm-state-name {
     font-size: 14px;
-    color: var(--dv-gray600);
+    color: var(--dv-fixed-dark);
+    opacity: 0.7;
     margin-bottom: 2px;
   }
 
   .alarm-state-text {
     font-size: 18px;
     font-weight: 600;
+    color: var(--dv-fixed-dark);
+  }
+
+  /* Arm/Disarm Controls */
+  .alarm-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .alarm-mode-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 8px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .alarm-mode-btn:active {
+    transform: scale(0.95);
+  }
+
+  .alarm-mode-btn ha-icon {
+    --mdc-icon-size: 28px;
+  }
+
+  .alarm-mode-btn span {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .alarm-mode-home {
+    background: var(--dv-orange);
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-mode-home ha-icon {
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-mode-away {
+    background: var(--dv-red);
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-mode-away ha-icon {
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-mode-night {
+    background: var(--dv-purple);
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-mode-night ha-icon {
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-mode-disarm {
+    background: var(--dv-green);
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-mode-disarm ha-icon {
+    color: var(--dv-fixed-dark);
+  }
+
+  /* PIN Code Entry */
+  .alarm-pin-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0 20px;
+  }
+
+  .alarm-pin-display {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .alarm-pin-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--dv-gray400);
+    transition: all 0.15s ease;
+  }
+
+  .alarm-pin-dot.filled {
+    background: var(--dv-gray800);
+    border-color: var(--dv-gray800);
+  }
+
+  .alarm-pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 260px;
+    width: 100%;
+  }
+
+  .alarm-pin-key {
+    width: 100%;
+    aspect-ratio: 1.4;
+    border-radius: 12px;
+    border: none;
+    background: var(--dv-gray100);
     color: var(--dv-gray800);
+    font-size: 22px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .alarm-pin-key:active {
+    background: var(--dv-gray300);
+    transform: scale(0.95);
+  }
+
+  .alarm-pin-key ha-icon {
+    --mdc-icon-size: 22px;
+    color: var(--dv-gray800);
+  }
+
+  .alarm-pin-cancel {
+    background: var(--dv-red);
+  }
+
+  .alarm-pin-cancel ha-icon {
+    color: var(--dv-fixed-dark);
+  }
+
+  .alarm-pin-cancel:active {
+    background: var(--dv-red);
+    opacity: 0.8;
+  }
+
+  .alarm-pin-backspace {
+    background: var(--dv-gray200);
+  }
+
+  .alarm-pin-submit {
+    width: 100%;
+    max-width: 260px;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: var(--dv-gray800);
+    color: var(--dv-gray000);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .alarm-pin-submit:active {
+    transform: scale(0.98);
+  }
+
+  .alarm-pin-submit.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Open Sensors */
+  .alarm-open-sensors {
+    margin-top: 4px;
+  }
+
+  .alarm-open-sensors-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dv-gray800);
+    margin: 0 0 10px;
+  }
+
+  .alarm-open-sensors-title ha-icon {
+    --mdc-icon-size: 18px;
+    color: var(--dv-red);
+  }
+
+  .alarm-open-sensors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .alarm-open-sensor-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--dv-gray100);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--dv-gray800);
+  }
+
+  .alarm-open-sensor-item ha-icon {
+    --mdc-icon-size: 18px;
+    color: var(--dv-yellow);
   }
 `;
