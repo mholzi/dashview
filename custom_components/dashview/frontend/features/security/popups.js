@@ -191,9 +191,22 @@ export function renderSecurityPopupContent(component, html) {
     `;
   };
 
+  // Get alarm information if configured
+  const alarmEntity = component._alarmEntity;
+  const alarmState = alarmEntity ? component.hass.states[alarmEntity] : null;
+
   return html`
     <!-- Security Tabs -->
     <div class="security-tabs">
+      ${alarmEntity ? html`
+        <button
+          class="security-tab ${component._activeSecurityTab === 'alarm' ? 'active' : ''}"
+          @click=${() => component._activeSecurityTab = 'alarm'}
+        >
+          <ha-icon icon="mdi:shield"></ha-icon>
+          <span>Alarm</span>
+        </button>
+      ` : ''}
       <button
         class="security-tab ${component._activeSecurityTab === 'windows' ? 'active' : ''}"
         @click=${() => component._activeSecurityTab = 'windows'}
@@ -216,6 +229,47 @@ export function renderSecurityPopupContent(component, html) {
         <span>${activeMotionCount} von ${enabledMotion.length}</span>
       </button>
     </div>
+
+    <!-- Alarm Content -->
+    ${component._activeSecurityTab === 'alarm' ? html`
+      ${!alarmEntity || !alarmState ? html`
+        <div class="security-empty-state">
+          <ha-icon icon="mdi:shield-off"></ha-icon>
+          <p>No alarm control panel configured.</p>
+        </div>
+      ` : html`
+        <div class="alarm-state-display">
+          <div class="alarm-state-icon">
+            <ha-icon icon="${
+              alarmState.state === 'disarmed' ? 'mdi:shield-off' :
+              alarmState.state === 'armed_home' ? 'mdi:shield-home' :
+              alarmState.state === 'armed_away' ? 'mdi:shield-lock' :
+              alarmState.state === 'armed_night' ? 'mdi:shield-moon' :
+              alarmState.state === 'triggered' ? 'mdi:shield-alert' :
+              'mdi:shield'
+            }"></ha-icon>
+          </div>
+          <div class="alarm-state-info">
+            <div class="alarm-state-name">${alarmState.attributes?.friendly_name || 'Alarm'}</div>
+            <div class="alarm-state-text">${
+              alarmState.state === 'disarmed' ? 'Disarmed' :
+              alarmState.state === 'armed_home' ? 'Armed Home' :
+              alarmState.state === 'armed_away' ? 'Armed Away' :
+              alarmState.state === 'armed_night' ? 'Armed Night' :
+              alarmState.state === 'triggered' ? 'ALARM TRIGGERED' :
+              alarmState.state === 'arming' ? 'Arming...' :
+              alarmState.state === 'pending' ? 'Pending...' :
+              alarmState.state
+            }</div>
+          </div>
+        </div>
+        
+        <!-- Basic Controls Placeholder -->
+        <div style="text-align: center; padding: 20px; color: var(--secondary-text-color); font-size: 14px;">
+          Alarm controls will be implemented in next iteration
+        </div>
+      `}
+    ` : ''}
 
     <!-- Windows Content -->
     ${component._activeSecurityTab === 'windows' ? html`

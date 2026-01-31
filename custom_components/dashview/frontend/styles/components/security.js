@@ -797,4 +797,46 @@ export const securityStyles = `
     font-size: 13px;
     color: var(--dv-gray600);
   }
+
+  /* ==================== ALARM CONTROL PANEL ==================== */
+  .alarm-state-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 12px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    background: var(--dv-gray100);
+  }
+
+  .alarm-state-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--dv-white);
+  }
+
+  .alarm-state-icon ha-icon {
+    --mdc-icon-size: 28px;
+    color: var(--dv-gray800);
+  }
+
+  .alarm-state-info {
+    flex: 1;
+  }
+
+  .alarm-state-name {
+    font-size: 14px;
+    color: var(--dv-gray600);
+    margin-bottom: 2px;
+  }
+
+  .alarm-state-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dv-gray800);
+  }
 `;

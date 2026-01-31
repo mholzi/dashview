@@ -415,6 +415,13 @@
       "is_critical": "is critical.",
       "are_critical": "are critical."
     },
+    "alarm": {
+      "disarmed": "Disarmed",
+      "armed_home": "Armed Home",
+      "armed_away": "Armed Away", 
+      "armed_night": "Armed Night",
+      "triggered": "ALARM TRIGGERED"
+    },
     "general": {
       "currently_are": "Currently",
       "open_suffix": "open.",
