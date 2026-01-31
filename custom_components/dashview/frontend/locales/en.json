@@ -50,9 +50,10 @@
       "filter": "Filter",
       "close": "Close",
       "confirm": "Confirm",
+      "retry": "Try again",
       "skip": "Skip",
-      "lets_go": "Let's go!",
-      "continue": "Continue"
+      "continue": "Continue",
+      "lets_go": "Let's go!"
     },
     "options": {
       "all": "All",
@@ -60,13 +61,12 @@
       "enabled": "Enabled",
       "disabled": "Disabled",
       "of": "of",
+      "under": "under",
       "new": "New",
       "improved": "Improved",
       "fixed": "Fixed",
-      "attention": "Attention",
-      "under": "under"
-    },
-    "retry": "Retry"
+      "attention": "Attention"
+    }
   },
   "entityPicker": {
     "noResults": "No matching entities found"
@@ -152,6 +152,9 @@
     }
   },
   "ui": {
+    "notifications": {
+      "ventilate_room": "Please ventilate room"
+    },
     "tabs": {
       "home": "Home",
       "weather": "Weather",
@@ -170,14 +173,15 @@
       "rooms": "Rooms",
       "other_devices": "Other Devices",
       "devices": "Devices",
+      "device": "Device",
       "locks": "Locks",
       "batteries": "Batteries",
       "batteries_ok": "All batteries OK",
       "roofWindows": "Roof Windows",
       "open_windows": "Open Windows",
       "closed_windows": "Closed Windows",
-      "open_garages": "Open Garages",
-      "closed_garages": "Closed Garages",
+      "open_garages": "Open Garage Doors",
+      "closed_garages": "Closed Garage Doors",
       "no_devices_under": "No devices under",
       "device": "Device",
       "whats_new": "What's New?"
@@ -268,6 +272,14 @@
       "severe_warning": "Severe weather warning",
       "extreme_warning": "Extreme weather"
     },
+    "uv_index": "UV Index",
+    "uv_peak": "Peak UV",
+    "uv_protection": "Protection recommended",
+    "uv_low": "Low",
+    "uv_moderate": "Moderate",
+    "uv_high": "High",
+    "uv_very_high": "Very High",
+    "uv_extreme": "Extreme",
     "pollen": "Pollen Forecast",
     "pollen_types": {
       "erle": "Alder",
@@ -1113,7 +1125,24 @@
       "open": "Open Doors",
       "closed": "Closed Doors"
     },
-    "title": "Security"
+    "title": "Security",
+    "summary": {
+      "allSecure": "All Secure",
+      "everythingLocked": "Everything locked & closed",
+      "issues": "{{count}} Issues",
+      "issue": "1 Issue",
+      "windows": "{{count}} Windows",
+      "window": "1 Window",
+      "doors": "{{count}} Doors",
+      "door": "1 Door",
+      "locks": "{{count}} Locks",
+      "lock": "1 Lock",
+      "garages": "{{count}} Garages",
+      "garage": "1 Garage",
+      "smokeAlert": "Smoke Alert",
+      "waterAlert": "Water Alert",
+      "cardName": "Security Summary"
+    }
   },
   "onboarding": {
     "title": "Setup Wizard",
@@ -1239,7 +1268,7 @@
       "readyDesc": "Your dashboard is configured and ready to use."
     }
   },
-  "suggestions": {
+  "smartSuggestions": {
     "lightsLeftOn": {
       "title": "Lights still on",
       "desc": "{{count}} lights are on late at night",

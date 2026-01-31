@@ -201,6 +201,7 @@ export function getForecastData(hass, type, forecasts, weatherEntity) {
         precipitation_probability: forecast.precipitation_probability,
         wind_speed: forecast.wind_speed,
         datetime: forecast.datetime,
+        uv_index: forecast.uv_index,
       };
     }
   }
@@ -220,6 +221,7 @@ export function getForecastData(hass, type, forecasts, weatherEntity) {
         precipitation_probability: forecast.precipitation_probability,
         wind_speed: forecast.wind_speed,
         datetime: forecast.datetime,
+        uv_index: forecast.uv_index,
       };
     }
   }

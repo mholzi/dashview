@@ -50,9 +50,10 @@
       "filter": "Filter",
       "close": "Schließen",
       "confirm": "Bestätigen",
+      "retry": "Erneut versuchen",
       "skip": "Überspringen",
-      "lets_go": "Los geht's!",
-      "continue": "Weiter"
+      "continue": "Weiter",
+      "lets_go": "Los geht's!"
     },
     "options": {
       "all": "Alle",
@@ -60,13 +61,12 @@
       "enabled": "Aktiviert",
       "disabled": "Deaktiviert",
       "of": "von",
+      "under": "unter",
       "new": "Neu",
       "improved": "Verbessert",
       "fixed": "Behoben",
-      "attention": "Achtung",
-      "under": "unter"
-    },
-    "retry": "Erneut versuchen"
+      "attention": "Achtung"
+    }
   },
   "entityPicker": {
     "noResults": "Keine passenden Entitäten gefunden"
@@ -152,6 +152,9 @@
     }
   },
   "ui": {
+    "notifications": {
+      "ventilate_room": "Bitte Raum lüften"
+    },
     "tabs": {
       "home": "Home",
       "weather": "Wetter",
@@ -170,6 +173,7 @@
       "rooms": "Räume",
       "other_devices": "Weitere Geräte",
       "devices": "Geräte",
+      "device": "Gerät",
       "locks": "Schlösser",
       "batteries": "Batterien",
       "batteries_ok": "Alle Batterien in Ordnung",
@@ -268,6 +272,14 @@
       "severe_warning": "Unwetterwarnung vor",
       "extreme_warning": "Extremes Unwetter"
     },
+    "uv_index": "UV-Index",
+    "uv_peak": "UV-Maximum",
+    "uv_protection": "Sonnenschutz empfohlen",
+    "uv_low": "Niedrig",
+    "uv_moderate": "Mäßig",
+    "uv_high": "Hoch",
+    "uv_very_high": "Sehr hoch",
+    "uv_extreme": "Extrem",
     "pollen": "Pollenflug",
     "pollen_types": {
       "erle": "Erle",
@@ -1237,9 +1249,26 @@
       "open": "Offene Türen",
       "closed": "Geschlossene Türen"
     },
-    "title": "Sicherheit"
+    "title": "Sicherheit",
+    "summary": {
+      "allSecure": "Alles sicher",
+      "everythingLocked": "Alles verriegelt & geschlossen",
+      "issues": "{{count}} Probleme",
+      "issue": "1 Problem",
+      "windows": "{{count}} Fenster",
+      "window": "1 Fenster",
+      "doors": "{{count}} Türen",
+      "door": "1 Tür",
+      "locks": "{{count}} Schlösser",
+      "lock": "1 Schloss",
+      "garages": "{{count}} Garagen",
+      "garage": "1 Garage",
+      "smokeAlert": "Rauchalarm",
+      "waterAlert": "Wasseralarm",
+      "cardName": "Sicherheit"
+    }
   },
-  "suggestions": {
+  "smartSuggestions": {
     "lightsLeftOn": {
       "title": "Lichter noch an",
       "desc": "{{count}} Lichter sind spät nachts noch an",

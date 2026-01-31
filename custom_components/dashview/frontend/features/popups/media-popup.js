@@ -227,7 +227,7 @@ function renderMediaPlayer(component, html, player) {
             <div class="popup-media-track-artist">${state.attributes?.media_artist || t('media.unknown_artist')}</div>
           ` : html`
             <div class="popup-media-track-title">${player.name}</div>
-            <div class="popup-media-track-artist">${state.state === 'idle' ? t('media.idle') : state.state === 'standby' ? t('media.standby', 'Bereit') : state.state}</div>
+            <div class="popup-media-track-artist">${state.state === 'idle' ? t('media.idle') : state.state === 'standby' ? t('media.standby') : state.state}</div>
           `}
         </div>
 
@@ -273,7 +273,7 @@ function renderMediaPlayer(component, html, player) {
         </div>
       ` : html`
         <div class="popup-media-idle">
-          ${state.state === 'off' ? t('media.off') : t('media.unavailable', 'Nicht verfügbar')}
+          ${state.state === 'off' ? t('media.off') : t('media.unavailable')}
         </div>
       `}
     </div>

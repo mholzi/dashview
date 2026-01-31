@@ -1382,9 +1382,15 @@ if (typeof structuredClone === 'undefined') {
       const currentFloorConfig = this._floorCardConfig[floorId] || {};
 
       // For appliances, store additional data needed for device card rendering
+      // For security summary, store type: 'security'
       let slotData = null;
       if (entityId) {
-        if (entityData && entityData.type === 'appliance' && entityData.appliance) {
+        if (entityData && entityData.type === 'security') {
+          slotData = {
+            entity_id: entityId,
+            type: 'security',
+          };
+        } else if (entityData && entityData.type === 'appliance' && entityData.appliance) {
           slotData = {
             entity_id: entityId,
             type: 'appliance',
@@ -2891,15 +2897,14 @@ if (typeof structuredClone === 'undefined') {
       const messages = [];
       if (highTemps.length > 0) {
         const avg = (highTemps.reduce((sum, s) => sum + s.value, 0) / highTemps.length).toFixed(1);
-        const unit = highTemps[0]?.unit || this.hass?.config?.unit_system?.temperature || '°C';
-        messages.push(`${t('sensor.temperature', 'Temperature')}: ${avg}${unit}`);
+        messages.push(`${t('sensor.temperature')}: ${avg}°C`);
       }
       if (highHumidity.length > 0) {
         const avg = (highHumidity.reduce((sum, s) => sum + s.value, 0) / highHumidity.length).toFixed(1);
-        messages.push(`${t('sensor.humidity', 'Humidity')}: ${avg}%`);
+        messages.push(`${t('sensor.humidity')}: ${avg}%`);
       }
 
-      return { title: t('ui.notifications.ventilate_room', 'Please ventilate room'), subtitle: messages.join(' · ') };
+      return { title: t('ui.notifications.ventilate_room'), subtitle: messages.join(' · ') };
     }
 
     /**
@@ -4501,7 +4506,7 @@ if (typeof structuredClone === 'undefined') {
                 cursor: pointer;
                 font-size: 12px;
               "
-            >${t('common.retry', 'Retry')}</button>
+            >${t('common.actions.retry')}</button>
           </div>
         ` : ''}
 
