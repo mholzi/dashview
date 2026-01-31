@@ -35,7 +35,10 @@
       "duration_minutes": "{{minutes}}min",
       "until_time": "until {{time}}",
       "until_tomorrow": "until tomorrow {{time}}",
-      "until_date": "until {{date}} {{time}}"
+      "until_date": "until {{date}} {{time}}",
+      "days_ago": "{{days}} days ago",
+      "hours_ago": "{{hours}}h ago",
+      "minutes_ago": "{{minutes}}min ago"
     },
     "actions": {
       "save": "Save",
@@ -180,6 +183,7 @@
       "open_garages": "Open Garage Doors",
       "closed_garages": "Closed Garage Doors",
       "no_devices_under": "No devices under",
+      "device": "Device",
       "whats_new": "What's New?"
     },
     "errors": {
@@ -195,7 +199,9 @@
       "no_sensors_selected": "No sensors selected",
       "no_devices_enabled": "No devices enabled.",
       "no_lights_enabled": "No lights enabled in admin configuration.",
-      "no_windows_enabled": "No windows enabled in admin configuration."
+      "no_windows_enabled": "No windows enabled in admin configuration.",
+      "no_garages_enabled": "No garages enabled in admin configuration.",
+      "no_motion_enabled": "No motion sensors enabled in admin configuration."
     },
     "popups": {
       "lights": {
@@ -215,6 +221,9 @@
         "on_section": "TVs on",
         "off_section": "TVs off"
       }
+    },
+    "notifications": {
+      "ventilate_room": "Please ventilate room"
     }
   },
   "rooms": {
@@ -315,6 +324,7 @@
     "playing": "Playing",
     "paused": "Paused",
     "standby": "Standby",
+    "title": "Music",
     "unavailable": "Unavailable"
   },
   "status": {
@@ -937,7 +947,8 @@
       "noWindowsEnabled": "No windows enabled in admin configuration.",
       "noGaragesEnabled": "No garage doors enabled in admin configuration.",
       "noMotionEnabled": "No motion sensors enabled in admin configuration."
-    }
+    },
+    "title": "Admin"
   },
   "changelog": {
     "titles": {
@@ -1114,6 +1125,7 @@
       "open": "Open Doors",
       "closed": "Closed Doors"
     },
+    "title": "Security",
     "summary": {
       "allSecure": "All Secure",
       "everythingLocked": "Everything locked & closed",
@@ -1255,5 +1267,23 @@
       "ready": "All set!",
       "readyDesc": "Your dashboard is configured and ready to use."
     }
+  },
+  "smartSuggestions": {
+    "lightsLeftOn": {
+      "title": "Lights still on",
+      "desc": "{{count}} lights are on late at night",
+      "action": "Turn off all"
+    },
+    "acConflict": {
+      "title": "Windows open with climate running",
+      "desc": "This wastes energy — close windows or turn off climate",
+      "action": "Show windows"
+    },
+    "sunset": {
+      "title": "It's dark outside",
+      "desc": "No lights are on — turn on lights?",
+      "action": "Turn on lights"
+    },
+    "dismiss": "Dismiss"
   }
 }

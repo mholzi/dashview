@@ -35,7 +35,10 @@
       "duration_minutes": "{{minutes}}min",
       "until_time": "bis {{time}}",
       "until_tomorrow": "bis morgen {{time}}",
-      "until_date": "bis {{date}} {{time}}"
+      "until_date": "bis {{date}} {{time}}",
+      "days_ago": "vor {{days}} Tagen",
+      "hours_ago": "vor {{hours}}h",
+      "minutes_ago": "vor {{minutes}}min"
     },
     "actions": {
       "save": "Speichern",
@@ -180,6 +183,7 @@
       "open_garages": "Offene Garagentore",
       "closed_garages": "Geschlossene Garagentore",
       "no_devices_under": "Keine Geräte unter",
+      "device": "Gerät",
       "whats_new": "Was ist neu?"
     },
     "errors": {
@@ -195,7 +199,9 @@
       "no_sensors_selected": "Keine Sensoren ausgewählt",
       "no_devices_enabled": "Keine Geräte aktiviert.",
       "no_lights_enabled": "Keine Lichter in der Admin-Konfiguration aktiviert.",
-      "no_windows_enabled": "Keine Fenster in der Admin-Konfiguration aktiviert."
+      "no_windows_enabled": "Keine Fenster in der Admin-Konfiguration aktiviert.",
+      "no_garages_enabled": "Keine Garagentore in der Admin-Konfiguration aktiviert.",
+      "no_motion_enabled": "Keine Bewegungsmelder in der Admin-Konfiguration aktiviert."
     },
     "popups": {
       "lights": {
@@ -215,6 +221,9 @@
         "on_section": "Fernseher an",
         "off_section": "Fernseher aus"
       }
+    },
+    "notifications": {
+      "ventilate_room": "Bitte Raum lüften"
     }
   },
   "rooms": {
@@ -315,6 +324,7 @@
     "playing": "Spielt",
     "paused": "Pausiert",
     "standby": "Bereit",
+    "title": "Musik",
     "unavailable": "Nicht verfügbar"
   },
   "status": {
@@ -937,7 +947,8 @@
       "noWindowsEnabled": "Keine Fenster in der Admin-Konfiguration aktiviert.",
       "noGaragesEnabled": "Keine Garagentore in der Admin-Konfiguration aktiviert.",
       "noMotionEnabled": "Keine Bewegungsmelder in der Admin-Konfiguration aktiviert."
-    }
+    },
+    "title": "Admin"
   },
   "changelog": {
     "titles": {
@@ -1238,6 +1249,7 @@
       "open": "Offene Türen",
       "closed": "Geschlossene Türen"
     },
+    "title": "Sicherheit",
     "summary": {
       "allSecure": "Alles sicher",
       "everythingLocked": "Alles verriegelt & geschlossen",
@@ -1255,5 +1267,23 @@
       "waterAlert": "Wasseralarm",
       "cardName": "Sicherheit"
     }
+  },
+  "smartSuggestions": {
+    "lightsLeftOn": {
+      "title": "Lichter noch an",
+      "desc": "{{count}} Lichter sind spät nachts noch an",
+      "action": "Alle ausschalten"
+    },
+    "acConflict": {
+      "title": "Fenster offen bei laufender Heizung",
+      "desc": "Das verschwendet Energie — Fenster schließen oder Heizung ausschalten",
+      "action": "Fenster anzeigen"
+    },
+    "sunset": {
+      "title": "Es ist dunkel draußen",
+      "desc": "Keine Lichter an — Lichter einschalten?",
+      "action": "Lichter einschalten"
+    },
+    "dismiss": "Ausblenden"
   }
 }

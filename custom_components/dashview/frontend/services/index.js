@@ -99,3 +99,10 @@ export {
   detectTemperatureAnomaly,
   detectHumidityAnomaly,
 } from './anomaly-detector.js';
+
+// Suggestion Engine Service (Contextual smart suggestions)
+export {
+  evaluateSuggestions,
+  dismissSuggestion,
+  recordSuggestionAction,
+} from './suggestion-engine.js';
