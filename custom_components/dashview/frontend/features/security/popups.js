@@ -243,7 +243,8 @@ export function renderSecurityPopupContent(component, html) {
       ` : (() => {
         const state = alarmState.state;
         const attrs = alarmState.attributes || {};
-        const codeRequired = attrs.code_arm_required || attrs.code_format;
+        const codeArmRequired = !!attrs.code_arm_required;
+        const codeFormat = attrs.code_format || null; // 'number' or 'text'
         const supportedFeatures = attrs.supported_features || 0;
         // Standard alarm_control_panel feature flags
         const SUPPORT_ARM_HOME = 1;
@@ -284,12 +285,11 @@ export function renderSecurityPopupContent(component, html) {
         };
 
         const handleArmAction = (service) => {
-          if (codeRequired && !isDisarmed) {
-            // Need PIN to disarm — show PIN pad
-            component._alarmPendingAction = service;
-            component._alarmPinCode = '';
-            component.requestUpdate();
-          } else if (codeRequired && service === 'alarm_disarm') {
+          const isArmAction = service !== 'alarm_disarm';
+          const needsCode = isArmAction ? codeArmRequired : !!codeFormat;
+
+          if (needsCode) {
+            // Show PIN pad for this action
             component._alarmPendingAction = service;
             component._alarmPinCode = '';
             component.requestUpdate();
