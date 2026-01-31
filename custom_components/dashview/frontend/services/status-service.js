@@ -1311,6 +1311,76 @@ export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStat
 }
 
 /**
+ * Get alarm status for info text row
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {string} alarmEntity - Alarm control panel entity ID
+ * @returns {Object|null} Status object or null
+ */
+export function getAlarmStatus(hass, infoTextConfig, alarmEntity) {
+  if (!hass || !infoTextConfig.alarm?.enabled || !alarmEntity) return null;
+
+  const state = hass.states[alarmEntity];
+  if (!state) return null;
+
+  const alarmState = state.state;
+
+  // Map states to display information
+  const stateMapping = {
+    disarmed: {
+      prefixText: 'Alarm ist',
+      badgeText: 'unscharf',
+      emoji: '🛡️',
+      isWarning: false
+    },
+    armed_home: {
+      prefixText: 'Alarm ist',
+      badgeText: 'scharf (Zuhause)',
+      emoji: '🛡️',
+      isWarning: false
+    },
+    armed_away: {
+      prefixText: 'Alarm ist',
+      badgeText: 'scharf (Abwesend)',
+      emoji: '🛡️',
+      isWarning: false
+    },
+    armed_night: {
+      prefixText: 'Alarm ist',
+      badgeText: 'scharf (Nacht)',
+      emoji: '🛡️',
+      isWarning: false
+    },
+    triggered: {
+      prefixText: '⚠️',
+      badgeText: 'ALARM AUSGELÖST',
+      emoji: '🚨',
+      suffixText: '!',
+      isWarning: true,
+      isCritical: true,
+      priority: 100
+    }
+  };
+
+  const stateInfo = stateMapping[alarmState];
+  if (!stateInfo) return null;
+
+  return {
+    state: alarmState,
+    prefixText: stateInfo.prefixText,
+    badgeText: stateInfo.badgeText,
+    emoji: stateInfo.emoji,
+    suffixText: stateInfo.suffixText || '.',
+    isWarning: stateInfo.isWarning || false,
+    isCritical: stateInfo.isCritical || false,
+    priority: stateInfo.priority || 50,
+    clickAction: 'security',
+    alertId: alarmState === 'triggered' ? `alarm:${alarmEntity}` : null,
+    entityLastChanged: state.last_changed || null,
+  };
+}
+
+/**
  * Get all status items for the info text row
  * @param {Object} hass - Home Assistant instance
  * @param {Object} infoTextConfig - Info text configuration
@@ -1320,9 +1390,10 @@ export function getAppliancesStatus(hass, infoTextConfig, appliancesWithHomeStat
  * @param {Array} appliancesWithHomeStatus - Optional array of appliances with showInHomeStatus enabled
  * @param {Function} getApplianceStatus - Optional function to get appliance status
  * @param {Object} openTooLongThresholds - Thresholds for open-too-long alerts
+ * @param {string} alarmEntity - Optional alarm control panel entity ID
  * @returns {Array} Array of active status objects
  */
-export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelIds = {}, entityHasLabel = null, appliancesWithHomeStatus = [], getApplianceStatus = null, openTooLongThresholds = {}) {
+export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelIds = {}, entityHasLabel = null, appliancesWithHomeStatus = [], getApplianceStatus = null, openTooLongThresholds = {}, alarmEntity = null) {
   const {
     enabledMotionSensors = {},
     enabledGarages = {},
@@ -1367,6 +1438,8 @@ export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelId
     // Water leak and smoke are highest priority (life safety)
     getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors, waterLeakLabelId, entityHasLabel),
     getSmokeStatus(hass, infoTextConfig, enabledSmokeSensors, smokeLabelId, entityHasLabel),
+    // Alarm status (high priority, especially when triggered)
+    getAlarmStatus(hass, infoTextConfig, alarmEntity),
     // Door/lock/garage/window open-too-long alerts (security concerns)
     getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLongMinutes, doorLabelId, entityHasLabel),
     getLockStatus(hass, infoTextConfig, enabledLocks, lockUnlockedTooLongMinutes, lockLabelId, entityHasLabel),
@@ -1400,5 +1473,6 @@ export default {
   getVacuumStatus,
   getBatteryLowStatus,
   getAppliancesStatus,
+  getAlarmStatus,
   getAllStatusItems,
 };

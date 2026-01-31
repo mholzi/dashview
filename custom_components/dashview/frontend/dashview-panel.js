@@ -545,6 +545,8 @@ if (typeof structuredClone === 'undefined') {
       this._weatherPrecipitationEntity = "";
       this._hourlyForecastEntity = "";
       this._dwdWarningEntity = "";
+      // Alarm control panel
+      this._alarmEntity = "";
       // Weather radar settings (Windy embed)
       this._weatherRadarLat = 50.0;
       this._weatherRadarLon = 8.7;
@@ -1737,6 +1739,7 @@ if (typeof structuredClone === 'undefined') {
             this._weatherPrecipitationEntity = settings.weatherPrecipitationEntity;
             this._hourlyForecastEntity = settings.hourlyForecastEntity;
             this._dwdWarningEntity = settings.dwdWarningEntity;
+            this._alarmEntity = settings.alarmEntity || '';
             // Weather radar settings
             this._weatherRadarLat = settings.weatherRadarLat ?? 50.0;
             this._weatherRadarLon = settings.weatherRadarLon ?? 8.7;
@@ -4460,7 +4463,8 @@ if (typeof structuredClone === 'undefined') {
               roofWindowOpenTooLongMinutes: this._roofWindowOpenTooLongMinutes,
               coverOpenTooLongMinutes: this._coverOpenTooLongMinutes,
               lockUnlockedTooLongMinutes: this._lockUnlockedTooLongMinutes,
-            }
+            },
+            this._alarmEntity
           )
         : [];
 

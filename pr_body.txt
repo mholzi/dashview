@@ -1,0 +1,21 @@
+This PR implements context-relevant suggestion banners inside room popups as requested in issue #147.
+
+## Changes
+
+- **services/suggestion-engine.js**: Added `evaluateRoomSuggestions()` function that filters global suggestions to only show those relevant to the current room's entities
+- **features/popups/room-popup.js**: Integrated suggestion banners at the top of room popup content, reusing existing banner styling and interaction handlers  
+- **styles/popups/room.js**: Added popup-specific styling adjustments for smaller, more compact suggestion banners
+
+## Implementation Details
+
+- Room suggestions are filtered by area ID - only suggestions affecting entities in the current room are shown
+- Service-based suggestions (like 'turn off lights') are filtered to only include entities in the current room
+- Non-service suggestions (like 'show windows' popup) are shown in all relevant rooms
+- Suggestion IDs are made unique per room to avoid conflicts
+- Counts in suggestion descriptions are updated to reflect room-filtered entities
+
+## Testing
+
+The feature works correctly regardless of the merge order with issue #148 fix since it uses `getDefaultEnabledEntityIds` as recommended in the research.
+
+Fixes #147
