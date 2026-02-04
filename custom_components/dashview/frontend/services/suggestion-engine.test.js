@@ -10,11 +10,12 @@ vi.mock('../utils/i18n.js', () => ({
 
 // Mock helpers
 vi.mock('../utils/helpers.js', () => ({
-  getEnabledEntityIds: (component, domain) => {
-    const map = component?._enabledEntityIds || {};
-    return map[domain] || [];
+  getDefaultEnabledEntityIds: (enabledMap) => {
+    // Returns array of entity IDs that are enabled (value is true or truthy)
+    if (!enabledMap || typeof enabledMap !== 'object') return [];
+    return Object.keys(enabledMap).filter(id => enabledMap[id]);
   },
-  filterEntitiesByState: (hass, ids, state) => {
+  filterEntitiesByState: (ids, hass, state) => {
     return ids.filter(id => hass.states[id]?.state === state);
   },
 }));
@@ -42,7 +43,20 @@ describe('suggestion-engine', () => {
   }
 
   function makeContext(enabledIds = {}) {
-    return { _enabledEntityIds: enabledIds };
+    // Convert domain-based arrays to enabledMaps format
+    // enabledIds format: { light: ['light.a', 'light.b'], climate: ['climate.x'] }
+    // enabledMaps format: { enabledLights: { 'light.a': true }, enabledClimates: { ... } }
+    const enabledMaps = {};
+    if (enabledIds.light) {
+      enabledMaps.enabledLights = Object.fromEntries(enabledIds.light.map(id => [id, true]));
+    }
+    if (enabledIds.climate) {
+      enabledMaps.enabledClimates = Object.fromEntries(enabledIds.climate.map(id => [id, true]));
+    }
+    if (enabledIds.binary_sensor) {
+      enabledMaps.enabledWindows = Object.fromEntries(enabledIds.binary_sensor.map(id => [id, true]));
+    }
+    return { enabledMaps };
   }
 
   // ── evaluateSuggestions ──
@@ -112,7 +126,7 @@ describe('suggestion-engine', () => {
       });
       const ctx = makeContext({ light: ['light.living', 'light.bedroom', 'light.kitchen'] });
       const result = evaluateSuggestions(hass, ctx);
-      const lightsRule = result.find(s => s.id === 'lights_left_on');
+      const lightsRule = result.find(s => s.id === 'lights-left-on');
       expect(lightsRule).toBeDefined();
 
       vi.useRealTimers();
@@ -129,7 +143,7 @@ describe('suggestion-engine', () => {
       });
       const ctx = makeContext({ light: ['light.living', 'light.bedroom', 'light.kitchen'] });
       const result = evaluateSuggestions(hass, ctx);
-      const lightsRule = result.find(s => s.id === 'lights_left_on');
+      const lightsRule = result.find(s => s.id === 'lights-left-on');
       expect(lightsRule).toBeUndefined();
 
       vi.useRealTimers();
@@ -149,7 +163,7 @@ describe('suggestion-engine', () => {
         binary_sensor: ['binary_sensor.window_living'],
       });
       const result = evaluateSuggestions(hass, ctx);
-      const acRule = result.find(s => s.id === 'ac_windows_conflict');
+      const acRule = result.find(s => s.id === 'ac-windows-conflict');
       expect(acRule).toBeDefined();
       expect(acRule.level).toBe('warning');
     });
@@ -164,7 +178,7 @@ describe('suggestion-engine', () => {
         binary_sensor: ['binary_sensor.window_living'],
       });
       const result = evaluateSuggestions(hass, ctx);
-      const acRule = result.find(s => s.id === 'ac_windows_conflict');
+      const acRule = result.find(s => s.id === 'ac-windows-conflict');
       expect(acRule).toBeUndefined();
     });
   });
@@ -184,14 +198,14 @@ describe('suggestion-engine', () => {
 
       // First eval — should fire
       let result = evaluateSuggestions(hass, ctx);
-      const lightsRule = result.find(s => s.id === 'lights_left_on');
+      const lightsRule = result.find(s => s.id === 'lights-left-on');
       if (lightsRule) {
         // Dismiss it
-        dismissSuggestion('lights_left_on', 60 * 60 * 1000);
+        dismissSuggestion('lights-left-on', 60 * 60 * 1000);
 
         // Second eval — should be suppressed
         result = evaluateSuggestions(hass, ctx);
-        expect(result.find(s => s.id === 'lights_left_on')).toBeUndefined();
+        expect(result.find(s => s.id === 'lights-left-on')).toBeUndefined();
       }
 
       vi.useRealTimers();

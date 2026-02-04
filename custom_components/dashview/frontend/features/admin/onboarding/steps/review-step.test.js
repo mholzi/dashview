@@ -106,7 +106,7 @@ describe('Review Step', () => {
       expect(result.roomOrder.total).toBe(3);
     });
 
-    it('should count enabled rooms from wizard state', () => {
+    it('should count enabled rooms from panel state', () => {
       const mockPanel = {
         _floors: [],
         _areas: [
@@ -114,12 +114,10 @@ describe('Review Step', () => {
           { area_id: 'area2' },
           { area_id: 'area3' }
         ],
-        _wizardRoomConfigState: {
-          enabledRooms: {
-            'area1': true,
-            'area2': true,
-            'area3': false
-          }
+        _enabledRooms: {
+          'area1': true,
+          'area2': true,
+          'area3': false
         }
       };
       const result = generateReviewSummary(mockPanel);
@@ -164,11 +162,10 @@ describe('Review Step', () => {
           { area_id: 'area2', floor_id: 'floor2' },
           { area_id: 'area3', floor_id: 'floor2' }
         ],
-        _wizardRoomConfigState: {
-          enabledRooms: {
-            'area1': true,
-            'area2': true
-          }
+        _enabledRooms: {
+          'area1': true,
+          'area2': true,
+          'area3': false
         },
         _wizardFloorCardsState: {
           floorOverviewEnabled: { 'floor1': true },

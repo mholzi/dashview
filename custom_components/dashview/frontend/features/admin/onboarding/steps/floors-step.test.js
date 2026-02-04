@@ -40,20 +40,20 @@ describe('Floors Step', () => {
       expect(floorsStepStyles).toContain('.dv-floors-step');
     });
 
-    it('should contain floor item class', () => {
-      expect(floorsStepStyles).toContain('.dv-floor-item');
+    it('should contain order item class (from orderStyles)', () => {
+      expect(floorsStepStyles).toContain('.order-item');
     });
 
-    it('should contain floor list class', () => {
-      expect(floorsStepStyles).toContain('.dv-floors-list');
+    it('should contain order list class (from orderStyles)', () => {
+      expect(floorsStepStyles).toContain('.order-list');
     });
 
-    it('should contain drag handle class', () => {
-      expect(floorsStepStyles).toContain('.dv-floor-drag-handle');
+    it('should contain sortable handle class (from orderStyles)', () => {
+      expect(floorsStepStyles).toContain('.sortable-handle');
     });
 
-    it('should contain dragging state class', () => {
-      expect(floorsStepStyles).toContain('.dv-floor-item.dragging');
+    it('should contain sortable ghost class for dragging state (from orderStyles)', () => {
+      expect(floorsStepStyles).toContain('.sortable-ghost');
     });
 
     it('should contain empty state class', () => {
@@ -64,9 +64,9 @@ describe('Floors Step', () => {
       expect(floorsStepStyles).toContain('--dv-');
     });
 
-    it('should include fallback CSS variables', () => {
-      expect(floorsStepStyles).toContain('var(--primary-color)');
-      expect(floorsStepStyles).toContain('var(--primary-text-color)');
+    it('should use dv-prefixed CSS variables', () => {
+      expect(floorsStepStyles).toContain('var(--dv-gray');
+      expect(floorsStepStyles).toContain('var(--dv-blue');
     });
   });
 

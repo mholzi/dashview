@@ -8,12 +8,14 @@ import { createLightSliderHandlers } from './light-slider.js';
 describe('light-slider memory leak prevention (Story 7.4)', () => {
   let handlers;
   let onBrightnessChange;
+  let onToggle;
   let mockSliderElement;
   let mockItem;
 
   beforeEach(() => {
-    // Mock onBrightnessChange callback
+    // Mock callbacks
     onBrightnessChange = vi.fn();
+    onToggle = vi.fn();
 
     // Create mock DOM elements
     mockSliderElement = {
@@ -46,6 +48,7 @@ describe('light-slider memory leak prevention (Story 7.4)', () => {
     // Create handlers
     handlers = createLightSliderHandlers({
       onBrightnessChange,
+      onToggle,
       getSliderElement: () => mockSliderElement,
     });
   });
@@ -193,7 +196,7 @@ describe('light-slider memory leak prevention (Story 7.4)', () => {
   });
 
   describe('existing functionality (AC7)', () => {
-    it('should call onBrightnessChange on click', () => {
+    it('should call onToggle on click (tap toggles, drag changes brightness)', () => {
       const mockClickEvent = {
         currentTarget: mockSliderElement,
         clientX: 50,
@@ -201,7 +204,7 @@ describe('light-slider memory leak prevention (Story 7.4)', () => {
 
       handlers.handleClick(mockClickEvent, 'light.test');
 
-      expect(onBrightnessChange).toHaveBeenCalledWith('light.test', 50);
+      expect(onToggle).toHaveBeenCalledWith('light.test');
     });
 
     it('should handle touch interactions', () => {

@@ -87,20 +87,20 @@ describe('Room Config Step', () => {
       expect(entitiesStepStyles).toContain('.dv-room-config-step');
     });
 
-    it('should contain room config floor group class', () => {
-      expect(entitiesStepStyles).toContain('.dv-room-config-floor-group');
+    it('should contain room config floors class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-floors');
     });
 
-    it('should contain room config room item class', () => {
-      expect(entitiesStepStyles).toContain('.dv-room-config-room-item');
+    it('should contain room config floor header class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-floor-header');
     });
 
-    it('should contain room config checkbox class', () => {
-      expect(entitiesStepStyles).toContain('.dv-room-config-checkbox');
+    it('should contain room config search class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-search');
     });
 
-    it('should contain room config summary class', () => {
-      expect(entitiesStepStyles).toContain('.dv-room-config-summary');
+    it('should contain room config hint class', () => {
+      expect(entitiesStepStyles).toContain('.dv-room-config-hint');
     });
 
     it('should contain empty state class', () => {
@@ -111,9 +111,9 @@ describe('Room Config Step', () => {
       expect(entitiesStepStyles).toContain('--dv-');
     });
 
-    it('should include fallback CSS variables', () => {
-      expect(entitiesStepStyles).toContain('var(--primary-color)');
-      expect(entitiesStepStyles).toContain('var(--primary-text-color)');
+    it('should use dv-prefixed CSS variables', () => {
+      expect(entitiesStepStyles).toContain('var(--dv-gray');
+      expect(entitiesStepStyles).toContain('var(--dv-blue');
     });
   });
 
@@ -160,28 +160,26 @@ describe('Room Config Step', () => {
 });
 
 describe('getEntitySelections', () => {
-  it('should return empty object when no wizard state', () => {
+  it('should return empty object when no enabledRooms', () => {
     const mockPanel = {};
     const result = getEntitySelections(mockPanel);
     expect(result).toEqual({});
   });
 
-  it('should return empty object when wizard state has no enabledRooms', () => {
+  it('should return empty object when enabledRooms is undefined', () => {
     const mockPanel = {
-      _wizardRoomConfigState: {}
+      _enabledRooms: undefined
     };
     const result = getEntitySelections(mockPanel);
     expect(result).toEqual({});
   });
 
-  it('should return enabled rooms from wizard state', () => {
+  it('should return enabled rooms from panel state', () => {
     const mockPanel = {
-      _wizardRoomConfigState: {
-        enabledRooms: {
-          'living_room': true,
-          'bedroom': false,
-          'kitchen': true
-        }
+      _enabledRooms: {
+        'living_room': true,
+        'bedroom': false,
+        'kitchen': true
       }
     };
     const result = getEntitySelections(mockPanel);
