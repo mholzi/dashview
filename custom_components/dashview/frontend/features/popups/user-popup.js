@@ -4,35 +4,8 @@
  */
 
 import { renderPopupHeader } from '../../components/layout/index.js';
-import { calculateTimeDifference } from '../../utils/helpers.js';
+import { formatTimeAgo } from '../../utils/formatters.js';
 import { t } from '../../utils/i18n.js';
-
-/**
- * Format a timestamp to a human-readable "time ago" string
- * @param {string} lastChanged - ISO timestamp
- * @returns {string} Formatted time string
- */
-function formatTimeAgo(lastChanged) {
-  if (!lastChanged) return '';
-
-  const last = new Date(lastChanged);
-  if (isNaN(last.getTime())) return '';
-
-  const now = new Date();
-  const diffMs = now - last;
-
-  if (isNaN(diffMs) || diffMs < 0) return '';
-
-  const { days, hours, minutes } = calculateTimeDifference(diffMs);
-
-  if (isNaN(minutes)) return '';
-
-  if (days >= 2) return t('time.days_ago', { count: days }, `${days} days ago`);
-  if (days >= 1) return t('time.yesterday', 'Yesterday');
-  if (hours >= 1) return t('time.hours_ago', { count: hours }, `${hours}h ago`);
-  if (minutes >= 1) return t('time.minutes_ago', { count: minutes }, `${minutes}m ago`);
-  return t('time.just_now', 'Just now');
-}
 
 /**
  * Format a timestamp for history display (includes time of day)

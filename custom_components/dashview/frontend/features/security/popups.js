@@ -7,7 +7,6 @@ import {
   getEnabledEntitiesSortedByLastChanged,
   isStateOn,
   isStateOpen,
-  calculateTimeDifference,
   getFriendlyName,
   formatLastChanged,
   openMoreInfo
@@ -63,28 +62,6 @@ export function renderSecurityPopupContent(component, html) {
   const openWindowsCount = enabledWindows.filter(w => w.isOpen).length;
   const activeMotionCount = enabledMotion.filter(m => m.isActive).length;
   const openGaragesCount = enabledGarages.filter(g => g.isOpen).length;
-
-  // Format last changed time using utility
-  const formatLastChanged = (lastChanged) => {
-    if (!lastChanged) return "";
-
-    const last = new Date(lastChanged);
-    if (isNaN(last.getTime())) return "";
-
-    const now = new Date();
-    const diffMs = now - last;
-
-    if (isNaN(diffMs) || diffMs < 0) return "";
-
-    const { days, hours, minutes } = calculateTimeDifference(diffMs);
-
-    if (isNaN(minutes)) return "";
-
-    if (days >= 2) return `${days} days ago`;
-    if (days >= 1) return `Yesterday`;
-    if (hours >= 1) return `${hours}h ago`;
-    return `${minutes}m ago`;
-  };
 
   // Sort entities by last_changed (most recent first)
   const sortByLastChangedTime = (entities) => {

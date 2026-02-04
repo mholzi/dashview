@@ -6,93 +6,15 @@
  * @module core/render
  */
 
-/**
- * Format a timestamp as relative time ago
- * @param {string|Date} lastChanged - ISO timestamp or Date object
- * @returns {string} Formatted time ago string (e.g., "5m ago")
- */
-export function formatTimeAgo(lastChanged) {
-  if (!lastChanged) return '';
-  const lastChangedDate = new Date(lastChanged);
-  const now = new Date();
-  const diffSec = Math.floor((now - lastChangedDate) / 1000);
-  if (diffSec < 60) return `${diffSec}s ago`;
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-  return `${Math.floor(diffSec / 86400)}d ago`;
-}
-
-/**
- * Format garage last changed time in German
- * @param {string|Date} lastChanged - ISO timestamp or Date object
- * @returns {string} Formatted time string in German
- */
-export function formatGarageLastChanged(lastChanged) {
-  if (!lastChanged) return '';
-  const last = new Date(lastChanged);
-  if (isNaN(last.getTime())) return '';
-  const diff = Date.now() - last.getTime();
-  const mins = Math.floor(diff / 60000);
-  const hrs = Math.floor(mins / 60);
-  const days = Math.floor(hrs / 24);
-  if (days >= 2) return `vor ${days} Tagen`;
-  if (days >= 1) return `Gestern`;
-  if (hrs >= 1) return `vor ${hrs}h`;
-  if (mins >= 1) return `vor ${mins}min`;
-  return 'Gerade eben';
-}
-
-/**
- * Format the current date in German locale
- * @returns {string} Formatted date string
- */
-export function formatDate() {
-  const now = new Date();
-  return now.toLocaleDateString("de-DE", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-/**
- * Format remaining time from various formats
- * @param {string} value - Time value (ISO timestamp, minutes, etc.)
- * @returns {string|null} Formatted time string or null if invalid
- */
-export function formatRemainingTime(value) {
-  if (!value || value === 'unknown' || value === 'unavailable') return null;
-
-  // Try parsing as ISO timestamp
-  const date = new Date(value);
-  if (!isNaN(date.getTime())) {
-    const now = new Date();
-    const diffMs = date - now;
-    if (diffMs > 0) {
-      const minutes = Math.round(diffMs / 60000);
-      if (minutes >= 60) {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours}h ${mins}min`;
-      }
-      return `${minutes} min`;
-    }
-  }
-
-  // Try parsing as number (minutes)
-  const num = parseFloat(value);
-  if (!isNaN(num) && num > 0) {
-    if (num >= 60) {
-      const hours = Math.floor(num / 60);
-      const mins = Math.round(num % 60);
-      return `${hours}h ${mins}min`;
-    }
-    return `${Math.round(num)} min`;
-  }
-
-  return null;
-}
+// Re-export canonical formatters from utils/formatters.js (single source of truth)
+// These were originally defined here with hardcoded English/German strings.
+// Now delegated to the i18n-aware versions in utils/formatters.js.
+export {
+  formatTimeAgo,
+  formatGarageLastChanged,
+  formatDate,
+} from '../utils/formatters.js';
+export { formatRemainingTime } from '../utils/helpers.js';
 
 /**
  * Get low battery devices from hass states

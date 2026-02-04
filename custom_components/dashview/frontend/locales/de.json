@@ -463,7 +463,9 @@
     "minutes_ago": "vor {{count}}m",
     "just_now": "Gerade eben",
     "today": "Heute",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "tomorrow": "Morgen",
+    "in_days": "in {{count}} Tagen"
   },
   "lock": {
     "locked": "Verschlossen",

@@ -4,6 +4,7 @@
  */
 
 import { t } from './i18n.js';
+import { formatDuration } from './formatters.js';
 
 /**
  * Sort array by custom order
@@ -258,43 +259,20 @@ export function getDefaultEnabledEntityIds(enabledMap) {
 }
 
 /**
- * Format time ago in German
+ * Format time ago (i18n-aware)
+ * @deprecated Use formatTimeAgo from utils/formatters.js directly
  * @param {string|Date} timestamp - Timestamp to format
  * @returns {string} Formatted time ago string
  */
-export function formatTimeAgoGerman(timestamp) {
-  if (!timestamp) return '';
-
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  if (isNaN(date.getTime())) return '';
-
-  const now = new Date();
-  const diffMs = now - date;
-  const { days, hours, minutes } = calculateTimeDifference(diffMs);
-
-  if (days >= 2) return `vor ${days} Tagen`;
-  if (days >= 1) return 'Gestern';
-  if (hours >= 1) return `vor ${hours}h`;
-  if (minutes >= 1) return `vor ${minutes}min`;
-  return 'Gerade eben';
-}
+export { formatTimeAgo as formatTimeAgoGerman } from './formatters.js';
 
 /**
- * Format duration in German
+ * Format duration (i18n-aware)
+ * @deprecated Use formatDuration from utils/formatters.js directly
  * @param {number} milliseconds - Duration in milliseconds
  * @returns {string} Formatted duration string
  */
-export function formatDurationGerman(milliseconds) {
-  const { hours, remainingMinutes } = calculateTimeDifference(milliseconds);
-
-  let result = '';
-  if (hours > 0) result += `${hours}h`;
-  if (remainingMinutes > 0 || hours === 0) {
-    if (hours > 0) result += ' ';
-    result += `${remainingMinutes}min`;
-  }
-  return result;
-}
+export { formatDuration as formatDurationGerman } from './formatters.js';
 
 // ==================== Array Sorting Utilities ====================
 
@@ -402,7 +380,7 @@ export function formatRemainingTime(finishTimeState, readyText = null) {
     }
 
     const diffMs = endTime - now;
-    return formatDurationGerman(diffMs);
+    return formatDuration(diffMs);
   } catch (e) {
     return '';
   }

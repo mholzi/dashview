@@ -22,13 +22,15 @@ export {
   isHapticSupported
 } from './haptic.js';
 
-// Formatters
+// Formatters (canonical source of truth for all date/time formatting)
 export {
   formatGarageLastChanged,
   formatDate,
   formatLastChanged,
   formatAbsoluteTime,
-  parseGarbageState
+  parseGarbageState,
+  formatTimeAgo,
+  formatDuration,
 } from './formatters.js';
 
 // Icons

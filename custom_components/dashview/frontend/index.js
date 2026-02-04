@@ -84,7 +84,7 @@ export {
   getWeatherIcon as getWeatherIconUtil,
   translateWeatherCondition as translateWeather
 } from './utils/icons.js';
-export { formatLastChanged, formatTime, formatDate } from './utils/formatters.js';
+export { formatLastChanged, formatTimeAgo, formatDate } from './utils/formatters.js';
 export { getFriendlyName } from './utils/helpers.js';
 
 // ============================================================================

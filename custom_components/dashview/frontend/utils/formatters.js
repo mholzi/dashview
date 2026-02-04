@@ -95,6 +95,7 @@ export function formatAbsoluteTime(lastChanged) {
 
 /**
  * Parse garbage sensor state to get days until pickup
+ * Uses i18n for localized output
  * @param {string} raw - Raw sensor state value
  * @returns {{days: number, label: string}} Days count and display label
  */
@@ -104,21 +105,67 @@ export function parseGarbageState(raw) {
 
   if (raw.toLowerCase() === 'heute' || raw.toLowerCase() === 'today') {
     days = 0;
-    label = 'Heute';
+    label = t('time.today', 'Today');
   } else if (raw.toLowerCase() === 'morgen' || raw.toLowerCase() === 'tomorrow') {
     days = 1;
-    label = 'Morgen';
+    label = t('time.tomorrow', 'Tomorrow');
   } else {
     const match = raw.match(/(\d+)/);
     days = match ? parseInt(match[1], 10) : 99;
     if (days === 0) {
-      label = 'Heute';
+      label = t('time.today', 'Today');
     } else if (days === 1) {
-      label = 'Morgen';
+      label = t('time.tomorrow', 'Tomorrow');
     } else {
-      label = `in ${days} Tagen`;
+      label = t('time.in_days', { count: days }, `in ${days} days`);
     }
   }
 
   return { days, label };
+}
+
+/**
+ * Format a timestamp as relative time ago
+ * Uses i18n for localized output — canonical implementation
+ * @param {string|Date} lastChanged - ISO timestamp or Date object
+ * @returns {string} Formatted time ago string (e.g., "5m ago")
+ */
+export function formatTimeAgo(lastChanged) {
+  if (!lastChanged) return '';
+
+  const date = lastChanged instanceof Date ? lastChanged : new Date(lastChanged);
+  if (isNaN(date.getTime())) return '';
+
+  const now = new Date();
+  const diffMs = now - date;
+
+  if (isNaN(diffMs) || diffMs < 0) return '';
+
+  const { days, hours, minutes } = calculateTimeDifference(diffMs);
+
+  if (isNaN(minutes)) return '';
+
+  if (days >= 2) return t('time.days_ago', { count: days }, `${days} days ago`);
+  if (days >= 1) return t('time.yesterday', 'Yesterday');
+  if (hours >= 1) return t('time.hours_ago', { count: hours }, `${hours}h ago`);
+  if (minutes >= 1) return t('time.minutes_ago', { count: minutes }, `${minutes}m ago`);
+  return t('time.just_now', 'Just now');
+}
+
+/**
+ * Format a duration in milliseconds as a human-readable string
+ * Uses i18n for localized output — canonical implementation
+ * @param {number} milliseconds - Duration in milliseconds
+ * @returns {string} Formatted duration string (e.g., "2h 15m")
+ */
+export function formatDuration(milliseconds) {
+  const { hours, remainingMinutes } = calculateTimeDifference(milliseconds);
+
+  let result = '';
+  if (hours > 0) result += `${hours}h`;
+  if (remainingMinutes > 0 || hours === 0) {
+    if (hours > 0) result += ' ';
+    result += `${remainingMinutes}min`;
+  }
+  return result;
 }
