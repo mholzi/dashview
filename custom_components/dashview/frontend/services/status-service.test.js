@@ -2,18 +2,27 @@
  * Status Service Tests
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getWaterLeakStatus } from './status-service.js';
+import { getWaterLeakStatus, getAlarmStatus } from './status-service.js';
 
-// Mock the i18n function
+// Mock the i18n function — supports 2-arg and 3-arg forms
 vi.mock('../utils/i18n.js', () => ({
-  t: (key, params) => {
+  t: (key, fallbackOrParams = null, fallbackWhenParams = null) => {
     const translations = {
       'status.water.noLeaks': 'No leaks detected',
       'status.water.leakDetected': 'LEAK DETECTED',
       'status.water.leaksDetected': 'leaks detected',
-      'status.water.inLocation': `in ${params?.location || ''}`,
+      'status.water.inLocation': `in ${typeof fallbackOrParams === 'object' ? fallbackOrParams?.location || '' : ''}`,
+      'status.alarm.prefix': 'Alarm is',
+      'status.alarm.disarmed': 'disarmed',
+      'status.alarm.armed_home': 'armed (Home)',
+      'status.alarm.armed_away': 'armed (Away)',
+      'status.alarm.armed_night': 'armed (Night)',
+      'status.alarm.triggered': 'ALARM TRIGGERED',
     };
-    return translations[key] || key;
+    if (translations[key] !== undefined) return translations[key];
+    // Fallback logic matching real t()
+    if (typeof fallbackOrParams === 'string') return fallbackOrParams;
+    return fallbackWhenParams ?? key;
   }
 }));
 
@@ -169,6 +178,122 @@ describe('getWaterLeakStatus', () => {
       // Only bathroom_leak has the label, and it's off, so should be ok
       expect(result).not.toBeNull();
       expect(result.state).toBe('ok');
+    });
+  });
+});
+
+describe('getAlarmStatus', () => {
+  const makeHass = (entityId, state, attrs = {}) => ({
+    states: {
+      [entityId]: {
+        state,
+        attributes: attrs,
+        last_changed: '2026-02-05T12:00:00Z',
+      },
+    },
+  });
+
+  const enabledConfig = { alarm: { enabled: true } };
+  const disabledConfig = { alarm: { enabled: false } };
+  const alarmEntity = 'alarm_control_panel.home';
+
+  describe('when alarm feature is disabled', () => {
+    it('returns null when alarm is not enabled', () => {
+      const hass = makeHass(alarmEntity, 'disarmed');
+      expect(getAlarmStatus(hass, disabledConfig, alarmEntity)).toBeNull();
+    });
+
+    it('returns null when hass is null', () => {
+      expect(getAlarmStatus(null, enabledConfig, alarmEntity)).toBeNull();
+    });
+  });
+
+  describe('when entity is missing', () => {
+    it('returns null when entity does not exist in hass', () => {
+      const hass = { states: {} };
+      expect(getAlarmStatus(hass, enabledConfig, alarmEntity)).toBeNull();
+    });
+  });
+
+  describe('auto-detection', () => {
+    it('auto-detects alarm entity when none provided', () => {
+      const hass = makeHass('alarm_control_panel.auto', 'disarmed');
+      const result = getAlarmStatus(hass, enabledConfig, null);
+      expect(result).not.toBeNull();
+      expect(result.state).toBe('disarmed');
+    });
+
+    it('returns null when no alarm entity exists and none provided', () => {
+      const hass = { states: { 'light.bedroom': { state: 'on' } } };
+      expect(getAlarmStatus(hass, enabledConfig, null)).toBeNull();
+    });
+  });
+
+  describe('state mapping', () => {
+    it('maps disarmed state correctly', () => {
+      const hass = makeHass(alarmEntity, 'disarmed');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.state).toBe('disarmed');
+      expect(result.prefixText).toBe('Alarm is');
+      expect(result.badgeText).toBe('disarmed');
+      expect(result.emoji).toBe('🛡️');
+      expect(result.isWarning).toBe(false);
+      expect(result.isCritical).toBe(false);
+      expect(result.clickAction).toBe('security');
+      expect(result.alertId).toBeNull();
+    });
+
+    it('maps armed_home state correctly', () => {
+      const hass = makeHass(alarmEntity, 'armed_home');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.state).toBe('armed_home');
+      expect(result.prefixText).toBe('Alarm is');
+      expect(result.badgeText).toBe('armed (Home)');
+      expect(result.isWarning).toBe(false);
+    });
+
+    it('maps armed_away state correctly', () => {
+      const hass = makeHass(alarmEntity, 'armed_away');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.badgeText).toBe('armed (Away)');
+    });
+
+    it('maps armed_night state correctly', () => {
+      const hass = makeHass(alarmEntity, 'armed_night');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.badgeText).toBe('armed (Night)');
+    });
+
+    it('maps triggered state with critical flags', () => {
+      const hass = makeHass(alarmEntity, 'triggered');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.state).toBe('triggered');
+      expect(result.prefixText).toBe('⚠️');
+      expect(result.badgeText).toBe('ALARM TRIGGERED');
+      expect(result.emoji).toBe('🚨');
+      expect(result.isWarning).toBe(true);
+      expect(result.isCritical).toBe(true);
+      expect(result.priority).toBe(100);
+      expect(result.alertId).toBe(`alarm:${alarmEntity}`);
+    });
+
+    it('returns null for unknown alarm state', () => {
+      const hass = makeHass(alarmEntity, 'unknown_state');
+      expect(getAlarmStatus(hass, enabledConfig, alarmEntity)).toBeNull();
+    });
+  });
+
+  describe('returned metadata', () => {
+    it('includes entityLastChanged', () => {
+      const hass = makeHass(alarmEntity, 'disarmed');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.entityLastChanged).toBe('2026-02-05T12:00:00Z');
+    });
+
+    it('non-triggered states have default priority 50', () => {
+      const hass = makeHass(alarmEntity, 'armed_away');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.priority).toBe(50);
     });
   });
 });

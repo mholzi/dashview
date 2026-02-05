@@ -420,7 +420,8 @@
       "triggered": "ALARM AUSGELÖST",
       "arming": "Wird scharf geschaltet…",
       "pending": "Ausstehend…",
-      "openSensors": "Offene Sensoren"
+      "openSensors": "Offene Sensoren",
+      "prefix": "Alarm ist"
     },
     "general": {
       "currently_are": "Aktuell sind",

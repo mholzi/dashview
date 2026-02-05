@@ -420,7 +420,8 @@
       "triggered": "ALARM TRIGGERED",
       "arming": "Arming…",
       "pending": "Pending…",
-      "openSensors": "Open Sensors"
+      "openSensors": "Open Sensors",
+      "prefix": "Alarm is"
     },
     "general": {
       "currently_are": "Currently",

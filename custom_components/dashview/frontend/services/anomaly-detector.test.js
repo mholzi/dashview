@@ -4,17 +4,19 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock i18n — return English strings matching the locale file
+// Mock i18n — matches real t(key, fallbackOrParams, fallbackWhenParams) signature
 vi.mock('../utils/i18n.js', () => ({
-  t: vi.fn((key, paramsOrFallback, fallback) => {
+  t: vi.fn((key, fallbackOrParams = null, fallbackWhenParams = null) => {
     const translations = {
       'time.duration_1_hour': '1 hour',
       'time.duration_n_hours': '{{count}} hours',
       'time.duration_1_minute': '1 minute',
       'time.duration_n_minutes': '{{count}} minutes',
     };
-    const template = translations[key] || fallback || key;
-    const params = typeof paramsOrFallback === 'object' ? paramsOrFallback : {};
+    const isFallbackString = typeof fallbackOrParams === 'string';
+    const fallback = isFallbackString ? fallbackOrParams : (fallbackWhenParams ?? key);
+    const params = isFallbackString ? {} : (fallbackOrParams || {});
+    const template = translations[key] || fallback;
     return template.replace(/\{\{(\w+)\}\}/g, (_, k) => params[k] ?? '');
   }),
 }));
