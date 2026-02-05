@@ -463,7 +463,11 @@
     "minutes_ago": "{{count}}m ago",
     "just_now": "Just now",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "duration_1_hour": "1 hour",
+    "duration_n_hours": "{{count}} hours",
+    "duration_1_minute": "1 minute",
+    "duration_n_minutes": "{{count}} minutes"
   },
   "lock": {
     "locked": "Locked",

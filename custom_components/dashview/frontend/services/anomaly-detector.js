@@ -6,6 +6,8 @@
  * configured thresholds, helping identify HVAC issues or open windows.
  */
 
+import { t } from '../utils/i18n.js';
+
 /**
  * @typedef {Object} HistoryPoint
  * @property {number} time - Timestamp in milliseconds
@@ -37,16 +39,18 @@ export function formatDuration(minutes) {
   if (minutes >= 60) {
     const hours = minutes / 60;
     if (hours === 1) {
-      return '1 hour';
+      return t('time.duration_1_hour', '1 hour');
     }
     // Check if it's a whole number of hours
     if (Number.isInteger(hours)) {
-      return `${hours} hours`;
+      return t('time.duration_n_hours', { count: hours }, `${hours} hours`);
     }
-    return `${hours.toFixed(1)} hours`;
+    return t('time.duration_n_hours', { count: hours.toFixed(1) }, `${hours.toFixed(1)} hours`);
   }
   const roundedMinutes = Math.round(minutes);
-  return roundedMinutes === 1 ? '1 minute' : `${roundedMinutes} minutes`;
+  return roundedMinutes === 1
+    ? t('time.duration_1_minute', '1 minute')
+    : t('time.duration_n_minutes', { count: roundedMinutes }, `${roundedMinutes} minutes`);
 }
 
 /**

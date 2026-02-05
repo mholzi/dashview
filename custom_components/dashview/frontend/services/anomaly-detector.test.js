@@ -3,6 +3,22 @@
  * Tests for rate-of-change detection in temperature and humidity sensors
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock i18n — return English strings matching the locale file
+vi.mock('../utils/i18n.js', () => ({
+  t: vi.fn((key, paramsOrFallback, fallback) => {
+    const translations = {
+      'time.duration_1_hour': '1 hour',
+      'time.duration_n_hours': '{{count}} hours',
+      'time.duration_1_minute': '1 minute',
+      'time.duration_n_minutes': '{{count}} minutes',
+    };
+    const template = translations[key] || fallback || key;
+    const params = typeof paramsOrFallback === 'object' ? paramsOrFallback : {};
+    return template.replace(/\{\{(\w+)\}\}/g, (_, k) => params[k] ?? '');
+  }),
+}));
+
 import {
   formatDuration,
   calculateRateOfChange,
