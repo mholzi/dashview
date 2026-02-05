@@ -275,16 +275,8 @@ export function getSmokeStatus(hass, infoTextConfig, enabledSmokeSensors, labelI
  * @returns {Object|null} Status object or null
  */
 export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.motion?.enabled) return null;
-
-  // Check if any enabled motion sensor is detecting motion
-  let enabledMotionSensorIds = getEnabledEntityIds(enabledMotionSensors);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledMotionSensorIds = enabledMotionSensorIds.filter(id => entityHasLabel(id, labelId));
-  }
-
-  if (enabledMotionSensorIds.length === 0) return null;
+  const enabledMotionSensorIds = _prepareEntityIds(hass, infoTextConfig, 'motion', enabledMotionSensors, labelId, entityHasLabel);
+  if (!enabledMotionSensorIds) return null;
 
   // Find all motion sensors that are currently "on" and get their last_changed times
   const activeMotionSensors = enabledMotionSensorIds
@@ -812,20 +804,14 @@ export function getDryerStatus(hass, infoTextConfig) {
   if (!hass || !infoTextConfig.dryer?.enabled) return null;
 
   const entityId = infoTextConfig.dryer.entity;
-  const finishTimeEntityId = infoTextConfig.dryer.finishTimeEntity;
-
   if (!entityId) return null;
 
   const operationState = hass.states[entityId];
-  const finishTime = finishTimeEntityId ? hass.states[finishTimeEntityId] : null;
-
   if (!operationState) return null;
 
   const state = operationState.state?.toLowerCase();
 
   if (state === "run" || state === "running" || state === "on") {
-    // Note: timeText calculated but not currently used in output
-    // const timeText = finishTime ? formatRemainingTime(finishTime.state) : "";
     return {
       state: "running",
       prefixText: t('status.appliances.dryer.prefix'),
