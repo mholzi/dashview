@@ -280,13 +280,14 @@ describe('getAlarmStatus', () => {
       expect(result.alertId).toBe(`alarm:${alarmEntity}`);
     });
 
-    it('maps arming state correctly', () => {
+    it('maps arming state with warning flag', () => {
       const hass = makeHass(alarmEntity, 'arming');
       const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
       expect(result.state).toBe('arming');
       expect(result.prefixText).toBe('Alarm is');
       expect(result.badgeText).toBe('arming…');
-      expect(result.isWarning).toBe(false);
+      expect(result.isWarning).toBe(true);
+      expect(result.priority).toBe(80);
     });
 
     it('maps pending state with warning flag', () => {
