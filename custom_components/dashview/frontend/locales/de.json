@@ -421,7 +421,8 @@
       "arming": "Wird scharf geschaltet…",
       "pending": "Ausstehend…",
       "openSensors": "Offene Sensoren",
-      "prefix": "Alarm ist"
+      "prefix": "Alarm ist",
+      "triggered_banner": "ALARM AUSGELÖST — Tippen zum Anzeigen"
     },
     "general": {
       "currently_are": "Aktuell sind",

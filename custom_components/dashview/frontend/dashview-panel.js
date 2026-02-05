@@ -3125,6 +3125,24 @@ if (typeof structuredClone === 'undefined') {
     _closeWeatherPopup() { this._closePopup('_weatherPopupOpen'); }
     _handleWeatherPopupOverlayClick(e) { this._handlePopupOverlay(e, () => this._closeWeatherPopup()); }
 
+    /**
+     * Returns the alarm-specific CSS badge class for a given state.
+     * Alarm classes take precedence over generic warning/critical styling.
+     * @param {string} state - The alarm state (disarmed, armed_home, etc.)
+     * @returns {string} CSS class name or empty string
+     */
+    _getAlarmBadgeClass(state) {
+      const alarmClasses = {
+        disarmed: 'alarm-disarmed',
+        armed_home: 'alarm-armed-home',
+        armed_away: 'alarm-armed-away',
+        armed_night: 'alarm-armed-night',
+        arming: 'alarm-arming',
+        pending: 'alarm-pending',
+      };
+      return alarmClasses[state] || '';
+    }
+
     _handleInfoTextClick(action) {
       if (action === 'security') this._openPopup('_securityPopupOpen');
       else if (action === 'lights') this._openPopup('_lightsPopupOpen');
@@ -4489,6 +4507,7 @@ if (typeof structuredClone === 'undefined') {
 
       // Track dismissed count for "Show all" UI
       const dismissedCount = uiStateStore ? uiStateStore.getDismissedCount() : 0;
+      const hasTriggeredAlarm = visibleStatusItems.some(s => s.state === 'triggered');
 
       // Use current weather sensors if configured, otherwise fallback to main weather entity
       const headerWeather = currentWeather || (weather ? { temperature: weather.temperature, condition: weather.state } : null);
@@ -4619,7 +4638,7 @@ if (typeof structuredClone === 'undefined') {
                   ${index > 0 ? html`<span class="text-segment">&nbsp;&nbsp;</span>` : ''}
                   <span class="text-segment">${status.prefixText} </span>
                   <span
-                    class="info-badge ${status.state === 'motion' || status.state === 'finished' || status.state === 'on' ? 'success' : ''} ${status.isCritical ? 'critical' : status.isWarning ? 'warning' : ''} ${status.clickAction ? 'clickable' : ''}"
+                    class="info-badge ${status.state === 'motion' || status.state === 'finished' || status.state === 'on' ? 'success' : ''} ${this._getAlarmBadgeClass(status.state) || (status.isCritical ? 'critical' : status.isWarning ? 'warning' : '')} ${status.clickAction ? 'clickable' : ''}"
                     @click=${status.clickAction ? () => this._handleInfoTextClick(status.clickAction) : null}
                   >
                     ${status.badgeIcon ? html`<ha-icon icon="${status.badgeIcon}" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon> ` : ''}${status.badgeText}${status.emoji || ''}
@@ -4645,6 +4664,19 @@ if (typeof structuredClone === 'undefined') {
                     <ha-icon icon="mdi:eye-off" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon>
                     ${t('status.dismissedCount', { count: dismissedCount })}
                   </span>
+                ` : ''}
+                ${hasTriggeredAlarm ? html`
+                  <div
+                    class="alarm-alert-banner"
+                    role="alert"
+                    aria-live="assertive"
+                    tabindex="0"
+                    @click=${() => this._handleInfoTextClick('security')}
+                    @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._handleInfoTextClick('security'); } }}
+                  >
+                    <ha-icon icon="mdi:shield-alert"></ha-icon>
+                    ${t('status.alarm.triggered_banner', 'ALARM TRIGGERED — Tap to view')}
+                  </div>
                 ` : ''}
               </div>
             `

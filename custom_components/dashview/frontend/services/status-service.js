@@ -1118,6 +1118,20 @@ export function getAlarmStatus(hass, infoTextConfig, alarmEntity) {
       isWarning: true,
       isCritical: true,
       priority: 100
+    },
+    arming: {
+      prefixText: t('status.alarm.prefix', 'Alarm is'),
+      badgeText: t('status.alarm.arming', 'arming…'),
+      emoji: '🛡️',
+      isWarning: true,
+      priority: 80
+    },
+    pending: {
+      prefixText: t('status.alarm.prefix', 'Alarm is'),
+      badgeText: t('status.alarm.pending', 'pending…'),
+      emoji: '🛡️',
+      isWarning: true,
+      priority: 90
     }
   };
 

@@ -421,7 +421,8 @@
       "arming": "Arming…",
       "pending": "Pending…",
       "openSensors": "Open Sensors",
-      "prefix": "Alarm is"
+      "prefix": "Alarm is",
+      "triggered_banner": "ALARM TRIGGERED — Tap to view"
     },
     "general": {
       "currently_are": "Currently",

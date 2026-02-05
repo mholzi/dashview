@@ -552,6 +552,53 @@ export const scenesStyles = `
     color: var(--dv-gray000);
   }
 
+  .info-text-row .info-badge.alarm-disarmed {
+    background: var(--dv-green);
+    color: var(--dv-gray000);
+  }
+
+  .info-text-row .info-badge.alarm-armed-home {
+    background: var(--dv-orange, #f59e0b);
+    color: var(--dv-gray000);
+  }
+
+  .info-text-row .info-badge.alarm-armed-away,
+  .info-text-row .info-badge.alarm-armed-night {
+    background: var(--dv-red);
+    color: var(--dv-gray000);
+  }
+
+  .info-text-row .info-badge.alarm-arming,
+  .info-text-row .info-badge.alarm-pending {
+    background: var(--dv-orange, #f59e0b);
+    color: var(--dv-gray000);
+  }
+
+  .info-text-row .alarm-alert-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    margin-top: 4px;
+    background: var(--error-color, #dc2626);
+    color: white;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    animation: pulse-critical 2s infinite;
+    transition: opacity 0.2s ease;
+  }
+
+  .info-text-row .alarm-alert-banner:hover {
+    opacity: 0.9;
+  }
+
+  .info-text-row .alarm-alert-banner ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
   .info-text-row .info-badge.clickable {
     cursor: pointer;
     transition: opacity 0.2s ease, transform 0.1s ease;
