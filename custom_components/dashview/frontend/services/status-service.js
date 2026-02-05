@@ -1335,32 +1335,32 @@ export function getAlarmStatus(hass, infoTextConfig, alarmEntity) {
   // Map states to display information
   const stateMapping = {
     disarmed: {
-      prefixText: 'Alarm ist',
-      badgeText: 'unscharf',
+      prefixText: t('status.alarm.disarmed'),
+      badgeText: t('status.alarm.disarmed'),
       emoji: '🛡️',
       isWarning: false
     },
     armed_home: {
-      prefixText: 'Alarm ist',
-      badgeText: 'scharf (Zuhause)',
+      prefixText: t('status.alarm.armed_home'),
+      badgeText: t('status.alarm.armed_home'),
       emoji: '🛡️',
       isWarning: false
     },
     armed_away: {
-      prefixText: 'Alarm ist',
-      badgeText: 'scharf (Abwesend)',
+      prefixText: t('status.alarm.armed_away'),
+      badgeText: t('status.alarm.armed_away'),
       emoji: '🛡️',
       isWarning: false
     },
     armed_night: {
-      prefixText: 'Alarm ist',
-      badgeText: 'scharf (Nacht)',
+      prefixText: t('status.alarm.armed_night'),
+      badgeText: t('status.alarm.armed_night'),
       emoji: '🛡️',
       isWarning: false
     },
     triggered: {
       prefixText: '⚠️',
-      badgeText: 'ALARM AUSGELÖST',
+      badgeText: t('status.alarm.triggered'),
       emoji: '🚨',
       suffixText: '!',
       isWarning: true,
