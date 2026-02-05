@@ -4619,7 +4619,7 @@ if (typeof structuredClone === 'undefined') {
                   ${index > 0 ? html`<span class="text-segment">&nbsp;&nbsp;</span>` : ''}
                   <span class="text-segment">${status.prefixText} </span>
                   <span
-                    class="info-badge ${status.state === 'motion' || status.state === 'finished' || status.state === 'on' ? 'success' : ''} ${status.isCritical ? 'critical' : status.isWarning ? 'warning' : ''} ${status.clickAction ? 'clickable' : ''}"
+                    class="info-badge ${status.state === 'motion' || status.state === 'finished' || status.state === 'on' ? 'success' : ''} ${status.isCritical ? 'critical' : status.isWarning ? 'warning' : ''} ${status.state === 'disarmed' ? 'alarm-disarmed' : status.state === 'armed_home' ? 'alarm-armed-home' : status.state === 'armed_away' ? 'alarm-armed-away' : status.state === 'armed_night' ? 'alarm-armed-night' : status.state === 'arming' ? 'alarm-arming' : status.state === 'pending' ? 'alarm-pending' : ''} ${status.clickAction ? 'clickable' : ''}"
                     @click=${status.clickAction ? () => this._handleInfoTextClick(status.clickAction) : null}
                   >
                     ${status.badgeIcon ? html`<ha-icon icon="${status.badgeIcon}" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon> ` : ''}${status.badgeText}${status.emoji || ''}
@@ -4645,6 +4645,15 @@ if (typeof structuredClone === 'undefined') {
                     <ha-icon icon="mdi:eye-off" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon>
                     ${t('status.dismissedCount', { count: dismissedCount })}
                   </span>
+                ` : ''}
+                ${visibleStatusItems.find(s => s.state === 'triggered') ? html`
+                  <div
+                    class="alarm-alert-banner"
+                    @click=${() => this._handleInfoTextClick('security')}
+                  >
+                    <ha-icon icon="mdi:shield-alert"></ha-icon>
+                    ${t('status.alarm.triggered_banner', 'ALARM TRIGGERED — Tap to view')}
+                  </div>
                 ` : ''}
               </div>
             `

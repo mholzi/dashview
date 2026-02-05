@@ -18,6 +18,9 @@ vi.mock('../utils/i18n.js', () => ({
       'status.alarm.armed_away': 'armed (Away)',
       'status.alarm.armed_night': 'armed (Night)',
       'status.alarm.triggered': 'ALARM TRIGGERED',
+      'status.alarm.arming': 'arming…',
+      'status.alarm.pending': 'pending…',
+      'status.alarm.triggered_banner': 'ALARM TRIGGERED — Tap to view',
     };
     if (translations[key] !== undefined) return translations[key];
     // Fallback logic matching real t()
@@ -275,6 +278,25 @@ describe('getAlarmStatus', () => {
       expect(result.isCritical).toBe(true);
       expect(result.priority).toBe(100);
       expect(result.alertId).toBe(`alarm:${alarmEntity}`);
+    });
+
+    it('maps arming state correctly', () => {
+      const hass = makeHass(alarmEntity, 'arming');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.state).toBe('arming');
+      expect(result.prefixText).toBe('Alarm is');
+      expect(result.badgeText).toBe('arming…');
+      expect(result.isWarning).toBe(false);
+    });
+
+    it('maps pending state with warning flag', () => {
+      const hass = makeHass(alarmEntity, 'pending');
+      const result = getAlarmStatus(hass, enabledConfig, alarmEntity);
+      expect(result.state).toBe('pending');
+      expect(result.prefixText).toBe('Alarm is');
+      expect(result.badgeText).toBe('pending…');
+      expect(result.isWarning).toBe(true);
+      expect(result.priority).toBe(90);
     });
 
     it('returns null for unknown alarm state', () => {
