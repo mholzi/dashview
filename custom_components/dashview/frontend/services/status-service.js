@@ -12,6 +12,103 @@ import {
 } from '../utils/helpers.js';
 import { t } from '../utils/i18n.js';
 
+// ==================== Internal Helpers ====================
+
+/**
+ * Prepare filtered entity IDs with enabled check and label filtering
+ * @param {Object} hass - Home Assistant instance
+ * @param {Object} infoTextConfig - Info text configuration
+ * @param {string} configKey - Key in infoTextConfig to check enabled state
+ * @param {Object} enabledEntities - Map of enabled entity IDs
+ * @param {string|null} labelId - Optional label ID to filter by
+ * @param {Function|null} entityHasLabel - Optional function to check if entity has label
+ * @returns {string[]|null} Filtered entity IDs or null if disabled/empty
+ */
+function _prepareEntityIds(hass, infoTextConfig, configKey, enabledEntities, labelId, entityHasLabel) {
+  if (!hass || !infoTextConfig[configKey]?.enabled) return null;
+  let ids = getEnabledEntityIds(enabledEntities);
+  if (labelId && entityHasLabel) {
+    ids = ids.filter(id => entityHasLabel(id, labelId));
+  }
+  return ids.length > 0 ? ids : null;
+}
+
+/**
+ * Find the entity that has been in its current state the longest
+ * @param {string[]} entityIds - Array of entity IDs
+ * @param {Object} hass - Home Assistant instance
+ * @returns {{ entity: string, minutes: number, lastChanged: Date|null }}
+ */
+function _findLongestDuration(entityIds, hass) {
+  const now = new Date();
+  let entity = entityIds[0];
+  let minutes = 0;
+  let lastChanged = null;
+
+  entityIds.forEach(entityId => {
+    const state = hass.states[entityId];
+    if (state?.last_changed) {
+      const changed = new Date(state.last_changed);
+      const mins = Math.floor((now - changed) / 60000);
+      if (mins > minutes) {
+        minutes = mins;
+        entity = entityId;
+        lastChanged = changed;
+      }
+    }
+  });
+
+  return { entity, minutes, lastChanged };
+}
+
+/**
+ * Format a duration in minutes to a human-readable i18n string
+ * @param {number} totalMinutes - Duration in minutes
+ * @returns {string} Formatted duration text
+ */
+function _formatDurationText(totalMinutes) {
+  const { days, hours, minutes } = calculateTimeDifference(totalMinutes * 60000);
+  if (days > 0) return t('common.time.duration_days', { days });
+  if (hours > 0) return t('common.time.duration_hours', { hours });
+  return t('common.time.duration_minutes', { minutes: minutes || totalMinutes });
+}
+
+/**
+ * Find sensors in an alert state, returning name and lastChanged for each
+ * @param {string[]} entityIds - Array of entity IDs
+ * @param {Object} hass - Home Assistant instance
+ * @param {string} alertState - State value that indicates alert (e.g., 'on')
+ * @returns {Array<{entityId: string, name: string, lastChanged: Date|null}>}
+ */
+function _findAlertSensors(entityIds, hass, alertState) {
+  return entityIds
+    .map(entityId => {
+      const state = hass.states[entityId];
+      if (state && state.state === alertState) {
+        return {
+          entityId,
+          name: state.attributes?.friendly_name || entityId,
+          lastChanged: state.last_changed ? new Date(state.last_changed) : null,
+        };
+      }
+      return null;
+    })
+    .filter(s => s !== null);
+}
+
+/**
+ * Get the earliest lastChanged sensor from a list (for aggregate alerts)
+ * @param {Array<{lastChanged: Date|null}>} sensors - Array of sensor objects
+ * @returns {Object} The sensor with the earliest lastChanged
+ */
+function _getEarliestSensor(sensors) {
+  return sensors.reduce((earliest, current) =>
+    current.lastChanged && (!earliest.lastChanged || current.lastChanged < earliest.lastChanged) ? current : earliest
+  );
+}
+
+// ==================== Status Provider Functions ====================
+
 /**
  * Get washer status for info text row
  * @param {Object} hass - Home Assistant instance
@@ -67,41 +164,15 @@ export function getWasherStatus(hass, infoTextConfig) {
  * @returns {Object|null} Status object or null
  */
 export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.water?.enabled) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'water', enabledWaterLeakSensors, labelId, entityHasLabel);
+  if (!ids) return null;
 
-  // Get enabled water leak sensor IDs
-  let enabledWaterLeakSensorIds = getEnabledEntityIds(enabledWaterLeakSensors);
+  const wetSensors = _findAlertSensors(ids, hass, 'on');
 
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledWaterLeakSensorIds = enabledWaterLeakSensorIds.filter(id => entityHasLabel(id, labelId));
-  }
-
-  if (enabledWaterLeakSensorIds.length === 0) return null;
-
-  // Find all sensors that are currently detecting water (state 'on')
-  const wetSensors = enabledWaterLeakSensorIds
-    .map(entityId => {
-      const state = hass.states[entityId];
-      if (state && state.state === 'on') {
-        return {
-          entityId,
-          name: state.attributes?.friendly_name || entityId,
-          lastChanged: state.last_changed ? new Date(state.last_changed) : null,
-        };
-      }
-      return null;
-    })
-    .filter(s => s !== null);
-
-  const leakDetected = wetSensors.length > 0;
-
-  if (leakDetected) {
-    // Alert state - water leak detected
+  if (wetSensors.length > 0) {
     const count = wetSensors.length;
 
     if (count === 1) {
-      // Single leak - show location
       const sensor = wetSensors[0];
       return {
         state: 'alert',
@@ -116,10 +187,7 @@ export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors
         entityLastChanged: sensor.lastChanged ? sensor.lastChanged.toISOString() : null,
       };
     } else {
-      // Multiple leaks - show count (use earliest lastChanged for aggregate)
-      const earliestSensor = wetSensors.reduce((earliest, current) =>
-        current.lastChanged && (!earliest.lastChanged || current.lastChanged < earliest.lastChanged) ? current : earliest
-      );
+      const earliest = _getEarliestSensor(wetSensors);
       return {
         state: 'alert',
         prefixText: t('status.water.leakDetected'),
@@ -130,11 +198,10 @@ export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors
         clickAction: 'water',
         priority: 100,
         alertId: 'water:multiple',
-        entityLastChanged: earliestSensor.lastChanged ? earliestSensor.lastChanged.toISOString() : null,
+        entityLastChanged: earliest.lastChanged ? earliest.lastChanged.toISOString() : null,
       };
     }
   } else {
-    // OK state - no leaks
     return {
       state: 'ok',
       prefixText: t('status.water.noLeaks'),
@@ -157,40 +224,15 @@ export function getWaterLeakStatus(hass, infoTextConfig, enabledWaterLeakSensors
  * @returns {Object|null} Status object or null
  */
 export function getSmokeStatus(hass, infoTextConfig, enabledSmokeSensors, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.smoke?.enabled) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'smoke', enabledSmokeSensors, labelId, entityHasLabel);
+  if (!ids) return null;
 
-  // Get enabled smoke sensor IDs
-  let enabledSmokeSensorIds = getEnabledEntityIds(enabledSmokeSensors);
-
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledSmokeSensorIds = enabledSmokeSensorIds.filter(id => entityHasLabel(id, labelId));
-  }
-
-  if (enabledSmokeSensorIds.length === 0) return null;
-
-  // Find all sensors that are currently detecting smoke (state 'on')
-  const activeSensors = enabledSmokeSensorIds
-    .map(entityId => {
-      const state = hass.states[entityId];
-      if (state && state.state === 'on') {
-        return {
-          entityId,
-          name: state.attributes?.friendly_name || entityId,
-          lastChanged: state.last_changed ? new Date(state.last_changed) : null,
-        };
-      }
-      return null;
-    })
-    .filter(s => s !== null);
-
-  // Only show when smoke is actively detected — no "all clear" status
+  const activeSensors = _findAlertSensors(ids, hass, 'on');
   if (activeSensors.length === 0) return null;
 
   const count = activeSensors.length;
 
   if (count === 1) {
-    // Single detector — show name
     const sensor = activeSensors[0];
     return {
       state: 'alert',
@@ -206,10 +248,7 @@ export function getSmokeStatus(hass, infoTextConfig, enabledSmokeSensors, labelI
       entityLastChanged: sensor.lastChanged ? sensor.lastChanged.toISOString() : null,
     };
   } else {
-    // Multiple detectors — show count
-    const earliestSensor = activeSensors.reduce((earliest, current) =>
-      current.lastChanged && (!earliest.lastChanged || current.lastChanged < earliest.lastChanged) ? current : earliest
-    );
+    const earliest = _getEarliestSensor(activeSensors);
     return {
       state: 'alert',
       prefixText: t('status.smoke.detected'),
@@ -221,7 +260,7 @@ export function getSmokeStatus(hass, infoTextConfig, enabledSmokeSensors, labelI
       clickAction: 'smoke',
       priority: 100,
       alertId: 'smoke:multiple',
-      entityLastChanged: earliestSensor.lastChanged ? earliestSensor.lastChanged.toISOString() : null,
+      entityLastChanged: earliest.lastChanged ? earliest.lastChanged.toISOString() : null,
     };
   }
 }
@@ -350,79 +389,30 @@ export function getMotionStatus(hass, infoTextConfig, enabledMotionSensors, labe
  * @returns {Object|null} Status object or null
  */
 export function getGarageStatus(hass, infoTextConfig, enabledGarages, garageOpenTooLongMinutes = 30, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.garage?.enabled) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'garage', enabledGarages, labelId, entityHasLabel);
+  if (!ids) return null;
 
-  let enabledGarageIds = getEnabledEntityIds(enabledGarages);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledGarageIds = enabledGarageIds.filter(id => entityHasLabel(id, labelId));
-  }
-  if (enabledGarageIds.length === 0) return null;
-
-  const openGarages = filterEntitiesByState(enabledGarageIds, hass, 'open');
+  const openGarages = filterEntitiesByState(ids, hass, 'open');
   if (openGarages.length === 0) return null;
 
   const count = openGarages.length;
-  const now = new Date();
+  const { entity: longestEntity, minutes: longestMinutes, lastChanged } = _findLongestDuration(openGarages, hass);
 
-  // Find the longest open duration among all open garages
-  let longestOpenMinutes = 0;
-  openGarages.forEach(entityId => {
-    const state = hass.states[entityId];
-    if (state && state.last_changed) {
-      const lastChanged = new Date(state.last_changed);
-      const diffMs = now - lastChanged;
-      const openMinutes = Math.floor(diffMs / 60000);
-      if (openMinutes > longestOpenMinutes) {
-        longestOpenMinutes = openMinutes;
-      }
-    }
-  });
-
-  // Check if any garage has been open too long
-  const isOpenTooLong = longestOpenMinutes >= garageOpenTooLongMinutes;
-
-  if (isOpenTooLong) {
-    // Format duration text
-    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
-    let durationText = '';
-    if (days > 0) {
-      durationText = t('common.time.duration_days', { days });
-    } else if (hours > 0) {
-      durationText = t('common.time.duration_hours', { hours });
-    } else {
-      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
-    }
-
-    // Find the garage that's been open longest for alertId
-    let longestOpenGarage = openGarages[0];
-    let longestLastChanged = null;
-    openGarages.forEach(entityId => {
-      const state = hass.states[entityId];
-      if (state && state.last_changed) {
-        const lastChanged = new Date(state.last_changed);
-        if (!longestLastChanged || lastChanged < longestLastChanged) {
-          longestLastChanged = lastChanged;
-          longestOpenGarage = entityId;
-        }
-      }
-    });
-
+  if (longestMinutes >= garageOpenTooLongMinutes) {
     return {
       state: "warning",
       prefixText: "",
-      badgeText: t('status.garage.open_too_long', { duration: durationText }),
+      badgeText: t('status.garage.open_too_long', { duration: _formatDurationText(longestMinutes) }),
       badgeIcon: "mdi:garage-alert",
       suffixText: "",
       clickAction: "garage",
       isWarning: true,
       priority: 91,
-      alertId: count === 1 ? `garage:${longestOpenGarage}` : 'garage:multiple',
-      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
+      alertId: count === 1 ? `garage:${longestEntity}` : 'garage:multiple',
+      entityLastChanged: lastChanged ? lastChanged.toISOString() : null,
     };
   }
 
-  // Normal open status (no warning)
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
@@ -444,21 +434,14 @@ export function getGarageStatus(hass, infoTextConfig, enabledGarages, garageOpen
  * @returns {Object|null} Status object or null
  */
 export function getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLongMinutes = 30, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.doors?.enabled) return null;
-
-  let enabledDoorIds = getEnabledEntityIds(enabledDoors);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledDoorIds = enabledDoorIds.filter(id => entityHasLabel(id, labelId));
-  }
-  if (enabledDoorIds.length === 0) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'doors', enabledDoors, labelId, entityHasLabel);
+  if (!ids) return null;
 
   // Filter for binary_sensors with device_class: door that are 'on' (open)
-  const openDoors = enabledDoorIds
+  const openDoors = ids
     .map(entityId => {
       const state = hass.states[entityId];
       if (!state || state.state !== 'on') return null;
-      // Only include actual door sensors (device_class: door)
       if (state.attributes?.device_class !== 'door') return null;
       return {
         entityId,
@@ -470,39 +453,22 @@ export function getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLon
 
   if (openDoors.length === 0) return null;
 
+  // Find the door that's been open longest
   const now = new Date();
-
-  // Find the longest open duration and the door that's been open longest
   let longestOpenDoor = openDoors[0];
   let longestOpenMinutes = 0;
-
   openDoors.forEach(door => {
     if (door.lastChanged) {
-      const diffMs = now - door.lastChanged;
-      const openMinutes = Math.floor(diffMs / 60000);
-      if (openMinutes > longestOpenMinutes) {
-        longestOpenMinutes = openMinutes;
+      const mins = Math.floor((now - door.lastChanged) / 60000);
+      if (mins > longestOpenMinutes) {
+        longestOpenMinutes = mins;
         longestOpenDoor = door;
       }
     }
   });
 
-  // Check if any door has been open too long
-  const isOpenTooLong = longestOpenMinutes >= doorOpenTooLongMinutes;
-
-  if (isOpenTooLong) {
-    // Format duration text
-    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
-    let durationText = '';
-    if (days > 0) {
-      durationText = t('common.time.duration_days', { days });
-    } else if (hours > 0) {
-      durationText = t('common.time.duration_hours', { hours });
-    } else {
-      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
-    }
-
-    // Show door name if single door, count if multiple
+  if (longestOpenMinutes >= doorOpenTooLongMinutes) {
+    const durationText = _formatDurationText(longestOpenMinutes);
     const displayText = openDoors.length === 1
       ? t('status.door.open_too_long_single', { name: longestOpenDoor.name, duration: durationText })
       : t('status.door.open_too_long_multiple', { count: openDoors.length, duration: durationText });
@@ -521,7 +487,6 @@ export function getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLon
     };
   }
 
-  // Normal open status (no warning) - just show count of open doors
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
@@ -543,79 +508,30 @@ export function getDoorStatus(hass, infoTextConfig, enabledDoors, doorOpenTooLon
  * @returns {Object|null} Status object or null
  */
 export function getWindowsStatus(hass, infoTextConfig, enabledWindows, windowOpenTooLongMinutes = 120, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.windows?.enabled) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'windows', enabledWindows, labelId, entityHasLabel);
+  if (!ids) return null;
 
-  let enabledWindowIds = getEnabledEntityIds(enabledWindows);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledWindowIds = enabledWindowIds.filter(id => entityHasLabel(id, labelId));
-  }
-  if (enabledWindowIds.length === 0) return null;
-
-  const openWindows = filterEntitiesByState(enabledWindowIds, hass, 'on');
+  const openWindows = filterEntitiesByState(ids, hass, 'on');
   if (openWindows.length === 0) return null;
 
   const count = openWindows.length;
-  const now = new Date();
+  const { entity: longestEntity, minutes: longestMinutes, lastChanged } = _findLongestDuration(openWindows, hass);
 
-  // Find the longest open duration among all open windows
-  let longestOpenMinutes = 0;
-  openWindows.forEach(entityId => {
-    const state = hass.states[entityId];
-    if (state && state.last_changed) {
-      const lastChanged = new Date(state.last_changed);
-      const diffMs = now - lastChanged;
-      const openMinutes = Math.floor(diffMs / 60000);
-      if (openMinutes > longestOpenMinutes) {
-        longestOpenMinutes = openMinutes;
-      }
-    }
-  });
-
-  // Check if any window has been open too long
-  const isOpenTooLong = longestOpenMinutes >= windowOpenTooLongMinutes;
-
-  if (isOpenTooLong) {
-    // Format duration text
-    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
-    let durationText = '';
-    if (days > 0) {
-      durationText = t('common.time.duration_days', { days });
-    } else if (hours > 0) {
-      durationText = t('common.time.duration_hours', { hours });
-    } else {
-      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
-    }
-
-    // Find the window that's been open longest for alertId
-    let longestOpenWindow = openWindows[0];
-    let longestLastChanged = null;
-    openWindows.forEach(entityId => {
-      const state = hass.states[entityId];
-      if (state && state.last_changed) {
-        const lastChanged = new Date(state.last_changed);
-        if (!longestLastChanged || lastChanged < longestLastChanged) {
-          longestLastChanged = lastChanged;
-          longestOpenWindow = entityId;
-        }
-      }
-    });
-
+  if (longestMinutes >= windowOpenTooLongMinutes) {
     return {
       state: "warning",
       prefixText: "",
       badgeText: `${count}`,
       emoji: "🪟",
-      suffixText: ` ${t('status.general.open_suffix')} (${durationText})`,
+      suffixText: ` ${t('status.general.open_suffix')} (${_formatDurationText(longestMinutes)})`,
       clickAction: "security",
       isWarning: true,
       priority: 90,
-      alertId: count === 1 ? `window:${longestOpenWindow}` : 'window:multiple',
-      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
+      alertId: count === 1 ? `window:${longestEntity}` : 'window:multiple',
+      entityLastChanged: lastChanged ? lastChanged.toISOString() : null,
     };
   }
 
-  // Normal open status (no warning)
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
@@ -636,31 +552,21 @@ export function getWindowsStatus(hass, infoTextConfig, enabledWindows, windowOpe
  * @returns {Object|null} Status object or null
  */
 export function getLightsOnStatus(hass, infoTextConfig, enabledLights, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.lights?.enabled) return null;
-
-  let enabledLightIds = getEnabledEntityIds(enabledLights);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledLightIds = enabledLightIds.filter(id => entityHasLabel(id, labelId));
-  }
+  let ids = _prepareEntityIds(hass, infoTextConfig, 'lights', enabledLights, labelId, entityHasLabel);
+  if (!ids) return null;
 
   // Exclude non-light domains (automation, script, scene with light label)
   const excludedDomains = ['automation', 'script', 'scene'];
-  enabledLightIds = enabledLightIds.filter(id => {
-    const domain = id.split('.')[0];
-    return !excludedDomains.includes(domain);
-  });
+  ids = ids.filter(id => !excludedDomains.includes(id.split('.')[0]));
+  if (ids.length === 0) return null;
 
-  if (enabledLightIds.length === 0) return null;
-
-  const lightsOn = filterEntitiesByState(enabledLightIds, hass, 'on');
+  const lightsOn = filterEntitiesByState(ids, hass, 'on');
   if (lightsOn.length === 0) return null;
 
-  const count = lightsOn.length;
   return {
     state: "on",
     prefixText: t('status.lights.are_on'),
-    badgeText: `${count}`,
+    badgeText: `${lightsOn.length}`,
     emoji: "💡",
     suffixText: t('status.lights.suffix'),
     clickAction: "lights",
@@ -678,79 +584,30 @@ export function getLightsOnStatus(hass, infoTextConfig, enabledLights, labelId =
  * @returns {Object|null} Status object or null
  */
 export function getRoofWindowStatus(hass, infoTextConfig, enabledRoofWindows, roofWindowOpenTooLongMinutes = 120, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.roofWindows?.enabled) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'roofWindows', enabledRoofWindows, labelId, entityHasLabel);
+  if (!ids) return null;
 
-  let enabledRoofWindowIds = getEnabledEntityIds(enabledRoofWindows);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledRoofWindowIds = enabledRoofWindowIds.filter(id => entityHasLabel(id, labelId));
-  }
-  if (enabledRoofWindowIds.length === 0) return null;
-
-  const openRoofWindows = filterEntitiesByState(enabledRoofWindowIds, hass, 'on');
+  const openRoofWindows = filterEntitiesByState(ids, hass, 'on');
   if (openRoofWindows.length === 0) return null;
 
   const count = openRoofWindows.length;
-  const now = new Date();
+  const { entity: longestEntity, minutes: longestMinutes, lastChanged } = _findLongestDuration(openRoofWindows, hass);
 
-  // Find the longest open duration among all open roof windows
-  let longestOpenMinutes = 0;
-  openRoofWindows.forEach(entityId => {
-    const state = hass.states[entityId];
-    if (state && state.last_changed) {
-      const lastChanged = new Date(state.last_changed);
-      const diffMs = now - lastChanged;
-      const openMinutes = Math.floor(diffMs / 60000);
-      if (openMinutes > longestOpenMinutes) {
-        longestOpenMinutes = openMinutes;
-      }
-    }
-  });
-
-  // Check if any roof window has been open too long
-  const isOpenTooLong = longestOpenMinutes >= roofWindowOpenTooLongMinutes;
-
-  if (isOpenTooLong) {
-    // Format duration text
-    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
-    let durationText = '';
-    if (days > 0) {
-      durationText = t('common.time.duration_days', { days });
-    } else if (hours > 0) {
-      durationText = t('common.time.duration_hours', { hours });
-    } else {
-      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
-    }
-
-    // Find the roof window that's been open longest for alertId
-    let longestOpenRoofWindow = openRoofWindows[0];
-    let longestLastChanged = null;
-    openRoofWindows.forEach(entityId => {
-      const state = hass.states[entityId];
-      if (state && state.last_changed) {
-        const lastChanged = new Date(state.last_changed);
-        if (!longestLastChanged || lastChanged < longestLastChanged) {
-          longestLastChanged = lastChanged;
-          longestOpenRoofWindow = entityId;
-        }
-      }
-    });
-
+  if (longestMinutes >= roofWindowOpenTooLongMinutes) {
     return {
       state: "warning",
       prefixText: "",
       badgeText: `${count}`,
       badgeIcon: "mdi:window-open-variant",
-      suffixText: ` ${t('status.roofWindow.open_too_long')} (${durationText})`,
+      suffixText: ` ${t('status.roofWindow.open_too_long')} (${_formatDurationText(longestMinutes)})`,
       clickAction: "security",
       isWarning: true,
       priority: 89,
-      alertId: count === 1 ? `roofWindow:${longestOpenRoofWindow}` : 'roofWindow:multiple',
-      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
+      alertId: count === 1 ? `roofWindow:${longestEntity}` : 'roofWindow:multiple',
+      entityLastChanged: lastChanged ? lastChanged.toISOString() : null,
     };
   }
 
-  // Normal open status (no warning)
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
@@ -772,92 +629,43 @@ export function getRoofWindowStatus(hass, infoTextConfig, enabledRoofWindows, ro
  * @returns {Object|null} Status object or null
  */
 export function getCoversStatus(hass, infoTextConfig, enabledCovers, coverOpenTooLongMinutes = 240, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.covers?.enabled) return null;
-
-  let enabledCoverIds = getEnabledEntityIds(enabledCovers);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledCoverIds = enabledCoverIds.filter(id => entityHasLabel(id, labelId));
-  }
+  let ids = _prepareEntityIds(hass, infoTextConfig, 'covers', enabledCovers, labelId, entityHasLabel);
+  if (!ids) return null;
 
   // Only include actual cover domain entities (not automations, etc.)
-  enabledCoverIds = enabledCoverIds.filter(id => id.startsWith('cover.'));
+  ids = ids.filter(id => id.startsWith('cover.'));
+  if (ids.length === 0) return null;
 
-  if (enabledCoverIds.length === 0) return null;
-
-  const openCovers = enabledCoverIds
-    .filter(entityId => {
-      const state = hass.states[entityId];
-      return state && state.state !== 'closed';
-    });
-
+  // Covers use !== 'closed' (catches open, opening, closing, stopped)
+  const openCovers = ids.filter(entityId => {
+    const state = hass.states[entityId];
+    return state && state.state !== 'closed';
+  });
   if (openCovers.length === 0) return null;
 
   const count = openCovers.length;
-  const now = new Date();
+  const coverLabel = count === 1 ? t('status.covers.label_singular') : t('status.covers.label_plural');
+  const { entity: longestEntity, minutes: longestMinutes, lastChanged } = _findLongestDuration(openCovers, hass);
 
-  // Find the longest open duration among all open covers
-  let longestOpenMinutes = 0;
-  openCovers.forEach(entityId => {
-    const state = hass.states[entityId];
-    if (state && state.last_changed) {
-      const lastChanged = new Date(state.last_changed);
-      const diffMs = now - lastChanged;
-      const openMinutes = Math.floor(diffMs / 60000);
-      if (openMinutes > longestOpenMinutes) {
-        longestOpenMinutes = openMinutes;
-      }
-    }
-  });
-
-  // Check if any cover has been open too long
-  const isOpenTooLong = longestOpenMinutes >= coverOpenTooLongMinutes;
-
-  if (isOpenTooLong) {
-    // Format duration text
-    const { days, hours, minutes } = calculateTimeDifference(longestOpenMinutes * 60000);
-    let durationText = '';
-    if (days > 0) {
-      durationText = t('common.time.duration_days', { days });
-    } else if (hours > 0) {
-      durationText = t('common.time.duration_hours', { hours });
-    } else {
-      durationText = t('common.time.duration_minutes', { minutes: minutes || longestOpenMinutes });
-    }
-
-    // Find the cover that's been open longest for alertId
-    let longestOpenCover = openCovers[0];
-    let longestLastChanged = null;
-    openCovers.forEach(entityId => {
-      const state = hass.states[entityId];
-      if (state && state.last_changed) {
-        const lastChanged = new Date(state.last_changed);
-        if (!longestLastChanged || lastChanged < longestLastChanged) {
-          longestLastChanged = lastChanged;
-          longestOpenCover = entityId;
-        }
-      }
-    });
-
+  if (longestMinutes >= coverOpenTooLongMinutes) {
     return {
       state: "warning",
       prefixText: "",
-      badgeText: `${count} ${count === 1 ? t('status.covers.label_singular') : t('status.covers.label_plural')}`,
+      badgeText: `${count} ${coverLabel}`,
       badgeIcon: "mdi:window-shutter-alert",
-      suffixText: ` ${t('status.general.open_suffix')} (${durationText})`,
+      suffixText: ` ${t('status.general.open_suffix')} (${_formatDurationText(longestMinutes)})`,
       clickAction: "covers",
       isWarning: true,
       priority: 88,
-      alertId: count === 1 ? `cover:${longestOpenCover}` : 'cover:multiple',
-      entityLastChanged: longestLastChanged ? longestLastChanged.toISOString() : null,
+      alertId: count === 1 ? `cover:${longestEntity}` : 'cover:multiple',
+      entityLastChanged: lastChanged ? lastChanged.toISOString() : null,
     };
   }
 
-  // Normal open status (no warning)
   return {
     state: "open",
     prefixText: t('status.general.currently_are'),
-    badgeText: `${count} ${count === 1 ? t('status.covers.label_singular') : t('status.covers.label_plural')}`,
+    badgeText: `${count} ${coverLabel}`,
     badgeIcon: "mdi:window-shutter-open",
     suffixText: t('status.general.open_suffix'),
     clickAction: "covers",
@@ -875,65 +683,31 @@ export function getCoversStatus(hass, infoTextConfig, enabledCovers, coverOpenTo
  * @returns {Object|null} Status object or null
  */
 export function getLockStatus(hass, infoTextConfig, enabledLocks, lockUnlockedTooLongMinutes = 30, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.locks?.enabled) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'locks', enabledLocks, labelId, entityHasLabel);
+  if (!ids) return null;
 
-  let enabledLockIds = getEnabledEntityIds(enabledLocks);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledLockIds = enabledLockIds.filter(id => entityHasLabel(id, labelId));
-  }
-  if (enabledLockIds.length === 0) return null;
-
-  // Find all locks that are currently unlocked
-  const unlockedLocks = enabledLockIds
-    .map(entityId => {
-      const state = hass.states[entityId];
-      if (!state || state.state !== 'unlocked') return null;
-      return {
-        entityId,
-        name: state.attributes?.friendly_name || entityId,
-        lastChanged: state.last_changed ? new Date(state.last_changed) : null,
-      };
-    })
-    .filter(l => l !== null);
-
+  // Find all locks that are currently unlocked (uses name for display)
+  const unlockedLocks = _findAlertSensors(ids, hass, 'unlocked');
   if (unlockedLocks.length === 0) return null;
 
+  // Find the lock that's been unlocked longest
   const now = new Date();
-
-  // Find the longest unlocked duration and the lock that's been unlocked longest
-  let longestUnlockedLock = unlockedLocks[0];
-  let longestUnlockedMinutes = 0;
-
+  let longestLock = unlockedLocks[0];
+  let longestMinutes = 0;
   unlockedLocks.forEach(lock => {
     if (lock.lastChanged) {
-      const diffMs = now - lock.lastChanged;
-      const unlockedMinutes = Math.floor(diffMs / 60000);
-      if (unlockedMinutes > longestUnlockedMinutes) {
-        longestUnlockedMinutes = unlockedMinutes;
-        longestUnlockedLock = lock;
+      const mins = Math.floor((now - lock.lastChanged) / 60000);
+      if (mins > longestMinutes) {
+        longestMinutes = mins;
+        longestLock = lock;
       }
     }
   });
 
-  // Check if any lock has been unlocked too long
-  const isUnlockedTooLong = longestUnlockedMinutes >= lockUnlockedTooLongMinutes;
-
-  if (isUnlockedTooLong) {
-    // Format duration text
-    const { days, hours, minutes } = calculateTimeDifference(longestUnlockedMinutes * 60000);
-    let durationText = '';
-    if (days > 0) {
-      durationText = t('common.time.duration_days', { days });
-    } else if (hours > 0) {
-      durationText = t('common.time.duration_hours', { hours });
-    } else {
-      durationText = t('common.time.duration_minutes', { minutes: minutes || longestUnlockedMinutes });
-    }
-
-    // Show lock name if single lock, count if multiple
+  if (longestMinutes >= lockUnlockedTooLongMinutes) {
+    const durationText = _formatDurationText(longestMinutes);
     const displayText = unlockedLocks.length === 1
-      ? t('status.lock.unlocked_too_long_single', { name: longestUnlockedLock.name, duration: durationText })
+      ? t('status.lock.unlocked_too_long_single', { name: longestLock.name, duration: durationText })
       : t('status.lock.unlocked_too_long_multiple', { count: unlockedLocks.length, duration: durationText });
 
     return {
@@ -945,12 +719,11 @@ export function getLockStatus(hass, infoTextConfig, enabledLocks, lockUnlockedTo
       clickAction: "security",
       isWarning: true,
       priority: 93,
-      alertId: unlockedLocks.length === 1 ? `lock:${longestUnlockedLock.entityId}` : 'lock:multiple',
-      entityLastChanged: longestUnlockedLock.lastChanged ? longestUnlockedLock.lastChanged.toISOString() : null,
+      alertId: unlockedLocks.length === 1 ? `lock:${longestLock.entityId}` : 'lock:multiple',
+      entityLastChanged: longestLock.lastChanged ? longestLock.lastChanged.toISOString() : null,
     };
   }
 
-  // Normal unlocked status (no warning) - just show count
   return {
     state: "unlocked",
     prefixText: t('status.general.currently_are'),
@@ -971,23 +744,16 @@ export function getLockStatus(hass, infoTextConfig, enabledLocks, lockUnlockedTo
  * @returns {Object|null} Status object or null
  */
 export function getTVsStatus(hass, infoTextConfig, enabledTVs, labelId = null, entityHasLabel = null) {
-  if (!hass || !infoTextConfig.tvs?.enabled) return null;
+  const ids = _prepareEntityIds(hass, infoTextConfig, 'tvs', enabledTVs, labelId, entityHasLabel);
+  if (!ids) return null;
 
-  let enabledTVIds = getEnabledEntityIds(enabledTVs);
-  // Filter by label if provided
-  if (labelId && entityHasLabel) {
-    enabledTVIds = enabledTVIds.filter(id => entityHasLabel(id, labelId));
-  }
-  if (enabledTVIds.length === 0) return null;
-
-  const tvsOn = filterEntitiesByState(enabledTVIds, hass, 'on');
+  const tvsOn = filterEntitiesByState(ids, hass, 'on');
   if (tvsOn.length === 0) return null;
 
-  const count = tvsOn.length;
   return {
     state: "on",
     prefixText: t('status.tvs.are_on'),
-    badgeText: `${count}`,
+    badgeText: `${tvsOn.length}`,
     badgeIcon: "mdi:television",
     suffixText: t('status.tvs.suffix'),
     clickAction: "tvs",
