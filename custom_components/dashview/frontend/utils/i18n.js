@@ -286,10 +286,10 @@ async function _doInitI18n(lang) {
  *   t('status.lights_on', { count: 3 }) // "3 lights on"
  *   t('greeting', { name: '<script>' }) // "Hello, &lt;script&gt;!" (XSS safe)
  */
-export function t(key, fallbackOrParams = null) {
-  // Determine if second arg is a fallback string or params object
+export function t(key, fallbackOrParams = null, fallbackWhenParams = null) {
+  // Support 3-arg form: t(key, params, fallback) — and 2-arg: t(key, fallback) or t(key, params)
   const isFallbackString = typeof fallbackOrParams === 'string';
-  const fallback = isFallbackString ? fallbackOrParams : key;
+  const fallback = isFallbackString ? fallbackOrParams : (fallbackWhenParams ?? key);
   const params = isFallbackString ? {} : (fallbackOrParams || {});
 
   // Navigate to nested key
