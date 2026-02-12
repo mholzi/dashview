@@ -558,12 +558,17 @@ async def websocket_delete_photo(
 
     # Convert public URL to file path
     filename = path.replace(PHOTO_URL_PREFIX + "/", "")
-    # Prevent directory traversal
-    if "/" in filename or "\\" in filename or ".." in filename:
-        connection.send_error(msg["id"], "invalid_path", "Invalid file path")
+    # SECURITY: Reuse the same validation as upload to prevent path traversal (#167)
+    upload_dir = Path(hass.config.path(PHOTO_UPLOAD_DIR))
+    try:
+        safe_filename, file_path = validate_and_sanitize_filename(filename, upload_dir)
+    except ValueError as err:
+        _LOGGER.warning(
+            "SECURITY: Delete path traversal attempt rejected | filename=%s | error=%s",
+            filename, str(err)
+        )
+        connection.send_error(msg["id"], "invalid_path", str(err))
         return
-
-    file_path = Path(hass.config.path(PHOTO_UPLOAD_DIR)) / filename
 
     # Delete the file if it exists
     try:
