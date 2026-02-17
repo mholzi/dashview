@@ -15,39 +15,11 @@
 
 // ============================================================================
 // structuredClone Polyfill (Safari <15.4, Chrome <98, Firefox <94)
-// MUST run synchronously before any other code
+// MUST run synchronously before any other code.
+// Single source of truth: utils/polyfills.js
 // ============================================================================
-if (typeof structuredClone === 'undefined') {
-  globalThis.structuredClone = function(obj, seen = new WeakSet()) {
-    if (obj === null || typeof obj !== 'object') return obj;
-    if (seen.has(obj)) {
-      throw new DOMException('Circular reference detected', 'DataCloneError');
-    }
-    seen.add(obj);
-    if (obj instanceof Date) return new Date(obj);
-    if (obj instanceof RegExp) return new RegExp(obj);
-    if (obj instanceof Map) {
-      const clone = new Map();
-      obj.forEach((v, k) => clone.set(structuredClone(k, seen), structuredClone(v, seen)));
-      return clone;
-    }
-    if (obj instanceof Set) {
-      const clone = new Set();
-      obj.forEach(v => clone.add(structuredClone(v, seen)));
-      return clone;
-    }
-    if (Array.isArray(obj)) {
-      return obj.map(item => structuredClone(item, seen));
-    }
-    const clone = {};
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        clone[key] = structuredClone(obj[key], seen);
-      }
-    }
-    return clone;
-  };
-}
+import { initPolyfills } from './utils/polyfills.js';
+initPolyfills();
 
 // Wait for HA frontend to be ready, then load
 (async () => {
