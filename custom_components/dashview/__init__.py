@@ -161,24 +161,27 @@ async def async_setup_frontend(hass: HomeAssistant) -> None:
         js_url = f"{URL_BASE}/dashview-panel.js?v={VERSION}"
         _LOGGER.info("Using unbundled frontend (dev mode)")
 
-    # Register the panel (only if not already registered)
+    # Always (re-)register the panel to ensure js_url stays current
+    # after version bumps. async_register_built_in_panel overwrites
+    # any existing registration for the same frontend_url_path.
     panel_url = PANEL_URL.lstrip("/")
-    if panel_url not in hass.data.get("frontend_panels", {}):
-        async_register_built_in_panel(
-            hass,
-            component_name="custom",
-            sidebar_title=PANEL_TITLE,
-            sidebar_icon=PANEL_ICON,
-            frontend_url_path=panel_url,
-            require_admin=False,
-            config={
-                "_panel_custom": {
-                    "name": PANEL_NAME,
-                    "js_url": js_url,
-                    "embed_iframe": False,
-                }
-            },
-        )
-        _LOGGER.info("Dashview frontend panel registered")
-    else:
-        _LOGGER.info("Dashview frontend panel already registered, skipping")
+    try:
+        async_remove_panel(hass, panel_url)
+    except Exception:  # noqa: BLE001
+        pass  # Panel may not exist yet on first install
+    async_register_built_in_panel(
+        hass,
+        component_name="custom",
+        sidebar_title=PANEL_TITLE,
+        sidebar_icon=PANEL_ICON,
+        frontend_url_path=panel_url,
+        require_admin=False,
+        config={
+            "_panel_custom": {
+                "name": PANEL_NAME,
+                "js_url": js_url,
+                "embed_iframe": False,
+            }
+        },
+    )
+    _LOGGER.info("Dashview frontend panel registered: %s", js_url)
