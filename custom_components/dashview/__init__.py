@@ -165,10 +165,8 @@ async def async_setup_frontend(hass: HomeAssistant) -> None:
     # after version bumps. async_register_built_in_panel overwrites
     # any existing registration for the same frontend_url_path.
     panel_url = PANEL_URL.lstrip("/")
-    try:
+    if panel_url in hass.data.get("frontend_panels", {}):
         async_remove_panel(hass, panel_url)
-    except Exception:  # noqa: BLE001
-        pass  # Panel may not exist yet on first install
     async_register_built_in_panel(
         hass,
         component_name="custom",
