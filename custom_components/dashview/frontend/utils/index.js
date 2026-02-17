@@ -6,7 +6,8 @@
  *   import { formatDate, getAreaIcon, triggerHaptic } from './utils/index.js';
  *
  * Polyfills:
- *   structuredClone polyfill is imported from polyfills.js at the top of dashview-panel.js.
+ *   structuredClone polyfill is inlined in dashview-panel.js (classic script constraint).
+ *   Canonical implementation in polyfills.js — both must stay in sync.
  *   The polyfills.js module provides the same implementation for testing.
  */
 

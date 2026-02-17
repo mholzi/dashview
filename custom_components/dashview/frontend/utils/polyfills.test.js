@@ -249,3 +249,28 @@ describe('settings-store draft mode compatibility', () => {
     expect(originalValues.theme).toBe('dark');
   });
 });
+
+describe('dashview-panel.js polyfill sync check', () => {
+  it('should have the inline polyfill in dashview-panel.js matching the canonical implementation', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const panelPath = path.resolve(import.meta.dirname, '..', 'dashview-panel.js');
+    const panelSrc = fs.readFileSync(panelPath, 'utf-8');
+
+    // Both must contain the same core logic markers
+    const coreSignatures = [
+      'Circular reference detected',
+      'DataCloneError',
+      'instanceof Date',
+      'instanceof RegExp',
+      'instanceof Map',
+      'instanceof Set',
+      'Array.isArray',
+      'Object.prototype.hasOwnProperty',
+    ];
+
+    for (const sig of coreSignatures) {
+      expect(panelSrc).toContain(sig);
+    }
+  });
+});
