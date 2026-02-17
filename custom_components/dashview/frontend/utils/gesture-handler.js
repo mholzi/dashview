@@ -78,6 +78,7 @@ export function createGestureHandler(callbacks = {}, options = {}) {
   let longPressTimer = null;
   let currentElement = null;
   let elementRect = null;
+  let documentListenersActive = false;
 
   /**
    * Clear the long press timer
@@ -104,11 +105,41 @@ export function createGestureHandler(callbacks = {}, options = {}) {
   }
 
   /**
+   * Attach document-level mouse listeners for active drag tracking
+   * outside element boundaries.
+   */
+  function addDocumentListeners() {
+    if (documentListenersActive) return;
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', handleDocumentMouseUp);
+    documentListenersActive = true;
+  }
+
+  /**
+   * Remove document-level mouse listeners.
+   */
+  function removeDocumentListeners() {
+    if (!documentListenersActive) return;
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', handleDocumentMouseUp);
+    documentListenersActive = false;
+  }
+
+  /**
+   * Handle mouseup at document level during an active drag.
+   * @param {MouseEvent} e
+   */
+  function handleDocumentMouseUp(e) {
+    end(e);
+  }
+
+  /**
    * Reset to idle state
    */
   function reset() {
     state = GESTURE_STATE.IDLE;
     clearLongPressTimer();
+    removeDocumentListeners();
     currentElement = null;
     elementRect = null;
   }
@@ -166,6 +197,7 @@ export function createGestureHandler(callbacks = {}, options = {}) {
         // Only enter sliding if horizontal movement is dominant
         if (absDeltaX > absDeltaY) {
           state = GESTURE_STATE.SLIDING;
+          addDocumentListeners();
           if (onSlideStart) {
             onSlideStart();
           }
@@ -230,6 +262,17 @@ export function createGestureHandler(callbacks = {}, options = {}) {
     reset();
   }
 
+  /**
+   * Handle mouse leaving the element. If actively sliding, ignore it
+   * (document-level listeners will track the drag). Otherwise cancel.
+   */
+  function handleMouseLeave() {
+    if (state === GESTURE_STATE.SLIDING) {
+      return; // Document listeners handle the rest
+    }
+    cancel();
+  }
+
   return {
     // Touch events
     onTouchStart: start,
@@ -241,7 +284,7 @@ export function createGestureHandler(callbacks = {}, options = {}) {
     onMouseDown: start,
     onMouseMove: move,
     onMouseUp: end,
-    onMouseLeave: cancel,
+    onMouseLeave: handleMouseLeave,
 
     // State accessors
     getState: () => state,
