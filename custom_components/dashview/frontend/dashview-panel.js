@@ -16,15 +16,46 @@
 // ============================================================================
 // structuredClone Polyfill (Safari <15.4, Chrome <98, Firefox <94)
 // MUST run synchronously before any other code.
-// Single source of truth: utils/polyfills.js
+// Cannot use static import here — this file is loaded as a classic script,
+// not an ES module. Canonical implementation lives in utils/polyfills.js.
+// Keep both in sync (verified by polyfills.test.js).
 // ============================================================================
-import { initPolyfills } from './utils/polyfills.js';
-initPolyfills();
+if (typeof structuredClone === 'undefined') {
+  globalThis.structuredClone = function(obj, seen = new WeakSet()) {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (seen.has(obj)) {
+      throw new DOMException('Circular reference detected', 'DataCloneError');
+    }
+    seen.add(obj);
+    if (obj instanceof Date) return new Date(obj);
+    if (obj instanceof RegExp) return new RegExp(obj);
+    if (obj instanceof Map) {
+      const clone = new Map();
+      obj.forEach((v, k) => clone.set(structuredClone(k, seen), structuredClone(v, seen)));
+      return clone;
+    }
+    if (obj instanceof Set) {
+      const clone = new Set();
+      obj.forEach(v => clone.add(structuredClone(v, seen)));
+      return clone;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => structuredClone(item, seen));
+    }
+    const clone = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        clone[key] = structuredClone(obj[key], seen);
+      }
+    }
+    return clone;
+  };
+}
 
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
-  const DASHVIEW_VERSION = "1.5.0";
+  const DASHVIEW_VERSION = "1.5.1";
 
   // Non-device domains to exclude from entity lists globally
   // These should never appear as room entities even if they carry a matching label

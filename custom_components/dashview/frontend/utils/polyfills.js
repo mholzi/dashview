@@ -7,8 +7,9 @@
  * Usage:
  *   import { initPolyfills, structuredClonePolyfill } from './polyfills.js';
  *
- * This is the single source of truth for the structuredClone polyfill.
- * Imported synchronously at the top of dashview-panel.js via initPolyfills().
+ * Canonical implementation of the structuredClone polyfill.
+ * Also inlined in dashview-panel.js (classic script, cannot use static imports).
+ * Both copies must stay in sync — verified by polyfills.test.js.
  */
 
 /**
