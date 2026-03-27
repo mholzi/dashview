@@ -157,7 +157,11 @@ export function renderRoomPopup(component, html) {
 
   return html`
     <div class="popup-overlay" @click=${component._handlePopupOverlayClick}>
-      <div class="popup-container">
+      <div class="popup-container"
+           role="dialog"
+           aria-modal="true"
+           aria-label="${t('ui.popup.room')}"
+           @keydown=${(e) => { if (e.key === 'Escape') component._closeRoomPopup(); }}>
         ${renderPopupHeader(html, {
           icon: component._getAreaIcon(component._popupRoom),
           title: component._popupRoom.name,
@@ -530,7 +534,12 @@ function renderLightSection(component, html, areaId) {
 
   return html`
     <div class="popup-light-section">
-      <div class="popup-light-header" @click=${component._togglePopupLightExpanded}>
+      <div class="popup-light-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupLightExpanded}"
+           @click=${component._togglePopupLightExpanded}
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupLightExpanded(); } }}>
         <ha-icon icon="mdi:lightbulb"></ha-icon>
         <span class="popup-light-title">${t('ui.sections.light')}</span>
         <span class="popup-light-count">${t('popup.room.lights_count', { on: onCount, total: totalCount })}</span>
@@ -702,7 +711,11 @@ function renderCoverSection(component, html, areaId) {
 
   return html`
     <div class="popup-cover-section">
-      <div class="popup-cover-header">
+      <div class="popup-cover-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupCoverExpanded}"
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupCoverExpanded(); } }}>
         <span class="popup-cover-title" @click=${component._togglePopupCoverExpanded}>${t('ui.sections.covers')}</span>
         <div class="popup-cover-slider"
           @click=${(e) => component._handleAllCoversSliderClick(e, areaId)}
@@ -789,7 +802,11 @@ function renderFanSection(component, html, areaId) {
           const percentage = fan.percentage ?? 0;
           return html`
             <div class="popup-entity-row">
-              <div class="popup-entity-info" @click=${() => component._toggleFan(fan.entity_id)}>
+              <div class="popup-entity-info"
+                   role="button"
+                   tabindex="0"
+                   @click=${() => component._toggleFan(fan.entity_id)}
+                   @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._toggleFan(fan.entity_id); } }}>
                 <ha-icon
                   icon="${isOn ? 'mdi:fan' : 'mdi:fan-off'}"
                   class="${isOn ? 'state-on' : 'state-off'}"
@@ -830,7 +847,11 @@ function renderRoofWindowSection(component, html, areaId) {
 
   return html`
     <div class="popup-cover-section">
-      <div class="popup-cover-header">
+      <div class="popup-cover-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupRoofWindowExpanded}"
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupRoofWindowExpanded(); } }}>
         <span class="popup-cover-title" @click=${component._togglePopupRoofWindowExpanded}>
           <ha-icon icon="mdi:window-open" style="--mdc-icon-size: 18px; vertical-align: middle; margin-right: 4px;"></ha-icon>
           ${t('ui.sections.roofWindows')}
@@ -892,7 +913,12 @@ function renderMediaSection(component, html, areaId) {
 
   return html`
     <div class="popup-media-section">
-      <div class="popup-media-header" @click=${component._togglePopupMediaExpanded}>
+      <div class="popup-media-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupMediaExpanded}"
+           @click=${component._togglePopupMediaExpanded}
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupMediaExpanded(); } }}>
         <ha-icon icon="mdi:music"></ha-icon>
         <span class="popup-media-title">${t('ui.sections.music')}</span>
         <span class="popup-media-count">${t('popup.room.media_count', { playing: playingCount, total: totalCount })}</span>
@@ -1017,7 +1043,12 @@ function renderTVSection(component, html, areaId) {
 
   return html`
     <div class="popup-tv-section">
-      <div class="popup-tv-header" @click=${component._togglePopupTVExpanded}>
+      <div class="popup-tv-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupTVExpanded}"
+           @click=${component._togglePopupTVExpanded}
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupTVExpanded(); } }}>
         <ha-icon icon="mdi:television"></ha-icon>
         <span class="popup-tv-title">${t('ui.sections.tvs')}</span>
         <span class="popup-tv-count">${t('popup.room.tv_count', { on: onCount, total: totalCount })}</span>
@@ -1076,7 +1107,12 @@ function renderLockSection(component, html, areaId) {
 
   return html`
     <div class="popup-lock-section">
-      <div class="popup-lock-header" @click=${component._togglePopupLockExpanded}>
+      <div class="popup-lock-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupLockExpanded}"
+           @click=${component._togglePopupLockExpanded}
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupLockExpanded(); } }}>
         <ha-icon icon="mdi:lock"></ha-icon>
         <span class="popup-lock-title">${t('ui.sections.locks')}</span>
         <span class="popup-lock-count">${unlockedCount > 0 ? t('lock.count_unlocked', { count: unlockedCount }) : t('lock.all_locked')}</span>
@@ -1131,7 +1167,12 @@ function renderGarageSection(component, html, areaId) {
 
   return html`
     <div class="popup-garage-section">
-      <div class="popup-garage-header" @click=${component._togglePopupGarageExpanded}>
+      <div class="popup-garage-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupGarageExpanded}"
+           @click=${component._togglePopupGarageExpanded}
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupGarageExpanded(); } }}>
         <ha-icon icon="mdi:garage"></ha-icon>
         <span class="popup-garage-title">${t('ui.sections.garage')}</span>
         <span class="popup-garage-count">${t('popup.room.garage_count', { open: openCount, total: totalCount })}</span>
@@ -1202,7 +1243,12 @@ function renderApplianceSection(component, html, areaId) {
 
   return html`
     <div class="popup-devices-section">
-      <div class="popup-devices-header" @click=${component._togglePopupDevicesExpanded}>
+      <div class="popup-devices-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="${component._popupDevicesExpanded}"
+           @click=${component._togglePopupDevicesExpanded}
+           @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); component._togglePopupDevicesExpanded(); } }}>
         <ha-icon icon="mdi:devices"></ha-icon>
         <span class="popup-devices-title">${t('ui.sections.devices')}</span>
         <span class="popup-devices-count">${activeCount > 0 ? `${activeCount} ${t('common.status.active')}` : `${appliances.length} ${t('ui.sections.devices')}`}</span>

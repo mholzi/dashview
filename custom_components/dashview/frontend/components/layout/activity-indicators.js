@@ -156,7 +156,10 @@ export function renderActivityRow(html, indicators, onRoomClick) {
         <div
           class="activity-chip ${indicator.type === 'floor' ? 'floor-chip' : indicator.type === 'room-smoke' ? 'room-smoke-chip' : indicator.type === 'room-motion' ? 'room-motion-chip' : 'room-chip'}"
           title="${indicator.label}${indicator.hasMotion ? ' (Motion)' : ''}${indicator.hasSmoke ? ' (Smoke!)' : ''}"
+          role="${indicator.areaId ? 'button' : 'presentation'}"
+          tabindex="${indicator.areaId ? '0' : '-1'}"
           @click=${indicator.areaId ? () => onRoomClick(indicator.areaId) : null}
+          @keydown=${indicator.areaId ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRoomClick(indicator.areaId); } } : null}
           style="${indicator.areaId ? 'cursor: pointer;' : ''}"
         >
           <ha-icon icon="${indicator.icon}"></ha-icon>

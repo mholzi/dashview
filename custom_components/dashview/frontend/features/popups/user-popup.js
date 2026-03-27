@@ -80,7 +80,7 @@ export function renderUserPopup(component, html) {
 
   return html`
     <div class="popup-overlay" @click=${component._handleUserPopupOverlayClick}>
-      <div class="popup-container" @click=${(e) => e.stopPropagation()}>
+      <div class="popup-container" role="dialog" aria-modal="true" @click=${(e) => e.stopPropagation()} @keydown=${(e) => { if (e.key === 'Escape') component._closeUserPopup?.(); }}>
         ${renderPopupHeader(html, {
           icon: 'mdi:account',
           title: person.name,
