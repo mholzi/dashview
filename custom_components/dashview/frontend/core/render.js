@@ -128,58 +128,6 @@ export function getLowBatteryDevices(hass, threshold = 20) {
 }
 
 /**
- * Get entity counts for statistics
- * @param {Object} hass - Home Assistant instance
- * @param {Array} entityRegistry - Entity registry array
- * @param {Object} enabledLights - Enabled lights map
- * @param {string} lightLabelId - Light label ID
- * @returns {Object} Entity count statistics
- */
-export function getEntityCounts(hass, entityRegistry, enabledLights, lightLabelId) {
-  if (!hass) {
-    return {
-      total: 0,
-      lights: 0,
-      switches: 0,
-      sensors: 0,
-      unavailable: 0,
-      lightsOn: 0,
-      enabledLights: 0,
-      totalLabeledLights: 0
-    };
-  }
-
-  const states = Object.values(hass.states);
-
-  // Filter enabled lights by current label (iterate over registry for default-enabled)
-  const enabledLightIds = entityRegistry
-    .filter((entityReg) => {
-      const entityId = entityReg.entity_id;
-      if (enabledLights[entityId] === false) return false;
-      // Only count lights that have the currently selected light label
-      if (!lightLabelId || !entityReg.labels || !entityReg.labels.includes(lightLabelId)) return false;
-      return true;
-    })
-    .map((e) => e.entity_id);
-
-  // Count entities with the "Light" label
-  const totalLabeledLights = lightLabelId
-    ? entityRegistry.filter(e => e.labels && e.labels.includes(lightLabelId)).length
-    : 0;
-
-  return {
-    total: states.length,
-    lights: states.filter((e) => e.entity_id.startsWith("light.")).length,
-    switches: states.filter((e) => e.entity_id.startsWith("switch.")).length,
-    sensors: states.filter((e) => e.entity_id.startsWith("sensor.")).length,
-    unavailable: states.filter((e) => e.state === "unavailable").length,
-    lightsOn: enabledLightIds.filter(id => hass.states[id]?.state === "on").length,
-    enabledLights: enabledLightIds.length,
-    totalLabeledLights,
-  };
-}
-
-/**
  * Get room climate notification if thresholds exceeded
  * @param {Object} params - Parameters object
  * @param {Object} params.hass - Home Assistant instance

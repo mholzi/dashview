@@ -44,7 +44,6 @@ export {
   formatDate,
   formatRemainingTime,
   getLowBatteryDevices,
-  getEntityCounts,
   getRoomClimateNotification,
   getApplianceStatus,
   createRoomIndicator,
