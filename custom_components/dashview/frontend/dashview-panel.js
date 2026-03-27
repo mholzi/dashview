@@ -255,39 +255,34 @@ if (typeof structuredClone === 'undefined') {
   class DashviewPanel extends LitElement {
     static get properties() {
       return {
+        // HA-provided
         hass: { type: Object },
         narrow: { type: Boolean },
         route: { type: Object },
         panel: { type: Object },
+        // Timer
         _currentTime: { type: String },
+        // Tab state
         _activeTab: { type: String },
-        _areas: { type: Array },
-        _enabledRooms: { type: Object },
-        _enabledLights: { type: Object },
-        _enabledMotionSensors: { type: Object },
-        _enabledSmokeSensors: { type: Object },
-        _enabledCovers: { type: Object },
-        _coverInvertPosition: { type: Object },
-        _enabledGarages: { type: Object },
-        _enabledWindows: { type: Object },
-        _enabledDoors: { type: Object },
-        _enabledVibrationSensors: { type: Object },
-        _enabledTemperatureSensors: { type: Object },
-        _enabledHumiditySensors: { type: Object },
-        _enabledClimates: { type: Object },
-        _enabledMediaPlayers: { type: Object },
-        _enabledTVs: { type: Object },
-        _enabledLocks: { type: Object },
-        _enabledWaterLeakSensors: { type: Object },
-        _waterLeakLabelId: { type: String },
-        _doorLabelId: { type: String },
+        _adminSubTab: { type: String },
+        _activeFloorTab: { type: String },
+        _activeSecurityTab: { type: String },
+        _activeCustomLabelTab: { type: String },
+        _activeMediaTab: { type: String },
+        // Popup states
+        _popupRoom: { type: Object },
         _mediaPopupOpen: { type: Boolean },
         _waterPopupOpen: { type: Boolean },
-        _activeMediaTab: { type: String },
-        _lastMotionChangeTime: { type: Object },
-        _motionDetected: { type: Boolean },
-        _expandedAreas: { type: Object },
-        _popupRoom: { type: Object },
+        _weatherPopupOpen: { type: Boolean },
+        _securityPopupOpen: { type: Boolean },
+        _lightsPopupOpen: { type: Boolean },
+        _coversPopupOpen: { type: Boolean },
+        _tvsPopupOpen: { type: Boolean },
+        _batteryPopupOpen: { type: Boolean },
+        _userPopupOpen: { type: Boolean },
+        _adminPopupOpen: { type: Boolean },
+        _changelogPopupOpen: { type: Boolean },
+        // Popup expanded states
         _popupCoverExpanded: { type: Boolean },
         _popupGarageExpanded: { type: Boolean },
         _popupLightExpanded: { type: Boolean },
@@ -296,69 +291,11 @@ if (typeof structuredClone === 'undefined') {
         _popupMediaExpanded: { type: Boolean },
         _popupThermostatExpanded: { type: Boolean },
         _popupDevicesExpanded: { type: Boolean },
-        _adminSubTab: { type: String },
-        _labels: { type: Array },
-        _entityRegistry: { type: Array },
-        _deviceRegistry: { type: Array },
-        _labelIdsReady: { type: Boolean },
-        _scenes: { type: Array },
-        _floors: { type: Array },
-        _activeFloorTab: { type: String },
-        _activeSecurityTab: { type: String },
-        _securityPopupOpen: { type: Boolean },
-        _lightsPopupOpen: { type: Boolean },
-        _coversPopupOpen: { type: Boolean },
-        _tvsPopupOpen: { type: Boolean },
-        _batteryPopupOpen: { type: Boolean },
-        _userPopupOpen: { type: Boolean },
-        _presenceHistory: { type: Array },
-        _presenceHistoryExpanded: { type: Boolean },
-        _adminPopupOpen: { type: Boolean },
-        _showWizard: { type: Boolean },
-        _notificationTempThreshold: { type: Number },
-        _notificationHumidityThreshold: { type: Number },
-        _tempRapidChangeThreshold: { type: Number },
-        _tempRapidChangeWindowMinutes: { type: Number },
-        _humidityRapidChangeThreshold: { type: Number },
-        _humidityRapidChangeWindowMinutes: { type: Number },
-        _doorOpenTooLongMinutes: { type: Number },
-        _windowOpenTooLongMinutes: { type: Number },
-        _garageOpenTooLongMinutes: { type: Number },
-        _roofWindowOpenTooLongMinutes: { type: Number },
-        _coverOpenTooLongMinutes: { type: Number },
-        _lockUnlockedTooLongMinutes: { type: Number },
-        _weatherPopupOpen: { type: Boolean },
-        _selectedForecastTab: { type: Number },
-        _weatherEntity: { type: String },
-        _weatherCurrentTempEntity: { type: String },
-        _weatherCurrentStateEntity: { type: String },
-        _weatherTodayTempEntity: { type: String },
-        _weatherTodayStateEntity: { type: String },
-        _weatherTomorrowTempEntity: { type: String },
-        _weatherTomorrowStateEntity: { type: String },
-        _weatherDay2TempEntity: { type: String },
-        _weatherDay2StateEntity: { type: String },
-        _weatherPrecipitationEntity: { type: String },
-        _hourlyForecastEntity: { type: String },
-        _weatherRadarLat: { type: Number },
-        _weatherRadarLon: { type: Number },
-        _weatherRadarZoom: { type: Number },
-        _weatherRadarTempUnit: { type: String },
-        _weatherRadarWindUnit: { type: String },
-        _weatherForecasts: { type: Array },
-        _weatherHourlyForecasts: { type: Array },
-        _availableWeatherEntities: { type: Array },
-        _floorOrder: { type: Array },
-        _roomOrder: { type: Object },
-        _floorCardConfig: { type: Object },
-        _openEntityDropdown: { type: String },
-        _selectedFloorCardSlot: { type: String },
-        _floorCardSearchState: { type: Object },
-        _floorOverviewEnabled: { type: Object },
-        _floorOverviewIndex: { type: Object },
-        _garbageSensors: { type: Array },
-        _garbageDisplayFloor: { type: String },
-        _garbageCardIndex: { type: Number },
+        // Expanded sections
+        _expandedAreas: { type: Object },
+        _expandedCardSections: { type: Object },
+        _expandedCustomLabels: { type: Object },
+        // Search state
         _garbageSearchQuery: { type: String },
         _garbageSearchFocused: { type: Boolean },
         _dwdWarningSearchQuery: { type: String },
@@ -367,48 +304,49 @@ if (typeof structuredClone === 'undefined') {
         _weatherEntitySearchFocused: { type: Boolean },
         _personEntitySearchQuery: { type: String },
         _personEntitySearchFocused: { type: Boolean },
-        _expandedCardSections: { type: Object },
-        _thermostatHistory: { type: Object },
-        _roomRateOfChangeAlert: { type: Object },
-        // Info text configuration
-        _infoTextConfig: { type: Object },
-        _infoTextSearchQuery: { type: Object },
-        _infoTextSearchFocused: { type: Object },
-        // Scene buttons configuration
-        _sceneButtons: { type: Array },
         _sceneButtonSearchQuery: { type: String },
         _sceneButtonSearchFocused: { type: Boolean },
-        _editingSceneButton: { type: Object },
-        // Room-specific scene buttons
-        _roomSceneButtons: { type: Object },
-        _editingRoomSceneButton: { type: String },
+        _trainSearchQuery: { type: String },
+        _trainSearchFocused: { type: Boolean },
+        _infoTextSearchQuery: { type: Object },
+        _infoTextSearchFocused: { type: Object },
         _roomSceneIconSearchQuery: { type: String },
         _roomSceneIconSearchFocused: { type: Boolean },
         _roomSceneEntitySearchQuery: { type: String },
         _roomSceneEntitySearchFocused: { type: Boolean },
-        // Media presets (playlists)
-        _mediaPresets: { type: Array },
         _mediaPresetSearchQuery: { type: String },
         _mediaPresetSearchFocused: { type: Boolean },
-        // User photos (custom photos per person entity)
-        _userPhotos: { type: Object },
-        // Manual language override (null = follow HA, 'en'/'de' = override)
-        _manualLanguage: { type: String },
-        // Thermostat swipe index per room
+        // Entity dropdown / floor card
+        _openEntityDropdown: { type: String },
+        _selectedFloorCardSlot: { type: String },
+        _floorCardSearchState: { type: Object },
+        // Motion state
+        _motionDetected: { type: Boolean },
+        _lastMotionChangeTime: { type: Object },
+        // Thermostat / climate
+        _thermostatHistory: { type: Object },
+        _roomRateOfChangeAlert: { type: Object },
         _thermostatSwipeIndex: { type: Object },
-        // Custom labels configuration
-        _customLabels: { type: Object },
-        _enabledCustomEntities: { type: Object },
-        _expandedCustomLabels: { type: Object },
-        _activeCustomLabelTab: { type: String },
-        // Train departures configuration
-        _trainDepartures: { type: Array },
-        _trainSearchQuery: { type: String },
-        _trainSearchFocused: { type: Boolean },
-        // Changelog popup
-        _changelogPopupOpen: { type: Boolean },
+        // Weather forecasts (runtime data, not settings)
+        _weatherForecasts: { type: Array },
+        _weatherHourlyForecasts: { type: Array },
+        _availableWeatherEntities: { type: Array },
+        // Presence
+        _presenceHistory: { type: Array },
+        _presenceHistoryExpanded: { type: Boolean },
+        // Wizard / label readiness
+        _showWizard: { type: Boolean },
+        _labelIdsReady: { type: Boolean },
+        // Forecast / garbage card index
+        _selectedForecastTab: { type: Number },
+        _garbageCardIndex: { type: Number },
+        // Editing state
+        _editingSceneButton: { type: Object },
+        _editingRoomSceneButton: { type: String },
+        // Changelog
         _changelogPageIndex: { type: Number },
-        _lastSeenVersion: { type: String },
+        // Floor overview
+        _floorOverviewIndex: { type: Object },
       };
     }
 
@@ -446,29 +384,9 @@ if (typeof structuredClone === 'undefined') {
       this._cachedEnabledMapsKey = null;
       this._enabledMapsVersion = 0;
       this._activeTab = "home";
-      this._areas = [];
-      this._enabledRooms = {};
-      this._enabledLights = {};
-      this._enabledMotionSensors = {};
-      this._enabledSmokeSensors = {};
-      this._enabledCovers = {};
-      this._coverInvertPosition = {};
-      this._enabledMediaPlayers = {};
-      this._enabledTVs = {};
-      this._enabledLocks = {};
-      this._enabledWaterLeakSensors = {};
-      this._waterLeakLabelId = null;
       this._mediaPopupOpen = false;
       this._waterPopupOpen = false;
       this._activeMediaTab = null;
-      this._enabledGarages = {};
-      this._enabledWindows = {};
-      this._enabledDoors = {};
-      this._enabledVibrationSensors = {};
-      this._enabledTemperatureSensors = {};
-      this._enabledHumiditySensors = {};
-      this._enabledClimates = {};
-      this._enabledRoofWindows = {};
       this._lastMotionChangeTime = null;
       this._motionDetected = false;
       this._previousMotionState = null;
@@ -484,37 +402,11 @@ if (typeof structuredClone === 'undefined') {
       this._popupDevicesExpanded = true;
       this._popupTVExpanded = true;
       this._adminSubTab = "labels";  // Start with Labels tab for initial setup
-      this._settingsLoaded = false;
       this._settingsError = null;  // Error message if settings fail to load
       this._saveDebounceTimer = null;
-      this._labels = [];
-      this._entityRegistry = [];
-      this._deviceRegistry = [];
       this._labelIdsReady = false;
-      this._lightLabelId = null;
-      this._mediaPlayerLabelId = null;
-      this._motionLabelId = null;
-      this._smokeLabelId = null;
-      this._coverLabelId = null;
-      this._garageLabelId = null;
-      this._windowLabelId = null;
-      this._doorLabelId = null;
-      this._vibrationLabelId = null;
-      this._temperatureLabelId = null;
-      this._humidityLabelId = null;
-      this._climateLabelId = null;
-      this._roofWindowLabelId = null;
-      this._tvLabelId = null;
-      this._lockLabelId = null;
-      // Custom labels configuration - labels beyond the predefined ones
-      this._customLabels = {};  // { labelId: { enabled: true, icon: 'mdi:...', name: 'Label Name' } }
-      this._enabledCustomEntities = {};  // { entityId: { enabled: true, childEntities: ['entity_id1', 'entity_id2'] } }
       this._expandedCustomLabels = {};  // Track which custom label sections are expanded in admin
-      // Enabled appliances (device-based)
-      this._enabledAppliances = {};  // { deviceId: true/false }
       this._activeCustomLabelTab = null;  // Active tab in Other Entities section
-      this._scenes = [];
-      this._floors = [];
       this._activeFloorTab = null;
       this._activeSecurityTab = 'windows';
       this._securityPopupOpen = false;
@@ -527,53 +419,15 @@ if (typeof structuredClone === 'undefined') {
       this._presenceHistoryExpanded = false;
       this._adminPopupOpen = false;
       this._showWizard = false;
-      this._notificationTempThreshold = 23;
-      this._notificationHumidityThreshold = 60;
-      this._tempRapidChangeThreshold = 5;
-      this._tempRapidChangeWindowMinutes = 60;
-      this._humidityRapidChangeThreshold = 20;
-      this._humidityRapidChangeWindowMinutes = 30;
-      this._doorOpenTooLongMinutes = 30;
-      this._windowOpenTooLongMinutes = 120;
-      this._garageOpenTooLongMinutes = 30;
-      this._roofWindowOpenTooLongMinutes = 120;
-      this._coverOpenTooLongMinutes = 240;
-      this._lockUnlockedTooLongMinutes = 30;
       this._weatherPopupOpen = false;
       this._selectedForecastTab = 0;
-      this._weatherEntity = "weather.forecast_home";
-      this._weatherCurrentTempEntity = "";
-      this._weatherCurrentStateEntity = "";
-      this._weatherTodayTempEntity = "";
-      this._weatherTodayStateEntity = "";
-      this._weatherTomorrowTempEntity = "";
-      this._weatherTomorrowStateEntity = "";
-      this._weatherDay2TempEntity = "";
-      this._weatherDay2StateEntity = "";
-      this._weatherPrecipitationEntity = "";
-      this._hourlyForecastEntity = "";
-      this._dwdWarningEntity = "";
-      // Alarm control panel
-      this._alarmEntity = "";
-      // Weather radar settings (Windy embed)
-      this._weatherRadarLat = 50.0;
-      this._weatherRadarLon = 8.7;
-      this._weatherRadarZoom = 9;
-      this._weatherRadarTempUnit = "°C";
-      this._weatherRadarWindUnit = "km/h";
       this._weatherForecasts = [];
       this._weatherHourlyForecasts = [];
       this._availableWeatherEntities = [];
-      this._floorOrder = [];
-      this._roomOrder = {};
-      this._floorCardConfig = {};
       this._openEntityDropdown = null;
       this._selectedFloorCardSlot = null;
       this._floorCardSearchState = {};
-      this._floorOverviewEnabled = {};
       this._floorOverviewIndex = {};
-      this._garbageSensors = [];
-      this._garbageDisplayFloor = null;
       this._garbageCardIndex = 0;
       this._garbageSearchQuery = '';
       this._garbageSearchFocused = false;
@@ -586,8 +440,121 @@ if (typeof structuredClone === 'undefined') {
       this._expandedCardSections = {};
       this._thermostatHistory = {};
       this._roomRateOfChangeAlert = null;
-      // Info text configuration - which status items to show and their entity configs
-      this._infoTextConfig = {
+      // Search state for info text entity pickers
+      this._infoTextSearchQuery = {};
+      this._infoTextSearchFocused = {};
+      // Scene buttons configuration
+      this._sceneButtonSearchQuery = '';
+      this._sceneButtonSearchFocused = false;
+      this._editingSceneButton = null;
+      this._iconSearchQuery = '';
+      this._iconSearchFocused = false;
+      // Room-specific scene buttons
+      this._editingRoomSceneButton = null;
+      this._roomSceneIconSearchQuery = '';
+      this._roomSceneIconSearchFocused = false;
+      this._roomSceneEntitySearchQuery = '';
+      this._roomSceneEntitySearchFocused = false;
+      // Media presets (playlists)
+      this._mediaPresetSearchQuery = '';
+      this._mediaPresetSearchFocused = false;
+      // Train departures configuration
+      this._trainSearchQuery = '';
+      this._trainSearchFocused = false;
+      // Entity search within rooms (not persisted)
+      this._entitySearchTermsByRoom = {};
+      this._entitySearchDebounceTimers = {};
+      // Thermostat swipe index per room
+      this._thermostatSwipeIndex = {};
+      // Changelog popup state
+      this._changelogPopupOpen = false;
+      this._changelogPageIndex = 0;
+      // Request registry for aborting in-flight requests on unmount
+      if (coreUtils?.createRequestRegistry) {
+        this._requestRegistry = coreUtils.createRequestRegistry();
+      } else {
+        this._requestRegistry = null;
+        debugLog('Request registry unavailable - fetch abort on unmount disabled');
+      }
+    }
+
+    // ============================================
+    // Store-delegating getters (replaces duplicated properties)
+    // ============================================
+
+    // Registry data (from registryStore)
+    get _areas() { return registryStore?.areas || []; }
+    get _floors() { return registryStore?.floors || []; }
+    get _labels() { return registryStore?.labels || []; }
+    get _entityRegistry() { return registryStore?.entityRegistry || []; }
+    get _deviceRegistry() { return registryStore?.deviceRegistry || []; }
+    get _scenes() { return registryStore?.scenes || []; }
+
+    // Settings data (from settingsStore)
+    get _enabledRooms() { return settingsStore?.get('enabledRooms') || {}; }
+    get _enabledLights() { return settingsStore?.get('enabledLights') || {}; }
+    get _enabledMotionSensors() { return settingsStore?.get('enabledMotionSensors') || {}; }
+    get _enabledSmokeSensors() { return settingsStore?.get('enabledSmokeSensors') || {}; }
+    get _enabledCovers() { return settingsStore?.get('enabledCovers') || {}; }
+    get _coverInvertPosition() { return settingsStore?.get('coverInvertPosition') || {}; }
+    get _enabledGarages() { return settingsStore?.get('enabledGarages') || {}; }
+    get _enabledWindows() { return settingsStore?.get('enabledWindows') || {}; }
+    get _enabledDoors() { return settingsStore?.get('enabledDoors') || {}; }
+    get _enabledVibrationSensors() { return settingsStore?.get('enabledVibrationSensors') || {}; }
+    get _enabledTemperatureSensors() { return settingsStore?.get('enabledTemperatureSensors') || {}; }
+    get _enabledHumiditySensors() { return settingsStore?.get('enabledHumiditySensors') || {}; }
+    get _enabledClimates() { return settingsStore?.get('enabledClimates') || {}; }
+    get _enabledMediaPlayers() { return settingsStore?.get('enabledMediaPlayers') || {}; }
+    get _enabledTVs() { return settingsStore?.get('enabledTVs') || {}; }
+    get _enabledLocks() { return settingsStore?.get('enabledLocks') || {}; }
+    get _enabledRoofWindows() { return settingsStore?.get('enabledRoofWindows') || {}; }
+    get _enabledWaterLeakSensors() { return settingsStore?.get('enabledWaterLeakSensors') || {}; }
+    get _enabledAppliances() { return settingsStore?.get('enabledAppliances') || {}; }
+    get _enabledCustomEntities() { return settingsStore?.get('enabledCustomEntities') || {}; }
+
+    // Threshold settings
+    get _notificationTempThreshold() { return settingsStore?.get('notificationTempThreshold') ?? 23; }
+    get _notificationHumidityThreshold() { return settingsStore?.get('notificationHumidityThreshold') ?? 60; }
+    get _tempRapidChangeThreshold() { return settingsStore?.get('tempRapidChangeThreshold') ?? 5; }
+    get _tempRapidChangeWindowMinutes() { return settingsStore?.get('tempRapidChangeWindowMinutes') ?? 60; }
+    get _humidityRapidChangeThreshold() { return settingsStore?.get('humidityRapidChangeThreshold') ?? 20; }
+    get _humidityRapidChangeWindowMinutes() { return settingsStore?.get('humidityRapidChangeWindowMinutes') ?? 30; }
+    get _doorOpenTooLongMinutes() { return settingsStore?.get('doorOpenTooLongMinutes') ?? 30; }
+    get _windowOpenTooLongMinutes() { return settingsStore?.get('windowOpenTooLongMinutes') ?? 120; }
+    get _garageOpenTooLongMinutes() { return settingsStore?.get('garageOpenTooLongMinutes') ?? 30; }
+    get _roofWindowOpenTooLongMinutes() { return settingsStore?.get('roofWindowOpenTooLongMinutes') ?? 120; }
+    get _coverOpenTooLongMinutes() { return settingsStore?.get('coverOpenTooLongMinutes') ?? 240; }
+    get _lockUnlockedTooLongMinutes() { return settingsStore?.get('lockUnlockedTooLongMinutes') ?? 30; }
+
+    // Weather entity settings
+    get _weatherEntity() { return settingsStore?.get('weatherEntity') || ''; }
+    get _weatherCurrentTempEntity() { return settingsStore?.get('weatherCurrentTempEntity') || ''; }
+    get _weatherCurrentStateEntity() { return settingsStore?.get('weatherCurrentStateEntity') || ''; }
+    get _weatherTodayTempEntity() { return settingsStore?.get('weatherTodayTempEntity') || ''; }
+    get _weatherTodayStateEntity() { return settingsStore?.get('weatherTodayStateEntity') || ''; }
+    get _weatherTomorrowTempEntity() { return settingsStore?.get('weatherTomorrowTempEntity') || ''; }
+    get _weatherTomorrowStateEntity() { return settingsStore?.get('weatherTomorrowStateEntity') || ''; }
+    get _weatherDay2TempEntity() { return settingsStore?.get('weatherDay2TempEntity') || ''; }
+    get _weatherDay2StateEntity() { return settingsStore?.get('weatherDay2StateEntity') || ''; }
+    get _weatherPrecipitationEntity() { return settingsStore?.get('weatherPrecipitationEntity') || ''; }
+    get _hourlyForecastEntity() { return settingsStore?.get('hourlyForecastEntity') || ''; }
+    get _dwdWarningEntity() { return settingsStore?.get('dwdWarningEntity') || ''; }
+    get _alarmEntity() { return settingsStore?.get('alarmEntity') || ''; }
+    get _weatherRadarLat() { return settingsStore?.get('weatherRadarLat') ?? 50.0; }
+    get _weatherRadarLon() { return settingsStore?.get('weatherRadarLon') ?? 8.7; }
+    get _weatherRadarZoom() { return settingsStore?.get('weatherRadarZoom') ?? 9; }
+    get _weatherRadarTempUnit() { return settingsStore?.get('weatherRadarTempUnit') || '°C'; }
+    get _weatherRadarWindUnit() { return settingsStore?.get('weatherRadarWindUnit') || 'km/h'; }
+
+    // Other settings
+    get _floorOrder() { return settingsStore?.get('floorOrder') || []; }
+    get _roomOrder() { return settingsStore?.get('roomOrder') || {}; }
+    get _floorCardConfig() { return settingsStore?.get('floorCardConfig') || {}; }
+    get _floorOverviewEnabled() { return settingsStore?.get('floorOverviewEnabled') || {}; }
+    get _garbageSensors() { return settingsStore?.get('garbageSensors') || []; }
+    get _garbageDisplayFloor() { return settingsStore?.get('garbageDisplayFloor') || null; }
+    get _infoTextConfig() {
+      const defaults = {
         motion: { enabled: true },
         garage: { enabled: true },
         doors: { enabled: false },
@@ -604,52 +571,70 @@ if (typeof structuredClone === 'undefined') {
         vacuum: { enabled: false, entity: '', roomMapping: {} },
         batteryLow: { enabled: false, threshold: 20 },
       };
-      // Search state for info text entity pickers
-      this._infoTextSearchQuery = {};
-      this._infoTextSearchFocused = {};
-      // Scene buttons configuration
-      this._sceneButtons = [];
-      this._sceneButtonSearchQuery = '';
-      this._sceneButtonSearchFocused = false;
-      this._editingSceneButton = null;
-      this._iconSearchQuery = '';
-      this._iconSearchFocused = false;
-      // Room-specific scene buttons
-      this._roomSceneButtons = {};
-      this._editingRoomSceneButton = null;
-      this._roomSceneIconSearchQuery = '';
-      this._roomSceneIconSearchFocused = false;
-      this._roomSceneEntitySearchQuery = '';
-      this._roomSceneEntitySearchFocused = false;
-      // Media presets (playlists)
-      this._mediaPresets = [];
-      this._mediaPresetSearchQuery = '';
-      this._mediaPresetSearchFocused = false;
-      // User photos (custom photos per person entity)
-      this._userPhotos = {};
-      // Manual language override
-      this._manualLanguage = null;
-      // Train departures configuration
-      this._trainDepartures = [];
-      this._trainSearchQuery = '';
-      this._trainSearchFocused = false;
-      // Entity search within rooms (not persisted)
-      this._entitySearchTermsByRoom = {};
-      this._entitySearchDebounceTimers = {};
-      // Thermostat swipe index per room
-      this._thermostatSwipeIndex = {};
-      // Changelog popup state
-      this._changelogPopupOpen = false;
-      this._changelogPageIndex = 0;
-      this._lastSeenVersion = null;
-      // Request registry for aborting in-flight requests on unmount
-      if (coreUtils?.createRequestRegistry) {
-        this._requestRegistry = coreUtils.createRequestRegistry();
-      } else {
-        this._requestRegistry = null;
-        debugLog('Request registry unavailable - fetch abort on unmount disabled');
-      }
+      return { ...defaults, ...settingsStore?.get('infoTextConfig') };
     }
+    get _sceneButtons() { return settingsStore?.get('sceneButtons') || []; }
+    get _roomSceneButtons() { return settingsStore?.get('roomSceneButtons') || {}; }
+    get _customLabels() { return settingsStore?.get('customLabels') || {}; }
+    get _trainDepartures() { return settingsStore?.get('trainDepartures') || []; }
+    get _mediaPresets() { return settingsStore?.get('mediaPresets') || []; }
+    get _userPhotos() { return settingsStore?.get('userPhotos') || {}; }
+    get _manualLanguage() { return settingsStore?.get('manualLanguage') || null; }
+    get _lastSeenVersion() { return settingsStore?.get('lastSeenVersion') || null; }
+
+    // Category label IDs (derived from settings)
+    get _lightLabelId() { return settingsStore?.get('categoryLabels')?.light ?? null; }
+    get _coverLabelId() { return settingsStore?.get('categoryLabels')?.cover ?? null; }
+    get _roofWindowLabelId() { return settingsStore?.get('categoryLabels')?.roofWindow ?? null; }
+    get _windowLabelId() { return settingsStore?.get('categoryLabels')?.window ?? null; }
+    get _doorLabelId() { return settingsStore?.get('categoryLabels')?.door ?? null; }
+    get _garageLabelId() { return settingsStore?.get('categoryLabels')?.garage ?? null; }
+    get _motionLabelId() { return settingsStore?.get('categoryLabels')?.motion ?? null; }
+    get _smokeLabelId() { return settingsStore?.get('categoryLabels')?.smoke ?? null; }
+    get _vibrationLabelId() { return settingsStore?.get('categoryLabels')?.vibration ?? null; }
+    get _temperatureLabelId() { return settingsStore?.get('categoryLabels')?.temperature ?? null; }
+    get _humidityLabelId() { return settingsStore?.get('categoryLabels')?.humidity ?? null; }
+    get _climateLabelId() { return settingsStore?.get('categoryLabels')?.climate ?? null; }
+    get _mediaPlayerLabelId() { return settingsStore?.get('categoryLabels')?.mediaPlayer ?? null; }
+    get _tvLabelId() { return settingsStore?.get('categoryLabels')?.tv ?? null; }
+    get _lockLabelId() { return settingsStore?.get('categoryLabels')?.lock ?? null; }
+    get _waterLeakLabelId() { return settingsStore?.get('categoryLabels')?.waterLeak ?? null; }
+
+    get _settingsLoaded() { return settingsStore?.loaded || false; }
+
+    // Setters for properties that are written to
+    set _enabledRooms(v) { settingsStore?.set('enabledRooms', v, false); }
+    set _enabledLights(v) { settingsStore?.set('enabledLights', v, false); }
+    set _enabledMotionSensors(v) { settingsStore?.set('enabledMotionSensors', v, false); }
+    set _enabledSmokeSensors(v) { settingsStore?.set('enabledSmokeSensors', v, false); }
+    set _enabledCovers(v) { settingsStore?.set('enabledCovers', v, false); }
+    set _coverInvertPosition(v) { settingsStore?.set('coverInvertPosition', v, false); }
+    set _enabledGarages(v) { settingsStore?.set('enabledGarages', v, false); }
+    set _enabledWindows(v) { settingsStore?.set('enabledWindows', v, false); }
+    set _enabledDoors(v) { settingsStore?.set('enabledDoors', v, false); }
+    set _enabledVibrationSensors(v) { settingsStore?.set('enabledVibrationSensors', v, false); }
+    set _enabledTemperatureSensors(v) { settingsStore?.set('enabledTemperatureSensors', v, false); }
+    set _enabledHumiditySensors(v) { settingsStore?.set('enabledHumiditySensors', v, false); }
+    set _enabledClimates(v) { settingsStore?.set('enabledClimates', v, false); }
+    set _enabledMediaPlayers(v) { settingsStore?.set('enabledMediaPlayers', v, false); }
+    set _enabledTVs(v) { settingsStore?.set('enabledTVs', v, false); }
+    set _enabledLocks(v) { settingsStore?.set('enabledLocks', v, false); }
+    set _enabledRoofWindows(v) { settingsStore?.set('enabledRoofWindows', v, false); }
+    set _enabledWaterLeakSensors(v) { settingsStore?.set('enabledWaterLeakSensors', v, false); }
+    set _enabledAppliances(v) { settingsStore?.set('enabledAppliances', v, false); }
+    set _enabledCustomEntities(v) { settingsStore?.set('enabledCustomEntities', v, false); }
+    set _notificationTempThreshold(v) { settingsStore?.set('notificationTempThreshold', v, false); }
+    set _notificationHumidityThreshold(v) { settingsStore?.set('notificationHumidityThreshold', v, false); }
+    set _tempRapidChangeThreshold(v) { settingsStore?.set('tempRapidChangeThreshold', v, false); }
+    set _tempRapidChangeWindowMinutes(v) { settingsStore?.set('tempRapidChangeWindowMinutes', v, false); }
+    set _humidityRapidChangeThreshold(v) { settingsStore?.set('humidityRapidChangeThreshold', v, false); }
+    set _humidityRapidChangeWindowMinutes(v) { settingsStore?.set('humidityRapidChangeWindowMinutes', v, false); }
+    set _doorOpenTooLongMinutes(v) { settingsStore?.set('doorOpenTooLongMinutes', v, false); }
+    set _windowOpenTooLongMinutes(v) { settingsStore?.set('windowOpenTooLongMinutes', v, false); }
+    set _garageOpenTooLongMinutes(v) { settingsStore?.set('garageOpenTooLongMinutes', v, false); }
+    set _roofWindowOpenTooLongMinutes(v) { settingsStore?.set('roofWindowOpenTooLongMinutes', v, false); }
+    set _coverOpenTooLongMinutes(v) { settingsStore?.set('coverOpenTooLongMinutes', v, false); }
+    set _lockUnlockedTooLongMinutes(v) { settingsStore?.set('lockUnlockedTooLongMinutes', v, false); }
 
     /**
      * Dispatch a dashview-error event for centralized error handling
@@ -1549,36 +1534,10 @@ if (typeof structuredClone === 'undefined') {
         // Load registry data via store (replaces _loadAreas, _loadLabels, etc.)
         if (registryStore && !registryStore._data.areasLoading && registryStore.areas.length === 0) {
           registryStore.loadAll().then(() => {
-            // Sync store data to local properties for backwards compatibility during transition
-            this._areas = registryStore.areas;
-            this._floors = registryStore.floors;
-            this._entityRegistry = registryStore.entityRegistry;
-            this._deviceRegistry = registryStore.deviceRegistry;
-            this._labels = registryStore.labels;
-            // Copy auto-detected label IDs ONLY as fallback defaults (don't overwrite user settings)
-            // User-configured labels from categoryLabels take precedence
-            const labelIds = registryStore.labelIds;
-            // Only set from auto-detection if user hasn't configured this category yet
-            if (this._lightLabelId === null) this._lightLabelId = labelIds.light;
-            if (this._motionLabelId === null) this._motionLabelId = labelIds.motion;
-            if (this._smokeLabelId === null) this._smokeLabelId = labelIds.smoke;
-            if (this._coverLabelId === null) this._coverLabelId = labelIds.cover;
-            if (this._garageLabelId === null) this._garageLabelId = labelIds.garage;
-            if (this._windowLabelId === null) this._windowLabelId = labelIds.window;
-            if (this._doorLabelId === null) this._doorLabelId = labelIds.door;
-            if (this._vibrationLabelId === null) this._vibrationLabelId = labelIds.vibration;
-            if (this._temperatureLabelId === null) this._temperatureLabelId = labelIds.temperature;
-            if (this._humidityLabelId === null) this._humidityLabelId = labelIds.humidity;
-            if (this._climateLabelId === null) this._climateLabelId = labelIds.climate;
-            if (this._roofWindowLabelId === null) this._roofWindowLabelId = labelIds.roofWindow;
-            if (this._mediaPlayerLabelId === null) this._mediaPlayerLabelId = labelIds.mediaPlayer;
-            if (this._tvLabelId === null) this._tvLabelId = labelIds.tv;
-            this._scenes = registryStore.scenes;
-            // Update RoomDataService with registry data
+            // Update RoomDataService with registry data (reads from store-delegating getters)
             if (roomDataService) {
               roomDataService.setEntityRegistry(this._entityRegistry);
               roomDataService.setDeviceRegistry(this._deviceRegistry);
-              // Use current label IDs (user-configured take precedence over auto-detected)
               this._updateRoomDataServiceLabelIds();
             }
             // Mark label IDs as ready - this triggers reactive update
@@ -1591,94 +1550,6 @@ if (typeof structuredClone === 'undefined') {
         // Load settings via store (replaces _loadSettings)
         if (settingsStore && !settingsStore.loaded) {
           settingsStore.load().then(() => {
-            // Sync store data to local properties for backwards compatibility
-            const settings = settingsStore.all;
-            this._enabledRooms = settings.enabledRooms || {};
-            this._enabledLights = settings.enabledLights || {};
-            this._enabledMotionSensors = settings.enabledMotionSensors || {};
-            this._enabledSmokeSensors = settings.enabledSmokeSensors || {};
-            this._enabledWaterLeakSensors = settings.enabledWaterLeakSensors || {};
-            this._enabledCovers = settings.enabledCovers || {};
-            this._coverInvertPosition = settings.coverInvertPosition || {};
-            this._enabledMediaPlayers = settings.enabledMediaPlayers || {};
-            this._enabledTVs = settings.enabledTVs || {};
-            this._enabledLocks = settings.enabledLocks || {};
-            this._enabledGarages = settings.enabledGarages || {};
-            this._enabledWindows = settings.enabledWindows || {};
-            this._enabledDoors = settings.enabledDoors || {};
-            this._enabledVibrationSensors = settings.enabledVibrationSensors || {};
-            this._enabledTemperatureSensors = settings.enabledTemperatureSensors || {};
-            this._enabledHumiditySensors = settings.enabledHumiditySensors || {};
-            this._enabledClimates = settings.enabledClimates || {};
-            this._enabledRoofWindows = settings.enabledRoofWindows || {};
-            this._notificationTempThreshold = settings.notificationTempThreshold ?? 23;
-            this._notificationHumidityThreshold = settings.notificationHumidityThreshold ?? 60;
-            this._tempRapidChangeThreshold = settings.tempRapidChangeThreshold ?? 5;
-            this._tempRapidChangeWindowMinutes = settings.tempRapidChangeWindowMinutes ?? 60;
-            this._humidityRapidChangeThreshold = settings.humidityRapidChangeThreshold ?? 20;
-            this._humidityRapidChangeWindowMinutes = settings.humidityRapidChangeWindowMinutes ?? 30;
-            this._doorOpenTooLongMinutes = settings.doorOpenTooLongMinutes ?? 30;
-            this._windowOpenTooLongMinutes = settings.windowOpenTooLongMinutes ?? 120;
-            this._garageOpenTooLongMinutes = settings.garageOpenTooLongMinutes ?? 30;
-            this._roofWindowOpenTooLongMinutes = settings.roofWindowOpenTooLongMinutes ?? 120;
-            this._coverOpenTooLongMinutes = settings.coverOpenTooLongMinutes ?? 240;
-            this._lockUnlockedTooLongMinutes = settings.lockUnlockedTooLongMinutes ?? 30;
-            this._weatherEntity = settings.weatherEntity;
-            this._weatherCurrentTempEntity = settings.weatherCurrentTempEntity;
-            this._weatherCurrentStateEntity = settings.weatherCurrentStateEntity;
-            this._weatherTodayTempEntity = settings.weatherTodayTempEntity;
-            this._weatherTodayStateEntity = settings.weatherTodayStateEntity;
-            this._weatherTomorrowTempEntity = settings.weatherTomorrowTempEntity;
-            this._weatherTomorrowStateEntity = settings.weatherTomorrowStateEntity;
-            this._weatherDay2TempEntity = settings.weatherDay2TempEntity;
-            this._weatherDay2StateEntity = settings.weatherDay2StateEntity;
-            this._weatherPrecipitationEntity = settings.weatherPrecipitationEntity;
-            this._hourlyForecastEntity = settings.hourlyForecastEntity;
-            this._dwdWarningEntity = settings.dwdWarningEntity;
-            this._alarmEntity = settings.alarmEntity || '';
-            // Weather radar settings
-            this._weatherRadarLat = settings.weatherRadarLat ?? 50.0;
-            this._weatherRadarLon = settings.weatherRadarLon ?? 8.7;
-            this._weatherRadarZoom = settings.weatherRadarZoom ?? 9;
-            this._weatherRadarTempUnit = settings.weatherRadarTempUnit || "°C";
-            this._weatherRadarWindUnit = settings.weatherRadarWindUnit || "km/h";
-            this._floorOrder = settings.floorOrder || [];
-            this._roomOrder = settings.roomOrder || {};
-            this._floorCardConfig = settings.floorCardConfig || {};
-            this._floorOverviewEnabled = settings.floorOverviewEnabled || {};
-            this._garbageSensors = settings.garbageSensors || [];
-            this._garbageDisplayFloor = settings.garbageDisplayFloor || null;
-            this._infoTextConfig = { ...this._infoTextConfig, ...settings.infoTextConfig };
-            this._sceneButtons = settings.sceneButtons || [];
-            this._roomSceneButtons = settings.roomSceneButtons || {};
-            this._customLabels = settings.customLabels || {};
-            this._enabledCustomEntities = settings.enabledCustomEntities || {};
-            this._enabledAppliances = settings.enabledAppliances || {};
-            this._trainDepartures = settings.trainDepartures || [];
-            this._mediaPresets = settings.mediaPresets || [];
-            this._userPhotos = settings.userPhotos || {};
-            this._manualLanguage = settings.manualLanguage || null;
-            this._lastSeenVersion = settings.lastSeenVersion || null;
-            // Load category label mappings (user-configured labels for each category)
-            // Use 'in' check to properly handle null values (null is a valid setting meaning "no label")
-            if (settings.categoryLabels) {
-              this._lightLabelId = 'light' in settings.categoryLabels ? settings.categoryLabels.light : this._lightLabelId;
-              this._coverLabelId = 'cover' in settings.categoryLabels ? settings.categoryLabels.cover : this._coverLabelId;
-              this._roofWindowLabelId = 'roofWindow' in settings.categoryLabels ? settings.categoryLabels.roofWindow : this._roofWindowLabelId;
-              this._windowLabelId = 'window' in settings.categoryLabels ? settings.categoryLabels.window : this._windowLabelId;
-              this._doorLabelId = 'door' in settings.categoryLabels ? settings.categoryLabels.door : this._doorLabelId;
-              this._garageLabelId = 'garage' in settings.categoryLabels ? settings.categoryLabels.garage : this._garageLabelId;
-              this._motionLabelId = 'motion' in settings.categoryLabels ? settings.categoryLabels.motion : this._motionLabelId;
-              this._smokeLabelId = 'smoke' in settings.categoryLabels ? settings.categoryLabels.smoke : this._smokeLabelId;
-              this._vibrationLabelId = 'vibration' in settings.categoryLabels ? settings.categoryLabels.vibration : this._vibrationLabelId;
-              this._temperatureLabelId = 'temperature' in settings.categoryLabels ? settings.categoryLabels.temperature : this._temperatureLabelId;
-              this._humidityLabelId = 'humidity' in settings.categoryLabels ? settings.categoryLabels.humidity : this._humidityLabelId;
-              this._climateLabelId = 'climate' in settings.categoryLabels ? settings.categoryLabels.climate : this._climateLabelId;
-              this._mediaPlayerLabelId = 'mediaPlayer' in settings.categoryLabels ? settings.categoryLabels.mediaPlayer : this._mediaPlayerLabelId;
-              this._tvLabelId = 'tv' in settings.categoryLabels ? settings.categoryLabels.tv : this._tvLabelId;
-              this._lockLabelId = 'lock' in settings.categoryLabels ? settings.categoryLabels.lock : this._lockLabelId;
-            }
-            this._settingsLoaded = true;
             this._settingsError = null;
             // Auto-detect alarm entity and set security tab default
             if (!this._alarmEntity && this.hass) {
@@ -1696,7 +1567,7 @@ if (typeof structuredClone === 'undefined') {
             }
             // Check for new version and show changelog popup if needed
             this._checkForNewVersion();
-            // Update RoomDataService with enabled maps
+            // Update RoomDataService with enabled maps (reads from store-delegating getters)
             if (roomDataService) {
               roomDataService.setEnabledMaps({
                 enabledLights: this._enabledLights,
@@ -1722,7 +1593,7 @@ if (typeof structuredClone === 'undefined') {
             this._updateRoomDataServiceLabelIds();
             // Invalidate enabled maps cache so it's rebuilt on next render
             this._enabledMapsVersion++;
-            debugLog("Settings synced from store");
+            debugLog("Settings loaded from store");
             this.requestUpdate();
           }).catch(e => {
             console.error("Failed to load settings from store:", e);
@@ -4450,7 +4321,7 @@ if (typeof structuredClone === 'undefined') {
             <ha-icon icon="mdi:alert-circle" style="--mdc-icon-size: 18px;"></ha-icon>
             <span>${this._settingsError}</span>
             <button
-              @click=${() => { this._settingsLoaded = false; this._settingsError = null; this._loadSettings(); }}
+              @click=${() => { this._settingsError = null; if (settingsStore) { settingsStore._loaded = false; settingsStore.load(); } this.requestUpdate(); }}
               style="
                 margin-left: auto;
                 background: rgba(255,255,255,0.2);
