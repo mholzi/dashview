@@ -55,6 +55,7 @@ if (typeof structuredClone === 'undefined') {
 // Wait for HA frontend to be ready, then load
 (async () => {
   // Version for cache busting - update this when making changes
+  // NOTE: Use `npm run bump-version <version>` to update all version constants at once
   const DASHVIEW_VERSION = "1.5.3";
 
   // Non-device domains to exclude from entity lists globally

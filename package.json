@@ -11,7 +11,9 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "build": "rollup -c",
-    "build:watch": "rollup -c --watch"
+    "build:watch": "rollup -c --watch",
+    "bump-version": "bash scripts/bump-version.sh",
+    "check-version": "bash scripts/check-version.sh"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.0",
