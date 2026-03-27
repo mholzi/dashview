@@ -41,12 +41,6 @@ export {
   translateWeatherCondition
 } from './icons.js';
 
-// Entity utilities
-export {
-  getEntityCounts,
-  getFriendlyName
-} from './entities.js';
-
 // General helpers
 export {
   sortByCustomOrder,
@@ -133,11 +127,3 @@ export {
   applyDelta
 } from './settings-diff.js';
 
-// Entity suggestions utilities
-export {
-  getUnusedEntitiesForCategory,
-  getAllSuggestionsForArea,
-  getUnusedEntityCount,
-  getMissingSuggestions,
-  renderSuggestionsBanner
-} from './entity-suggestions.js';
