@@ -441,6 +441,10 @@ if (typeof structuredClone === 'undefined') {
       super();
       this._currentTime = "";
       this._timeInterval = null;
+      // Memoization cache for enabled maps (recomputed only when inputs change)
+      this._cachedEnabledMaps = null;
+      this._cachedEnabledMapsKey = null;
+      this._enabledMapsVersion = 0;
       this._activeTab = "home";
       this._areas = [];
       this._enabledRooms = {};
@@ -683,17 +687,26 @@ if (typeof structuredClone === 'undefined') {
       };
       document.addEventListener('click', this._closeDropdownHandler);
 
-      // Subscribe to store changes for reactive updates
+      // Subscribe to store changes with rAF batching to coalesce multiple
+      // store updates in the same tick into a single render cycle
+      this._pendingStoreUpdate = false;
+      const batchedUpdate = () => {
+        if (!this._pendingStoreUpdate) {
+          this._pendingStoreUpdate = true;
+          requestAnimationFrame(() => {
+            this._pendingStoreUpdate = false;
+            this.requestUpdate();
+          });
+        }
+      };
       if (settingsStore) {
-        this._unsubscribeSettings = settingsStore.subscribe(() => {
-          this.requestUpdate();
-        });
+        this._unsubscribeSettings = settingsStore.subscribe(batchedUpdate);
       }
       if (uiStateStore) {
-        this._unsubscribeUIState = uiStateStore.subscribe(() => this.requestUpdate());
+        this._unsubscribeUIState = uiStateStore.subscribe(batchedUpdate);
       }
       if (registryStore) {
-        this._unsubscribeRegistry = registryStore.subscribe(() => this.requestUpdate());
+        this._unsubscribeRegistry = registryStore.subscribe(batchedUpdate);
       }
 
       // Centralized error event listener for debugging and monitoring
@@ -1707,6 +1720,8 @@ if (typeof structuredClone === 'undefined') {
             }
             // Update roomDataService with user-configured label IDs
             this._updateRoomDataServiceLabelIds();
+            // Invalidate enabled maps cache so it's rebuilt on next render
+            this._enabledMapsVersion++;
             debugLog("Settings synced from store");
             this.requestUpdate();
           }).catch(e => {
@@ -1810,11 +1825,14 @@ if (typeof structuredClone === 'undefined') {
     _updateTime() {
       const now = new Date();
       const locale = this.hass?.language || navigator.language || 'en';
-      this._currentTime = now.toLocaleTimeString(locale, {
+      const newTime = now.toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
       });
+      // Only trigger re-render when the displayed time actually changes
+      if (newTime !== this._currentTime) {
+        this._currentTime = newTime;
+      }
     }
 
     _toggleMenu() {
@@ -1885,6 +1903,7 @@ if (typeof structuredClone === 'undefined') {
     _toggleEntityEnabled(settingsKey, entityId) {
       const isCurrentlyEnabled = this[settingsKey][entityId] !== false;
       this[settingsKey] = { ...this[settingsKey], [entityId]: !isCurrentlyEnabled };
+      this._enabledMapsVersion++;
       this._saveSettings();
       // Update roomDataService with the new enabled maps
       if (roomDataService) {
@@ -4322,6 +4341,38 @@ if (typeof structuredClone === 'undefined') {
       return orderedRooms;
     }
 
+    /**
+     * Get memoized enabled maps — only recomputed when entity registry or label/enabled inputs change
+     */
+    _getCachedEnabledMaps() {
+      const key = [
+        this._enabledMapsVersion,
+        this._entityRegistry?.length,
+        this._motionLabelId, this._garageLabelId, this._windowLabelId,
+        this._roofWindowLabelId, this._doorLabelId, this._lightLabelId,
+        this._coverLabelId, this._tvLabelId, this._lockLabelId,
+        this._waterLeakLabelId, this._smokeLabelId,
+      ].join('|');
+      if (key === this._cachedEnabledMapsKey && this._cachedEnabledMaps) {
+        return this._cachedEnabledMaps;
+      }
+      this._cachedEnabledMapsKey = key;
+      this._cachedEnabledMaps = {
+        enabledMotionSensors: this._buildEnabledMapFromRegistry(this._motionLabelId, this._enabledMotionSensors),
+        enabledGarages: this._buildEnabledMapFromRegistry(this._garageLabelId, this._enabledGarages),
+        enabledWindows: this._buildEnabledMapFromRegistry(this._windowLabelId, this._enabledWindows),
+        enabledRoofWindows: this._buildEnabledMapFromRegistry(this._roofWindowLabelId, this._enabledRoofWindows),
+        enabledDoors: this._buildEnabledMapFromRegistry(this._doorLabelId, this._enabledDoors),
+        enabledLights: this._buildEnabledMapFromRegistry(this._lightLabelId, this._enabledLights),
+        enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
+        enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
+        enabledLocks: this._buildEnabledMapFromRegistry(this._lockLabelId, this._enabledLocks),
+        enabledWaterLeakSensors: this._buildEnabledMapFromRegistry(this._waterLeakLabelId, this._enabledWaterLeakSensors),
+        enabledSmokeSensors: this._buildEnabledMapFromRegistry(this._smokeLabelId, this._enabledSmokeSensors),
+      };
+      return this._cachedEnabledMaps;
+    }
+
     render() {
       const weather = this._getWeather();
       const currentWeather = this._getCurrentWeatherData();
@@ -4332,24 +4383,13 @@ if (typeof structuredClone === 'undefined') {
       const appliancesWithHomeStatus = this._getAppliancesWithHomeStatus();
 
       // Get all status items via status service (filtered by current labels)
-      // Build enabled maps from registry to support default-enabled behavior
+      // Use memoized enabled maps to avoid 11x full registry iterations per render
+      const enabledMaps = this._getCachedEnabledMaps();
       const allStatusItems = statusService
         ? statusService.getAllStatusItems(
             this.hass,
             this._infoTextConfig,
-            {
-              enabledMotionSensors: this._buildEnabledMapFromRegistry(this._motionLabelId, this._enabledMotionSensors),
-              enabledGarages: this._buildEnabledMapFromRegistry(this._garageLabelId, this._enabledGarages),
-              enabledWindows: this._buildEnabledMapFromRegistry(this._windowLabelId, this._enabledWindows),
-              enabledRoofWindows: this._buildEnabledMapFromRegistry(this._roofWindowLabelId, this._enabledRoofWindows),
-              enabledDoors: this._buildEnabledMapFromRegistry(this._doorLabelId, this._enabledDoors),
-              enabledLights: this._buildEnabledMapFromRegistry(this._lightLabelId, this._enabledLights),
-              enabledCovers: this._buildEnabledMapFromRegistry(this._coverLabelId, this._enabledCovers),
-              enabledTVs: this._buildEnabledMapFromRegistry(this._tvLabelId, this._enabledTVs),
-              enabledLocks: this._buildEnabledMapFromRegistry(this._lockLabelId, this._enabledLocks),
-              enabledWaterLeakSensors: this._buildEnabledMapFromRegistry(this._waterLeakLabelId, this._enabledWaterLeakSensors),
-              enabledSmokeSensors: this._buildEnabledMapFromRegistry(this._smokeLabelId, this._enabledSmokeSensors),
-            },
+            enabledMaps,
             {
               motionLabelId: this._motionLabelId,
               garageLabelId: this._garageLabelId,
