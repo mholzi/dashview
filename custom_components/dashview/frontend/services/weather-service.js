@@ -277,14 +277,15 @@ export function getDwdWarnings(hass, dwdWarningEntity) {
         const endDate = new Date(endTime);
         const now = new Date();
         const diffDays = Math.floor((endDate - now) / (1000 * 60 * 60 * 24));
-        const endTimeStr = endDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        const locale = navigator.language || 'en';
+        const endTimeStr = endDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 
         if (diffDays === 0) {
           endLabel = t('common.time.until_time', { time: endTimeStr });
         } else if (diffDays === 1) {
           endLabel = t('common.time.until_tomorrow', { time: endTimeStr });
         } else {
-          const endDateStr = endDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+          const endDateStr = endDate.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
           endLabel = t('common.time.until_date', { date: endDateStr, time: endTimeStr });
         }
       }
