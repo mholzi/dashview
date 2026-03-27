@@ -104,19 +104,19 @@ export function parseGarbageState(raw) {
 
   if (raw.toLowerCase() === 'heute' || raw.toLowerCase() === 'today') {
     days = 0;
-    label = 'Heute';
+    label = t('common.time.today');
   } else if (raw.toLowerCase() === 'morgen' || raw.toLowerCase() === 'tomorrow') {
     days = 1;
-    label = 'Morgen';
+    label = t('common.time.tomorrow');
   } else {
     const match = raw.match(/(\d+)/);
     days = match ? parseInt(match[1], 10) : 99;
     if (days === 0) {
-      label = 'Heute';
+      label = t('common.time.today');
     } else if (days === 1) {
-      label = 'Morgen';
+      label = t('common.time.tomorrow');
     } else {
-      label = `in ${days} Tagen`;
+      label = t('common.time.in_days', { days });
     }
   }
 

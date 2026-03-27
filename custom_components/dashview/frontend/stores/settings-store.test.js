@@ -1169,7 +1169,7 @@ describe('SettingsStore', () => {
       expect(saveCalls.length).toBe(1);
       expect(saveCalls[0][0].changes).toMatchObject({
         weatherEntity: 'weather.modified',
-        'enabledRooms.room.test': true
+        enabledRooms: { 'room.test': true }
       });
     });
 

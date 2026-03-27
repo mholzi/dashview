@@ -227,7 +227,7 @@ export function buildEnabledMapFromRegistry(labelId, existingMap, entityRegistry
   entityRegistry.forEach(e => {
     if (e.labels && e.labels.includes(labelId)) {
       // Use existing value if set, otherwise default to true
-      map[e.entity_id] = existingMap[e.entity_id] !== false;
+      map[e.entity_id] = (existingMap || {})[e.entity_id] !== false;
     }
   });
   return map;
