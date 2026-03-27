@@ -73,8 +73,8 @@ if (typeof structuredClone === 'undefined') {
   const haPanel = customElements.get("ha-panel-lovelace");
   const LitElement = Object.getPrototypeOf(haPanel);
 
-  // Import lit html and css from the global scope
-  const { html, css } = await import("https://unpkg.com/lit@2.8.0/index.js?module");
+  // Import lit html and css from local vendor bundle (no CDN dependency)
+  const { html, css } = await import("./vendor/lit.esm.js");
 
   // Module references
   let externalStylesLoaded = false;
@@ -3622,7 +3622,7 @@ if (typeof structuredClone === 'undefined') {
           const domain = e.entity_id.split('.')[0];
           if (EXCLUDED_DOMAINS.includes(domain)) return;
           // Skip explicitly disabled entities (false), include all others (undefined/true)
-          if (existingMap[e.entity_id] === false) return;
+          if ((existingMap || {})[e.entity_id] === false) return;
           // Skip entities not allocated to a room
           const areaId = this._getAreaIdForEntity(e.entity_id);
           if (!areaId) return;

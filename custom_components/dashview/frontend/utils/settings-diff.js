@@ -56,7 +56,7 @@ export function calculateDelta(oldSettings, newSettings) {
         continue;
       }
 
-      // Handle nested objects - recurse
+      // Handle nested objects - recurse (but not entity maps whose keys contain dots)
       if (
         typeof oldVal === 'object' &&
         oldVal !== null &&
@@ -64,6 +64,15 @@ export function calculateDelta(oldSettings, newSettings) {
         newVal !== null &&
         !Array.isArray(oldVal)
       ) {
+        // If any key contains a dot (e.g., entity IDs like "light.kitchen"),
+        // treat the object as an opaque leaf to avoid path corruption in deep_merge
+        const allObjKeys = [...Object.keys(oldVal), ...Object.keys(newVal)];
+        if (allObjKeys.some(k => k.includes('.'))) {
+          if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+            changes[fullPath] = newVal;
+          }
+          continue;
+        }
         diff(oldVal, newVal, fullPath);
         continue;
       }
