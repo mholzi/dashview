@@ -91,6 +91,24 @@ export const SETTINGS_SCHEMA = {
     max: 1440,
     default: THRESHOLDS?.DEFAULT_GARAGE_OPEN_TOO_LONG_MINUTES ?? 30
   },
+  roofWindowOpenTooLongMinutes: {
+    type: 'number',
+    min: 5,
+    max: 1440,
+    default: THRESHOLDS?.DEFAULT_ROOF_WINDOW_OPEN_TOO_LONG_MINUTES ?? 120
+  },
+  coverOpenTooLongMinutes: {
+    type: 'number',
+    min: 5,
+    max: 1440,
+    default: THRESHOLDS?.DEFAULT_COVER_OPEN_TOO_LONG_MINUTES ?? 240
+  },
+  lockUnlockedTooLongMinutes: {
+    type: 'number',
+    min: 5,
+    max: 1440,
+    default: THRESHOLDS?.DEFAULT_LOCK_UNLOCKED_TOO_LONG_MINUTES ?? 30
+  },
 
   // Weather entity configuration
   weatherEntity: { type: 'string', default: 'weather.forecast_home' },
@@ -139,6 +157,31 @@ export const SETTINGS_SCHEMA = {
 
   // User photos
   userPhotos: { type: 'object', default: {} },
+
+  // Alarm entity
+  alarmEntity: { type: 'string', default: '' },
+
+  // Cover position inversion map
+  coverInvertPosition: { type: 'object', default: {} },
+
+  // Language override (null = follow HA, 'en'/'de' = override)
+  manualLanguage: { type: 'stringOrNull', default: null },
+
+  // Weather radar settings
+  weatherRadarLat: { type: 'number', min: -90, max: 90, default: 50.0 },
+  weatherRadarLon: { type: 'number', min: -180, max: 180, default: 8.7 },
+  weatherRadarZoom: { type: 'number', min: 1, max: 20, default: 9 },
+  weatherRadarTempUnit: { type: 'string', default: '°C' },
+  weatherRadarWindUnit: { type: 'string', default: 'km/h' },
+
+  // Pollen configuration
+  pollenConfig: { type: 'object', default: { enabled: true, enabledSensors: {}, displayMode: 'active' } },
+
+  // Train departures
+  trainDepartures: { type: 'array', default: [] },
+
+  // Enabled doors map
+  enabledDoors: { type: 'object', default: {} },
 };
 
 /**

@@ -180,6 +180,7 @@ if (typeof structuredClone === 'undefined') {
   let statusService = null;
   let weatherService = null;
   let anomalyDetector = null;
+  let suggestionEngine = null;
   try {
     const servicesModule = await import(`./services/index.js?v=${DASHVIEW_VERSION}`);
     roomDataService = servicesModule.getRoomDataService();
@@ -211,6 +212,11 @@ if (typeof structuredClone === 'undefined') {
     anomalyDetector = {
       detectTemperatureAnomaly: servicesModule.detectTemperatureAnomaly,
       detectHumidityAnomaly: servicesModule.detectHumidityAnomaly,
+    };
+    suggestionEngine = {
+      evaluateSuggestions: servicesModule.evaluateSuggestions,
+      dismissSuggestion: servicesModule.dismissSuggestion,
+      recordSuggestionAction: servicesModule.recordSuggestionAction,
     };
     debugLog("Loaded services module");
   } catch (e) {
@@ -345,6 +351,8 @@ if (typeof structuredClone === 'undefined') {
         _editingRoomSceneButton: { type: String },
         // Changelog
         _changelogPageIndex: { type: Number },
+        // Smart suggestions
+        _activeSuggestions: { type: Array },
         // Floor overview
         _floorOverviewIndex: { type: Object },
       };
@@ -466,6 +474,8 @@ if (typeof structuredClone === 'undefined') {
       this._entitySearchDebounceTimers = {};
       // Thermostat swipe index per room
       this._thermostatSwipeIndex = {};
+      // Smart suggestions
+      this._activeSuggestions = [];
       // Changelog popup state
       this._changelogPopupOpen = false;
       this._changelogPageIndex = 0;
@@ -797,6 +807,72 @@ if (typeof structuredClone === 'undefined') {
     _handleRoofWindowOpenTooLongChange(e) { this._handleThresholdChange('_roofWindowOpenTooLongMinutes', 5, 1440, e); }
     _handleCoverOpenTooLongChange(e) { this._handleThresholdChange('_coverOpenTooLongMinutes', 5, 1440, e); }
     _handleLockUnlockedTooLongChange(e) { this._handleThresholdChange('_lockUnlockedTooLongMinutes', 5, 1440, e); }
+
+    // ============================================
+    // Smart Suggestions
+    // ============================================
+
+    /**
+     * Evaluate and update active suggestions based on current state
+     */
+    _updateSuggestions() {
+      if (!suggestionEngine || !this.hass) {
+        this._activeSuggestions = [];
+        return;
+      }
+      const context = {
+        enabledMaps: {
+          enabledLights: this._enabledLights,
+          enabledClimates: this._enabledClimates,
+          enabledWindows: this._enabledWindows,
+        },
+        labelIds: {
+          light: this._lightLabelId,
+          climate: this._climateLabelId,
+          window: this._windowLabelId,
+        },
+        entityHasLabel: (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
+        getAreaIdForEntity: (entityId) => this._getAreaIdForEntity(entityId),
+      };
+      this._activeSuggestions = suggestionEngine.evaluateSuggestions(this.hass, context);
+    }
+
+    /**
+     * Handle user clicking a suggestion action button
+     * @param {Object} suggestion - Suggestion object from the engine
+     */
+    _handleSuggestionAction(suggestion) {
+      if (!suggestion?.actionData) return;
+      const { actionType, actionData } = suggestion;
+
+      if (actionType === 'service' && actionData.domain && actionData.service) {
+        // Call HA service for each entity
+        (actionData.entityIds || []).forEach(entityId => {
+          this.hass.callService(actionData.domain, actionData.service, {
+            entity_id: entityId,
+          });
+        });
+      } else if (actionType === 'popup' && actionData.popup === 'lights') {
+        this._lightsPopupOpen = true;
+      }
+
+      // Record the action and refresh suggestions
+      if (suggestionEngine) {
+        suggestionEngine.recordSuggestionAction(suggestion.id);
+      }
+      this._updateSuggestions();
+    }
+
+    /**
+     * Handle user dismissing a suggestion
+     * @param {Object} suggestion - Suggestion object from the engine
+     */
+    _handleSuggestionDismiss(suggestion) {
+      if (!suggestion?.id || !suggestionEngine) return;
+      // Default cooldown of 60 minutes
+      suggestionEngine.dismissSuggestion(suggestion.id, 60 * 60 * 1000);
+      this._updateSuggestions();
+    }
 
     /**
      * Set a category's label mapping
@@ -1610,6 +1686,8 @@ if (typeof structuredClone === 'undefined') {
         if (this._weatherForecasts.length === 0) {
           this._fetchWeatherForecasts();
         }
+        // Evaluate smart suggestions based on current state
+        this._updateSuggestions();
       }
     }
 
