@@ -17,13 +17,13 @@
     "prepare": "cp scripts/pre-commit .git/hooks/pre-commit 2>/dev/null && chmod +x .git/hooks/pre-commit 2>/dev/null || true"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.0",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@vitest/coverage-v8": "^2.0.0",
-    "happy-dom": "^15.0.0",
-    "rollup": "^4.28.0",
-    "sortablejs": "^1.15.6",
-    "vitest": "^2.0.0"
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^1.0.0",
+    "@vitest/coverage-v8": "^4.1.2",
+    "happy-dom": "^20.8.9",
+    "rollup": "^4.60.0",
+    "sortablejs": "^1.15.7",
+    "vitest": "^4.1.2"
   }
 }
