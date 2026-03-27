@@ -200,11 +200,8 @@ export class RegistryStore {
       this._data.floors = floorsResult || [];
       this._data.areasLoading = false;
 
-      // Build area index for O(1) lookups (Story 7.8)
-      this._areaById.clear();
-      this._data.areas.forEach(area => {
-        this._areaById.set(area.area_id, area);
-      });
+      // Rebuild all indexes (entity, device, area) for O(1) lookups
+      this._buildIndexes();
 
       this._notifyListeners('areas', this._data.areas);
       this._notifyListeners('floors', this._data.floors);
@@ -237,23 +234,8 @@ export class RegistryStore {
       this._data.labels = labelResult || [];
       this._data.entitiesLoading = false;
 
-      // Build entity and device indexes for O(1) lookups (Story 7.8)
-      this._entityById.clear();
-      this._data.entityRegistry.forEach(entity => {
-        this._entityById.set(entity.entity_id, entity);
-      });
-
-      this._deviceById.clear();
-      this._data.deviceRegistry.forEach(device => {
-        // Home Assistant uses 'id' for device registry, but some fixtures use 'device_id'
-        const deviceId = device.id || device.device_id;
-        if (deviceId) {
-          this._deviceById.set(deviceId, device);
-        }
-      });
-
-      // Invalidate area-label cache when registries change (Story 7.8)
-      this._areaLabelCache.clear();
+      // Rebuild all indexes (entity, device, area) for O(1) lookups
+      this._buildIndexes();
 
       // Resolve label IDs
       this._resolveLabelIds();

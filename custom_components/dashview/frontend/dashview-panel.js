@@ -586,15 +586,19 @@ if (typeof structuredClone === 'undefined') {
       this._infoTextConfig = {
         motion: { enabled: true },
         garage: { enabled: true },
-        washer: { enabled: true, entity: 'sensor.waschmaschine_operation_state', finishTimeEntity: 'sensor.waschmaschine_programme_finish_time' },
+        doors: { enabled: false },
+        roofWindows: { enabled: false },
+        locks: { enabled: false },
+        washer: { enabled: true, entity: '', finishTimeEntity: '' },
         windows: { enabled: false },
         lights: { enabled: false },
         covers: { enabled: false },
+        water: { enabled: false },
+        smoke: { enabled: false },
         dishwasher: { enabled: false, entity: '', finishTimeEntity: '' },
         dryer: { enabled: false, entity: '', finishTimeEntity: '' },
         vacuum: { enabled: false, entity: '', roomMapping: {} },
         batteryLow: { enabled: false, threshold: 20 },
-        alarm: { enabled: true },
       };
       // Search state for info text entity pickers
       this._infoTextSearchQuery = {};
@@ -767,160 +771,34 @@ if (typeof structuredClone === 'undefined') {
     }
 
     /**
-     * Handle temperature threshold change from admin input
+     * Generic threshold change handler — validates and persists a numeric input
+     * @param {string} propertyName - The reactive property to update (e.g., '_notificationTempThreshold')
+     * @param {number} min - Minimum allowed value
+     * @param {number} max - Maximum allowed value
      * @param {Event} e - Input change event
      */
-    _handleTempThresholdChange(e) {
+    _handleThresholdChange(propertyName, min, max, e) {
       const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 0 && value <= 50) {
-        this._notificationTempThreshold = value;
+      if (!isNaN(value) && value >= min && value <= max) {
+        this[propertyName] = value;
         this._saveSettings();
         this.requestUpdate();
       }
     }
 
-    /**
-     * Handle humidity threshold change from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleHumidityThresholdChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 0 && value <= 100) {
-        this._notificationHumidityThreshold = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle temperature rapid change threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleTempRapidChangeThresholdChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 1 && value <= 20) {
-        this._tempRapidChangeThreshold = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle temperature rapid change window from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleTempRapidChangeWindowChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 15 && value <= 180) {
-        this._tempRapidChangeWindowMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle humidity rapid change threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleHumidityRapidChangeThresholdChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 5 && value <= 50) {
-        this._humidityRapidChangeThreshold = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle humidity rapid change window from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleHumidityRapidChangeWindowChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 10 && value <= 120) {
-        this._humidityRapidChangeWindowMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle door open too long threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleDoorOpenTooLongChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 5 && value <= 1440) {
-        this._doorOpenTooLongMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle window open too long threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleWindowOpenTooLongChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 5 && value <= 1440) {
-        this._windowOpenTooLongMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle garage open too long threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleGarageOpenTooLongChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 5 && value <= 1440) {
-        this._garageOpenTooLongMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle roof window open too long threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleRoofWindowOpenTooLongChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 5 && value <= 1440) {
-        this._roofWindowOpenTooLongMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle cover open too long threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleCoverOpenTooLongChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 5 && value <= 1440) {
-        this._coverOpenTooLongMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
-
-    /**
-     * Handle lock unlocked too long threshold from admin input
-     * @param {Event} e - Input change event
-     */
-    _handleLockUnlockedTooLongChange(e) {
-      const value = parseInt(e.target.value, 10);
-      if (!isNaN(value) && value >= 5 && value <= 1440) {
-        this._lockUnlockedTooLongMinutes = value;
-        this._saveSettings();
-        this.requestUpdate();
-      }
-    }
+    // Threshold change handlers — delegate to generic _handleThresholdChange
+    _handleTempThresholdChange(e) { this._handleThresholdChange('_notificationTempThreshold', 0, 50, e); }
+    _handleHumidityThresholdChange(e) { this._handleThresholdChange('_notificationHumidityThreshold', 0, 100, e); }
+    _handleTempRapidChangeThresholdChange(e) { this._handleThresholdChange('_tempRapidChangeThreshold', 1, 20, e); }
+    _handleTempRapidChangeWindowChange(e) { this._handleThresholdChange('_tempRapidChangeWindowMinutes', 15, 180, e); }
+    _handleHumidityRapidChangeThresholdChange(e) { this._handleThresholdChange('_humidityRapidChangeThreshold', 5, 50, e); }
+    _handleHumidityRapidChangeWindowChange(e) { this._handleThresholdChange('_humidityRapidChangeWindowMinutes', 10, 120, e); }
+    _handleDoorOpenTooLongChange(e) { this._handleThresholdChange('_doorOpenTooLongMinutes', 5, 1440, e); }
+    _handleWindowOpenTooLongChange(e) { this._handleThresholdChange('_windowOpenTooLongMinutes', 5, 1440, e); }
+    _handleGarageOpenTooLongChange(e) { this._handleThresholdChange('_garageOpenTooLongMinutes', 5, 1440, e); }
+    _handleRoofWindowOpenTooLongChange(e) { this._handleThresholdChange('_roofWindowOpenTooLongMinutes', 5, 1440, e); }
+    _handleCoverOpenTooLongChange(e) { this._handleThresholdChange('_coverOpenTooLongMinutes', 5, 1440, e); }
+    _handleLockUnlockedTooLongChange(e) { this._handleThresholdChange('_lockUnlockedTooLongMinutes', 5, 1440, e); }
 
     /**
      * Set a category's label mapping
