@@ -128,6 +128,17 @@ Control every device type from a single, unified interface.
 <tr>
 <td width="50%">
 
+#### Fans
+<img src="docs/images/fans-control.png" alt="Fans Control" width="300" />
+
+- Speed control
+- Oscillation toggle
+- Direction control
+- Grouped by room
+
+</td>
+<td width="50%">
+
 #### Covers & Blinds
 <img src="docs/images/covers-control.png" alt="Covers Control" width="300" />
 
@@ -187,6 +198,16 @@ Plan your day without leaving the dashboard.
 
 ---
 
+### Smart Suggestions
+
+Dashview analyzes your Home Assistant setup and recommends entities you might want to add to your dashboard. No more hunting through entity lists — Dashview surfaces what matters.
+
+- Detects unassigned entities that belong on your dashboard
+- Suggests label and area mappings based on your existing setup
+- One-click to accept suggestions
+
+---
+
 ### Floor Overview
 
 Navigate multi-story homes with ease.
@@ -212,6 +233,7 @@ Navigate multi-story homes with ease.
 - **Haptic Feedback** — Tactile responses on touch devices
 - **Dark Mode** — Automatic theme switching
 - **Mobile First** — Touch-friendly, responsive design
+- **Accessible** — Full ARIA support, keyboard navigation, and screen reader compatibility
 
 ---
 
@@ -290,6 +312,7 @@ Go to **Settings** → **Labels** and create labels for your device types:
 | `Water Leak` | Water leak/moisture sensors |
 | `Smoke` | Smoke/fire detectors |
 | `Media` | Speakers, TVs |
+| `Fans` | Ceiling fans, ventilation |
 | `Garage` | Garage door controls |
 
 ### Step 2: Assign Labels to Entities
@@ -331,6 +354,7 @@ Dashview works with any Home Assistant entity in these domains:
 | `sensor` | Temperature, humidity, battery |
 | `media_player` | Playback, volume, queue |
 | `switch` | On/off control |
+| `fan` | Speed, oscillation, direction |
 | `scene` | One-tap activation |
 | `script` | Custom actions |
 
