@@ -1166,7 +1166,17 @@ export function getAlarmStatus(hass, infoTextConfig, alarmEntity) {
  * @param {string} alarmEntity - Optional alarm control panel entity ID
  * @returns {Array} Array of active status objects
  */
-export function getAllStatusItems(hass, infoTextConfig, enabledEntities, labelIds = {}, entityHasLabel = null, appliancesWithHomeStatus = [], getApplianceStatus = null, openTooLongThresholds = {}, alarmEntity = null) {
+export function getAllStatusItems({
+  hass,
+  infoTextConfig,
+  enabledEntities = {},
+  labelIds = {},
+  entityHasLabel = null,
+  appliancesWithHomeStatus = [],
+  getApplianceStatus = null,
+  openTooLongThresholds = {},
+  alarmEntity = null,
+}) {
   const {
     enabledMotionSensors = {},
     enabledGarages = {},

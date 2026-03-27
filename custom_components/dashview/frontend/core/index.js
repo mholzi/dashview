@@ -64,3 +64,17 @@ export {
   createCancellableTimeout,
   TIMEOUT_DEFAULTS,
 } from '../utils/timeout.js';
+
+// Module Registry
+export {
+  registerModule,
+  getModule,
+  hasModule,
+} from './module-registry.js';
+
+// Panel Interface Validation
+export {
+  validatePanelInterface,
+  REQUIRED_PANEL_METHODS,
+  REQUIRED_PANEL_PROPERTIES,
+} from './panel-interface.js';

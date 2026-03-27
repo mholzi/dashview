@@ -4386,11 +4386,11 @@ if (typeof structuredClone === 'undefined') {
       // Use memoized enabled maps to avoid 11x full registry iterations per render
       const enabledMaps = this._getCachedEnabledMaps();
       const allStatusItems = statusService
-        ? statusService.getAllStatusItems(
-            this.hass,
-            this._infoTextConfig,
-            enabledMaps,
-            {
+        ? statusService.getAllStatusItems({
+            hass: this.hass,
+            infoTextConfig: this._infoTextConfig,
+            enabledEntities: enabledMaps,
+            labelIds: {
               motionLabelId: this._motionLabelId,
               garageLabelId: this._garageLabelId,
               windowLabelId: this._windowLabelId,
@@ -4403,10 +4403,10 @@ if (typeof structuredClone === 'undefined') {
               waterLeakLabelId: this._waterLeakLabelId,
               smokeLabelId: this._smokeLabelId,
             },
-            (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
+            entityHasLabel: (entityId, labelId) => this._entityHasCurrentLabel(entityId, labelId),
             appliancesWithHomeStatus,
-            (appliance) => this._getApplianceStatus(appliance),
-            {
+            getApplianceStatus: (appliance) => this._getApplianceStatus(appliance),
+            openTooLongThresholds: {
               doorOpenTooLongMinutes: this._doorOpenTooLongMinutes,
               windowOpenTooLongMinutes: this._windowOpenTooLongMinutes,
               garageOpenTooLongMinutes: this._garageOpenTooLongMinutes,
@@ -4414,8 +4414,8 @@ if (typeof structuredClone === 'undefined') {
               coverOpenTooLongMinutes: this._coverOpenTooLongMinutes,
               lockUnlockedTooLongMinutes: this._lockUnlockedTooLongMinutes,
             },
-            this._alarmEntity
-          )
+            alarmEntity: this._alarmEntity,
+          })
         : [];
 
       // Filter out dismissed alerts (warnings only, per AC #5)
