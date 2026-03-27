@@ -70,8 +70,8 @@ if (typeof structuredClone === 'undefined') {
   const haPanel = customElements.get("ha-panel-lovelace");
   const LitElement = Object.getPrototypeOf(haPanel);
 
-  // Import lit html and css from the global scope
-  const { html, css } = await import("https://unpkg.com/lit@2.8.0/index.js?module");
+  // Import lit html and css from local vendor bundle (no CDN dependency)
+  const { html, css } = await import("./vendor/lit.esm.js");
 
   // Module references
   let externalStylesLoaded = false;

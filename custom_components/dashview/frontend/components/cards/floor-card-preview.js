@@ -26,6 +26,15 @@
 
 import { t } from '../../utils/i18n.js';
 
+/**
+ * Escape HTML special characters to prevent XSS when inserting into innerHTML.
+ */
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 export class FloorCardPreview extends HTMLElement {
   static get observedAttributes() {
     return ['floor-id', 'scale'];
@@ -122,12 +131,12 @@ export class FloorCardPreview extends HTMLElement {
       <style>${this._getStyles()}</style>
       <div class="preview-label">
         <ha-icon icon="mdi:eye"></ha-icon>
-        <span>${t('admin.layout.floorCardPreview')}</span>
+        <span>${escapeHtml(t('admin.layout.floorCardPreview'))}</span>
       </div>
       <div class="preview-container" style="--scale: ${scale}">
         <div class="preview-header">
-          <ha-icon icon="${floor?.icon || 'mdi:home-floor-1'}"></ha-icon>
-          <span>${floor?.name || t('admin.layout.floor')}</span>
+          <ha-icon icon="${escapeHtml(floor?.icon || 'mdi:home-floor-1')}"></ha-icon>
+          <span>${escapeHtml(floor?.name || t('admin.layout.floor'))}</span>
         </div>
         <div class="floor-card-grid">
           ${this._renderSlot(slots[0], 0)}
@@ -159,9 +168,9 @@ export class FloorCardPreview extends HTMLElement {
 
     return `
       <div class="slot slot-${slotIndex} ${stateClass}">
-        <ha-icon icon="${displayInfo.icon}"></ha-icon>
-        <span class="slot-name">${displayInfo.name}</span>
-        <span class="slot-state">${displayInfo.state}</span>
+        <ha-icon icon="${escapeHtml(displayInfo.icon)}"></ha-icon>
+        <span class="slot-name">${escapeHtml(displayInfo.name)}</span>
+        <span class="slot-state">${escapeHtml(displayInfo.state)}</span>
       </div>
     `;
   }

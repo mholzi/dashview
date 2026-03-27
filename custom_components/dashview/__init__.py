@@ -276,6 +276,7 @@ async def websocket_get_settings(
     vol.Required("type"): f"{DOMAIN}/save_settings",
     vol.Required("settings"): dict,
 })
+@websocket_api.require_admin
 @websocket_api.async_response
 @rate_limited("save_settings")
 async def websocket_save_settings(
@@ -354,6 +355,7 @@ def deep_merge(base: dict, changes: dict) -> dict:
     vol.Required("changes"): dict,
     vol.Optional("version"): int,  # Timestamp for conflict detection
 })
+@websocket_api.require_admin
 @websocket_api.async_response
 @rate_limited("save_settings")
 async def websocket_save_settings_delta(
@@ -416,6 +418,7 @@ async def websocket_save_settings_delta(
     vol.Required("filename"): str,
     vol.Required("data"): str,  # Base64 encoded image data
 })
+@websocket_api.require_admin
 @websocket_api.async_response
 @rate_limited("upload_photo")
 async def websocket_upload_photo(
@@ -534,6 +537,7 @@ async def websocket_upload_photo(
     vol.Required("type"): f"{DOMAIN}/delete_photo",
     vol.Required("path"): str,
 })
+@websocket_api.require_admin
 @websocket_api.async_response
 @rate_limited("delete_photo")
 async def websocket_delete_photo(
