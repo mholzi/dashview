@@ -868,6 +868,8 @@
       "waterLeakDesc": "Wasserleck- und Feuchtigkeitssensoren",
       "covers": "Rollos / Jalousien",
       "coverDesc": "Rollladen- und Jalousie-Entitäten",
+      "fans": "Ventilatoren",
+      "fanDesc": "Ventilator- und Lüftungsentitäten",
       "roofWindows": "Dachfenster",
       "roofWindowDesc": "Dachfenster-Entitäten",
       "garages": "Garagentore",

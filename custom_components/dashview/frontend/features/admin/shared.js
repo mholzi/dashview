@@ -313,6 +313,7 @@ export function showConfirmation(panel, { title, message, onConfirm, destructive
 export const LABEL_CATEGORIES = [
   { key: 'light', icon: 'mdi:lightbulb-group', titleKey: 'admin.entityTypes.lights', descKey: 'admin.entityTypes.lightDesc', prop: '_lightLabelId' },
   { key: 'cover', icon: 'mdi:window-shutter', titleKey: 'admin.entityTypes.covers', descKey: 'admin.entityTypes.coverDesc', prop: '_coverLabelId' },
+  { key: 'fan', icon: 'mdi:fan', titleKey: 'admin.entityTypes.fans', descKey: 'admin.entityTypes.fanDesc', prop: '_fanLabelId' },
   { key: 'roofWindow', icon: 'mdi:window-open', titleKey: 'admin.entityTypes.roofWindows', descKey: 'admin.entityTypes.roofWindowDesc', prop: '_roofWindowLabelId' },
   { key: 'window', icon: 'mdi:window-closed-variant', titleKey: 'admin.entityTypes.windows', descKey: 'admin.entityTypes.windowDesc', prop: '_windowLabelId' },
   { key: 'garage', icon: 'mdi:garage', titleKey: 'admin.entityTypes.garages', descKey: 'admin.entityTypes.garageDesc', prop: '_garageLabelId' },

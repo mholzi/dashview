@@ -66,6 +66,7 @@ const LABEL_PATTERNS = {
   motion: ['motion', 'bewegung'],
   smoke: ['smoke', 'rauchmelder', 'smoke detector'],
   cover: ['cover', 'rollo', 'blind'],
+  fan: ['fan', 'ventilator', 'lüfter'],
   garage: ['garage', 'garagentor'],
   window: ['window', 'fenster'],
   door: ['door', 'tür', 'türen', 'türsensor'],
