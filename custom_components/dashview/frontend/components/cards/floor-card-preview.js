@@ -30,9 +30,13 @@ import { t } from '../../utils/i18n.js';
  * Escape HTML special characters to prevent XSS when inserting into innerHTML.
  */
 function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 export class FloorCardPreview extends HTMLElement {
