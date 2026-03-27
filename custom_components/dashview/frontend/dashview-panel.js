@@ -4450,7 +4450,7 @@ if (typeof structuredClone === 'undefined') {
         <!-- TOP HEADER -->
         <div class="top-header">
           <div class="header-left">
-            <button class="menu-button" @click=${this._toggleMenu}>
+            <button class="menu-button" @click=${this._toggleMenu} aria-label="${t('common.actions.menu') || 'Menu'}">
               <ha-icon icon="mdi:menu"></ha-icon>
             </button>
           </div>
@@ -4458,7 +4458,7 @@ if (typeof structuredClone === 'undefined') {
           <div class="header-right">
             ${headerWeather
               ? html`
-                  <div class="weather-widget" @click=${this._openWeatherPopup}>
+                  <div class="weather-widget" @click=${this._openWeatherPopup} role="button" tabindex="0" aria-label="${t('weather.current')}" @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._openWeatherPopup(); } }}>
                     <ha-icon
                       class="weather-icon"
                       icon="${this._getWeatherIcon(headerWeather.condition)}"
@@ -4472,7 +4472,7 @@ if (typeof structuredClone === 'undefined') {
               : ""}
             ${person
               ? html`
-                  <div class="person-avatar ${person.state === "home" ? "home" : ""}" @click=${this._openUserPopup}>
+                  <div class="person-avatar ${person.state === "home" ? "home" : ""}" @click=${this._openUserPopup} role="button" tabindex="0" aria-label="${person?.name || 'User'}" @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._openUserPopup(); } }}>
                     ${person.picture
                       ? html`<img src="${person.picture}" alt="${person.name}" />`
                       : html`<ha-icon icon="mdi:account"></ha-icon>`}
@@ -4493,6 +4493,10 @@ if (typeof structuredClone === 'undefined') {
                       title="${indicator.label}${indicator.hasMotion ? ' (Motion)' : ''}${indicator.hasSmoke ? ' (Smoke!)' : ''}"
                       @click=${indicator.areaId ? () => this._openRoomPopup(indicator.areaId) : null}
                       style="${indicator.areaId ? 'cursor: pointer;' : ''}"
+                      role="${indicator.areaId ? 'button' : ''}"
+                      tabindex="${indicator.areaId ? '0' : ''}"
+                      aria-label="${indicator.label}${indicator.hasMotion ? ' (Motion)' : ''}${indicator.hasSmoke ? ' (Smoke!)' : ''}"
+                      @keydown=${indicator.areaId ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._openRoomPopup(indicator.areaId); } } : null}
                     >
                       <ha-icon icon="${indicator.icon}"></ha-icon>
                     </div>
@@ -4536,6 +4540,9 @@ if (typeof structuredClone === 'undefined') {
                   <span
                     class="info-badge ${status.state === 'motion' || status.state === 'finished' || status.state === 'on' ? 'success' : ''} ${this._getAlarmBadgeClass(status.state) || (status.isCritical ? 'critical' : status.isWarning ? 'warning' : '')} ${status.clickAction ? 'clickable' : ''}"
                     @click=${status.clickAction ? () => this._handleInfoTextClick(status.clickAction) : null}
+                    role="${status.clickAction ? 'button' : ''}"
+                    tabindex="${status.clickAction ? '0' : ''}"
+                    @keydown=${status.clickAction ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._handleInfoTextClick(status.clickAction); } } : null}
                   >
                     ${status.badgeIcon ? html`<ha-icon icon="${status.badgeIcon}" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon> ` : ''}${status.badgeText}${status.emoji || ''}
                     ${(status.isWarning || status.isCritical) && status.alertId ? html`
@@ -4543,6 +4550,10 @@ if (typeof structuredClone === 'undefined') {
                         class="info-badge-dismiss"
                         @click=${(e) => { e.stopPropagation(); this._dismissAlert(status); }}
                         title="${t('status.dismiss')}"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Dismiss"
+                        @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this._dismissAlert(status); } }}
                       >
                         <ha-icon icon="mdi:close" style="--mdc-icon-size: 12px;"></ha-icon>
                       </span>
@@ -4556,6 +4567,9 @@ if (typeof structuredClone === 'undefined') {
                     class="info-badge dismissed-indicator clickable"
                     @click=${() => this._showAllAlerts()}
                     title="${t('status.showAllAlerts')}"
+                    role="button"
+                    tabindex="0"
+                    @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._showAllAlerts(); } }}
                   >
                     <ha-icon icon="mdi:eye-off" style="--mdc-icon-size: 14px; vertical-align: middle;"></ha-icon>
                     ${t('status.dismissedCount', { count: dismissedCount })}
@@ -4600,8 +4614,8 @@ if (typeof structuredClone === 'undefined') {
         <!-- SECURITY POPUP -->
         ${this._securityPopupOpen
           ? html`
-              <div class="popup-overlay" @click=${this._handleSecurityPopupOverlayClick}>
-                <div class="popup-container">
+              <div class="popup-overlay" @click=${this._handleSecurityPopupOverlayClick} @keydown=${(e) => { if (e.key === 'Escape') { this._securityPopupOpen = false; this.requestUpdate(); } }}>
+                <div class="popup-container" role="dialog" aria-modal="true" aria-label="${t('security.title', 'Security')}">
                   <div class="popup-header">
                     <div class="popup-icon" style="background: var(--primary-color);">
                       <ha-icon icon="mdi:shield-home"></ha-icon>
@@ -4609,7 +4623,7 @@ if (typeof structuredClone === 'undefined') {
                     <div class="popup-title">
                       <h2>${t('security.title', 'Security')}</h2>
                     </div>
-                    <button class="popup-close" @click=${() => this._securityPopupOpen = false}>
+                    <button class="popup-close" @click=${() => this._securityPopupOpen = false} aria-label="${t('common.actions.close', 'Close')}">
                       <ha-icon icon="mdi:close"></ha-icon>
                     </button>
                   </div>
@@ -4624,8 +4638,8 @@ if (typeof structuredClone === 'undefined') {
         <!-- LIGHTS POPUP -->
         ${this._lightsPopupOpen
           ? html`
-              <div class="popup-overlay" @click=${this._handleLightsPopupOverlayClick}>
-                <div class="popup-container">
+              <div class="popup-overlay" @click=${this._handleLightsPopupOverlayClick} @keydown=${(e) => { if (e.key === 'Escape') { this._closeLightsPopup(); } }}>
+                <div class="popup-container" role="dialog" aria-modal="true" aria-label="${t('ui.popups.lights.title')}">
                   <div class="popup-header">
                     <div class="popup-icon" style="background: var(--dv-gradient-active, linear-gradient(135deg, #ffd54f 0%, #ffb300 100%));">
                       <ha-icon icon="mdi:lightbulb-group"></ha-icon>
@@ -4633,7 +4647,7 @@ if (typeof structuredClone === 'undefined') {
                     <div class="popup-title">
                       <h2>${t('ui.popups.lights.title')}</h2>
                     </div>
-                    <button class="popup-close" @click=${this._closeLightsPopup}>
+                    <button class="popup-close" @click=${this._closeLightsPopup} aria-label="${t('common.actions.close', 'Close')}">
                       <ha-icon icon="mdi:close"></ha-icon>
                     </button>
                   </div>
@@ -4648,8 +4662,8 @@ if (typeof structuredClone === 'undefined') {
         <!-- COVERS POPUP -->
         ${this._coversPopupOpen
           ? html`
-              <div class="popup-overlay" @click=${this._handleCoversPopupOverlayClick}>
-                <div class="popup-container">
+              <div class="popup-overlay" @click=${this._handleCoversPopupOverlayClick} @keydown=${(e) => { if (e.key === 'Escape') { this._closeCoversPopup(); } }}>
+                <div class="popup-container" role="dialog" aria-modal="true" aria-label="${t('ui.popups.covers.title', 'Covers')}">
                   <div class="popup-header">
                     <div class="popup-icon" style="background: var(--dv-gradient-cover, linear-gradient(135deg, #90caf9 0%, #42a5f5 100%));">
                       <ha-icon icon="mdi:window-shutter"></ha-icon>
@@ -4657,7 +4671,7 @@ if (typeof structuredClone === 'undefined') {
                     <div class="popup-title">
                       <h2>${t('ui.popups.covers.title', 'Covers')}</h2>
                     </div>
-                    <button class="popup-close" @click=${this._closeCoversPopup}>
+                    <button class="popup-close" @click=${this._closeCoversPopup} aria-label="${t('common.actions.close', 'Close')}">
                       <ha-icon icon="mdi:close"></ha-icon>
                     </button>
                   </div>
@@ -4672,8 +4686,8 @@ if (typeof structuredClone === 'undefined') {
         <!-- TVS POPUP -->
         ${this._tvsPopupOpen
           ? html`
-              <div class="popup-overlay" @click=${this._handleTVsPopupOverlayClick}>
-                <div class="popup-container">
+              <div class="popup-overlay" @click=${this._handleTVsPopupOverlayClick} @keydown=${(e) => { if (e.key === 'Escape') { this._closeTVsPopup(); } }}>
+                <div class="popup-container" role="dialog" aria-modal="true" aria-label="${t('ui.popups.tvs.title', 'TVs')}">
                   <div class="popup-header">
                     <div class="popup-icon" style="background: var(--dv-gradient-media, linear-gradient(135deg, #ce93d8 0%, #ab47bc 100%));">
                       <ha-icon icon="mdi:television"></ha-icon>
@@ -4681,7 +4695,7 @@ if (typeof structuredClone === 'undefined') {
                     <div class="popup-title">
                       <h2>${t('ui.popups.tvs.title', 'TVs')}</h2>
                     </div>
-                    <button class="popup-close" @click=${this._closeTVsPopup}>
+                    <button class="popup-close" @click=${this._closeTVsPopup} aria-label="${t('common.actions.close', 'Close')}">
                       <ha-icon icon="mdi:close"></ha-icon>
                     </button>
                   </div>
@@ -4699,8 +4713,8 @@ if (typeof structuredClone === 'undefined') {
               const batteryStatus = statusService?.getBatteryLowStatus(this.hass, this._infoTextConfig);
               const isCritical = batteryStatus?.isCritical || false;
               return html`
-              <div class="popup-overlay" @click=${this._handleBatteryPopupOverlayClick}>
-                <div class="popup-container">
+              <div class="popup-overlay" @click=${this._handleBatteryPopupOverlayClick} @keydown=${(e) => { if (e.key === 'Escape') { this._closeBatteryPopup(); } }}>
+                <div class="popup-container" role="dialog" aria-modal="true" aria-label="${t('ui.sections.batteries', 'Batteries')}">
                   <div class="popup-header">
                     <div class="popup-icon" style="background: var(${isCritical ? '--error-color, #dc2626' : '--warning-color, #ff9800'});">
                       <ha-icon icon="${isCritical ? 'mdi:battery-alert' : 'mdi:battery-low'}"></ha-icon>
@@ -4708,7 +4722,7 @@ if (typeof structuredClone === 'undefined') {
                     <div class="popup-title">
                       <h2>${t('ui.sections.batteries', 'Batteries')}</h2>
                     </div>
-                    <button class="popup-close" @click=${this._closeBatteryPopup}>
+                    <button class="popup-close" @click=${this._closeBatteryPopup} aria-label="${t('common.actions.close', 'Close')}">
                       <ha-icon icon="mdi:close"></ha-icon>
                     </button>
                   </div>
@@ -4744,8 +4758,8 @@ if (typeof structuredClone === 'undefined') {
         <!-- ADMIN POPUP -->
         ${this._adminPopupOpen
           ? html`
-              <div class="popup-overlay" @click=${this._handleAdminPopupOverlayClick}>
-                <div class="popup-container" @click=${(e) => e.stopPropagation()}>
+              <div class="popup-overlay" @click=${this._handleAdminPopupOverlayClick} @keydown=${(e) => { if (e.key === 'Escape') { this._adminPopupOpen = false; this.requestUpdate(); } }}>
+                <div class="popup-container" @click=${(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="${t('admin.title', 'Admin')}">
                   <div class="popup-header">
                     <div class="popup-icon" style="background: var(--primary-color);">
                       <ha-icon icon="mdi:cog"></ha-icon>
@@ -4753,7 +4767,7 @@ if (typeof structuredClone === 'undefined') {
                     <div class="popup-title">
                       <h2>${t('admin.title', 'Admin')}</h2>
                     </div>
-                    <button class="popup-close" @click=${() => this._adminPopupOpen = false}>
+                    <button class="popup-close" @click=${() => this._adminPopupOpen = false} aria-label="${t('common.actions.close', 'Close')}">
                       <ha-icon icon="mdi:close"></ha-icon>
                     </button>
                   </div>

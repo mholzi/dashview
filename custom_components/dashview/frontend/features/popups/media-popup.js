@@ -83,7 +83,7 @@ export function renderMediaPopup(component, html) {
 
   return html`
     <div class="popup-overlay" @click=${component._handleMediaPopupOverlayClick}>
-      <div class="popup-container" @click=${(e) => e.stopPropagation()}>
+      <div class="popup-container" role="dialog" aria-modal="true" @click=${(e) => e.stopPropagation()} @keydown=${(e) => { if (e.key === 'Escape') component._closeMediaPopup?.(); }}>
         ${renderPopupHeader(html, {
           icon: 'mdi:music',
           title: t('ui.sections.music'),
@@ -143,6 +143,7 @@ function renderMediaContent(component, html) {
       ${areaIds.map(areaId => html`
         <button
           class="media-popup-tab ${component._activeMediaTab === areaId ? 'active' : ''}"
+          role="tab" aria-selected="${component._activeMediaTab === areaId}"
           @click=${() => { component._activeMediaTab = areaId; component.requestUpdate(); }}
         >
           ${areaGroups[areaId].areaName}

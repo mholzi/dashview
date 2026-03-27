@@ -19,7 +19,7 @@ export function renderWaterPopup(component, html) {
 
   return html`
     <div class="popup-overlay" @click=${(e) => handleOverlayClick(e, component)}>
-      <div class="popup-container" @click=${(e) => e.stopPropagation()}>
+      <div class="popup-container" role="dialog" aria-modal="true" @click=${(e) => e.stopPropagation()} @keydown=${(e) => { if (e.key === 'Escape') { component._waterPopupOpen = false; } }}>
         ${renderPopupHeader(html, {
           icon: 'mdi:water-alert',
           title: t('water.title'),

@@ -113,6 +113,8 @@ export function renderAdminTab(panel, html) {
         >
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'setup' ? 'active' : ''}"
+            role="tab"
+            aria-selected="${panel._adminSubTab === 'setup'}"
             @click=${() => handleTabClick('setup')}
           >
             <ha-icon icon="mdi:wizard-hat"></ha-icon>
@@ -120,6 +122,8 @@ export function renderAdminTab(panel, html) {
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'entities' ? 'active' : ''}"
+            role="tab"
+            aria-selected="${panel._adminSubTab === 'entities'}"
             @click=${() => handleTabClick('entities')}
           >
             <ha-icon icon="mdi:home-group"></ha-icon>
@@ -127,6 +131,8 @@ export function renderAdminTab(panel, html) {
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'layout' ? 'active' : ''}"
+            role="tab"
+            aria-selected="${panel._adminSubTab === 'layout'}"
             @click=${() => handleTabClick('layout')}
           >
             <ha-icon icon="mdi:view-grid-plus"></ha-icon>
@@ -134,6 +140,8 @@ export function renderAdminTab(panel, html) {
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'weather' ? 'active' : ''}"
+            role="tab"
+            aria-selected="${panel._adminSubTab === 'weather'}"
             @click=${() => handleTabClick('weather')}
           >
             <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
@@ -141,6 +149,8 @@ export function renderAdminTab(panel, html) {
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'status' ? 'active' : ''}"
+            role="tab"
+            aria-selected="${panel._adminSubTab === 'status'}"
             @click=${() => handleTabClick('status')}
           >
             <ha-icon icon="mdi:information-outline"></ha-icon>
@@ -148,6 +158,8 @@ export function renderAdminTab(panel, html) {
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'scenes' ? 'active' : ''}"
+            role="tab"
+            aria-selected="${panel._adminSubTab === 'scenes'}"
             @click=${() => handleTabClick('scenes')}
           >
             <ha-icon icon="mdi:play-box-multiple"></ha-icon>
@@ -155,6 +167,8 @@ export function renderAdminTab(panel, html) {
           </button>
           <button
             class="admin-sub-tab ${panel._adminSubTab === 'users' ? 'active' : ''}"
+            role="tab"
+            aria-selected="${panel._adminSubTab === 'users'}"
             @click=${() => handleTabClick('users')}
           >
             <ha-icon icon="mdi:account-group"></ha-icon>

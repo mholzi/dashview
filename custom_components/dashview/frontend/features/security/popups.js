@@ -204,6 +204,8 @@ export function renderSecurityPopupContent(component, html) {
       ${alarmEntity ? html`
         <button
           class="security-tab ${component._activeSecurityTab === 'alarm' ? 'active' : ''}"
+          role="tab"
+          aria-selected="${component._activeSecurityTab === 'alarm'}"
           @click=${() => component._activeSecurityTab = 'alarm'}
         >
           <ha-icon icon="mdi:shield"></ha-icon>
@@ -212,6 +214,8 @@ export function renderSecurityPopupContent(component, html) {
       ` : ''}
       <button
         class="security-tab ${component._activeSecurityTab === 'windows' ? 'active' : ''}"
+        role="tab"
+        aria-selected="${component._activeSecurityTab === 'windows'}"
         @click=${() => component._activeSecurityTab = 'windows'}
       >
         <ha-icon icon="mdi:window-open"></ha-icon>
@@ -219,6 +223,8 @@ export function renderSecurityPopupContent(component, html) {
       </button>
       <button
         class="security-tab ${component._activeSecurityTab === 'garage' ? 'active' : ''}"
+        role="tab"
+        aria-selected="${component._activeSecurityTab === 'garage'}"
         @click=${() => component._activeSecurityTab = 'garage'}
       >
         <ha-icon icon="mdi:garage"></ha-icon>
@@ -226,6 +232,8 @@ export function renderSecurityPopupContent(component, html) {
       </button>
       <button
         class="security-tab ${component._activeSecurityTab === 'motion' ? 'active' : ''}"
+        role="tab"
+        aria-selected="${component._activeSecurityTab === 'motion'}"
         @click=${() => component._activeSecurityTab = 'motion'}
       >
         <ha-icon icon="mdi:motion-sensor"></ha-icon>

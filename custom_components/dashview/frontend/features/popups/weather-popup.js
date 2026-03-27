@@ -70,7 +70,7 @@ export function renderWeatherPopup(component, html) {
 
   return html`
     <div class="popup-overlay" @click=${component._handleWeatherPopupOverlayClick}>
-      <div class="popup-container">
+      <div class="popup-container" role="dialog" aria-modal="true" @keydown=${(e) => { if (e.key === 'Escape') component._closeWeatherPopup?.(); }}>
         ${renderPopupHeader(html, {
           icon: 'mdi:white-balance-sunny',
           title: t('ui.tabs.weather'),
@@ -173,10 +173,13 @@ function renderForecastTabs(component, html) {
   return html`
     <div class="weather-forecast-tabs">
       <button class="weather-forecast-tab ${component._selectedForecastTab === 0 ? 'active' : ''}"
+              role="tab" aria-selected="${component._selectedForecastTab === 0}"
               @click=${() => { component._selectedForecastTab = 0; component.requestUpdate(); }}>${t('weather.today')}</button>
       <button class="weather-forecast-tab ${component._selectedForecastTab === 1 ? 'active' : ''}"
+              role="tab" aria-selected="${component._selectedForecastTab === 1}"
               @click=${() => { component._selectedForecastTab = 1; component.requestUpdate(); }}>${t('weather.tomorrow')}</button>
       <button class="weather-forecast-tab ${component._selectedForecastTab === 2 ? 'active' : ''}"
+              role="tab" aria-selected="${component._selectedForecastTab === 2}"
               @click=${() => { component._selectedForecastTab = 2; component.requestUpdate(); }}>${t('weather.day_after')}</button>
     </div>
   `;

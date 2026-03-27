@@ -18,7 +18,10 @@ export function renderChip(html, { icon, label, active = false, type = '', onCli
   return html`
     <div
       class="chip ${active ? 'active' : 'inactive'} ${type}"
+      role="button"
+      tabindex="0"
       @click=${onClick}
+      @keydown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(e); } }}
     >
       <ha-icon icon="${icon}"></ha-icon>
       <span>${label}</span>
