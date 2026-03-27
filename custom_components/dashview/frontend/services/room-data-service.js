@@ -43,6 +43,15 @@ const ENTITY_TYPE_CONFIG = {
       position: state?.attributes?.current_position,
     }),
   },
+  fan: {
+    labelKey: 'fan',
+    enabledMapKey: 'enabledFans',
+    extraAttributes: (state) => ({
+      percentage: state?.attributes?.percentage,
+      preset_mode: state?.attributes?.preset_mode,
+      direction: state?.attributes?.direction,
+    }),
+  },
   garage: {
     labelKey: 'garage',
     enabledMapKey: 'enabledGarages',
@@ -311,6 +320,10 @@ export class RoomDataService {
 
   getAreaCovers(areaId) {
     return this.getAreaEntities(areaId, 'cover');
+  }
+
+  getAreaFans(areaId) {
+    return this.getAreaEntities(areaId, 'fan');
   }
 
   getAreaGarages(areaId) {

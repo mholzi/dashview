@@ -506,6 +506,7 @@ if (typeof structuredClone === 'undefined') {
     get _enabledMotionSensors() { return settingsStore?.get('enabledMotionSensors') || {}; }
     get _enabledSmokeSensors() { return settingsStore?.get('enabledSmokeSensors') || {}; }
     get _enabledCovers() { return settingsStore?.get('enabledCovers') || {}; }
+    get _enabledFans() { return settingsStore?.get('enabledFans') || {}; }
     get _coverInvertPosition() { return settingsStore?.get('coverInvertPosition') || {}; }
     get _enabledGarages() { return settingsStore?.get('enabledGarages') || {}; }
     get _enabledWindows() { return settingsStore?.get('enabledWindows') || {}; }
@@ -595,6 +596,7 @@ if (typeof structuredClone === 'undefined') {
     // Category label IDs (derived from settings)
     get _lightLabelId() { return settingsStore?.get('categoryLabels')?.light ?? null; }
     get _coverLabelId() { return settingsStore?.get('categoryLabels')?.cover ?? null; }
+    get _fanLabelId() { return settingsStore?.get('categoryLabels')?.fan ?? null; }
     get _roofWindowLabelId() { return settingsStore?.get('categoryLabels')?.roofWindow ?? null; }
     get _windowLabelId() { return settingsStore?.get('categoryLabels')?.window ?? null; }
     get _doorLabelId() { return settingsStore?.get('categoryLabels')?.door ?? null; }
@@ -618,6 +620,7 @@ if (typeof structuredClone === 'undefined') {
     set _enabledMotionSensors(v) { settingsStore?.set('enabledMotionSensors', v, false); }
     set _enabledSmokeSensors(v) { settingsStore?.set('enabledSmokeSensors', v, false); }
     set _enabledCovers(v) { settingsStore?.set('enabledCovers', v, false); }
+    set _enabledFans(v) { settingsStore?.set('enabledFans', v, false); }
     set _coverInvertPosition(v) { settingsStore?.set('coverInvertPosition', v, false); }
     set _enabledGarages(v) { settingsStore?.set('enabledGarages', v, false); }
     set _enabledWindows(v) { settingsStore?.set('enabledWindows', v, false); }
@@ -1885,6 +1888,7 @@ if (typeof structuredClone === 'undefined') {
     _toggleSmokeSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledSmokeSensors', entityId); }
     _toggleWaterLeakSensorEnabled(entityId) { this._toggleEntityEnabled('_enabledWaterLeakSensors', entityId); }
     _toggleCoverEnabled(entityId) { this._toggleEntityEnabled('_enabledCovers', entityId); }
+    _toggleFanEnabled(entityId) { this._toggleEntityEnabled('_enabledFans', entityId); }
     _toggleCoverInvertPosition(entityId) {
       this._coverInvertPosition = { ...this._coverInvertPosition, [entityId]: !this._coverInvertPosition[entityId] };
       this._saveSettings();
@@ -2305,6 +2309,15 @@ if (typeof structuredClone === 'undefined') {
       }), this._coverLabelId);
     }
 
+    _getEnabledFansForRoom(areaId) {
+      return this._getEnabledEntitiesForRoom(areaId, this._enabledFans, (s) => ({
+        state: s.state,
+        percentage: s.attributes?.percentage ?? null,
+        preset_mode: s.attributes?.preset_mode ?? null,
+        speed_count: s.attributes?.speed_count ?? null,
+      }), this._fanLabelId);
+    }
+
     _getEnabledGaragesForRoom(areaId) {
       return this._getEnabledEntitiesForRoom(areaId, this._enabledGarages, s => ({ state: s.state, last_changed: s.last_changed }), this._garageLabelId);
     }
@@ -2411,6 +2424,14 @@ if (typeof structuredClone === 'undefined') {
     _closeAllCovers() {
       const enabledCoverIds = this._getEnabledEntityIdsFromRegistry(this._coverLabelId, this._enabledCovers);
       enabledCoverIds.forEach(entityId => this._coverService(entityId, 'close_cover'));
+    }
+
+    // Fan service methods
+    _toggleFan(entityId) {
+      this.hass.callService('fan', 'toggle', { entity_id: entityId });
+    }
+    _setFanPercentage(entityId, percentage) {
+      this.hass.callService('fan', 'set_percentage', { entity_id: entityId, percentage });
     }
 
     _formatGarageLastChanged(lastChanged) {
@@ -3408,6 +3429,10 @@ if (typeof structuredClone === 'undefined') {
 
     _getAreaCovers(areaId) {
       return roomDataService ? roomDataService.getAreaCovers(areaId) : [];
+    }
+
+    _getAreaFans(areaId) {
+      return roomDataService ? roomDataService.getAreaFans(areaId) : [];
     }
 
     _getAreaGarages(areaId) {

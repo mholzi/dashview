@@ -70,6 +70,7 @@ import { hapticWarning } from '../utils/haptic.js';
  * @property {EnabledEntityMap} enabledMotionSensors
  * @property {EnabledEntityMap} enabledSmokeSensors
  * @property {EnabledEntityMap} enabledCovers
+ * @property {EnabledEntityMap} enabledFans
  * @property {EnabledEntityMap} enabledMediaPlayers
  * @property {EnabledEntityMap} enabledGarages
  * @property {EnabledEntityMap} enabledWindows
@@ -129,6 +130,7 @@ export const DEFAULT_SETTINGS = {
   enabledMotionSensors: {},
   enabledSmokeSensors: {},
   enabledCovers: {},
+  enabledFans: {},
   enabledMediaPlayers: {},
   enabledGarages: {},
   enabledWindows: {},
@@ -225,6 +227,7 @@ export const DEFAULT_SETTINGS = {
   categoryLabels: {
     light: null,
     cover: null,
+    fan: null,
     roofWindow: null,
     window: null,
     garage: null,

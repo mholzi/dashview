@@ -868,6 +868,8 @@
       "waterLeakDesc": "Water leak and moisture sensors",
       "covers": "Covers / Blinds",
       "coverDesc": "Cover and blind entities",
+      "fans": "Fans",
+      "fanDesc": "Fan and ventilation entities",
       "roofWindows": "Roof Windows",
       "roofWindowDesc": "Roof window entities",
       "garages": "Garage Doors",

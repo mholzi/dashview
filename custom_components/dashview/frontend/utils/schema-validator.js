@@ -18,6 +18,7 @@ export const SETTINGS_SCHEMA = {
   enabledMotionSensors: { type: 'object', default: {} },
   enabledSmokeSensors: { type: 'object', default: {} },
   enabledCovers: { type: 'object', default: {} },
+  enabledFans: { type: 'object', default: {} },
   enabledMediaPlayers: { type: 'object', default: {} },
   enabledGarages: { type: 'object', default: {} },
   enabledWindows: { type: 'object', default: {} },

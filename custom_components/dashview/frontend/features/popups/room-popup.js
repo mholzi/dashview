@@ -173,6 +173,7 @@ export function renderRoomPopup(component, html) {
           ${renderTemperatureSection(component, html, areaId)}
           ${renderLightSection(component, html, areaId)}
           ${renderCoverSection(component, html, areaId)}
+          ${renderFanSection(component, html, areaId)}
           ${renderRoofWindowSection(component, html, areaId)}
           ${renderMediaSection(component, html, areaId)}
           ${renderTVSection(component, html, areaId)}
@@ -764,6 +765,54 @@ function renderCoverSection(component, html, areaId) {
             <span class="popup-cover-position">${displayPosition}%</span>
           </div>
         `})}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render fan section with toggle and speed control
+ */
+function renderFanSection(component, html, areaId) {
+  const fans = component._getEnabledFansForRoom?.(areaId) || [];
+  if (fans.length === 0) return '';
+
+  return html`
+    <div class="popup-section">
+      <div class="popup-section-header">
+        <ha-icon icon="mdi:fan" style="--mdc-icon-size: 18px;"></ha-icon>
+        <span>${t('admin.entityTypes.fans')}</span>
+      </div>
+      <div class="popup-section-content">
+        ${fans.map(fan => {
+          const isOn = fan.state === 'on';
+          const percentage = fan.percentage ?? 0;
+          return html`
+            <div class="popup-entity-row">
+              <div class="popup-entity-info" @click=${() => component._toggleFan(fan.entity_id)}>
+                <ha-icon
+                  icon="${isOn ? 'mdi:fan' : 'mdi:fan-off'}"
+                  class="${isOn ? 'state-on' : 'state-off'}"
+                  style="--mdc-icon-size: 20px;"
+                ></ha-icon>
+                <span class="popup-entity-name">${fan.name}</span>
+              </div>
+              ${isOn && fan.percentage !== null ? html`
+                <div class="popup-entity-controls">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    .value=${percentage}
+                    @change=${(e) => component._setFanPercentage(fan.entity_id, parseInt(e.target.value, 10))}
+                    class="popup-slider"
+                  />
+                  <span class="popup-entity-value">${percentage}%</span>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        })}
       </div>
     </div>
   `;
