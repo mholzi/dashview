@@ -264,7 +264,7 @@ export const DEFAULT_SETTINGS = {
 export class SettingsStore {
   constructor() {
     /** @type {DashviewSettings} */
-    this._settings = { ...DEFAULT_SETTINGS };
+    this._settings = structuredClone(DEFAULT_SETTINGS);
     /** @type {boolean} */
     this._loaded = false;
     /** @type {Promise|null} - Deduplicates concurrent load() calls (#74) */
@@ -744,7 +744,7 @@ export class SettingsStore {
    * @param {boolean} [save=true] - Whether to save after reset
    */
   reset(save = true) {
-    this._settings = { ...DEFAULT_SETTINGS };
+    this._settings = structuredClone(DEFAULT_SETTINGS);
     this._notifyListeners('_reset', true);
     if (save) {
       this.save();

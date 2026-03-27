@@ -14,7 +14,7 @@
  * Current version of the installed integration
  * UPDATE THIS with each release - must match manifest.json/const.py
  */
-export const CURRENT_VERSION = '1.5.0-beta.18';
+export const CURRENT_VERSION = '1.5.3';
 
 /**
  * Changelog entries - newest first
