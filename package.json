@@ -13,7 +13,8 @@
     "build": "rollup -c",
     "build:watch": "rollup -c --watch",
     "bump-version": "bash scripts/bump-version.sh",
-    "check-version": "bash scripts/check-version.sh"
+    "check-version": "bash scripts/check-version.sh",
+    "prepare": "cp scripts/pre-commit .git/hooks/pre-commit 2>/dev/null && chmod +x .git/hooks/pre-commit 2>/dev/null || true"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.0",
