@@ -56,7 +56,7 @@ if (typeof structuredClone === 'undefined') {
 (async () => {
   // Version for cache busting - update this when making changes
   // NOTE: Use `npm run bump-version <version>` to update all version constants at once
-  const DASHVIEW_VERSION = "1.5.3";
+  const DASHVIEW_VERSION = "1.6.0";
 
   // Non-device domains to exclude from entity lists globally
   // These should never appear as room entities even if they carry a matching label
@@ -499,6 +499,14 @@ if (typeof structuredClone === 'undefined') {
     get _entityRegistry() { return registryStore?.entityRegistry || []; }
     get _deviceRegistry() { return registryStore?.deviceRegistry || []; }
     get _scenes() { return registryStore?.scenes || []; }
+    get _areasLoading() { return registryStore?.areasLoading || false; }
+    get _areasLoadError() { return registryStore?.areasLoadError || false; }
+    _retryLoadAreas() {
+      if (registryStore) {
+        registryStore._data.areasLoadError = false;
+        registryStore.loadAreas().then(() => this.requestUpdate());
+      }
+    }
 
     // Settings data (from settingsStore)
     get _enabledRooms() { return settingsStore?.get('enabledRooms') || {}; }

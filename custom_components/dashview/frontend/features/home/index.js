@@ -253,9 +253,31 @@ export function renderRaeumeSection(component, html) {
 }
 
 export function renderFloorOverviewCard(component, html, floorId) {
-  // Show skeleton while hass is not ready
-  if (!component.hass || !component._areas || component._areas.length === 0) {
+  // Show skeleton while loading
+  if (!component.hass || component._areasLoading) {
     return renderFloorOverviewSkeleton(html);
+  }
+
+  // Show error state with retry if load failed
+  if (component._areasLoadError) {
+    return html`
+      <div class="floor-overview-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--dv-gray000);">
+        <span style="color: var(--error-color, #b71c1c); font-size: 13px;">${t('ui.errors.rooms_load_failed', 'Failed to load rooms')}</span>
+        <button
+          @click=${() => component._retryLoadAreas()}
+          style="background: var(--primary-color); color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer;"
+        >${t('common.actions.retry', 'Retry')}</button>
+      </div>
+    `;
+  }
+
+  // No areas configured in Home Assistant
+  if (!component._areas || component._areas.length === 0) {
+    return html`
+      <div class="floor-overview-card" style="display: flex; align-items: center; justify-content: center; background: var(--dv-gray000);">
+        <span style="color: var(--secondary-text-color); font-size: 12px;">${t('ui.errors.no_areas_configured', 'No rooms configured in Home Assistant')}</span>
+      </div>
+    `;
   }
 
   // Get all enabled rooms for this floor (enabled by default if not explicitly disabled)

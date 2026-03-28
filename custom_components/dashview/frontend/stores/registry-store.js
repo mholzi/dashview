@@ -53,6 +53,7 @@ export const DEFAULT_REGISTRY = {
 
   // Loading states
   areasLoading: false,
+  areasLoadError: false,
   entitiesLoading: false,
 };
 
@@ -134,6 +135,14 @@ export class RegistryStore {
     return this._data.areas;
   }
 
+  get areasLoadError() {
+    return this._data.areasLoadError;
+  }
+
+  get areasLoading() {
+    return this._data.areasLoading;
+  }
+
   /**
    * Get floors
    * @returns {Array}
@@ -190,6 +199,7 @@ export class RegistryStore {
     if (!this._hass || this._data.areasLoading) return;
 
     this._data.areasLoading = true;
+    this._data.areasLoadError = false;
 
     try {
       const [areasResult, floorsResult] = await Promise.all([
@@ -211,6 +221,8 @@ export class RegistryStore {
     } catch (e) {
       console.error('Dashview: Failed to load areas:', e);
       this._data.areasLoading = false;
+      this._data.areasLoadError = true;
+      this._notifyListeners('areasLoadError', true);
     }
   }
 

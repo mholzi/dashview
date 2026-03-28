@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-03-28
+
+### Added
+
+- **Fan Support** — Speed, oscillation, and direction control, grouped by room (#208)
+- **Smart Suggestions** — Auto-detects unassigned entities and suggests label/area mappings (#207, #210)
+- **Accessibility** — Full ARIA support, keyboard navigation, screen reader compatibility (#209)
+
+### Changed
+
+- Store architecture refactored — panel delegates to stores via getters, eliminating duplication (#179)
+- Service params, module registry, and interface validation improvements (#181, #183, #184, #185)
+- Memoized enabled maps and batched store updates for better performance (#201, #202, #203)
+
+### Fixed
+
+- Security hardening and bug fixes (#186, #187, #188, #189, #204, #205, #206)
+- Code quality: DRY thresholds, hardcoded defaults, locale, indexes (#191–#194)
+- Skeleton loader stuck indefinitely when registry load fails — now shows error + retry button
+- Dead code removed: 5 orphan files and unused re-exports (#195, #196, #197)
+- Updated all devDependencies to fix 13 security vulnerabilities (#198, #200)
+
+---
+
 ## [1.3.0] - 2026-01-19
 
 ### Added
