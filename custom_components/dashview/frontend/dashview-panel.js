@@ -56,7 +56,7 @@ if (typeof structuredClone === 'undefined') {
 (async () => {
   // Version for cache busting - update this when making changes
   // NOTE: Use `npm run bump-version <version>` to update all version constants at once
-  const DASHVIEW_VERSION = "1.6.0";
+  const DASHVIEW_VERSION = "1.6.1";
 
   // Non-device domains to exclude from entity lists globally
   // These should never appear as room entities even if they carry a matching label
